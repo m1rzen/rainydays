@@ -1,0 +1,31 @@
+node_modules/
+dist/
+.electron-app/
+release/
+test-results/
+coverage/
+parity/.probe/
+.env
+*.log
+
+# Local secrets, runtime data, and generated evidence
+.env*
+!.env.example
+data/
+output/
+LUX.oracle
+nul
+.sec03-native-build/
+.sec03-native-test/
+build-info.json
+dist-integrity.json
+package-artifact.json
+
+# Local model payloads are downloaded/generated dependencies
+models/
+
+# Local editor and OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

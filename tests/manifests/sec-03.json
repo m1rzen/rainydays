@@ -1,0 +1,700 @@
+{
+  "schemaVersion": 2,
+  "taskId": "SEC-03",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "sentinel",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "architecture": {
+    "exactCasePath": "parity/SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md",
+    "sha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1"
+  },
+  "attackMatrix": {
+    "exactCasePath": "tests/sec03-attack-matrix.json",
+    "sha256": "5b2bc86c818aab0135d1db11de0ac5dc138ae253c41944aef1829053963eff21"
+  },
+  "predecessor": {
+    "taskId": "SEC-02",
+    "exactCasePath": "tests/manifests/sec-02-resolved.json",
+    "fileSha256": "a788157aeb96cf6a4ca4ac6878eb902207df4aeffad2b537a782930a98961b5a",
+    "canonicalPayloadSha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108"
+  },
+  "deltaEntries": [
+    {
+      "exactCasePath": "electron/main.cjs",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "electron/preload.cjs",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "src/agent.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "src/capability-broker.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "src/execution-isolation.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "src/execution-native.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "src/execution-runtime.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "src/manual-execution-consent.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "src/native-process-consent.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "src/native-process-consent-transport.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "src/path-policy.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "src/terminal.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "src/types.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "dist/agent.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "dist/capability-broker.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "dist/execution-isolation.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "dist/execution-native.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "dist/execution-runtime.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "dist/manual-execution-consent.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "dist/native-process-consent.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "dist/native-process-consent-transport.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "dist/path-policy.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "dist/terminal.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "dist/tool-policies.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "native/sandbox-host/journal.h",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "native/sandbox-host/protocol.h",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "parity/SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "parity/reports/sec-03-architect-freeze.json",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "parity/schema/sec-03-governance-contract.json",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/sec03-attack-matrix.json",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/sec03-attack-matrix.schema.json",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-policy.json",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-inventory.json",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-inventory.schema.json",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/sec03-receipts.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "scripts/build-sec03-native.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "scripts/sec03-execution-scanner.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "scripts/sec03-execution-crosscheck.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "scripts/sec03-execution-inventory.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "scripts/sec03-receipt-set.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "scripts/sec03-governance.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "scripts/generate-sec03-resolved-manifest.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "scripts/build-inputs.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "scripts/prepare-electron-app.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "scripts/run-test-layer.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "scripts/run-tests.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "scripts/run-coverage.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "package.json",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "package-lock.json",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/unit/execution-root-lease.test.mjs",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/unit/native-process-consent.test.mjs",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-execution-inventory.test.mjs",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-governance-adversarial.test.mjs",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-governance.test.mjs",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-receipts.test.mjs",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-child-consent-transport.test.mjs",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
+      "kind": "test",
+      "layer": "packaged",
+      "owner": "SEC-03",
+      "supersedes": true
+    }
+  ],
+  "coverageExemptions": [
+    {
+      "exactCasePath": "electron/main.cjs",
+      "reason": "Electron main-process consent and native bridge wiring execute in the real Electron projection layer.",
+      "evidenceLayer": "electron",
+      "evidenceOwners": []
+    },
+    {
+      "exactCasePath": "electron/preload.cjs",
+      "reason": "The preload mutation surface executes only in the real Electron renderer lifecycle.",
+      "evidenceLayer": "electron",
+      "evidenceOwners": []
+    },
+    {
+      "exactCasePath": "native/sandbox-host/journal.h",
+      "reason": "Native journal behavior is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": [
+        {
+          "receiptLayer": "real-host",
+          "testFile": "tests/integration/sec03-native-host.test.mjs",
+          "familyIds": [
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16",
+            "A17",
+            "A18",
+            "A19"
+          ]
+        }
+      ]
+    },
+    {
+      "exactCasePath": "native/sandbox-host/protocol.h",
+      "reason": "Native protocol behavior is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": [
+        {
+          "receiptLayer": "real-host",
+          "testFile": "tests/integration/sec03-native-host.test.mjs",
+          "familyIds": [
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16",
+            "A17",
+            "A18",
+            "A19"
+          ]
+        }
+      ]
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
+      "reason": "The native sandbox host is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": [
+        {
+          "receiptLayer": "real-host",
+          "testFile": "tests/integration/sec03-native-host.test.mjs",
+          "familyIds": [
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16",
+            "A17",
+            "A18",
+            "A19"
+          ]
+        }
+      ]
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "reason": "The native launcher is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": [
+        {
+          "receiptLayer": "real-host",
+          "testFile": "tests/integration/sec03-native-host.test.mjs",
+          "familyIds": [
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16",
+            "A17",
+            "A18",
+            "A19"
+          ]
+        }
+      ]
+    },
+    {
+      "exactCasePath": "src/execution-isolation.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/execution-isolation.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "exactCasePath": "src/execution-native.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/execution-native.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "exactCasePath": "src/execution-runtime.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/execution-runtime.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "exactCasePath": "src/manual-execution-consent.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/manual-execution-consent.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "exactCasePath": "src/native-process-consent.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/native-process-consent.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "exactCasePath": "src/native-process-consent-transport.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/native-process-consent-transport.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    }
+  ]
+}

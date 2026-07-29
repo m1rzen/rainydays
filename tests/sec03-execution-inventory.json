@@ -1,0 +1,5036 @@
+{
+  "schemaVersion": 1,
+  "task": "SEC-03",
+  "architectureSha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1",
+  "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
+  "crosscheckSha256": "88e2d2d6a4f2e8445253f3561b810d3f7a6e54388184452dff92d5421d1d36d3",
+  "policySha256": "22916200c3712014f10b4d5c6e448ab63da79d8afbb044821fa9a4ae5d1bcb96",
+  "sourceSetSha256": "2c6ebc4ecb483d524154092e6330189ad29ef813d8939e8f05a9df3910e4abe4",
+  "files": [
+    {
+      "sourcePath": "electron/main.cjs",
+      "bytes": 22514,
+      "sha256": "48c78082c4e36b4d99c8f7a0209110095d3689ebeee2ef40857895b1d8abf420",
+      "executionClass": "electron-runtime"
+    },
+    {
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "bytes": 15041,
+      "sha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "executionClass": "electron-runtime"
+    },
+    {
+      "sourcePath": "electron/preload.cjs",
+      "bytes": 499,
+      "sha256": "2e092cdd99aea46474fb525f60d456bd65cbb130a3c44ca5acc85f2ed81357a8",
+      "executionClass": "electron-runtime"
+    },
+    {
+      "sourcePath": "native/sandbox-host/journal.h",
+      "bytes": 16324,
+      "sha256": "360b3c54df18a4a48630d2d919f5705e7ac92a131737329f5fef03d99cb96000",
+      "executionClass": "native-host"
+    },
+    {
+      "sourcePath": "native/sandbox-host/protocol.h",
+      "bytes": 1115,
+      "sha256": "9a1b3e612106e67b28945da5d569df095a55b15d6fe0d866bf94468efb390c5d",
+      "executionClass": "native-host"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "bytes": 64818,
+      "sha256": "a572bf6c731d9411abeea96846a0f7d3bb06cae26ef746e11d7b8167a210ca91",
+      "executionClass": "native-host"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "bytes": 54030,
+      "sha256": "50bddb6f2d786c9c422b22f66b87fd65597ce9bbbd40dc47a9183272527f2025",
+      "executionClass": "native-host"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "bytes": 102086,
+      "sha256": "7c635670ca31f058592a05d4bc977a6eeaf3865f61fee39ee37ca82024f003fc",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "scripts/after-pack.cjs",
+      "bytes": 5044,
+      "sha256": "5dc1d359f67612cb94859f458725dea68223c81cea8e9a31090adb10d9190410",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/build-electron.mjs",
+      "bytes": 1393,
+      "sha256": "2051751d6e66095f66d66050a0fd2ad40d24c1c6f4477f7c499cfd77a5b3830d",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/build-inputs.mjs",
+      "bytes": 14664,
+      "sha256": "a756212c0cb4a14453a2f3754c08b7780565f1d6a261e8289f9e50c4f412e328",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/build-sec03-native.mjs",
+      "bytes": 10994,
+      "sha256": "511db91a462e8aa513b356f6d99666e5f5cd84abe68a69ca0eda6020a8382807",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/copy-vendor.mjs",
+      "bytes": 723,
+      "sha256": "6d8617799f5b53c97c99d43656b2e083167853a702e34d8bf7e95cf8d3340d79",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/coverage-lib.mjs",
+      "bytes": 4585,
+      "sha256": "5d49ffdad3f198af27b722c5c19e628fbe5d859bf1ec286fbc91df11ca9d085b",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/electron-asar-integrity.mjs",
+      "bytes": 15717,
+      "sha256": "850e9158829464b5ca71bf87ce7e988f54cf359f8105e93c87895c329eb3547a",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/electron-stage-integrity.mjs",
+      "bytes": 9569,
+      "sha256": "d8cc22d01b380117a602a2e85b78191e2f3c64ebc90e622e94659560f93f8c3f",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/generate-build-info.mjs",
+      "bytes": 6701,
+      "sha256": "24fc61c231a9588c10262c5a07927520ff36c1be95d2b8847674e161a85f80ee",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/generate-dist-integrity.mjs",
+      "bytes": 2834,
+      "sha256": "9d9b56e5463c92e09d8027e8f2c4eff7d63d288a49710a5f4774468d0d4a8f92",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/generate-sec02-resolved-manifest.mjs",
+      "bytes": 2486,
+      "sha256": "e8e238131bca5b7d70689cde87e6aa0fb567d96b8cda867a3585681307996e13",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/generate-sec03-resolved-manifest.mjs",
+      "bytes": 2317,
+      "sha256": "574ff2b3acf9b85e215c3e53fdd34f5298718d2eb77418db3e780b2a59c95163",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/identity.mjs",
+      "bytes": 6213,
+      "sha256": "c5049f6c700b0dd43181635a7d3d7d61fb19acecb0d6534359977b6b8ba6cb65",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/orchestrator.mjs",
+      "bytes": 20230,
+      "sha256": "b499484097959041c5eeef0e8957fd0fc2681312da523b381aa13069620a041a",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/policy.mjs",
+      "bytes": 4511,
+      "sha256": "dd1635f25546be0f70583d18e9626114e9bfd778b1e1219c7531e15a6d86d1cc",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/process.mjs",
+      "bytes": 4531,
+      "sha256": "50bf5b2d5884611f49f1c0565ffb7eaf9a8996807cf39b6a9ad2e9acff182ba7",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/provenance.mjs",
+      "bytes": 4901,
+      "sha256": "8837b9120e932f35ab1901ad92fe9455b0089c4d537804be66d3b84e7a625fc4",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/receipts.mjs",
+      "bytes": 2610,
+      "sha256": "da274fc9f5b7a74bb9adcf3a98a34d88610676bf8e601fb902b8d27f794b3aa2",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/report-schema.mjs",
+      "bytes": 30754,
+      "sha256": "d3dcd2509eac108b90f7714ecd6dc5b56214efeb2ac8e71dedf9ccef2ec07c63",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/retry.mjs",
+      "bytes": 2735,
+      "sha256": "5426f1b615fd840e793072cdeb7e5ffced90a8b01791c02d77a6e7bf6ffac756",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/sca.mjs",
+      "bytes": 6598,
+      "sha256": "e6dbb150584c1276aab2ce6a173a10a32df0dc8987fa2f8c113756bbb5fe88f4",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/secret-scan.mjs",
+      "bytes": 7743,
+      "sha256": "08feba62c801ad0f68fd2d7566724995d94d020aa7f584ef10da95cb531465d4",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/signature.mjs",
+      "bytes": 6424,
+      "sha256": "55ffa89ab134d8eb38ff8cfd2d1e4050a0bad719772dfa60681389c8a5bb71c1",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/gov04/steps.mjs",
+      "bytes": 24963,
+      "sha256": "526662a1a8af80bf4a45c7090a9ee1a668d1b747839c38bb384e5abffc16c655",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/package-artifact-lib.mjs",
+      "bytes": 3910,
+      "sha256": "482907fe366f69ebbe3e1e3e1c3ad94166c769e5499921ddb598ac624b8f0f92",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/prepare-electron-app.mjs",
+      "bytes": 10528,
+      "sha256": "f66b5fa8406ac459875a7ed36a53019b29610db26894a305ea3f46639efb7388",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/report-schema.mjs",
+      "bytes": 48004,
+      "sha256": "89ceb49d2e688e4ac382f7144f3d73e9c60bc80521983bbc508783afb4dedfe3",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/run-coverage.mjs",
+      "bytes": 8978,
+      "sha256": "dddb9f2800f5cc2cb299a0651488a17380d6abb29bda967feaf58073d9557968",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/run-gov04.mjs",
+      "bytes": 2137,
+      "sha256": "212e9e11c02c9df9c0050e79cea2980e3a1436e774aa5c7cfcabc9f928caabf5",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/run-test-layer.mjs",
+      "bytes": 17746,
+      "sha256": "dd1ced0cf800ae236acff816a05e25bcb7b3c0c9f6ea9c818002e30f61f8064d",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/run-tests.mjs",
+      "bytes": 13220,
+      "sha256": "6ea80b052f2d5b96ed248c37a2f10a502775cc1da2a14cc74329c0c90f4afd6f",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/sec02-governance.mjs",
+      "bytes": 20103,
+      "sha256": "67a64abaa4114cdfc1de4295506e24583d6762dcd453f4750579e430295f8e5d",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/sec02-receipt-set.mjs",
+      "bytes": 17067,
+      "sha256": "092186aa279dd3f9fe05895924be72c7379f40eb1c98c739075888aef706e5ec",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/sec02-sink-crosscheck.mjs",
+      "bytes": 23470,
+      "sha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/sec02-sink-inventory.mjs",
+      "bytes": 18533,
+      "sha256": "83e9d1e24fd4551ac855be957b4d6e3e3557815b97fd106c1094bedcf3e2952b",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/sec02-sink-scanner.mjs",
+      "bytes": 54988,
+      "sha256": "0d0bf8d8501ef4a9adee3d1437e65dadfa5789770706d7ff7fa1f0e5f2488070",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/sec03-execution-crosscheck.mjs",
+      "bytes": 17522,
+      "sha256": "88e2d2d6a4f2e8445253f3561b810d3f7a6e54388184452dff92d5421d1d36d3",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/sec03-execution-inventory.mjs",
+      "bytes": 4982,
+      "sha256": "b265a34f0d688f38a2482a36e65f44b6783bd13a2370952e9ffe854506cd25f1",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/sec03-execution-scanner.mjs",
+      "bytes": 28240,
+      "sha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/sec03-governance.mjs",
+      "bytes": 14476,
+      "sha256": "9fb260b480163afae71c4c295033a5e41268e08248e1baea688b466414bd5a66",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/sec03-receipt-set.mjs",
+      "bytes": 6596,
+      "sha256": "af9a349d7ae407bc1fbd0ce829a1d7c3b32175987a10ca5214279a7f24d6afc7",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/test-gate-selftest.mjs",
+      "bytes": 29331,
+      "sha256": "4f5ba37817f94c93a082b0912e248fea001cf2e0c267d0dc10377859ddd7261b",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/test-gov04-selftest.mjs",
+      "bytes": 2885,
+      "sha256": "ae6ddc4f901f028b402c9b64f732d68e4568cac43122f9996eda80f464eacca1",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/test-version-model.mjs",
+      "bytes": 45533,
+      "sha256": "3bf407670f890f948ff4f4655ade2a482e35d8171936d49f54d5b9f014e0e852",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/version-test-child.mjs",
+      "bytes": 17959,
+      "sha256": "6c4d71dccc63fed6dcf6530b5789b7181317da537b0698ff7e7ae94d5cb5879d",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/write-package-artifact.mjs",
+      "bytes": 2125,
+      "sha256": "3b666668e7e3801c9f277a7784e94051801f8dec4ad67d5f6c2a4d03a71af5af",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "src/agent.ts",
+      "bytes": 18082,
+      "sha256": "5e831a3dcc92200520d9e356cad58ac4188f46c1c2de6f15f06f69b01212a587",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/bootstrap-database.ts",
+      "bytes": 10988,
+      "sha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "bytes": 25019,
+      "sha256": "81a3e5894c6d9f54322f384381812a27460fdf550dfe68dbedcc1a17ba648bb7",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/capability-broker.ts",
+      "bytes": 58344,
+      "sha256": "919d448cd6705b5270328a7b435e84257b8c740a5f7aa60c0573139794e97ae0",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/config.ts",
+      "bytes": 10903,
+      "sha256": "aec182a130c719dd741d3c0397ee47ef4315128c53d3a1372c47645c513e5668",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/cron.ts",
+      "bytes": 3343,
+      "sha256": "0d1ce315c15f514e90e1ab6b16aa00cb41425012e39aa088d14276436d61b88c",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/daemon.ts",
+      "bytes": 6053,
+      "sha256": "f6b350cf29bddb68efb5c45f4273e4835862bad2aff21af34f1d2ebf4f969c66",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/db.ts",
+      "bytes": 33442,
+      "sha256": "bc1a65ad9e74f7ea84df8c32e392e6a2de64611efa5c0a35c5a40f4f06f68378",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/document-parser-worker.ts",
+      "bytes": 695,
+      "sha256": "a7f1bad065e4639e57f647d75b55d9914f53968ed5ec67ce58add071fffc9e4e",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/embedding.ts",
+      "bytes": 6025,
+      "sha256": "8df320a74a5fbe7a4fff24cdd6bd3f7ea4b0f38ca3a38d57a07a78f027922b7f",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/execution-isolation.ts",
+      "bytes": 26105,
+      "sha256": "39d3dd0a3b36ad078d23b7ba9a5d54448d5e20d320f1b2634c4538b0a9b65199",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/execution-native.ts",
+      "bytes": 15958,
+      "sha256": "173f2d1f4d5b49b1c3eaa1c56dc6bfc1a1201534cb2cc4fcb908f63d4e2c75c3",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/execution-runtime.ts",
+      "bytes": 22728,
+      "sha256": "4978ba123ab2f602dfa151611a77d023da612bfb412f68c495882a1fae87f786",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/file-viewer.ts",
+      "bytes": 19664,
+      "sha256": "c9af63fb2ab7a1896aba2c0790cb465c2e7c304c8e9d36b536d418e68e503d80",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/index.ts",
+      "bytes": 65422,
+      "sha256": "43db29052054587e10c6646d772fe2996351658a0c32a9de8859778e5d3fda9f",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/link.ts",
+      "bytes": 4868,
+      "sha256": "624c93e7c3c9164b549c705cf9415cc19d94628df4df5a7a0f0ec1a4dcc381a8",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/llm.ts",
+      "bytes": 7779,
+      "sha256": "2001453648d49d2585200b9f8a740936054bbe1a84b9b0c05f145fdb02abca24",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/logger.ts",
+      "bytes": 1240,
+      "sha256": "c4051b3a012a0c276c7cbde0596a4e4e4bef9d5f123c92e17e3d9919204ace94",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/managed-path-store.ts",
+      "bytes": 9157,
+      "sha256": "de4986391dd9731ae3f230636d905317eea58dd8588e29438c191a3056a889c5",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/manual-execution-consent.ts",
+      "bytes": 11359,
+      "sha256": "aec7054d54450ff0bbe2db2d6745db6b1d44962d3cf8d8ffde845aa936454266",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/memory.ts",
+      "bytes": 12072,
+      "sha256": "fcf69dc974275be636a3b984714acb01f41452520ac01f6c9df3481b97dc22f0",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/native-process-consent-transport.ts",
+      "bytes": 20260,
+      "sha256": "ea7a50e51a402226298e79e44ca7c82a5da1e8ec5de1e05834230eb95bc7a723",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/native-process-consent.ts",
+      "bytes": 6497,
+      "sha256": "ceea309abe64ce506d3d7d217fa7c2f405dadacaffacf135faeaedb920eb8c52",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/oracle.ts",
+      "bytes": 7060,
+      "sha256": "308b8ed937d04985f5ad599d1ce657128ad2871e73591adba0bd2a7012ffde27",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/path-policy.ts",
+      "bytes": 106656,
+      "sha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/path-runtime.ts",
+      "bytes": 369,
+      "sha256": "f597718bbd4ff1f17ed44bf89f8ef96b6a8dfa7ab78d973b98329c2d6a30b459",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/pdf-parse.d.ts",
+      "bytes": 423,
+      "sha256": "16e9f786d20b1b826f5314f0e751b1b174cbf23e37bdd76b90acd4a5ae75c702",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/persona.ts",
+      "bytes": 8113,
+      "sha256": "10c53944c511997ea0dae02d77c59ddc0c8d62b5daef78b1163c2bb4ea133574",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/playbook.ts",
+      "bytes": 10884,
+      "sha256": "8a74957a9a2d13d3c017a30f4b711ffbab8850da5faf5509eb04bf38bd9dc060",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/process-tree.ts",
+      "bytes": 3855,
+      "sha256": "d2b8326cd1194b98637d399cb89f92246e08b615a36d4220b1db21bef2e42aac",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/resource-owner.ts",
+      "bytes": 3767,
+      "sha256": "56f2dc62889febd7bb94f242a91da46e48a810b38222c136f796714a0b3be5b4",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/runtime-paths.ts",
+      "bytes": 2886,
+      "sha256": "6fd02f8410519fe9621419798eb66eeaaaac6f82061a82049659f704a267ff19",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/session.ts",
+      "bytes": 17521,
+      "sha256": "aff31c0efe162f2fb904bbf859b7fe703d8342d23fae084d4ecc42a79f5d8120",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/settings-enrollment.ts",
+      "bytes": 2545,
+      "sha256": "4d5cceb2fa118364b13165b738fc9eedc8a2cb006571d5c86289210529927b70",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/subagent.ts",
+      "bytes": 3296,
+      "sha256": "f722cca7b44b922e535cd4877eb2682d4a2667e255439dbbd1089f1eed338dd2",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/supervisor.ts",
+      "bytes": 3095,
+      "sha256": "ad94fc0b4e247e3bac4c416df2598957b4ea0961ea44eb8ca649cbd55dabf446",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/task.ts",
+      "bytes": 2577,
+      "sha256": "cabac4b14b3dad3d3fdfbffb444cd9a56c74302facec7d8e506df6c582f8b876",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/terminal-facade.ts",
+      "bytes": 389,
+      "sha256": "c84c51155e86d21e8479a73b47d579effe458505d359b3e3dc0958b567723fc4",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/terminal.ts",
+      "bytes": 13982,
+      "sha256": "9d0d9170e063a315ddcdcffb0ee295e33ac587932466012586b9bb9b95c61fd2",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tool-policies.ts",
+      "bytes": 6929,
+      "sha256": "1557ce8af3247e55a283eacf573974d06b933772e70891e2f7893fa0acaee452",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/advanced-tools.ts",
+      "bytes": 8809,
+      "sha256": "acc5b9464f1038c815a783eff5e8ee73bc64b2e0278fb081c5dcc3b7c116ba9c",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/ask-user-tool.ts",
+      "bytes": 3585,
+      "sha256": "438bead757241cc2338c7f199c4aefa24d05e713cc29f978d10afd3dc24f195a",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/cron-tools.ts",
+      "bytes": 5051,
+      "sha256": "af05ed1f1fa2ba484d737382a84e442e8c9bca89fe3398e8dc4400c45e154f44",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/curate-tool.ts",
+      "bytes": 2034,
+      "sha256": "61c0d46b83c4a0def5e681fcb7072055f9ff593daeed1dd3b344df520b2c30cf",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/download-tool.ts",
+      "bytes": 2934,
+      "sha256": "89ce9a4eea4ee11f07ce452d983badf23f941343038320c497cd06ef5f5abd62",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/filesystem.ts",
+      "bytes": 16820,
+      "sha256": "f9042cf71e142e8a78f0a34ad697777ab0f31a0fccc3e41e07ce28af0a72caf6",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/image-helper.ts",
+      "bytes": 2905,
+      "sha256": "90e5f73c1fc576b647d5db9114786001949884cc455c7c973509574f974c9414",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/index.ts",
+      "bytes": 14268,
+      "sha256": "c4a1a6a07537a200fb81124300e20b7919c25dd305f5d65e42e404f1b33d9930",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/knowledge-tools.ts",
+      "bytes": 7998,
+      "sha256": "4f0b70d3e68a09f5b2ac970518c8f39f3fc26c96f8c027af8c905a18e5e392f0",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/memory-tools.ts",
+      "bytes": 7790,
+      "sha256": "5e044a2a839f032921fd6bda14e80ffa07e8949e37d63842a479591e85878a65",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/oracle-tool.ts",
+      "bytes": 1109,
+      "sha256": "16faa956f91505c75b005c40b35de2fee9942c8b00d80f53724c8885be66ce39",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/parsers.ts",
+      "bytes": 4181,
+      "sha256": "468b05155df227d783c7e8c5c53a5f17ac23f725166fa1b16dc8f8a54bdfea7d",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/phase1-tools.ts",
+      "bytes": 7481,
+      "sha256": "0814062256f824f2c923c283f920756c33649a6020e81cc619eba35eabb8d48b",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/read-repo.ts",
+      "bytes": 8334,
+      "sha256": "5d54bfc355379961e6a2a1c1768d428522d56b474ed2293da42d74d81c453682",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/save-persona.ts",
+      "bytes": 2955,
+      "sha256": "5bdda02d32d79faca1d306b30171317329975ee2957487f669558b3d39245450",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/script.ts",
+      "bytes": 2539,
+      "sha256": "f8d03d1d0fdc5d9c41e2138004d571f07a4e3075c7e14a81cbc6cdefa149f3bd",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/search-tool.ts",
+      "bytes": 3369,
+      "sha256": "1e0a80f0c002dca45994020b25436395b14460a4d5c640b460bc5ab7b23057e4",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/shell.ts",
+      "bytes": 3365,
+      "sha256": "cf60a5d2f2fcfd7cb87be651bd8d771b4b1f7aac83a12d3c22d2b571ef098a6d",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/subagent-tools.ts",
+      "bytes": 2545,
+      "sha256": "a254010beb6a258174984b14d751cb398f169f6e016933838a128f117dd750ab",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/system.ts",
+      "bytes": 925,
+      "sha256": "30135e27ba88dd44a73fb06b9082facf90de0183da5e106245841079bf3427b5",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/task-tools.ts",
+      "bytes": 5060,
+      "sha256": "e5931ca095505af37cce6039ca5d2ba5a13797716cb44d9399a86e57675f2568",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/terminal-tools.ts",
+      "bytes": 6008,
+      "sha256": "500b76dc818208a7573ea2caab48277006270feeac7b320038f8c25382015e06",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/web.ts",
+      "bytes": 3259,
+      "sha256": "7b1074486f6292728b503a5ae45628248d37e9d75eac412f59edbb8e0582a768",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/tools/writer.ts",
+      "bytes": 4519,
+      "sha256": "5315722ab514c4ec1752863c3554ff07c0ede014cf4e28373f48e5f746a87799",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/types.ts",
+      "bytes": 6864,
+      "sha256": "951d693769ee13d59743968eb3ae4e328d5de4df779c503b4afdc96b5cfd1b3a",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/version.ts",
+      "bytes": 8211,
+      "sha256": "637135394fee2929fdec04a8d2bd5fd88ddb93bc4fb475cc159799526147f82d",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/wire.ts",
+      "bytes": 4878,
+      "sha256": "cd6fbccc8d7a46ad7f8b020fda423051a57c1ca012ed01079f61d6494e2ac355",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "tests/contract/config-managed-store.test.mjs",
+      "bytes": 6815,
+      "sha256": "2de7a8885623c1acc4b0bae4f9a58ebed2e1f762893c470c5b2d1bd52617fdd4",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/contract/lux-baseline.test.mjs",
+      "bytes": 1827,
+      "sha256": "75e04be913efbf704af9c86c368e5a70f823d9bc920d1ff3f8b348a4f95224f1",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/contract/sec01-attack-contract.test.mjs",
+      "bytes": 11633,
+      "sha256": "09bf70a12f2a200db03eb170d48acac0db7df3f24ef7743801d462896ea7dd19",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/contract/sec01-boundaries.test.mjs",
+      "bytes": 6873,
+      "sha256": "e90a2721217b2b5ee9d7ae1577fec023cb605b7a571cc688b55c73fac1316960",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/contract/sec02-governance.test.mjs",
+      "bytes": 7801,
+      "sha256": "873bcd23b9d7d75e879c40908525044369b208abe7dbc478795272aa2d345ddb",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/contract/sec02-sink-inventory.test.mjs",
+      "bytes": 23824,
+      "sha256": "f354c64c8c4b5358d4f95789c2a31efbab7994140c46491b8ec0d64f94ca3a9c",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/contract/sec03-execution-inventory.test.mjs",
+      "bytes": 5712,
+      "sha256": "abbd0ab375ceb7a280e7b90b304b931e7e5bec8106b47266edd7edeb1b3bf99e",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/contract/sec03-governance-adversarial.test.mjs",
+      "bytes": 6566,
+      "sha256": "dc25adced7caf618db7721da4a88617e59f360a61819fc231d248c00f733b8b9",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/contract/sec03-governance.test.mjs",
+      "bytes": 3146,
+      "sha256": "2db60ce73ae3b343264ba2014dd23aef889e3ce45c00bb3e6185802304d8b2b9",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/contract/sec03-native-package-identity.test.mjs",
+      "bytes": 6295,
+      "sha256": "6cc358bea00e3d57f770061ade6c105e8967387f344cca9e745f30d1a393ae79",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/contract/sec03-receipts.test.mjs",
+      "bytes": 6656,
+      "sha256": "1c0669a065d49a29cd1068b5fc00ed2ea71d855f4beede5aec37b2bccede603d",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/electron/desktop-smoke.test.mjs",
+      "bytes": 11401,
+      "sha256": "600a16a510f620583cb0db547dcd149091cbd265dddceb4d36d432f32aa11596",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/fixtures/failing/assertion.test.mjs",
+      "bytes": 196,
+      "sha256": "93373c1dd5959d142f5a1f861731e1bc3a89b425ca1ea642bb7d15e126b6e939",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/fixtures/model-tree-child.mjs",
+      "bytes": 9670,
+      "sha256": "6108934e10506f7d581c24cb56fbcad89bd93269bf611b1fbfa663e7859a9f16",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/fixtures/sec01-shutdown-server.mjs",
+      "bytes": 717,
+      "sha256": "9c5be41ca7ad880b10790e3020e5fceb747f640b41c2b8195951ea567db43e27",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/fixtures/sqlite-lifetime-child.mjs",
+      "bytes": 8303,
+      "sha256": "4acd07d3078adfb0bd6fc8f71859c0a6a5a3770fd462a634f36fe865aae0d73d",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/gov04/report-fixture.mjs",
+      "bytes": 8950,
+      "sha256": "dbc2177603f9f54b0fc7e5e24972eb0c84c1bdfafd8be529d423f44d89aa165a",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/gov04/report-schema.test.mjs",
+      "bytes": 21850,
+      "sha256": "962e4c826291605ad183f636b5b381f698022ac0dc43f8ed2e8ec5f848f403c4",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/gov04/workflow-policy.test.mjs",
+      "bytes": 3258,
+      "sha256": "0466a4de68b56adaf731c5e4fccf78b1e12da5a9769924d2d2bb43008171d6d7",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/helpers.mjs",
+      "bytes": 27364,
+      "sha256": "e4569b6c6dda49afdc361cb885d3f5662b87db3c55fbd92dc675ea5be4248296",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
+      "bytes": 2538,
+      "sha256": "499fa3fc9399676089a47b930cae7b69ac44eea4a08aa1ccc22fb1e257667091",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
+      "bytes": 3272,
+      "sha256": "9363f664728f1c77d441d406003b086c6ff1a0f8b108cf29471808db5eef504e",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/embedding-path-lifetime.test.mjs",
+      "bytes": 3301,
+      "sha256": "44ca24a62160383deb1a189790ca967edcb234f857034bdf6bc9729443340e70",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/file-viewer-direct.test.mjs",
+      "bytes": 27452,
+      "sha256": "297854cb70059b2cbeb7daead20d4b304a81d7cc62e22aab9e75e6a77de5a758",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "bytes": 29428,
+      "sha256": "0460fa7978e50105d9b1822c5a58f231413ab8ad01969a66cf71ab327e7f96ce",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/managed-path-store.test.mjs",
+      "bytes": 22249,
+      "sha256": "de6b5fed33fa716823da923fec5f591febfbca061f0d2675c1de347547ae0757",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/path-tool-gateway.test.mjs",
+      "bytes": 33448,
+      "sha256": "8dbda839316b145ca717cb158a47448b1d2a6897e794ce9b99798a3b9b9139ba",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/process-cwd.test.mjs",
+      "bytes": 21795,
+      "sha256": "5c6b237dd64a50ae2dc1bd34d10ef8a7491c4b39a53a0b313706acc506ae6252",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/repo-oracle-path.test.mjs",
+      "bytes": 17648,
+      "sha256": "28acca9e6fef0f8161ff27f6271a8b351d06d4e561461ee8f38242b02fe05978",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/sec01-agent.test.mjs",
+      "bytes": 21287,
+      "sha256": "98dc8d51f5c8d061e4d2b0b7c64b02e225e021adbe2e80c0b2acc1ef7a7fab5a",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/sec01-terminal-owner.test.mjs",
+      "bytes": 7899,
+      "sha256": "f016f5f317dab9301c0ab8ce05535d4d4a09ed77294a20767d57cbe334515d1c",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/sec03-child-consent-transport.test.mjs",
+      "bytes": 8572,
+      "sha256": "571126f1e0e65b7dc5f0cd9d83e5b1908ff748baa53b28fb5436d3b6618564f6",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "bytes": 3360,
+      "sha256": "9548c654f98d26ecb9c5b3340e77ff2720a3ef156742e7bf3fb37d19fc814ac6",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "bytes": 24812,
+      "sha256": "4e2a129122c063f7d2d7ce21cfe9aa87f1e52f492efbcaee06ce3a5b9a3947e9",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/version-model.test.mjs",
+      "bytes": 2358,
+      "sha256": "e3c03454cbe21c5e3816033c3bbe27f1ca5f4bdb35e42d02a1d2bf4ce3c24551",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/watcher-authority.test.mjs",
+      "bytes": 20006,
+      "sha256": "5f3db08b61d2edf9337dd691bd5d8e741c1a0aa771d7dd407a9d23f083cfdba5",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/packaged/installed-smoke.test.mjs",
+      "bytes": 25982,
+      "sha256": "7764fec4a53a74e0ac303a5d9614cd9491cf0d0781299c9a7ea4a56a7ddc46bf",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/packaged/smoke-helpers.mjs",
+      "bytes": 1411,
+      "sha256": "8c69f03842321ced25d6bfde91f53e2dec481b8787281e8d34747cc6cd228ed9",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/sec01-probe.mjs",
+      "bytes": 4095,
+      "sha256": "15da67d17c9402dba1666553d9cd9e399da0f7dc03e1ff2c142a9aa714c14afa",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/sec02-receipts.mjs",
+      "bytes": 8454,
+      "sha256": "ee10fddc08fc32495c6a49bc121d306bf89f40d20d7b8fd39947608e398f47a7",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/sec03-receipts.mjs",
+      "bytes": 15452,
+      "sha256": "a47c0794a4f339f4745ea6985f229a1395b6ff0ba4bf588d3996dd69b42a502a",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/approval-response.test.mjs",
+      "bytes": 1091,
+      "sha256": "674bda14c3500ef4abb6546acc0482608ed54edacf217f02cafc71e20c0d55a4",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/capability-broker.test.mjs",
+      "bytes": 77320,
+      "sha256": "98ea1c343280ae6fd3cd845c0016ef703a3befabc8babee299f3dca9799dbc1b",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/electron-path-bootstrap.test.mjs",
+      "bytes": 7406,
+      "sha256": "8cca4df4f91f73d6cbda4efa9e933b8f744afb4ac72180dfa50ae2975ccfc69c",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/execution-isolation.test.mjs",
+      "bytes": 14889,
+      "sha256": "56162f6d4f4fa73ebd42b2a51b68dab978fb4c20909162d8dfa80cc67afd0271",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/execution-root-lease.test.mjs",
+      "bytes": 6223,
+      "sha256": "92f18c8da6de0056a13b53459d766635eb56ef8fbb9a780560e823793532d1ac",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/framework.test.mjs",
+      "bytes": 23274,
+      "sha256": "5b4c44fedf57025736643e5c03e801cedffacf885448e2b25c3920f03594cc7c",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/native-process-consent.test.mjs",
+      "bytes": 6461,
+      "sha256": "3659c8a0dbddb5fd656c67f1a8e6ece9c6e18e0fb19495a275501edf00c5ab08",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/path-policy.test.mjs",
+      "bytes": 113135,
+      "sha256": "ed223fafb951bc138ebe96cfee188a3181e9ff8790219e498b4e1744b0604966",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/playbook-owner.test.mjs",
+      "bytes": 1317,
+      "sha256": "afd18d5e05554e2e29bb4c2ba91a39d1a8038a223c31b70c4847be9778b84a67",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/process-tree.test.mjs",
+      "bytes": 1801,
+      "sha256": "14a5a35f9538da490e368b1687b50e0464838e3e3ad1c3169632bd5fd6b3aeef",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/resource-owner.test.mjs",
+      "bytes": 3916,
+      "sha256": "ade1b14b027bbb9efd35b5ec45399ecd65127b4ad8a4c87b594b454bb89388ff",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/settings-enrollment.test.mjs",
+      "bytes": 7603,
+      "sha256": "f7206395d1b16ca5344fff8893924e844766e2ff2b5bf62d203acc3a5e422e6e",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/terminal-owner.test.mjs",
+      "bytes": 9348,
+      "sha256": "8e06466d6b86f3b458cdd845d4490b14b862bfda769836f6a025b54fabe55a5b",
+      "executionClass": "build-test"
+    }
+  ],
+  "sites": [
+    {
+      "id": "exec-cbbeded32fa3f6a3e6f4e60a",
+      "occurrence": 1,
+      "sourcePath": "electron/main.cjs",
+      "line": 48,
+      "column": 20,
+      "nodeKind": "CallExpression",
+      "container": "canListen",
+      "family": "network",
+      "api": "createServer",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "a1d0531e04043d7e6003634086edcda8e726bec9d22dd45a41a346ec925245b2",
+      "executionClass": "electron-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-60577be76833fe4a3f40a907",
+      "occurrence": 1,
+      "sourcePath": "electron/main.cjs",
+      "line": 129,
+      "column": 17,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "startPackagedServer",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "electron-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-cd3e8315619f4e1c76fc4a25",
+      "occurrence": 1,
+      "sourcePath": "electron/main.cjs",
+      "line": 172,
+      "column": 21,
+      "nodeKind": "CallExpression",
+      "container": "startServerProcess",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "90d88e3c24ceadce45251dccd94597c7658d8a26c378d27f05f874a5b683e460",
+      "executionClass": "electron-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-73773f4ce2e5df4b35010c49",
+      "occurrence": 1,
+      "sourcePath": "electron/main.cjs",
+      "line": 524,
+      "column": 24,
+      "nodeKind": "CallExpression",
+      "container": "stopDevelopmentServer",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "a63f29b5f32a180175a17e941e0b14b36b8a84651b9e3f74aa8b73b02b102e14",
+      "executionClass": "electron-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-36d22a56df968b95e31ab192",
+      "occurrence": 1,
+      "sourcePath": "electron/main.cjs",
+      "line": 555,
+      "column": 19,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "electron-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-7eedb10e5100016e4115f8dd",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 309,
+      "column": 8,
+      "nodeKind": "NativeCallExpression",
+      "container": "SetJobLimits",
+      "family": "native-addon",
+      "api": "SetInformationJobObject",
+      "operands": [
+        "job-handle",
+        "policy-or-process"
+      ],
+      "normalizedNodeSha256": "2b96ddf54aa5ee9d78184d8a4707b6c65a26b7a368ff9508058f54da9409c4c9",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-6c1307818c5419b6a0443509",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 309,
+      "column": 300,
+      "nodeKind": "NativeCallExpression",
+      "container": "SetJobLimits",
+      "family": "native-addon",
+      "api": "SetInformationJobObject",
+      "operands": [
+        "job-handle",
+        "policy-or-process"
+      ],
+      "normalizedNodeSha256": "61f2d4e89271213e6165170a96b2a94db48ea727824b28b7a72a30aae67f9b3e",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-1e4ca04477491d4869b0084d",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 328,
+      "column": 3,
+      "nodeKind": "NativeCallExpression",
+      "container": "FailJob",
+      "family": "native-addon",
+      "api": "TerminateJobObject",
+      "operands": [
+        "job-handle",
+        "policy-or-process"
+      ],
+      "normalizedNodeSha256": "10316786b474d6f2813040d4b61fe584d5fd8056a056101d98aa1c759d01fcca",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-f54c6a63d24abce5e9dbe9aa",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 387,
+      "column": 31,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "CreateAppContainerProfile",
+      "operands": [
+        "profile-or-sid",
+        "capabilities"
+      ],
+      "normalizedNodeSha256": "fd689f0354962bbded852c22d85af817086f5b63548837ba0b262228f2da0785",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-8f959325e86d94db67f74fec",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 388,
+      "column": 98,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "operands": [
+        "profile-or-sid",
+        "capabilities"
+      ],
+      "normalizedNodeSha256": "5370e0da0d8e4e88b4ac13c5aaeda75bdd77a4dca5946e62650b8b45eb37a39e",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-c2a0a4fa23971453b752414c",
+      "occurrence": 2,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 389,
+      "column": 161,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "operands": [
+        "profile-or-sid",
+        "capabilities"
+      ],
+      "normalizedNodeSha256": "5370e0da0d8e4e88b4ac13c5aaeda75bdd77a4dca5946e62650b8b45eb37a39e",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-cd99329b67335980080f85d6",
+      "occurrence": 3,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 392,
+      "column": 356,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "operands": [
+        "profile-or-sid",
+        "capabilities"
+      ],
+      "normalizedNodeSha256": "5370e0da0d8e4e88b4ac13c5aaeda75bdd77a4dca5946e62650b8b45eb37a39e",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-b7c98da1234bb407e4f21591",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 394,
+      "column": 14,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "CreateJobObjectW",
+      "operands": [
+        "job-handle",
+        "policy-or-process"
+      ],
+      "normalizedNodeSha256": "b7113a5ef64550beb8ee656e786f22846c996e93922f1e67649d3ee9b0fd5bc5",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-97af3aceb029dbd3eda387af",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 395,
+      "column": 71,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "SetInformationJobObject",
+      "operands": [
+        "job-handle",
+        "policy-or-process"
+      ],
+      "normalizedNodeSha256": "459e091cf6b148dd679c7560f48e758723ad73a020ddb134e02429b79503978d",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-c0064a147c4b379a4666cd9f",
+      "occurrence": 4,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 395,
+      "column": 282,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "operands": [
+        "profile-or-sid",
+        "capabilities"
+      ],
+      "normalizedNodeSha256": "5370e0da0d8e4e88b4ac13c5aaeda75bdd77a4dca5946e62650b8b45eb37a39e",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-90f22fe2020f47e4b82ab9fd",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 398,
+      "column": 148,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "CreatePseudoConsole",
+      "operands": [
+        "conpty-handle",
+        "stdio-handles",
+        "size"
+      ],
+      "normalizedNodeSha256": "6fc88d797edb044c7ba824ee2ef73b344e7cee9dfc6a342bb8207f0fca1e734d",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-3e4b4734b493805ea7f4b9bc",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 405,
+      "column": 32,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "ClosePseudoConsole",
+      "operands": [
+        "conpty-handle",
+        "stdio-handles",
+        "size"
+      ],
+      "normalizedNodeSha256": "0420bdf1109c13a26a010191378719116465a7d76cac8c1bd8d2a32426ff0c46",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-8b23f8adfe74eb3d32d8cc3f",
+      "occurrence": 5,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 405,
+      "column": 315,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "operands": [
+        "profile-or-sid",
+        "capabilities"
+      ],
+      "normalizedNodeSha256": "5370e0da0d8e4e88b4ac13c5aaeda75bdd77a4dca5946e62650b8b45eb37a39e",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-e0822958a6166a4faac8a7e0",
+      "occurrence": 2,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 410,
+      "column": 104,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "ClosePseudoConsole",
+      "operands": [
+        "conpty-handle",
+        "stdio-handles",
+        "size"
+      ],
+      "normalizedNodeSha256": "0420bdf1109c13a26a010191378719116465a7d76cac8c1bd8d2a32426ff0c46",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-d46e5fc25e7384fd469cb051",
+      "occurrence": 6,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 410,
+      "column": 347,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "operands": [
+        "profile-or-sid",
+        "capabilities"
+      ],
+      "normalizedNodeSha256": "5370e0da0d8e4e88b4ac13c5aaeda75bdd77a4dca5946e62650b8b45eb37a39e",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-8deb78063396f16041b384a7",
+      "occurrence": 3,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 414,
+      "column": 116,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "ClosePseudoConsole",
+      "operands": [
+        "conpty-handle",
+        "stdio-handles",
+        "size"
+      ],
+      "normalizedNodeSha256": "0420bdf1109c13a26a010191378719116465a7d76cac8c1bd8d2a32426ff0c46",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-d1af30f6879d71b697e1910b",
+      "occurrence": 7,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 414,
+      "column": 253,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "operands": [
+        "profile-or-sid",
+        "capabilities"
+      ],
+      "normalizedNodeSha256": "5370e0da0d8e4e88b4ac13c5aaeda75bdd77a4dca5946e62650b8b45eb37a39e",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-fd554ff8fd20f4d3968b4ca5",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 422,
+      "column": 132,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "child-process",
+      "api": "CreateProcessW",
+      "operands": [
+        "application",
+        "command-line",
+        "inherit-handles",
+        "creation-flags",
+        "environment",
+        "cwd",
+        "startup-info"
+      ],
+      "normalizedNodeSha256": "c0c366af46cf5f0424aad323c2652582d92b3d2a7059718bb155f40470f31939",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-c95054366da797059cdfe7f3",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 424,
+      "column": 105,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "AssignProcessToJobObject",
+      "operands": [
+        "job-handle",
+        "policy-or-process"
+      ],
+      "normalizedNodeSha256": "1ae92105bc0dfb76e6648cc63d59254bb884bca200978c5bbd169eb188651aa9",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-5d252cf99777504e6d830498",
+      "occurrence": 4,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 425,
+      "column": 216,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "ClosePseudoConsole",
+      "operands": [
+        "conpty-handle",
+        "stdio-handles",
+        "size"
+      ],
+      "normalizedNodeSha256": "0420bdf1109c13a26a010191378719116465a7d76cac8c1bd8d2a32426ff0c46",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-c72fc39b727d02f180cc4519",
+      "occurrence": 8,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 425,
+      "column": 430,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "operands": [
+        "profile-or-sid",
+        "capabilities"
+      ],
+      "normalizedNodeSha256": "5370e0da0d8e4e88b4ac13c5aaeda75bdd77a4dca5946e62650b8b45eb37a39e",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-c549a3605192b270dc55e968",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 426,
+      "column": 202,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "TerminateJobObject",
+      "operands": [
+        "job-handle",
+        "policy-or-process"
+      ],
+      "normalizedNodeSha256": "b07890e47b791aeaefce609dfc1da55ef28ae341df8a539cdcf7ebf35b3461aa",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-1614d6401be0e35bcb091fe1",
+      "occurrence": 2,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 435,
+      "column": 69,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "TerminateJobObject",
+      "operands": [
+        "job-handle",
+        "policy-or-process"
+      ],
+      "normalizedNodeSha256": "b07890e47b791aeaefce609dfc1da55ef28ae341df8a539cdcf7ebf35b3461aa",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-6cb11d4140e3f6b60116e047",
+      "occurrence": 3,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 436,
+      "column": 268,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "TerminateJobObject",
+      "operands": [
+        "job-handle",
+        "policy-or-process"
+      ],
+      "normalizedNodeSha256": "b07890e47b791aeaefce609dfc1da55ef28ae341df8a539cdcf7ebf35b3461aa",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-0c154502b123fdbd2a002bca",
+      "occurrence": 5,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 438,
+      "column": 17,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "ClosePseudoConsole",
+      "operands": [
+        "conpty-handle",
+        "stdio-handles",
+        "size"
+      ],
+      "normalizedNodeSha256": "0420bdf1109c13a26a010191378719116465a7d76cac8c1bd8d2a32426ff0c46",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-0bb8d68d00eea90d3f13c196",
+      "occurrence": 9,
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "line": 440,
+      "column": 307,
+      "nodeKind": "NativeCallExpression",
+      "container": "Run",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "operands": [
+        "profile-or-sid",
+        "capabilities"
+      ],
+      "normalizedNodeSha256": "5370e0da0d8e4e88b4ac13c5aaeda75bdd77a4dca5946e62650b8b45eb37a39e",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-0515df0a9b409e806a87b2d4",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "line": 461,
+      "column": 29,
+      "nodeKind": "NativeCallExpression",
+      "container": "RecoverJournals",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "operands": [
+        "profile-or-sid",
+        "capabilities"
+      ],
+      "normalizedNodeSha256": "ca56b88f5c975a0d61bc6f7b38cd625030e455fce7db1b36806ee099dd488cd9",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-f6f82e21b5567822c708abc6",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "line": 527,
+      "column": 24,
+      "nodeKind": "NativeCallExpression",
+      "container": "LaunchHost",
+      "family": "child-process",
+      "api": "CreateProcessW",
+      "operands": [
+        "application",
+        "command-line",
+        "inherit-handles",
+        "creation-flags",
+        "environment",
+        "cwd",
+        "startup-info"
+      ],
+      "normalizedNodeSha256": "9681c8005ad1a416f9293035075fccca2c55288ca784b3314557a6ea245b5852",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-67ffbcfb5a3cb64de6b07d60",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 557,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "doSearch",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "490e52316d80e48fc253b24befa0ee6e709b493b8a9f43614cd5e02b70d408e9",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-a948d308dbfcf26e09e606d2",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 601,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "forkCurrentSession",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "a575bc59581697d9ef3ca7387afeea620b560597908790f38bb85ca2149a8b46",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-344d8cd3c576fbb5973e256e",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 620,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "exportCurrentSession",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "4e98a123a7ea69df4c0c4917179553a8cd7c6665346f502dc4431c5e7c8c22ec",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-541565284ad48913214175ce",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 638,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "importSession",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "5d594f5e18f5b45ab28a55722835990c68080173cfaebfd2b09b4e34358d8faa",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-27d0f786cbc39852f8e7993b",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 656,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "addPin",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "bb9e8dfffaea54b7470242cbcf11a72f4644e4b8e095b23763c53e10affdb9ab",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-ba216dde085ca44fc55eed9f",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 662,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "removePin",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "d0bf93def081d67d060a78067246db396e3b9f9a5d6e07236b88666b864bbfa7",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-acc6140b187faae8e61d232d",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 668,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "loadPins",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "24d77880fa3333dd7d7f3c9b6d9af7d2155dc1b9e63aa4ca36f62098adedfd5a",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-a7ef2dee55eb4e263e8e5b9f",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 678,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "rollback",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "d63a4597360900e41728a7979d915af7826fd76de6ea49df18ecba4cdbb7bbff",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-ab0c785e201c782d9ad22209",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 701,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "loadTerminals",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "49f8a49586574b92e9775e35ae331f1e73059145dea60661b9fc91396adb21d7",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-667c705da52b4b2934d6f6a6",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 795,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "clearActiveTerminal",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "a530d4a9402d9da20cce7f1aca814aaff8e853ca8b747bd835a382c1fe1f1b3c",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-f262236c2eccbc8b2039d0ad",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 801,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "killActiveTerminal",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "b04ff1080f9c4e3a268c2cfa9fa94af7fdcaab5bdcadc1e508c783bdb62720e2",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-4fe80d301a7d6a93c018ea1c",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 811,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "closeActiveTerminal",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "4985bb518124dc10051f987b17180eec071d0f7b9fb570ba46752d667a0866fd",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-4557757aba7ae3d4e795d05b",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 857,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "ensureFileRoots",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "b9c03ff491702b64c0695c229c4cd14e625c3c3286066f91b656d0bf6919ea69",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-1d3f753ba4d02fc153895fae",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 899,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "openFileDirectory",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "eb2f1fd9dd88a24fff7391025ea2752e31500de9b7fbf943499f3d827ef37cec",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-ac4fcd808229b11354661be5",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1020,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "previewFile",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "79fcd9d1df602735da8a25c0ee89f368efb9cceb407e2ac0263baebfb69bb9ce",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-6c1962afdfe285ed56aaf174",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1075,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "revealSelectedFile",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "3d93b7c4bb675c145f8f877602001be0e408384dd51aa644c089bccbe62fc5d8",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-4c5b6321c789fce2940fb17f",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1109,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "openResolvedFilePath",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "ebcaa03935ca9a6bd050e0cb519ab6fce1648f8cba15f65d0d12e94a38f7b78f",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-eed038d10d0edd39c00d2b46",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1127,
+      "column": 23,
+      "nodeKind": "CallExpression",
+      "container": "pathExistsInViewer",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "ebcaa03935ca9a6bd050e0cb519ab6fce1648f8cba15f65d0d12e94a38f7b78f",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-ee782a8c1506846f8f8bef47",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1222,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "openSettings",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "7cb561cfea8f38be232b4b96078f01b60a05669a038f87204e940f0109b80951",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-60baff745973fe957be20dc6",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1306,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "refreshSettingsState",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "7cb561cfea8f38be232b4b96078f01b60a05669a038f87204e940f0109b80951",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-620e59206ede0aaca8947614",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1329,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "saveGeneralSettings",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "3ebeacd8b7eccf3a842bd35b2957ed86b2222b237b90b00baf3394a4ea00d760",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-06746f73acbdefc9e6458251",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1347,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "saveProvider",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "9d1b99c6ee8c058bd74e3b032a6e3b7abb892bd4b8d8df87e1f87f88392e6098",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-d3376ff29aa23ad75c248c86",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1359,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "switchCurrentProvider",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "b3d9e69b133a6c08d9e3dd67c46f868208a416fe399230ba57f3f64990e9a313",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-2cc1857952a7e55edef64912",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1370,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "deleteCurrentProvider",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "71729a1de298b7dff5cf532f8c953bdb97e6f496ef8affd91512893ede463be2",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-bfb944e2668c04417303aee2",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1394,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "loadPersonas",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "c8a68964f815522f33399743fd7e10659e489ab46fee55098fec1660c15087d3",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-e9ea59cbe552682985c54e0b",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1405,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "switchPersona",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "37f9dbb63cd24a65bdf8335e86ea64a6d15f37b19f85feed7d67aa4dc79dfa7e",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-b16fd3cfeee8027348bf9263",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1410,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "loadSessions",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "b4d792d3cff9069cb1791c294268b3b82d7d64ef2a97ed7f5c2f65e26151aa72",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-8f5eb51a5cb7196dc61aa53f",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1416,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "newChat",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "f3553af8ad263cfa78efcf2c1c1c2512f8041bc9229f6d3789c85fa61a222c19",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-d24bf3329aac4f741f0ad483",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1420,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "selectSession",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "11d2e54fddba3f582214db215daa76e39d35e6a395c343d61a1376ef4a2a4589",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-7599b548b41c40fee533f8b8",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1422,
+      "column": 122,
+      "nodeKind": "CallExpression",
+      "container": "selectSession",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "c8a68964f815522f33399743fd7e10659e489ab46fee55098fec1660c15087d3",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-87db534184daad6e0c8e1c23",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1423,
+      "column": 26,
+      "nodeKind": "CallExpression",
+      "container": "selectSession",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "d1cc9bf927826b584dde4be659f5b298b3e078ef4692e8a1f025d47d43fe4b67",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-6ae6312588f4527152da4223",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1429,
+      "column": 38,
+      "nodeKind": "CallExpression",
+      "container": "deleteSession",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "580c0946ec853b94bf1b249fbaf66f43dc7640a65b5872c326556ee1044c23c5",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-aeafa20094f9af2c811ec01b",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1463,
+      "column": 32,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "bcf71bc7c1f9f2a63688e1583f17fbaad676cd8d2d22d3a7937015a9c70d8600",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-7ff890e540f8627c52af5de3",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1484,
+      "column": 50,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "12b2fd35b6dc1eae47c6b50e39d0e7765a6737c2b4f6adb24a6e949d6566982d",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-063845defbb554e420dadcd6",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1515,
+      "column": 40,
+      "nodeKind": "CallExpression",
+      "container": "clearChat",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "6ec28f87aa6777fd1de186e116ddd0211c3576165887ada232abe9ea27f13bfe",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-7e28bacf9ab888d903c612ef",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1522,
+      "column": 74,
+      "nodeKind": "CallExpression",
+      "container": "loadSessionTasks",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "ea3cc7f7c5801273bf39d1f708afdfb1553021ebbec43159b4325a8838ed24be",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-f2836f33f002d5240a5c52cf",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1525,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "updateStatus",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "589a738f39ce92666f7da53c61c377845742c491f3883e64801be7436d2d06cc",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-f3c605ae27957972a2d9ecbd",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1552,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "downloadDiagnostics",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "858ea41ebab2b53974ce888718a5a8d96d2fa8a15b5047b745bdc2d91da22eb1",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-673bd64a177d7c2a76e800dd",
+      "occurrence": 1,
+      "sourcePath": "public/index.html",
+      "line": 1679,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "submitAskAnswer",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "5e00ef346ba3e7d8095fd3e89796e7177b4fb969134f20e8a777d7858705cfd3",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-f633770f86b7249472403063",
+      "occurrence": 1,
+      "sourcePath": "scripts/build-electron.mjs",
+      "line": 12,
+      "column": 6,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-834aa1d9488f849f5056f7da",
+      "occurrence": 1,
+      "sourcePath": "scripts/build-electron.mjs",
+      "line": 19,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "0ca839932797406b6bdd67bfa12193034ab9268d7a38fdec4dc9f56bf1946ed3",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-35d8e9025100c400236a4802",
+      "occurrence": 1,
+      "sourcePath": "scripts/build-sec03-native.mjs",
+      "line": 27,
+      "column": 18,
+      "nodeKind": "CallExpression",
+      "container": "run",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "e7a8bb3fee40e10120da68a2ea6af769e1a79821ec3cdf14a843ebb54df51424",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-f4a094f974296cba2cf4f6f3",
+      "occurrence": 1,
+      "sourcePath": "scripts/build-sec03-native.mjs",
+      "line": 84,
+      "column": 6,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-e857ec77b6756e083fb5ccd3",
+      "occurrence": 1,
+      "sourcePath": "scripts/build-sec03-native.mjs",
+      "line": 103,
+      "column": 22,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "e07f3c2b5597a91168abd672e689f697aaa58495dd41ae5c3175263dabfac2fd",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-fd81db92cae203e6a07599e8",
+      "occurrence": 1,
+      "sourcePath": "scripts/gov04/process.mjs",
+      "line": 61,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "runBoundedProcess",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "bad07fee0c8a6c852d7eb422c9d02033c949846486cdcd6fc4137830e439b603",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-c515b10283835c7099222370",
+      "occurrence": 1,
+      "sourcePath": "scripts/prepare-electron-app.mjs",
+      "line": 100,
+      "column": 19,
+      "nodeKind": "CallExpression",
+      "container": "runDirect",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "ecf057810287a9c1ac79906af99e2d26a46b92c9ed105955b3d1836321b504c2",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-62f645de80010df2c43e67c1",
+      "occurrence": 1,
+      "sourcePath": "scripts/run-test-layer.mjs",
+      "line": 106,
+      "column": 29,
+      "nodeKind": "CallExpression",
+      "container": "loadSec03Inputs",
+      "family": "unknown-execution-sink",
+      "api": "computed-import",
+      "operands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "eb4459d6259925b4df41841188adcaf7fc8ab19ebd12a70844624b26236e56fb",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-f9a76c4a11fb146869c53ad1",
+      "occurrence": 1,
+      "sourcePath": "scripts/run-test-layer.mjs",
+      "line": 221,
+      "column": 8,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "main",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-5ea5319686d511484a253a85",
+      "occurrence": 1,
+      "sourcePath": "scripts/run-tests.mjs",
+      "line": 89,
+      "column": 38,
+      "nodeKind": "CallExpression",
+      "container": "loadSec03Context",
+      "family": "unknown-execution-sink",
+      "api": "computed-import",
+      "operands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "32bcd24dc8a2cd3976b22eda08fb1afbd289376e373594ec89ae4ada39f62ef0",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-a99a64262f6fed8d24ef8f0f",
+      "occurrence": 1,
+      "sourcePath": "scripts/sec03-receipt-set.mjs",
+      "line": 30,
+      "column": 284,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "unknown-execution-sink",
+      "api": "computed-import",
+      "operands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "85b956443af7e8455692cb2e6857e9faa4514ecc7a74236eb4b4dcdead71fcea",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-6476496f1c6940b436d53a69",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-gate-selftest.mjs",
+      "line": 92,
+      "column": 15,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "runCoverageMechanismProof",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-38ef316f923100205aa92eda",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-gate-selftest.mjs",
+      "line": 122,
+      "column": 17,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "execute",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-2d2d8e8ecf145755fb54e2e7",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 33,
+      "column": 8,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "childEnvironment",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-6ffc49eed62ae7b6127a2a3f",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 43,
+      "column": 18,
+      "nodeKind": "CallExpression",
+      "container": "runHelper",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "53b647de3a23323177cd9dc45b2efeffe6b5d127e5f5ef04e6fa09679a70f22e",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-6422811c3708881af16844b0",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 55,
+      "column": 18,
+      "nodeKind": "CallExpression",
+      "container": "freePort",
+      "family": "network",
+      "api": "createServer",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "7ce50db7f528e37304c5054ed2afdb1831db0d9937c7a3912c3800d6304f0d8b",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-f10b9cfbcd0c8b6a3e7214fe",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 74,
+      "column": 5,
+      "nodeKind": "CallExpression",
+      "container": "stopChild",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "3567c986cd20d30e9963207f5020b17b031ef26ba1bb27535182a1b6382eb3f1",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-3eee4e10a12d2649c0dfcc1b",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 93,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "assertElectronMetadataRejected",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "de5505402d66fd23342d72fbd948930daa3d806c6cac9186616061be98601382",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-1f0b00ac4b340edd4be8a4c9",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 99,
+      "column": 15,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "assertElectronMetadataRejected",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-aeb1c7eef3451c61a5c70729",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 128,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "startServer",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "b62b52f9b03f18540670159a21e1acfa31418d53db806d1d2c6d3207859df26f",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-5dc271ef54aee9576f7d3ab0",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 152,
+      "column": 27,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "main",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-45952ae34073edf99b2e2555",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 153,
+      "column": 29,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "12f006be1a41ab1b986363354a4357d35fb56a82f5f3919371b8520caadd2c64",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-012867860adf902bc0c6601c",
+      "occurrence": 2,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 156,
+      "column": 30,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "12f006be1a41ab1b986363354a4357d35fb56a82f5f3919371b8520caadd2c64",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-530663ec564be623b8f8694f",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 158,
+      "column": 29,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "0970975bf1cae9f2992b73762de7c961cc1c59eb7dd62824b1cdcdd0479087b4",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-05bb7a024e29052320457b9c",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 166,
+      "column": 26,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "c9b9a54da116a0a7750bec53529b853927b6bc7c351c662fec6d6a94836f9beb",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-a6f406cccd7856dffb20f7c2",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 174,
+      "column": 30,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "6ed2d7ac98472a26a9d07e841faf5423d0cb0d1b71169195bbf122b4084151ba",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-f675a54915ac47fb0b712a79",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 192,
+      "column": 22,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "b2aea2ebac3e5e3ba0fd63f9c4e5699c7d88d99222c5fdc203c5f29080f3bb64",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-a982867bfdb71b2d14359dac",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 221,
+      "column": 21,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "834741b9a30c0ad7385f267b34d249f3734d37ec773e81dc4702a65272578921",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-d9ee2b20bdd242a27a4bbc7e",
+      "occurrence": 2,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 227,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "834741b9a30c0ad7385f267b34d249f3734d37ec773e81dc4702a65272578921",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-ab8d85d7d2dbd8d9af5e6ca5",
+      "occurrence": 3,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 238,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "834741b9a30c0ad7385f267b34d249f3734d37ec773e81dc4702a65272578921",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-d5d344647ed010269f6ed42c",
+      "occurrence": 4,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 243,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "834741b9a30c0ad7385f267b34d249f3734d37ec773e81dc4702a65272578921",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-154b980b238cfbd37287320d",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 250,
+      "column": 24,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "7e6cad9ae230ff29940100a9e662ca47cc6b298eed8237dbf4c7cce66928e2bb",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-8122dafac3ae6ab0f14be2b1",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 280,
+      "column": 31,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "406bab13d1c8734ca79c5bc996ad53044ede652706d8809b9d5e6d06d35615b8",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-9a29caa55903d5dd966e94f1",
+      "occurrence": 5,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 294,
+      "column": 29,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "834741b9a30c0ad7385f267b34d249f3734d37ec773e81dc4702a65272578921",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-0dc50ef7887e04e601c2b134",
+      "occurrence": 6,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 299,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "834741b9a30c0ad7385f267b34d249f3734d37ec773e81dc4702a65272578921",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-719de2ae3c05a188399cc3e4",
+      "occurrence": 2,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 304,
+      "column": 33,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "7e6cad9ae230ff29940100a9e662ca47cc6b298eed8237dbf4c7cce66928e2bb",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-cf9bfba5dd44fa06c8b15e63",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 687,
+      "column": 36,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "943c4bf1b396e4ff301e2b4d2f78a3804ed9eff7c9418948d911888dde0c8805",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-c44dd693d58ce49b14645e61",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 688,
+      "column": 35,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "2f6c453bc37bc12ecfe6e19fa84d5f785774c962c7d0dc0a3eda2b65fee4b3ed",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-5ec0bb0c00886668935da777",
+      "occurrence": 1,
+      "sourcePath": "scripts/test-version-model.mjs",
+      "line": 689,
+      "column": 40,
+      "nodeKind": "CallExpression",
+      "container": "main",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "09a11ba730bed59e691a0ac76f22339505264b3f00946f8db052db77ec7a62f5",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-8bdfe9e6a73832cd7bbc8504",
+      "occurrence": 1,
+      "sourcePath": "src/daemon.ts",
+      "line": 63,
+      "column": 37,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "startServer",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-66398f00fe3182ac6a205ff1",
+      "occurrence": 1,
+      "sourcePath": "src/daemon.ts",
+      "line": 67,
+      "column": 21,
+      "nodeKind": "CallExpression",
+      "container": "startServer",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "a00408c7ea11caab0ffc16d76fbdc62d707b61605324c9500014bbc3d68fc827",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-b2bbf7e5a6ba31cb75bac866",
+      "occurrence": 1,
+      "sourcePath": "src/daemon.ts",
+      "line": 119,
+      "column": 28,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "20165d1ddfd4f7aed860d6e5c9fc82132e46c721c34c94b88c85f0402917efdf",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-2f116710a978a6f5751b97ab",
+      "occurrence": 1,
+      "sourcePath": "src/execution-native.ts",
+      "line": 247,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "loadAddon",
+      "family": "native-addon",
+      "api": "require.node",
+      "operands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "a8dde3c79d2be664ce49ec20931118523ac369cf84be80a248d127411dfdd86d",
+      "executionClass": "product-runtime",
+      "classification": "governed-adapter"
+    },
+    {
+      "id": "exec-8fc4a6ca80b863be900c19f1",
+      "occurrence": 1,
+      "sourcePath": "src/execution-native.ts",
+      "line": 248,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "loadAddon",
+      "family": "native-addon",
+      "api": "require.node",
+      "operands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "a51ee1cf91ee4e4039304fc30572375946ba298d5f96c7ad4d52f0fdb875c384",
+      "executionClass": "product-runtime",
+      "classification": "governed-adapter"
+    },
+    {
+      "id": "exec-59cdde621a662e5395abda45",
+      "occurrence": 1,
+      "sourcePath": "src/file-viewer.ts",
+      "line": 104,
+      "column": 16,
+      "nodeKind": "NewExpression",
+      "container": "parseDocumentIsolated",
+      "family": "worker",
+      "api": "Worker",
+      "operands": [
+        "argument:0",
+        "argument:1.env",
+        "argument:1.workerData",
+        "argument:1.resourceLimits"
+      ],
+      "normalizedNodeSha256": "990c2e57397ca8396d9d3ee796773a0bc1b2aa4c67e65c62b6a38828e1e660d3",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-cab8f8559e3c6cb603514356",
+      "occurrence": 1,
+      "sourcePath": "src/file-viewer.ts",
+      "line": 389,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "FileViewerService.reveal",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "83c936ef1682e8bd99351af6309256cc68c561a6b208681a4a5533581cfa8886",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-68cae95c622b78ea64ab451b",
+      "occurrence": 1,
+      "sourcePath": "src/process-tree.ts",
+      "line": 44,
+      "column": 20,
+      "nodeKind": "CallExpression",
+      "container": "runWindowsTreeKiller",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "535f103cab3e976db2acb818b854b1e04cdd227eaf1769bceb7ab2f9fa046d55",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-7e4036505d34a994930394d6",
+      "occurrence": 1,
+      "sourcePath": "src/tools/download-tool.ts",
+      "line": 71,
+      "column": 28,
+      "nodeKind": "CallExpression",
+      "container": "downloadExec",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "41d7c22e60b787afbba2f24073089de6e389522cfd24fc99893cb27a8c7fba52",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-f9d6239b8910851bf9157e33",
+      "occurrence": 1,
+      "sourcePath": "src/tools/read-repo.ts",
+      "line": 38,
+      "column": 7,
+      "nodeKind": "CallExpression",
+      "container": "runGitLsFiles",
+      "family": "child-process",
+      "api": "execFile",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "95a13263ee7c291b1458b38bf0866807ad173f39de35015e85ac24dc60f43f87",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-6ab35821e230b0c089885838",
+      "occurrence": 1,
+      "sourcePath": "src/tools/search-tool.ts",
+      "line": 36,
+      "column": 28,
+      "nodeKind": "CallExpression",
+      "container": "webSearchExec",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "15a0168cfa21a520313904d3d36eec4266d1404aa8069935128fedea8e740798",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-bf9e0304e245d075f4592f21",
+      "occurrence": 1,
+      "sourcePath": "src/tools/web.ts",
+      "line": 40,
+      "column": 28,
+      "nodeKind": "CallExpression",
+      "container": "fetchUrlExec",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "0fbe9cf31506255e4e4c9690f74f2019fc5090d1175ee0f145197424ec24c8fd",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-e0f7c75b3f19899ea40d4694",
+      "occurrence": 1,
+      "sourcePath": "tests/contract/sec01-attack-contract.test.mjs",
+      "line": 176,
+      "column": 27,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-82d32b2180d5372626be26a5",
+      "occurrence": 1,
+      "sourcePath": "tests/electron/desktop-smoke.test.mjs",
+      "line": 28,
+      "column": 10,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "startElectron",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-bcbbaefc6ec031a60417f9af",
+      "occurrence": 1,
+      "sourcePath": "tests/helpers.mjs",
+      "line": 381,
+      "column": 22,
+      "nodeKind": "CallExpression",
+      "container": "freeDistinctPorts",
+      "family": "network",
+      "api": "createServer",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "a1d0531e04043d7e6003634086edcda8e726bec9d22dd45a41a346ec925245b2",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-4d72e263650070e4f46172c4",
+      "occurrence": 1,
+      "sourcePath": "tests/helpers.mjs",
+      "line": 416,
+      "column": 20,
+      "nodeKind": "CallExpression",
+      "container": "terminateProcessTree",
+      "family": "child-process",
+      "api": "spawnSync",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "3567c986cd20d30e9963207f5020b17b031ef26ba1bb27535182a1b6382eb3f1",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-5ca156ed0e47fcaccab0e746",
+      "occurrence": 1,
+      "sourcePath": "tests/helpers.mjs",
+      "line": 440,
+      "column": 18,
+      "nodeKind": "CallExpression",
+      "container": "terminateProcessTreeAsync",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "752d7fdeb30fe26b0fdc4e3e4d32f47a162f634ca20a974337511be5fff454e6",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-999da31ec8e4290d5f14aa2b",
+      "occurrence": 1,
+      "sourcePath": "tests/helpers.mjs",
+      "line": 453,
+      "column": 10,
+      "nodeKind": "CallExpression",
+      "container": "spawnManaged",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "76aec8ce6725b5f059dd89a423a0a6384857cbb4af835be61d1f4d9343ef2a3a",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-f7aa761fead066c536dd3da6",
+      "occurrence": 1,
+      "sourcePath": "tests/helpers.mjs",
+      "line": 455,
+      "column": 25,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "spawnManaged",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-46682c665cc52273d2e4f0ca",
+      "occurrence": 1,
+      "sourcePath": "tests/helpers.mjs",
+      "line": 463,
+      "column": 76,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "runProcess",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-ce5fbce477083f7b7ebcaab4",
+      "occurrence": 1,
+      "sourcePath": "tests/helpers.mjs",
+      "line": 523,
+      "column": 10,
+      "nodeKind": "CallExpression",
+      "container": "boundedFetch",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "f17c14a8cf4fd8b3bec776b0de2ab48d79aadc4e572c99e05a4a53e4315a589c",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-fbfde060896b05d25c1d123f",
+      "occurrence": 1,
+      "sourcePath": "tests/helpers.mjs",
+      "line": 548,
+      "column": 19,
+      "nodeKind": "NewExpression",
+      "container": "CdpClient.constructor",
+      "family": "network",
+      "api": "WebSocket",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "0f863aa28cc345639c814873877c413491a367bf97eba861b4569ed5a2a06631",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-075eaec31f1ff3edb6a5e6b4",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
+      "line": 24,
+      "column": 34,
+      "nodeKind": "CallExpression",
+      "container": "cleanupTree",
+      "family": "child-process",
+      "api": "execFile",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "75107f825fec19edf3d2acb69a406c944d9c1e1ed3b9aee182d3190c68aa1d47",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-dbdb5d1a3bfa6c61dbd077fc",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
+      "line": 33,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "9e73a8cb919e4714103d8289931f509c2809fd9e42f48f2d7a7e17e0500946f9",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-60206040561907a6ce0499c9",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
+      "line": 36,
+      "column": 10,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-414a7d9d9df01927094b09c1",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
+      "line": 58,
+      "column": 32,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "02e4221208015171ac2d9a592e579c9039c071d513899b0d9b6a5e46d4210817",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-cc35957818b179f77bba90b6",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
+      "line": 72,
+      "column": 15,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "02e4221208015171ac2d9a592e579c9039c071d513899b0d9b6a5e46d4210817",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-90ff6556af801879ad399894",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/embedding-path-lifetime.test.mjs",
+      "line": 19,
+      "column": 17,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "runTreeScenario",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-cac76dc4947e5af990ecec5e",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 61,
+      "column": 26,
+      "nodeKind": "CallExpression",
+      "container": "api",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "df28f780dfc504fcec84a012ec1d13f82d60bddd392230486067a9598dda24fa",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-aec931faa07729434b37ad48",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 81,
+      "column": 10,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "startServer",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-77611afdf39cd614f5acc85e",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 102,
+      "column": 28,
+      "nodeKind": "CallExpression",
+      "container": "startServer",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "e319b13ed9f3da6fc34177a2a4dfd749f13e9b2f56eeda165ce12b7c6e00f503",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-c362b3a383e79049767f5aef",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 160,
+      "column": 31,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "9dc4f3785e60046a8a586504cd179e01f14c392e402f8c6e4f75d06cf9a820e6",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-98a8a2a73ebd6325ed570659",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 163,
+      "column": 32,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "90f739a296b4979cf45a0c0a0cac2f7a2a5c1f984ffbaabf0912955fa2c0b269",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-e33775881feba132ec5e1a72",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 176,
+      "column": 24,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "5595eda3c3f7e1b8a14b7f16920cb3f4e93ab6b41d4abfae039b1b712410583f",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-9d80c22e7ea2004ef44194de",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 179,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "b1bb5bda602d56fae20207b216d90daf707f5d108df19510b557a64752a10145",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-8ce3c3a77eef39f31f2cbf36",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 185,
+      "column": 26,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "0d66c42f88d03ee03104b972dc51fdd0bc7d4d20ad362c828912a7d1c55b3314",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-5927857cad2e64f7808ba30b",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 190,
+      "column": 32,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "94928ae45fc47fd74730e63b36cb66f4b7bdaf7481e2453dfe9e93202f086c99",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-795b384503d00ce1861707ca",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 332,
+      "column": 14,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-50621336c84385b7c79e2734",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 352,
+      "column": 33,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "b28ef122fb2ae757890834bd62935f711bc0861f68532e261337b4fc73fb1987",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-85e2b58b65d2a842ec0750a2",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 531,
+      "column": 10,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-6db4d8ae29c0f71e16975382",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
+      "line": 553,
+      "column": 29,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "a05abe48e91e73219ada0a24008f0f2c0100ba4898a028de091c896ee6d9c20a",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-d46c8ea1fcbc3ea25f7bde87",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/managed-path-store.test.mjs",
+      "line": 411,
+      "column": 24,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-1a28222fd3f68d7776a616b4",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/managed-path-store.test.mjs",
+      "line": 422,
+      "column": 21,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "f9112cbd6c7da1b2511a9c5899652b5bf20372b25d762381a3192c4920984820",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-ae4e947995c98095d07da413",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/managed-path-store.test.mjs",
+      "line": 468,
+      "column": 19,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "f01831076e1c85d8285ca1d5bd8c186166da2d48d2c4904f46c1c4c74621727f",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-1d8cfb30f20ded9ec1919844",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec01-terminal-owner.test.mjs",
+      "line": 16,
+      "column": 26,
+      "nodeKind": "CallExpression",
+      "container": "api",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "df28f780dfc504fcec84a012ec1d13f82d60bddd392230486067a9598dda24fa",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-d73efa4b47070d0a5c15cb4a",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec01-terminal-owner.test.mjs",
+      "line": 38,
+      "column": 10,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-44de0d6202c3c872ed3ee11d",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec01-terminal-owner.test.mjs",
+      "line": 57,
+      "column": 30,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "e319b13ed9f3da6fc34177a2a4dfd749f13e9b2f56eeda165ce12b7c6e00f503",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-21f045156b2fdf73db038fd1",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec01-terminal-owner.test.mjs",
+      "line": 126,
+      "column": 10,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-91b22ba8996742b954ff0fe3",
+      "occurrence": 2,
+      "sourcePath": "tests/integration/sec01-terminal-owner.test.mjs",
+      "line": 145,
+      "column": 30,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "e319b13ed9f3da6fc34177a2a4dfd749f13e9b2f56eeda165ce12b7c6e00f503",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-69d911108def654f01f0d94c",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-child-consent-transport.test.mjs",
+      "line": 52,
+      "column": 19,
+      "nodeKind": "CallExpression",
+      "container": "spawnConsentChild",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "9c0bf4b21156038d0c2b61df2f9aaec3c95365ba8f1f844c5b8fb8b23bbf4367",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-6b48f6629c362f2c2cad610e",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-child-consent-transport.test.mjs",
+      "line": 201,
+      "column": 19,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "4600992218e8fbc92f13e7a27b9cb6ceb29876155c54abd6b236bc8a0b68d358",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-30559997928a3eceaaca32bb",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "line": 22,
+      "column": 10,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-200572008c32eaa898f4e45d",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "line": 41,
+      "column": 30,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "19b3d31829dbbf87cdad855e144f8ee7efb6bfa989243c939ab8097b9ba61c6a",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-b33e4e78ccabdef9080d074e",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "line": 47,
+      "column": 24,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "9dc4f3785e60046a8a586504cd179e01f14c392e402f8c6e4f75d06cf9a820e6",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-694849f64879f9503601a4a6",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "line": 52,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "7ed409bfccd3db7f744f77962e2c97ceb8c96208dd5cb5095f664b37d149b083",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-492795fd286f9439e401d288",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "line": 53,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "8bd1cf185eb5d390c5cf03c6747a2df9ea117615188ddb7b27deea80e7c3c4e6",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-4408dbb2df97bc22c0972e48",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "line": 54,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "bd9ed7420d7b7cb65dc616fdc65cc287d55536335821aa9ae224a48e8fa1d359",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-538f506a5373ccc19f1828fd",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "line": 55,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "dffed57853e02bdd012cf43043edfd0b838d14f630c30e7c8531d2ae6436ac0a",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-f9dad9846d70a7c7959b2936",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "line": 58,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "88d71cf57e34f16f043de754c0d54091e99ebb05519e6669faf1713d5430a5c1",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-a5e025a1abd03387b12b1cec",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "line": 65,
+      "column": 32,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "04f30a733e8d7abf724a5fcc8c243cfa354895d8db931b57709bc0fa44c8d7fd",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-3010d2f9c783af7ff319f4fc",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 180,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "start",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-db660016362354bcb45171eb",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 214,
+      "column": 12,
+      "nodeKind": "CallExpression",
+      "container": "testNativeArtifacts",
+      "family": "unknown-execution-sink",
+      "api": "dynamic-require",
+      "operands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "d24696b890effd72089a44b1ba500192bcb7061b9d721d6ca684d5202764903c",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-8b27d3a1e82f8bd7a5624b81",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 214,
+      "column": 12,
+      "nodeKind": "CallExpression",
+      "container": "testNativeArtifacts",
+      "family": "unknown-execution-sink",
+      "api": "require",
+      "operands": [
+        "callee",
+        "dynamic-loader"
+      ],
+      "normalizedNodeSha256": "d24696b890effd72089a44b1ba500192bcb7061b9d721d6ca684d5202764903c",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-f35e7bdf19d6560ccead5e2f",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 230,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "dynamic-require",
+      "operands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "7a3344e85d46c1f54fc8b06636d22e5dc366aa7a7a0234e717588a656b6036dc",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-8877efc2c03f7434e3f80928",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 230,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "require",
+      "operands": [
+        "callee",
+        "dynamic-loader"
+      ],
+      "normalizedNodeSha256": "7a3344e85d46c1f54fc8b06636d22e5dc366aa7a7a0234e717588a656b6036dc",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-0ec0e2e4d7294f9e71756825",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 241,
+      "column": 18,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "createServer",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "e3cd274747fb961369313e87e7d36a41f1741ec7a7e65fdda9d79662e557129f",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-0693de0c1bf141378c020f60",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 273,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "dynamic-require",
+      "operands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "7a3344e85d46c1f54fc8b06636d22e5dc366aa7a7a0234e717588a656b6036dc",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-03fbfd8a4defb92acd2da012",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 273,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "require",
+      "operands": [
+        "callee",
+        "dynamic-loader"
+      ],
+      "normalizedNodeSha256": "7a3344e85d46c1f54fc8b06636d22e5dc366aa7a7a0234e717588a656b6036dc",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-32ec9002e9960e5a7d6993be",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 305,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "dynamic-require",
+      "operands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "7a3344e85d46c1f54fc8b06636d22e5dc366aa7a7a0234e717588a656b6036dc",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-a42dda8adceb276df64f4225",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 305,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "require",
+      "operands": [
+        "callee",
+        "dynamic-loader"
+      ],
+      "normalizedNodeSha256": "7a3344e85d46c1f54fc8b06636d22e5dc366aa7a7a0234e717588a656b6036dc",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-3346d7593c58ac7724501fd6",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 313,
+      "column": 18,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "network",
+      "api": "createServer",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "e3cd274747fb961369313e87e7d36a41f1741ec7a7e65fdda9d79662e557129f",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-830a9cc51c4df6ab2e7650c3",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 357,
+      "column": 19,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "dynamic-require",
+      "operands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "7a3344e85d46c1f54fc8b06636d22e5dc366aa7a7a0234e717588a656b6036dc",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-28d841c67d16f0a312217c2b",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 357,
+      "column": 19,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "require",
+      "operands": [
+        "callee",
+        "dynamic-loader"
+      ],
+      "normalizedNodeSha256": "7a3344e85d46c1f54fc8b06636d22e5dc366aa7a7a0234e717588a656b6036dc",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-b8bfa2a4bb599a26beb3241d",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 397,
+      "column": 24,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-f7c82f9004b6dd7bdc78f428",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 412,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-6655c4600e6b950bfdf261b1",
+      "occurrence": 2,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 422,
+      "column": 27,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-29ac5ea170668797d8e957d7",
+      "occurrence": 3,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 435,
+      "column": 29,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-c89474fbddfedcc924635d69",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 445,
+      "column": 24,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-32e3a47a7fc0399b646d1dbf",
+      "occurrence": 2,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 452,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-9a4cdd7a7d7877aa60c08d26",
+      "occurrence": 3,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 458,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-d7e7e94c2d1437bbecfb2f7c",
+      "occurrence": 2,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 465,
+      "column": 22,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-da2f5c1b8bb878fdabd5ae9d",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 472,
+      "column": 24,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-abe3308bfe63b6684157f58d",
+      "occurrence": 4,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 497,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-daf3231dfd9ec6fe20f8924e",
+      "occurrence": 2,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 501,
+      "column": 23,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-aadebafa52fdc3ad82e416e5",
+      "occurrence": 3,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 505,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-f65cbfd8070aec1107965141",
+      "occurrence": 5,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 522,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-657299a24679172ea119d427",
+      "occurrence": 4,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 528,
+      "column": 23,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-fd683f04b705a43de7193c67",
+      "occurrence": 5,
+      "sourcePath": "tests/integration/sec03-native-host.test.mjs",
+      "line": 536,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "unknown-execution-sink",
+      "api": "openExclusiveHostLease",
+      "operands": [
+        "callee",
+        "unsupported-dialect"
+      ],
+      "normalizedNodeSha256": "1d19101c6c595844592391898a9192981a1e1da932424b86f5e8f8ecd2fd7c85",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-0bb58a03d0e2053e537ea6b4",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/version-model.test.mjs",
+      "line": 39,
+      "column": 17,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-5ed86e440d5e948c6dacdc9e",
+      "occurrence": 1,
+      "sourcePath": "tests/packaged/installed-smoke.test.mjs",
+      "line": 62,
+      "column": 15,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "launchInstalled",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-85ad10fc7aa2cb150f19fb24",
+      "occurrence": 1,
+      "sourcePath": "tests/packaged/installed-smoke.test.mjs",
+      "line": 191,
+      "column": 42,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "powershell",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-3561bf583d67a1cdc9f88a68",
+      "occurrence": 1,
+      "sourcePath": "tests/packaged/installed-smoke.test.mjs",
+      "line": 221,
+      "column": 49,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "processReferenceCount",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-6e7770f0f2269c55685e2bb5",
+      "occurrence": 1,
+      "sourcePath": "tests/packaged/installed-smoke.test.mjs",
+      "line": 324,
+      "column": 27,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-e58622b25799be0826b91356",
+      "occurrence": 1,
+      "sourcePath": "tests/sec02-receipts.mjs",
+      "line": 52,
+      "column": 44,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "sec02EvidenceEnabled",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-a7c9b6d7195ded0e07f09e1a",
+      "occurrence": 1,
+      "sourcePath": "tests/sec02-receipts.mjs",
+      "line": 98,
+      "column": 72,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "createSec02Recorder",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-9c6f7a69cc6b2ae98639e1d8",
+      "occurrence": 1,
+      "sourcePath": "tests/sec03-receipts.mjs",
+      "line": 53,
+      "column": 86,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "createSec03Recorder",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-4b7f1f53bc07e63b8b5cbfc3",
+      "occurrence": 1,
+      "sourcePath": "tests/unit/framework.test.mjs",
+      "line": 298,
+      "column": 10,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-c91e568cf872466bd99bb950",
+      "occurrence": 1,
+      "sourcePath": "tests/unit/path-policy.test.mjs",
+      "line": 249,
+      "column": 15,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    }
+  ],
+  "violations": [],
+  "migrated": true,
+  "canonicalPayloadSha256": "fae1b5a7ff1db3e2a4f34e66958c8639150f9dcb778d3490b60798159294b808"
+}

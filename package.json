@@ -1,0 +1,159 @@
+{
+  "name": "mini-lux",
+  "version": "0.1.0",
+  "description": "产品研发室微型 AI Agent —— Lux 架构复刻 MVP",
+  "type": "module",
+  "packageManager": "npm@11.11.0",
+  "engines": {
+    "node": ">=24.14.1 <25",
+    "npm": ">=11.11.0 <12"
+  },
+  "scripts": {
+    "assets": "node scripts/copy-vendor.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint \"src/**/*.ts\" \"electron/**/*.{cjs,mjs,js}\" \"scripts/**/*.{mjs,cjs,js}\" \"tests/**/*.mjs\" \"parity/scripts/**/*.mjs\" --max-warnings 0 --no-inline-config --report-unused-disable-directives",
+    "build:native": "node scripts/build-sec03-native.mjs",
+    "build:native:check": "node scripts/build-sec03-native.mjs --check",
+    "build:metadata": "node scripts/generate-build-info.mjs",
+    "build:dist-integrity": "node scripts/generate-dist-integrity.mjs",
+    "dev": "npm run build:native && npm run build:metadata && npm run assets && tsx watch src/index.ts",
+    "build": "npm run build:metadata && npm run build:native && tsc && npm run build:dist-integrity && npm run assets",
+    "start": "node dist/index.js",
+    "electron": "npm run build && electron electron/main.cjs",
+    "electron:dev": "npm run build && electron electron/main.cjs",
+    "daemon": "tsx src/daemon.ts",
+    "dist": "npm run build && npm run stage:electron && node scripts/build-electron.mjs",
+    "stage:electron": "node scripts/prepare-electron-app.mjs",
+    "dist:dir": "npm run build && npm run stage:electron && node scripts/build-electron.mjs --dir",
+    "parity:capture": "node parity/scripts/capture-lux-baseline.mjs",
+    "parity:compare": "node parity/scripts/compare-lux-baselines.mjs",
+    "parity:test": "node parity/scripts/test-baseline-diff.mjs",
+    "parity:verify": "node parity/scripts/verify-locked-baseline.mjs",
+    "version:test": "npm run build && node scripts/test-version-model.mjs",
+    "test:unit": "node scripts/run-test-layer.mjs --layer unit",
+    "test:contract": "node scripts/run-test-layer.mjs --layer contract",
+    "test:integration": "node scripts/run-test-layer.mjs --layer integration",
+    "test:electron": "node scripts/run-test-layer.mjs --layer electron",
+    "test:packaged": "node scripts/run-test-layer.mjs --layer packaged",
+    "test:package": "npm run dist && node scripts/write-package-artifact.mjs && npm run test:packaged",
+    "test:coverage": "node scripts/run-coverage.mjs",
+    "test:self": "node scripts/test-gate-selftest.mjs",
+    "test:gov04:self": "node scripts/test-gov04-selftest.mjs",
+    "gate:gov04": "node scripts/run-gov04.mjs --profile merge",
+    "gate:gov04:release": "node scripts/run-gov04.mjs --profile trusted-release",
+    "test:quick": "node scripts/run-tests.mjs --profile quick",
+    "test:sec01:quick": "node scripts/run-tests.mjs --task SEC-01 --profile quick",
+    "test:sec01": "node scripts/run-tests.mjs --task SEC-01 --profile full",
+    "governance:sec02:generate": "node scripts/generate-sec02-resolved-manifest.mjs",
+    "governance:sec02:check": "node scripts/generate-sec02-resolved-manifest.mjs --check",
+    "governance:sec02:sinks": "node scripts/sec02-sink-inventory.mjs --check",
+    "test:sec02:quick": "node scripts/run-tests.mjs --task SEC-02 --profile quick",
+    "test:sec02": "node scripts/run-tests.mjs --task SEC-02 --profile full",
+    "governance:sec03:sinks": "node scripts/sec03-execution-inventory.mjs --check",
+    "test:sec03:contract": "node --test tests/contract/sec03-execution-inventory.test.mjs tests/contract/sec03-governance-adversarial.test.mjs tests/contract/sec03-receipts.test.mjs",
+    "test:sec03:native": "node --test tests/integration/sec03-native-host.test.mjs tests/integration/sec03-electron-auth.test.mjs",
+    "test:sec03:receipts": "node scripts/sec03-receipt-set.mjs --check",
+    "test:sec03": "node scripts/run-tests.mjs --task SEC-03 --profile full",
+    "test": "node scripts/run-tests.mjs --profile full",
+    "governance:sec03:generate": "node scripts/generate-sec03-resolved-manifest.mjs",
+    "governance:sec03:check": "node scripts/generate-sec03-resolved-manifest.mjs --check",
+    "test:sec03:quick": "node scripts/run-tests.mjs --task SEC-03 --profile quick"
+  },
+  "dependencies": {
+    "@xenova/transformers": "^2.17.2",
+    "ajv": "8.18.0",
+    "ajv-formats": "^3.0.1",
+    "better-sqlite3": "^12.11.1",
+    "cors": "^2.8.5",
+    "docx": "^9.7.1",
+    "express": "4.22.2",
+    "gray-matter": "^4.0.3",
+    "iconv-lite": "^0.6.3",
+    "mammoth": "^1.8.0",
+    "openai": "^4.77.0",
+    "pdf-parse": "^1.1.1",
+    "xlsx": "file:vendor/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@electron/asar": "3.4.1",
+    "@eslint/js": "10.0.1",
+    "@highlightjs/cdn-assets": "^11.11.1",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.0",
+    "c8": "10.1.3",
+    "electron": "43.1.1",
+    "electron-builder": "26.15.3",
+    "eslint": "10.7.0",
+    "globals": "17.7.0",
+    "marked": "^18.0.6",
+    "tsx": "^4.19.0",
+    "typescript": "5.7.3",
+    "typescript-eslint": "8.64.0",
+    "wait-on": "^8.0.5"
+  },
+  "overrides": {
+    "@xenova/transformers": {
+      "sharp": "0.35.3"
+    },
+    "ajv": {
+      "fast-uri": "3.1.4"
+    },
+    "express": {
+      "body-parser": "1.20.6"
+    },
+    "onnx-proto": {
+      "protobufjs": "7.6.5"
+    },
+    "test-exclude": {
+      "glob": "10.5.0"
+    }
+  },
+  "build": {
+    "appId": "com.minilux.app",
+    "productName": "Mini-Lux",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*.js",
+      "dist/native/sandbox-host.exe",
+      "dist/native/sandbox-launcher.node",
+      "dist/native/sec03-native-manifest.json",
+      "electron-stage-integrity.json",
+      "electron/**/*",
+      "public/**/*",
+      "personas/**/*",
+      "skills/**/*",
+      "build-info.json",
+      "dist-integrity.json",
+      "package.json",
+      "models/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Mini-Lux",
+      "include": "build/installer.nsh"
+    },
+    "asarUnpack": [
+      "build-info.json",
+      "package.json",
+      "public/**/*",
+      "models/**/*",
+      "personas/**/*",
+      "skills/**/*",
+      "dist/document-parser-worker.js",
+      "dist/native/sandbox-host.exe",
+      "dist/native/sandbox-launcher.node",
+      "**/better-sqlite3/build/Release/*.node",
+      "**/onnxruntime-node/bin/napi-v3/win32/x64/**/*"
+    ],
+    "afterPack": "./scripts/after-pack.cjs"
+  },
+  "main": "electron/main.cjs"
+}

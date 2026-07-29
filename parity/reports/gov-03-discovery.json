@@ -1,0 +1,40 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-03",
+  "persona": "explorer",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "canonicalSpec": "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md:333-341",
+  "architectureDraft": "parity/GOV-03-TEST-ARCHITECTURE.md",
+  "existingAssets": {
+    "layers": ["unit", "contract", "integration", "electron", "packaged"],
+    "testFiles": 6,
+    "manifest": "tests/manifests/gov-03.json",
+    "coverageRegistry": "tests/coverage-scope.json",
+    "helpers": "tests/helpers.mjs",
+    "failingFixture": "tests/fixtures/failing/assertion.test.mjs"
+  },
+  "confirmedGaps": [
+    "No npm test or unified five-layer runner",
+    "No coverage executor or enforced thresholds; c8 is absent from package.json and package-lock.json",
+    "Integration draft expects GOV-02 26/26 but accepted GOV-02 is 27/27",
+    "Electron draft requires MINI_LUX_E2E_USE_DIST but electron/main.cjs has no such development-only path",
+    "No fault-gate self-test for assertion, corrupt fixture, coverage miss, or stale packaged artifact",
+    "No atomic unified JSON report",
+    "Tests are not yet included in sourceDigest despite the architecture requirement",
+    "No CI workflow exists; this remains correctly deferred to GOV-04"
+  ],
+  "constraints": [
+    "Use node:test and node:assert/strict",
+    "Add only c8 as a test dependency unless architecture review proves otherwise",
+    "Do not use historical or latest-by-time installers",
+    "All non-package profiles must preserve formal artifact hashes",
+    "Coverage claims must be limited to an explicit governed registry",
+    "Every injected failure must produce non-zero",
+    "Stop after Reviewer at user confirmation"
+  ],
+  "verdict": "ready-for-planning"
+}

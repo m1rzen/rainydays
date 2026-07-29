@@ -1,0 +1,42 @@
+{
+  "reportVersion": 1,
+  "task": "SEC-02",
+  "scope": "P36-static-and-package-completeness",
+  "persona": "architect",
+  "state": "option-a-frozen-for-one-cycle-recovery",
+  "approvedAt": "2026-07-24T13:00:00+08:00",
+  "userDecision": "Option A — restricted runtime dialect plus explicit sink ledger",
+  "amendment": {
+    "path": "parity/SEC-02-P36-RUNTIME-DIALECT-AMENDMENT-01.md",
+    "sha256": "474dd7432ea421c742f37c8a1535175377291939119e59f15ef0ccacb11ed2a0"
+  },
+  "finiteDomain": {
+    "source": ["src/**/*.{ts,tsx}", "electron/**/*.{js,mjs,cjs}"],
+    "package": ["dist/**/*.{js,mjs,cjs}", "electron/**/*.{js,mjs,cjs}"],
+    "dependenciesIncluded": false,
+    "testsAndGovernanceIncludedInLanguageClaim": false
+  },
+  "unsupportedSyntaxPolicy": "fail-closed without analyzer expansion",
+  "completionPredicate": [
+    "exact source domain",
+    "zero unsupported dialect sites",
+    "zero unapproved governed imports",
+    "zero missing/extra/unresolved/stale ledger sites",
+    "complete runtime canaries",
+    "exact source/stage/ASAR executable projection",
+    "complete package dialect check",
+    "one shared source/build/stage/ASAR/report identity",
+    "exact seven P36 receipts"
+  ],
+  "budget": {
+    "implementationCycles": 1,
+    "independentReviewCycles": 1,
+    "onFailure": "return immediately to red-stop BLOCKED"
+  },
+  "nonClaims": [
+    "arbitrary JavaScript data-flow completeness",
+    "dependency-internal path behavior",
+    "Shell/Script/Terminal post-start filesystem isolation"
+  ],
+  "next": "Developer may execute the single implementation cycle. A Reviewer must independently reject or accept the exact resulting bytes."
+}

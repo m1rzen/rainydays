@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "taskId": "GOV-04",
+  "amendment": "01",
+  "state": "frozen",
+  "reason": "GOV-03 quick requires disposable build outputs while the package authority must start clean and package exactly once",
+  "document": "parity/GOV-04-ARCHITECT-AMENDMENT-01.md",
+  "sha256": "bf0ed14427466f259c273ab9b29cd8d54dab647c6985320ffe87eee5a43148c3",
+  "bytes": 5188,
+  "frozenAt": "2026-07-17T06:41:49.000Z",
+  "supersedes": [
+    "the 14-step state machine in GOV-04-CI-ARCHITECTURE.md",
+    "the single-workspace interpretation of package-only formal outputs"
+  ],
+  "fixedStepCount": 16,
+  "rootNpmCiCount": 2,
+  "stagingNpmCiCount": 1,
+  "reviewerVerdict": null,
+  "userStatus": "not-reviewed"
+}

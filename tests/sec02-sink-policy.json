@@ -1,0 +1,2945 @@
+{
+  "schemaVersion": 1,
+  "task": "SEC-02",
+  "detectorPolicySha256": "0d0bf8d8501ef4a9adee3d1437e65dadfa5789770706d7ff7fa1f0e5f2488070",
+  "bindings": [
+    {
+      "siteId": "sink-737e8e7fed0c6358826cae25",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "6227e5e56c8b86767d71000100cae190f703c57e758a0240827062c0e67a4087",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-1c1107880edae8240e50bb2b",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "dbcd262637c39e2327bd2c548607f9e082b2ef933fb7dbae2205c182c5bd2d3c",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-96545976fb3945998517b6bd",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "c708865fa8059572110bc7974a96a090eaf5f7a15dd8253a1ed0ee113e8b974f",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-92f3102e54ced2cd49a7b044",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "ac78b5f1aea5cf34e429327c68a75f356aead7bff87689a2fc1fc03dae4a4ed2",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-95fc4d50a74e30b32f251631",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "79e27362ff1605e363b8302692890a9a2389cd1261d33fe17cde59a3df17ecab",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-f657afa31b8a30b29f14f007",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "25684352d5c4a46cb8638a12def764df0673e7def150db71ae611fc9d7a318fa",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-df1a645fb7d0bcb73bf5a6d0",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "a3df249c23257eee5b56bb3f8371664a19f093874138093ecf9b19c7f3495b4b",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-47a0c025b69dfcbb8f9eec0b",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "cfcda07f2709b146c3f75d9ac37e75b245d3e1cd84cf68e9ee4e213eda4aecea",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-3204e682fbe3e12338aefb90",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "f8d6bd36ee6f7519936b38e1d0c444e3cae234f71c403b098bb9e11ff3ad00f0",
+      "container": "startPackagedServer",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#startPackagedServer:module-loader.import",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#startPackagedServer:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-6f4e9360771c9a6dd14b7213",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "9a7d3cb8b3ff729d2c0d0b0f320b3862895dc8cdd293567965ec0a597c890f51",
+      "container": "startServerProcess",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd",
+        "argument:2.shell"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/main.cjs#startServerProcess:child-process.spawn",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "electron/main.cjs#startServerProcess:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "electron/main.cjs#startServerProcess:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "authority-canonical-cwd",
+            "anchor": "electron/main.cjs#startServerProcess:argument:2.cwd"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "electron/main.cjs#startServerProcess:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-d58f6e164ee3e9fc42885e74",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "80a3ce3a82ebe19949907b5daeb999842b230d08e0c66d3ccd5f747485db658d",
+      "container": "createWindow",
+      "family": "electron-path-property",
+      "api": "BrowserWindow",
+      "pathOperands": [
+        "argument:0.icon",
+        "argument:0.webPreferences.preload"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/main.cjs#createWindow:electron-path-property.BrowserWindow",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0.icon",
+            "classification": "bootstrap-file-lease",
+            "anchor": "electron/main.cjs#createWindow:argument:0.icon"
+          },
+          {
+            "selector": "argument:0.webPreferences.preload",
+            "classification": "bootstrap-file-lease",
+            "anchor": "electron/main.cjs#createWindow:argument:0.webPreferences.preload"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-0afcdaf217cac5705bbd68be",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "54840bf00298e35abd01a13a6cc7ae4ee8d632826e26d3c5c4de11de50a729fa",
+      "container": "createTray",
+      "family": "electron-path-property",
+      "api": "Tray",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/main.cjs#createTray:electron-path-property.Tray",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-file-lease",
+            "anchor": "electron/main.cjs#createTray:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-8e08f83d596e8d35670d9fb3",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "6899fde9d9b46dab3d3893ae273af938c07d71018bffe5e820d2d90d06213c46",
+      "container": "stopDevelopmentServer",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.shell"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/main.cjs#stopDevelopmentServer:child-process.spawn",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "electron/main.cjs#stopDevelopmentServer:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "electron/main.cjs#stopDevelopmentServer:argument:1"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "electron/main.cjs#stopDevelopmentServer:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-e4584198fe4a905359bb89df",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "827a8156f2efb8f20f591705bfc5119b5d306fce04052a0afa430ec7b2d0b405",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/path-bootstrap.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/path-bootstrap.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-78e90219dd3cc477d1e25e2e",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "dbcd262637c39e2327bd2c548607f9e082b2ef933fb7dbae2205c182c5bd2d3c",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/path-bootstrap.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/path-bootstrap.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-ad4e7e012727667a8187ecbb",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "25684352d5c4a46cb8638a12def764df0673e7def150db71ae611fc9d7a318fa",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/path-bootstrap.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/path-bootstrap.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-b426b927f82e700fe016fdd4",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "921a88c578b7781e8b69b71ee0b51690f36f46618a73c14e7c7fced79be0a724",
+      "container": "assertNoRedirectComponents",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#assertNoRedirectComponents:node-fs.lstatSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#assertNoRedirectComponents:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-e9f60377a7ba14a0be4c146b",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "77d2858be57c9de801cc5c3c0cabb49d4f44ea3b4605fd0f06a442944b72691a",
+      "container": "canonicalDirectory",
+      "family": "node-fs",
+      "api": "realpathSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#canonicalDirectory:node-fs.realpathSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#canonicalDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-12d963fa74be6de3ac6d4e97",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "5d705b21b8ddd4f89c4f620612566c41e478ac39699114a64f0d2d2218058da2",
+      "container": "canonicalDirectory",
+      "family": "node-fs",
+      "api": "statSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#canonicalDirectory:node-fs.statSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#canonicalDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-f001c9a65840a29515278a5a",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "4a0566962a7d0e6e5bd7afb0ab89c83d28b1c79a49a3b14607c7589583754caa",
+      "container": "verifyDirectory",
+      "family": "node-fs",
+      "api": "realpathSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#verifyDirectory:node-fs.realpathSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#verifyDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-68448c469361fd3bc492137a",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "5d705b21b8ddd4f89c4f620612566c41e478ac39699114a64f0d2d2218058da2",
+      "container": "verifyDirectory",
+      "family": "node-fs",
+      "api": "statSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#verifyDirectory:node-fs.statSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#verifyDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-93aba5276eac452aecde5cea",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "c8b3bd05a3b689186f69d01805c856cf26bcf130cdbc33b0ada69931eda055fb",
+      "container": "openFileAt",
+      "family": "node-fs",
+      "api": "realpathSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#openFileAt:node-fs.realpathSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#openFileAt:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-f2402500e1f800cd7f0d1960",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "8543bcb0095c0d69d5cca27ba4b7861724a7cd9b414c9ae0409e9c36e445d7e3",
+      "container": "openFileAt",
+      "family": "node-fs",
+      "api": "openSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#openFileAt:node-fs.openSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#openFileAt:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-8a791145736d1061edc234c5",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "5d705b21b8ddd4f89c4f620612566c41e478ac39699114a64f0d2d2218058da2",
+      "container": "openFileAt",
+      "family": "node-fs",
+      "api": "statSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#openFileAt:node-fs.statSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#openFileAt:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-7098c28108f372a1e7753e82",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "059560d755524e25d5d2d9db8a5463e25561b9aa820b924609e53a5e253734c0",
+      "container": "ElectronFileLease.verify",
+      "family": "node-fs",
+      "api": "realpathSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#ElectronFileLease.verify:node-fs.realpathSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#ElectronFileLease.verify:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-76e72f7981cd2f3de54588c9",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "96ba9ed8ff3cc33dc42118e5eff6b7726a75fff7dbc3560dd54d4f8bfef00f6a",
+      "container": "ElectronFileLease.verify",
+      "family": "node-fs",
+      "api": "statSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#ElectronFileLease.verify:node-fs.statSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#ElectronFileLease.verify:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-7e8ae1024dd0191cdef54f0c",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "3b30d589987de5a6d0f3c9a0dd01f0e6211c537990c2af26adad87917113d30d",
+      "container": "ElectronArchiveFileLease.readBytes",
+      "family": "node-fs",
+      "api": "statSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#ElectronArchiveFileLease.readBytes:node-fs.statSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#ElectronArchiveFileLease.readBytes:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-4065d58b44ff78c1eecd70a1",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "f136b87cd60ba997a27c0bc400409aff8147adde4a7596d88d0e43bad7e983cb",
+      "container": "ElectronArchiveFileLease.readBytes",
+      "family": "node-fs",
+      "api": "readFileSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#ElectronArchiveFileLease.readBytes:node-fs.readFileSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#ElectronArchiveFileLease.readBytes:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-93c16d1c8d9160068852acfd",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "3b30d589987de5a6d0f3c9a0dd01f0e6211c537990c2af26adad87917113d30d",
+      "container": "ElectronArchiveFileLease.verify",
+      "family": "node-fs",
+      "api": "statSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#ElectronArchiveFileLease.verify:node-fs.statSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#ElectronArchiveFileLease.verify:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-2253ed101cacd5832e37c5a9",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "0261947b9eb641ccc3e9e230e0af5208da8574aeefacc652ae9101bb3fce7552",
+      "container": "ElectronBootstrapPathStore.constructor",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#ElectronBootstrapPathStore.constructor:node-fs.lstatSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#ElectronBootstrapPathStore.constructor:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-bb241b0a5b5fc11232f6a343",
+      "sourcePath": "electron/preload.cjs",
+      "normalizedNodeSha256": "6227e5e56c8b86767d71000100cae190f703c57e758a0240827062c0e67a4087",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/preload.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/preload.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-abbacd4d8d64d77378cd0d3f",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "4506161869017b711ca726ab9062e3926fac759a584ad0e460e825635a24fb53",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "createRequire",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/bootstrap-database.ts#<top-level>:module-loader.createRequire",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-origin",
+            "anchor": "src/bootstrap-database.ts#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-f067aa725d1ae70bfb400c93",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "05cda8226a3dcb5475ab07855c87518698e08176a1370c6c8d8026215fa89e39",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "createRequire-call",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/bootstrap-database.ts#<top-level>:module-loader.createRequire-call",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/bootstrap-database.ts#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-8523b5a84491a1d0ccea60fc",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "6ef8fce845585d395e7c59d07d7f3cb039689927f6978a5b7367f8e53119aae7",
+      "container": "inspectExactPath",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#inspectExactPath:node-fs.lstatSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#inspectExactPath:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-c5e4282b12b236e984470552",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "e19c5526489562f273fa8ac0e060e764a678cc20f3d06cd315d2028d745fb7ff",
+      "container": "inspectExactPath",
+      "family": "node-fs",
+      "api": "realpathSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#inspectExactPath:node-fs.realpathSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#inspectExactPath:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-9fed401913ed4510c4dad143",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "4990a6d7e3220093a2e33e15cb65cd51789daa2f508dc264899a81a794b1ec24",
+      "container": "inspectExactPath",
+      "family": "node-fs",
+      "api": "statSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#inspectExactPath:node-fs.statSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#inspectExactPath:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-65c08e48b4fc75c01898fadd",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "d7db388e720cb12df33c213534f92c885bd2619196b976c93c7a08bd22ae3303",
+      "container": "SqlitePathGuard.assertCurrent",
+      "family": "node-fs",
+      "api": "readdirSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#SqlitePathGuard.assertCurrent:node-fs.readdirSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#SqlitePathGuard.assertCurrent:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-6fd9a8bf3d5836ef6190694d",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "e1a651e2e0140f02ad7b54b9a1df574e7b1ee65f8fb8fdc8106d9e8b3f499101",
+      "container": "SqlitePathGuard.assertCurrent",
+      "family": "node-fs",
+      "api": "existsSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#SqlitePathGuard.assertCurrent:node-fs.existsSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#SqlitePathGuard.assertCurrent:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-45a438c39cb12d21bd536c9c",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "bade97d4a96f5fa32b38ab5e8e546a5d54cb57c155b6b2e12ed6c5df564edd81",
+      "container": "readHeader",
+      "family": "node-fs",
+      "api": "openSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#readHeader:node-fs.openSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#readHeader:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-3a7905c83933ae63cf2aa53e",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "90270b96d0c76ef02c382d4d9ec2efc57a3bbae4b1dc6315cfa3cd89b7229123",
+      "container": "removeProbeFiles",
+      "family": "node-fs",
+      "api": "readdirSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#removeProbeFiles:node-fs.readdirSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#removeProbeFiles:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-5eb9f71374e8aff9c32d671f",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "515257f1b60eaf35625d9bd1d0494904efbd9d902d13f683882a00f79a387cc8",
+      "container": "removeProbeFiles",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#removeProbeFiles:node-fs.lstatSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#removeProbeFiles:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-d9172ad5a3a7d3e584822fcc",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "f36037aa9becc468cab26e6786dfdaac7ad704b29f29526658f27334e1834b6c",
+      "container": "removeProbeFiles",
+      "family": "node-fs",
+      "api": "unlinkSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#removeProbeFiles:node-fs.unlinkSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#removeProbeFiles:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-9ebe89ec7ddc4688114b0fd1",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "d8d3711a4b4078884dd407bb0b4fe7dc0ff7aef1ba5a46aa66bac259b57c10f4",
+      "container": "existingVersionWithoutMutation",
+      "family": "node-fs",
+      "api": "existsSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#existingVersionWithoutMutation:node-fs.existsSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#existingVersionWithoutMutation:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-7c9a78e7d96d0af22f06c7db",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "b58cc609edae29824de1e21df3de11798dca1248d153138362262f9b0f7087ab",
+      "container": "existingVersionWithoutMutation",
+      "family": "node-fs",
+      "api": "copyFileSync",
+      "pathOperands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#existingVersionWithoutMutation:node-fs.copyFileSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#existingVersionWithoutMutation:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#existingVersionWithoutMutation:argument:1"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-10a3baaf40c371bf5ea53015",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "07d0e34ad2f3c02131846e1c2b1133257790b5676654d22777ac482aa1597ad9",
+      "container": "existingVersionWithoutMutation",
+      "family": "node-fs",
+      "api": "copyFileSync",
+      "pathOperands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#existingVersionWithoutMutation:node-fs.copyFileSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#existingVersionWithoutMutation:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#existingVersionWithoutMutation:argument:1"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-3f234368c8280f98ef9bf23d",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "91cfa322f6e90a395a56f9d373719a92c6c13fb24a698d691eb84d94dfade548",
+      "container": "existingVersionWithoutMutation",
+      "family": "third-party-path-api",
+      "api": "better-sqlite3.Database",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#existingVersionWithoutMutation:third-party-path-api.better-sqlite3.Database",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#existingVersionWithoutMutation:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-b8d89ab628dee2505fd562a1",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "4d51eafbdd9a68ef86508e63d314fe784030bbe9425d1d077cb6e0d49762a7ed",
+      "container": "openBootstrapDatabase",
+      "family": "third-party-path-api",
+      "api": "better-sqlite3.Database",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#openBootstrapDatabase:third-party-path-api.better-sqlite3.Database",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#openBootstrapDatabase:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-b5554c8c39b6e37c544763f1",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "f78f2b19f2439ca051cd6589de93ad52271f18b69364e8b54ec658248280592f",
+      "container": "createInMemoryBootstrapDatabase",
+      "family": "third-party-path-api",
+      "api": "better-sqlite3.Database",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#createInMemoryBootstrapDatabase:third-party-path-api.better-sqlite3.Database",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "sqlite-memory-identifier",
+            "anchor": "src/bootstrap-database.ts#createInMemoryBootstrapDatabase:literal-:memory:"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-c6a5b83358de64fded85db21",
+      "sourcePath": "src/daemon.ts",
+      "normalizedNodeSha256": "dbc1852d130e31d5956af7419aac13979ce3bd752c1496c7b5c738a4bd839870",
+      "container": "startServer",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd",
+        "argument:2.shell"
+      ],
+      "executionClass": "source-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "src/daemon.ts#startServer:child-process.spawn",
+        "evidenceIds": [
+          "daemon-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/daemon.ts#startServer:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "src/daemon.ts#startServer:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "authority-canonical-cwd",
+            "anchor": "src/daemon.ts#startServer:argument:2.cwd"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/daemon.ts#startServer:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-593ddb9dc2535b87bfb34104",
+      "sourcePath": "src/embedding.ts",
+      "normalizedNodeSha256": "9b2e9acae209b4e67192c038272e63c57f7d7dd3778b9521b5f5d974beb1c451",
+      "container": "getModel",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/embedding.ts#getModel:module-loader.import",
+        "evidenceIds": [
+          "model-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/embedding.ts#getModel:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-060c57ddb61ea34f569a7169",
+      "sourcePath": "src/embedding.ts",
+      "normalizedNodeSha256": "7d3a1049a08cf75db75225474aa20da722ee361e98806b9deacab52ef4f0f0cc",
+      "container": "getModel",
+      "family": "third-party-path-property",
+      "api": "localModelPath",
+      "pathOperands": [
+        "right-hand-side"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "src/embedding.ts#getModel:third-party-path-property.localModelPath",
+        "evidenceIds": [
+          "model-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "right-hand-side",
+            "classification": "model-tree-lease",
+            "anchor": "src/embedding.ts#getModel:right-hand-side"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-299f0d2d0fec82b4102316af",
+      "sourcePath": "src/file-viewer.ts",
+      "normalizedNodeSha256": "b1794b24dd3772da6bf5f141dba074a3dd38662bf1888ed7ed354bd7b085bcf8",
+      "container": "parseDocumentIsolated",
+      "family": "worker",
+      "api": "Worker",
+      "pathOperands": [
+        "argument:0",
+        "argument:1.workerData.bytes",
+        "argument:1.workerData.fileName"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "worker-byte-only",
+        "anchor": "src/file-viewer.ts#parseDocumentIsolated:worker.Worker",
+        "evidenceIds": [
+          "file-viewer",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-file-lease",
+            "anchor": "src/file-viewer.ts#parseDocumentIsolated:argument:0"
+          },
+          {
+            "selector": "argument:1.workerData.bytes",
+            "classification": "bounded-bytes",
+            "anchor": "src/file-viewer.ts#parseDocumentIsolated:argument:1.workerData.bytes"
+          },
+          {
+            "selector": "argument:1.workerData.fileName",
+            "classification": "basename-metadata",
+            "anchor": "src/file-viewer.ts#parseDocumentIsolated:argument:1.workerData.fileName"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-3fc3b6e9373519534bddfe0a",
+      "sourcePath": "src/file-viewer.ts",
+      "normalizedNodeSha256": "ab67fc7746b325a0ac918d45dafc7a6144fdf542e9995742e7c11087eb9c06ca",
+      "container": "FileViewerService.reveal",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "src/file-viewer.ts#FileViewerService.reveal:child-process.spawn",
+        "evidenceIds": [
+          "file-viewer",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/file-viewer.ts#FileViewerService.reveal:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "src/file-viewer.ts#FileViewerService.reveal:argument:1"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/file-viewer.ts#FileViewerService.reveal:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-d07b4b2c8cf7ed613e3fd830",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "922838812195e7597faaa22808d201e27b9d12217d8d99d1ea7a58423f45471e",
+      "container": "PathPolicy.constructor",
+      "family": "node-fs",
+      "api": "watch",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.constructor:node-fs.watch",
+        "evidenceIds": [
+          "watcher",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.constructor:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-5b4b1a17f54d5de7a7588020",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "91906b6268808a073c99931a674c040a97fecf08721741d12a299db1ae8bba98",
+      "container": "PathPolicy.createAuthority",
+      "family": "node-fs",
+      "api": "realpath",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.createAuthority:node-fs.realpath",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.createAuthority:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-1325c487f00c8b00e5fd4197",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "dc09791a7352b5d09c9fa56a0585b4482ab167fc74b4a730940a1ca778bd76db",
+      "container": "PathPolicy.#readExistingFile",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#readExistingFile:node-fs.open",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#readExistingFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-f2d559c8c06d3799c3e6ff23",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "dc09791a7352b5d09c9fa56a0585b4482ab167fc74b4a730940a1ca778bd76db",
+      "container": "PathPolicy.openReadLease",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.openReadLease:node-fs.open",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.openReadLease:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-a2b77b03c3ab9d929c4bee3a",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "7cceece7663de8a90a4b087013abbff6d2a60b2df5f3f6cbbdcaf488767a327c",
+      "container": "PathPolicy.#listExistingDirectory",
+      "family": "node-fs",
+      "api": "opendir",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#listExistingDirectory:node-fs.opendir",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#listExistingDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-78d1b7507b44007ca06340dd",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "9934a8724ee055108c8d14bd4c89e722a3568d3be53f304b7dfc721b0dd18b6a",
+      "container": "PathPolicy.#listExistingDirectory",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#listExistingDirectory:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#listExistingDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-ff4b9c576fb181b9541df431",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "5d1824cdf5f0568e0c6f724e23e932706bd841658bb0a78a9ed3d5478fe4dccc",
+      "container": "PathPolicy.preflightWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.preflightWrite:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.preflightWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-de1767bbba819217e62bc36b",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "71de767ab7cdb0a25955e34f10da98c537d7473b1917c438832af5088a12bfe0",
+      "container": "PathPolicy.preflightWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.preflightWrite:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.preflightWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-9b3f2a2f2b60f26b8d97367d",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "b20f109c945ae189104046a297dabc783d32f10f27172c76ab26a106de99aa39",
+      "container": "authorizeEvent",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#authorizeEvent:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#authorizeEvent:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-80da13a0e97e59dbf5610599",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "7ddd8d73210516f64b60ea284f9d09b26254572757e80a30c7d45f48588e22a2",
+      "container": "authorizeEvent",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#authorizeEvent:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#authorizeEvent:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-9fde321546e5855e056413c6",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "5d1824cdf5f0568e0c6f724e23e932706bd841658bb0a78a9ed3d5478fe4dccc",
+      "container": "PathPolicy.createDirectoryEnrollment",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.createDirectoryEnrollment:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.createDirectoryEnrollment:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-cc26c9c6241404b868cb9ff5",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "71de767ab7cdb0a25955e34f10da98c537d7473b1917c438832af5088a12bfe0",
+      "container": "PathPolicy.createDirectoryEnrollment",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.createDirectoryEnrollment:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.createDirectoryEnrollment:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-cde5e810d3ee12c466bbe598",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "30b5865b4c2e76069e5f06abaa9b9476b34c07cdf9f99efb476fa54ca53fe1bb",
+      "container": "PathPolicy.createDirectoryEnrollment",
+      "family": "node-fs",
+      "api": "mkdir",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.createDirectoryEnrollment:node-fs.mkdir",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.createDirectoryEnrollment:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-45aafbf06f3ba6b4b432ca21",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "5d1824cdf5f0568e0c6f724e23e932706bd841658bb0a78a9ed3d5478fe4dccc",
+      "container": "PathPolicy.atomicCreateOrReplaceFile",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.atomicCreateOrReplaceFile:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.atomicCreateOrReplaceFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-e8bd7a921e275c2d076200c9",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "82552208cfe1698f6e1f4e7a3c39a16dfdffdd28b54d7babe93ad6fce05f9a64",
+      "container": "PathPolicy.atomicCreateOrReplaceFile",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.atomicCreateOrReplaceFile:node-fs.open",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.atomicCreateOrReplaceFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-65f60948655b4d38e0a20418",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "5d1824cdf5f0568e0c6f724e23e932706bd841658bb0a78a9ed3d5478fe4dccc",
+      "container": "PathPolicy.atomicCreateOrReplaceFile",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.atomicCreateOrReplaceFile:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.atomicCreateOrReplaceFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-7ef54cffaaf1a40302646bf7",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "e20295e1b846bb75d6125136c45a85a5577e5dd10b8f796470fe6337aba98c8a",
+      "container": "PathPolicy.atomicCreateOrReplaceFile",
+      "family": "node-fs",
+      "api": "rename",
+      "pathOperands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.atomicCreateOrReplaceFile:node-fs.rename",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.atomicCreateOrReplaceFile:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.atomicCreateOrReplaceFile:argument:1"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-b6fb1447a514cafa9c331606",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "5d1824cdf5f0568e0c6f724e23e932706bd841658bb0a78a9ed3d5478fe4dccc",
+      "container": "PathPolicy.#createFileInternal",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#createFileInternal:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#createFileInternal:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-f8da28023c86bcc1887e8d50",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "71de767ab7cdb0a25955e34f10da98c537d7473b1917c438832af5088a12bfe0",
+      "container": "PathPolicy.#createFileInternal",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#createFileInternal:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#createFileInternal:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-d2a49869e474b75263232be7",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "cc13bfee26994fb2f0ff3db6a9ae7deb6236376b317eda4cf0cd389df8e83efe",
+      "container": "PathPolicy.#createFileInternal",
+      "family": "node-fs",
+      "api": "mkdir",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#createFileInternal:node-fs.mkdir",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#createFileInternal:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-3a5aaa9e86d75cfa3cf56745",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "56dcf08caf7db511b1fc49c6476998cf82f721e1f4239de2aef13c358de0ba3b",
+      "container": "PathPolicy.#createFileInternal",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#createFileInternal:node-fs.open",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#createFileInternal:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-62f6be76773c81c611392cc6",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "ad09d1ff0f02e3fdfd1e29be21b329208b677c7c52b2f6b540e6738d348193ef",
+      "container": "PathPolicy.#replaceFileInternal",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#replaceFileInternal:node-fs.open",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#replaceFileInternal:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-d2b3bae251640d085de9f8fb",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "36fefbdd9a47fbeb0b4a6c672a0e60e9f9610cf67e04a49492d7d9bb06ae8c16",
+      "container": "PathPolicy.#probeDirectoryIdentity",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#probeDirectoryIdentity:node-fs.open",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#probeDirectoryIdentity:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-bc622822b78e0fae61abf411",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "c14cf1833412a5cf0fb2677af90e548869d0bc9a351e8002371359b81f83f100",
+      "container": "PathPolicy.#walkConfiguredRootNoRedirect",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#walkConfiguredRootNoRedirect:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#walkConfiguredRootNoRedirect:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-b86b6e2c1b8be8f8ebde2a7e",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "c14cf1833412a5cf0fb2677af90e548869d0bc9a351e8002371359b81f83f100",
+      "container": "PathPolicy.#walkNoRedirect",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#walkNoRedirect:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#walkNoRedirect:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-50aa4bbe9ddb4d3050bd9030",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "63ba3cd3c4650dae72bd3877ab0fd17907ebe74262cc2176ec7ae6d4258aaf31",
+      "container": "PathPolicy.#statIdentity",
+      "family": "node-fs",
+      "api": "stat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#statIdentity:node-fs.stat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#statIdentity:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-e980b687cfd4c6b4479cd08a",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "6804726b04638b547d8091b200e3d4a927949f6de2bca71332c5f3f3142194f7",
+      "container": "PathPolicy.#lstatIdentity",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#lstatIdentity:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#lstatIdentity:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-d5c18a3016878722c5c3b799",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "596309662c8fab15f15695341aeca51cd9a0f1bb96b886dbfa328339aacd8ca5",
+      "container": "PathPolicy.#rollbackCreated",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#rollbackCreated:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#rollbackCreated:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-81e504409c0c68f6a0cf38cd",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "22d55958ff8da02edb855fe203911c75ade46f7cecb9645b36f2740920e1b9e8",
+      "container": "PathPolicy.#rollbackCreated",
+      "family": "node-fs",
+      "api": "rmdir",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#rollbackCreated:node-fs.rmdir",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#rollbackCreated:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-e4b423b50f51232897635ec7",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "4927422c3ccfb85b7c625b3d7a4d765e0736fb29d602f97f161bdae459254c40",
+      "container": "PathPolicy.#rollbackCreated",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#rollbackCreated:node-fs.unlink",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#rollbackCreated:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-9ff1eb6f05ac2ab782130c15",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "0fb9bdf11a0764774573943ce7601d8b3a9a4adc389fa4ec807e00d5cbf4325b",
+      "container": "PathPolicy.#rollbackCreated",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#rollbackCreated:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#rollbackCreated:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-d765d63e87811019a1eb8af1",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "b846f8ef2c0a02fa5887e2886f87fea4ae990d9e883eb8271ff9afa681309e37",
+      "container": "PathPolicy.#realpathOrDeny",
+      "family": "node-fs",
+      "api": "realpath",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#realpathOrDeny:node-fs.realpath",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#realpathOrDeny:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-5aa7570c8201bc5ae0644351",
+      "sourcePath": "src/process-tree.ts",
+      "normalizedNodeSha256": "64b9e9911a061a8e36033b47997184dd3008419db0f2dd175790174cc020406d",
+      "container": "runWindowsTreeKiller",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "src/process-tree.ts#runWindowsTreeKiller:child-process.spawn",
+        "evidenceIds": [
+          "process-tree",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/process-tree.ts#runWindowsTreeKiller:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "src/process-tree.ts#runWindowsTreeKiller:argument:1"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/process-tree.ts#runWindowsTreeKiller:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-61a335089c8af1571ceebb1d",
+      "sourcePath": "src/terminal.ts",
+      "normalizedNodeSha256": "2000d148b8eaeebb2250c5b78fa8fe9a42aab5314f0182e5a6d58642b0d8bf43",
+      "container": "TerminalManager.start",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "src/terminal.ts#TerminalManager.start:child-process.spawn",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/terminal.ts#TerminalManager.start:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "src/terminal.ts#TerminalManager.start:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "authority-canonical-cwd",
+            "anchor": "src/terminal.ts#TerminalManager.start:argument:2.cwd"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/terminal.ts#TerminalManager.start:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-9bcf1e99e867cc31003dd4cf",
+      "sourcePath": "src/tools/image-helper.ts",
+      "normalizedNodeSha256": "16a9a1f6092d37d3e3c4393138afd797e8161af7114b51c2afaeab6ace08bc7b",
+      "container": "imageHelperExec",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/tools/image-helper.ts#imageHelperExec:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/tools/image-helper.ts#imageHelperExec:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-bd60572b2a17bf75235f3352",
+      "sourcePath": "src/tools/image-helper.ts",
+      "normalizedNodeSha256": "9e15942308d68390fce2d4af7d8e076603796767930eac31ff77919f40605436",
+      "container": "imageHelperExec",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/tools/image-helper.ts#imageHelperExec:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/tools/image-helper.ts#imageHelperExec:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-beba5e43960ca0542cd08230",
+      "sourcePath": "src/tools/parsers.ts",
+      "normalizedNodeSha256": "4481b69ff379d413448b8193636800523c862f8c7066f5326c2c9fbf22812583",
+      "container": "parseText",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/tools/parsers.ts#parseText:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/tools/parsers.ts#parseText:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-56a8793c3d1a757eaee21322",
+      "sourcePath": "src/tools/parsers.ts",
+      "normalizedNodeSha256": "c194a869104fb8f846543e5007df62d901c40e34cd4c008c0e31479088277b62",
+      "container": "parseDocx",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/tools/parsers.ts#parseDocx:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/tools/parsers.ts#parseDocx:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-0efb090ae67b90cc105b8128",
+      "sourcePath": "src/tools/parsers.ts",
+      "normalizedNodeSha256": "a4b59d405eb399dad569b0986c7bdb2fe743f0238529274a8358d05ddc8bb8a6",
+      "container": "parseXlsx",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/tools/parsers.ts#parseXlsx:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/tools/parsers.ts#parseXlsx:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-a4df7c381ac7b78302114d1d",
+      "sourcePath": "src/tools/parsers.ts",
+      "normalizedNodeSha256": "e1d87e05e2ec04785232d4e98c5b231411a3656fceb4f74e9bc156573c4226e7",
+      "container": "parsePdf",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/tools/parsers.ts#parsePdf:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/tools/parsers.ts#parsePdf:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-a64279e39d868e3951568483",
+      "sourcePath": "src/tools/phase1-tools.ts",
+      "normalizedNodeSha256": "7b42bbd3c92bf2d721758fa65e119283ae93e528fa80df449b8ffd75df4f1968",
+      "container": "mascotNotifyExec",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/tools/phase1-tools.ts#mascotNotifyExec:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/tools/phase1-tools.ts#mascotNotifyExec:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-d8f90ebc8884ad1c74ff3ef8",
+      "sourcePath": "src/tools/read-repo.ts",
+      "normalizedNodeSha256": "bc8b5f83eef847e4454baaee8fa1e86936a368ecc75c6607640b1efd32095bdb",
+      "container": "runGitLsFiles",
+      "family": "child-process",
+      "api": "execFile",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "src/tools/read-repo.ts#runGitLsFiles:child-process.execFile",
+        "evidenceIds": [
+          "repo-oracle",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/tools/read-repo.ts#runGitLsFiles:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "src/tools/read-repo.ts#runGitLsFiles:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "authority-canonical-cwd",
+            "anchor": "src/tools/read-repo.ts#runGitLsFiles:argument:2.cwd"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/tools/read-repo.ts#runGitLsFiles:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-ad951cad071b201020ac6e56",
+      "sourcePath": "src/tools/script.ts",
+      "normalizedNodeSha256": "b75843044f39e5401617cd3828ba5745d8c990e6efe7800cdaeba819e9a415d1",
+      "container": "runNodeModule",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "src/tools/script.ts#runNodeModule:child-process.spawn",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/tools/script.ts#runNodeModule:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "src/tools/script.ts#runNodeModule:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "authority-canonical-cwd",
+            "anchor": "src/tools/script.ts#runNodeModule:argument:2.cwd"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-4cce55013c70ea46dc927c1c",
+      "sourcePath": "src/tools/shell.ts",
+      "normalizedNodeSha256": "72dfd5c677a0695cfee0e1a203198ba5091d91675186bf5ee80ae3166a988164",
+      "container": "runShellCommand",
+      "family": "child-process",
+      "api": "execFile",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "src/tools/shell.ts#runShellCommand:child-process.execFile",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/tools/shell.ts#runShellCommand:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "src/tools/shell.ts#runShellCommand:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "authority-canonical-cwd",
+            "anchor": "src/tools/shell.ts#runShellCommand:argument:2.cwd"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/tools/shell.ts#runShellCommand:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-995eabc5492cb075b2e43430",
+      "sourcePath": "src/tools/writer.ts",
+      "normalizedNodeSha256": "dd63bc25379e2903a838d33f92191648f1683dc8efe09190154e21f023cd1c82",
+      "container": "createDocxExec",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/tools/writer.ts#createDocxExec:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/tools/writer.ts#createDocxExec:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-080d2031884afbf3e66f31ed",
+      "sourcePath": "src/tools/writer.ts",
+      "normalizedNodeSha256": "a4b59d405eb399dad569b0986c7bdb2fe743f0238529274a8358d05ddc8bb8a6",
+      "container": "createXlsxExec",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/tools/writer.ts#createXlsxExec:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/tools/writer.ts#createXlsxExec:argument:0"
+          }
+        ]
+      }
+    }
+  ],
+  "canonicalPayloadSha256": "a5e30c4cb227010402781d0b13631e3b5057b807b54170d82d158b8190600e2f"
+}

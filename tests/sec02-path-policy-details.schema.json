@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mini-lux.local/schemas/sec02-path-policy-details.schema.json",
+  "title": "SEC-02 packaged PathPolicy launch details",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "expectedLaunchCount", "assertionIds", "launches"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "expectedLaunchCount": {"const": 2},
+    "assertionIds": {
+      "const": [
+        "root-internal-success",
+        "traversal-denied",
+        "junction-denied",
+        "viewer-range-handle-replacement",
+        "terminal-cwd-denied-before-spawn"
+      ]
+    },
+    "launches": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {"$ref": "#/$defs/launchOne"},
+        {"$ref": "#/$defs/launchTwo"}
+      ],
+      "items": false
+    }
+  },
+  "$defs": {
+    "assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "passed"],
+      "properties": {
+        "id": {
+          "enum": [
+            "root-internal-success",
+            "traversal-denied",
+            "junction-denied",
+            "viewer-range-handle-replacement",
+            "terminal-cwd-denied-before-spawn"
+          ]
+        },
+        "passed": {"const": true}
+      }
+    },
+    "launch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["launchIndex", "assertionCount", "passed", "assertions"],
+      "properties": {
+        "launchIndex": {"type": "integer"},
+        "assertionCount": {"const": 5},
+        "passed": {"const": true},
+        "assertions": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "prefixItems": [
+            {"allOf": [{"$ref": "#/$defs/assertion"}, {"type": "object", "properties": {"id": {"const": "root-internal-success"}}}]},
+            {"allOf": [{"$ref": "#/$defs/assertion"}, {"type": "object", "properties": {"id": {"const": "traversal-denied"}}}]},
+            {"allOf": [{"$ref": "#/$defs/assertion"}, {"type": "object", "properties": {"id": {"const": "junction-denied"}}}]},
+            {"allOf": [{"$ref": "#/$defs/assertion"}, {"type": "object", "properties": {"id": {"const": "viewer-range-handle-replacement"}}}]},
+            {"allOf": [{"$ref": "#/$defs/assertion"}, {"type": "object", "properties": {"id": {"const": "terminal-cwd-denied-before-spawn"}}}]}
+          ],
+          "items": false
+        }
+      }
+    },
+    "launchOne": {
+      "allOf": [
+        {"$ref": "#/$defs/launch"},
+        {"type": "object", "properties": {"launchIndex": {"const": 1}}}
+      ]
+    },
+    "launchTwo": {
+      "allOf": [
+        {"$ref": "#/$defs/launch"},
+        {"type": "object", "properties": {"launchIndex": {"const": 2}}}
+      ]
+    }
+  }
+}

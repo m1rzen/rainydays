@@ -1,0 +1,6289 @@
+{
+  "schemaVersion": 1,
+  "task": "SEC-03",
+  "architectureSha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1",
+  "candidateBinding": "runtime",
+  "layers": [
+    "real-host",
+    "electron",
+    "packaged"
+  ],
+  "profiles": [
+    "E1",
+    "E2",
+    "E3",
+    "E4"
+  ],
+  "realHostReceiptCount": 386,
+  "projectionReceiptCountPerLayer": 48,
+  "runtimeReceiptCount": 482,
+  "records": [
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "deepseek-api-key",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "deepseek-api-key",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "deepseek-api-key",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "deepseek-api-key",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "mini-lux-api-token",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "mini-lux-api-token",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "mini-lux-api-token",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "mini-lux-api-token",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "aws-secret-access-key",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "aws-secret-access-key",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "aws-secret-access-key",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "aws-secret-access-key",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "ssh-auth-sock",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "ssh-auth-sock",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "ssh-auth-sock",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "ssh-auth-sock",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "parent-sentinel",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "parent-sentinel",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "parent-sentinel",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "parent-sentinel",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-06",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "http-proxy",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-06",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "http-proxy",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "http-proxy",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-06",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "http-proxy",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-07",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "node-options",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-07",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "node-options",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-07",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "node-options",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-07",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "node-options",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-08",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "parent-path-entry",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-08",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "parent-path-entry",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-08",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "parent-path-entry",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A01",
+      "variantId": "A01-08",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "parent-path-entry",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_ABSENT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "sibling-prefix-absolute",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "sibling-prefix-absolute",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "sibling-prefix-absolute",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "sibling-prefix-absolute",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "another-fixed-drive",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "another-fixed-drive",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "another-fixed-drive",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "another-fixed-drive",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "unc-share",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "unc-share",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "unc-share",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "unc-share",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "win32-namespace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "win32-namespace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "win32-namespace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "win32-namespace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-06",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "device-namespace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-06",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "device-namespace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "device-namespace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-06",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "device-namespace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-07",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "ntfs-ads",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-07",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "ntfs-ads",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-07",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "ntfs-ads",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-07",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "ntfs-ads",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-08",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "root-junction-replacement",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-08",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "root-junction-replacement",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-08",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "root-junction-replacement",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-08",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "root-junction-replacement",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-09",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "descendant-symlink",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-09",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "descendant-symlink",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-09",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "descendant-symlink",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-09",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "descendant-symlink",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-10",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "descendant-junction",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-10",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "descendant-junction",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-10",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "descendant-junction",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-10",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "descendant-junction",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-11",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "outside-hardlink",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-11",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "outside-hardlink",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-11",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "outside-hardlink",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A02",
+      "variantId": "A02-11",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "outside-hardlink",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "replace-before-retained-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_IDENTITY_CHANGED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "replace-before-retained-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_IDENTITY_CHANGED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "replace-before-retained-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_IDENTITY_CHANGED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "replace-before-retained-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_IDENTITY_CHANGED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "replace-after-acl",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ROOT_REPLACEMENT_BLOCKED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "replace-after-acl",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ROOT_REPLACEMENT_BLOCKED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "replace-after-acl",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ROOT_REPLACEMENT_BLOCKED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "replace-after-acl",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ROOT_REPLACEMENT_BLOCKED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "replace-after-suspended-create",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ROOT_REPLACEMENT_BLOCKED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "replace-after-suspended-create",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ROOT_REPLACEMENT_BLOCKED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "replace-after-suspended-create",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ROOT_REPLACEMENT_BLOCKED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A03",
+      "variantId": "A03-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "replace-after-suspended-create",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ROOT_REPLACEMENT_BLOCKED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "dns-query",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "dns-query",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "dns-query",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "dns-query",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "udp-send",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "udp-send",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "udp-send",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "udp-send",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "loopback-connect",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "loopback-connect",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "loopback-connect",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "loopback-connect",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "listen-bind",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "listen-bind",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "listen-bind",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A04",
+      "variantId": "A04-05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "listen-bind",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "exact-https-operation",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_BROKER_ALLOWED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "exact-https-operation",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_BROKER_ALLOWED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "exact-https-operation",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_BROKER_ALLOWED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "scheme-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_SCHEME_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "scheme-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_SCHEME_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "scheme-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_SCHEME_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "host-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_HOST_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "host-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_HOST_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "host-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_HOST_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "port-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_PORT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "port-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_PORT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "port-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_PORT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "private-address",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_PRIVATE_ADDRESS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "private-address",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_PRIVATE_ADDRESS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "private-address",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_PRIVATE_ADDRESS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-06",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "dns-rebind",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_DNS_REBIND_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-06",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "dns-rebind",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_DNS_REBIND_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "dns-rebind",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_DNS_REBIND_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-07",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "redirect-chain",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_REDIRECT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-07",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "redirect-chain",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_REDIRECT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-07",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "redirect-chain",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_REDIRECT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-08",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "request-limit",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_REQUEST_LIMIT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-08",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "request-limit",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_REQUEST_LIMIT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-08",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "request-limit",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_REQUEST_LIMIT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-09",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "response-limit",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_RESPONSE_LIMIT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-09",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "response-limit",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_RESPONSE_LIMIT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-09",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "response-limit",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_RESPONSE_LIMIT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-10",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "broker-timeout",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_TIMEOUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-10",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "broker-timeout",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_TIMEOUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A05",
+      "variantId": "A05-10",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "broker-timeout",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BROKER_TIMEOUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "direct-child",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "direct-child",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "direct-child",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "direct-child",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "detached-child",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "detached-child",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "detached-child",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "detached-child",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "background-descendant",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "background-descendant",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "background-descendant",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A06",
+      "variantId": "A06-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "background-descendant",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "explicit-breakaway",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BREAKAWAY_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "explicit-breakaway",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BREAKAWAY_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "explicit-breakaway",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BREAKAWAY_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "explicit-breakaway",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BREAKAWAY_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "silent-breakaway",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BREAKAWAY_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "silent-breakaway",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BREAKAWAY_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "silent-breakaway",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BREAKAWAY_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "silent-breakaway",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_BREAKAWAY_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "nested-job",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_JOB_INCOMPATIBLE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "nested-job",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_JOB_INCOMPATIBLE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "nested-job",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_JOB_INCOMPATIBLE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "nested-job",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_JOB_INCOMPATIBLE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "duplicate-job-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "duplicate-job-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "duplicate-job-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "duplicate-job-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "duplicate-control-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "duplicate-control-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "duplicate-control-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "duplicate-control-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-06",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "unlisted-sentinel-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-06",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "unlisted-sentinel-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "unlisted-sentinel-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A07",
+      "variantId": "A07-06",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "unlisted-sentinel-handle",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HANDLE_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "cpu",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_CPU",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "cpu",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_CPU",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "cpu",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_CPU",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "cpu",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_CPU",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "active-process",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_ACTIVE_PROCESS",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "active-process",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_ACTIVE_PROCESS",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "active-process",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_ACTIVE_PROCESS",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "active-process",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_ACTIVE_PROCESS",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "process-memory",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_PROCESS_MEMORY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "process-memory",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_PROCESS_MEMORY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "process-memory",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_PROCESS_MEMORY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "process-memory",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_PROCESS_MEMORY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "job-memory",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_JOB_MEMORY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "job-memory",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_JOB_MEMORY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "job-memory",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_JOB_MEMORY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "job-memory",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_JOB_MEMORY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "output",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "output",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "output",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "output",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-06",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "wall",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_WALL",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-06",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "wall",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_WALL",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "wall",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_WALL",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-06",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "wall",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_WALL",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-07",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "idle",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_IDLE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A08",
+      "variantId": "A08-07",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "idle",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_LIMIT_IDLE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "normal-drain",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_COMPLETED_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "normal-drain",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_COMPLETED_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "normal-drain",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_COMPLETED_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "normal-drain",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_COMPLETED_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "explicit-cancel",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CANCELLED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "explicit-cancel",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CANCELLED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "explicit-cancel",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CANCELLED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "explicit-cancel",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CANCELLED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "session-retire",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SESSION_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "session-retire",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SESSION_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "session-retire",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SESSION_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "session-retire",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SESSION_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "service-shutdown",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SERVICE_SHUTDOWN",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "service-shutdown",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SERVICE_SHUTDOWN",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "service-shutdown",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SERVICE_SHUTDOWN",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "service-shutdown",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SERVICE_SHUTDOWN",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-06",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "service-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SERVICE_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-06",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "service-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SERVICE_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "service-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SERVICE_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-06",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "service-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_SERVICE_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-07",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "host-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-07",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "host-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-07",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "host-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-07",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "host-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-08",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "channel-loss",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CHANNEL_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-08",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "channel-loss",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CHANNEL_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-08",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "channel-loss",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CHANNEL_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A09",
+      "variantId": "A09-08",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "channel-loss",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CHANNEL_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A10",
+      "variantId": "A10-01",
+      "profileId": "HOST",
+      "stimulus": {
+        "descriptor": "length",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_PROTOCOL_INVALID",
+      "expectedSubcode": "length",
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A10",
+      "variantId": "A10-02",
+      "profileId": "HOST",
+      "stimulus": {
+        "descriptor": "oversize",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_PROTOCOL_INVALID",
+      "expectedSubcode": "oversize",
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A10",
+      "variantId": "A10-03",
+      "profileId": "HOST",
+      "stimulus": {
+        "descriptor": "unknown-key",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_PROTOCOL_INVALID",
+      "expectedSubcode": "unknown-key",
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A10",
+      "variantId": "A10-04",
+      "profileId": "HOST",
+      "stimulus": {
+        "descriptor": "duplicate-key",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_PROTOCOL_INVALID",
+      "expectedSubcode": "duplicate-key",
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A10",
+      "variantId": "A10-05",
+      "profileId": "HOST",
+      "stimulus": {
+        "descriptor": "utf8",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_PROTOCOL_INVALID",
+      "expectedSubcode": "utf8",
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A10",
+      "variantId": "A10-06",
+      "profileId": "HOST",
+      "stimulus": {
+        "descriptor": "replay",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_PROTOCOL_INVALID",
+      "expectedSubcode": "replay",
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A10",
+      "variantId": "A10-07",
+      "profileId": "HOST",
+      "stimulus": {
+        "descriptor": "second-launch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_PROTOCOL_INVALID",
+      "expectedSubcode": "second-launch",
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A10",
+      "variantId": "A10-08",
+      "profileId": "HOST",
+      "stimulus": {
+        "descriptor": "secret",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_PROTOCOL_INVALID",
+      "expectedSubcode": "secret",
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A10",
+      "variantId": "A10-09",
+      "profileId": "HOST",
+      "stimulus": {
+        "descriptor": "state",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_PROTOCOL_INVALID",
+      "expectedSubcode": "state",
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "grant-required",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_REQUIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "grant-required",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_REQUIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "grant-required",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_REQUIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "grant-forged",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_FORGED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "grant-forged",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_FORGED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "grant-forged",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_FORGED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "argument-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_ARGUMENT_MISMATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "argument-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_ARGUMENT_MISMATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "argument-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_ARGUMENT_MISMATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "expired",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_EXPIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "expired",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_EXPIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "expired",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_EXPIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "replayed",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "replayed",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "replayed",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-06",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "cross-run",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_CROSS_RUN",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-06",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "cross-run",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_CROSS_RUN",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "cross-run",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_CROSS_RUN",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-07",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "cross-session",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_CROSS_SESSION",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-07",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "cross-session",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_CROSS_SESSION",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-07",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "cross-session",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_CROSS_SESSION",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-08",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "concurrent-reuse",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_CONCURRENT_REUSE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-08",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "concurrent-reuse",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_CONCURRENT_REUSE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A11",
+      "variantId": "A11-08",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "concurrent-reuse",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_GRANT_CONCURRENT_REUSE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A12",
+      "variantId": "A12-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "consent-denied",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CONSENT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A12",
+      "variantId": "A12-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "consent-dismissed",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CONSENT_DISMISSED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A12",
+      "variantId": "A12-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "consent-expired",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CONSENT_EXPIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A12",
+      "variantId": "A12-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "argument-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CONSENT_ARGUMENT_MISMATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A12",
+      "variantId": "A12-05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "replayed",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CONSENT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A12",
+      "variantId": "A12-06",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "synthetic",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CONSENT_SYNTHETIC",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A12",
+      "variantId": "A12-07",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "cross-window",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CONSENT_CROSS_WINDOW",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A12",
+      "variantId": "A12-08",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "cross-session",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CONSENT_CROSS_SESSION",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A12",
+      "variantId": "A12-09",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "concurrent-reuse",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_CONSENT_CONCURRENT_REUSE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A13",
+      "variantId": "A13-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "http-start",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_DIRECT_MUTATION_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A13",
+      "variantId": "A13-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "http-input",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_DIRECT_MUTATION_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A13",
+      "variantId": "A13-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "cross-owner-kill",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_OWNER_MISMATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A13",
+      "variantId": "A13-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "cross-owner-close",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_OWNER_MISMATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "pre-mutation-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ACL_PRISTINE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "pre-mutation-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ACL_PRISTINE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "pre-mutation-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ACL_PRISTINE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "pre-mutation-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ACL_PRISTINE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "post-apply-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ACL_RECOVERED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "post-apply-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ACL_RECOVERED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "post-apply-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ACL_RECOVERED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "post-apply-crash",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ACL_RECOVERED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "sharing-failure",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_SHARING_FAILED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "sharing-failure",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_SHARING_FAILED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "sharing-failure",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_SHARING_FAILED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "sharing-failure",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_SHARING_FAILED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "propagation-failure",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_PROPAGATION_FAILED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "propagation-failure",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_PROPAGATION_FAILED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "propagation-failure",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_PROPAGATION_FAILED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "propagation-failure",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_PROPAGATION_FAILED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "dacl-conflict",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_CONFLICT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "dacl-conflict",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_CONFLICT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "dacl-conflict",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_CONFLICT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "dacl-conflict",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ACL_CONFLICT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-06",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "root-identity-change",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_IDENTITY_CHANGED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-06",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "root-identity-change",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_IDENTITY_CHANGED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "root-identity-change",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_IDENTITY_CHANGED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-06",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "root-identity-change",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_IDENTITY_CHANGED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-07",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "invalid-recovery-journal",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_RECOVERY_JOURNAL_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-07",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "invalid-recovery-journal",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_RECOVERY_JOURNAL_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-07",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "invalid-recovery-journal",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_RECOVERY_JOURNAL_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A14",
+      "variantId": "A14-07",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "invalid-recovery-journal",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_RECOVERY_JOURNAL_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "missing-launcher",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "missing-launcher",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "missing-launcher",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "missing-launcher",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "missing-host",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "missing-host",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "missing-host",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "missing-host",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "extra-native-artifact",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "extra-native-artifact",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "extra-native-artifact",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "extra-native-artifact",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "changed-launcher",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "changed-launcher",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "changed-launcher",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "changed-launcher",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "changed-host",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "changed-host",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "changed-host",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "changed-host",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-06",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "wrong-pe-machine",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-06",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "wrong-pe-machine",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "wrong-pe-machine",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-06",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "wrong-pe-machine",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-07",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "forbidden-import-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-07",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "forbidden-import-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-07",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "forbidden-import-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-07",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "forbidden-import-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-08",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "host-replacement-under-lease",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-08",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "host-replacement-under-lease",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-08",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "host-replacement-under-lease",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-08",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "host-replacement-under-lease",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-09",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "source-toolchain-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-09",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "source-toolchain-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-09",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "source-toolchain-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A15",
+      "variantId": "A15-09",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "source-toolchain-mismatch",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NATIVE_IDENTITY_INVALID",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "unicode-space-workspace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "unicode-space-workspace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "unicode-space-workspace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "unicode-space-workspace",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "separate-fixed-ntfs-vhd",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "separate-fixed-ntfs-vhd",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "separate-fixed-ntfs-vhd",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A16",
+      "variantId": "A16-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "separate-fixed-ntfs-vhd",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A17",
+      "variantId": "A17-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "native-addon",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_SCRIPT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A17",
+      "variantId": "A17-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "worker",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_SCRIPT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A17",
+      "variantId": "A17-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "child-process",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_SCRIPT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A17",
+      "variantId": "A17-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "inspector",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_SCRIPT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A17",
+      "variantId": "A17-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "wasi",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_SCRIPT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A17",
+      "variantId": "A17-06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "filesystem-bypass",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_SCRIPT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A17",
+      "variantId": "A17-07",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "network-bypass",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_SCRIPT_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "authorized-unc",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "authorized-unc",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "authorized-unc",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "authorized-unc",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "mapped-remote-drive",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "mapped-remote-drive",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "mapped-remote-drive",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "mapped-remote-drive",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "local-non-ntfs",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "local-non-ntfs",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "local-non-ntfs",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "local-non-ntfs",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "removable-ntfs",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "removable-ntfs",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "removable-ntfs",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "removable-ntfs",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "reparse-root",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "reparse-root",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "reparse-root",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A18",
+      "variantId": "A18-05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "reparse-root",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_ROOT_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "real-host",
+      "familyId": "A19",
+      "variantId": "A19-01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "e4-brokered-mode",
+        "sourceVariant": null
+      },
+      "expectedCode": "EXEC_NETWORK_PROFILE_UNSUPPORTED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P01",
+      "variantId": "P01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "seam-host-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HOST_BOUND",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P01",
+      "variantId": "P01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "seam-host-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HOST_BOUND",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P01",
+      "variantId": "P01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "seam-host-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HOST_BOUND",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P01",
+      "variantId": "P01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "seam-host-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HOST_BOUND",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P02",
+      "variantId": "P02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "token-match",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_TOKEN_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P02",
+      "variantId": "P02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "token-match",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_TOKEN_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P02",
+      "variantId": "P02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "token-match",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_TOKEN_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P02",
+      "variantId": "P02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "token-match",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_TOKEN_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P03",
+      "variantId": "P03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "job-policy-readback",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P03",
+      "variantId": "P03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "job-policy-readback",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P03",
+      "variantId": "P03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "job-policy-readback",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P03",
+      "variantId": "P03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "job-policy-readback",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P04",
+      "variantId": "P04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "environment-exact",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_EXACT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P04",
+      "variantId": "P04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "environment-exact",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_EXACT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P04",
+      "variantId": "P04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "environment-exact",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_EXACT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P04",
+      "variantId": "P04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "environment-exact",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_EXACT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P05",
+      "variantId": "P05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": "A16-01"
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P05",
+      "variantId": "P05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": "A16-01"
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P05",
+      "variantId": "P05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": "A16-01"
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P05",
+      "variantId": "P05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": "A16-01"
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P06",
+      "variantId": "P06",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": "A02-01"
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P06",
+      "variantId": "P06",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": "A02-01"
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P06",
+      "variantId": "P06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": "A02-01"
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P06",
+      "variantId": "P06",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": "A02-01"
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P07",
+      "variantId": "P07",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": "A04-02"
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P07",
+      "variantId": "P07",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": "A04-02"
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P07",
+      "variantId": "P07",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": "A04-02"
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P07",
+      "variantId": "P07",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": "A04-02"
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P08",
+      "variantId": "P08",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": "A06-02"
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P08",
+      "variantId": "P08",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": "A06-02"
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P08",
+      "variantId": "P08",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": "A06-02"
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P08",
+      "variantId": "P08",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": "A06-02"
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P09",
+      "variantId": "P09",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "output-limit",
+        "sourceVariant": "A08-05"
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P09",
+      "variantId": "P09",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "output-limit",
+        "sourceVariant": "A08-05"
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P09",
+      "variantId": "P09",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "output-limit",
+        "sourceVariant": "A08-05"
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P09",
+      "variantId": "P09",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "output-limit",
+        "sourceVariant": "A08-05"
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P10",
+      "variantId": "P10",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": "A09-03"
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P10",
+      "variantId": "P10",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": "A09-03"
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P10",
+      "variantId": "P10",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": "A09-03"
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P10",
+      "variantId": "P10",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": "A09-03"
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P11",
+      "variantId": "P11",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "grant-or-consent-replay",
+        "sourceVariant": "A11-05"
+      },
+      "expectedCode": "EXEC_GRANT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P11",
+      "variantId": "P11",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "grant-or-consent-replay",
+        "sourceVariant": "A11-05"
+      },
+      "expectedCode": "EXEC_GRANT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P11",
+      "variantId": "P11",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "grant-or-consent-replay",
+        "sourceVariant": "A11-05"
+      },
+      "expectedCode": "EXEC_GRANT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P11",
+      "variantId": "P11",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "grant-or-consent-replay",
+        "sourceVariant": "A12-05"
+      },
+      "expectedCode": "EXEC_CONSENT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P12",
+      "variantId": "P12",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "host-crash-cleanup",
+        "sourceVariant": "A09-07"
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P12",
+      "variantId": "P12",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "host-crash-cleanup",
+        "sourceVariant": "A09-07"
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P12",
+      "variantId": "P12",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "host-crash-cleanup",
+        "sourceVariant": "A09-07"
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "electron",
+      "familyId": "P12",
+      "variantId": "P12",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "host-crash-cleanup",
+        "sourceVariant": "A09-07"
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P01",
+      "variantId": "P01",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "seam-host-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HOST_BOUND",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P01",
+      "variantId": "P01",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "seam-host-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HOST_BOUND",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P01",
+      "variantId": "P01",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "seam-host-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HOST_BOUND",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P01",
+      "variantId": "P01",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "seam-host-digest",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_HOST_BOUND",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P02",
+      "variantId": "P02",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "token-match",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_TOKEN_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P02",
+      "variantId": "P02",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "token-match",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_TOKEN_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P02",
+      "variantId": "P02",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "token-match",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_TOKEN_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P02",
+      "variantId": "P02",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "token-match",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_TOKEN_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P03",
+      "variantId": "P03",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "job-policy-readback",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P03",
+      "variantId": "P03",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "job-policy-readback",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P03",
+      "variantId": "P03",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "job-policy-readback",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P03",
+      "variantId": "P03",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "job-policy-readback",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_JOB_MATCH",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P04",
+      "variantId": "P04",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "environment-exact",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_EXACT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P04",
+      "variantId": "P04",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "environment-exact",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_EXACT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P04",
+      "variantId": "P04",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "environment-exact",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_EXACT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P04",
+      "variantId": "P04",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "environment-exact",
+        "sourceVariant": null
+      },
+      "expectedCode": "OBS_ENV_EXACT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P05",
+      "variantId": "P05",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": "A16-01"
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P05",
+      "variantId": "P05",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": "A16-01"
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P05",
+      "variantId": "P05",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": "A16-01"
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P05",
+      "variantId": "P05",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "ascii-workspace",
+        "sourceVariant": "A16-01"
+      },
+      "expectedCode": "OBS_POSITIVE_COMPLETE",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P06",
+      "variantId": "P06",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": "A02-01"
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P06",
+      "variantId": "P06",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": "A02-01"
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P06",
+      "variantId": "P06",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": "A02-01"
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P06",
+      "variantId": "P06",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "dotdot-outside",
+        "sourceVariant": "A02-01"
+      },
+      "expectedCode": "OBS_FS_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P07",
+      "variantId": "P07",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": "A04-02"
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P07",
+      "variantId": "P07",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": "A04-02"
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P07",
+      "variantId": "P07",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": "A04-02"
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P07",
+      "variantId": "P07",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "external-tcp",
+        "sourceVariant": "A04-02"
+      },
+      "expectedCode": "OBS_NETWORK_DENIED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P08",
+      "variantId": "P08",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": "A06-02"
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P08",
+      "variantId": "P08",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": "A06-02"
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P08",
+      "variantId": "P08",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": "A06-02"
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P08",
+      "variantId": "P08",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "grandchild",
+        "sourceVariant": "A06-02"
+      },
+      "expectedCode": "OBS_JOB_EMPTY",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P09",
+      "variantId": "P09",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "output-limit",
+        "sourceVariant": "A08-05"
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P09",
+      "variantId": "P09",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "output-limit",
+        "sourceVariant": "A08-05"
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P09",
+      "variantId": "P09",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "output-limit",
+        "sourceVariant": "A08-05"
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P09",
+      "variantId": "P09",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "output-limit",
+        "sourceVariant": "A08-05"
+      },
+      "expectedCode": "EXEC_LIMIT_OUTPUT",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P10",
+      "variantId": "P10",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": "A09-03"
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P10",
+      "variantId": "P10",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": "A09-03"
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P10",
+      "variantId": "P10",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": "A09-03"
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P10",
+      "variantId": "P10",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "owner-retire",
+        "sourceVariant": "A09-03"
+      },
+      "expectedCode": "EXEC_OWNER_RETIRED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P11",
+      "variantId": "P11",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "grant-or-consent-replay",
+        "sourceVariant": "A11-05"
+      },
+      "expectedCode": "EXEC_GRANT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P11",
+      "variantId": "P11",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "grant-or-consent-replay",
+        "sourceVariant": "A11-05"
+      },
+      "expectedCode": "EXEC_GRANT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P11",
+      "variantId": "P11",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "grant-or-consent-replay",
+        "sourceVariant": "A11-05"
+      },
+      "expectedCode": "EXEC_GRANT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P11",
+      "variantId": "P11",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "grant-or-consent-replay",
+        "sourceVariant": "A12-05"
+      },
+      "expectedCode": "EXEC_CONSENT_REPLAYED",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P12",
+      "variantId": "P12",
+      "profileId": "E1",
+      "stimulus": {
+        "descriptor": "host-crash-cleanup",
+        "sourceVariant": "A09-07"
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P12",
+      "variantId": "P12",
+      "profileId": "E2",
+      "stimulus": {
+        "descriptor": "host-crash-cleanup",
+        "sourceVariant": "A09-07"
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P12",
+      "variantId": "P12",
+      "profileId": "E3",
+      "stimulus": {
+        "descriptor": "host-crash-cleanup",
+        "sourceVariant": "A09-07"
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    },
+    {
+      "layer": "packaged",
+      "familyId": "P12",
+      "variantId": "P12",
+      "profileId": "E4",
+      "stimulus": {
+        "descriptor": "host-crash-cleanup",
+        "sourceVariant": "A09-07"
+      },
+      "expectedCode": "EXEC_HOST_LOST",
+      "expectedSubcode": null,
+      "nativeProducerRequired": true
+    }
+  ],
+  "canonicalPayloadSha256": "96a3bfc2807aa60b9862a44e7fb0b83237176877d0d25b17bf93d787916baec8"
+}

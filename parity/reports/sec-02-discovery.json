@@ -1,0 +1,186 @@
+{
+  "reportVersion": 1,
+  "task": "SEC-02",
+  "persona": "architect",
+  "state": "discovery-complete-awaiting-architecture-freeze",
+  "generatedAt": "2026-07-21T17:16:42+08:00",
+  "canonical": "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md#SEC-02",
+  "baselineCandidate": {
+    "buildId": "0.1.0+local.bc9570de9e02",
+    "sourceDigest": "bc9570de9e026e449affaaaa881b1e6265943937c37520a5cbb3def5a845b4a1",
+    "sourceInputFiles": 177,
+    "sec01UserConfirmed": true
+  },
+  "oracle": {
+    "availableInProject": true,
+    "toolResult": "unavailable",
+    "reason": "oracle_query is bound to the Lux host cwd and could not open F:\\mini-lux\\LUX.oracle; discovery used current source directly."
+  },
+  "rootCause": {
+    "summary": "CapabilityContext.allowedRoots is immutable metadata but no unified execution-point PathPolicy consumes it.",
+    "evidence": [
+      "src/index.ts:175-191 injects Settings roots into the effective Persona.",
+      "src/capability-broker.ts:744-779 snapshots roots and serializes them into executor environment.",
+      "src/tools/filesystem.ts:118-121 defines an unused startsWith-based isPathAllowed helper.",
+      "Most path sinks accept absolute paths or resolve relative paths without capability containment."
+    ]
+  },
+  "currentBoundaries": {
+    "fileViewer": {
+      "status": "partial",
+      "strengths": [
+        "Existing paths use root realpath, target realpath and component-aware path.relative containment.",
+        "Unapproved UNC absolute paths are rejected before arbitrary SMB access in resolveAbsolute."
+      ],
+      "gaps": [
+        "Relative traversal may reach realpath before lexical containment.",
+        "Local root-external absolute paths may be probed before denial.",
+        "preview/content/reveal validate a path and later reopen or spawn by string, leaving TOCTOU windows.",
+        "Settings roots accept Windows namespace, ADS and trailing-alias forms."
+      ]
+    },
+    "capabilityBroker": {
+      "status": "metadata-only",
+      "gaps": [
+        "Roots are raw string-set identities rather than canonical root identities.",
+        "Child attenuation compares exact raw strings.",
+        "ToolInvocationServices exposes no capability-scoped path gateway.",
+        "Direct operations bind arguments but do not enforce path containment."
+      ]
+    }
+  },
+  "pathSurfaces": [
+    {
+      "category": "generic-read-search",
+      "files": ["src/tools/filesystem.ts", "src/tools/read-repo.ts"],
+      "operations": ["list_directory", "read_file", "search_files", "grep", "read_repo"],
+      "severity": "critical",
+      "gaps": ["absolute path allowed", "relative traversal", "UNC access", "junction/symlink escape", "no capability root check"]
+    },
+    {
+      "category": "generic-write-edit",
+      "files": ["src/tools/filesystem.ts"],
+      "operations": ["write_file", "edit_file"],
+      "severity": "critical",
+      "gaps": ["string deletion of '..'", "other-drive replacement", "junction parent", "uncontrolled overwrite", "TOCTOU"]
+    },
+    {
+      "category": "download-office",
+      "files": ["src/tools/download-tool.ts", "src/tools/writer.ts"],
+      "operations": ["download", "create_docx", "create_xlsx"],
+      "severity": "critical",
+      "gaps": ["filename escape", "other-drive replacement", "unverified nearest parent", "junction parent", "path-based library reopen"]
+    },
+    {
+      "category": "external-content",
+      "files": ["src/tools/image-helper.ts", "src/oracle.ts", "src/tools/read-repo.ts"],
+      "operations": ["image_helper", "oracle_save", "read_repo"],
+      "severity": "critical",
+      "gaps": ["root-external read", "unapproved UNC", "content may be sent to provider", "process CWD escape"]
+    },
+    {
+      "category": "managed-definitions",
+      "files": ["src/persona.ts", "src/tools/save-persona.ts", "src/playbook.ts"],
+      "operations": ["Persona load/save", "Skill load", "Playbook create/read/execute"],
+      "severity": "critical",
+      "gaps": ["name traversal", "symlink follow", "check-then-write", "root-external prompt or JSON injection"]
+    },
+    {
+      "category": "cwd",
+      "files": ["src/tools/shell.ts", "src/tools/script.ts", "src/tools/terminal-tools.ts", "src/terminal.ts", "src/index.ts"],
+      "operations": ["execute_command CWD", "script initial CWD", "shell_start CWD", "HTTP Terminal start CWD"],
+      "severity": "critical",
+      "gaps": ["root-external CWD", "junction CWD", "process starts before capability path enforcement"]
+    },
+    {
+      "category": "watchers",
+      "files": ["src/tools/advanced-tools.ts", "src/wire.ts"],
+      "operations": ["poll_subscribe"],
+      "severity": "high",
+      "gaps": ["arbitrary watch path", "global ownerless resource", "no authority revoke lifecycle"]
+    },
+    {
+      "category": "http-file-control",
+      "files": ["src/file-viewer.ts", "src/index.ts"],
+      "operations": ["list", "preview", "resolve", "content", "reveal"],
+      "severity": "high",
+      "gaps": ["split validation/open", "root-external local probe", "string path stream", "mutable Settings root reread"]
+    },
+    {
+      "category": "bootstrap-paths",
+      "files": ["src/runtime-paths.ts", "src/config.ts", "src/db.ts", "src/embedding.ts", "src/index.ts"],
+      "operations": ["APP_ROOT", "USER_DATA", "CONFIG", "DATA", "PUBLIC", "MODELS", "Persona/Skill/Playbook/Oracle roots"],
+      "severity": "high",
+      "gaps": ["operator environment can redirect", "disk config load bypasses HTTP validation", "public static root can be redirected in source mode"]
+    }
+  ],
+  "windowsAttackClasses": [
+    "dot-dot traversal and mixed separators",
+    "other drive and drive-relative paths",
+    "unapproved and sibling UNC shares",
+    "extended and device namespaces (\\\\?\\, \\\\.\\, \\??\\, GLOBALROOT)",
+    "case aliases and sibling-prefix",
+    "trailing dots and spaces",
+    "alternate data streams and extra colons",
+    "DOS device names",
+    "symlink and junction escape",
+    "root replacement",
+    "nearest-existing-parent escape",
+    "validation-to-open and validation-to-publish TOCTOU"
+  ],
+  "requiredArchitectureProperties": [
+    "Capability roots are the only model/direct-operation authorization source.",
+    "Windows-special syntax is rejected before any filesystem/network/process side effect.",
+    "Roots are canonical identities, not raw strings.",
+    "Containment uses lexical and canonical component-aware relative checks.",
+    "Existing reads bind validation and use to one opened object identity.",
+    "New files validate the nearest existing parent and rollback on identity change.",
+    "All path surfaces use one gateway, including direct APIs and managed Persona/Skill/Playbook/Oracle roots.",
+    "Long-lived watchers are owner-bound and revoked before runtime replacement.",
+    "Denials emit redacted structured audit events with stable codes and zero side effects.",
+    "Shell/Script/Terminal initial CWD is SEC-02; post-start filesystem isolation remains SEC-03."
+  ],
+  "governanceFindings": {
+    "cumulativeManifestGap": {
+      "status": "must-fix-before-sec02-candidate",
+      "missingFromGov03Unit": [
+        "tests/unit/approval-response.test.mjs",
+        "tests/unit/playbook-owner.test.mjs"
+      ],
+      "sec01AcceptanceImpact": "The accepted SEC-01 official and independent full reports executed both files. The gap affects GOV-03 cumulative monotonicity, not the existence of SEC-01 standalone evidence.",
+      "requiredContract": "For each layer, SEC-01 must be a subset of SEC-02 and SEC-02 a subset of GOV-03."
+    },
+    "pipelineDefinitionDigestGap": {
+      "status": "must-fix-before-sec02-candidate",
+      "problem": "The named pipeline digest omits ordinary tests, manifests, coverage scope and core GOV-03 runner/schema files even though Source Digest binds them.",
+      "requiredFix": "Expand the pipeline definition predicate so test and gate-definition changes alter pipelineDefinitionDigest and releaseCandidateId."
+    },
+    "gov04Integration": {
+      "decision": "Keep the frozen 16-step GOV-04 order; make GOV-03 cumulatively execute SEC-02 rather than adding a duplicate step.",
+      "packageRule": "Extend the existing Electron and installed smoke tests; do not add a second packaged test file."
+    }
+  },
+  "scopeBoundary": {
+    "sec02Owns": [
+      "canonical path syntax and containment",
+      "existing/new target authorization",
+      "path-object identity and deterministic TOCTOU handling",
+      "initial CWD authorization",
+      "managed definition paths",
+      "path denial audit observation"
+    ],
+    "laterTasksOwn": [
+      "SEC-03: OS sandbox, process environment, command/script post-start filesystem and network confinement",
+      "SEC-04: local control-plane token/IPC and short-lived UI gesture grants",
+      "SEC-06: durable structured audit storage"
+    ]
+  },
+  "blockingFindings": [
+    "No unified PathPolicy exists.",
+    "Most model and direct path sinks do not consume capability roots.",
+    "Windows aliases, reparse points and TOCTOU are not uniformly controlled.",
+    "Path denials do not yet provide machine-verifiable zero-side-effect audit evidence.",
+    "Cumulative test manifests are not yet monotonic across completed security tasks."
+  ],
+  "next": "Freeze parity/SEC-02-PATH-POLICY-ARCHITECTURE.md and a fixed executable attack matrix before implementation."
+}

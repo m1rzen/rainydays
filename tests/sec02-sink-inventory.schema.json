@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mini-lux.local/schema/sec02-sink-inventory-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "task", "detectorPolicySha256", "reviewPolicySha256", "dialectCheckerSha256", "dialectPolicySha256", "dialectImportSetSha256", "runtimeSinkSetSha256", "sourceClosure", "files", "runtimeEvidence", "sinks", "packageProjection", "canonicalPayloadSha256"],
+  "properties": {
+    "schemaVersion": {"const": 2},
+    "task": {"const": "SEC-02"},
+    "detectorPolicySha256": {"$ref": "#/$defs/sha256"},
+    "reviewPolicySha256": {"$ref": "#/$defs/sha256"},
+    "dialectCheckerSha256": {"$ref": "#/$defs/sha256"},
+    "dialectPolicySha256": {"$ref": "#/$defs/sha256"},
+    "dialectImportSetSha256": {"$ref": "#/$defs/sha256"},
+    "runtimeSinkSetSha256": {"$ref": "#/$defs/sha256"},
+    "sourceClosure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain", "executableFileCount", "executableManifestSha256", "dialectImportCount", "dialectExceptionCount"],
+      "properties": {
+        "domain": {"const": "mini-lux/sec02/restricted-runtime-dialect/v1"},
+        "executableFileCount": {"type": "integer", "minimum": 1},
+        "executableManifestSha256": {"$ref": "#/$defs/sha256"},
+        "dialectImportCount": {"type": "integer", "minimum": 1},
+        "dialectExceptionCount": {"type": "integer", "minimum": 0}
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sourcePath", "bytes", "sha256", "role", "packageExpectation"],
+        "properties": {
+          "sourcePath": {"$ref": "#/$defs/path"},
+          "bytes": {"type": "integer", "minimum": 0},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "role": {"enum": ["product-runtime", "source-runtime", "electron-runtime", "package-hook", "build-governance", "parity-governance", "test-only", "renderer-vendored", "configuration-only"]},
+          "packageExpectation": {"enum": ["compiled-to-asar", "included-in-asar", "builder-hook-only", "excluded-from-asar"]}
+        }
+      }
+    },
+    "runtimeEvidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "layer", "executionContract", "testFile", "testFileSha256", "testCaseId"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]+$"},
+          "layer": {"enum": ["contract", "integration", "electron", "packaged"]},
+          "executionContract": {"enum": ["node-test-file-pass", "sec02-receipt", "installed-parent-scan"]},
+          "testFile": {"$ref": "#/$defs/path"},
+          "testFileSha256": {"$ref": "#/$defs/sha256"},
+          "testCaseId": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "sinks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "occurrence", "sourcePath", "fileSha256", "line", "column", "nodeKind", "container", "family", "api", "pathOperands", "normalizedNodeSha256", "executionClass", "packageExpectation", "binding"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^sink-[a-f0-9]{24}$"},
+          "occurrence": {"type": "integer", "minimum": 1},
+          "sourcePath": {"$ref": "#/$defs/path"},
+          "fileSha256": {"$ref": "#/$defs/sha256"},
+          "line": {"type": "integer", "minimum": 1},
+          "column": {"type": "integer", "minimum": 1},
+          "nodeKind": {"type": "string", "minLength": 1},
+          "container": {"type": "string", "minLength": 1},
+          "family": {"enum": ["node-fs", "child-process", "worker", "module-loader", "electron-path-api", "electron-path-property", "express-path-api", "third-party-path-api", "third-party-path-property", "unresolved-governed-call"]},
+          "api": {"type": "string", "minLength": 1},
+          "pathOperands": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "normalizedNodeSha256": {"$ref": "#/$defs/sha256"},
+          "executionClass": {"enum": ["product-runtime", "source-runtime", "electron-runtime", "package-hook", "build-governance", "parity-governance", "test-only", "renderer-vendored", "configuration-only"]},
+          "packageExpectation": {"enum": ["compiled-to-asar", "included-in-asar", "builder-hook-only", "excluded-from-asar"]},
+          "binding": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "anchor", "evidenceIds", "operands"],
+            "properties": {
+              "kind": {"enum": ["adapter-internal", "bootstrap-adapter", "runtime-canary", "worker-byte-only", "static-module-loader", "build-governance", "test-only", "configuration-only"]},
+              "anchor": {"type": "string", "minLength": 1},
+              "evidenceIds": {"type": "array", "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]+$"}, "uniqueItems": true},
+              "operands": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["selector", "classification", "anchor"],
+                  "properties": {
+                    "selector": {"type": "string", "minLength": 1},
+                    "classification": {"type": "string", "minLength": 1},
+                    "anchor": {"type": "string", "minLength": 1}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "packageProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stageValidator", "asarValidator", "installedOwner"],
+      "properties": {
+        "stageValidator": {"const": "scripts/electron-stage-integrity.mjs"},
+        "asarValidator": {"const": "scripts/electron-asar-integrity.mjs"},
+        "installedOwner": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["observationId", "testFile", "testCaseId"],
+          "properties": {
+            "observationId": {"const": "SEC02-P36-packaged-asar-bound"},
+            "testFile": {"const": "tests/packaged/installed-smoke.test.mjs"},
+            "testCaseId": {"const": "current Windows installer repeats identity, persistence and cleanup smoke"}
+          }
+        }
+      }
+    },
+    "canonicalPayloadSha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "path": {"type": "string", "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9_.@+~-]+(?:/[A-Za-z0-9_.@+~ -]+)*$"}
+  }
+}

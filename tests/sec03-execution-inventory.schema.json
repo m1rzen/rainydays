@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mini-lux.local/schema/sec03-execution-inventory-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "task", "architectureSha256", "scannerSha256", "crosscheckSha256", "policySha256", "sourceSetSha256", "files", "sites", "violations", "migrated", "canonicalPayloadSha256"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "task": {"const": "SEC-03"},
+    "architectureSha256": {"const": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1"},
+    "scannerSha256": {"$ref": "#/$defs/sha256"},
+    "crosscheckSha256": {"$ref": "#/$defs/sha256"},
+    "policySha256": {"$ref": "#/$defs/sha256"},
+    "sourceSetSha256": {"$ref": "#/$defs/sha256"},
+    "files": {"type": "array", "items": {"$ref": "#/$defs/file"}},
+    "sites": {"type": "array", "items": {"$ref": "#/$defs/site"}},
+    "violations": {"type": "array", "items": {"$ref": "#/$defs/violation"}},
+    "migrated": {"type": "boolean"},
+    "canonicalPayloadSha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "file": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourcePath", "bytes", "sha256", "executionClass"],
+      "properties": {
+        "sourcePath": {"$ref": "#/$defs/path"}, "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "executionClass": {"enum": ["product-runtime", "electron-runtime", "native-host", "build-test"]}
+      }
+    },
+    "site": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "occurrence", "sourcePath", "line", "column", "nodeKind", "container", "family", "api", "operands", "normalizedNodeSha256", "executionClass", "classification"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^exec-[a-f0-9]{24}$"}, "occurrence": {"type": "integer", "minimum": 1},
+        "sourcePath": {"$ref": "#/$defs/path"}, "line": {"type": "integer", "minimum": 1}, "column": {"type": "integer", "minimum": 1},
+        "nodeKind": {"type": "string", "minLength": 1}, "container": {"type": "string", "minLength": 1},
+        "family": {"enum": ["child-process", "worker", "electron-utility", "native-addon", "process-environment", "network", "unknown-execution-sink"]},
+        "api": {"type": "string", "minLength": 1}, "operands": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "normalizedNodeSha256": {"$ref": "#/$defs/sha256"},
+        "executionClass": {"enum": ["product-runtime", "electron-runtime", "native-host", "build-test"]},
+        "classification": {"enum": ["governed-adapter", "fixed-purpose-production", "build-test", "native-host-adapter", "unclassified"]}
+      }
+    },
+    "violation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "sourcePath", "line", "detail"],
+      "properties": {
+        "code": {"enum": ["UNCLASSIFIED_EXECUTION_SINK", "GOVERNED_REEXPORT", "CALLABLE_ESCAPE", "UNSUPPORTED_RUNTIME_DIALECT", "E1_E4_DIRECT_SINK", "ALLOWLIST_DRIFT"]},
+        "sourcePath": {"$ref": "#/$defs/path"}, "line": {"type": "integer", "minimum": 1}, "detail": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

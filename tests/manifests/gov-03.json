@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "taskId": "GOV-03",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["planner", "architect", "developer", "debugger", "reviewer"],
+  "changedRuntimeFiles": ["electron/main.cjs"],
+  "coverageExemptions": {
+    "electron/main.cjs": {
+      "reason": "Electron main-process V8 is outside the Node c8 population",
+      "evidenceLayer": "electron"
+    }
+  },
+  "layers": {
+    "unit": ["tests/unit/framework.test.mjs"],
+    "contract": [
+      "tests/contract/lux-baseline.test.mjs",
+      "tests/unit/capability-broker.test.mjs",
+      "tests/unit/terminal-owner.test.mjs",
+      "tests/contract/sec01-boundaries.test.mjs",
+      "tests/contract/sec01-attack-contract.test.mjs"
+    ],
+    "integration": [
+      "tests/integration/sec01-agent.test.mjs",
+      "tests/integration/sec01-terminal-owner.test.mjs",
+      "tests/integration/version-model.test.mjs"
+    ],
+    "electron": ["tests/electron/desktop-smoke.test.mjs"],
+    "packaged": ["tests/packaged/installed-smoke.test.mjs"]
+  }
+}

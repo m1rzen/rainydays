@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "taskId": "GOV-04",
+  "toolchain": {
+    "node": "24.14.1",
+    "npm": "11.11.0",
+    "typescript": "5.7.3",
+    "eslint": "10.7.0",
+    "c8": "10.1.3"
+  },
+  "sca": {
+    "registry": "https://registry.npmjs.org",
+    "auditReportVersion": 2,
+    "maximumCritical": 0,
+    "maximumHigh": 0,
+    "exceptions": []
+  },
+  "secretScan": {
+    "tool": "gitleaks",
+    "version": "8.30.1",
+    "windowsX64ZipUrl": "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_windows_x64.zip",
+    "windowsX64ZipSha256": "d29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e",
+    "windowsX64ExecutableSha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c",
+    "redactionPercent": 100,
+    "allowlist": []
+  },
+  "signature": {
+    "unsignedTestStatus": "NotSigned",
+    "trustedStatus": "Valid",
+    "requireTimestamp": true,
+    "signerAllowlistPath": "parity/policies/gov-04-signer-allowlist.json"
+  },
+  "trustedRelease": {
+    "state": "unconfigured",
+    "provider": "github-actions",
+    "repository": null,
+    "workflow": ".github/workflows/gov-04-trusted-release.yml",
+    "event": "workflow_dispatch",
+    "environment": "mini-lux-trusted-release",
+    "requireProtectedRef": true
+  },
+  "artifactRetentionDays": {
+    "reports": 30,
+    "unsignedDiagnostic": 7,
+    "trustedRelease": 90
+  },
+  "retry": {
+    "maximumAttemptsPerStep": 1,
+    "allowWithinRunRetry": false
+  }
+}

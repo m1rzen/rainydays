@@ -1,0 +1,46 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-03",
+  "persona": "architect",
+  "state": "frozen-for-implementation",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "architecture": {
+    "path": "parity/GOV-03-TEST-ARCHITECTURE.md",
+    "lines": 335,
+    "bytes": 21199,
+    "sha256": "f551acf9509699f9e784c9db3a0598e256949f2c8010e41fdf70f3aa84564598"
+  },
+  "planning": {
+    "discovery": "parity/reports/gov-03-discovery.json",
+    "plan": "parity/reports/gov-03-plan.json",
+    "batches": ["framework-core", "five-layer-corrections", "honest-coverage", "fault-gate-selftest", "stability", "formal-package", "independent-gates"]
+  },
+  "frozenDecisions": [
+    "Use node:test and one direct lockfile-pinned c8 dependency only",
+    "One c8 --all invocation with exact includes and fresh raw output",
+    "Coverage gate reads integer counters; missing, zero-denominator, stale or remapped data fails closed",
+    "Security branches require both aggregate and per-file 90 percent",
+    "GOV-02 integration engine must not write root formal artifacts",
+    "Electron compiled-dist switch accepts only exact value 1 in non-packaged mode and reuses packaged server path",
+    "Electron expectations derive from build-info and both launches repeat identity, 401, current session and cleanup checks",
+    "Packaged smoke requires exact filename plus package-run hash manifest and structured preflight failures",
+    "Non-Windows packaged status is unsupported and cannot satisfy full acceptance",
+    "Changed runtime files require governed coverage or an explicit reviewed E2E exemption",
+    "All reports are sanitized, schema-validated and atomically published",
+    "GOV-04 CI, lint, SCA, signing and artifact upload remain out of scope"
+  ],
+  "implementationBlockersResolvedByContract": [
+    "Rounded coverage percentage ambiguity",
+    "Root artifact mutation by integration tests",
+    "Unused Electron E2E environment switch",
+    "Tooltip misreported as window title",
+    "Historical installer override bypass",
+    "Skipped packaged test misreported as pass",
+    "Electron main coverage-governance contradiction"
+  ],
+  "verdict": "ready-for-developer"
+}

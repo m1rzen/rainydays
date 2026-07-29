@@ -1,0 +1,108 @@
+{
+  "reportVersion": 3,
+  "task": "GOV-04",
+  "persona": "reviewer",
+  "generatedAt": "2026-07-17T15:36:43.000Z",
+  "state": "local-implementation-verified-final-acceptance-blocked",
+  "candidateReviewed": "e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c",
+  "developerReport": {
+    "path": "parity/reports/gov-04-developer-verification.json",
+    "currentSha256": "833edc73937e6c2fe1df157417125cc3774a73a88d879a00b063464f7caf5722",
+    "previousReviewerReferencedSha256": "c8391e54a07b1ebd9120ccae6f037e8a69b9480e0c3020b388e4a419782636ef",
+    "matchesPreviousReviewerBinding": false,
+    "trustedAsAuthority": false
+  },
+  "independentlyVerified": {
+    "candidateIdentityRecomputed": true,
+    "faultGate": {
+      "command": "npm run test:gov04:self",
+      "state": "passed",
+      "scenarios": "23/23"
+    },
+    "staticGates": {
+      "lint": "passed-zero-warnings",
+      "typecheck": "passed"
+    },
+    "officialSca": {
+      "registry": "https://registry.npmjs.org",
+      "production": {
+        "critical": 0,
+        "high": 0,
+        "total": 0,
+        "dependencies": 675
+      },
+      "full": {
+        "critical": 0,
+        "high": 0,
+        "total": 0,
+        "dependencies": 675
+      }
+    },
+    "mergeRun": {
+      "runId": "b2c3ac69-2df0-4513-83dc-b07c249f388d",
+      "reportSha256": "51cb5402ae747a9fdb919913f289e5e5fcb225fdac2de80a364bedb959ffd988",
+      "markerValid": true,
+      "reportSchemaValid": true,
+      "candidateMatchesCurrentSource": true,
+      "stepsPassedOnce": "16/16",
+      "childEvidenceHashesMatched": "11/11",
+      "artifact": {
+        "bytes": 245339253,
+        "sha256": "56898f3c2eed4d1c48ddaf05131421ba9c04023a61425500a0ba969d221d4b48",
+        "hashRecomputed": true,
+        "authenticodeStatus": "NotSigned",
+        "artifactClass": "test-only",
+        "trust": "untrusted",
+        "releaseEligible": false
+      },
+      "packagedSmokePassed": true,
+      "cleanupPassed": true,
+      "provenance": "synthetic-local-git-fixture-only"
+    },
+    "trustedReleaseNegativeProof": {
+      "runId": "fba36ef4-ebc1-420a-86fc-b520541f3ccb",
+      "reportSha256": "39091778ba6c7a4972cedc42fec12aeec31bde054bfb5bb33e2867160641e71d",
+      "markerValid": true,
+      "state": "failed",
+      "releaseEligible": false,
+      "firstFailure": "prepare",
+      "failureClass": "TRUSTED_PROVENANCE_UNVERIFIED",
+      "executedSteps": ["prepare", "finalize"],
+      "cleanupPassed": true
+    }
+  },
+  "localEvidenceRetentionFinding": {
+    "id": "REV3-GOV04-01",
+    "severity": "governance-documentation-blocker",
+    "title": "Developer verification links are not reproducible from the stated workspace paths",
+    "facts": [
+      "The current Developer report byte hash differs from the hash recorded in reviewer verdict 02.",
+      "The Developer report names test-results/gov04-retry-prior-final and test-results/gov04-retry-bound-final, but neither directory exists in the current workspace.",
+      "The immutable raw reports, marker, child evidence and frozen installer for the reviewed merge run were still available in isolated evidence storage and independently rehashed during this review."
+    ],
+    "requiredResolution": "Regenerate the Developer verification report against the current bytes and preserve/export the verified evidence bundle to the configured retained evidence store before treating the Developer report as a durable audit index."
+  },
+  "externalAcceptanceBlockers": [
+    {
+      "id": "REV3-GOV04-02",
+      "severity": "governance-blocker",
+      "title": "No authenticated GitHub service-side execution or enforcement evidence",
+      "requiredEvidence": [
+        "A configured GitHub repository identity and immutable full-history hosted run for the governed candidate.",
+        "GitHub service evidence for the protected target ref, required GOV-04 checks/ruleset and active workflow/CODEOWNERS policy.",
+        "Evidence that the mini-lux-trusted-release environment is protected and used by the trusted workflow."
+      ]
+    },
+    {
+      "id": "REV3-GOV04-03",
+      "severity": "release-blocker",
+      "title": "Trusted signing policy remains intentionally unconfigured",
+      "requiredEvidence": [
+        "REL-01-approved Authenticode signer thumbprint and subject configured in the allowlist.",
+        "A valid timestamped Authenticode and signtool verification in a governed hosted trusted-release run."
+      ]
+    }
+  ],
+  "reviewerVerdict": "LOCAL_IMPLEMENTATION_PASS_FINAL_ACCEPTANCE_BLOCKED",
+  "userStatus": "not-reviewed"
+}

@@ -1,0 +1,79 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-03",
+  "persona": "reviewer",
+  "generatedAt": "2026-07-17T04:21:54.000Z",
+  "verdict": "PASS",
+  "state": "user-confirmed",
+  "reviewedBuild": {
+    "appVersion": "0.1.0",
+    "buildId": "0.1.0+local.2555ee8076f2",
+    "sourceDigest": "2555ee8076f235a00f34d05f644af67aaa715e4f445532d65c8e79c40682a8f9",
+    "buildInfoSha256": "5610a3051b5a037c8bd3ed239c189286a6e0b5c7b4ad9e3221f2ced4d71e96c2",
+    "distIntegritySha256": "8bbead9c24ad51e2b8ae8481b70bee964f5169c737d4e80c7c6db6f35a72daf4"
+  },
+  "reviewedArtifact": {
+    "path": "release/Mini-Lux Setup 0.1.0-0.1.0~2Blocal.2555ee8076f2.exe",
+    "bytes": 218387092,
+    "sha256": "15643004a4df53a9cf24367be26b14e8d722b9e2144c9b4068767ef80444f6fe",
+    "manifestSha256": "1fb6dfc247effbed442a82d36396f03501c9e08a8b965c40177ac28e24e3d1a9"
+  },
+  "evidenceBindings": {
+    "architectureSha256": "9ce8cb70ca5e83dbcb5e1fdf39255a814201b4b5b0321d53099190e522dc9276",
+    "developerReport": "parity/reports/gov-03-developer-verification.json",
+    "developerReportSha256": "8954b97a8fa078a5d7f1782cea2280c832dbd41fd8cef1f2d441a82cea050f8c",
+    "debuggerVerdict": "parity/reports/gov-03-debugger-verdict-04.json",
+    "debuggerVerdictSha256": "d55684c7c337da9a3c7f6e079d67b8126dded4652a757fa57ef97c815bfa22dd",
+    "fullReport": "test-results/gov-03-2555-full.json",
+    "fullReportSha256": "ccec4ecceb703e6dff9c211947b4432f886911d57361fc67d103436cfa0feddd"
+  },
+  "independentChecks": {
+    "canonicalTaskAcceptance": "PASS: five-layer framework, extensible task manifest, unified report and fail-closed negative gate",
+    "personaChain": "PASS: planner -> architect -> developer -> debugger -> reviewer",
+    "architectureConformance": "PASS: all ten frozen acceptance steps have bound evidence",
+    "currentManifest": "PASS: exact five layers and electron/main.cjs E2E exemption",
+    "npmEntrypoints": "PASS: all required layer, package, coverage, self, quick and full commands exist",
+    "c8Pin": "PASS: direct and lockfile version 10.1.3",
+    "sourceDigest": "PASS: 118 inputs; current check remains 2555ee8076f2",
+    "unifiedSchema": "PASS: current validators accepted full report and all child reports",
+    "fullGate": "PASS: 7/7 required steps in 249242 ms; cleanup and formal artifact invariance true",
+    "unit": "PASS: 19/19",
+    "contract": "PASS: 2/2 wrappers, including GOV-01 13/13 synthetic and 10/10 locked baseline",
+    "integration": "PASS: GOV-02 side-effect-free engine including internal 27/27 matrix",
+    "electron": "PASS: real main/preload/renderer, two launches and persisted session",
+    "packaged": "PASS: exact manifest-bound installer, two launches, official uninstall and cleanup",
+    "quickStability": "PASS: three consecutive 2555 quick runs with unchanged artifacts and successful cleanup",
+    "coverage": "PASS: governed lines 1359/1562; security branches 342/367; all security denominators and per-file floors pass",
+    "coverageScopeHonesty": "PASS: report says governed registry only and does not claim whole-product coverage",
+    "faultGate": "PASS: fixed ordered 17-scenario matrix; failed matrix, manifest mutation, timeout cleanup and expectedFiles forgeries are rejected",
+    "debuggerIndependence": "PASS: independent timeout negative, 17/17 self-test, packaged 2/2 and zero post-run residue",
+    "artifactIdentity": "PASS: filename, Build ID, source digest, byte length and SHA-256 agree across build, manifest, reports and actual installer",
+    "evidenceHygiene": "PASS: full authority report contains no absolute user path, API key or bearer credential",
+    "supersededCandidates": "PASS: bf8b and all earlier rejected candidates are explicit and current 2555 is not superseded"
+  },
+  "acceptanceSequence": {
+    "sourceLayers": true,
+    "coverageMechanismSelfProof": true,
+    "coverageThresholds": true,
+    "faultGate": true,
+    "threeQuickRuns": true,
+    "newFormalInstaller": true,
+    "installedPackagedE2E": true,
+    "completeAcceptanceProfile": true,
+    "independentDebugger": true,
+    "independentReviewer": true
+  },
+  "nonBlockingRisks": [
+    "The installer is unsigned; signing remains REL-01 and this candidate is not a trusted release.",
+    "Coverage applies only to the disclosed governed registry, not the whole legacy Mini-Lux product.",
+    "Immediate same-path NSIS execution previously produced Windows 0xC0000005; manifest-verified per-run copies mitigate the test path but do not claim an upstream NSIS root-cause repair.",
+    "GOV-04 CI, lint, SCA, secret scanning, signature enforcement and artifact upload remain unimplemented.",
+    "A hostile same-user path race remains outside the frozen GOV-03 threat model and belongs to later security hardening."
+  ],
+  "blockingFindings": [],
+  "userConfirmation": {
+    "confirmed": true,
+    "confirmedAt": "2026-07-17T04:23:21.000Z",
+    "acceptedBuildId": "0.1.0+local.2555ee8076f2"
+  }
+}

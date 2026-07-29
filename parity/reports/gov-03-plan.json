@@ -1,0 +1,63 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-03",
+  "persona": "planner",
+  "baseline": "Lux Desktop 0.1.898",
+  "goal": "Deliver one fail-closed five-layer test gate with honest governed coverage and repeatable installed-package smoke.",
+  "batches": [
+    {
+      "id": "A",
+      "name": "framework-core",
+      "changes": ["manifest validation", "generic layer runner", "atomic unified report", "formal artifact snapshots"],
+      "gate": "unit layer passes; intentional assertion returns non-zero"
+    },
+    {
+      "id": "B",
+      "name": "five-layer-corrections",
+      "changes": ["GOV-02 27/27 integration expectation", "narrow Electron compiled-dist E2E path", "exact-current packaged artifact resolution", "process/listener cleanup"],
+      "gate": "unit, contract, integration and Electron layers pass independently"
+    },
+    {
+      "id": "C",
+      "name": "honest-coverage",
+      "changes": ["direct c8 dev dependency", "--all governed registry", "first-party JSON threshold evaluation", "legacy debt disclosure"],
+      "gate": "governed lines >=80%; security branches >=90%; omitted file counts as zero"
+    },
+    {
+      "id": "D",
+      "name": "fault-gate-selftest",
+      "changes": ["assertion failure", "corrupt Lux baseline", "forced coverage miss", "missing/mismatched installer"],
+      "gate": "each injected child fails non-zero; unexpected zero fails self-test"
+    },
+    {
+      "id": "E",
+      "name": "stability",
+      "changes": ["run test:quick three consecutive times", "verify formal artifacts and Temp cleanup after each run"],
+      "gate": "3/3 passes with zero residue"
+    },
+    {
+      "id": "F",
+      "name": "formal-package",
+      "changes": ["include tests in sourceDigest", "build new installer", "run exact packaged smoke", "run complete npm test", "emit unified evidence"],
+      "gate": "new Build ID; packaged restart and uninstall pass; all five layers/coverage/self-test pass"
+    },
+    {
+      "id": "G",
+      "name": "independent-gates",
+      "changes": ["Debugger negative/restart/race/package/cleanup rerun", "Reviewer architecture/scope/artifact/report review"],
+      "gate": "verified-awaiting-user-confirmation"
+    }
+  ],
+  "npmEntrypoints": [
+    "test:unit", "test:contract", "test:integration", "test:electron", "test:packaged",
+    "test:package", "test:coverage", "test:self", "test:quick", "test"
+  ],
+  "explicitNonGoals": [
+    "No CI workflow, lint, SCA, secret scan, signing, or artifact upload (GOV-04/REL tasks)",
+    "No claim of whole-product coverage until the governed registry includes the whole product",
+    "No latest-by-time or historical-installer fallback",
+    "No Playwright/Jest/Vitest or external browser-driver stack"
+  ],
+  "failurePrecedence": ["timeout-or-crash", "artifact-mutation", "test-failure", "coverage-threshold", "cleanup-failure", "report-validation"],
+  "verdict": "ready-for-architect-review"
+}

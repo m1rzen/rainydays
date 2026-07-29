@@ -1,0 +1,453 @@
+import assert from "node:assert/strict";
+import { mkdir, readFile, symlink, unlink, writeFile } from "node:fs/promises";
+import path from "node:path";
+import test from "node:test";
+import { evaluateCoverageSummary, meetsPercent } from "../../scripts/coverage-lib.mjs";
+import { selfTestScenarioContract, validateLayerReport, validatePackagedDetails, validateSelfTestReport } from "../../scripts/report-schema.mjs";
+import { aggregateSec02UnifiedEvidence, validateSec02UnifiedEvidence } from "../../scripts/sec02-receipt-set.mjs";
+import { canonicalJson, sha256Bytes } from "../../scripts/sec02-governance.mjs";
+import { classifyInstallerResult, launchTracked, requireObservedProcessResult } from "../packaged/smoke-helpers.mjs";
+import {
+  artifactSafeBuildId,
+  atomicWriteJson,
+  classifyProcessResult,
+  formalArtifactSnapshot,
+  loadCoverageScope,
+  loadTaskManifest,
+  makeTempDir,
+  parseTapSummary,
+  prepareReportPath,
+  projectRoot,
+  removeFixture,
+  runProcess,
+  terminateProcessTreeAsync,
+  safeRelativePath,
+  sha256File,
+  validateCoverageGovernance,
+  validateReportPath,
+} from "../helpers.mjs";
+
+function frozenActual(observation) {
+  const actual = structuredClone(observation.expected);
+  if (Array.isArray(actual.allowedOutcomes)) {
+    const selected = actual.allowedOutcomes.find(candidate => candidate.verdictContribution === "pass") ?? actual.allowedOutcomes[0];
+    return { receiptPresent: actual.receiptPresent, skipped: actual.skipped, ...selected };
+  }
+  if (Array.isArray(actual.allowedCleanupOutcomes)) {
+    actual.cleanupOutcome = actual.allowedCleanupOutcomes[0];
+    delete actual.allowedCleanupOutcomes;
+  }
+  if (Array.isArray(actual.allowedFinalStates)) {
+    actual.finalState = actual.allowedFinalStates[0];
+    delete actual.allowedFinalStates;
+  }
+  return actual;
+}
+
+function signedReceipt(payload) {
+  return { ...payload, receiptSha256: sha256Bytes(canonicalJson(payload)) };
+}
+
+function makeUnifiedSources(manifest, matrix, runId) {
+  const matrixSha256 = manifest.governedArtifacts.find(entry => entry.exactCasePath === "tests/sec02-attack-matrix.json").sha256;
+  const observations = new Map(matrix.scenarios.flatMap(scenario => scenario.observations).map(observation => [observation.id, observation]));
+  const sources = new Map(["unit", "contract", "integration", "electron", "packaged"].map(layer => [layer, []]));
+  for (const binding of manifest.evidence.observations.filter(entry => entry.producer === "node-test")) {
+    const observation = observations.get(binding.observationId);
+    const actual = frozenActual(observation);
+    sources.get(binding.layer).push(signedReceipt({
+      schemaVersion: 1, kind: "observation", runId,
+      resolvedManifestSha256: manifest.canonicalPayloadSha256, matrixSha256,
+      id: binding.observationId, evidenceTier: binding.evidenceTier,
+      stimulusSha256: binding.stimulusCanonicalSha256,
+      evidenceFile: binding.test.exactCasePath, testCaseId: binding.testCaseId,
+      actual, actualSha256: sha256Bytes(canonicalJson(actual)),
+      passed: true, skipped: false, todo: false, mockSubstitution: false,
+    }));
+  }
+  for (const binding of manifest.evidence.positives) {
+    const actual = { passed: true };
+    sources.get(binding.layer).push(signedReceipt({
+      schemaVersion: 1, kind: "positive", runId,
+      resolvedManifestSha256: manifest.canonicalPayloadSha256, matrixSha256,
+      id: binding.positiveReceiptId, evidenceFile: binding.test.exactCasePath, testCaseId: binding.testCaseId,
+      actual, actualSha256: sha256Bytes(canonicalJson(actual)),
+      passed: true, skipped: false, todo: false, mockSubstitution: false,
+    }));
+  }
+  return [...sources].map(([layer, receipts]) => ({ layer, receipts }));
+}
+
+function resign(receipt) {
+  receipt.actualSha256 = sha256Bytes(canonicalJson(receipt.actual));
+  const payload = { ...receipt };
+  delete payload.receiptSha256;
+  receipt.receiptSha256 = sha256Bytes(canonicalJson(payload));
+}
+
+test("artifact Build ID encoding is collision-free for the allowed alphabet", () => {
+  assert.equal(artifactSafeBuildId("0.1.0+local.abc"), "0.1.0~2Blocal.abc");
+  assert.notEqual(artifactSafeBuildId("a+b"), artifactSafeBuildId("a_b"));
+});
+
+test("manifest paths reject traversal, absolute and Windows separators", () => {
+  assert.equal(safeRelativePath("tests/unit/framework.test.mjs"), "tests/unit/framework.test.mjs");
+  for (const value of ["../escape", "/absolute", "C:/absolute", "tests\\escape", "tests/../escape", "tests/*.test.mjs", "tests/[ab].mjs"]) {
+    assert.throws(() => safeRelativePath(value));
+  }
+});
+
+test("GOV-03 task manifest consumes the validated SEC-02 resolved cumulative view", async () => {
+  const { manifest, resolvedManifest } = await loadTaskManifest("GOV-03");
+  assert.deepEqual(Object.keys(manifest.layers).sort(), ["contract", "electron", "integration", "packaged", "unit"]);
+  assert.equal(manifest.baseline.manifestSha256, "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df");
+  assert.equal(resolvedManifest.task, "SEC-02");
+  assert.equal(resolvedManifest.cumulativeViews.find(view => view.taskId === "GOV-03").tests.length, 31);
+  assert.equal(resolvedManifest.evidence.observations.length, 411);
+  assert.equal(resolvedManifest.evidence.positives.length, 22);
+});
+
+test("SEC-02 unified runner independently joins raw receipts and rejects receipt-set mutations", async () => {
+  const manifest = JSON.parse(await readFile(path.join(projectRoot, "tests", "manifests", "sec-02-resolved.json"), "utf8"));
+  const matrix = JSON.parse(await readFile(path.join(projectRoot, "tests", "sec02-attack-matrix.json"), "utf8"));
+  const runId = "12345678-1234-4234-9234-123456789abc";
+  const context = { manifest, matrix, runId };
+  const sources = makeUnifiedSources(manifest, matrix, runId);
+  const evidence = aggregateSec02UnifiedEvidence(sources, context);
+  assert.equal(evidence.complete, true);
+  assert.equal(evidence.producerSummaryTrusted, false);
+  assert.equal(evidence.expectedRawReceiptCount, 431);
+  assert.equal(evidence.joinedRawReceiptCount, 431);
+  assert.deepEqual(evidence.denialProof, {
+    expectedCount: 380, observedCount: 380, exactlyOnce: true, denied: true,
+    auditAttemptsOne: true, auditAllowedFieldsExact: true, rawPathsAbsent: true, passed: true,
+  });
+  assert.deepEqual(evidence.positiveProof, {
+    expectedCount: 22, observedCount: 22, exactIds: true, exactlyOnce: true,
+    passedCount: 22, skipped: 0, todo: 0, failed: 0, passed: true,
+  });
+  assert.deepEqual(evidence.synthesizedReceipts.map(receipt => receipt.id), [
+    "SEC02-P34-all-denial-receipts-audited",
+    "SEC02-P35-fixed-positive-set-complete",
+  ]);
+  const frozenById = new Map(matrix.scenarios.flatMap(scenario => scenario.observations).map(observation => [observation.id, observation.expected]));
+  for (const receipt of evidence.synthesizedReceipts) assert.deepEqual(receipt.actual, frozenById.get(receipt.id));
+  assert.doesNotThrow(() => validateSec02UnifiedEvidence(evidence, sources, context));
+
+  const duplicate = structuredClone(sources);
+  const duplicateSource = duplicate.find(source => source.receipts.length > 0);
+  duplicateSource.receipts.push(structuredClone(duplicateSource.receipts[0]));
+  const duplicateEvidence = aggregateSec02UnifiedEvidence(duplicate, context);
+  assert.equal(duplicateEvidence.complete, false);
+  assert.equal(duplicateEvidence.duplicateIds.length, 1);
+
+  const missing = structuredClone(sources);
+  const removed = missing.find(source => source.receipts.length > 0).receipts.shift();
+  const missingEvidence = aggregateSec02UnifiedEvidence(missing, context);
+  assert.equal(missingEvidence.complete, false);
+  assert(missingEvidence.missingObservationIds.includes(removed.id));
+
+  const extra = structuredClone(sources);
+  extra.find(source => source.layer === "contract").receipts.push(structuredClone(evidence.synthesizedReceipts[0]));
+  const extraEvidence = aggregateSec02UnifiedEvidence(extra, context);
+  assert.equal(extraEvidence.complete, false);
+  assert.deepEqual(extraEvidence.extraIds, ["SEC02-P34-all-denial-receipts-audited"]);
+
+  const invalid = structuredClone(sources);
+  invalid.find(source => source.receipts.length > 0).receipts[0].receiptSha256 = "0".repeat(64);
+  const invalidEvidence = aggregateSec02UnifiedEvidence(invalid, context);
+  assert.equal(invalidEvidence.complete, false);
+  assert.equal(invalidEvidence.invalidCount, 1);
+
+  const crossRun = structuredClone(sources);
+  const crossRunReceipt = crossRun.find(source => source.receipts.length > 0).receipts[0];
+  crossRunReceipt.runId = "22345678-1234-4234-9234-123456789abc";
+  resign(crossRunReceipt);
+  const crossRunEvidence = aggregateSec02UnifiedEvidence(crossRun, context);
+  assert.equal(crossRunEvidence.complete, false);
+  assert.equal(crossRunEvidence.crossRunCount, 1);
+
+  const denialMutation = structuredClone(sources);
+  const denialReceipt = denialMutation.flatMap(source => source.receipts).find(receipt => receipt.kind === "observation" && receipt.actual.denied === true);
+  denialReceipt.actual.denied = false;
+  resign(denialReceipt);
+  assert.equal(aggregateSec02UnifiedEvidence(denialMutation, context).complete, false);
+
+  const positiveMutation = structuredClone(sources);
+  const positiveReceipt = positiveMutation.flatMap(source => source.receipts).find(receipt => receipt.kind === "positive");
+  positiveReceipt.skipped = true;
+  resign(positiveReceipt);
+  assert.equal(aggregateSec02UnifiedEvidence(positiveMutation, context).complete, false);
+
+  const forged = { ...missingEvidence, complete: true };
+  assert.throws(() => validateSec02UnifiedEvidence(forged, missing, context), /independent raw-receipt recomputation/);
+});
+
+test("coverage scope is explicit and changed runtime files are governed", async () => {
+  const { manifest } = await loadTaskManifest("GOV-03");
+  const { scope } = await loadCoverageScope();
+  assert(scope.thresholds.overallLines >= 80);
+  assert(scope.thresholds.securityBranches >= 90);
+  for (const entry of scope.securityCritical) assert(scope.overall.includes(entry));
+  assert(scope.securityCritical.includes("dist/path-runtime.js"));
+  assert.equal(scope.perFileLineMinimum["dist/path-runtime.js"], 100);
+  await validateCoverageGovernance(manifest, scope);
+  assert.equal(manifest.coverageExemptions["electron/main.cjs"].evidenceLayer, "electron");
+});
+
+test("TAP summary and process failure precedence are deterministic", () => {
+  const summary = parseTapSummary("# tests 5\n# pass 4\n# fail 1\n# skipped 0\n# cancelled 0\n# todo 0\n");
+  assert.deepEqual(summary, { tests: 5, passed: 4, failed: 1, skipped: 0, cancelled: 0, todo: 0 });
+  assert.equal(classifyProcessResult({ code: 0, signal: null }), "passed");
+  assert.equal(classifyProcessResult({ code: 1, signal: null }), "failed");
+  assert.equal(classifyProcessResult({ code: 1, signal: "SIGTERM" }), "crashed");
+  assert.equal(classifyProcessResult({ code: 0, signal: null, timedOut: true }), "timed-out");
+});
+
+test("packaged crash and observation failures are fail-closed", () => {
+  assert.equal(classifyInstallerResult({ code: 0xC0000005, signal: null }), "windows-crash");
+  assert.equal(classifyInstallerResult({ code: null, signal: "SIGTERM" }), "signal-crash");
+  assert.throws(() => requireObservedProcessResult({ code: 5, signal: null }, [0, 1], "registry observation"), /failed with 5/);
+  assert.throws(() => requireObservedProcessResult({ code: null, signal: "SIGTERM" }, [0], "registry observation"), /crashed/);
+  assert.throws(() => validatePackagedDetails(null, { passed: true }), /must be present/);
+  const packageBinding = {
+    schemaVersion: 2, buildId: "0.1.0+local.synthetic", sourceDigest: "1".repeat(64),
+    sinkInventorySha256: "4".repeat(64), detectorPolicySha256: "5".repeat(64), reviewPolicySha256: "6".repeat(64),
+    dialectCheckerSha256: "b".repeat(64), dialectPolicySha256: "c".repeat(64), dialectImportSetSha256: "d".repeat(64),
+    executableManifestSha256: "7".repeat(64), runtimeSinkSetSha256: "8".repeat(64),
+    authoredExecutableProjectionSha256: "9".repeat(64), packagedSinkSetSha256: "a".repeat(64), packagedDialectImportSetSha256: "e".repeat(64), asarSha256: "2".repeat(64),
+    authoredFileCount: 3, dependencyFileCount: 4, unpacked: { fileCount: 2, executableFileCount: 1 },
+    missing: [], extra: [], mismatched: [], packageInspected: true, asarPayloadBound: true, producerSummaryTrusted: false,
+  };
+  const assertionIds = [
+    "root-internal-success", "traversal-denied", "junction-denied",
+    "viewer-range-handle-replacement", "terminal-cwd-denied-before-spawn",
+  ];
+  const pathPolicy = {
+    schemaVersion: 1,
+    expectedLaunchCount: 2,
+    assertionIds,
+    launches: [1, 2].map(launchIndex => ({
+      launchIndex,
+      assertionCount: assertionIds.length,
+      passed: true,
+      assertions: assertionIds.map(id => ({ id, passed: true })),
+    })),
+  };
+  const packagedDetails = {
+    phase: "complete",
+    artifactExecution: { sourceBytes: 4, sourceSha256: "3".repeat(64), executedBytes: 4, executedSha256: "3".repeat(64), identityMatched: true },
+    installerExitCode: 0, installerSignal: null, installerClassification: "passed", installerConverged: true,
+    packageBinding,
+    pathPolicy,
+    uninstallerSignal: null, uninstallerConverged: true,
+    cleanup: {
+      attemptedOfficialUninstall: true, officialUninstallExitCode: 0, installDirectoryEmpty: true,
+      registryObserved: true, registryMatchesBaseline: true, shortcutObserved: true, shortcutMatchesBaseline: true,
+      processesStopped: true, executionCopyReleased: true, fixtureRemoved: true, passed: true,
+    },
+  };
+  const sinkIdentity = {
+    canonicalPayloadSha256: packageBinding.sinkInventorySha256,
+    detectorPolicySha256: packageBinding.detectorPolicySha256,
+    reviewPolicySha256: packageBinding.reviewPolicySha256,
+    dialectCheckerSha256: packageBinding.dialectCheckerSha256,
+    dialectPolicySha256: packageBinding.dialectPolicySha256,
+    dialectImportSetSha256: packageBinding.dialectImportSetSha256,
+    executableManifestSha256: packageBinding.executableManifestSha256,
+    runtimeSinkSetSha256: packageBinding.runtimeSinkSetSha256,
+  };
+  assert.doesNotThrow(() => validatePackagedDetails(packagedDetails, { passed: true, sinkIdentity }));
+  assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, runtimeSinkSetSha256: "f".repeat(64) } }, { passed: true, sinkIdentity }), /runtime sink set differs/);
+  assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, dialectPolicySha256: "f".repeat(64) } }, { passed: true, sinkIdentity }), /restricted dialect policy differs/);
+  assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, missing: ["dist/bypass.js"] } }, { passed: true }), /asarPayloadBound is inconsistent/);
+  assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, producerSummaryTrusted: true } }, { passed: true }), /must not trust/);
+  assert.throws(() => validatePackagedDetails({ ...packagedDetails, pathPolicy: { ...pathPolicy, launches: pathPolicy.launches.slice(0, 1) } }, { passed: true }), /exactly two launches/);
+  assert.throws(() => validatePackagedDetails({
+    ...packagedDetails,
+    pathPolicy: {
+      ...pathPolicy,
+      launches: [pathPolicy.launches[0], {
+        ...pathPolicy.launches[1],
+        passed: false,
+        assertions: pathPolicy.launches[1].assertions.map((entry, index) => index === 0 ? { ...entry, passed: false } : entry),
+      }],
+    },
+  }, { passed: true }), /both launches/);
+  assert.throws(() => validatePackagedDetails({
+    ...packagedDetails,
+    pathPolicy: {
+      ...pathPolicy,
+      launches: [{
+        ...pathPolicy.launches[0],
+        assertions: [{ ...pathPolicy.launches[0].assertions[0], path: "C:\\secret" }, ...pathPolicy.launches[0].assertions.slice(1)],
+      }, pathPolicy.launches[1]],
+    },
+  }), /keys differ/);
+});
+
+test("process timeout records successful child-tree reclamation", async () => {
+  await assert.rejects(
+    runProcess(process.execPath, ["-e", "Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0)"], { timeoutMs: 100 }),
+    (error) => error?.code === "PROCESS_TIMEOUT" && error?.termination?.exitCode === 0 && error?.termination?.childExited === true
+  );
+});
+
+test("readiness failure leaves a tracked child available for cleanup", async () => {
+  const instance = launchTracked(process.execPath, ["-e", "setInterval(()=>{},1000)"], {
+    env: process.env,
+    timeoutMs: 100,
+    label: "synthetic readiness",
+    readyProbe: async () => { throw new Error("intentional readiness failure"); },
+  });
+  assert(instance.child.pid, "spawned child was not returned immediately");
+  await assert.rejects(instance.ready, /intentional readiness failure/);
+  const termination = await terminateProcessTreeAsync(instance.child);
+  assert.equal(termination.exitCode, 0);
+  assert.equal(termination.childExited, true);
+});
+
+test("atomic JSON reports publish complete parseable content", async () => {
+  const root = await makeTempDir("mini-lux-gov03-report-");
+  try {
+    const report = path.join(root, "nested", "report.json");
+    await atomicWriteJson(report, { state: "passed", count: 2 });
+    assert.deepEqual(JSON.parse(await readFile(report, "utf8")), { state: "passed", count: 2 });
+  } finally {
+    await removeFixture(root);
+  }
+});
+
+test("current runs remove stale reports before execution", async () => {
+  const root = await makeTempDir("mini-lux-gov03-stale-report-");
+  try {
+    const report = path.join(root, "stale.json");
+    await writeFile(report, JSON.stringify({ state: "passed" }));
+    assert.equal(await prepareReportPath(report), report);
+    await assert.rejects(() => readFile(report, "utf8"));
+  } finally {
+    await removeFixture(root);
+  }
+});
+
+test("malformed successful reports fail strict schema validation", () => {
+  assert.throws(() => validateLayerReport({ state: "passed" }), /keys differ/);
+});
+
+test("self-test reports cannot shrink the fixed fault matrix", () => {
+  const side = {
+    buildInfo: null, distIntegrity: null, packageArtifactManifest: null, installer: null,
+    appAsar: null, distTree: "0".repeat(64), electronAppTree: "0".repeat(64), releaseTree: "0".repeat(64),
+  };
+  const report = {
+    reportVersion: 1, taskId: "GOV-03", state: "passed", failureClass: null,
+    startedAt: new Date(0).toISOString(), finishedAt: new Date(0).toISOString(), durationMs: 0,
+    scenarios: [{ ...selfTestScenarioContract[0], actual: "rejected unchanged", passed: true, details: null }],
+    cleanupPassed: true, baselineUnchanged: true,
+    artifactSnapshot: { before: side, after: side, unchanged: true }, maxRssBytes: 0,
+  };
+  assert.throws(() => validateSelfTestReport(report, { taskId: "GOV-03" }), /fixed fault matrix/);
+});
+
+test("report destinations cannot target formal artifacts", async () => {
+  const buildInfoPath = path.join(projectRoot, "build-info.json");
+  const before = await sha256File(buildInfoPath);
+  await assert.rejects(() => validateReportPath(buildInfoPath));
+  assert.equal(await sha256File(buildInfoPath), before);
+});
+
+test("allowed-root internal junctions cannot redirect reports", async () => {
+  const reportRoot = path.join(projectRoot, "test-results");
+  const pivot = path.join(reportRoot, `junction-${process.pid}-${Date.now()}`);
+  try {
+    await mkdir(reportRoot, { recursive: true });
+    await symlink(projectRoot, pivot, "junction");
+    await assert.rejects(() => validateReportPath(path.join(pivot, "build-info.json")), /symbolic link/);
+  } finally {
+    await unlink(pivot).catch(() => {});
+  }
+});
+
+test("formal artifact snapshot represents present and absent package outputs", async () => {
+  const snapshot = await formalArtifactSnapshot();
+  assert.deepEqual(Object.keys(snapshot).sort(), ["appAsar", "buildInfo", "distIntegrity", "packageArtifactManifest", "installer", "distTree", "electronAppTree", "releaseTree"].sort());
+  for (const key of ["distTree", "electronAppTree", "releaseTree"]) assert.match(snapshot[key], /^[a-f0-9]{64}$/);
+  for (const key of ["buildInfo", "distIntegrity", "packageArtifactManifest", "installer", "appAsar"]) {
+    assert(snapshot[key] === null || /^[a-f0-9]{64}$/.test(snapshot[key]), `${key} must be null or SHA-256`);
+  }
+});
+
+test("Windows case aliases cannot disable per-file floors", async () => {
+  const root = await makeTempDir("mini-lux-gov03-case-floor-");
+  try {
+    const current = (await loadCoverageScope()).scope;
+    const aliased = {
+      ...current,
+      perFileLineMinimum: {
+        ...current.perFileLineMinimum,
+        "dist/version.js": undefined,
+        "DIST/VERSION.JS": 100,
+      },
+    };
+    delete aliased.perFileLineMinimum["dist/version.js"];
+    const scopePath = path.join(root, "case-alias.json");
+    await writeFile(scopePath, JSON.stringify(aliased, null, 2));
+    await assert.rejects(() => loadCoverageScope(scopePath), /casing\/path must exactly match/);
+  } finally {
+    await removeFixture(root);
+  }
+});
+
+test("coverage thresholds use exact integer arithmetic", () => {
+  assert.equal(meetsPercent(89, 100, 90), false);
+  assert.equal(meetsPercent(9, 10, 90), true);
+  assert.equal(meetsPercent(0, 0, 90), false);
+  const scope = {
+    overall: ["dist/a.js", "dist/b.js"],
+    securityCritical: ["dist/a.js"],
+    thresholds: { overallLines: 80, securityBranches: 90 },
+    perFileLineMinimum: { "dist/a.js": 80 },
+  };
+  const metric = (linesCovered, linesTotal, branchCovered, branchTotal) => ({
+    lines: { covered: linesCovered, total: linesTotal },
+    branches: { covered: branchCovered, total: branchTotal },
+  });
+  const summary = {
+    [path.join(projectRoot, "dist", "a.js")]: metric(8, 10, 9, 10),
+    [path.join(projectRoot, "dist", "b.js")]: metric(8, 10, 0, 0),
+  };
+  const passed = evaluateCoverageSummary(summary, scope, projectRoot);
+  assert.equal(passed.passed, true);
+  summary[path.join(projectRoot, "dist", "a.js")].branches.covered = 8;
+  const failed = evaluateCoverageSummary(summary, scope, projectRoot);
+  assert.equal(failed.passed, false);
+  assert.equal(failed.securityBranches.passed, false);
+  assert.equal(failed.files.find((entry) => entry.path === "dist/a.js").securityDenominatorPassed, true);
+});
+
+test("coverage evaluation fails missing and unexpected paths", () => {
+  const scope = {
+    overall: ["dist/a.js"],
+    securityCritical: ["dist/a.js"],
+    thresholds: { overallLines: 80, securityBranches: 90 },
+    perFileLineMinimum: {},
+  };
+  const summary = {
+    [path.join(projectRoot, "dist", "other.js")]: {
+      lines: { covered: 10, total: 10 },
+      branches: { covered: 10, total: 10 },
+    },
+  };
+  const result = evaluateCoverageSummary(summary, scope, projectRoot);
+  assert.equal(result.passed, false);
+  assert.deepEqual(result.missingFiles, ["dist/a.js"]);
+  assert.deepEqual(result.unexpectedFiles, ["dist/other.js"]);
+});
+
+test("fixture cleanup is idempotent", async () => {
+  const root = await makeTempDir("mini-lux-gov03-unit-");
+  await mkdir(path.join(root, "nested"));
+  await writeFile(path.join(root, "nested", "sentinel.txt"), "sentinel");
+  await removeFixture(root);
+  await removeFixture(root);
+});

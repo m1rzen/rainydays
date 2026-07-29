@@ -1,0 +1,54 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-04",
+  "persona": "architect",
+  "generatedAt": "2026-07-17T04:41:25.000Z",
+  "state": "frozen-for-implementation",
+  "canonical": "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md#GOV-04",
+  "architecture": {
+    "path": "parity/GOV-04-CI-ARCHITECTURE.md",
+    "sha256": "96dd58fa180606df13265f2e461a0bda3c08ff94879b3a8fdc3ae478000a1022",
+    "lines": 356
+  },
+  "discovery": "parity/reports/gov-04-discovery.json",
+  "frozenDecisions": [
+    "A first-party orchestrator and semantic report are the gate authority; workflow YAML only supplies hosted orchestration and evidence retention.",
+    "Merge and trusted-release profiles are separate trust domains.",
+    "Unsigned test artifacts may receive diagnostic packaged smoke but are always untrusted and release-ineligible.",
+    "Official-endpoint SCA is fail-closed and GOV-04 grants no current critical/high exception.",
+    "Secret scanning is redacted; full-history evidence requires a complete Git checkout.",
+    "Complete package inputs, including models, workflow and policy, participate in candidate identity.",
+    "Every required step executes once per run and failed evidence cannot be retried away.",
+    "Local snapshot provenance cannot satisfy final remote-enforcement acceptance.",
+    "GitHub workflow presence is insufficient without server-side ruleset and real failed/successful run evidence.",
+    "Current unsigned and vulnerable graph keeps trusted release blocked until remediation and REL-01 signing."
+  ],
+  "implementationOrder": [
+    "candidate identity and pinned toolchain",
+    "typecheck and lint",
+    "GOV-04 report schema and orchestrator",
+    "SCA and redacted secret scan",
+    "package/signature/packaged-smoke chain",
+    "fault-gate self-test",
+    "immutable-pinned GitHub workflow and CODEOWNERS",
+    "clean snapshot and hosted evidence"
+  ],
+  "currentBlockingFacts": {
+    "gitRepository": false,
+    "hostedRulesetEvidence": false,
+    "scaCritical": 1,
+    "scaHighAll": 15,
+    "installerSigned": false,
+    "releaseEligible": false
+  },
+  "developerMayNot": [
+    "soft-fail or ignore scanner unavailability",
+    "treat unsigned as trusted",
+    "approve critical/high exceptions on its own",
+    "claim Git history or branch protection from this local directory",
+    "reuse stale package output or retry failed steps within one run",
+    "omit models/workflow/policy from package candidate identity"
+  ],
+  "reviewerVerdict": null,
+  "userStatus": "not-reviewed"
+}

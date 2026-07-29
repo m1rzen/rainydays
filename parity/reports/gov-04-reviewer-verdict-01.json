@@ -1,0 +1,59 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-04",
+  "persona": "reviewer",
+  "generatedAt": "2026-07-17T08:52:00.000Z",
+  "state": "blocked-return-to-developer",
+  "candidateReviewed": "9582ec74af992504553e8ac6ca7e674c92ae735cef46746b12fb7d04ea86f552",
+  "developerReport": {
+    "path": "parity/reports/gov-04-developer-verification.json",
+    "sha256": "c8391e54a07b1ebd9120ccae6f037e8a69b9480e0c3020b388e4a419782636ef",
+    "trustedAsAuthority": false
+  },
+  "independentlyVerified": {
+    "mergeRunId": "791f4abf-bbd3-4982-aea8-e560730b8ddc",
+    "mergeReportSha256": "11d9fea8ef5447f4891c58ac96df3670490ff97fc8af38eb141434bdfcf6e313",
+    "reportSchemaValid": true,
+    "markerValid": true,
+    "stepsPassedOnce": "16/16",
+    "artifactSha256": "b1c3b2195dcd80beddc042769464eb8fdb05cee61ab6f2ed2854ea8d99dc521f",
+    "artifactHashRecomputed": true,
+    "authenticodeStatus": "NotSigned",
+    "releaseEligible": false,
+    "packagedSmokePassed": true,
+    "cleanupPassed": true,
+    "syntheticFixtureOnly": true
+  },
+  "blockingFindings": [
+    {
+      "id": "REV1-GOV04-01",
+      "severity": "P1",
+      "title": "Trusted release eligibility is not bound to hosted protected GitHub provenance",
+      "evidence": [
+        "scripts/gov04/provenance.mjs:15-33 labels any clean non-shallow local Git repository as git-full-history and permits repository=null.",
+        "scripts/gov04/report-schema.mjs:337 permits releaseEligible=true using git-full-history/historyComplete/clean without requiring repository, hosted provider, protected ref, workflow event or environment identity.",
+        "A read-only forged report with profile=trusted-release, repository=null, Valid/allowlisted/timestamped signature evidence and trusted artifact was accepted by validateGov04Report."
+      ],
+      "requiredResolution": "Trusted-release execution and report validation must fail closed unless governed hosted/protected provenance fields are present and semantically bound; add a fixed negative proof that local/full-history or missing repository/protected-ref provenance cannot become releaseEligible."
+    },
+    {
+      "id": "REV1-GOV04-02",
+      "severity": "governance-blocker",
+      "title": "Remote enforcement acceptance is not yet evidenced",
+      "evidence": [
+        "F:/mini-lux is not a Git repository.",
+        "The successful run used a byte-identical synthetic local Git fixture with repository=null.",
+        "No GitHub hosted run URL/ID, server-side ruleset, required-check, CODEOWNERS enforcement or branch-protection response exists."
+      ],
+      "requiredResolution": "After code remediation, retain this as an explicit external acceptance blocker until a real repository and GitHub server-side evidence are available; do not fabricate it locally."
+    }
+  ],
+  "nonFindings": [
+    "The successful merge-profile implementation run is internally consistent and correctly remains release-ineligible.",
+    "Production/full SCA and current/synthetic-history secret scans report zero findings with no exception.",
+    "The unsigned diagnostic artifact is clearly separated and packaged smoke executed hash-identical bytes.",
+    "The prior SCA invalid response stopped fail-closed and the later pass was a distinct run linked by retryOf."
+  ],
+  "reviewerVerdict": "BLOCK",
+  "userStatus": "not-reviewed"
+}

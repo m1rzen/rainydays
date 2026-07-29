@@ -1,0 +1,206 @@
+{
+  "baseline": {
+    "baseRegistryToolCount": 72,
+    "bytes": 298838,
+    "canonicalPayloadSha256": "13d71e22bbf0987072f67841b78ffbcf95053a0bb5f762923a1455656d023664",
+    "helpSectionCount": 25,
+    "installedPersonaCount": 2,
+    "modelFacingToolCount": 86,
+    "path": "parity/baselines/lux-desktop-0.1.898.json",
+    "schemaVersion": 1,
+    "sha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df",
+    "skillCount": 27,
+    "sourceCount": 69
+  },
+  "commands": [
+    "npm run parity:capture -- --lux-root <Lux v0.1.898 lux-dist> --output parity/baselines/lux-desktop-0.1.898.json",
+    "npm run parity:compare -- <expected.json> <actual.json>",
+    "npm run parity:test",
+    "npm run parity:verify",
+    "npm run build"
+  ],
+  "evidenceHashes": {
+    "../package-lock.json": "4a5f799fafbc45e464840d5484d4dbe507eb0b79de190eb00a85bb8ad8591e32",
+    "../package.json": "973b4d0f25e9e2c40c3e99655d950ce714f5e98e306f392e82305d514bbc6693",
+    "BASELINE-DESIGN.md": "7e751a84832663e7af7ccf66061e6455d9591833fb98d37e8ce1c409974eecd1",
+    "README.md": "a72124d43d1eac0166ad2e50291ea28b9b92688e65c5b5db0393354dacef3e0e",
+    "probes/tool-catalog-mod.mjs": "525ce79de7282cd3febda91d451c05ee1968a20d99f4f2c81b024a5747415d95",
+    "schema/lux-desktop-baseline.schema.json": "8ed33ea4fa9e3e84d646a0317e64ea7c7ec2c1b755d2626cdaa1ec30e03759ee",
+    "scripts/baseline-lib.mjs": "55bfc7298bb4bceed020b86a13bb92a3594ff7d47d4c32fc7826fe91969d0f9a",
+    "scripts/capture-lux-baseline.mjs": "32dd69d8a07b974e8d383f31728bbc9449fe32d0d235cd003c167f5e751e188d",
+    "scripts/compare-lux-baselines.mjs": "79a18da4e3f2ce7e30cbc3ef0c653ae7b73d8eab24012d6e2aaccd7a22e20bc3",
+    "scripts/test-baseline-diff.mjs": "2fd5b4aa7315197646b6df7dea4fc1f8753aa72f7d39bd22c1ce4c9559df5b99",
+    "scripts/verify-locked-baseline.mjs": "8010c98ef7f8523ce2296db988e1fc3672cd218d81261682a124014a9bb30553"
+  },
+  "generatedAt": "2026-07-15T05:22:35.257Z",
+  "reportVersion": 1,
+  "reviewerReview": {
+    "blockingFindings": [],
+    "checks": [
+      {
+        "evidence": "Four malformed manifests independently returned exit code 2.",
+        "name": "Draft 2020-12 Schema enforced",
+        "result": "passed"
+      },
+      {
+        "evidence": "13/13.",
+        "name": "Synthetic contract tests",
+        "result": "passed"
+      },
+      {
+        "evidence": "10/10.",
+        "name": "Locked baseline fault injection",
+        "result": "passed"
+      },
+      {
+        "evidence": "86 model-facing tools, 72 base Registry tools, canonical diff 0.",
+        "name": "Independent real recapture",
+        "result": "passed"
+      },
+      {
+        "evidence": "69 Lux source hashes and 11 repository evidence hashes recomputed with no mismatch.",
+        "name": "Source and evidence hashes",
+        "result": "passed"
+      },
+      {
+        "evidence": "npm run build succeeded; ajv@8.17.1 and ajv-formats@3.0.1 are direct dependencies.",
+        "name": "Build and dependency gate",
+        "result": "passed"
+      },
+      {
+        "evidence": "No run-* directory remained; manifest contained no loopback token, Authorization header, or absolute host path.",
+        "name": "Probe isolation and cleanup",
+        "result": "passed"
+      }
+    ],
+    "notes": [
+      "F:/mini-lux is not currently a Git repository, so git diff/history evidence is unavailable; this does not alter the machine-readable baseline result and should be addressed by governance/CI work.",
+      "An early manual experiment outside the final per-run capture lifecycle left PID 504 on 127.0.0.1:18999 and a locked ignored parity/.probe/lux-home directory. The reviewed capture implementation uses unique run-* directories and cleaned its Reviewer run successfully; no real user config or credential is present in the locked baseline."
+    ],
+    "persona": "reviewer",
+    "reviewedAt": "2026-07-15T05:24:21.494Z"
+  },
+  "reviewerVerdict": "passed",
+  "scenarios": [
+    {
+      "actualExitCode": 0,
+      "expectedDifference": null,
+      "expectedExitCode": 0,
+      "name": "capture-metadata-ignored",
+      "passed": true,
+      "summary": {
+        "added": 0,
+        "changed": 0,
+        "removed": 0
+      }
+    },
+    {
+      "actualExitCode": 1,
+      "expectedDifference": {
+        "kind": "removed",
+        "path": "/contracts/tools/by-name/task_create"
+      },
+      "expectedExitCode": 1,
+      "name": "removed-tool",
+      "passed": true,
+      "summary": {
+        "added": 0,
+        "changed": 1,
+        "removed": 1
+      }
+    },
+    {
+      "actualExitCode": 1,
+      "expectedDifference": {
+        "kind": "changed",
+        "path": "/contracts/tools/by-name/read/parameters/required"
+      },
+      "expectedExitCode": 1,
+      "name": "changed-required-field",
+      "passed": true,
+      "summary": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      }
+    },
+    {
+      "actualExitCode": 1,
+      "expectedDifference": {
+        "kind": "changed",
+        "path": "/contracts/settings/fields/by-id/help~1config.md:173/values/说明"
+      },
+      "expectedExitCode": 1,
+      "name": "changed-documented-default",
+      "passed": true,
+      "summary": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      }
+    },
+    {
+      "actualExitCode": 1,
+      "expectedDifference": {
+        "kind": "changed",
+        "path": "/sources/by-path/help~1tools.md/sha256"
+      },
+      "expectedExitCode": 1,
+      "name": "changed-help-source-hash",
+      "passed": true,
+      "summary": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      }
+    },
+    {
+      "actualExitCode": 2,
+      "expectedDifference": null,
+      "expectedExitCode": 2,
+      "name": "schema-rejects-unknown-capture-field",
+      "passed": true,
+      "summary": null
+    },
+    {
+      "actualExitCode": 2,
+      "expectedDifference": null,
+      "expectedExitCode": 2,
+      "name": "schema-rejects-invalid-source-hash",
+      "passed": true,
+      "summary": null
+    },
+    {
+      "actualExitCode": 2,
+      "expectedDifference": null,
+      "expectedExitCode": 2,
+      "name": "schema-rejects-missing-runtime-field",
+      "passed": true,
+      "summary": null
+    },
+    {
+      "actualExitCode": 2,
+      "expectedDifference": null,
+      "expectedExitCode": 2,
+      "name": "schema-rejects-unknown-top-level-field",
+      "passed": true,
+      "summary": null
+    },
+    {
+      "actualExitCode": 2,
+      "expectedExitCode": 2,
+      "name": "duplicate-tool-invalid",
+      "passed": true
+    }
+  ],
+  "summary": {
+    "durationMs": 1589,
+    "failed": 0,
+    "passed": 10
+  },
+  "target": {
+    "product": "Lux Desktop",
+    "version": "0.1.898"
+  },
+  "task": "GOV-01"
+}

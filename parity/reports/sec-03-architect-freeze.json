@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "task": "SEC-03",
+  "revision": 2,
+  "status": "frozen",
+  "baseline": "Lux Desktop 0.1.898",
+  "platform": {
+    "os": [
+      "Windows 10 22H2 x64",
+      "Windows 11 x64"
+    ],
+    "executionRoots": "local-fixed-ntfs-only",
+    "sandboxToken": "regular-appcontainer-zero-capabilities"
+  },
+  "architecture": {
+    "path": "parity/SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md",
+    "reviewedCandidateSha256": "1128f805796d55635e4429f9cbad730d5c37886400caba30e59a712ef5df0c80",
+    "frozenSha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1"
+  },
+  "review": {
+    "reviewer": "independent-sentinel",
+    "verdict": "PASS",
+    "closedBlockers": [
+      "B1-native-launch-order-and-handle-inheritance",
+      "B2-unique-appcontainer-sid-and-acl-recovery",
+      "B3-exact-machine-readable-receipt-closure",
+      "B4-native-main-process-consent"
+    ],
+    "implementationAuthorized": true
+  },
+  "receipts": {
+    "realHost": 386,
+    "electron": 48,
+    "packaged": 48,
+    "total": 482,
+    "profiles": ["E1", "E2", "E3", "E4"],
+    "attackFamilies": 19,
+    "projectionFamilies": 12
+  },
+  "invariants": {
+    "unsandboxedFallback": false,
+    "directNetwork": false,
+    "unsupportedRootsFailBeforeSideEffects": true,
+    "nativeConsentForManualStartAndInput": true,
+    "jobAssignedBeforeResume": true,
+    "uniqueAppContainerSidPerExecutionOrSession": true
+  }
+}

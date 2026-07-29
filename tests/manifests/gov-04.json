@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "taskId": "GOV-04",
+  "stepOrder": [
+    "prepare",
+    "source-clean-install",
+    "typecheck",
+    "lint",
+    "source-test-build",
+    "gov03-quick",
+    "gov03-self-test",
+    "sca-production",
+    "sca-full",
+    "secret-current",
+    "secret-history",
+    "package-clean-install",
+    "package",
+    "signature-policy",
+    "packaged-smoke",
+    "finalize"
+  ],
+  "testFiles": [
+    "tests/gov04/report-schema.test.mjs",
+    "tests/gov04/workflow-policy.test.mjs"
+  ]
+}

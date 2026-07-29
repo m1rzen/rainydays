@@ -1,0 +1,111 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-02",
+  "persona": "debugger",
+  "generatedAt": "2026-07-16T03:21:40.325Z",
+  "verdict": "PASS",
+  "candidate": {
+    "appVersion": "0.1.0",
+    "buildId": "0.1.0+local.b7bf1107e585",
+    "sourceDigest": "b7bf1107e585091f773390d12eba68801e7031d1d98ebfbdc16ecfe4a668595f",
+    "distIntegritySha256": "9e599acb051e1994194a61bf12c0ffa919d94ed3b18b9887fc9fe24d03c4c992",
+    "builtAt": "2026-07-16T03:15:14.407Z"
+  },
+  "priorCandidateRejection": {
+    "buildId": "0.1.0+local.8262948364c8",
+    "verdict": "FAIL",
+    "reproduction": [
+      "silent install",
+      "first launch",
+      "create persisted session",
+      "stop process",
+      "second launch"
+    ],
+    "failure": "数据库 Schema 1 不兼容: 存在未知或缺失的 Schema 对象",
+    "rootCause": "phase1-tools created the legitimate memos table after Schema validation, while the complete Schema 1 signature omitted it",
+    "resolution": [
+      "memos moved into CURRENT_SCHEMA_SQL and EXPECTED_COLUMNS",
+      "import-time DDL removed from phase1-tools",
+      "real memo/session write and reopen regression added"
+    ],
+    "priorArtifactInvalidated": true
+  },
+  "independentTests": {
+    "sourceGate": {
+      "command": "node scripts/generate-build-info.mjs --check",
+      "passed": true,
+      "inputFiles": 93
+    },
+    "versionModel": {
+      "command": "npm run version:test",
+      "passed": 27,
+      "failed": 0,
+      "durationMs": 7638,
+      "restartRegression": "legitimate memo and session writes survive database restart"
+    },
+    "gov01": {
+      "synthetic": {
+        "passed": 13,
+        "failed": 0,
+        "durationMs": 1191
+      },
+      "lockedFaultInjection": {
+        "passed": 10,
+        "failed": 0,
+        "durationMs": 1817
+      }
+    },
+    "asarIntegrity": {
+      "manifestFiles": 49,
+      "failedFiles": 0,
+      "manifestBound": true,
+      "sourceBound": true,
+      "onlyExtraArchiveEntry": "dist/tools directory node"
+    },
+    "installed": {
+      "silentInstallExitCode": 0,
+      "firstLaunch": true,
+      "sessionId": "2330adca-719d-4428-94bb-f45b3815a72a",
+      "memoViaRealTool": {
+        "id": 1,
+        "content": "GOV-02 b7bf persisted memo",
+        "status": "active",
+        "tags": "gov02"
+      },
+      "secondLaunch": true,
+      "autoRestoredSession": true,
+      "preservedMemo": true,
+      "userVersion": 1,
+      "foreignKeyViolations": 0,
+      "unauthenticatedEndpoints": {
+        "version": 401,
+        "status": 401,
+        "diagnostics": 401
+      },
+      "silentUninstallExitCode": 0,
+      "remainingFiles": 0,
+      "listeningPorts": 0,
+      "emptyCustomTargetRemoved": true
+    }
+  },
+  "artifacts": {
+    "installer": {
+      "path": "release/Mini-Lux Setup 0.1.0-0.1.0~2Blocal.b7bf1107e585.exe",
+      "bytes": 218386992,
+      "sha256": "5dcc401a5bb12103d27e008dac8315c0efe84617b8244955e79dc16f578f17c8"
+    },
+    "appAsar": {
+      "path": "release/win-unpacked/resources/app.asar",
+      "bytes": 320848413,
+      "sha256": "0883476a04a2e5fa51d8179b7cb9f2141a485d75d66b8d623f625ff84264e7cc"
+    },
+    "buildInfoSha256": "34889def7626f1cf63d1f14a5c06fe434f4d9d3965c01c4cf0e91302a8adff80",
+    "distIntegritySha256": "9e599acb051e1994194a61bf12c0ffa919d94ed3b18b9887fc9fe24d03c4c992"
+  },
+  "knownReleaseRisk": {
+    "codeSigning": "NotSigned",
+    "blockingForGov02": false,
+    "reason": "No code-signing identity is configured; risk is disclosed and unchanged from the canonical task boundary"
+  },
+  "blockingFindings": []
+}

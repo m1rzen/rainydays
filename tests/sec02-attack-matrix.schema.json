@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mini-lux.local/schemas/sec02-attack-matrix.schema.json",
+  "title": "SEC-02 frozen attack matrix",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "task",
+    "state",
+    "evidenceTiers",
+    "defaultEnvironmentPolicy",
+    "requiredObservationContract",
+    "profiles",
+    "scenarioCount",
+    "requiredObservationCount",
+    "positiveReceiptCount",
+    "positiveReceiptIds",
+    "denialObservationIds",
+    "supplementalEvidence",
+    "scenarios"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 2},
+    "task": {"const": "SEC-02"},
+    "state": {"enum": ["architecture-draft-revision-3", "architecture-frozen"]},
+    "evidenceTiers": {
+      "const": [
+        "windows-native",
+        "production-barrier",
+        "pure-policy",
+        "runtime-contract",
+        "contract-validation",
+        "static-inventory"
+      ]
+    },
+    "defaultEnvironmentPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "windows-native",
+        "production-barrier",
+        "pure-policy",
+        "runtime-contract",
+        "contract-validation",
+        "static-inventory"
+      ],
+      "properties": {
+        "windows-native": {"const": "required-capability-fail-no-skip-mock-or-downgrade"},
+        "production-barrier": {"const": "required-capability-fail-no-skip-mock-or-downgrade"},
+        "pure-policy": {"const": "required"},
+        "runtime-contract": {"const": "required"},
+        "contract-validation": {"const": "required"},
+        "static-inventory": {"const": "required"}
+      }
+    },
+    "requiredObservationContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exactObservationIds",
+        "duplicates",
+        "missing",
+        "extra",
+        "skipped",
+        "todo",
+        "failed",
+        "mockSubstitutions",
+        "tierDowngrades"
+      ],
+      "properties": {
+        "exactObservationIds": {"const": true},
+        "duplicates": {"const": 0},
+        "missing": {"const": 0},
+        "extra": {"const": 0},
+        "skipped": {"const": 0},
+        "todo": {"const": 0},
+        "failed": {"const": 0},
+        "mockSubstitutions": {"const": 0},
+        "tierDowngrades": {"const": 0}
+      }
+    },
+    "profiles": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/jsonObject"}
+    },
+    "scenarioCount": {"const": 36},
+    "requiredObservationCount": {"type": "integer", "minimum": 1},
+    "positiveReceiptCount": {"const": 22},
+    "positiveReceiptIds": {
+      "type": "array",
+      "minItems": 22,
+      "maxItems": 22,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^SEC02-POS-[a-z0-9-]+$"}
+    },
+    "denialObservationIds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^SEC02-P[0-9]{2}-[a-z0-9-]+$"}
+    },
+    "supplementalEvidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "required", "mayAffectVerdict"],
+        "properties": {
+          "id": {"type": "string"},
+          "required": {"const": false},
+          "mayAffectVerdict": {"const": false}
+        }
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 36,
+      "maxItems": 36,
+      "items": {"$ref": "#/$defs/scenario"}
+    }
+  },
+  "$defs": {
+    "jsonValue": {
+      "anyOf": [
+        {"type": "null"},
+        {"type": "boolean"},
+        {"type": "number"},
+        {"type": "string"},
+        {"type": "array", "items": {"$ref": "#/$defs/jsonValue"}},
+        {"$ref": "#/$defs/jsonObject"}
+      ]
+    },
+    "jsonObject": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/jsonValue"}
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "observations"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^SEC02-P[0-9]{2}$"},
+        "title": {"type": "string", "minLength": 1},
+        "observations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/observation"}
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "evidenceTier",
+        "expectedProfile",
+        "required",
+        "outcomeClass",
+        "environmentPolicy",
+        "stimulus",
+        "expected"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^SEC02-P[0-9]{2}-[a-z0-9-]+$"},
+        "evidenceTier": {
+          "enum": [
+            "windows-native",
+            "production-barrier",
+            "pure-policy",
+            "runtime-contract",
+            "contract-validation",
+            "static-inventory"
+          ]
+        },
+        "expectedProfile": {"type": "string", "minLength": 1},
+        "required": {"const": true},
+        "outcomeClass": {"enum": ["denial", "positive", "security-proof", "conditional", "meta"]},
+        "environmentPolicy": {"type": "string", "minLength": 1},
+        "stimulus": {"$ref": "#/$defs/jsonObject"},
+        "expected": {"$ref": "#/$defs/jsonObject"}
+      }
+    }
+  }
+}

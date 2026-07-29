@@ -1,0 +1,168 @@
+{
+  "reportVersion": 3,
+  "task": "GOV-02",
+  "generatedAt": "2026-07-16T03:22:35.462Z",
+  "developerVerdict": "implemented-debugger-verified-awaiting-reviewer",
+  "architecture": {
+    "document": "parity/GOV-02-VERSION-MODEL.md",
+    "sha256": "45b3bc1b9d46400dfa6698513bee6092f8e77bcc1f7a4f0a0bd3be90b848971a"
+  },
+  "build": {
+    "product": "Mini-Lux",
+    "appVersion": "0.1.0",
+    "buildId": "0.1.0+local.b7bf1107e585",
+    "buildIdSource": "derived",
+    "sourceDigest": "b7bf1107e585091f773390d12eba68801e7031d1d98ebfbdc16ecfe4a668595f",
+    "distIntegritySha256": "9e599acb051e1994194a61bf12c0ffa919d94ed3b18b9887fc9fe24d03c4c992",
+    "buildInfoSha256": "34889def7626f1cf63d1f14a5c06fe434f4d9d3965c01c4cf0e91302a8adff80",
+    "databaseSchemaVersion": 1,
+    "sessionExportVersion": 1,
+    "protocols": {
+      "link": {
+        "version": 1,
+        "enabled": true,
+        "transport": "in-process"
+      },
+      "worker": {
+        "version": null,
+        "enabled": false,
+        "transport": null
+      },
+      "mcp": {
+        "version": null,
+        "enabled": false,
+        "transport": null
+      }
+    },
+    "luxBaseline": {
+      "schemaVersion": 1,
+      "targetVersion": "0.1.898",
+      "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+    }
+  },
+  "artifacts": {
+    "installer": {
+      "path": "release/Mini-Lux Setup 0.1.0-0.1.0~2Blocal.b7bf1107e585.exe",
+      "bytes": 218386992,
+      "sha256": "5dcc401a5bb12103d27e008dac8315c0efe84617b8244955e79dc16f578f17c8"
+    },
+    "blockmap": {
+      "path": "release/Mini-Lux Setup 0.1.0-0.1.0~2Blocal.b7bf1107e585.exe.blockmap",
+      "bytes": 226248,
+      "sha256": "3694cebb27e5fbbbf80a3d4fdd218762a213594bac1af3767bf393d35979fa20"
+    },
+    "unpackedExecutable": {
+      "path": "release/win-unpacked/Mini-Lux.exe",
+      "bytes": 188787712,
+      "sha256": "0addbed21fda83e9a8400715dea454309fa9e011d8f4fc2830596787cdc33ca0",
+      "windowsProductName": "Mini-Lux",
+      "windowsProductVersion": "0.1.0.0",
+      "windowsFileVersion": "0.1.0"
+    },
+    "appAsar": {
+      "path": "release/win-unpacked/resources/app.asar",
+      "bytes": 320848413,
+      "sha256": "0883476a04a2e5fa51d8179b7cb9f2141a485d75d66b8d623f625ff84264e7cc",
+      "embeddedBuildInfoSha256": "34889def7626f1cf63d1f14a5c06fe434f4d9d3965c01c4cf0e91302a8adff80",
+      "embeddedDistIntegritySha256": "9e599acb051e1994194a61bf12c0ffa919d94ed3b18b9887fc9fe24d03c4c992",
+      "manifestFilesVerified": 49,
+      "embeddedBuildInfoEqualsRoot": true,
+      "embeddedDistIntegrityEqualsRoot": true,
+      "embeddedCriticalDistFilesEqualRoot": true
+    }
+  },
+  "tests": {
+    "versionModel": {
+      "command": "npm run version:test",
+      "passed": 27,
+      "failed": 0,
+      "durationMs": 7638,
+      "coverage": [
+        "deterministic and source-bound Build ID",
+        "strict SemVer, CI Build ID and canonical builtAt rejection",
+        "stale source, tampered dist, malformed metadata and Electron startup rejection",
+        "fresh, legacy, future, WAL, rollback and full Schema signature database paths",
+        "legitimate memo and session writes survive database restart",
+        "current and legacy Session Export, exact envelopes, ToolCall pairing and zero-write rejection",
+        "Link private capability, spoof rejection and real Session lifecycle",
+        "API, log, diagnostics and UI Build ID consistency"
+      ]
+    },
+    "gov01Regression": {
+      "syntheticContract": {
+        "command": "npm run parity:test",
+        "passed": 13,
+        "failed": 0
+      },
+      "lockedBaselineFaultInjection": {
+        "command": "npm run parity:verify -- --report <temp>",
+        "passed": 10,
+        "failed": 0
+      }
+    },
+    "independentDebugger": {
+      "report": "parity/reports/gov-02-debugger-verification.json",
+      "verdict": "PASS",
+      "priorRejectedBuildId": "0.1.0+local.8262948364c8",
+      "verifiedBuildId": "0.1.0+local.b7bf1107e585"
+    },
+    "packagedAndInstalled": {
+      "silentInstallExitCode": 0,
+      "firstLaunch": true,
+      "sessionId": "2330adca-719d-4428-94bb-f45b3815a72a",
+      "memoViaRealTool": {
+        "id": 1,
+        "content": "GOV-02 b7bf persisted memo",
+        "status": "active",
+        "tags": "gov02"
+      },
+      "secondLaunch": true,
+      "autoRestoredSession": true,
+      "preservedMemo": true,
+      "userVersion": 1,
+      "foreignKeyViolations": 0,
+      "unauthenticatedEndpoints": {
+        "version": 401,
+        "status": 401,
+        "diagnostics": 401
+      },
+      "silentUninstallExitCode": 0,
+      "remainingFiles": 0,
+      "listeningPorts": 0,
+      "emptyCustomTargetRemoved": true
+    }
+  },
+  "evidenceHashes": {
+    "package.json": "78135511d2725823dc04ad3e3a3e997449bfc239a3dd6dabfc608d9b35080cdf",
+    "build-info.json": "34889def7626f1cf63d1f14a5c06fe434f4d9d3965c01c4cf0e91302a8adff80",
+    "dist-integrity.json": "9e599acb051e1994194a61bf12c0ffa919d94ed3b18b9887fc9fe24d03c4c992",
+    "electron/main.cjs": "c22e423cee9c16a6de372828809be4e535cdcc92305efc1e5bd8b3495dd7eb12",
+    "electron/preload.cjs": "2ea9a2eed986271f3c705b050f3b9fc00f0a204ad83af6cccae512378b80bcd9",
+    "public/index.html": "65bf642698df8769338df52c7eb07bb2b5c204071563d49c4765dd6d8b4725d6",
+    "scripts/generate-build-info.mjs": "18dfd12229ba835e0888f3f80f1108badcd08c22168d3d48fff9e952488bcdad",
+    "scripts/generate-dist-integrity.mjs": "0ec5c9ff8baad855bda4aa67d961282dc5f86eb7f274f81e02a6910b96f3ce96",
+    "scripts/prepare-electron-app.mjs": "29b71c3749939cb2ac08611970ed7c725a85694fb6242d9f66188a846d188896",
+    "scripts/test-version-model.mjs": "934e0c0fb331016494e68674ec04af7d4348aa59451db3ad5ff48e9211abfc3b",
+    "scripts/version-test-child.mjs": "ebb8a9fd2546ef7b9a8cef0388e7fc84d1c2bd93da5dd49d5ff5c1be1d66ce1a",
+    "src/db.ts": "b5e624c3c4896b564742f8d629a9bda4da38287465e0e6ac261614bb10a6b9c2",
+    "src/index.ts": "c7fe95d405e8767c9a966ab5ec07c311404743d7849d60c6814256acbde03c6e",
+    "src/link.ts": "624c93e7c3c9164b549c705cf9415cc19d94628df4df5a7a0f0ec1a4dcc381a8",
+    "src/session.ts": "aff31c0efe162f2fb904bbf859b7fe703d8342d23fae084d4ecc42a79f5d8120",
+    "src/tools/phase1-tools.ts": "8550ea188341d001387a42eaf9fac69a4d4920a29ab613fe67e62dd637323878",
+    "src/version.ts": "0789bc5170e069723e90e5abba72f397563d8cce584bcbfb578e391b3f2ea00d"
+  },
+  "security": {
+    "diagnosticContainsApiKey": false,
+    "diagnosticContainsLocalApiToken": false,
+    "diagnosticContainsAbsoluteUserPath": false,
+    "diagnosticContainsConfigOrDatabasePath": false,
+    "unsupportedWorkerOrMcpVersionAdvertised": false
+  },
+  "environmentNotes": [
+    "The project root is not a Git repository, so no Git diff/history evidence is available.",
+    "The NSIS artifact is unsigned because no code-signing identity is configured; electron-builder skipped signing.",
+    "The silent uninstaller removed all files and processes but left an empty custom /D= Temp directory; the test harness removed that empty directory.",
+    "Build 0.1.0+local.8262948364c8 was independently rejected and is invalid; only the installer whose filename contains b7bf1107e585 is the current GOV-02 candidate."
+  ],
+  "blockingFindings": []
+}

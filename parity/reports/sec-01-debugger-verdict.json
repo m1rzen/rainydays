@@ -1,0 +1,162 @@
+{
+  "reportVersion": 4,
+  "task": "SEC-01",
+  "persona": "debugger",
+  "state": "verified-forward-to-independent-reviewer",
+  "reviewedAt": "2026-07-21T15:39:00+08:00",
+  "candidate": {
+    "buildId": "0.1.0+local.bc9570de9e02",
+    "sourceDigest": "bc9570de9e026e449affaaaa881b1e6265943937c37520a5cbb3def5a845b4a1",
+    "inputFiles": 177,
+    "buildInfoSha256": "4a1ca0c7cc6425eac17e339770387b9f5b3354866afe19e60b7e0fb6dad3bf88",
+    "distIntegritySha256": "a11ec016c50634807f7efa1f4d94771662fbb46cae83d042fcf35f85d15935ab",
+    "installerFilename": "Mini-Lux Setup 0.1.0-0.1.0~2Blocal.bc9570de9e02.exe",
+    "installerBytes": 245330941,
+    "installerSha256": "d6cf14317278242d156182005ce56edab427e274000820af313a92d24e4df10f",
+    "appAsarSha256": "5d93022a0d669055deb2c917dc9448d3cb50f0da0d899526396d29727299d441"
+  },
+  "independentEvidence": {
+    "sourceAndPackageIdentity": {
+      "sourceDigestRecomputed": true,
+      "inputFiles": 177,
+      "distFilesRecomputed": 52,
+      "distMismatches": 0,
+      "packageManifestMatched": true,
+      "installerBytesAndSha256Matched": true,
+      "appAsarBuildInfoByteIdentical": true,
+      "appAsarDistIntegrityByteIdentical": true,
+      "appAsarDistPayloadMismatches": 0
+    },
+    "securityContract": {
+      "architectureSha256": "809b97201e4934b0d0024336d668f2824ce006d296192cd772b2894437426afc",
+      "scenarios": 31,
+      "runtimeObservations": 63,
+      "targetedCommand": "node --test --test-concurrency=1 tests/unit/capability-broker.test.mjs tests/contract/sec01-attack-contract.test.mjs tests/contract/sec01-boundaries.test.mjs",
+      "tests": 23,
+      "passed": 23,
+      "failed": 0,
+      "completeBoundaryParts": ["policyRegistry", "dispatcher", "supervisor", "terminalFacade"]
+    },
+    "dependencyDiff": {
+      "baselineCandidate": "0.1.0+local.eb18f782b5ed",
+      "changedGovernedFiles": ["package.json", "package-lock.json"],
+      "unchangedGovernedFiles": 175,
+      "concurrentlyRemoved": true,
+      "shellQuoteRemoved": true,
+      "protobufjsOverride": "7.6.5",
+      "otherVersionDrift": false
+    },
+    "officialSca": {
+      "registry": "https://registry.npmjs.org",
+      "production": {"info": 0, "low": 1, "moderate": 0, "high": 0, "critical": 0, "total": 1},
+      "full": {"info": 0, "low": 1, "moderate": 0, "high": 0, "critical": 0, "total": 1},
+      "exceptions": 0,
+      "thresholdMatched": true
+    },
+    "localPackaged": {
+      "path": "test-results/sec01-debugger-bc957-packaged.json",
+      "sha256": "3ac06be1839f9c2cad2fee2c6fa3a739c68fa45e65efbac417230bd599359b07",
+      "state": "passed",
+      "sourceAndExecutedArtifactMatched": true,
+      "officialUninstallExitCode": 0,
+      "cleanupPassed": true,
+      "formalArtifactsUnchanged": true,
+      "sameInstallerSuccessfulRuns": 3
+    },
+    "gov04PriorFailure": {
+      "runId": "89c1a3db-44b4-45d3-97ec-04a63c1d5487",
+      "report": {
+        "path": "test-results/sec01-gov04-bc957-prior-failure/gov04-report.json",
+        "sha256": "40d57bc4b66725e3a8535dac2d04742d451319e4d534a4a2a0f62ae0a8734122"
+      },
+      "marker": {
+        "path": "test-results/sec01-gov04-bc957-prior-failure/gov04-final-marker.json",
+        "sha256": "d97360cf776309c26e23380e5cfd9576f3b77d0344ebc11474ef77f4ca6e660d"
+      },
+      "state": "failed",
+      "failureClass": "SCA_REPORT_INVALID",
+      "sourceUnchanged": true,
+      "cleanupPassed": true
+    },
+    "gov04ControlledRetry": {
+      "runId": "ecdfb8b3-45b6-4f66-95aa-227fe50b3f79",
+      "retryOf": "89c1a3db-44b4-45d3-97ec-04a63c1d5487",
+      "report": {
+        "path": "test-results/sec01-gov04-bc957-final/gov04-report.json",
+        "sha256": "8386e3ddc2e5d0f0d45c89a918aaef727d14c3f1b6a5c7895af36b4392acf66a"
+      },
+      "marker": {
+        "path": "test-results/sec01-gov04-bc957-final/gov04-final-marker.json",
+        "sha256": "acc4858098f87955d7da6a4e1dabdd57add50707e692320d42ce7801085e5123"
+      },
+      "state": "passed",
+      "durationMs": 414037,
+      "candidateId": "7b8c9a84fdda2fe99d4d676fd8e42b5ff02c3481f28dd910b335d538c58541e2",
+      "expectedSteps": 16,
+      "executedSteps": 16,
+      "receiptChainRecomputed": true,
+      "priorReportMarkerAndCandidateMatched": true,
+      "sourceAndPackageWorkspacesMatched": true,
+      "currentSecretFindings": 0,
+      "historySecretFindings": 0,
+      "historyComplete": true,
+      "packagedSmokePassed": true,
+      "cleanupPassed": true
+    },
+    "gov04TestArtifact": {
+      "path": "test-results/sec01-gov04-bc957-final/unsigned/UNSIGNED-UNTRUSTED-DO-NOT-DISTRIBUTE--Mini-Lux Setup 0.1.0-0.1.0~2Bci.7b8c9a84fdda2fe99d4d676fd8e42b5ff02c3481f28dd910b335d538c58541e2.exe",
+      "bytes": 245345225,
+      "sha256": "ca589ae87ac33bf17734b7b53d1493b113560062891b59d7f3c9bcaa980a32f4",
+      "signatureStatus": "NotSigned",
+      "artifactClass": "test-only",
+      "trust": "untrusted",
+      "releaseEligible": false
+    },
+    "developerReport": {
+      "path": "parity/reports/sec-01-developer-verification.json",
+      "sha256": "80d00aded3b4fe60160c75863a061cce28ced243a3fb110e1cc78083ae79e516",
+      "usedAsAuthority": false,
+      "referencesCrossChecked": true
+    }
+  },
+  "resolvedFindings": [
+    {
+      "id": "SEC01-GOV04-COVERAGE",
+      "status": "resolved",
+      "evidence": "The cumulative GOV-03 manifest now executes SEC-01 contract and integration evidence without lowering thresholds; governed coverage has no missing, unexpected or zero-hit file."
+    },
+    {
+      "id": "SEC01-BUILD-CLOSURE",
+      "status": "resolved",
+      "evidence": "The frozen SEC-01 architecture is included in the 177-file Source Digest closure and GOV-02 isolation fixtures copy the complete governed input set."
+    },
+    {
+      "id": "SEC01-SCA-DRIFT",
+      "status": "resolved",
+      "evidence": "Unused concurrently/shell-quote high-risk path was removed and the protobufjs override advanced to 7.6.5; official production and full audits report zero high/critical and no exceptions."
+    },
+    {
+      "id": "SEC01-GOV04-POSITIVE",
+      "status": "resolved",
+      "evidence": "A byte-identical, clean, non-shallow 177-file Git fixture passed all 16 GOV-04 merge steps; a transient invalid npm response is retained and cryptographically bound to the successful controlled retry."
+    },
+    {
+      "id": "SEC01-EVIDENCE-RETENTION",
+      "status": "resolved",
+      "evidence": "The prior failure report/marker, successful report/marker/supporting JSON, and explicitly untrusted unsigned test artifact are preserved under test-results with matching hashes."
+    }
+  ],
+  "blockingFindings": [],
+  "knownNonBlockingRisks": [
+    "The official npm graph currently reports one low-severity body-parser advisory; the frozen GOV-04 policy rejects high and critical findings, and no exception was used.",
+    "Socket-level network enforcement remains SEC-03; SEC-01 binds and attenuates only the declared network envelope.",
+    "Canonical filesystem containment remains SEC-02; SEC-01 prevents root broadening but does not claim complete path safety.",
+    "Historical same-path NSIS 0xC0000005 remains disclosed; this candidate completed three local packaged runs plus the GOV-04 packaged smoke without recurrence."
+  ],
+  "externalBlockers": [
+    "Real GitHub server-side governance evidence remains unavailable without a hosted repository and protected settings.",
+    "REL-01 trusted Authenticode identity and RFC3161 timestamp remain unavailable without an approved signer and configured allowlist."
+  ],
+  "reviewerVerdict": null,
+  "userStatus": "not-reviewed"
+}

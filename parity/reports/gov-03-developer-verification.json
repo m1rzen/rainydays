@@ -1,0 +1,208 @@
+{
+  "reportVersion": 5,
+  "task": "GOV-03",
+  "persona": "developer",
+  "state": "implemented-independent-debugger-verified-awaiting-reviewer",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "architecture": {
+    "path": "parity/GOV-03-TEST-ARCHITECTURE.md",
+    "sha256": "9ce8cb70ca5e83dbcb5e1fdf39255a814201b4b5b0321d53099190e522dc9276",
+    "amendments": [
+      "parity/reports/gov-03-architect-amendment-01.json",
+      "parity/reports/gov-03-architect-amendment-02.json"
+    ]
+  },
+  "supersededCandidates": [
+    "0.1.0+local.a5377368c5f6",
+    "0.1.0+local.110e45b1fa20",
+    "0.1.0+local.6f931a379114",
+    "0.1.0+local.eff58b567e8b",
+    "0.1.0+local.e1acf42bf610",
+    "0.1.0+local.f5c02bf0bc35",
+    "0.1.0+local.8821ffd5162e",
+    "0.1.0+local.910fd119576f",
+    "0.1.0+local.bf8b3aa978da"
+  ],
+  "build": {
+    "appVersion": "0.1.0",
+    "buildId": "0.1.0+local.2555ee8076f2",
+    "sourceDigest": "2555ee8076f235a00f34d05f644af67aaa715e4f445532d65c8e79c40682a8f9",
+    "buildInfoSha256": "5610a3051b5a037c8bd3ed239c189286a6e0b5c7b4ad9e3221f2ced4d71e96c2",
+    "distIntegritySha256": "8bbead9c24ad51e2b8ae8481b70bee964f5169c737d4e80c7c6db6f35a72daf4",
+    "sourceInputFiles": 118,
+    "testsAndGateScriptsIncludedInSourceDigest": true,
+    "nsisIncludeIncludedInSourceDigest": true
+  },
+  "artifact": {
+    "path": "release/Mini-Lux Setup 0.1.0-0.1.0~2Blocal.2555ee8076f2.exe",
+    "bytes": 218387092,
+    "sha256": "15643004a4df53a9cf24367be26b14e8d722b9e2144c9b4068767ef80444f6fe",
+    "manifest": "test-results/package-artifact.json",
+    "manifestSha256": "1fb6dfc247effbed442a82d36396f03501c9e08a8b965c40177ac28e24e3d1a9",
+    "identityMatched": true,
+    "signed": false
+  },
+  "debuggerReturnsResolved": {
+    "priorVerdicts": [
+      "parity/reports/gov-03-debugger-verdict.json",
+      "parity/reports/gov-03-debugger-verdict-02.json",
+      "parity/reports/gov-03-debugger-verdict-03.json"
+    ],
+    "resolved": [
+      {
+        "id": "DBG3-GOV03-01",
+        "resolution": "A versioned exact-order 17-scenario contract is shared by the self-test producer and report validator; reduced, renamed, reordered or extra matrices are rejected."
+      },
+      {
+        "id": "DBG3-GOV03-02",
+        "resolution": "packageArtifactManifest is part of every formal artifact snapshot; an isolated manifest-only mutation proves ARTIFACT_MUTATION."
+      },
+      {
+        "id": "DBG3-GOV03-03",
+        "resolution": "runProcess timeout evidence records taskkill/direct termination and child exit; validators reject TIMEOUT when termination cleanup is contradictory."
+      },
+      {
+        "id": "DBG3-GOV03-04",
+        "resolution": "Packaged convergence observes artifact-execution, process-temp and installed paths without fixed sleeps."
+      },
+      {
+        "id": "DBG3-GOV03-05",
+        "resolution": "Registry snapshots use PowerShell Get-ItemProperty with ErrorAction Stop and canonical sorted JSON; observation errors are fatal."
+      },
+      {
+        "id": "DBG3-GOV03-06",
+        "resolution": "Layer expectedFiles are validated in exact order against the current task manifest at child and unified boundaries."
+      },
+      {
+        "id": "DBG3-GOV03-07",
+        "resolution": "The machine-authoritative unified report explicitly discloses same-path NSIS 0xC0000005 as a residual risk and per-run copy as mitigation only."
+      }
+    ]
+  },
+  "fullGate": {
+    "command": "node scripts/run-tests.mjs --profile full --report test-results/gov-03-2555-full.json",
+    "exitCode": 0,
+    "state": "passed",
+    "durationMs": 249242,
+    "report": "test-results/gov-03-2555-full.json",
+    "reportSha256": "ccec4ecceb703e6dff9c211947b4432f886911d57361fc67d103436cfa0feddd",
+    "expectedAndActual": [
+      "unit",
+      "contract",
+      "integration",
+      "electron",
+      "packaged",
+      "coverage",
+      "self-test"
+    ],
+    "cleanupPassed": true,
+    "formalArtifactsUnchanged": true,
+    "allChildReportSchemasValid": true,
+    "layers": {
+      "unit": { "tests": 19, "passed": 19, "failed": 0, "durationMs": 23606 },
+      "contract": { "tests": 2, "passed": 2, "failed": 0, "durationMs": 14120, "gov01Synthetic": "13/13", "lockedBaseline": "10/10" },
+      "integration": { "tests": 1, "passed": 1, "failed": 0, "durationMs": 33685, "gov02Internal": "27/27" },
+      "electron": { "tests": 1, "passed": 1, "failed": 0, "durationMs": 23512, "launches": 2 },
+      "packaged": { "tests": 1, "passed": 1, "failed": 0, "durationMs": 34005, "launches": 2 }
+    }
+  },
+  "coverage": {
+    "authority": "embedded coverage result in test-results/gov-03-2555-full.json",
+    "state": "passed",
+    "governedLines": { "covered": 1359, "total": 1562, "threshold": 80, "passed": true },
+    "securityBranches": { "covered": 342, "total": 367, "threshold": 90, "passed": true },
+    "zeroHitFiles": [],
+    "missingFiles": [],
+    "unexpectedFiles": [],
+    "scopeClaim": "governed registry only; not whole-product coverage"
+  },
+  "faultGate": {
+    "authority": "embedded self-test result in test-results/gov-03-2555-full.json",
+    "state": "passed",
+    "durationMs": 67454,
+    "scenarios": 17,
+    "failed": 0,
+    "proofs": [
+      "the exact ordered self-test matrix is mandatory",
+      "package artifact manifest-only mutation is ARTIFACT_MUTATION",
+      "coverage timeout records successful child-tree reclamation",
+      "TIMEOUT with failed termination cleanup is report-invalid",
+      "wrong layer expectedFiles is report-invalid"
+    ],
+    "cleanupPassed": true,
+    "formalArtifactsUnchanged": true
+  },
+  "developerPackagedEvidence": {
+    "sameArtifactRuns": [
+      {
+        "report": "test-results/gov-03-2555-packaged-1.json",
+        "reportSha256": "1149b03d0bc5b451a29dbf9407b4b95063a6499b58188607bcdcd457ed4ac97d",
+        "durationMs": 36706,
+        "state": "passed"
+      },
+      {
+        "report": "test-results/gov-03-2555-full.json#packaged",
+        "durationMs": 34005,
+        "state": "passed"
+      }
+    ],
+    "sourceAndExecutedSha256": "15643004a4df53a9cf24367be26b14e8d722b9e2144c9b4068767ef80444f6fe",
+    "allInstallerExitCodes": 0,
+    "allOfficialUninstallExitCodes": 0,
+    "allCleanupPassed": true,
+    "fixedCooldownBetweenRuns": false
+  },
+  "quickStability": {
+    "runs": [
+      { "report": "test-results/gov-03-2555-quick-1.json", "sha256": "7a50ac25eb40a3a4629149afe8c0ee4c40c5b6af8db286be18ea8069e12eb90e", "durationMs": 151028, "state": "passed" },
+      { "report": "test-results/gov-03-2555-quick-2.json", "sha256": "0645e1c56bb6d51c2aa54646b03e4af3c0e3de6de035a3e73ce8a36123631fb4", "durationMs": 155645, "state": "passed" },
+      { "report": "test-results/gov-03-2555-quick-3.json", "sha256": "4eefd1072941d71179cc789316ecb4851823e6865657f0a2a1ad03255cd2fca5", "durationMs": 151536, "state": "passed" }
+    ],
+    "consistentBuildId": "0.1.0+local.2555ee8076f2",
+    "consistentCoverageCounters": true,
+    "allChildSchemasValid": true,
+    "allCleanupPassed": true,
+    "allFormalArtifactsUnchanged": true
+  },
+  "independentDebugger": {
+    "verdict": "parity/reports/gov-03-debugger-verdict-04.json",
+    "verdictSha256": "d55684c7c337da9a3c7f6e079d67b8126dded4652a757fa57ef97c815bfa22dd",
+    "state": "verified-forward-to-independent-reviewer",
+    "independentSelfTest": {
+      "report": "test-results/gov-03-debugger-2555-selftest.json",
+      "sha256": "8623dbd2c0a9d8e898d2aea894bb383109af831006bfe840ec0463b2521a9b78",
+      "scenarios": 17,
+      "failed": 0
+    },
+    "independentPackagedRuns": [
+      { "report": "test-results/gov-03-debugger-2555-packaged-1.json", "sha256": "9b7522c1ff02cd91ba726ebc9099a013d29999e66b203ad4c388a8cdcb955120", "state": "passed", "durationMs": 34759 },
+      { "report": "test-results/gov-03-debugger-2555-packaged-2.json", "sha256": "0a9fbb41952f6b7fdb9546838cbc8b3b74afe0ff17a9643b8fb9cac9255c0bb9", "state": "passed", "durationMs": 34440 }
+    ],
+    "blockingFindings": []
+  },
+  "cleanup": {
+    "processResidue": 0,
+    "tempFixtureResidue": 0,
+    "uninstallRegistryResidue": 0,
+    "shortcutResidue": 0
+  },
+  "historicalFailureSignals": [
+    "Superseded a537 and 110e candidates returned NSIS 0xC0000005 under repeated same-path execution; current per-run copy execution is a disclosed mitigation, not a claimed upstream fix.",
+    "Superseded f5c0 left a current-user Desktop shortcut; the official NSIS uninstall logic was fixed.",
+    "Superseded 910f failed Debugger because its self-test schema, artifact snapshot, timeout cleanup and packaged observation contracts were incomplete.",
+    "Superseded bf8b failed final Debugger because TIMEOUT report validation did not require successful termination cleanup."
+  ],
+  "nonClaims": [
+    "GOV-04 CI workflow, lint, SCA, secret scanning and artifact upload are not implemented.",
+    "The governed coverage registry is not whole-product coverage.",
+    "The unsigned installer is not a trusted release; signing remains REL-01.",
+    "Per-run installer execution isolation does not root-cause or repair upstream same-path NSIS host instability.",
+    "This Developer report does not substitute for the independent Reviewer verdict or user confirmation."
+  ],
+  "reviewerVerdict": null,
+  "userStatus": "not-reviewed"
+}

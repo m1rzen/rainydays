@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mini-lux.local/schema/sec03-attack-matrix-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "task", "architectureSha256", "candidateBinding", "layers", "profiles", "realHostReceiptCount", "projectionReceiptCountPerLayer", "runtimeReceiptCount", "records", "canonicalPayloadSha256"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "task": {"const": "SEC-03"},
+    "architectureSha256": {"const": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1"},
+    "candidateBinding": {"const": "runtime"},
+    "layers": {"const": ["real-host", "electron", "packaged"]},
+    "profiles": {"const": ["E1", "E2", "E3", "E4"]},
+    "realHostReceiptCount": {"const": 386},
+    "projectionReceiptCountPerLayer": {"const": 48},
+    "runtimeReceiptCount": {"const": 482},
+    "records": {
+      "type": "array", "minItems": 482, "maxItems": 482,
+      "items": {"$ref": "#/$defs/record"}
+    },
+    "canonicalPayloadSha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "record": {
+      "type": "object", "additionalProperties": false,
+      "required": ["layer", "familyId", "variantId", "profileId", "stimulus", "expectedCode", "expectedSubcode", "nativeProducerRequired"],
+      "properties": {
+        "layer": {"enum": ["real-host", "electron", "packaged"]},
+        "familyId": {"type": "string", "pattern": "^(?:A(?:0[1-9]|1[0-9])|P(?:0[1-9]|1[0-2]))$"},
+        "variantId": {"type": "string", "pattern": "^(?:A(?:0[1-9]|1[0-9])-[0-9]{2}|P(?:0[1-9]|1[0-2]))$"},
+        "profileId": {"enum": ["E1", "E2", "E3", "E4", "HOST"]},
+        "stimulus": {
+          "type": "object", "additionalProperties": false,
+          "required": ["descriptor", "sourceVariant"],
+          "properties": {
+            "descriptor": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+            "sourceVariant": {"anyOf": [{"type": "string", "pattern": "^(?:A(?:0[1-9]|1[0-9])-[0-9]{2})$"}, {"type": "null"}]}
+          }
+        },
+        "expectedCode": {"type": "string", "pattern": "^(?:EXEC|OBS)_[A-Z0-9_]+$"},
+        "expectedSubcode": {"anyOf": [{"type": "string", "pattern": "^[a-z0-9-]+$"}, {"type": "null"}]},
+        "nativeProducerRequired": {"const": true}
+      }
+    }
+  }
+}

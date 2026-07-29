@@ -1,0 +1,111 @@
+{
+  "reportVersion": 1,
+  "task": "SEC-01",
+  "persona": "explorer",
+  "generatedAt": "2026-07-17T16:00:00.000Z",
+  "canonical": "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md#SEC-01",
+  "state": "discovery-complete-awaiting-architecture-freeze",
+  "oracle": {
+    "projectFileExists": true,
+    "queryAvailableForProject": false,
+    "reason": "oracle_query resolved the Lux host cwd instead of F:/mini-lux and reported no snapshot; source was inspected directly"
+  },
+  "currentAuthorizationModel": {
+    "personaVisibilityFilter": "Agent/SubAgent/Playbook call getToolDefinitions(persona.tools), which only limits definitions sent to the provider",
+    "executionAuthority": "src/tools/index.ts executeTool resolves any static or dynamic registered name and executes it without persona/session/capability validation",
+    "supervisor": "src/agent.ts calls approveToolCall only on the main Agent path; supervisor is disabled by default and approves dangerous tools when disabled or uninitialized",
+    "sessionIdentity": "Session has a private Link symbol for Link message origin only; tool execution has no session identity capability",
+    "apiAuthentication": "All /api routes require one local API token, but no per-operation capability or short-lived grant is enforced"
+  },
+  "directExecutionCallers": [
+    {
+      "path": "src/agent.ts",
+      "boundary": "main model tool calls",
+      "supervisor": true,
+      "capabilityCheckedAtExecute": false
+    },
+    {
+      "path": "src/subagent.ts",
+      "boundary": "subagent model tool calls",
+      "supervisor": false,
+      "capabilityCheckedAtExecute": false
+    },
+    {
+      "path": "src/playbook.ts",
+      "boundary": "playbook model tool calls",
+      "supervisor": false,
+      "capabilityCheckedAtExecute": false
+    }
+  ],
+  "bypassFindings": [
+    {
+      "id": "SEC01-DISC-01",
+      "severity": "critical",
+      "title": "Persona tool lists are presentation filters, not execution authorization",
+      "evidence": ["src/agent.ts:164", "src/tools/index.ts:168-176", "src/tools/index.ts:183-205"]
+    },
+    {
+      "id": "SEC01-DISC-02",
+      "severity": "critical",
+      "title": "Global dynamic registry permits same-name executor replacement without owner, version or session binding",
+      "evidence": ["src/tools/index.ts:149-161", "src/agent.ts:36-69", "src/index.ts:1013-1082"]
+    },
+    {
+      "id": "SEC01-DISC-03",
+      "severity": "critical",
+      "title": "SubAgent and Playbook execute global tools outside Supervisor",
+      "evidence": ["src/subagent.ts:45-83", "src/playbook.ts:147-172"]
+    },
+    {
+      "id": "SEC01-DISC-04",
+      "severity": "high",
+      "title": "Supervisor is optional fail-open and can be disabled by the supervise tool",
+      "evidence": ["src/supervisor.ts:11-19", "src/supervisor.ts:58-69", "src/tools/advanced-tools.ts:170-183"]
+    },
+    {
+      "id": "SEC01-DISC-05",
+      "severity": "critical",
+      "title": "Persistent Terminal HTTP API directly starts and writes shell processes outside tool authorization",
+      "evidence": ["src/index.ts:374-475", "src/terminal.ts:72-151"]
+    },
+    {
+      "id": "SEC01-DISC-06",
+      "severity": "high",
+      "title": "Persona has no immutable version or digest; old executors and switched sessions cannot be rejected at execution time",
+      "evidence": ["src/types.ts:100-113", "src/persona.ts:46-75", "src/index.ts:210-227"]
+    },
+    {
+      "id": "SEC01-DISC-07",
+      "severity": "high",
+      "title": "Malformed tool JSON is silently converted to empty arguments instead of failing schema validation",
+      "evidence": ["src/agent.ts:257-266", "src/subagent.ts:74-83", "src/playbook.ts:167-172"]
+    },
+    {
+      "id": "SEC01-DISC-08",
+      "severity": "high",
+      "title": "Parallel or stale runs share global Agent, Persona, Supervisor and dynamic tool state",
+      "evidence": ["src/index.ts:94-100", "src/index.ts:809-859", "src/tools/index.ts:147-161"]
+    }
+  ],
+  "frozenScopeForArchitecture": [
+    "Immutable CapabilityContext containing session, persona identity/version, allowed tools/roots, network policy, risk class and approval grant reference",
+    "Execution-point authorization in the single tool dispatcher",
+    "Attenuated child contexts for SubAgent and Playbook",
+    "Dynamic tool registration identity and non-overridable ownership",
+    "Fail-closed behavior for missing, stale, cross-session or forged contexts",
+    "A controlled bridge for direct high-risk APIs such as Terminal",
+    "Attack tests proving zero executor invocation on denial"
+  ],
+  "deferredToDependentCards": [
+    "SEC-02 canonical PathPolicy semantics",
+    "SEC-03 OS sandbox, environment/network/resource limits and complete process-tree termination",
+    "SEC-04 IPC migration, API token removal from query and short-lived user gesture grants",
+    "SEC-06 durable structured audit storage",
+    "RT-01 full multi-session runtime concurrency"
+  ],
+  "nonClaims": [
+    "API token authentication is not equivalent to tool capability authorization.",
+    "A tool omitted from provider definitions is not proven unexecutable.",
+    "The existing Supervisor is advisory and cannot serve as the CapabilityBroker authority."
+  ]
+}

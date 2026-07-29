@@ -1,0 +1,15 @@
+{
+  "defaultProfile": "deepseek",
+  "profiles": {
+    "deepseek": {
+      "model": "deepseek-v4-pro",
+      "apiKey": "",
+      "baseURL": "https://api.deepseek.com"
+    },
+    "deepseek-flash": {
+      "model": "deepseek-v4-flash",
+      "apiKey": "",
+      "baseURL": "https://api.deepseek.com"
+    }
+  }
+}

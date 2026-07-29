@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "taskId": "SEC-01",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "sentinel", "developer", "debugger", "reviewer"],
+  "changedRuntimeFiles": [
+    "dist/capability-broker.js",
+    "dist/tool-policies.js",
+    "dist/tools/index.js",
+    "dist/terminal.js",
+    "dist/terminal-facade.js",
+    "src/agent.ts",
+    "src/capability-broker.ts",
+    "src/index.ts",
+    "src/persona.ts",
+    "src/playbook.ts",
+    "src/subagent.ts",
+    "src/supervisor.ts",
+    "src/terminal-facade.ts",
+    "src/terminal.ts",
+    "src/tool-policies.ts",
+    "src/tools/advanced-tools.ts",
+    "src/tools/ask-user-tool.ts",
+    "src/tools/index.ts",
+    "src/tools/phase1-tools.ts",
+    "src/tools/save-persona.ts",
+    "src/tools/subagent-tools.ts",
+    "src/tools/terminal-tools.ts",
+    "src/types.ts",
+    "personas/daily.md",
+    "personas/debugger.md",
+    "personas/developer.md",
+    "personas/general.md",
+    "personas/quick-fix.md",
+    "personas/rds-assistant.md",
+    "personas/sentinel.md",
+    "personas/writer.md"
+  ],
+  "coverageExemptions": {
+    "src/agent.ts": {"reason": "Agent authorization orchestration is exercised by the SEC-01 integration layer; the governed dispatcher and Broker are measured separately.", "evidenceLayer": "integration"},
+    "src/capability-broker.ts": {"reason": "The compiled equivalent dist/capability-broker.js is in the governed security-critical coverage registry.", "evidenceLayer": "contract"},
+    "src/index.ts": {"reason": "HTTP direct-operation wiring and packaged Session isolation are exercised by integration, Electron and packaged layers.", "evidenceLayer": "integration"},
+    "src/persona.ts": {"reason": "Effective Persona digest and runtime authority freshness are exercised by the SEC-01 integration layer.", "evidenceLayer": "integration"},
+    "src/playbook.ts": {"reason": "Playbook capability attenuation and owner lineage are exercised by dedicated unit and integration contracts.", "evidenceLayer": "unit"},
+    "src/subagent.ts": {"reason": "SubAgent child attenuation and strict provider argument handling are exercised by the SEC-01 integration layer.", "evidenceLayer": "integration"},
+    "src/supervisor.ts": {"reason": "Supervisor remains advisory and model-immutable; state preservation is proved by the SEC-01 integration layer.", "evidenceLayer": "integration"},
+    "src/terminal-facade.ts": {"reason": "The compiled equivalent dist/terminal-facade.js is in the governed security-critical coverage registry.", "evidenceLayer": "integration"},
+    "src/terminal.ts": {"reason": "The compiled equivalent dist/terminal.js is in the governed security-critical coverage registry.", "evidenceLayer": "integration"},
+    "src/tool-policies.ts": {"reason": "The compiled equivalent dist/tool-policies.js is in the governed security-critical coverage registry.", "evidenceLayer": "contract"},
+    "src/tools/advanced-tools.ts": {"reason": "The model-visible Supervisor control surface is checked structurally and behaviorally in contract and integration layers.", "evidenceLayer": "contract"},
+    "src/tools/ask-user-tool.ts": {"reason": "Exact structured positive and negative approval responses are exercised by dedicated unit tests.", "evidenceLayer": "unit"},
+    "src/tools/index.ts": {"reason": "The compiled equivalent dist/tools/index.js is in the governed security-critical coverage registry.", "evidenceLayer": "contract"},
+    "src/tools/phase1-tools.ts": {"reason": "Capability-scoped search_tools definition discovery is covered through dispatcher structural contracts.", "evidenceLayer": "contract"},
+    "src/tools/save-persona.ts": {"reason": "Network policy persistence and effective Persona refresh are checked by the SEC-01 integration contract.", "evidenceLayer": "integration"},
+    "src/tools/subagent-tools.ts": {"reason": "Invocation-service child derivation is exercised through the Agent integration attack matrix.", "evidenceLayer": "integration"},
+    "src/tools/terminal-tools.ts": {"reason": "Terminal tool ownership and sole-facade imports are proved by unit, contract and integration layers.", "evidenceLayer": "integration"},
+    "src/types.ts": {"reason": "This file contains TypeScript-only authority contracts and emits no independently testable runtime behavior.", "evidenceLayer": "contract"},
+    "personas/daily.md": {"reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.", "evidenceLayer": "integration"},
+    "personas/debugger.md": {"reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.", "evidenceLayer": "integration"},
+    "personas/developer.md": {"reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.", "evidenceLayer": "integration"},
+    "personas/general.md": {"reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.", "evidenceLayer": "integration"},
+    "personas/quick-fix.md": {"reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.", "evidenceLayer": "integration"},
+    "personas/rds-assistant.md": {"reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.", "evidenceLayer": "integration"},
+    "personas/sentinel.md": {"reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.", "evidenceLayer": "integration"},
+    "personas/writer.md": {"reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.", "evidenceLayer": "integration"}
+  },
+  "layers": {
+    "unit": [
+      "tests/unit/approval-response.test.mjs",
+      "tests/unit/playbook-owner.test.mjs"
+    ],
+    "contract": [
+      "tests/unit/capability-broker.test.mjs",
+      "tests/unit/terminal-owner.test.mjs",
+      "tests/contract/sec01-boundaries.test.mjs",
+      "tests/contract/sec01-attack-contract.test.mjs",
+      "tests/contract/lux-baseline.test.mjs"
+    ],
+    "integration": [
+      "tests/integration/sec01-agent.test.mjs",
+      "tests/integration/sec01-terminal-owner.test.mjs",
+      "tests/integration/version-model.test.mjs"
+    ],
+    "electron": ["tests/electron/desktop-smoke.test.mjs"],
+    "packaged": ["tests/packaged/installed-smoke.test.mjs"]
+  }
+}

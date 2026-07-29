@@ -1,0 +1,170 @@
+{
+  "reportVersion": 6,
+  "task": "GOV-04",
+  "persona": "developer",
+  "generatedAt": "2026-07-17T15:39:46.000Z",
+  "state": "two-debugger-returns-resolved-awaiting-independent-debugger-review",
+  "canonical": "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md#GOV-04",
+  "architecture": {
+    "path": "parity/GOV-04-CI-ARCHITECTURE.md",
+    "sha256": "96dd58fa180606df13265f2e461a0bda3c08ff94879b3a8fdc3ae478000a1022",
+    "amendment": {
+      "path": "parity/GOV-04-ARCHITECT-AMENDMENT-01.md",
+      "sha256": "bf0ed14427466f259c273ab9b29cd8d54dab647c6985320ffe87eee5a43148c3"
+    },
+    "frozenReport": {
+      "path": "parity/reports/gov-04-architect-freeze.json",
+      "sha256": "599a7094b89d7c6dccbda351d4fb725c8fbc848f24e5884bf56b871a8b9dd692"
+    }
+  },
+  "candidate": {
+    "schemaVersion": 1,
+    "sourceDigest": "a64eb8e74cbe0865e06edc26684e69ed8cce77319203c60d84f4e370752874f2",
+    "packageInputDigest": "602269b411386a58a1a0aefd5ddebb8bb248443e6554d50fba59e5f4e02fc52b",
+    "pipelineDefinitionDigest": "1d458cbb12aca0aa90d1bfdc5f95a6523eb9383682417a12dda4f2502ba1707a",
+    "policyDigest": "e6847b0cbb95cc7fe9605af8c86c145f11f07dffb0f583600befd06d07e98b29",
+    "sourceManifestSha256": "d3fa9a1417a28f30f4194bb370c78c8e4cad8a73a5256ad2ddffe6ce42d81393",
+    "releaseCandidateId": "e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c",
+    "fileCount": 161,
+    "totalBytes": 139679468,
+    "modelsWorkflowPolicyRetryAndCandidateBuildClosureIncluded": true
+  },
+  "debuggerReturnsResolved": [
+    {
+      "finding": "cross-run retry was an unauthenticated UUID string",
+      "resolution": "retry is now null or a fixed record with runId, prior report SHA-256, prior marker SHA-256, prior candidate ID and priorState=failed. Resolver rejects symlink/junction escapes, nonexistent runs, passed prior runs and marker/report mismatches; it only reads prior evidence."
+    },
+    {
+      "finding": "candidate identity could be decoupled from source/package Build ID",
+      "resolution": "report schema now recomputes source-test-build sourceDigest and source/package buildId from report.candidate, requiring 0.1.0+ci.<releaseCandidateId> at both build boundaries."
+    }
+  ],
+  "toolchain": {
+    "node": "24.14.1",
+    "npm": "11.11.0",
+    "typescript": "5.7.3",
+    "eslint": "10.7.0",
+    "c8": "10.1.3",
+    "gitleaks": "8.30.1",
+    "gitleaksExecutableSha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c"
+  },
+  "policy": {
+    "path": "parity/policies/gov-04-policy.json",
+    "sha256": "c01d540dd282d8c6d8185a58a146fc63ce8d6c045afb9dd9f458d459f270311a",
+    "signerAllowlistPath": "parity/policies/gov-04-signer-allowlist.json",
+    "signerAllowlistSha256": "220492fb55e7486e6c1e0f7b8b531caa4cc4b6b7b562fd4e0d517dc962597409",
+    "signerState": "unconfigured",
+    "criticalHighExceptions": 0
+  },
+  "verification": {
+    "schemaAndWorkflowTests": { "state": "passed", "passed": 31, "failed": 0 },
+    "faultGate": { "command": "npm run test:gov04:self", "state": "passed", "scenarios": 23, "failed": 0 },
+    "staticGates": { "typecheck": "passed", "lint": "passed-zero-warnings" },
+    "fixedNewProof": "G04-23 changes candidate and matching package candidate fields while retaining the older source/package Build ID; validator rejects the forged report."
+  },
+  "priorFailure": {
+    "profile": "trusted-release",
+    "state": "failed-as-required",
+    "releaseEligible": false,
+    "runId": "fba36ef4-ebc1-420a-86fc-b520541f3ccb",
+    "candidateId": "e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c",
+    "failureClass": "TRUSTED_PROVENANCE_UNVERIFIED",
+    "executedSteps": ["prepare", "finalize"],
+    "report": "test-results/gov04-retained/fba36ef4-ebc1-420a-86fc-b520541f3ccb/gov04-report.json",
+    "reportSha256": "39091778ba6c7a4972cedc42fec12aeec31bde054bfb5bb33e2867160641e71d",
+    "markerSha256": "1fa08440e0a63683b9506f87062bbca73478beb8aae4186008b4c4c6e1f8d266",
+    "cleanupPassed": true
+  },
+  "implementationRun": {
+    "profile": "merge",
+    "state": "passed",
+    "releaseEligible": false,
+    "runId": "b2c3ac69-2df0-4513-83dc-b07c249f388d",
+    "durationMs": 600346,
+    "retry": {
+      "runId": "fba36ef4-ebc1-420a-86fc-b520541f3ccb",
+      "priorReportSha256": "39091778ba6c7a4972cedc42fec12aeec31bde054bfb5bb33e2867160641e71d",
+      "priorMarkerSha256": "1fa08440e0a63683b9506f87062bbca73478beb8aae4186008b4c4c6e1f8d266",
+      "priorCandidateId": "e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c",
+      "priorState": "failed"
+    },
+    "report": "test-results/gov04-retained/b2c3ac69-2df0-4513-83dc-b07c249f388d/gov04-report.json",
+    "reportSha256": "51cb5402ae747a9fdb919913f289e5e5fcb225fdac2de80a364bedb959ffd988",
+    "marker": "test-results/gov04-retained/b2c3ac69-2df0-4513-83dc-b07c249f388d/gov04-final-marker.json",
+    "markerSha256": "91ff695ccc30ce9bcefdc1c616e448671d6c1d5a8927ac6aa24c72cff664f943",
+    "stepsExpected": 16,
+    "stepsExecutedOnce": 16,
+    "stepsPassed": 16,
+    "candidateBuildId": "0.1.0+ci.e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c",
+    "cleanup": { "workspaceRemoved": true, "sourceUnchanged": true, "artifactUnchanged": true, "evidencePreserved": true }
+  },
+  "retainedEvidence": {
+    "path": "test-results/gov04-retained",
+    "manifest": "test-results/gov04-retained/retention-manifest.json",
+    "manifestSha256": "11a95aaa4e57e7ace48798b520c22c72981a07999439beab1bbe137922db4d1d",
+    "entries": 16,
+    "copyMode": "exclusive-byte-preserving-copy-from-raw-run-evidence",
+    "validatedPriorAndCurrentMarkers": true
+  },
+  "provenanceScope": {
+    "implementationValidation": "synthetic-local-git-fixture",
+    "fixtureCommit": "1e8b339b2746b8abec5374a588b9daa8e058a38a",
+    "fixtureHistoryComplete": true,
+    "fixtureClean": true,
+    "fixtureCandidateByteIdenticalToSource": true,
+    "provider": null,
+    "repositoryIdentity": null,
+    "originalSourceHasGitRepository": false,
+    "hostedGitHubRunProven": false,
+    "serverSideRulesetProven": false,
+    "branchProtectionProven": false
+  },
+  "securityGates": {
+    "scaProduction": { "state": "passed", "dependencyTotal": 675, "critical": 0, "high": 0, "totalFindings": 0, "reportSha256": "f5d0b1d7fdf9a0043273f5060115998e668f5d0c0b6241d23c815ec851170767" },
+    "scaFull": { "state": "passed", "dependencyTotal": 675, "critical": 0, "high": 0, "totalFindings": 0, "reportSha256": "f5d0b1d7fdf9a0043273f5060115998e668f5d0c0b6241d23c815ec851170767" },
+    "secretCurrent": { "state": "passed", "findings": 0, "redactionPercent": 100, "reportSha256": "f94472685854a5ace999a22690f3d31c191f77d566fe672be7cc891f3a5d9401" },
+    "secretHistory": { "state": "passed-for-synthetic-fixture-history-only", "findings": 0, "redactionPercent": 100, "reportSha256": "7bf8d3eb4df93afff7e6593d148200619b4b0f8fa906dead6ea230b6261f0a50" }
+  },
+  "artifact": {
+    "filename": "Mini-Lux Setup 0.1.0-0.1.0~2Bci.e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c.exe",
+    "publishedPath": "test-results/gov04-retained/b2c3ac69-2df0-4513-83dc-b07c249f388d/unsigned/UNSIGNED-UNTRUSTED-DO-NOT-DISTRIBUTE--Mini-Lux Setup 0.1.0-0.1.0~2Bci.e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c.exe",
+    "bytes": 245339253,
+    "sha256": "56898f3c2eed4d1c48ddaf05131421ba9c04023a61425500a0ba969d221d4b48",
+    "authenticodeStatus": "NotSigned",
+    "artifactClass": "test-only",
+    "trust": "untrusted",
+    "releaseEligible": false,
+    "manifest": "test-results/gov04-retained/b2c3ac69-2df0-4513-83dc-b07c249f388d/package-artifact.json",
+    "manifestSha256": "4ed66d4b8ceed1bcfbb5c2ed1e7ae98c8783c83148b032dde131ad929e0609aa"
+  },
+  "packagedSmoke": {
+    "state": "passed",
+    "sourceAndExecutedSha256": "56898f3c2eed4d1c48ddaf05131421ba9c04023a61425500a0ba969d221d4b48",
+    "identityMatched": true,
+    "report": "test-results/gov04-retained/b2c3ac69-2df0-4513-83dc-b07c249f388d/gov03-packaged.json",
+    "reportSha256": "6a2e951d30fb6c1a5feb0486bd4971180a16d90f7cebd8c3b711eaa43ffbdca1"
+  },
+  "workflows": {
+    "merge": { "path": ".github/workflows/gov-04-merge.yml", "sha256": "e464898e1ebbeffb901965630feb5d257aecefb79e59069a39535336da439651" },
+    "trustedRelease": { "path": ".github/workflows/gov-04-trusted-release.yml", "sha256": "dba310054eae96d9c91cbffa8d67620f8754c080c81d4825a4b53e3c3858cef1" },
+    "actionsPinnedByCommit": true,
+    "permissionsReadOnly": true,
+    "hostedExecutionClaimed": false
+  },
+  "supersededCandidates": [
+    "00400c990424e8ad16e4a2eabd0fd8aa021a7a8279816c722bf4a88df489d8ab",
+    "40bce8e5eac8d7544b45d117300b2b0cc644e4ae3e7ce7e6289d73b4a3b5743f",
+    "756d1e1978cab04c4a58dbf4ea5ecfd0dd1e654812a78c597f8c9474ea9e387c",
+    "9582ec74af992504553e8ac6ca7e674c92ae735cef46746b12fb7d04ea86f552"
+  ],
+  "nonClaims": [
+    "This report does not claim GitHub Actions executed; the source directory is not a Git repository.",
+    "The synthetic local Git fixture proves the implemented state machine and full-history scan path only; it does not prove real repository history is secret-free.",
+    "Workflow files do not prove GitHub rulesets, required checks, CODEOWNERS enforcement or branch protection; those require independent server-side evidence.",
+    "The unsigned artifact is diagnostic only and must not be distributed as a trusted release.",
+    "Trusted-release enablement remains blocked until REL-01 configures an approved Authenticode signer, timestamp policy and hosted repository identity.",
+    "This Developer report does not substitute for independent Debugger/Reviewer verification or user confirmation."
+  ],
+  "reviewerVerdict": null,
+  "userStatus": "not-reviewed"
+}

@@ -1,0 +1,627 @@
+{
+  "schemaVersion": 1,
+  "task": "SEC-03",
+  "architectureSha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1",
+  "domain": "mini-lux/sec03/restricted-execution-dialect/v1",
+  "sourceRoots": [
+    "src/",
+    "electron/",
+    "scripts/",
+    "tests/",
+    "native/",
+    "public/**/*.html"
+  ],
+  "extensions": [
+    ".ts",
+    ".tsx",
+    ".js",
+    ".cjs",
+    ".mjs",
+    ".cpp",
+    ".cc",
+    ".h",
+    ".hpp",
+    ".html"
+  ],
+  "governedEntryPaths": [
+    "src/tools/shell.ts",
+    "src/terminal.ts",
+    "src/tools/script.ts"
+  ],
+  "governedAdapters": [
+    {
+      "sourcePath": "src/execution-native.ts",
+      "family": "native-addon",
+      "api": "require.node",
+      "container": "loadAddon",
+      "occurrenceId": "exec-2f116710a978a6f5751b97ab"
+    },
+    {
+      "sourcePath": "src/execution-native.ts",
+      "family": "native-addon",
+      "api": "require.node",
+      "container": "loadAddon",
+      "occurrenceId": "exec-8fc4a6ca80b863be900c19f1"
+    }
+  ],
+  "fixedPurposeProduction": [
+    {
+      "sourcePath": "electron/main.cjs",
+      "family": "network",
+      "api": "createServer",
+      "container": "canListen",
+      "occurrenceId": "exec-cbbeded32fa3f6a3e6f4e60a"
+    },
+    {
+      "sourcePath": "electron/main.cjs",
+      "family": "process-environment",
+      "api": "process.env",
+      "container": "startPackagedServer",
+      "occurrenceId": "exec-60577be76833fe4a3f40a907"
+    },
+    {
+      "sourcePath": "electron/main.cjs",
+      "family": "child-process",
+      "api": "spawn",
+      "container": "startServerProcess",
+      "occurrenceId": "exec-cd3e8315619f4e1c76fc4a25"
+    },
+    {
+      "sourcePath": "electron/main.cjs",
+      "family": "child-process",
+      "api": "spawn",
+      "container": "stopDevelopmentServer",
+      "occurrenceId": "exec-73773f4ce2e5df4b35010c49"
+    },
+    {
+      "sourcePath": "electron/main.cjs",
+      "family": "process-environment",
+      "api": "process.env",
+      "container": "<top-level>",
+      "occurrenceId": "exec-36d22a56df968b95e31ab192"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "doSearch",
+      "occurrenceId": "exec-67ffbcfb5a3cb64de6b07d60"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "forkCurrentSession",
+      "occurrenceId": "exec-a948d308dbfcf26e09e606d2"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "exportCurrentSession",
+      "occurrenceId": "exec-344d8cd3c576fbb5973e256e"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "importSession",
+      "occurrenceId": "exec-541565284ad48913214175ce"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "addPin",
+      "occurrenceId": "exec-27d0f786cbc39852f8e7993b"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "removePin",
+      "occurrenceId": "exec-ba216dde085ca44fc55eed9f"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "loadPins",
+      "occurrenceId": "exec-acc6140b187faae8e61d232d"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "rollback",
+      "occurrenceId": "exec-a7ef2dee55eb4e263e8e5b9f"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "loadTerminals",
+      "occurrenceId": "exec-ab0c785e201c782d9ad22209"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "clearActiveTerminal",
+      "occurrenceId": "exec-667c705da52b4b2934d6f6a6"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "killActiveTerminal",
+      "occurrenceId": "exec-f262236c2eccbc8b2039d0ad"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "closeActiveTerminal",
+      "occurrenceId": "exec-4fe80d301a7d6a93c018ea1c"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "ensureFileRoots",
+      "occurrenceId": "exec-4557757aba7ae3d4e795d05b"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "openFileDirectory",
+      "occurrenceId": "exec-1d3f753ba4d02fc153895fae"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "previewFile",
+      "occurrenceId": "exec-ac4fcd808229b11354661be5"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "revealSelectedFile",
+      "occurrenceId": "exec-6c1962afdfe285ed56aaf174"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "openResolvedFilePath",
+      "occurrenceId": "exec-4c5b6321c789fce2940fb17f"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "pathExistsInViewer",
+      "occurrenceId": "exec-eed038d10d0edd39c00d2b46"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "openSettings",
+      "occurrenceId": "exec-ee782a8c1506846f8f8bef47"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "refreshSettingsState",
+      "occurrenceId": "exec-60baff745973fe957be20dc6"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "saveGeneralSettings",
+      "occurrenceId": "exec-620e59206ede0aaca8947614"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "saveProvider",
+      "occurrenceId": "exec-06746f73acbdefc9e6458251"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "switchCurrentProvider",
+      "occurrenceId": "exec-d3376ff29aa23ad75c248c86"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "deleteCurrentProvider",
+      "occurrenceId": "exec-2cc1857952a7e55edef64912"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "loadPersonas",
+      "occurrenceId": "exec-bfb944e2668c04417303aee2"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "switchPersona",
+      "occurrenceId": "exec-e9ea59cbe552682985c54e0b"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "loadSessions",
+      "occurrenceId": "exec-b16fd3cfeee8027348bf9263"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "newChat",
+      "occurrenceId": "exec-8f5eb51a5cb7196dc61aa53f"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "selectSession",
+      "occurrenceId": "exec-d24bf3329aac4f741f0ad483"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "selectSession",
+      "occurrenceId": "exec-7599b548b41c40fee533f8b8"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "selectSession",
+      "occurrenceId": "exec-87db534184daad6e0c8e1c23"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "deleteSession",
+      "occurrenceId": "exec-6ae6312588f4527152da4223"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "<top-level>",
+      "occurrenceId": "exec-aeafa20094f9af2c811ec01b"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "<top-level>",
+      "occurrenceId": "exec-7ff890e540f8627c52af5de3"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "clearChat",
+      "occurrenceId": "exec-063845defbb554e420dadcd6"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "loadSessionTasks",
+      "occurrenceId": "exec-7e28bacf9ab888d903c612ef"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "updateStatus",
+      "occurrenceId": "exec-f2836f33f002d5240a5c52cf"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "downloadDiagnostics",
+      "occurrenceId": "exec-f3c605ae27957972a2d9ecbd"
+    },
+    {
+      "sourcePath": "public/index.html",
+      "family": "network",
+      "api": "fetch",
+      "container": "submitAskAnswer",
+      "occurrenceId": "exec-673bd64a177d7c2a76e800dd"
+    },
+    {
+      "sourcePath": "src/daemon.ts",
+      "family": "process-environment",
+      "api": "process.env",
+      "container": "startServer",
+      "occurrenceId": "exec-8bdfe9e6a73832cd7bbc8504"
+    },
+    {
+      "sourcePath": "src/daemon.ts",
+      "family": "child-process",
+      "api": "spawn",
+      "container": "startServer",
+      "occurrenceId": "exec-66398f00fe3182ac6a205ff1"
+    },
+    {
+      "sourcePath": "src/daemon.ts",
+      "family": "network",
+      "api": "fetch",
+      "container": "<top-level>",
+      "occurrenceId": "exec-b2bbf7e5a6ba31cb75bac866"
+    },
+    {
+      "sourcePath": "src/file-viewer.ts",
+      "family": "worker",
+      "api": "Worker",
+      "container": "parseDocumentIsolated",
+      "occurrenceId": "exec-59cdde621a662e5395abda45"
+    },
+    {
+      "sourcePath": "src/file-viewer.ts",
+      "family": "child-process",
+      "api": "spawn",
+      "container": "FileViewerService.reveal",
+      "occurrenceId": "exec-cab8f8559e3c6cb603514356"
+    },
+    {
+      "sourcePath": "src/process-tree.ts",
+      "family": "child-process",
+      "api": "spawn",
+      "container": "runWindowsTreeKiller",
+      "occurrenceId": "exec-68cae95c622b78ea64ab451b"
+    },
+    {
+      "sourcePath": "src/tools/download-tool.ts",
+      "family": "network",
+      "api": "fetch",
+      "container": "downloadExec",
+      "occurrenceId": "exec-7e4036505d34a994930394d6"
+    },
+    {
+      "sourcePath": "src/tools/read-repo.ts",
+      "family": "child-process",
+      "api": "execFile",
+      "container": "runGitLsFiles",
+      "occurrenceId": "exec-f9d6239b8910851bf9157e33"
+    },
+    {
+      "sourcePath": "src/tools/search-tool.ts",
+      "family": "network",
+      "api": "fetch",
+      "container": "webSearchExec",
+      "occurrenceId": "exec-6ab35821e230b0c089885838"
+    },
+    {
+      "sourcePath": "src/tools/web.ts",
+      "family": "network",
+      "api": "fetch",
+      "container": "fetchUrlExec",
+      "occurrenceId": "exec-bf9e0304e245d075f4592f21"
+    }
+  ],
+  "fixedDynamicLoads": [],
+  "nativeHostAdapters": [
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "SetInformationJobObject",
+      "container": "SetJobLimits",
+      "occurrenceId": "exec-7eedb10e5100016e4115f8dd"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "SetInformationJobObject",
+      "container": "SetJobLimits",
+      "occurrenceId": "exec-6c1307818c5419b6a0443509"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "TerminateJobObject",
+      "container": "FailJob",
+      "occurrenceId": "exec-1e4ca04477491d4869b0084d"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "CreateAppContainerProfile",
+      "container": "Run",
+      "occurrenceId": "exec-f54c6a63d24abce5e9dbe9aa"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "container": "Run",
+      "occurrenceId": "exec-8f959325e86d94db67f74fec"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "container": "Run",
+      "occurrenceId": "exec-c2a0a4fa23971453b752414c"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "container": "Run",
+      "occurrenceId": "exec-cd99329b67335980080f85d6"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "CreateJobObjectW",
+      "container": "Run",
+      "occurrenceId": "exec-b7c98da1234bb407e4f21591"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "SetInformationJobObject",
+      "container": "Run",
+      "occurrenceId": "exec-97af3aceb029dbd3eda387af"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "container": "Run",
+      "occurrenceId": "exec-c0064a147c4b379a4666cd9f"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "CreatePseudoConsole",
+      "container": "Run",
+      "occurrenceId": "exec-90f22fe2020f47e4b82ab9fd"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "ClosePseudoConsole",
+      "container": "Run",
+      "occurrenceId": "exec-3e4b4734b493805ea7f4b9bc"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "container": "Run",
+      "occurrenceId": "exec-8b23f8adfe74eb3d32d8cc3f"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "ClosePseudoConsole",
+      "container": "Run",
+      "occurrenceId": "exec-e0822958a6166a4faac8a7e0"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "container": "Run",
+      "occurrenceId": "exec-d46e5fc25e7384fd469cb051"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "ClosePseudoConsole",
+      "container": "Run",
+      "occurrenceId": "exec-8deb78063396f16041b384a7"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "container": "Run",
+      "occurrenceId": "exec-d1af30f6879d71b697e1910b"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "child-process",
+      "api": "CreateProcessW",
+      "container": "Run",
+      "occurrenceId": "exec-fd554ff8fd20f4d3968b4ca5"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "AssignProcessToJobObject",
+      "container": "Run",
+      "occurrenceId": "exec-c95054366da797059cdfe7f3"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "ClosePseudoConsole",
+      "container": "Run",
+      "occurrenceId": "exec-5d252cf99777504e6d830498"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "container": "Run",
+      "occurrenceId": "exec-c72fc39b727d02f180cc4519"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "TerminateJobObject",
+      "container": "Run",
+      "occurrenceId": "exec-c549a3605192b270dc55e968"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "TerminateJobObject",
+      "container": "Run",
+      "occurrenceId": "exec-1614d6401be0e35bcb091fe1"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "TerminateJobObject",
+      "container": "Run",
+      "occurrenceId": "exec-6cb11d4140e3f6b60116e047"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "ClosePseudoConsole",
+      "container": "Run",
+      "occurrenceId": "exec-0c154502b123fdbd2a002bca"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "container": "Run",
+      "occurrenceId": "exec-0bb8d68d00eea90d3f13c196"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "family": "native-addon",
+      "api": "DeleteAppContainerProfile",
+      "container": "RecoverJournals",
+      "occurrenceId": "exec-0515df0a9b409e806a87b2d4"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "family": "child-process",
+      "api": "CreateProcessW",
+      "container": "LaunchHost",
+      "occurrenceId": "exec-f6f82e21b5567822c708abc6"
+    }
+  ],
+  "canonicalPayloadSha256": "f6d0345829d550b4f71c4ff6716021f3f076b849e78803552dff4f695799d9a5"
+}

@@ -1,0 +1,34 @@
+{
+  "reportVersion": 1,
+  "task": "SEC-02",
+  "batch": "path-policy-core",
+  "state": "batch-verified-forward-to-broker-integration",
+  "buildId": "0.1.0+local.012e3bc482f5",
+  "sourceDigest": "012e3bc482f5aa99cfc00c139fcd703aecb242b0023d4ab73720c7b2557c9a40",
+  "core": {
+    "sourcePath": "src/path-policy.ts",
+    "sourceSha256": "4e2746ba90434d8e727dd13eb13626d7d31fc196497865c9f50bf4ef3be4de7f",
+    "testPath": "tests/unit/path-policy.test.mjs",
+    "testSha256": "080113b10c90961d031df8c6cc76e3669f0e60ef1ec67727ce33542e17459662",
+    "distSha256": "a28be49f1eb3f53a09d352414431e0d09f7543d2f582bc928c68200d5294a412"
+  },
+  "developer": {
+    "tests": { "passed": 24, "failed": 0, "skipped": 0 },
+    "lint": "passed",
+    "typecheck": "passed",
+    "sec01Regression": { "passed": 17, "failed": 0 }
+  },
+  "reviewer": {
+    "verdict": "PASS",
+    "enhancedNegativeGroups": { "passed": 7, "failed": 0 },
+    "blockingFindings": []
+  },
+  "debugger": {
+    "verdict": "PASS",
+    "independentWindowsChecks": { "passed": 18, "failed": 0 },
+    "fixtureRemoved": true,
+    "blockingFindings": []
+  },
+  "scopeLimit": "This closes only the PathPolicy core batch. Broker integration, path-taking callers, the 411-observation matrix, packaged evidence, and SEC-02 final acceptance remain open.",
+  "next": "Bind prepared PathAuthority and scoped path gateways into CapabilityBroker."
+}

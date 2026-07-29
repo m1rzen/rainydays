@@ -1,0 +1,46 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-02",
+  "persona": "reviewer",
+  "generatedAt": "2026-07-16T03:26:17.000Z",
+  "verdict": "PASS",
+  "state": "user-confirmed",
+  "reviewedBuild": {
+    "appVersion": "0.1.0",
+    "buildId": "0.1.0+local.b7bf1107e585",
+    "sourceDigest": "b7bf1107e585091f773390d12eba68801e7031d1d98ebfbdc16ecfe4a668595f",
+    "distIntegritySha256": "9e599acb051e1994194a61bf12c0ffa919d94ed3b18b9887fc9fe24d03c4c992"
+  },
+  "independentChecks": {
+    "canonicalTaskAcceptance": true,
+    "architectureMatchesImplementation": true,
+    "sourceGate": "PASS: 93 inputs",
+    "evidenceHashes": "PASS: 17 source/generated files and 4 artifacts",
+    "asarIntegrity": "PASS: 49/49 files; only extra entry is the dist/tools directory node",
+    "databaseMigration": "PASS: full schema object/SQL/column/index/AUTOINCREMENT/FK signature includes memos",
+    "memoImportTimeDdlRemoved": true,
+    "reviewerRestartReproduction": "PASS: fresh -> real memo/session write -> new-process reopen",
+    "debuggerInstalledRestart": "PASS: silent install -> first launch -> API session + real memo tool -> stop -> second launch -> auto-restore -> uninstall",
+    "versionSurfaces": "PASS: UI, installer filename, log, preload, API status/version and diagnostics use b7bf1107e585",
+    "incompatibleVersionHandling": "PASS: database, Session Export, Link and build metadata rejection paths",
+    "apiAuthentication": "PASS: all /api routes are behind constant-time local token middleware; installed unauthenticated probes returned 401",
+    "diagnosticSanitization": "PASS: no API key, local token, absolute user path, config path or database path",
+    "gov01Regression": "PASS: 13/13 synthetic and 10/10 locked fault injection"
+  },
+  "rejectedArtifact": {
+    "buildId": "0.1.0+local.8262948364c8",
+    "reason": "legitimate memos table caused second startup to fail complete Schema validation",
+    "mustNotBeDistributed": true
+  },
+  "nonBlockingRisks": [
+    "The NSIS installer is unsigned because no code-signing identity is configured.",
+    "Silent uninstall removes all files/processes but leaves an empty custom /D target directory; the harness removes it.",
+    "One Reviewer db-version command was run without Temp environment variables and opened the existing development DB for schema validation; it inserted no business rows. The isolated reproduction was then rerun correctly."
+  ],
+  "blockingFindings": [],
+  "userConfirmation": {
+    "confirmed": true,
+    "confirmedAt": "2026-07-16T03:27:34.000Z",
+    "acceptedBuildId": "0.1.0+local.b7bf1107e585"
+  }
+}

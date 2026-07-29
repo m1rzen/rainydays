@@ -1,0 +1,98 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-04",
+  "persona": "architect",
+  "generatedAt": "2026-07-17T04:41:25.000Z",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "acceptedPredecessor": {
+    "task": "GOV-03",
+    "buildId": "0.1.0+local.2555ee8076f2",
+    "reviewerVerdict": "parity/reports/gov-03-reviewer-verdict.json",
+    "state": "user-confirmed"
+  },
+  "repositoryState": {
+    "gitRepository": false,
+    "githubWorkflowPresent": false,
+    "remoteAndDefaultBranchKnown": false,
+    "branchProtectionKnown": false,
+    "hostedWorkflowRunAvailable": false,
+    "localProvenanceClaim": "local-snapshot-only"
+  },
+  "existingCapabilities": {
+    "gov03FiveLayers": true,
+    "gov03Coverage": true,
+    "gov03FaultGate": true,
+    "artifactManifestAndPackagedSmoke": true,
+    "typecheckScript": false,
+    "lintToolAndScript": false,
+    "scaGate": false,
+    "secretScanGate": false,
+    "signatureVerifier": false,
+    "artifactUploadWorkflow": false
+  },
+  "toolchainObserved": {
+    "platform": "win32",
+    "node": "24.14.1",
+    "npm": "11.11.0",
+    "lockfileVersion": 3,
+    "c8": "10.1.3"
+  },
+  "sca": {
+    "defaultRegistry": "https://registry.npmmirror.com",
+    "defaultRegistryAudit": "unavailable-404",
+    "officialRegistry": "https://registry.npmjs.org",
+    "production": {
+      "critical": 1,
+      "high": 4,
+      "moderate": 1,
+      "total": 6
+    },
+    "allDependencies": {
+      "critical": 1,
+      "high": 15,
+      "moderate": 1,
+      "total": 17
+    },
+    "blocking": true,
+    "notableRoots": [
+      "@xenova/transformers/onnxruntime-web/onnx-proto/protobufjs",
+      "xlsx",
+      "electron",
+      "electron-builder"
+    ]
+  },
+  "signature": {
+    "installer": "NotSigned",
+    "unpackedMainExe": "NotSigned",
+    "elevateExe": "NotSigned",
+    "trustedReleaseEligible": false
+  },
+  "sourceIdentityGap": {
+    "packageIncludesModels": true,
+    "sourceDigestIncludesModels": false,
+    "workflowAndGov04PolicyIncluded": false,
+    "blocking": true
+  },
+  "secretScanBoundary": {
+    "gitHistoryAvailable": false,
+    "scannerConfigured": false,
+    "ignoredEnvContainsNonPlaceholderCredential": true,
+    "credentialValueReadOrRecorded": false,
+    "action": "Treat as potentially valid; rotate if ever shared, logged, committed or packaged."
+  },
+  "requiredArchitectureDecisions": [
+    "Separate untrusted merge verification from protected trusted release.",
+    "Use a first-party fail-closed orchestrator; YAML is orchestration, not gate authority.",
+    "Bind every step to one run ID and one receipt chain; no within-run retries.",
+    "Run official-endpoint SCA and redacted secret scanning; unavailable scanners fail.",
+    "Require zero unapproved high/critical findings; current dependency graph blocks acceptance.",
+    "Classify unsigned artifacts as test-only and release-ineligible.",
+    "Include complete package inputs, workflows and policy in candidate identity.",
+    "Require GitHub server-side ruleset evidence before claiming an enforced remote gate."
+  ],
+  "state": "architecture-required-release-blocked"
+}

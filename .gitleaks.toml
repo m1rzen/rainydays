@@ -1,0 +1,4 @@
+title = "Mini-Lux GOV-04 secret scanning policy"
+
+[extend]
+useDefault = true

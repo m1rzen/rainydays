@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "task": "SEC-02",
+  "phase": "architecture-freeze",
+  "predecessorManifests": [
+    {
+      "task": "SEC-01",
+      "path": "tests/manifests/sec-01.json",
+      "sha256": "b836976785366f01d1147fef99fe30c53d44d07969708564e64ec3cd2d424964"
+    },
+    {
+      "task": "GOV-03",
+      "path": "tests/manifests/gov-03.json",
+      "sha256": "97907ee2f8e66e99381e52743ff8acb70bf82d640b641dc05f6ff6891194ba1f"
+    }
+  ],
+  "successorManifest": {
+    "task": "SEC-02",
+    "path": "tests/manifests/sec-02.json",
+    "allowedAbsentDuringArchitectureFreeze": true,
+    "requiredBeforeDeveloperCandidate": true
+  },
+  "resolvedManifestContract": {
+    "orderedTuple": ["exactCasePath", "sha256"],
+    "requiredInclusions": [
+      "SEC-01 test records subset of SEC-02 test records",
+      "SEC-02 test records subset of GOV-03 test records"
+    ],
+    "requiredUnions": [
+      "changedRuntimeFiles",
+      "coverageScopeFiles",
+      "coverageExemptionsWithReasonAndEvidenceLayer"
+    ],
+    "requiredBindings": [
+      "allSourceManifestSha256",
+      "architectureFreezeSha256",
+      "attackMatrixSha256",
+      "attackObservationIdTierStimulusTestCase",
+      "positiveReceiptIds",
+      "coverageThresholdsAndFloors",
+      "runnersHelpersSchemasInventories",
+      "packagedPathPolicySchema",
+      "faultContract"
+    ]
+  },
+  "pipelineDefinitionRequiredPaths": [
+    ".github/workflows/gov-04-merge.yml",
+    ".github/workflows/gov-04-trusted-release.yml",
+    "build/installer.nsh",
+    "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md",
+    "parity/GOV-04-CI-ARCHITECTURE.md",
+    "parity/GOV-04-ARCHITECT-AMENDMENT-01.md",
+    "parity/SEC-02-PATH-POLICY-ARCHITECTURE.md",
+    "parity/schema/sec-02-governance-contract.json",
+    "parity/scripts/validate-sec02-architecture.mjs",
+    "scripts/build-inputs.mjs",
+    "scripts/gov04/identity.mjs",
+    "scripts/gov04/report-schema.mjs",
+    "scripts/run-gov04.mjs",
+    "scripts/run-tests.mjs",
+    "scripts/run-test-layer.mjs",
+    "scripts/run-coverage.mjs",
+    "scripts/report-schema.mjs",
+    "scripts/test-gate-selftest.mjs",
+    "tests/helpers.mjs",
+    "tests/sec02-attack-matrix.json",
+    "tests/sec02-attack-matrix.schema.json",
+    "tests/manifests/sec-01.json",
+    "tests/manifests/gov-03.json",
+    "tests/manifests/gov-04.json",
+    "package.json",
+    "package-lock.json",
+    "eslint.config.mjs",
+    ".gitleaks.toml",
+    "tsconfig.json"
+  ],
+  "gov04StateMachine": {
+    "stepCount": 16,
+    "stepAtMostOnce": true,
+    "firstFailureBlocksLaterSteps": true,
+    "finalizeExactlyOnce": true,
+    "cleanInstallCount": 3,
+    "packageCount": 1,
+    "workspaceCount": 2,
+    "oneCandidateIdentityAcrossWorkspaces": true
+  },
+  "requiredFaults": [
+    "missing-predecessor-manifest",
+    "replaced-predecessor-manifest",
+    "shrunk-predecessor-manifest",
+    "forged-predecessor-digest",
+    "missing-attack-receipt",
+    "skipped-required-observation",
+    "evidence-tier-downgrade",
+    "changed-stimulus",
+    "missing-positive-receipt",
+    "missing-second-launch-packaged-assertion",
+    "weakened-coverage-floor",
+    "changed-gov04-state-machine"
+  ]
+}

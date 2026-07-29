@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "taskId": "GOV-04",
+  "state": "unconfigured",
+  "allowedSigners": [],
+  "note": "REL-01 must configure an approved Authenticode signer and timestamp policy before trusted release can become eligible."
+}

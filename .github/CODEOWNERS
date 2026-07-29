@@ -1,0 +1,3 @@
+# GOV-04 cannot bind CODEOWNERS until a real GitHub repository and owner identity exist.
+# A Sentinel/Reviewer must replace this comment with valid owners and capture
+# server-side CODEOWNERS/ruleset evidence before remote enforcement is accepted.

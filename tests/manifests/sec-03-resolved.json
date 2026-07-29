@@ -1,0 +1,3153 @@
+{
+  "schemaVersion": 2,
+  "task": "SEC-03",
+  "state": "governance-ready-runtime-receipts-required",
+  "architecture": {
+    "exactCasePath": "parity/SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md",
+    "sha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1"
+  },
+  "attackMatrix": {
+    "exactCasePath": "tests/sec03-attack-matrix.json",
+    "sha256": "5b2bc86c818aab0135d1db11de0ac5dc138ae253c41944aef1829053963eff21",
+    "realHostFamilyIds": [
+      "A01",
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A06",
+      "A07",
+      "A08",
+      "A09",
+      "A10",
+      "A11",
+      "A12",
+      "A13",
+      "A14",
+      "A15",
+      "A16",
+      "A17",
+      "A18",
+      "A19"
+    ],
+    "runtimeReceiptCount": 482
+  },
+  "predecessor": {
+    "taskId": "SEC-02",
+    "exactCasePath": "tests/manifests/sec-02-resolved.json",
+    "fileSha256": "a788157aeb96cf6a4ca4ac6878eb902207df4aeffad2b537a782930a98961b5a",
+    "canonicalPayloadSha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108"
+  },
+  "sourceManifest": {
+    "taskId": "SEC-03",
+    "exactCasePath": "tests/manifests/sec-03.json",
+    "sha256": "ceeb292e2d15fd2d20d52270fd272f0261e327f3fd57f3430d620608a0c7ff7d"
+  },
+  "deltaEntries": [
+    {
+      "exactCasePath": "electron/main.cjs",
+      "sha256": "48c78082c4e36b4d99c8f7a0209110095d3689ebeee2ef40857895b1d8abf420",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "electron/preload.cjs",
+      "sha256": "2e092cdd99aea46474fb525f60d456bd65cbb130a3c44ca5acc85f2ed81357a8",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/agent.ts",
+      "sha256": "5e831a3dcc92200520d9e356cad58ac4188f46c1c2de6f15f06f69b01212a587",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/capability-broker.ts",
+      "sha256": "919d448cd6705b5270328a7b435e84257b8c740a5f7aa60c0573139794e97ae0",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/execution-isolation.ts",
+      "sha256": "39d3dd0a3b36ad078d23b7ba9a5d54448d5e20d320f1b2634c4538b0a9b65199",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/execution-native.ts",
+      "sha256": "173f2d1f4d5b49b1c3eaa1c56dc6bfc1a1201534cb2cc4fcb908f63d4e2c75c3",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/execution-runtime.ts",
+      "sha256": "4978ba123ab2f602dfa151611a77d023da612bfb412f68c495882a1fae87f786",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/manual-execution-consent.ts",
+      "sha256": "aec7054d54450ff0bbe2db2d6745db6b1d44962d3cf8d8ffde845aa936454266",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/native-process-consent.ts",
+      "sha256": "ceea309abe64ce506d3d7d217fa7c2f405dadacaffacf135faeaedb920eb8c52",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/native-process-consent-transport.ts",
+      "sha256": "ea7a50e51a402226298e79e44ca7c82a5da1e8ec5de1e05834230eb95bc7a723",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "43db29052054587e10c6646d772fe2996351658a0c32a9de8859778e5d3fda9f",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/path-policy.ts",
+      "sha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/terminal.ts",
+      "sha256": "9d0d9170e063a315ddcdcffb0ee295e33ac587932466012586b9bb9b95c61fd2",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "1557ce8af3247e55a283eacf573974d06b933772e70891e2f7893fa0acaee452",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/types.ts",
+      "sha256": "951d693769ee13d59743968eb3ae4e328d5de4df779c503b4afdc96b5cfd1b3a",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "dist/agent.js",
+      "sha256": "79ac13550c0de237570a0ff9a506f7426e5992ad723a53ecfecf2f10cc43e49a",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/capability-broker.js",
+      "sha256": "076000e19e6fdd32f01a5af2be0c9229e4feb2ab5f3192bfb2a36a31111bf148",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "dist/execution-isolation.js",
+      "sha256": "e1345ad42f71e632e113b818e474bea4956756a28b317f43330843312765b7ec",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/execution-native.js",
+      "sha256": "10756f7222f3851a2a8404ccb17ee5f1ba9ab6e6b5511ad3f19e47d4dee81b12",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/execution-runtime.js",
+      "sha256": "4a7f7f377ec1b80b8826d558a38ce97f8089908dee422e5ec714e6cc0533308a",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/manual-execution-consent.js",
+      "sha256": "7d597c95ca68ab039a82018cbbce7512e77713f622009607d35c6bd1c11319d3",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/native-process-consent.js",
+      "sha256": "2644357964cf378c6c7fa072c339a3b24adf7808f682f92e8f9562e513f1084c",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/native-process-consent-transport.js",
+      "sha256": "9a21bb25ecf496b24bb43184c02180425b8d96759f731819cfec66b1fa01b3a7",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "e1ca4e9d26b7f759a220eb346d5f0426d544640659ab737a4775f807c6940a47",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "dist/path-policy.js",
+      "sha256": "9580f14fc4862a9fbbb2dc8af8f419b775ddb77f3e4472cbd43a9bf08f075abf",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "dist/terminal.js",
+      "sha256": "07b93df8ecfb16880a93c3d668b29591512b9620fb247e94d7928f5f2d3cfded",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "dist/tool-policies.js",
+      "sha256": "98cdb6e5b6589e28269a610f548ffb78d35d1ef07500c399bf0cb8a54c2bd52d",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "native/sandbox-host/journal.h",
+      "sha256": "360b3c54df18a4a48630d2d919f5705e7ac92a131737329f5fef03d99cb96000",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "native/sandbox-host/protocol.h",
+      "sha256": "9a1b3e612106e67b28945da5d569df095a55b15d6fe0d866bf94468efb390c5d",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
+      "sha256": "a572bf6c731d9411abeea96846a0f7d3bb06cae26ef746e11d7b8167a210ca91",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "sha256": "50bddb6f2d786c9c422b22f66b87fd65597ce9bbbd40dc47a9183272527f2025",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "parity/SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md",
+      "sha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "parity/reports/sec-03-architect-freeze.json",
+      "sha256": "6a743f23ad270e7c8ad470e31bc6ab41afe62042665e6f7d57c58318605b4556",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "parity/schema/sec-03-governance-contract.json",
+      "sha256": "b2c6ddb5443b17576c613057dfaab02558263d1c12f41744e6a5a3dd61873ca8",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-attack-matrix.json",
+      "sha256": "5b2bc86c818aab0135d1db11de0ac5dc138ae253c41944aef1829053963eff21",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-attack-matrix.schema.json",
+      "sha256": "cac06b349a895f4d1dbc6babe08b59f5403a44fe0e117baca3c64119f452b0a7",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-policy.json",
+      "sha256": "9121d62e4903196cb581d3685c92eaa29d1c365613a7b863a140b572ace1cdda",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-inventory.json",
+      "sha256": "0a4394ff633e276b525daa650c8c5f9e57515be6ded009156a57c64914ef66b6",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-inventory.schema.json",
+      "sha256": "34d8e86f2f461c1d3abb0cc7c9805db0c695dc6a6d19d32917702aee80d611a3",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-receipts.mjs",
+      "sha256": "a47c0794a4f339f4745ea6985f229a1395b6ff0ba4bf588d3996dd69b42a502a",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/build-sec03-native.mjs",
+      "sha256": "511db91a462e8aa513b356f6d99666e5f5cd84abe68a69ca0eda6020a8382807",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/sec03-execution-scanner.mjs",
+      "sha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/sec03-execution-crosscheck.mjs",
+      "sha256": "88e2d2d6a4f2e8445253f3561b810d3f7a6e54388184452dff92d5421d1d36d3",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/sec03-execution-inventory.mjs",
+      "sha256": "b265a34f0d688f38a2482a36e65f44b6783bd13a2370952e9ffe854506cd25f1",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/sec03-receipt-set.mjs",
+      "sha256": "af9a349d7ae407bc1fbd0ce829a1d7c3b32175987a10ca5214279a7f24d6afc7",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/sec03-governance.mjs",
+      "sha256": "9fb260b480163afae71c4c295033a5e41268e08248e1baea688b466414bd5a66",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/generate-sec03-resolved-manifest.mjs",
+      "sha256": "574ff2b3acf9b85e215c3e53fdd34f5298718d2eb77418db3e780b2a59c95163",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/build-inputs.mjs",
+      "sha256": "a756212c0cb4a14453a2f3754c08b7780565f1d6a261e8289f9e50c4f412e328",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "aa5ea3e5c2df371db245ab0859cfc8b72b52040da04ea4ace7e9b127b7cc2657",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "scripts/prepare-electron-app.mjs",
+      "sha256": "f66b5fa8406ac459875a7ed36a53019b29610db26894a305ea3f46639efb7388",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "33b118161e52fbb29342510e6058d9fec075e389c2ef17e1a6fba5a41dc87ae9",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "89ceb49d2e688e4ac382f7144f3d73e9c60bc80521983bbc508783afb4dedfe3",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "63fca270e28ae7afe560ab6ec7e9340aaf2d93f2e4aaa895dbd2cb0e067446da",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "scripts/run-test-layer.mjs",
+      "sha256": "dd1ced0cf800ae236acff816a05e25bcb7b3c0c9f6ea9c818002e30f61f8064d",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "0fb7dad7a7021bb98cfaa71d70e4eb445ab9c4869efccaff04d3f7b2aff555ed",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "scripts/run-tests.mjs",
+      "sha256": "6ea80b052f2d5b96ed248c37a2f10a502775cc1da2a14cc74329c0c90f4afd6f",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "0c0a6ac61ab7184bd77bb3e8dad72e25e3ffebc25ddaefbb5baea14317f8f8f2",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "scripts/run-coverage.mjs",
+      "sha256": "dddb9f2800f5cc2cb299a0651488a17380d6abb29bda967feaf58073d9557968",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "dddb9f2800f5cc2cb299a0651488a17380d6abb29bda967feaf58073d9557968",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "e4569b6c6dda49afdc361cb885d3f5662b87db3c55fbd92dc675ea5be4248296",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "2a478611b610cf3a31935e01cca95d624ccc035be7cd61bebf21d7890d262b65",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "5376cea77eab4741593f680f41d95c9a4ebb8d14dd9fccf24db994e6f9c5c34b",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "6e55cd6274577ace600959c29f7b988eb778d41d9965d245f85d4816ade7fbd0",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "package.json",
+      "sha256": "7070b4560a6928deef069ba80f4163861107d1fb106f3f28438d422d82fb23a6",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "36c57c34e179d5309cc08d7c07fd04c80ac6a846219478f1752c0f40fdace512",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "package-lock.json",
+      "sha256": "470ca8f79bd1e5d335135aa352743ca0708d9fcdf8354a1534a3c3b1b2ada1cd",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "470ca8f79bd1e5d335135aa352743ca0708d9fcdf8354a1534a3c3b1b2ada1cd",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+      "sha256": "56162f6d4f4fa73ebd42b2a51b68dab978fb4c20909162d8dfa80cc67afd0271",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 opaque ExecutionGrant rejects forgery, replay, expiry and failed-launch restoration",
+        "SEC-03 grant consumption is atomic under concurrent use and cross-owner use fails closed",
+        "SEC-03 persistent leases bind owner/session and InputGrant is one-shot under concurrency",
+        "SEC-03 E4 input accepts a new direct run only inside the launch authority incarnation",
+        "SEC-03 output limit terminates the native host and returns a stable denial",
+        "SEC-03 manual consent stores the exact request server-side and atomically rejects replay/concurrent reuse",
+        "SEC-03 manual consent deny/dismiss/invalidation/shutdown have zero execution side effects"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/unit/execution-root-lease.test.mjs",
+      "sha256": "92f18c8da6de0056a13b53459d766635eb56ef8fbb9a780560e823793532d1ac",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 execution-root lease is opaque, one-use, exact-mask and epoch bound",
+        "SEC-03 execution-root lease expires and authority retirement invalidates it",
+        "SEC-03 pathname swap after validation publishes no execution-root lease"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/unit/native-process-consent.test.mjs",
+      "sha256": "3659c8a0dbddb5fd656c67f1a8e6ece9c6e18e0fb19495a275501edf00c5ab08",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 native process consent is unavailable without the private main-process handler",
+        "SEC-03 native process consent binds exact bytes, authority and one native decision",
+        "SEC-03 native process consent denies invalidation and current-runtime replacement",
+        "SEC-03 manual consent rejects authority reincarnation, old A-to-B-to-A and invalidation",
+        "SEC-03 manual terminal start requires and preserves a private root qualification digest"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-execution-inventory.test.mjs",
+      "sha256": "abbd0ab375ceb7a280e7b90b304b931e7e5bec8106b47266edd7edeb1b3bf99e",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 frozen matrix is an exact 386 plus 96 machine-readable closure",
+        "SEC-03 scanner recognizes finite process worker utility addon environment network and handle sinks",
+        "SEC-03 independent crosscheck rejects alias re-export callable escape and unknown sink",
+        "SEC-03 authored projection includes native host sources and public HTML inline scripts",
+        "SEC-03 inventory reports current product migration drift without disguising scanner correctness"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-governance-adversarial.test.mjs",
+      "sha256": "dc25adced7caf618db7721da4a88617e59f360a61819fc231d248c00f733b8b9",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 exact occurrence IDs reject a second spawn in the same function",
+        "SEC-03 native adapter occurrence rejects a second CreateProcess",
+        "SEC-03 public inline/module projection rejects an unclassified second fetch and ignores text/comments",
+        "SEC-03 native scanner ignores comments and strings while recognizing security primitives",
+        "SEC-03 product-to-build-test reachability is a hard fail",
+        "SEC-03 finite dialect rejects call/apply/bind, bound invocation, re-export, storage escape, and dynamic loaders",
+        "SEC-03 exact caller governance rejects authority consumers outside their sole product modules"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-governance.test.mjs",
+      "sha256": "2db60ce73ae3b343264ba2014dd23aef889e3ce45c00bb3e6185802304d8b2b9",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 resolved manifest is byte-stable and binds the exact cumulative union",
+        "SEC-03 governance rejects predecessor and content-hash mutation",
+        "SEC-03 governance rejects missing and duplicate entries",
+        "SEC-03 governance rejects empty native exemption evidence owners"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
+      "sha256": "6cc358bea00e3d57f770061ade6c105e8967387f344cca9e745f30d1a393ae79",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 source digest authored set includes native sources, build logic, runtime, governance and matrix inputs",
+        "SEC-03 native projection binds the exact manifest, outputs, toolchain, freshness and AMD64 machine",
+        "SEC-03 native projection rejects stale native source and manifest toolchain identity",
+        "electron-builder includes only exact SEC-03 native paths and unpacks only the two binaries"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-receipts.test.mjs",
+      "sha256": "1c0669a065d49a29cd1068b5fc00ed2ea71d855f4beede5aec37b2bccede603d",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 482 closure contract freezes only matrix cardinality and never synthesizes native PASS evidence",
+        "SEC-03 receipt creation requires a complete authenticated evidence envelope and verifier",
+        "SEC-03 explicit test-only verifier produces non-completable receipts",
+        "SEC-03 validation rejects tamper, raw evidence, missing attestation, and wrong verifier",
+        "SEC-03 parent aggregation rejects duplicate, extra, cross-run, skipped, todo, default-like, and mock evidence"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
+      "sha256": "4e2a129122c063f7d2d7ce21cfe9aa87f1e52f492efbcaee06ce3a5b9a3947e9",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 native E1 uses real AppContainer/Job, denies ambient user data/env/network, and has no fallback",
+        "SEC-03 native rejects malformed launch/non-local root and survives repeated launcher lifecycle",
+        "SEC-03 native E3 runs exact stdin module with executable lease and denies ambient authority",
+        "SEC-03 native ${entryPoint} uses authenticated ConPTY input/output and graceful cleanup",
+        "SEC-03 native startup recovery blocks a live host and preserves an unrelated ACE after host crash",
+        "SEC-03 native startup recovery rejects corrupt and generation-gap journals before launch",
+        "SEC-03 native recovery rejects candidate drift and root object replacement"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "sha256": "9548c654f98d26ecb9c5b3340e77ff2720a3ef156742e7bf3fb37d19fc814ac6",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 local API accepts only the private trusted header and publishes no browser credential"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-child-consent-transport.test.mjs",
+      "sha256": "571126f1e0e65b7dc5f0cd9d83e5b1908ff748baa53b28fb5436d3b6618564f6",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 inherited anonymous pipes carry one parent-only approval",
+        "SEC-03 inherited anonymous pipes preserve a parent-only denial",
+        "SEC-03 child transport rejects concurrent cross-request substitution",
+        "SEC-03 child transport rejects a valid-MAC decision bound to another request",
+        "SEC-03 child transport rejects decision MAC tampering",
+        "SEC-03 replayed decision invalidates the private channel",
+        "SEC-03 child EOF invalidates the private channel",
+        "SEC-03 direct server mode has no inherited consent handler"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "600a16a510f620583cb0db547dcd149091cbd265dddceb4d36d432f32aa11596",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "real Electron main, preload and renderer preserve identity and session across restart"
+      ],
+      "supersedes": {
+        "owner": "SEC-01",
+        "sha256": "5eb3f8fd6a4190acfc4c128fecab231426129e6249e857e11b2c6cd3d5542ce8",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
+      "sha256": "7764fec4a53a74e0ac303a5d9614cd9491cf0d0781299c9a7ea4a56a7ddc46bf",
+      "kind": "test",
+      "layer": "packaged",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "current Windows installer repeats identity, persistence and cleanup smoke"
+      ],
+      "supersedes": {
+        "owner": "SEC-01",
+        "sha256": "7764fec4a53a74e0ac303a5d9614cd9491cf0d0781299c9a7ea4a56a7ddc46bf",
+        "hashScope": "file"
+      }
+    }
+  ],
+  "cumulativeEntries": [
+    {
+      "exactCasePath": "tests/unit/approval-response.test.mjs",
+      "sha256": "674bda14c3500ef4abb6546acc0482608ed54edacf217f02cafc71e20c0d55a4",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-01",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/unit/playbook-owner.test.mjs",
+      "sha256": "afd18d5e05554e2e29bb4c2ba91a39d1a8038a223c31b70c4847be9778b84a67",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-01",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/unit/capability-broker.test.mjs",
+      "sha256": "3ae2ef329fef20eb0894e5117d7631b83552a70d7fd06ff7dfb5f7c480ff282b",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-01",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/unit/terminal-owner.test.mjs",
+      "sha256": "17bf1ff0607a03ec27030699490006b581dd410ccd76a9a42253741ed970e624",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-01",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
+      "sha256": "e90a2721217b2b5ee9d7ae1577fec023cb605b7a571cc688b55c73fac1316960",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-01",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec01-attack-contract.test.mjs",
+      "sha256": "09bf70a12f2a200db03eb170d48acac0db7df3f24ef7743801d462896ea7dd19",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-01",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/lux-baseline.test.mjs",
+      "sha256": "75e04be913efbf704af9c86c368e5a70f823d9bc920d1ff3f8b348a4f95224f1",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-01",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+      "sha256": "98dc8d51f5c8d061e4d2b0b7c64b02e225e021adbe2e80c0b2acc1ef7a7fab5a",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-01",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/sec01-terminal-owner.test.mjs",
+      "sha256": "b99ddaca7ad15558867950c9a5fedc71acea72bb476b625eb3bdcfb1b04c661e",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-01",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/version-model.test.mjs",
+      "sha256": "e3c03454cbe21c5e3816033c3bbe27f1ca5f4bdb35e42d02a1d2bf4ce3c24551",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-01",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "600a16a510f620583cb0db547dcd149091cbd265dddceb4d36d432f32aa11596",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "real Electron main, preload and renderer preserve identity and session across restart"
+      ],
+      "supersedes": {
+        "owner": "SEC-01",
+        "sha256": "5eb3f8fd6a4190acfc4c128fecab231426129e6249e857e11b2c6cd3d5542ce8",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
+      "sha256": "7764fec4a53a74e0ac303a5d9614cd9491cf0d0781299c9a7ea4a56a7ddc46bf",
+      "kind": "test",
+      "layer": "packaged",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "current Windows installer repeats identity, persistence and cleanup smoke"
+      ],
+      "supersedes": {
+        "owner": "SEC-01",
+        "sha256": "7764fec4a53a74e0ac303a5d9614cd9491cf0d0781299c9a7ea4a56a7ddc46bf",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "tests/unit/resource-owner.test.mjs",
+      "sha256": "ade1b14b027bbb9efd35b5ec45399ecd65127b4ad8a4c87b594b454bb89388ff",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/config-managed-store.test.mjs",
+      "sha256": "2de7a8885623c1acc4b0bae4f9a58ebed2e1f762893c470c5b2d1bd52617fdd4",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec02-governance.test.mjs",
+      "sha256": "873bcd23b9d7d75e879c40908525044369b208abe7dbc478795272aa2d345ddb",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
+      "sha256": "f354c64c8c4b5358d4f95789c2a31efbab7994140c46491b8ec0d64f94ca3a9c",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/unit/electron-path-bootstrap.test.mjs",
+      "sha256": "8cca4df4f91f73d6cbda4efa9e933b8f744afb4ac72180dfa50ae2975ccfc69c",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/unit/path-policy.test.mjs",
+      "sha256": "ed223fafb951bc138ebe96cfee188a3181e9ff8790219e498b4e1744b0604966",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/unit/process-tree.test.mjs",
+      "sha256": "14a5a35f9538da490e368b1687b50e0464838e3e3ad1c3169632bd5fd6b3aeef",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/unit/settings-enrollment.test.mjs",
+      "sha256": "f7206395d1b16ca5344fff8893924e844766e2ff2b5bf62d203acc3a5e422e6e",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
+      "sha256": "499fa3fc9399676089a47b930cae7b69ac44eea4a08aa1ccc22fb1e257667091",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
+      "sha256": "9363f664728f1c77d441d406003b086c6ff1a0f8b108cf29471808db5eef504e",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/embedding-path-lifetime.test.mjs",
+      "sha256": "44ca24a62160383deb1a189790ca967edcb234f857034bdf6bc9729443340e70",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/file-viewer-direct.test.mjs",
+      "sha256": "297854cb70059b2cbeb7daead20d4b304a81d7cc62e22aab9e75e6a77de5a758",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
+      "sha256": "0460fa7978e50105d9b1822c5a58f231413ab8ad01969a66cf71ab327e7f96ce",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/managed-path-store.test.mjs",
+      "sha256": "de6b5fed33fa716823da923fec5f591febfbca061f0d2675c1de347547ae0757",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+      "sha256": "8dbda839316b145ca717cb158a47448b1d2a6897e794ce9b99798a3b9b9139ba",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/process-cwd.test.mjs",
+      "sha256": "5c6b237dd64a50ae2dc1bd34d10ef8a7491c4b39a53a0b313706acc506ae6252",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
+      "sha256": "28acca9e6fef0f8161ff27f6271a8b351d06d4e561461ee8f38242b02fe05978",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/watcher-authority.test.mjs",
+      "sha256": "5f3db08b61d2edf9337dd691bd5d8e741c1a0aa771d7dd407a9d23f083cfdba5",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/capability-broker.js",
+      "sha256": "076000e19e6fdd32f01a5af2be0c9229e4feb2ab5f3192bfb2a36a31111bf148",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "dist/tool-policies.js",
+      "sha256": "98cdb6e5b6589e28269a610f548ffb78d35d1ef07500c399bf0cb8a54c2bd52d",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "dist/tools/index.js",
+      "sha256": "dff01f2ae771f9fbbdaed7298a3c55c908b11d652ad5d18f940e7bc017c855a4",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/terminal.js",
+      "sha256": "07b93df8ecfb16880a93c3d668b29591512b9620fb247e94d7928f5f2d3cfded",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "dist/terminal-facade.js",
+      "sha256": "600ed95709be7c6057a4ef75d479e9a585a49193adc908c829766df6b893bc04",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/agent.ts",
+      "sha256": "5e831a3dcc92200520d9e356cad58ac4188f46c1c2de6f15f06f69b01212a587",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/capability-broker.ts",
+      "sha256": "919d448cd6705b5270328a7b435e84257b8c740a5f7aa60c0573139794e97ae0",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "43db29052054587e10c6646d772fe2996351658a0c32a9de8859778e5d3fda9f",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/persona.ts",
+      "sha256": "10c53944c511997ea0dae02d77c59ddc0c8d62b5daef78b1163c2bb4ea133574",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/playbook.ts",
+      "sha256": "8a74957a9a2d13d3c017a30f4b711ffbab8850da5faf5509eb04bf38bd9dc060",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/subagent.ts",
+      "sha256": "f722cca7b44b922e535cd4877eb2682d4a2667e255439dbbd1089f1eed338dd2",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/supervisor.ts",
+      "sha256": "ad94fc0b4e247e3bac4c416df2598957b4ea0961ea44eb8ca649cbd55dabf446",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/terminal-facade.ts",
+      "sha256": "c84c51155e86d21e8479a73b47d579effe458505d359b3e3dc0958b567723fc4",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/terminal.ts",
+      "sha256": "9d0d9170e063a315ddcdcffb0ee295e33ac587932466012586b9bb9b95c61fd2",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "1557ce8af3247e55a283eacf573974d06b933772e70891e2f7893fa0acaee452",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/tools/advanced-tools.ts",
+      "sha256": "acc5b9464f1038c815a783eff5e8ee73bc64b2e0278fb081c5dcc3b7c116ba9c",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/ask-user-tool.ts",
+      "sha256": "438bead757241cc2338c7f199c4aefa24d05e713cc29f978d10afd3dc24f195a",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "c4a1a6a07537a200fb81124300e20b7919c25dd305f5d65e42e404f1b33d9930",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/phase1-tools.ts",
+      "sha256": "0814062256f824f2c923c283f920756c33649a6020e81cc619eba35eabb8d48b",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/save-persona.ts",
+      "sha256": "5bdda02d32d79faca1d306b30171317329975ee2957487f669558b3d39245450",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/subagent-tools.ts",
+      "sha256": "a254010beb6a258174984b14d751cb398f169f6e016933838a128f117dd750ab",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/terminal-tools.ts",
+      "sha256": "500b76dc818208a7573ea2caab48277006270feeac7b320038f8c25382015e06",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/types.ts",
+      "sha256": "951d693769ee13d59743968eb3ae4e328d5de4df779c503b4afdc96b5cfd1b3a",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "personas/daily.md",
+      "sha256": "7c5b1ebc13767109cf2c5688b825c6773e2eae64bc2f8ab4ba65cbe488ceaf07",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "personas/debugger.md",
+      "sha256": "771620279be5b69221904554215042006051eefb16c3088e9484aa91140c4d8b",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "personas/developer.md",
+      "sha256": "831d8ba9e14b707365fe1829220f864fddc54ae983ee5102c89cc22b33d7db4c",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "personas/general.md",
+      "sha256": "47fd60ed68ed4a46eb2f3d667f966b9b337e82e95470bc7f8250615a65ad55d2",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "personas/quick-fix.md",
+      "sha256": "9147cf25cfa035a32192bbc61b1d32a9b7c090a54b3174262fb2e607e7b9681b",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "personas/rds-assistant.md",
+      "sha256": "68c6d9cecfa2cc224e9e4234d8ed3e7e18bc43c02aa705b8e9222fa1da054971",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "personas/sentinel.md",
+      "sha256": "61c5c370179d5053991b96850611b9738df948d2c2648bb5cf18a05af1d06c88",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "personas/writer.md",
+      "sha256": "4e57f6d5fe5f7318401ab7e18fd89d22ad9d9ac271075b5859ddcd873a28f885",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "electron/main.cjs",
+      "sha256": "48c78082c4e36b4d99c8f7a0209110095d3689ebeee2ef40857895b1d8abf420",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "electron/path-bootstrap.cjs",
+      "sha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "electron/preload.cjs",
+      "sha256": "2e092cdd99aea46474fb525f60d456bd65cbb130a3c44ca5acc85f2ed81357a8",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "dist/bootstrap-database.js",
+      "sha256": "710dca54aee38403ff43d64533747a457a0ef251fbc5b4741a20972bac974ce5",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/bootstrap-path-store.js",
+      "sha256": "d3c853d366564131605bbd4b89503a3764b3957a39a3adef9b3bc8e01cbe09b2",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/config.js",
+      "sha256": "a7eb95e3817a6c9500fcc08b1fbb5f9bf33e79543a71edbaf1a742e1c4c4fa89",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/daemon.js",
+      "sha256": "613b4e933b6bebf47b2b489f6aa987863bb543e1e3f238d59cc244cfdc96fea2",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/db.js",
+      "sha256": "5b532771f997aba95c557aad733f203b3d88da2cf5f104b58e279a7387b10307",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/embedding.js",
+      "sha256": "3b92426758008c54af3ca94af3064b2c89f0cb5517ecb2effbcbfe86812b65d7",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/file-viewer.js",
+      "sha256": "78cb6e470fe31452d903574165c36824f218c0beced505c31979b750ba31ac55",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "e1ca4e9d26b7f759a220eb346d5f0426d544640659ab737a4775f807c6940a47",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "dist/managed-path-store.js",
+      "sha256": "98e58978419d626fe1993fe0f044b5a8c41de53f8c523ce77267e6a7c2762557",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/path-policy.js",
+      "sha256": "9580f14fc4862a9fbbb2dc8af8f419b775ddb77f3e4472cbd43a9bf08f075abf",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "dist/path-runtime.js",
+      "sha256": "d760821107de45cd91a19deca71a8d661bb410b509471a1223dabdf4bb256444",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/process-tree.js",
+      "sha256": "dd03ef0767071ecfc43a45505ba119cb866c09fe7121cd2ebd6752aa3e8fd78d",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/resource-owner.js",
+      "sha256": "9ed0571c8cac3f781d9f120c7c12a7b766dc31b367d28ef34595f830ca403e3b",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/runtime-paths.js",
+      "sha256": "2ae847c02b3318a0f30d9ede08de47e7eda3950814573acd4d0c2051babfc2af",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/settings-enrollment.js",
+      "sha256": "c9a327f4f46c7ba20f528cb4aba1d7d27e6bdc76e951f31221f70b4352ba8fe6",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/tools/filesystem.js",
+      "sha256": "0ae86fc5731ef345795a19b4f946da19c72663d7700d1c5c5c54d27a4278f0b1",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/version.js",
+      "sha256": "f422e04edd22485f4edf94b49ae7195f441cb08055d439f0f9ae94dbb3092bd4",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/bootstrap-database.ts",
+      "sha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/bootstrap-path-store.ts",
+      "sha256": "81a3e5894c6d9f54322f384381812a27460fdf550dfe68dbedcc1a17ba648bb7",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/config.ts",
+      "sha256": "aec182a130c719dd741d3c0397ee47ef4315128c53d3a1372c47645c513e5668",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/daemon.ts",
+      "sha256": "f6b350cf29bddb68efb5c45f4273e4835862bad2aff21af34f1d2ebf4f969c66",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "bc1a65ad9e74f7ea84df8c32e392e6a2de64611efa5c0a35c5a40f4f06f68378",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/document-parser-worker.ts",
+      "sha256": "a7f1bad065e4639e57f647d75b55d9914f53968ed5ec67ce58add071fffc9e4e",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/embedding.ts",
+      "sha256": "8df320a74a5fbe7a4fff24cdd6bd3f7ea4b0f38ca3a38d57a07a78f027922b7f",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/file-viewer.ts",
+      "sha256": "c9af63fb2ab7a1896aba2c0790cb465c2e7c304c8e9d36b536d418e68e503d80",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/managed-path-store.ts",
+      "sha256": "de4986391dd9731ae3f230636d905317eea58dd8588e29438c191a3056a889c5",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/oracle.ts",
+      "sha256": "308b8ed937d04985f5ad599d1ce657128ad2871e73591adba0bd2a7012ffde27",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/path-policy.ts",
+      "sha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108",
+        "hashScope": "predecessor-manifest"
+      }
+    },
+    {
+      "exactCasePath": "src/path-runtime.ts",
+      "sha256": "f597718bbd4ff1f17ed44bf89f8ef96b6a8dfa7ab78d973b98329c2d6a30b459",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/process-tree.ts",
+      "sha256": "d2b8326cd1194b98637d399cb89f92246e08b615a36d4220b1db21bef2e42aac",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/resource-owner.ts",
+      "sha256": "56f2dc62889febd7bb94f242a91da46e48a810b38222c136f796714a0b3be5b4",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/runtime-paths.ts",
+      "sha256": "6fd02f8410519fe9621419798eb66eeaaaac6f82061a82049659f704a267ff19",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/settings-enrollment.ts",
+      "sha256": "4d5cceb2fa118364b13165b738fc9eedc8a2cb006571d5c86289210529927b70",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/download-tool.ts",
+      "sha256": "89ce9a4eea4ee11f07ce452d983badf23f941343038320c497cd06ef5f5abd62",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/filesystem.ts",
+      "sha256": "f9042cf71e142e8a78f0a34ad697777ab0f31a0fccc3e41e07ce28af0a72caf6",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/image-helper.ts",
+      "sha256": "90e5f73c1fc576b647d5db9114786001949884cc455c7c973509574f974c9414",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/parsers.ts",
+      "sha256": "468b05155df227d783c7e8c5c53a5f17ac23f725166fa1b16dc8f8a54bdfea7d",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/read-repo.ts",
+      "sha256": "5d54bfc355379961e6a2a1c1768d428522d56b474ed2293da42d74d81c453682",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/script.ts",
+      "sha256": "f8d03d1d0fdc5d9c41e2138004d571f07a4e3075c7e14a81cbc6cdefa149f3bd",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/shell.ts",
+      "sha256": "cf60a5d2f2fcfd7cb87be651bd8d771b4b1f7aac83a12d3c22d2b571ef098a6d",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/tools/writer.ts",
+      "sha256": "5315722ab514c4ec1752863c3554ff07c0ede014cf4e28373f48e5f746a87799",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/version.ts",
+      "sha256": "637135394fee2929fdec04a8d2bd5fd88ddb93bc4fb475cc159799526147f82d",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/wire.ts",
+      "sha256": "cd6fbccc8d7a46ad7f8b020fda423051a57c1ca012ed01079f61d6494e2ac355",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-02",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/execution-isolation.ts",
+      "sha256": "39d3dd0a3b36ad078d23b7ba9a5d54448d5e20d320f1b2634c4538b0a9b65199",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/execution-native.ts",
+      "sha256": "173f2d1f4d5b49b1c3eaa1c56dc6bfc1a1201534cb2cc4fcb908f63d4e2c75c3",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/execution-runtime.ts",
+      "sha256": "4978ba123ab2f602dfa151611a77d023da612bfb412f68c495882a1fae87f786",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/manual-execution-consent.ts",
+      "sha256": "aec7054d54450ff0bbe2db2d6745db6b1d44962d3cf8d8ffde845aa936454266",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/native-process-consent.ts",
+      "sha256": "ceea309abe64ce506d3d7d217fa7c2f405dadacaffacf135faeaedb920eb8c52",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "src/native-process-consent-transport.ts",
+      "sha256": "ea7a50e51a402226298e79e44ca7c82a5da1e8ec5de1e05834230eb95bc7a723",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/agent.js",
+      "sha256": "79ac13550c0de237570a0ff9a506f7426e5992ad723a53ecfecf2f10cc43e49a",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/execution-isolation.js",
+      "sha256": "e1345ad42f71e632e113b818e474bea4956756a28b317f43330843312765b7ec",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/execution-native.js",
+      "sha256": "10756f7222f3851a2a8404ccb17ee5f1ba9ab6e6b5511ad3f19e47d4dee81b12",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/execution-runtime.js",
+      "sha256": "4a7f7f377ec1b80b8826d558a38ce97f8089908dee422e5ec714e6cc0533308a",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/manual-execution-consent.js",
+      "sha256": "7d597c95ca68ab039a82018cbbce7512e77713f622009607d35c6bd1c11319d3",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/native-process-consent.js",
+      "sha256": "2644357964cf378c6c7fa072c339a3b24adf7808f682f92e8f9562e513f1084c",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "dist/native-process-consent-transport.js",
+      "sha256": "9a21bb25ecf496b24bb43184c02180425b8d96759f731819cfec66b1fa01b3a7",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "native/sandbox-host/journal.h",
+      "sha256": "360b3c54df18a4a48630d2d919f5705e7ac92a131737329f5fef03d99cb96000",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "native/sandbox-host/protocol.h",
+      "sha256": "9a1b3e612106e67b28945da5d569df095a55b15d6fe0d866bf94468efb390c5d",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
+      "sha256": "a572bf6c731d9411abeea96846a0f7d3bb06cae26ef746e11d7b8167a210ca91",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "sha256": "50bddb6f2d786c9c422b22f66b87fd65597ce9bbbd40dc47a9183272527f2025",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "parity/SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md",
+      "sha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "parity/reports/sec-03-architect-freeze.json",
+      "sha256": "6a743f23ad270e7c8ad470e31bc6ab41afe62042665e6f7d57c58318605b4556",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "parity/schema/sec-03-governance-contract.json",
+      "sha256": "b2c6ddb5443b17576c613057dfaab02558263d1c12f41744e6a5a3dd61873ca8",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-attack-matrix.json",
+      "sha256": "5b2bc86c818aab0135d1db11de0ac5dc138ae253c41944aef1829053963eff21",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-attack-matrix.schema.json",
+      "sha256": "cac06b349a895f4d1dbc6babe08b59f5403a44fe0e117baca3c64119f452b0a7",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-policy.json",
+      "sha256": "9121d62e4903196cb581d3685c92eaa29d1c365613a7b863a140b572ace1cdda",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-inventory.json",
+      "sha256": "0a4394ff633e276b525daa650c8c5f9e57515be6ded009156a57c64914ef66b6",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-inventory.schema.json",
+      "sha256": "34d8e86f2f461c1d3abb0cc7c9805db0c695dc6a6d19d32917702aee80d611a3",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/sec03-receipts.mjs",
+      "sha256": "a47c0794a4f339f4745ea6985f229a1395b6ff0ba4bf588d3996dd69b42a502a",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/build-sec03-native.mjs",
+      "sha256": "511db91a462e8aa513b356f6d99666e5f5cd84abe68a69ca0eda6020a8382807",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/sec03-execution-scanner.mjs",
+      "sha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/sec03-execution-crosscheck.mjs",
+      "sha256": "88e2d2d6a4f2e8445253f3561b810d3f7a6e54388184452dff92d5421d1d36d3",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/sec03-execution-inventory.mjs",
+      "sha256": "b265a34f0d688f38a2482a36e65f44b6783bd13a2370952e9ffe854506cd25f1",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/sec03-receipt-set.mjs",
+      "sha256": "af9a349d7ae407bc1fbd0ce829a1d7c3b32175987a10ca5214279a7f24d6afc7",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/sec03-governance.mjs",
+      "sha256": "9fb260b480163afae71c4c295033a5e41268e08248e1baea688b466414bd5a66",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/generate-sec03-resolved-manifest.mjs",
+      "sha256": "574ff2b3acf9b85e215c3e53fdd34f5298718d2eb77418db3e780b2a59c95163",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "scripts/build-inputs.mjs",
+      "sha256": "a756212c0cb4a14453a2f3754c08b7780565f1d6a261e8289f9e50c4f412e328",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "aa5ea3e5c2df371db245ab0859cfc8b72b52040da04ea4ace7e9b127b7cc2657",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "scripts/prepare-electron-app.mjs",
+      "sha256": "f66b5fa8406ac459875a7ed36a53019b29610db26894a305ea3f46639efb7388",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "33b118161e52fbb29342510e6058d9fec075e389c2ef17e1a6fba5a41dc87ae9",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "89ceb49d2e688e4ac382f7144f3d73e9c60bc80521983bbc508783afb4dedfe3",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "63fca270e28ae7afe560ab6ec7e9340aaf2d93f2e4aaa895dbd2cb0e067446da",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "scripts/run-test-layer.mjs",
+      "sha256": "dd1ced0cf800ae236acff816a05e25bcb7b3c0c9f6ea9c818002e30f61f8064d",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "0fb7dad7a7021bb98cfaa71d70e4eb445ab9c4869efccaff04d3f7b2aff555ed",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "scripts/run-tests.mjs",
+      "sha256": "6ea80b052f2d5b96ed248c37a2f10a502775cc1da2a14cc74329c0c90f4afd6f",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "0c0a6ac61ab7184bd77bb3e8dad72e25e3ffebc25ddaefbb5baea14317f8f8f2",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "scripts/run-coverage.mjs",
+      "sha256": "dddb9f2800f5cc2cb299a0651488a17380d6abb29bda967feaf58073d9557968",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "dddb9f2800f5cc2cb299a0651488a17380d6abb29bda967feaf58073d9557968",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "e4569b6c6dda49afdc361cb885d3f5662b87db3c55fbd92dc675ea5be4248296",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "2a478611b610cf3a31935e01cca95d624ccc035be7cd61bebf21d7890d262b65",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "5376cea77eab4741593f680f41d95c9a4ebb8d14dd9fccf24db994e6f9c5c34b",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "6e55cd6274577ace600959c29f7b988eb778d41d9965d245f85d4816ade7fbd0",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "package.json",
+      "sha256": "7070b4560a6928deef069ba80f4163861107d1fb106f3f28438d422d82fb23a6",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "36c57c34e179d5309cc08d7c07fd04c80ac6a846219478f1752c0f40fdace512",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "package-lock.json",
+      "sha256": "470ca8f79bd1e5d335135aa352743ca0708d9fcdf8354a1534a3c3b1b2ada1cd",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": {
+        "owner": "SEC-02",
+        "sha256": "470ca8f79bd1e5d335135aa352743ca0708d9fcdf8354a1534a3c3b1b2ada1cd",
+        "hashScope": "file"
+      }
+    },
+    {
+      "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+      "sha256": "56162f6d4f4fa73ebd42b2a51b68dab978fb4c20909162d8dfa80cc67afd0271",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 opaque ExecutionGrant rejects forgery, replay, expiry and failed-launch restoration",
+        "SEC-03 grant consumption is atomic under concurrent use and cross-owner use fails closed",
+        "SEC-03 persistent leases bind owner/session and InputGrant is one-shot under concurrency",
+        "SEC-03 E4 input accepts a new direct run only inside the launch authority incarnation",
+        "SEC-03 output limit terminates the native host and returns a stable denial",
+        "SEC-03 manual consent stores the exact request server-side and atomically rejects replay/concurrent reuse",
+        "SEC-03 manual consent deny/dismiss/invalidation/shutdown have zero execution side effects"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/unit/execution-root-lease.test.mjs",
+      "sha256": "92f18c8da6de0056a13b53459d766635eb56ef8fbb9a780560e823793532d1ac",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 execution-root lease is opaque, one-use, exact-mask and epoch bound",
+        "SEC-03 execution-root lease expires and authority retirement invalidates it",
+        "SEC-03 pathname swap after validation publishes no execution-root lease"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/unit/native-process-consent.test.mjs",
+      "sha256": "3659c8a0dbddb5fd656c67f1a8e6ece9c6e18e0fb19495a275501edf00c5ab08",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 native process consent is unavailable without the private main-process handler",
+        "SEC-03 native process consent binds exact bytes, authority and one native decision",
+        "SEC-03 native process consent denies invalidation and current-runtime replacement",
+        "SEC-03 manual consent rejects authority reincarnation, old A-to-B-to-A and invalidation",
+        "SEC-03 manual terminal start requires and preserves a private root qualification digest"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-execution-inventory.test.mjs",
+      "sha256": "abbd0ab375ceb7a280e7b90b304b931e7e5bec8106b47266edd7edeb1b3bf99e",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 frozen matrix is an exact 386 plus 96 machine-readable closure",
+        "SEC-03 scanner recognizes finite process worker utility addon environment network and handle sinks",
+        "SEC-03 independent crosscheck rejects alias re-export callable escape and unknown sink",
+        "SEC-03 authored projection includes native host sources and public HTML inline scripts",
+        "SEC-03 inventory reports current product migration drift without disguising scanner correctness"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-governance-adversarial.test.mjs",
+      "sha256": "dc25adced7caf618db7721da4a88617e59f360a61819fc231d248c00f733b8b9",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 exact occurrence IDs reject a second spawn in the same function",
+        "SEC-03 native adapter occurrence rejects a second CreateProcess",
+        "SEC-03 public inline/module projection rejects an unclassified second fetch and ignores text/comments",
+        "SEC-03 native scanner ignores comments and strings while recognizing security primitives",
+        "SEC-03 product-to-build-test reachability is a hard fail",
+        "SEC-03 finite dialect rejects call/apply/bind, bound invocation, re-export, storage escape, and dynamic loaders",
+        "SEC-03 exact caller governance rejects authority consumers outside their sole product modules"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-governance.test.mjs",
+      "sha256": "2db60ce73ae3b343264ba2014dd23aef889e3ce45c00bb3e6185802304d8b2b9",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 resolved manifest is byte-stable and binds the exact cumulative union",
+        "SEC-03 governance rejects predecessor and content-hash mutation",
+        "SEC-03 governance rejects missing and duplicate entries",
+        "SEC-03 governance rejects empty native exemption evidence owners"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
+      "sha256": "6cc358bea00e3d57f770061ade6c105e8967387f344cca9e745f30d1a393ae79",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 source digest authored set includes native sources, build logic, runtime, governance and matrix inputs",
+        "SEC-03 native projection binds the exact manifest, outputs, toolchain, freshness and AMD64 machine",
+        "SEC-03 native projection rejects stale native source and manifest toolchain identity",
+        "electron-builder includes only exact SEC-03 native paths and unpacks only the two binaries"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-receipts.test.mjs",
+      "sha256": "1c0669a065d49a29cd1068b5fc00ed2ea71d855f4beede5aec37b2bccede603d",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 482 closure contract freezes only matrix cardinality and never synthesizes native PASS evidence",
+        "SEC-03 receipt creation requires a complete authenticated evidence envelope and verifier",
+        "SEC-03 explicit test-only verifier produces non-completable receipts",
+        "SEC-03 validation rejects tamper, raw evidence, missing attestation, and wrong verifier",
+        "SEC-03 parent aggregation rejects duplicate, extra, cross-run, skipped, todo, default-like, and mock evidence"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
+      "sha256": "4e2a129122c063f7d2d7ce21cfe9aa87f1e52f492efbcaee06ce3a5b9a3947e9",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 native E1 uses real AppContainer/Job, denies ambient user data/env/network, and has no fallback",
+        "SEC-03 native rejects malformed launch/non-local root and survives repeated launcher lifecycle",
+        "SEC-03 native E3 runs exact stdin module with executable lease and denies ambient authority",
+        "SEC-03 native ${entryPoint} uses authenticated ConPTY input/output and graceful cleanup",
+        "SEC-03 native startup recovery blocks a live host and preserves an unrelated ACE after host crash",
+        "SEC-03 native startup recovery rejects corrupt and generation-gap journals before launch",
+        "SEC-03 native recovery rejects candidate drift and root object replacement"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs",
+      "sha256": "9548c654f98d26ecb9c5b3340e77ff2720a3ef156742e7bf3fb37d19fc814ac6",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 local API accepts only the private trusted header and publishes no browser credential"
+      ],
+      "supersedes": null
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-child-consent-transport.test.mjs",
+      "sha256": "571126f1e0e65b7dc5f0cd9d83e5b1908ff748baa53b28fb5436d3b6618564f6",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "SEC-03 inherited anonymous pipes carry one parent-only approval",
+        "SEC-03 inherited anonymous pipes preserve a parent-only denial",
+        "SEC-03 child transport rejects concurrent cross-request substitution",
+        "SEC-03 child transport rejects a valid-MAC decision bound to another request",
+        "SEC-03 child transport rejects decision MAC tampering",
+        "SEC-03 replayed decision invalidates the private channel",
+        "SEC-03 child EOF invalidates the private channel",
+        "SEC-03 direct server mode has no inherited consent handler"
+      ],
+      "supersedes": null
+    }
+  ],
+  "coverageExemptions": [
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/agent.ts",
+      "reason": "Agent authorization orchestration is exercised by the SEC-01 integration layer; the governed dispatcher and Broker are measured separately.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/capability-broker.ts",
+      "reason": "The compiled equivalent dist/capability-broker.js is in the governed security-critical coverage registry.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/index.ts",
+      "reason": "HTTP direct-operation wiring and packaged Session isolation are exercised by integration, Electron and packaged layers.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/persona.ts",
+      "reason": "Effective Persona digest and runtime authority freshness are exercised by the SEC-01 integration layer.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/playbook.ts",
+      "reason": "Playbook capability attenuation and owner lineage are exercised by dedicated unit and integration contracts.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/subagent.ts",
+      "reason": "SubAgent child attenuation and strict provider argument handling are exercised by the SEC-01 integration layer.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/supervisor.ts",
+      "reason": "Supervisor remains advisory and model-immutable; state preservation is proved by the SEC-01 integration layer.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/terminal-facade.ts",
+      "reason": "The compiled equivalent dist/terminal-facade.js is in the governed security-critical coverage registry.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/terminal.ts",
+      "reason": "The compiled equivalent dist/terminal.js is in the governed security-critical coverage registry.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/tool-policies.ts",
+      "reason": "The compiled equivalent dist/tool-policies.js is in the governed security-critical coverage registry.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/tools/advanced-tools.ts",
+      "reason": "The model-visible Supervisor control surface is checked structurally and behaviorally in contract and integration layers.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/tools/ask-user-tool.ts",
+      "reason": "Exact structured positive and negative approval responses are exercised by dedicated unit tests.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/tools/index.ts",
+      "reason": "The compiled equivalent dist/tools/index.js is in the governed security-critical coverage registry.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/tools/phase1-tools.ts",
+      "reason": "Capability-scoped search_tools definition discovery is covered through dispatcher structural contracts.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/tools/save-persona.ts",
+      "reason": "Network policy persistence and effective Persona refresh are checked by the SEC-01 integration contract.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/tools/subagent-tools.ts",
+      "reason": "Invocation-service child derivation is exercised through the Agent integration attack matrix.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/tools/terminal-tools.ts",
+      "reason": "Terminal tool ownership and sole-facade imports are proved by unit, contract and integration layers.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "src/types.ts",
+      "reason": "This file contains TypeScript-only authority contracts and emits no independently testable runtime behavior.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "personas/daily.md",
+      "reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "personas/debugger.md",
+      "reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "personas/developer.md",
+      "reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "personas/general.md",
+      "reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "personas/quick-fix.md",
+      "reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "personas/rds-assistant.md",
+      "reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "personas/sentinel.md",
+      "reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-01",
+      "exactCasePath": "personas/writer.md",
+      "reason": "Explicit transitional network policy is validated during Persona registry loading in integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "electron/main.cjs",
+      "reason": "Electron main-process consent and native bridge wiring execute in the real Electron projection layer.",
+      "evidenceLayer": "electron",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "electron/path-bootstrap.cjs",
+      "reason": "The CommonJS Electron bootstrap adapter uses real Windows handles, junctions, and replacement fixtures outside c8.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "electron/preload.cjs",
+      "reason": "The preload mutation surface executes only in the real Electron renderer lifecycle.",
+      "evidenceLayer": "electron",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "dist/daemon.js",
+      "reason": "The source-only supervisor is contract checked because importing it would launch a child process during coverage.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "dist/embedding.js",
+      "reason": "The offline model loader is verified by a real dependency functionality probe outside c8 to avoid loading the model in every coverage run.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "dist/index.js",
+      "reason": "HTTP bootstrap/static and direct authority paths execute in isolated server integration and Electron/package layers.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/agent.ts",
+      "reason": "Agent formatting preserves typed PathPolicy denials and is exercised through integration dispatch.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/bootstrap-database.ts",
+      "reason": "The compiled bootstrap adapter is security-critical coverage and GOV-02 verifies future WAL byte identity.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/bootstrap-path-store.ts",
+      "reason": "The compiled bootstrap authority store is security-critical coverage with real environment, static, model, and database integration.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/capability-broker.ts",
+      "reason": "The compiled equivalent dist/capability-broker.js is measured as security-critical coverage.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/config.ts",
+      "reason": "The compiled equivalent dist/config.js is measured and persistence failures are exercised by Settings integration.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/daemon.ts",
+      "reason": "Daemon startup uses the bootstrap initial-CWD and script identity adapter with no shell; the compiled source-only supervisor is contract checked.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/db.ts",
+      "reason": "The compiled equivalent dist/db.js is measured and the complete migration matrix runs through the bootstrap database adapter.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/document-parser-worker.ts",
+      "reason": "Worker input is byte-only and its lifecycle is exercised through File Viewer integration.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/embedding.ts",
+      "reason": "Offline Transformers initialization is bounded by the pinned models-directory adapter and dependency functionality probe.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/file-viewer.ts",
+      "reason": "The compiled equivalent dist/file-viewer.js is measured and direct routes are exercised by integration.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/index.ts",
+      "reason": "HTTP direct authorities and Settings publication are exercised by integration, Electron, and packaged layers.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/managed-path-store.ts",
+      "reason": "The compiled equivalent dist/managed-path-store.js is measured and real junction fixtures cover bootstrap roots.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/oracle.ts",
+      "reason": "Project and managed-store authorities are exercised by the real Git and Oracle integration layer.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/path-policy.ts",
+      "reason": "The compiled equivalent dist/path-policy.js is measured as security-critical coverage.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/path-runtime.ts",
+      "reason": "This module exposes only the process-local PathPolicy singleton used by covered adapters.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/persona.ts",
+      "reason": "Persona and Skill managed authorities are exercised with real files and junction denial.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/playbook.ts",
+      "reason": "Playbook managed definitions and exclusive creation are exercised by managed-store integration.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/process-tree.ts",
+      "reason": "The compiled equivalent dist/process-tree.js is measured and has deterministic cleanup tests.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/resource-owner.ts",
+      "reason": "The compiled equivalent dist/resource-owner.js is measured and root-subset retirement is tested.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/runtime-paths.ts",
+      "reason": "Pinned runtime locations are consumed only by governed bootstrap and config authorities.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/settings-enrollment.ts",
+      "reason": "The compiled equivalent dist/settings-enrollment.js is measured with transactional fault injection.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/terminal-facade.ts",
+      "reason": "The compiled equivalent remains governed by the predecessor SEC-01 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/terminal.ts",
+      "reason": "The compiled equivalent dist/terminal.js remains measured as security-critical coverage.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tool-policies.ts",
+      "reason": "The compiled equivalent remains governed and exact path operations are checked by contract tests.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/advanced-tools.ts",
+      "reason": "Oracle invocation routing is exercised by project and managed-store integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/download-tool.ts",
+      "reason": "Reservation-before-fetch and zero-fetch denial are exercised by integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/filesystem.ts",
+      "reason": "The compiled equivalent dist/tools/filesystem.js is measured with real gateway integration.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/image-helper.ts",
+      "reason": "Provider initialization after authorized byte reads is exercised by integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/index.ts",
+      "reason": "The compiled equivalent dist/tools/index.js remains measured as the unique dispatcher.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/parsers.ts",
+      "reason": "Buffer-only Office parsing and absence of path-taking APIs are checked by integration contracts.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/read-repo.ts",
+      "reason": "Fixed Git argv, NUL parsing, and per-entry authorization use real Git integration fixtures.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/save-persona.ts",
+      "reason": "Managed definition creation is exercised through isolated user-data integration.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/script.ts",
+      "reason": "Script stdin execution and authorized initial CWD are exercised by process integration.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/shell.ts",
+      "reason": "Shell spawn remains inside the authorized initial-CWD callback in process integration.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/terminal-tools.ts",
+      "reason": "Tool Terminal CWD and opaque ResourceOwner control are exercised by process integration.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/tools/writer.ts",
+      "reason": "Office generation commits only through output reservations in integration tests.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/types.ts",
+      "reason": "This file contains TypeScript-only opaque service contracts with no independent runtime branches.",
+      "evidenceLayer": "contract",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/version.ts",
+      "reason": "The compiled equivalent dist/version.js is measured and metadata bytes are read only through the app bootstrap authority.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-02",
+      "exactCasePath": "src/wire.ts",
+      "reason": "Watcher lease publication, event denial, and owner retirement are exercised by integration.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "native/sandbox-host/journal.h",
+      "reason": "Native journal behavior is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": [
+        {
+          "receiptLayer": "real-host",
+          "testFile": "tests/integration/sec03-native-host.test.mjs",
+          "familyIds": [
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16",
+            "A17",
+            "A18",
+            "A19"
+          ]
+        }
+      ]
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "native/sandbox-host/protocol.h",
+      "reason": "Native protocol behavior is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": [
+        {
+          "receiptLayer": "real-host",
+          "testFile": "tests/integration/sec03-native-host.test.mjs",
+          "familyIds": [
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16",
+            "A17",
+            "A18",
+            "A19"
+          ]
+        }
+      ]
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
+      "reason": "The native sandbox host is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": [
+        {
+          "receiptLayer": "real-host",
+          "testFile": "tests/integration/sec03-native-host.test.mjs",
+          "familyIds": [
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16",
+            "A17",
+            "A18",
+            "A19"
+          ]
+        }
+      ]
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "reason": "The native launcher is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": [
+        {
+          "receiptLayer": "real-host",
+          "testFile": "tests/integration/sec03-native-host.test.mjs",
+          "familyIds": [
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16",
+            "A17",
+            "A18",
+            "A19"
+          ]
+        }
+      ]
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "src/execution-isolation.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/execution-isolation.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "src/execution-native.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/execution-native.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "src/execution-runtime.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/execution-runtime.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "src/manual-execution-consent.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/manual-execution-consent.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "src/native-process-consent.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/native-process-consent.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-03",
+      "exactCasePath": "src/native-process-consent-transport.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/native-process-consent-transport.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    }
+  ],
+  "canonicalPayloadSha256": "19c7a59183559e2d5dcd0f5fb4c527d8942c4a6b48254cce6d260ac235ce4c51"
+}

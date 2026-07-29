@@ -1,0 +1,207 @@
+{
+  "reportVersion": 1,
+  "task": "SEC-01",
+  "persona": "reviewer",
+  "state": "verified-user-confirmed",
+  "reviewedAt": "2026-07-21T16:59:45+08:00",
+  "canonical": {
+    "path": "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md#SEC-01",
+    "architecture": {
+      "path": "parity/SEC-01-CAPABILITY-BROKER-ARCHITECTURE.md",
+      "sha256": "809b97201e4934b0d0024336d668f2824ce006d296192cd772b2894437426afc"
+    },
+    "scenarioCount": 31,
+    "runtimeObservationCount": 63
+  },
+  "candidate": {
+    "appVersion": "0.1.0",
+    "buildId": "0.1.0+local.bc9570de9e02",
+    "sourceDigest": "bc9570de9e026e449affaaaa881b1e6265943937c37520a5cbb3def5a845b4a1",
+    "packageInputDigest": "fa64b132bbe94c3071d06f4e354d38aeaf28c75b362e0114f0896a54fdb7d793",
+    "pipelineDefinitionDigest": "c83a0dbe1d86304f2f69ea56b9d72b3cff3032275d0e32482d959d405deca428",
+    "policyDigest": "e6847b0cbb95cc7fe9605af8c86c145f11f07dffb0f583600befd06d07e98b29",
+    "sourceManifestSha256": "b72cb1463f7cccd9e01589d56620d71eb614202f5912dc6aa56dbcbe34170625",
+    "releaseCandidateId": "7b8c9a84fdda2fe99d4d676fd8e42b5ff02c3481f28dd910b335d538c58541e2",
+    "sourceInputFiles": 177,
+    "sourceInputBytes": 139915618,
+    "buildInfoSha256": "4a1ca0c7cc6425eac17e339770387b9f5b3354866afe19e60b7e0fb6dad3bf88",
+    "distIntegritySha256": "a11ec016c50634807f7efa1f4d94771662fbb46cae83d042fcf35f85d15935ab"
+  },
+  "localArtifact": {
+    "manifest": {
+      "path": "test-results/package-artifact.json",
+      "sha256": "ae581a3ebb044faf6df0df99cb498bff9efef0764ca6bfe206e9021e27018b0c"
+    },
+    "filename": "Mini-Lux Setup 0.1.0-0.1.0~2Blocal.bc9570de9e02.exe",
+    "bytes": 245330941,
+    "sha256": "d6cf14317278242d156182005ce56edab427e274000820af313a92d24e4df10f",
+    "appAsarSha256": "5d93022a0d669055deb2c917dc9448d3cb50f0da0d899526396d29727299d441",
+    "signatureStatus": "NotSigned",
+    "releaseEligible": false
+  },
+  "reviewIndependence": {
+    "developerReport": {
+      "path": "parity/reports/sec-01-developer-verification.json",
+      "sha256": "80d00aded3b4fe60160c75863a061cce28ced243a3fb110e1cc78083ae79e516",
+      "usedAsAuthority": false
+    },
+    "debuggerVerdict": {
+      "path": "parity/reports/sec-01-debugger-verdict.json",
+      "sha256": "7c7698ceffa910c28015f0230677d13537eaf5ee528133021a649afb47795309",
+      "usedAsAuthority": false
+    },
+    "independentEvidence": {
+      "directory": "test-results/sec01-reviewer-bc957-independent",
+      "manifestSha256": "26ca2ab89450b298a663c198ba9ca558064a426a90f8c9631cfc5af1ef959bf1",
+      "sec01FullSha256": "46da56db0aacc846f2d24a4a1a465338b67abdbdd8fdad20e68121c38e96647c",
+      "gov04ReportSha256": "8a743d57631b23d1a2586c373e9d4345881fb2dafd0d21b291fcfe6ed7f15a88",
+      "gov04MarkerSha256": "cb92b7edd948e05dbeb53e510d29ce759e6d2a08223ff56352bb52594d6908d4"
+    }
+  },
+  "securityAcceptance": {
+    "singleBrokerExecutionAuthority": true,
+    "contextAuthenticityAndFreshness": true,
+    "immutableBindingAndArgumentSnapshot": true,
+    "exactOneUseApprovalGrant": true,
+    "childCapabilityAttenuation": true,
+    "supervisorCannotAuthorize": true,
+    "directOperationPrincipalSeparation": true,
+    "terminalSessionAndPrincipalOwnership": true,
+    "revokeBeforePublishAndSingleFlight": true,
+    "completeStaticBoundaryParts": [
+      "policyRegistry",
+      "dispatcher",
+      "supervisor",
+      "terminalFacade"
+    ],
+    "frozenAttackMatrix": {
+      "scenarios": 31,
+      "runtimeObservations": 63,
+      "missing": 0,
+      "duplicate": 0,
+      "falseObservations": 0
+    },
+    "positivePaths": [
+      "authorized static control",
+      "exact user-granted write",
+      "structured Agent approval",
+      "attenuated child read",
+      "scoped runtime binding",
+      "current-Session Terminal read and mutation",
+      "exact direct file reveal"
+    ]
+  },
+  "verification": {
+    "officialSec01Full": {
+      "path": "test-results/sec01-bc957-full.json",
+      "sha256": "a9315eecb396e533a28a0570ed934f3a99fd3e4fd23619cfbdf348cd6141235e",
+      "state": "passed",
+      "layers": [
+        "unit",
+        "contract",
+        "integration",
+        "electron",
+        "packaged",
+        "coverage",
+        "self-test"
+      ]
+    },
+    "independentSec01Full": {
+      "path": "test-results/sec01-reviewer-bc957-independent/sec01-full.json",
+      "sha256": "46da56db0aacc846f2d24a4a1a465338b67abdbdd8fdad20e68121c38e96647c",
+      "state": "passed"
+    },
+    "coverage": {
+      "overallLines": {
+        "covered": 2529,
+        "total": 2749,
+        "thresholdPercent": 80,
+        "passed": true
+      },
+      "securityBranches": {
+        "covered": 741,
+        "total": 817,
+        "thresholdPercent": 90,
+        "passed": true
+      },
+      "zeroHitFiles": 0,
+      "missingFiles": 0,
+      "unexpectedFiles": 0,
+      "perFileFloorsPassed": true
+    },
+    "officialSca": {
+      "production": {
+        "low": 1,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "full": {
+        "low": 1,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "exceptions": 0
+    }
+  },
+  "gov04Acceptance": {
+    "controlledRetry": {
+      "runId": "ecdfb8b3-45b6-4f66-95aa-227fe50b3f79",
+      "retryOf": "89c1a3db-44b4-45d3-97ec-04a63c1d5487",
+      "report": {
+        "path": "test-results/sec01-gov04-bc957-final/gov04-report.json",
+        "sha256": "8386e3ddc2e5d0f0d45c89a918aaef727d14c3f1b6a5c7895af36b4392acf66a"
+      },
+      "marker": {
+        "path": "test-results/sec01-gov04-bc957-final/gov04-final-marker.json",
+        "sha256": "acc4858098f87955d7da6a4e1dabdd57add50707e692320d42ce7801085e5123"
+      },
+      "expectedSteps": 16,
+      "executedSteps": 16,
+      "state": "passed",
+      "releaseEligible": false
+    },
+    "priorFailure": {
+      "runId": "89c1a3db-44b4-45d3-97ec-04a63c1d5487",
+      "failureClass": "SCA_REPORT_INVALID",
+      "reportSha256": "40d57bc4b66725e3a8535dac2d04742d451319e4d534a4a2a0f62ae0a8734122",
+      "markerSha256": "d97360cf776309c26e23380e5cfd9576f3b77d0344ebc11474ef77f4ca6e660d",
+      "cryptographicallyBoundToRetry": true
+    },
+    "independentFreshRun": {
+      "runId": "7502875d-a93c-409a-b9bc-f04a6eddef89",
+      "report": {
+        "path": "test-results/sec01-reviewer-bc957-independent/gov04-report.json",
+        "sha256": "8a743d57631b23d1a2586c373e9d4345881fb2dafd0d21b291fcfe6ed7f15a88"
+      },
+      "marker": {
+        "path": "test-results/sec01-reviewer-bc957-independent/gov04-evidence/gov04-final-marker.json",
+        "sha256": "cb92b7edd948e05dbeb53e510d29ce759e6d2a08223ff56352bb52594d6908d4"
+      },
+      "expectedSteps": 16,
+      "executedSteps": 16,
+      "state": "passed",
+      "releaseEligible": false,
+      "artifactRetained": false,
+      "purpose": "Independent corroborating rerun; authoritative controlled-retry artifact is retained separately."
+    }
+  },
+  "blockingFindings": [],
+  "knownNonBlockingRisks": [
+    "The official npm graph currently reports one low-severity transitive body-parser advisory; the frozen GOV-04 rejection threshold is high/critical and no exception was used.",
+    "Socket-level network enforcement remains SEC-03; SEC-01 binds and attenuates the declared network envelope but does not claim an OS sandbox.",
+    "Canonical filesystem containment remains SEC-02; SEC-01 prevents root broadening but does not claim complete path safety.",
+    "Historical same-path NSIS 0xC0000005 remains disclosed; bc957 completed three local packaged runs, the controlled GOV-04 packaged smoke, and the independent Reviewer GOV-04 packaged smoke without recurrence."
+  ],
+  "externalBlockers": [
+    "Real GitHub server-side governance evidence remains unavailable without a hosted repository and protected settings.",
+    "REL-01 trusted Authenticode identity and RFC3161 timestamp remain unavailable without an approved signer and configured allowlist."
+  ],
+  "reviewerVerdict": "pass",
+  "userStatus": "confirmed",
+  "userConfirmation": {
+    "decision": "accepted",
+    "confirmedAt": "2026-07-21T17:01:39+08:00"
+  }
+}

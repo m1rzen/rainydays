@@ -1,0 +1,83 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-03",
+  "persona": "debugger",
+  "state": "rejected-returned-to-developer",
+  "candidate": {
+    "buildId": "0.1.0+local.110e45b1fa20",
+    "installerSha256": "5cefef60a9ad066a237086b29c7bee0d901d546fd424c3498e481116781ca24b",
+    "disposition": "obsolete-do-not-distribute"
+  },
+  "independentEvidence": {
+    "reportDirectOverwriteRejected": true,
+    "tempJunctionEscapeRejected": true,
+    "caseAliasRejectedAndStaleReportRemoved": true,
+    "malformedChildRejected": true,
+    "coverageTimeoutAuthorityReport": true,
+    "selfTest": "13/13",
+    "installerCrashReproduced": {
+      "phase": "install",
+      "rawExitCode": 3221225477,
+      "hex": "0xC0000005",
+      "classification": "windows-crash",
+      "report": "test-results/gov-03-debugger-packaged-2.json"
+    },
+    "pathSensitivity": {
+      "samePathImmediate": "second run crashed",
+      "tenSecondCooldown": "4/4 passed",
+      "hashIdenticalIsolatedExecutionPath": "5/5 passed"
+    }
+  },
+  "blockingFindings": [
+    {
+      "id": "DBG2-GOV03-01",
+      "severity": "critical",
+      "finding": "An allowed-root internal junction can pass reverse containment and report publication remains after the artifact snapshot."
+    },
+    {
+      "id": "DBG2-GOV03-02",
+      "severity": "high",
+      "finding": "Coverage, unified, layer and packaged schemas validate shape but do not recompute semantic consistency; contradictory passing evidence is accepted."
+    },
+    {
+      "id": "DBG2-GOV03-03",
+      "severity": "high",
+      "finding": "Valid stale V8 coverage is not seeded into the same forced-miss coverage-gate run required by the frozen contract."
+    },
+    {
+      "id": "DBG2-GOV03-04",
+      "severity": "critical",
+      "finding": "The same Build 110 installer reproduced 0xC0000005 on immediate same-path rerun; the prior green full report is superseded by later failure evidence."
+    },
+    {
+      "id": "DBG2-GOV03-05",
+      "severity": "high",
+      "finding": "Installer/uninstaller descendant processes and executable-path release are not observed before the next run."
+    },
+    {
+      "id": "DBG2-GOV03-06",
+      "severity": "high",
+      "finding": "startInstalled can spawn a process and throw before returning its child reference, leaving finally unable to authoritatively reclaim it."
+    },
+    {
+      "id": "DBG2-GOV03-07",
+      "severity": "high",
+      "finding": "Registry observation fails open on query errors and shortcut evidence compares only guessed-path booleans."
+    },
+    {
+      "id": "DBG2-GOV03-08",
+      "severity": "medium",
+      "finding": "runProcess rewrites signal exits from raw code null to code 1."
+    }
+  ],
+  "requiredFixDirection": [
+    "Canonicalize report parents with one-way containment, reject the existing cursor if it is a link, and publish only to a revalidated canonical destination.",
+    "Recompute all passing semantics from counters/results and require fixed quick/full layer sets plus non-null consistent packaged evidence.",
+    "Seed valid V8 raw data into the exact forced-miss runner invocation.",
+    "Execute a preflight-verified, size/hash-identical installer copy from each isolated fixture path; record source/copy identity and cleanup, while disclosing rapid same-path rerun as a Windows/NSIS residual risk.",
+    "Track spawned application immediately, observe installer/uninstaller descendant convergence and executable-path release, and preserve raw code/signal.",
+    "Make registry observation errors fatal and use Windows Known Folders plus shortcut hashes."
+  ],
+  "reviewerVerdict": null,
+  "userStatus": "not-reviewed"
+}

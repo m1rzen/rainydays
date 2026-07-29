@@ -1,0 +1,240 @@
+{
+  "reportVersion": 6,
+  "task": "SEC-01",
+  "persona": "developer",
+  "generatedAt": "2026-07-21T15:16:00+08:00",
+  "state": "implemented-awaiting-independent-debugger",
+  "canonical": "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md#SEC-01",
+  "architecture": {
+    "path": "parity/SEC-01-CAPABILITY-BROKER-ARCHITECTURE.md",
+    "sha256": "809b97201e4934b0d0024336d668f2824ce006d296192cd772b2894437426afc",
+    "freezeReport": "parity/reports/sec-01-architect-freeze.json"
+  },
+  "supersededCandidates": [
+    {
+      "buildId": "0.1.0+local.353cf15d6d94",
+      "reason": "Independent lifecycle review found argument snapshot, one-use execution, monotonic invalidation, Terminal subscription and shutdown publication inconsistencies."
+    },
+    {
+      "buildId": "0.1.0+local.40571b10a379",
+      "reason": "Independent Reviewer found the canonical shell rejection path was not executed and matrix labels were not bound to runtime assertions."
+    },
+    {
+      "buildId": "0.1.0+local.826996d644ed",
+      "reason": "Independent Debugger found source-text matching did not prove runtime probe execution and compound scenarios lacked independent observations."
+    },
+    {
+      "buildId": "0.1.0+local.999946694639",
+      "reason": "A31 static-boundary-state was not bound to the complete source boundary set."
+    },
+    {
+      "buildId": "0.1.0+local.e9760ef8fb58",
+      "reason": "A repeated packaged launch exposed nondeterministic selected-Session restoration."
+    },
+    {
+      "buildId": "0.1.0+local.5907ac4bbbfd",
+      "reason": "A25 used a different authority for cross-Session replay and A31 emitted an incomplete static observation."
+    },
+    {
+      "buildId": "0.1.0+local.7319dbf1360d",
+      "reason": "The full-history GOV-04 gate exposed SEC-01 security files with zero coverage under the cumulative GOV-03 manifest."
+    },
+    {
+      "buildId": "0.1.0+local.21384bed889e",
+      "reason": "The full-history GOV-04 gate exposed that the frozen SEC-01 architecture was absent from the governed Build input closure."
+    },
+    {
+      "buildId": "0.1.0+local.eb18f782b5ed",
+      "reason": "A later official npm advisory made the full dependency graph fail the frozen zero-high SCA gate."
+    }
+  ],
+  "candidate": {
+    "appVersion": "0.1.0",
+    "buildId": "0.1.0+local.bc9570de9e02",
+    "sourceDigest": "bc9570de9e026e449affaaaa881b1e6265943937c37520a5cbb3def5a845b4a1",
+    "sourceInputFiles": 177,
+    "buildInfoSha256": "4a1ca0c7cc6425eac17e339770387b9f5b3354866afe19e60b7e0fb6dad3bf88",
+    "distIntegritySha256": "a11ec016c50634807f7efa1f4d94771662fbb46cae83d042fcf35f85d15935ab",
+    "sourceDigestRecomputedAfterFull": true
+  },
+  "localArtifact": {
+    "manifest": {
+      "path": "test-results/package-artifact.json",
+      "sha256": "ae581a3ebb044faf6df0df99cb498bff9efef0764ca6bfe206e9021e27018b0c"
+    },
+    "filename": "Mini-Lux Setup 0.1.0-0.1.0~2Blocal.bc9570de9e02.exe",
+    "bytes": 245330941,
+    "sha256": "d6cf14317278242d156182005ce56edab427e274000820af313a92d24e4df10f",
+    "signedAndReleaseEligible": false
+  },
+  "implementation": {
+    "executionAuthority": "Process-local CapabilityBroker is the sole authority for context-mandatory model dispatch and direct-operation facades.",
+    "argumentConsistency": "Schema validation, approval digest and executor consume one Broker-owned frozen prepared-call snapshot.",
+    "singleUse": "Prepared-call, challenge and grant ledgers are consumed fail-closed before executor entry.",
+    "freshness": "Session, run, Persona/Skill/Settings and authority epochs invalidate stale contexts monotonically.",
+    "childAttenuation": "SubAgent and Playbook bindings, roots, risks and network envelopes only narrow; recursion and parent grants do not propagate.",
+    "terminalBoundary": "Raw TerminalManager remains module-private; Session/principal ownership and direct-operation authorization precede manager access.",
+    "sessionRestoration": "Session selection persists a strictly monotonic touch and uses millisecond-preserving deterministic ordering."
+  },
+  "securityContract": {
+    "matrix": {
+      "path": "tests/sec01-attack-matrix.json",
+      "sha256": "e43d233192056ce7933279f62b9df68fe4e894cb4226812890a6ed9340c69239",
+      "schemaVersion": 3,
+      "scenarios": 31,
+      "runtimeObservations": 63
+    },
+    "runtimeReceiptContract": {
+      "path": "tests/contract/sec01-attack-contract.test.mjs",
+      "sha256": "8fda8947292c8fda7898e6b8d26929e12e2f42893fb1eed3e930baa9e85bb037",
+      "freshRunId": true,
+      "exactlyOnce": true,
+      "parentRevalidatesActualValues": true
+    },
+    "completeStaticBoundary": {
+      "path": "tests/contract/sec01-boundaries.test.mjs",
+      "sha256": "eb549cffabe6aa98a338a41a49b8fc11f0e6bd06836ae4e0405414f1177afe8f",
+      "parts": ["policyRegistry", "dispatcher", "supervisor", "terminalFacade"]
+    },
+    "canonicalProviderForgery": {
+      "tools": ["script", "execute_command"],
+      "dispatcherRejected": true,
+      "filesystemAndProcessCanariesUnchanged": true
+    }
+  },
+  "dependencyGovernance": {
+    "removedUnusedDevDependency": "concurrently",
+    "removedVulnerablePath": "concurrently -> shell-quote@1.8.4",
+    "protobufOverride": "7.6.5",
+    "productionAndFullCounts": {
+      "info": 0,
+      "low": 1,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 1
+    },
+    "exceptions": 0,
+    "remainingDisclosure": "Express 4 transitively pins body-parser below 1.20.6; the current advisory is low severity and below the frozen high/critical rejection threshold.",
+    "functionalProbe": {
+      "offlineEmbeddingDimensions": 384,
+      "embeddingNormalized": true,
+      "xlsxRoundTrip": true,
+      "xlsRoundTrip": true
+    }
+  },
+  "verification": {
+    "typecheck": "passed",
+    "lint": "passed-zero-warnings",
+    "gov03Quick": {
+      "path": "test-results/gov03-bc957-quick.json",
+      "sha256": "65677ff17cca46d76c07395f1f035e81cc6b6f0bb0a17967524f6c6ccbe0a5f8",
+      "state": "passed",
+      "durationMs": 230256,
+      "layers": {"unit": "19/19", "contract": "26/26", "integration": "4/4", "electron": "1/1", "coverage": "passed"}
+    },
+    "sec01Quick": {
+      "path": "test-results/sec01-bc957-quick.json",
+      "sha256": "1456c4442c01218a8621525aa65128885bb3e1924416cebdfdd74edd8c4fe95e",
+      "state": "passed",
+      "durationMs": 206682
+    },
+    "sec01Full": {
+      "path": "test-results/sec01-bc957-full.json",
+      "sha256": "a9315eecb396e533a28a0570ed934f3a99fd3e4fd23619cfbdf348cd6141235e",
+      "state": "passed",
+      "durationMs": 374552,
+      "layers": {"unit": "2/2", "contract": "26/26", "integration": "4/4", "electron": "1/1", "packaged": "1/1", "coverage": "passed", "selfTest": "17/17"},
+      "coverage": {
+        "overallLines": {"covered": 2529, "total": 2749, "thresholdPercent": 80},
+        "securityBranches": {"covered": 740, "total": 816, "thresholdPercent": 90},
+        "zeroHitFiles": 0,
+        "missingFiles": 0,
+        "unexpectedFiles": 0,
+        "perFileFloorsPassed": true
+      },
+      "formalArtifactsUnchanged": true
+    },
+    "localPackaged": {
+      "path": "test-results/sec01-bc957-packaged-1.json",
+      "sha256": "3c6b040544ed132bb73c44a5058fcd0bbc9a2cbbf904b05fc99f2a9c7617eb10",
+      "independentPlusFullRunsPassed": 2,
+      "identityMatched": true,
+      "officialUninstallExitCode": 0,
+      "cleanupPassed": true
+    }
+  },
+  "gov04CumulativeGate": {
+    "fixture": {
+      "sourceDigest": "bc9570de9e026e449affaaaa881b1e6265943937c37520a5cbb3def5a845b4a1",
+      "fileCount": 177,
+      "byteMismatches": 0,
+      "gitCommit": "9edd055ebd0ed9bf6fefc30ae7b1b5f7591ee21b",
+      "historyComplete": true,
+      "clean": true,
+      "coreAutocrlf": false
+    },
+    "firstRun": {
+      "runId": "89c1a3db-44b4-45d3-97ec-04a63c1d5487",
+      "state": "failed",
+      "failureClass": "SCA_REPORT_INVALID",
+      "reason": "The official npm audit endpoint returned an error document; source and cleanup remained unchanged."
+    },
+    "controlledRetry": {
+      "runId": "ecdfb8b3-45b6-4f66-95aa-227fe50b3f79",
+      "retryOf": "89c1a3db-44b4-45d3-97ec-04a63c1d5487",
+      "report": {
+        "path": "test-results/sec01-gov04-bc957-final/gov04-report.json",
+        "sha256": "8386e3ddc2e5d0f0d45c89a918aaef727d14c3f1b6a5c7895af36b4392acf66a"
+      },
+      "marker": {
+        "path": "test-results/sec01-gov04-bc957-final/gov04-final-marker.json",
+        "sha256": "acc4858098f87955d7da6a4e1dabdd57add50707e692320d42ce7801085e5123"
+      },
+      "state": "passed",
+      "durationMs": 414037,
+      "expectedSteps": 16,
+      "executedSteps": 16,
+      "allStepsPassed": true,
+      "candidateId": "7b8c9a84fdda2fe99d4d676fd8e42b5ff02c3481f28dd910b335d538c58541e2",
+      "priorReportAndMarkerHashesMatched": true,
+      "currentAndHistorySecretFindings": 0,
+      "cleanupPassed": true
+    },
+    "testOnlyArtifact": {
+      "buildId": "0.1.0+ci.7b8c9a84fdda2fe99d4d676fd8e42b5ff02c3481f28dd910b335d538c58541e2",
+      "bytes": 245345225,
+      "sha256": "ca589ae87ac33bf17734b7b53d1493b113560062891b59d7f3c9bcaa980a32f4",
+      "signatureStatus": "NotSigned",
+      "trust": "untrusted",
+      "releaseEligible": false,
+      "packagedSmokePassed": true
+    }
+  },
+  "debuggerHandoff": {
+    "previous7319VerdictIsNotReusable": true,
+    "independentReverificationRequired": true,
+    "requiredFocus": [
+      "Recompute the 177-file Source Digest and both local/GOV-04 artifact identities.",
+      "Validate the failed-run to controlled-retry report and marker hash binding.",
+      "Independently validate all 16 GOV-04 receipts, SCA reports, secret scans and packaged cleanup.",
+      "Confirm dependency-only changes did not weaken the SEC-01 31-scenario/63-observation contract."
+    ]
+  },
+  "scopeBoundaries": [
+    "SEC-02 owns canonical PathPolicy and filesystem-link containment.",
+    "SEC-03 owns OS process, filesystem, environment, resource and socket sandbox enforcement.",
+    "SEC-04 owns genuine short-lived UI gesture grants and IPC hardening.",
+    "SEC-06 owns durable structured audit storage.",
+    "RT-01 owns true multi-Session concurrent runtimes; SEC-01 intentionally uses fail-closed single flight."
+  ],
+  "externalBlockers": [
+    "Real GitHub server-side governance evidence is unavailable without a hosted repository and protected settings.",
+    "REL-01 trusted Authenticode signing is unavailable without an approved signer, allowlist and RFC3161 timestamp configuration."
+  ],
+  "nonClaims": [
+    "This Developer report is not an independent Debugger or Reviewer verdict.",
+    "Neither the local installer nor the GOV-04 merge artifact is release eligible.",
+    "Authorization does not imply executor sandboxing or complete path safety."
+  ]
+}

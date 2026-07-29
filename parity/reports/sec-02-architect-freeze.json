@@ -1,0 +1,74 @@
+{
+  "reportVersion": 1,
+  "task": "SEC-02",
+  "persona": "architect",
+  "state": "architecture-frozen-awaiting-independent-confirmation",
+  "frozenAt": "2026-07-22T09:50:03+08:00",
+  "canonical": "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md#SEC-02",
+  "baseline": {
+    "acceptedTask": "SEC-01",
+    "buildId": "0.1.0+local.bc9570de9e02",
+    "sourceDigest": "bc9570de9e026e449affaaaa881b1e6265943937c37520a5cbb3def5a845b4a1"
+  },
+  "decision": {
+    "implementationBoundary": "Node 24/Electron 43 capability-scoped PathPolicy",
+    "nativeAddonIntroduced": false,
+    "residualBoundary": "A concurrent process with the same OS principal winning the final unobservable path-resolution interval remains SEC-03; SEC-02 does not claim all Windows reparse tags or zero transient contact.",
+    "modelRootEnrollmentAllowed": false,
+    "mostSpecificRootWins": true,
+    "retiredAuthorityCanReactivate": false
+  },
+  "assets": {
+    "architecture": {
+      "path": "parity/SEC-02-PATH-POLICY-ARCHITECTURE.md",
+      "sha256": "0d78af1054c316022330f51fe8f68288782de9b6ce1bacb78a094df1aa7c0ada"
+    },
+    "matrix": {
+      "path": "tests/sec02-attack-matrix.json",
+      "sha256": "fdba733fec94a6bd7930605555e8306730ac9c7e762e6c9c9c0bbe04694a3574"
+    },
+    "schema": {
+      "path": "tests/sec02-attack-matrix.schema.json",
+      "sha256": "147c54072f9ab879e3d4cbe7a69dc7433d427f7d07190e87b442d175e08f7262"
+    },
+    "governance": {
+      "path": "parity/schema/sec-02-governance-contract.json",
+      "sha256": "39860fcd602a7084e075d4a3179c253e66298217dc7af10119ec31a2140141de"
+    },
+    "validator": {
+      "path": "parity/scripts/validate-sec02-architecture.mjs",
+      "sha256": "18111ca04fb9709eeac112154a40b4bb4ba515a5fcd7703224c03914b8389c4b"
+    }
+  },
+  "matrix": {
+    "schemaVersion": 2,
+    "scenarios": 36,
+    "observations": 411,
+    "denials": 380,
+    "positives": 22
+  },
+  "governance": {
+    "predecessorManifestsBound": ["SEC-01", "GOV-03"],
+    "sec02ManifestRequiredBeforeDeveloperCandidate": true,
+    "pipelineDefinitionPredicateExpanded": true,
+    "gov04StateMachineSteps": 16,
+    "unsignedMergeArtifactReleaseEligible": false
+  },
+  "redTeam": {
+    "revision1Verdict": "BLOCK",
+    "revision2Verdict": "BLOCK",
+    "revision3PreFreezeFindingsResolved": [
+      "post-create cleanup overclaim",
+      "enrollment authority resurrection and stale candidate race",
+      "audit attempt/runtime evidence ambiguity",
+      "issued lease retirement gaps",
+      "mutable matrix self-attestation",
+      "predecessor manifest and pipeline definition omissions"
+    ],
+    "architectureValidatorPositive": true,
+    "architectureFaultInjectionCases": 8,
+    "architectureFaultInjectionRejected": 8
+  },
+  "blockingFindings": [],
+  "next": "Independent Sentinel and Reviewer must validate these exact bytes before Developer implementation begins."
+}

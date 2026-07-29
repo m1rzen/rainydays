@@ -1,0 +1,63 @@
+{
+  "reportVersion": 1,
+  "task": "SEC-02",
+  "stage": "architecture-freeze",
+  "state": "independently-confirmed-forward-to-developer",
+  "confirmedAt": "2026-07-22T09:57:32+08:00",
+  "candidateFreezeReport": {
+    "path": "parity/reports/sec-02-architect-freeze.json",
+    "sha256": "16bf6038bcbc0eb6cd4e25c84d95ea18c079fa61223cbd3ae3f3d37b65e4547c"
+  },
+  "sentinel": {
+    "verdict": "FREEZE PASS",
+    "officialValidatorExitCode": 0,
+    "verified": [
+      "frozen Revision 3 identity",
+      "P31 recovery excludes candidate-new-epoch",
+      "retired authority never reactivates",
+      "post-create verified cleanup or PATH_ROLLBACK_FAILED",
+      "audit attempt and sink-failure semantics",
+      "issued lease retirement and opened-handle drain",
+      "Build and pipeline binding"
+    ],
+    "blockingFindings": []
+  },
+  "reviewer": {
+    "verdict": "FREEZE PASS",
+    "officialValidatorExitCode": 0,
+    "matrix": {
+      "schemaVersion": 2,
+      "scenarios": 36,
+      "observations": 411,
+      "denials": 380,
+      "positives": 22
+    },
+    "independentNegativeCases": [
+      "evidence tier mutation",
+      "stimulus mutation",
+      "P12 environment policy mutation",
+      "P34 runtime evidence downgrade",
+      "contradictory expected value",
+      "predecessor manifest mutation",
+      "pipeline predicate mutation"
+    ],
+    "allNegativeCasesRejected": true,
+    "verified": [
+      "SEC-01 predecessor manifest fixed hash",
+      "GOV-03 predecessor manifest fixed hash",
+      "SEC-02 manifest required before Developer candidate",
+      "GOV-04 Amendment-01 16-step state machine",
+      "all governance assets enter source and pipeline identity"
+    ],
+    "blockingFindings": []
+  },
+  "frozenAssets": {
+    "architectureSha256": "0d78af1054c316022330f51fe8f68288782de9b6ce1bacb78a094df1aa7c0ada",
+    "matrixSha256": "fdba733fec94a6bd7930605555e8306730ac9c7e762e6c9c9c0bbe04694a3574",
+    "schemaSha256": "147c54072f9ab879e3d4cbe7a69dc7433d427f7d07190e87b442d175e08f7262",
+    "governanceSha256": "39860fcd602a7084e075d4a3179c253e66298217dc7af10119ec31a2140141de",
+    "validatorSha256": "18111ca04fb9709eeac112154a40b4bb4ba515a5fcd7703224c03914b8389c4b"
+  },
+  "blockingFindings": [],
+  "next": "Developer implementation may begin. Any frozen-asset byte change requires a new Architect/Sentinel freeze."
+}

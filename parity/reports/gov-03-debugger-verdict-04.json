@@ -1,0 +1,105 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-03",
+  "persona": "debugger",
+  "state": "verified-forward-to-independent-reviewer",
+  "candidate": {
+    "buildId": "0.1.0+local.2555ee8076f2",
+    "sourceDigest": "2555ee8076f235a00f34d05f644af67aaa715e4f445532d65c8e79c40682a8f9",
+    "installerBytes": 218387092,
+    "installerSha256": "15643004a4df53a9cf24367be26b14e8d722b9e2144c9b4068767ef80444f6fe"
+  },
+  "independentEvidence": {
+    "sourceDigestCheck": true,
+    "timeoutReport": {
+      "path": "test-results/gov-03-debugger-2555-timeout.json",
+      "state": "timed-out",
+      "failureClass": "TIMEOUT",
+      "terminationExitCode": 0,
+      "childExited": true,
+      "artifactUnchanged": true
+    },
+    "negativeSchema": {
+      "timeoutCleanupContradictionRejected": true,
+      "reducedSelfTestMatrixRejected": true,
+      "wrongLayerExpectedFilesRejected": true
+    },
+    "selfTest": {
+      "path": "test-results/gov-03-debugger-2555-selftest.json",
+      "state": "passed",
+      "scenarios": 17,
+      "failed": 0,
+      "artifactUnchanged": true
+    },
+    "packagedRuns": [
+      {
+        "path": "test-results/gov-03-debugger-2555-packaged-1.json",
+        "state": "passed",
+        "sourceAndExecutedSha256": "15643004a4df53a9cf24367be26b14e8d722b9e2144c9b4068767ef80444f6fe",
+        "installerExitCode": 0,
+        "officialUninstallExitCode": 0,
+        "cleanupPassed": true
+      },
+      {
+        "path": "test-results/gov-03-debugger-2555-packaged-2.json",
+        "state": "passed",
+        "sourceAndExecutedSha256": "15643004a4df53a9cf24367be26b14e8d722b9e2144c9b4068767ef80444f6fe",
+        "installerExitCode": 0,
+        "officialUninstallExitCode": 0,
+        "cleanupPassed": true
+      }
+    ],
+    "postRunResidue": {
+      "miniLuxProcesses": 0,
+      "uninstallRegistryEntries": 0,
+      "shortcuts": 0,
+      "gov03TempFixtures": 0
+    }
+  },
+  "resolvedFindings": [
+    {
+      "id": "DBG3-GOV03-01",
+      "status": "resolved",
+      "evidence": "Exact ordered 17-scenario contract is enforced by producer and validator; independent one-scenario forgery rejected."
+    },
+    {
+      "id": "DBG3-GOV03-02",
+      "status": "resolved",
+      "evidence": "packageArtifactManifest is in all snapshots and manifest-only mutation is independently included in the passing fault gate."
+    },
+    {
+      "id": "DBG3-GOV03-03",
+      "status": "resolved",
+      "evidence": "Timeout termination is structured; cleanup contradiction is schema-invalid; independent child termination succeeded."
+    },
+    {
+      "id": "DBG3-GOV03-04",
+      "status": "resolved",
+      "evidence": "Packaged convergence includes artifact-execution, process-temp and installed paths without fixed cooldown."
+    },
+    {
+      "id": "DBG3-GOV03-05",
+      "status": "resolved",
+      "evidence": "Registry snapshot uses fail-closed PowerShell ErrorAction Stop and canonical sorted JSON."
+    },
+    {
+      "id": "DBG3-GOV03-06",
+      "status": "resolved",
+      "evidence": "Layer expectedFiles are exactly bound to current manifest; independent wrong-file report rejected."
+    },
+    {
+      "id": "DBG3-GOV03-07",
+      "status": "resolved",
+      "evidence": "Unified full report explicitly discloses historical same-path NSIS 0xC0000005 and describes per-run copy as mitigation only."
+    }
+  ],
+  "knownNonBlockingRisks": [
+    "The installer is unsigned; signing remains REL-01.",
+    "Coverage is the disclosed governed registry, not whole-product coverage.",
+    "Same-path immediate NSIS host instability is mitigated by verified per-run execution copies and remains an explicit residual risk.",
+    "A hostile same-user process can theoretically race path revalidation and rename; this is outside the frozen GOV-03 threat model and remains SEC hardening work."
+  ],
+  "blockingFindings": [],
+  "reviewerVerdict": null,
+  "userStatus": "not-reviewed"
+}

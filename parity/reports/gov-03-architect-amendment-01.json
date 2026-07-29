@@ -1,0 +1,26 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-03",
+  "persona": "architect",
+  "amendment": 1,
+  "state": "frozen-for-implementation",
+  "reason": "Non-packaged Electron cannot import the root better-sqlite3 binary in-process because the host Node ABI is 137 and Electron's embedded Node ABI is 130.",
+  "evidence": {
+    "probe": "Standalone Electron compiled-dist launch",
+    "observedError": "better_sqlite3.node was compiled for NODE_MODULE_VERSION 137 but Electron requires 130",
+    "originalArchitectureSha256": "f551acf9509699f9e784c9db3a0598e256949f2c8010e41fdf70f3aa84564598"
+  },
+  "revisedArchitecture": {
+    "path": "parity/GOV-03-TEST-ARCHITECTURE.md",
+    "lines": 337,
+    "bytes": 21861,
+    "sha256": "3f67d8f82717d7ad6546b99768be01a545d700244feaf34f200eebbc93fba200"
+  },
+  "decision": [
+    "Source Electron E2E uses a fail-closed explicit host-Node child to execute canonical compiled dist without npx, tsx or shell",
+    "Packaged Electron remains in-process and ignores development-only switches",
+    "Both source Electron and packaged E2E remain mandatory complementary evidence",
+    "No native dependency rebuild is performed in the root because it would invalidate host-Node integration tests"
+  ],
+  "verdict": "ready-for-developer-resume"
+}

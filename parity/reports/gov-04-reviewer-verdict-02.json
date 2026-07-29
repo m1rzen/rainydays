@@ -1,0 +1,113 @@
+{
+  "reportVersion": 2,
+  "task": "GOV-04",
+  "persona": "reviewer",
+  "generatedAt": "2026-07-17T15:21:48.000Z",
+  "state": "local-implementation-verified-awaiting-external-governance-evidence",
+  "candidateReviewed": "e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c",
+  "developerReport": {
+    "path": "parity/reports/gov-04-developer-verification.json",
+    "sha256": "c8391e54a07b1ebd9120ccae6f037e8a69b9480e0c3020b388e4a419782636ef",
+    "trustedAsAuthority": false
+  },
+  "independentlyVerified": {
+    "faultGate": {
+      "command": "npm run test:gov04:self",
+      "state": "passed",
+      "scenarios": "23/23"
+    },
+    "staticGates": {
+      "lint": "passed-zero-warnings",
+      "typecheck": "passed"
+    },
+    "officialSca": {
+      "registry": "https://registry.npmjs.org",
+      "production": {
+        "critical": 0,
+        "high": 0,
+        "total": 0
+      },
+      "full": {
+        "critical": 0,
+        "high": 0,
+        "total": 0
+      }
+    },
+    "mergeRun": {
+      "runId": "b2c3ac69-2df0-4513-83dc-b07c249f388d",
+      "reportSha256": "51cb5402ae747a9fdb919913f289e5e5fcb225fdac2de80a364bedb959ffd988",
+      "markerValid": true,
+      "reportSchemaValid": true,
+      "candidateMatchesCurrentSource": true,
+      "stepsPassedOnce": "16/16",
+      "releaseEligible": false,
+      "artifact": {
+        "bytes": 245339253,
+        "sha256": "56898f3c2eed4d1c48ddaf05131421ba9c04023a61425500a0ba969d221d4b48",
+        "authenticodeStatus": "NotSigned",
+        "artifactClass": "test-only",
+        "trust": "untrusted"
+      },
+      "childEvidenceHashesBound": true,
+      "packagedSmokePassed": true,
+      "cleanupPassed": true,
+      "provenance": "synthetic-local-git-fixture-only"
+    },
+    "trustedReleaseNegativeProof": {
+      "runId": "df0c057e-8442-473c-a89a-c0f8321354e5",
+      "reportSchemaValid": true,
+      "markerValid": true,
+      "state": "failed",
+      "releaseEligible": false,
+      "firstFailure": "prepare",
+      "failureClass": "TRUSTED_PROVENANCE_UNVERIFIED",
+      "executedSteps": ["prepare", "finalize"],
+      "cleanupPassed": true,
+      "forgedLocalTrustedReportRejected": true
+    }
+  },
+  "resolvedPriorFinding": {
+    "id": "REV1-GOV04-01",
+    "state": "resolved-locally",
+    "evidence": [
+      "Trusted release policy is deliberately unconfigured with repository=null.",
+      "Trusted-release execution stops at prepare without hosted protected provenance.",
+      "The semantic validator rejects a forged local trusted-release report even when signature and artifact fields are forged as trusted.",
+      "The fixed GOV-04 self-test contract includes the hosted-provenance negative case."
+    ]
+  },
+  "externalAcceptanceBlockers": [
+    {
+      "id": "REV2-GOV04-01",
+      "severity": "governance-blocker",
+      "title": "No authenticated GitHub server-side execution or enforcement evidence",
+      "facts": [
+        "The local source directory is not a Git repository.",
+        "No GitHub repository identity is configured in trustedRelease policy.",
+        "No hosted workflow run, server-side ruleset, required-check, protected-ref, CODEOWNERS, or environment-protection response is available for independent verification.",
+        "Workflow YAML and a local synthetic Git fixture cannot prove remote enforcement."
+      ],
+      "requiredEvidence": [
+        "A real GitHub repository identity and an immutable full-history hosted run for the governed candidate.",
+        "GitHub API or UI evidence of the protected target ref and required GOV-04 check/ruleset enforcement.",
+        "Evidence that the mini-lux-trusted-release environment is protected and used by the trusted workflow.",
+        "Server-side evidence that the committed workflow and CODEOWNERS policy are active."
+      ]
+    },
+    {
+      "id": "REV2-GOV04-02",
+      "severity": "release-blocker",
+      "title": "Trusted signing policy is deliberately unconfigured",
+      "facts": [
+        "The allowed signer list is unconfigured and empty.",
+        "The available installer is NotSigned, test-only, untrusted, and release-ineligible."
+      ],
+      "requiredEvidence": [
+        "REL-01-approved Authenticode certificate thumbprint and subject in the signer allowlist.",
+        "A valid timestamped signature verified by Authenticode and signtool in a governed hosted trusted-release run."
+      ]
+    }
+  ],
+  "reviewerVerdict": "LOCAL_PASS_EXTERNAL_GOVERNANCE_BLOCKED",
+  "userStatus": "not-reviewed"
+}

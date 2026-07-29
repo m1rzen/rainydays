@@ -1,0 +1,78 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-03",
+  "persona": "debugger",
+  "state": "rejected-returned-to-developer",
+  "candidate": {
+    "buildId": "0.1.0+local.910fd119576f",
+    "installerSha256": "8f8636ceeaa9701b4ce89f003a822d7504fb632c7eb983f09ac8a96717ac0faf",
+    "disposition": "obsolete-do-not-distribute"
+  },
+  "independentEvidence": {
+    "developerEvidenceNotTrustedAsVerdict": true,
+    "forgedCoverageCountersRejected": true,
+    "emptyFullReportRejected": true,
+    "contradictoryPackagedSuccessRejected": true,
+    "reducedSelfTestReportAccepted": true,
+    "independentSelfTest": {
+      "report": "test-results/gov-03-debugger-final-selftest.json",
+      "state": "passed",
+      "scenarios": 16
+    },
+    "staticInternalJunctionRejected": true,
+    "sourceDigestCheck": true
+  },
+  "blockingFindings": [
+    {
+      "id": "DBG3-GOV03-01",
+      "severity": "high",
+      "finding": "validateSelfTestReport accepts any non-empty all-passed scenario list, so a one-scenario report can satisfy the unified full gate despite the frozen fixed fault matrix."
+    },
+    {
+      "id": "DBG3-GOV03-02",
+      "severity": "high",
+      "finding": "formalArtifactSnapshot omits test-results/package-artifact.json although the frozen contract permits only the package-building profile to update the package artifact manifest."
+    },
+    {
+      "id": "DBG3-GOV03-03",
+      "severity": "high",
+      "finding": "runProcess discards terminateProcessTreeAsync results on timeout, so TIMEOUT evidence does not prove direct-child or descendant cleanup and cannot classify timeout cleanup failure."
+    },
+    {
+      "id": "DBG3-GOV03-04",
+      "severity": "high",
+      "finding": "Packaged convergence scans executionDir/installDir strings but omits the dedicated process-temp path used by NSIS descendants."
+    },
+    {
+      "id": "DBG3-GOV03-05",
+      "severity": "high",
+      "finding": "Registry observation accepts every reg.exe code 1 as observable no-match evidence, although code 1 may also represent query failure."
+    },
+    {
+      "id": "DBG3-GOV03-06",
+      "severity": "medium",
+      "finding": "Layer report validation binds command to self-declared expectedFiles but does not bind expectedFiles to the current task manifest."
+    },
+    {
+      "id": "DBG3-GOV03-07",
+      "severity": "medium",
+      "finding": "The unified report knownLimitations omits the independently reproduced same-path immediate NSIS 0xC0000005 residual risk; isolated-path 5/5 is a mitigation, not an upstream root-cause proof."
+    }
+  ],
+  "requiredFixDirection": [
+    "Define and validate one versioned exact-order self-test scenario contract; reject missing, duplicate, renamed or extra scenarios and bind expected classifications.",
+    "Add packageArtifactManifest to every formal artifact snapshot and add a manifest-only mutation fault proof.",
+    "Return structured timeout termination evidence; classify cleanup failure separately and self-test that child PID/listener/fixture actually converge.",
+    "Include process-temp in packaged convergence and strengthen installer/uninstaller process observation without fixed sleeps.",
+    "Replace ambiguous reg.exe code-1 observation with a fail-closed canonical PowerShell registry query using ErrorAction Stop.",
+    "Pass current manifest expectedFiles into layer schema validation and require exact ordered equality.",
+    "Disclose the historical same-path NSIS crash in the machine-authoritative unified report knownLimitations."
+  ],
+  "nonBlockingHardening": [
+    "A same-user concurrent parent-swap TOCTOU remains between report revalidation and path-based rename. Static symlink/junction escape is blocked. The frozen architecture does not define a hostile same-user process threat model; address under SEC hardening or revise the architecture before treating it as a GOV-03 blocker.",
+    "Coverage registry hash, exemptions and inventory relationships can be bound more tightly to current scope/manifest metadata.",
+    "Standalone parse-time CLI failures may leave an older default report; consumers must pair reports with the current process exit until invocation nonces are added."
+  ],
+  "reviewerVerdict": null,
+  "userStatus": "not-reviewed"
+}

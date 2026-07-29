@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mini-lux.local/parity/lux-desktop-baseline.schema.json",
+  "title": "Lux Desktop parity baseline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schemaVersion", "target", "runtime", "sources", "contracts", "capture"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["product", "version"],
+      "properties": {
+        "product": { "const": "Lux Desktop" },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodeVersion", "electronVersion", "prebuildsHash", "shellHash", "probeVersion"],
+      "properties": {
+        "nodeVersion": { "type": "string" },
+        "electronVersion": { "type": "string" },
+        "prebuildsHash": { "$ref": "#/$defs/hash" },
+        "shellHash": { "$ref": "#/$defs/hash" },
+        "probeVersion": { "type": "string" }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tools", "toolCatalog", "toolDocumentation", "personas", "skills", "settings", "sessions", "shortcuts", "slashCommands", "platforms", "help"],
+      "properties": {
+        "tools": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/tool" }
+        },
+        "toolCatalog": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["scope", "definitionSource", "baseRegistryDefinitionSource", "baseMembershipSource", "personaName", "toolCount", "baseRegistryToolCount", "baseRegistryNames", "dynamicExtensionsExcluded"],
+          "properties": {
+            "scope": { "const": "isolated-default-session-model-request" },
+            "definitionSource": { "const": "local-openai-compatible-provider-request" },
+            "baseRegistryDefinitionSource": { "const": "runtime-mod-api" },
+            "baseMembershipSource": { "const": "server-websocket-tool_definitions_updated" },
+            "personaName": { "type": "string" },
+            "toolCount": { "type": "integer", "minimum": 1 },
+            "baseRegistryToolCount": { "type": "integer", "minimum": 1 },
+            "baseRegistryNames": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "dynamicExtensionsExcluded": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "toolDocumentation": { "type": "object" },
+        "personas": { "type": "object" },
+        "skills": { "type": "array", "items": { "type": "object" } },
+        "settings": { "type": "object" },
+        "sessions": { "type": "object" },
+        "shortcuts": { "type": "array", "items": { "type": "object" } },
+        "slashCommands": { "type": "array", "items": { "type": "object" } },
+        "platforms": { "type": "object" },
+        "help": { "type": "object" }
+      }
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capturedAt", "hostPlatform", "hostArch"],
+      "properties": {
+        "capturedAt": { "type": "string", "format": "date-time" },
+        "hostPlatform": { "type": "string" },
+        "hostArch": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "kind", "required", "present", "size", "sha256"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^(?![A-Za-z]:|[/\\\\])(?!\\.\\.(?:[/\\\\]|$))(?!.*[/\\\\]\\.\\.(?:[/\\\\]|$)).+" },
+        "kind": { "enum": ["metadata", "help-manifest", "help", "skill", "persona", "prompt", "runtime-module", "browser-extension"] },
+        "required": { "type": "boolean" },
+        "present": { "type": "boolean" },
+        "size": { "type": ["integer", "null"], "minimum": 0 },
+        "sha256": { "anyOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "present": { "const": true } }, "required": ["present"] },
+          "then": { "properties": { "size": { "type": "integer" }, "sha256": { "$ref": "#/$defs/hash" } } },
+          "else": { "properties": { "size": { "type": "null" }, "sha256": { "type": "null" } } }
+        }
+      ]
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "description", "parameters", "sourceKind"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "parameters": { "type": "object" },
+        "sourceKind": { "const": "runtime-model-request" },
+        "metadata": { "type": "object" }
+      }
+    }
+  }
+}

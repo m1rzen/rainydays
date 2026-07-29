@@ -1,0 +1,152 @@
+{
+  "reportVersion": 4,
+  "task": "GOV-04",
+  "persona": "reviewer",
+  "generatedAt": "2026-07-17T15:49:54.000Z",
+  "state": "local-implementation-verified-final-acceptance-externally-blocked",
+  "candidateReviewed": "e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c",
+  "developerVerification": {
+    "path": "parity/reports/gov-04-developer-verification.json",
+    "reportVersion": 6,
+    "sha256": "9b91173383b1378179969ebce02c33c44b25df5cb206569a86355d0ea90e867c",
+    "immutableDuringReview": true
+  },
+  "independentVerification": {
+    "candidateIdentity": {
+      "recomputed": true,
+      "releaseCandidateId": "e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c",
+      "fileCount": 161,
+      "totalBytes": 139679468,
+      "matchesDeveloperV6": true
+    },
+    "retainedEvidence": {
+      "root": "test-results/gov04-retained",
+      "manifest": "test-results/gov04-retained/retention-manifest.json",
+      "manifestSha256": "11a95aaa4e57e7ace48798b520c22c72981a07999439beab1bbe137922db4d1d",
+      "entriesExpected": 16,
+      "entriesPresentRegularAndByteHashMatched": "16/16",
+      "totalRetainedBytes": 245418055
+    },
+    "reportAndMarkerValidation": {
+      "merge": {
+        "runId": "b2c3ac69-2df0-4513-83dc-b07c249f388d",
+        "report": "test-results/gov04-retained/b2c3ac69-2df0-4513-83dc-b07c249f388d/gov04-report.json",
+        "reportSha256": "51cb5402ae747a9fdb919913f289e5e5fcb225fdac2de80a364bedb959ffd988",
+        "marker": "test-results/gov04-retained/b2c3ac69-2df0-4513-83dc-b07c249f388d/gov04-final-marker.json",
+        "markerSha256": "91ff695ccc30ce9bcefdc1c616e448671d6c1d5a8927ac6aa24c72cff664f943",
+        "reportSchemaValid": true,
+        "markerValid": true,
+        "state": "passed",
+        "releaseEligible": false,
+        "stepsPassedOnce": "16/16",
+        "candidateBuildId": "0.1.0+ci.e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c",
+        "candidateBuildClosureValidated": true,
+        "cleanupPassed": true
+      },
+      "trustedReleaseNegative": {
+        "runId": "fba36ef4-ebc1-420a-86fc-b520541f3ccb",
+        "report": "test-results/gov04-retained/fba36ef4-ebc1-420a-86fc-b520541f3ccb/gov04-report.json",
+        "reportSha256": "39091778ba6c7a4972cedc42fec12aeec31bde054bfb5bb33e2867160641e71d",
+        "marker": "test-results/gov04-retained/fba36ef4-ebc1-420a-86fc-b520541f3ccb/gov04-final-marker.json",
+        "markerSha256": "1fa08440e0a63683b9506f87062bbca73478beb8aae4186008b4c4c6e1f8d266",
+        "reportSchemaValid": true,
+        "markerValid": true,
+        "state": "failed",
+        "releaseEligible": false,
+        "firstFailure": "prepare",
+        "failureClass": "TRUSTED_PROVENANCE_UNVERIFIED",
+        "executedSteps": ["prepare", "finalize"],
+        "cleanupPassed": true,
+        "failClosedBoundaryValidated": true
+      }
+    },
+    "retryBinding": {
+      "validated": true,
+      "mergeRetryRunId": "fba36ef4-ebc1-420a-86fc-b520541f3ccb",
+      "priorState": "failed",
+      "priorReportHashBound": true,
+      "priorMarkerHashBound": true,
+      "priorCandidateBound": true
+    },
+    "faultGates": {
+      "command": "npm run test:gov04:self",
+      "state": "passed",
+      "scenarios": "23/23"
+    },
+    "reportSchemaAndTrustedBoundaryTests": {
+      "command": "node --test tests/gov04/report-schema.test.mjs",
+      "state": "passed",
+      "tests": "27/27",
+      "includesUnsignedWrongSignerMissingTimestampAndLocalProvenanceRejection": true
+    },
+    "security": {
+      "registry": "https://registry.npmjs.org",
+      "scaProduction": {
+        "auditReportVersion": 2,
+        "dependencies": 675,
+        "critical": 0,
+        "high": 0,
+        "total": 0,
+        "reportSha256": "f5d0b1d7fdf9a0043273f5060115998e668f5d0c0b6241d23c815ec851170767"
+      },
+      "scaFull": {
+        "auditReportVersion": 2,
+        "dependencies": 675,
+        "critical": 0,
+        "high": 0,
+        "total": 0,
+        "reportSha256": "f5d0b1d7fdf9a0043273f5060115998e668f5d0c0b6241d23c815ec851170767"
+      },
+      "secretCurrent": {
+        "findings": 0,
+        "reportSha256": "f94472685854a5ace999a22690f3d31c191f77d566fe672be7cc891f3a5d9401"
+      },
+      "secretHistory": {
+        "findings": 0,
+        "reportSha256": "7bf8d3eb4df93afff7e6593d148200619b4b0f8fa906dead6ea230b6261f0a50",
+        "scope": "synthetic-local-git-fixture-history-only"
+      }
+    },
+    "artifact": {
+      "path": "test-results/gov04-retained/b2c3ac69-2df0-4513-83dc-b07c249f388d/unsigned/UNSIGNED-UNTRUSTED-DO-NOT-DISTRIBUTE--Mini-Lux Setup 0.1.0-0.1.0~2Bci.e7f9c437ec48d45ec5a486ffc00c6a84cd560ab958ae8df08b55594f73a7157c.exe",
+      "bytes": 245339253,
+      "sha256": "56898f3c2eed4d1c48ddaf05131421ba9c04023a61425500a0ba969d221d4b48",
+      "hashRecomputed": true,
+      "authenticodeStatus": "NotSigned",
+      "artifactClass": "test-only",
+      "trust": "untrusted",
+      "releaseEligible": false,
+      "classificationValidated": true
+    }
+  },
+  "externalAcceptanceBlockers": [
+    {
+      "id": "GOV04-EXT-01",
+      "title": "GitHub server-side governance evidence is absent",
+      "requiredEvidence": [
+        "Authenticated GitHub repository identity and immutable full-history hosted run for this candidate.",
+        "GitHub service-side evidence of protected target ref, active ruleset/required GOV-04 checks, workflow enforcement and CODEOWNERS or equivalent review policy.",
+        "GitHub evidence that the mini-lux-trusted-release environment is protected and used by the trusted-release workflow."
+      ],
+      "status": "blocked-not-claimed-passed"
+    },
+    {
+      "id": "REL01-EXT-02",
+      "title": "REL-01 trusted signing remains unconfigured",
+      "requiredEvidence": [
+        "REL-01-approved Authenticode signer thumbprint and subject in the signer allowlist.",
+        "Valid timestamped Authenticode and signtool verification in a governed hosted trusted-release run."
+      ],
+      "status": "blocked-not-claimed-passed"
+    }
+  ],
+  "nonClaims": [
+    "This verdict does not claim GitHub Actions executed.",
+    "This verdict does not claim GitHub rulesets, required checks, branch protection, CODEOWNERS enforcement or protected environment controls passed.",
+    "The synthetic local Git fixture proves the implemented full-history state-machine path only; it does not prove a production repository history is secret-free.",
+    "The unsigned diagnostic artifact is not a trusted release and must not be distributed as one.",
+    "No trusted release is accepted until external GitHub governance evidence and REL-01 signing evidence are independently supplied and verified."
+  ],
+  "reviewerVerdict": "LOCAL_IMPLEMENTATION_VERIFIED_FINAL_ACCEPTANCE_EXTERNALLY_BLOCKED",
+  "userStatus": "not-reviewed"
+}

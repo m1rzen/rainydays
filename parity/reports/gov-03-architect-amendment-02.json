@@ -1,0 +1,32 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-03",
+  "persona": "architect",
+  "amendment": 2,
+  "state": "frozen-for-implementation",
+  "reason": "Measured branch data showed that several db.js defense-in-depth branches are dominated by earlier exact-SQL fail-closed checks. Requiring 90 percent in every security file would force implementation-detail mocks or weaker validation and exceeds the canonical GOV-03 aggregate requirement.",
+  "evidence": {
+    "measuredSecurityBranches": { "covered": 223, "total": 293 },
+    "files": {
+      "dist/version.js": { "covered": 54, "total": 77 },
+      "dist/db.js": { "covered": 58, "total": 71 },
+      "dist/session.js": { "covered": 78, "total": 103 },
+      "dist/link.js": { "covered": 33, "total": 42 }
+    },
+    "priorArchitectureSha256": "3f67d8f82717d7ad6546b99768be01a545d700244feaf34f200eebbc93fba200"
+  },
+  "revisedArchitecture": {
+    "path": "parity/GOV-03-TEST-ARCHITECTURE.md",
+    "lines": 337,
+    "bytes": 22074,
+    "sha256": "9ce8cb70ca5e83dbcb5e1fdf39255a814201b4b5b0321d53099190e522dc9276"
+  },
+  "decision": [
+    "Enforce the canonical 90 percent threshold over the frozen aggregate of all security-critical files using integer counters",
+    "Require every security-critical file to have a non-zero denominator and disclose exact per-file counters",
+    "Keep dominated branches in the aggregate denominator; no ignore annotations or denominator trimming",
+    "Keep non-decreasing per-file line floors after the final measured run",
+    "Raise aggregate coverage through real invalid metadata, database, Session and Link behaviors rather than internal mocks"
+  ],
+  "verdict": "ready-for-developer-resume"
+}

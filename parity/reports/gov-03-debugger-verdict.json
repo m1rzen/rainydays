@@ -1,0 +1,84 @@
+{
+  "reportVersion": 1,
+  "task": "GOV-03",
+  "persona": "debugger",
+  "state": "rejected-returned-to-developer",
+  "candidate": {
+    "buildId": "0.1.0+local.a5377368c5f6",
+    "installerSha256": "8ee5cb73565db7febeb43384cf6fa057bf5d60e25699b52ace5167daaef20bdc",
+    "disposition": "obsolete-do-not-distribute"
+  },
+  "independentPositiveEvidence": {
+    "selfTest": "9/9 repeated, but proof set is incomplete",
+    "electron": "passed",
+    "packagedConsecutiveRuns": 3,
+    "coverage": {
+      "governedLines": "1359/1562",
+      "securityBranches": "342/367"
+    },
+    "portRecovery": "occupied preferred HTTP port recovered to next port with 401 and cleanup",
+    "invalidSwitchRecovery": "rejected before server listen with cleanup"
+  },
+  "blockingFindings": [
+    {
+      "id": "DBG-GOV03-01",
+      "severity": "critical",
+      "finding": "Arbitrary --report paths can overwrite formal artifacts after the unchanged snapshot and still exit zero."
+    },
+    {
+      "id": "DBG-GOV03-02",
+      "severity": "high",
+      "finding": "Formal artifact snapshots omit the complete .electron-app and release trees required by the frozen architecture."
+    },
+    {
+      "id": "DBG-GOV03-03",
+      "severity": "high",
+      "finding": "Windows case aliases in perFileLineMinimum can pass validation while silently disabling the floor."
+    },
+    {
+      "id": "DBG-GOV03-04",
+      "severity": "high",
+      "finding": "Unified runner accepts child JSON by state only, does not validate report schemas, and early setup failures can leave stale successful reports."
+    },
+    {
+      "id": "DBG-GOV03-05",
+      "severity": "high",
+      "finding": "Coverage self-proof does not inject a passing-ratio failing child or a passing-ratio formal-artifact mutation; stale proof uses invalid JSON and is not coupled to a forced miss."
+    },
+    {
+      "id": "DBG-GOV03-06",
+      "severity": "high",
+      "finding": "Coverage failure precedence and timeout handling do not match the frozen contract; timeout may produce no authority report."
+    },
+    {
+      "id": "DBG-GOV03-07",
+      "severity": "high",
+      "finding": "Self-test forced coverage can overwrite the preserved normal coverage evidence."
+    },
+    {
+      "id": "DBG-GOV03-08",
+      "severity": "high",
+      "finding": "Packaged E2E folds the original NSIS NTSTATUS into TEST_ASSERTION and does not preserve phase-specific installer evidence."
+    },
+    {
+      "id": "DBG-GOV03-09",
+      "severity": "high",
+      "finding": "Partial-install cleanup swallows uninstaller failures and does not fail closed on uninstall registry, shortcut, process and install-directory residue."
+    },
+    {
+      "id": "DBG-GOV03-10",
+      "severity": "medium",
+      "finding": "--task is not propagated into coverage governance, blocking the intended extension path for later task manifests."
+    }
+  ],
+  "requiredBeforeRerun": [
+    "Constrain and validate report destinations before execution and publication.",
+    "Snapshot the complete formal artifact set or update the frozen architecture with an independently approved equivalent.",
+    "Validate and publish strict current-run report schemas; remove stale reports before work begins.",
+    "Add real coverage child-failure, artifact-mutation, valid-stale and preserved-output isolation proofs.",
+    "Preserve installer phase, raw exit code and cleanup evidence; make partial-install cleanup fail closed.",
+    "Generate a new Build ID and installer because tests and gate scripts are source-digest inputs."
+  ],
+  "reviewerVerdict": null,
+  "userStatus": "not-reviewed"
+}

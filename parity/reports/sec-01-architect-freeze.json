@@ -1,0 +1,56 @@
+{
+  "reportVersion": 1,
+  "task": "SEC-01",
+  "persona": "architect",
+  "state": "architecture-frozen",
+  "frozenAt": "2026-07-18T01:20:00.000+08:00",
+  "canonicalTask": "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md#SEC-01",
+  "discovery": "parity/reports/sec-01-discovery.json",
+  "architecture": {
+    "path": "parity/SEC-01-CAPABILITY-BROKER-ARCHITECTURE.md",
+    "sha256": "809b97201e4934b0d0024336d668f2824ce006d296192cd772b2894437426afc",
+    "lines": 352,
+    "bytes": 25388
+  },
+  "challengeReviews": [
+    {
+      "taskId": "challenge-capability-threat-model-pq9",
+      "disposition": "accepted-and-incorporated"
+    },
+    {
+      "taskId": "assess-broker-implementation-seams-2cz",
+      "disposition": "accepted-and-incorporated"
+    }
+  ],
+  "frozenDecisions": [
+    "Capability authenticity is process-local object identity in Broker-private WeakMaps; serializable fields are not authority.",
+    "Authentic contexts are never exposed to Providers, HTTP clients, persistence, arguments, logs or general executors.",
+    "Tool authority binds immutable registration ID, executor identity, schema digest and policy digest rather than name alone.",
+    "Provider definitions and dispatcher execution derive from the same authentic frozen binding snapshot.",
+    "The current shared Agent/runtime is single-flight until RT-01; a second root run is rejected before memory mutation.",
+    "Persisted Session persona_name must match the effective Persona; missing Personas never fall back silently.",
+    "Persona, Settings, Session and runtime transitions revoke old authority before publishing new state.",
+    "SubAgent and Playbook contexts only attenuate pinned bindings, roots, network and all risk classes; no grants inherit.",
+    "Supervisor is advisory and Agent principals cannot change its state.",
+    "Approval challenge and grant are both exact, random, expiring, one-use and bound to session/run/binding/arguments.",
+    "Every Terminal operation and file reveal use a controlled direct-operation facade; Terminal resources are Session-owned.",
+    "Path canonicalization, executor sandboxing, genuine UI gesture proof and durable audit storage remain SEC-02/03/04/06."
+  ],
+  "fixedAttackScenarioCount": 31,
+  "implementationBatches": [
+    "Broker authenticity/lifecycle/single-flight/attenuation/challenge/grant core with unit tests",
+    "Persona digest, explicit network envelope and persisted Session binding",
+    "Complete multi-risk tool/direct-operation policy manifests",
+    "Immutable static/runtime registration bindings and collision rejection",
+    "Context-mandatory definitions/dispatcher and strict frozen argument validation",
+    "Agent run-local context and structured approval flow",
+    "SubAgent/Playbook attenuation and owned control resources",
+    "Terminal/file-reveal controlled facade, ownership and static boundary gate",
+    "31-scenario attack matrix, positive regressions and GOV-03/GOV-04 regression gates"
+  ],
+  "externalDeferredBlockers": [
+    "Real GitHub server-side governance evidence",
+    "REL-01 approved Authenticode signer and RFC3161 timestamp"
+  ],
+  "amendmentRule": "Sections 3, 6, 7, 8, 10 and 12 cannot be weakened without a numbered Architect amendment before implementation changes."
+}

@@ -1,0 +1,355 @@
+# GOV-04 Minimal Enforced CI/CD Gate Architecture
+
+## Status and authority
+
+- Task: GOV-04
+- Baseline: Lux Desktop v0.1.898, manifest schema 1
+- Predecessor: user-confirmed GOV-03 Build `0.1.0+local.2555ee8076f2`
+- Persona chain: architect → developer → sentinel/reviewer
+- Canonical source: `../LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md`
+- Discovery evidence: `reports/gov-04-discovery.json`
+- State: frozen by Architect on 2026-07-17
+- This document is the implementation contract. Developer may not weaken a required step, convert scanner unavailability into success, or claim remote enforcement without GitHub server evidence.
+
+## Goal
+
+GOV-04 establishes a fail-closed Windows gate with this ordered contract:
+
+```text
+clean install
+→ typecheck
+→ lint
+→ source tests
+→ SCA
+→ secret scan
+→ package once
+→ signature policy check
+→ packaged smoke
+→ evidence finalization
+```
+
+The first-party orchestrator is the gate authority. GitHub Actions invokes it, preserves evidence and enforces trust-domain boundaries; workflow YAML does not reimplement business logic.
+
+## Explicit current facts
+
+- `F:\mini-lux` is not a Git working tree and has no `.github` directory.
+- Local evidence can prove only a source snapshot, not a reviewed commit, complete Git history, default branch or active ruleset.
+- The accepted GOV-03 installer is hash-bound but unsigned.
+- Official npm audit currently reports one critical and fifteen high vulnerabilities across the full build graph; production alone contains one critical and four high.
+- The configured mirror does not implement npm's audit endpoint. The official advisory endpoint works.
+- No lint, secret scan, signature verifier or artifact upload gate currently exists.
+- `models/**` is packaged but absent from the current Source Digest input set.
+
+These are inputs to GOV-04, not findings that may be hidden to obtain a green report.
+
+## Trust domains and profiles
+
+### Merge profile
+
+Runs for untrusted pull requests, merge queues and default-branch verification without secrets.
+
+- GitHub token permissions: `contents: read` only.
+- Never uses `pull_request_target` to execute PR code.
+- Runs all source, SCA and secret gates.
+- Builds a test artifact once and performs the signature policy check.
+- `NotSigned` is accepted only under the explicit `unsigned-test` artifact policy so installed behavior can be tested.
+- The result may pass as a merge-quality gate, but it always records `trust=untrusted`, `artifactClass=test-only`, and `releaseEligible=false`.
+- Any uploaded installer name contains `UNSIGNED-UNTRUSTED-DO-NOT-DISTRIBUTE` and has short retention.
+
+### Trusted-release profile
+
+Runs only from a protected default branch/tag and protected environment.
+
+- Repeats the complete pipeline in a fresh workspace; it never promotes a PR artifact by assertion.
+- Signing credentials are unavailable to pull requests and fork code.
+- Authenticode must be `Valid`, the signer thumbprint must match the governed allowlist, and an acceptable timestamp must exist.
+- The package manifest is generated from the final signed bytes.
+- Packaged smoke executes exactly those final signed bytes.
+- Any unsigned, wrong-signer, invalid-chain, missing-timestamp or post-signature mutation result blocks packaged smoke and artifact publication.
+- Until REL-01 provides signing identity and policy, this profile must remain release-ineligible.
+
+## Required repository artifacts
+
+```text
+.github/workflows/gov-04-windows.yml
+.github/CODEOWNERS
+eslint.config.mjs
+.gitleaks.toml
+parity/GOV-04-CI-ARCHITECTURE.md
+parity/policies/gov-04-policy.json
+parity/policies/gov-04-signer-allowlist.json
+scripts/gov04/*.mjs
+scripts/run-gov04.mjs
+tests/gov04/*.test.mjs
+tests/manifests/gov-04.json
+```
+
+All policy, workflow, scanner configuration, GOV-04 scripts/tests and `models/**` are candidate identity inputs.
+
+## Candidate identity
+
+GOV-04 retains the existing Source Digest but closes its package-input gap.
+
+- Add `models`, `.github`, `parity/policies`, GOV-04 architecture, scripts and tests to the source input closure.
+- Record a `packageInputDigest` over every file that can affect the packaged bytes, including Electron builder configuration, NSIS include, model files, vendor assets, staging scripts and lockfile.
+- Record a `pipelineDefinitionDigest` over workflow, orchestrator, report schema and tests.
+- Record a `policyDigest` over SCA, secret, signature, artifact and retry policy.
+- A `releaseCandidateId` is derived from source digest, package input digest, pipeline definition digest and policy digest.
+- A change to `models/**`, workflow or policy must change the relevant digest; no package input may be ambient or omitted.
+
+## Per-run isolation
+
+Each invocation creates a new exclusive run root:
+
+```text
+%TEMP%/mini-lux-gov04/<runId>/
+  workspace/
+  cache/
+  reports/
+  logs/
+  artifacts/
+```
+
+Rules:
+
+- `runId` is a UUID generated by the parent.
+- The run root must not pre-exist and must contain no symlink, junction or reparse-point escape.
+- `node_modules`, `dist`, `.electron-app`, `release`, coverage and reports are absent at start.
+- Local mode copies a validated source snapshot and labels provenance `local-snapshot-unauthenticated`.
+- CI mode requires a full clean checkout and records commit SHA, event, repository and history completeness.
+- Source copied into the workspace is manifested and hashed before and after the copy; a race fails.
+- Package output is unique to the run and begins empty.
+- Reports are atomically published under the run root; no `latest success` file is authoritative.
+
+## Step state machine
+
+Required step IDs and order are fixed:
+
+1. `prepare`
+2. `clean-install`
+3. `typecheck`
+4. `lint`
+5. `gov03-quick`
+6. `gov03-self-test`
+7. `sca-production`
+8. `sca-full`
+9. `secret-current`
+10. `secret-history` in CI, or explicit `unsupported-history` failure in local snapshot mode
+11. `package`
+12. `signature-policy`
+13. `packaged-smoke`
+14. `finalize`
+
+Each required step executes at most once. A failed step makes later release steps `blocked`, triggers cleanup, and publishes a failed report. Automatic retry inside the same run is forbidden.
+
+A new complete run may follow a failed run, but it gets a new run ID, names the prior run, and starts from a new clean workspace. Previous evidence remains immutable. A stability sequence is predeclared; one failed member fails the sequence and cannot be replaced by additional attempts.
+
+## Clean install
+
+- Pin Node `24.14.1` and npm `11.11.0` for the first GOV-04 implementation. A runtime migration is a separate compatibility change requiring full GOV-03 regression.
+- `package.json` records exact `packageManager` and an engine policy.
+- Run `npm ci`; never fall back to `npm install`.
+- `node_modules` must be absent before install.
+- Hash `package.json` and `package-lock.json` before and after; both must remain unchanged.
+- Record registry configuration and tool versions, but never environment dumps or credentials.
+- A missing tool, registry failure, lock mismatch, lifecycle failure or timeout is fatal.
+- Caches may contain package-manager download data only. Never cache `node_modules`, build output, test results, installers or signing output.
+
+## Typecheck and lint
+
+Required npm commands:
+
+```text
+npm run typecheck
+npm run lint
+```
+
+- Typecheck uses pinned TypeScript with `tsc -p tsconfig.json --noEmit` and must not create `dist`.
+- Lint uses a lockfile-pinned ESLint flat configuration with `--max-warnings 0`, no auto-fix and no inline configuration.
+- Lint scope covers `src/**/*.ts`, `electron/**/*.{cjs,mjs,js}`, `scripts/**/*.{mjs,cjs,js}`, `tests/**/*.mjs`, and `parity/scripts/**/*.mjs`.
+- Generated, dependency, model and vendored minified directories are excluded explicitly.
+- Missing config/tool, zero matched authored files, warnings, errors or source mutation fail.
+
+## Source tests
+
+The source phase does not invoke GOV-03 full because full consumes a packaged artifact before GOV-04 creates one.
+
+It runs, in order:
+
+```text
+node scripts/run-tests.mjs --profile quick --report <run-report>
+node scripts/test-gate-selftest.mjs --task GOV-03 --report <run-report>
+```
+
+The parent independently records command, PID, timing, exit/signal/timeout, output hashes and child report hash. Child reports must pass current GOV-03 semantic validation and bind the current Build ID/source digest. A successful child exit without a valid report is failure.
+
+## SCA policy
+
+Two scans are mandatory against the official npm advisory endpoint:
+
+- production dependency graph (`--omit=dev`);
+- complete runtime and build graph.
+
+The wrapper validates audit JSON structure, metadata, vulnerability object, lockfile hash, tool version and timeout. Network failure, 404/429/5xx, malformed/empty JSON, stale lock binding or missing tool is `SCA_UNAVAILABLE`/`SCA_REPORT_INVALID`, never zero findings.
+
+GOV-04 acceptance requires:
+
+- zero unapproved critical findings;
+- zero unapproved high findings;
+- no expired or structurally invalid exception.
+
+An exception is keyed to exact advisory ID, package, affected range, dependency path, owner, rationale and expiry. Critical exceptions require explicit user risk acceptance and cannot be approved by the implementing Developer. This architecture does not grant any exception for the current findings. Dependency remediation must precede a green merge/release gate.
+
+## Secret scanning
+
+Use a fixed Gitleaks release and verify the downloaded binary checksum. GitHub Actions and external tools are pinned to immutable commit/version identities.
+
+- `secret-current` scans the current source tree with redaction.
+- `secret-history` scans complete Git history from a full-depth checkout.
+- Scanner output never contains the secret value.
+- Only fingerprint/path/rule-specific allowlists are permitted; directory-wide suppression is forbidden.
+- Scanner/config missing, checksum mismatch, incomplete history in CI, timeout or parse failure blocks.
+- Local snapshot mode cannot claim historical cleanliness and therefore cannot satisfy trusted-release acceptance.
+- The ignored local `.env` credential is not read or recorded. If it has ever been shared, logged, committed or packaged, it must be rotated outside this pipeline.
+
+## Package once
+
+Only the package step may create formal build outputs.
+
+- The workspace starts without build metadata, `dist`, `.electron-app`, `release` or package artifact manifest.
+- Run the formal build/package exactly once.
+- Generate the artifact manifest immediately after package completion.
+- Bind run ID, candidate identity, package step receipt, exact filename, bytes and SHA-256.
+- Freeze the artifact into a SHA-addressed run directory using exclusive creation, then rehash it.
+- Unexpected output files, a pre-existing installer, changed source input or mismatched manifest fail.
+
+## Signature policy
+
+Signature verification is read-only and hashes the artifact before and after.
+
+For `unsigned-test`:
+
+- Require the observed state to be exactly `NotSigned`.
+- Record `trust=untrusted`, `artifactClass=test-only`, `releaseEligible=false`.
+- Permit diagnostic packaged smoke, but never release publication.
+
+For `trusted-release`:
+
+- Require `Get-AuthenticodeSignature.Status == Valid` and successful `signtool verify /pa /all`.
+- Require governed signer certificate thumbprint/subject and valid timestamp evidence.
+- Require final installer, installed main EXE and uninstaller signature policy.
+- Missing signer allowlist, SignTool or trust validation fails.
+- Final package manifest and packaged smoke must bind signed bytes, not pre-sign bytes.
+
+## Packaged smoke
+
+- Uses the frozen artifact and current run manifest explicitly; no timestamp/latest selection.
+- The source, frozen and executed-copy hashes must match.
+- Reuses GOV-03's install, two-launch restart, API/session, official uninstall and fail-closed cleanup checks.
+- In merge mode it is diagnostic evidence for an unsigned test artifact.
+- In trusted-release mode it runs only after signature success and is release-required.
+- Registry, shortcut, process, listener and Temp state must return to baseline.
+
+## GOV-04 report authority
+
+The parent writes one schema-validated atomic report containing:
+
+```text
+schemaVersion / task / profile / state / releaseEligible
+runId / retryOf / attempt
+provenance level / commit and history completeness
+candidate and policy digests
+fixed ordered step receipts
+Node/npm/ESLint/Gitleaks/scanner versions
+SCA exact counts and exception decisions
+secret scan counts with redaction status
+artifact filename/bytes/hash/class/trust
+signature status and approved signer identity without private data
+packaged smoke receipt
+cleanup and source/artifact mutation results
+known limitations / reviewer verdict / user status
+```
+
+Every step receipt binds the prior receipt hash, command, observed process result, input/output digest and child report hash. The final marker binds final report hash and artifact hash. Reports never contain API keys, secret values, prompts, messages, environment dumps or absolute user paths.
+
+## Fault-gate self-test
+
+At minimum prove:
+
+1. missing typecheck/lint command fails;
+2. type error and lint warning/error fail;
+3. stale child report with wrong run/challenge fails;
+4. missing, duplicate, reordered or retried steps fail;
+5. child exit/report contradiction fails;
+6. SCA endpoint unavailable and malformed audit fail;
+7. critical/high advisory fixture fails;
+8. synthetic current/history secret fails with redacted evidence;
+9. package output pre-existence fails;
+10. `models/**` mutation changes package/candidate identity;
+11. installer replacement after package fails;
+12. unsigned artifact fails trusted-release policy;
+13. wrong signer, missing timestamp and post-sign mutation fail;
+14. packaged smoke using another hash fails;
+15. diagnostic smoke cannot set `releaseEligible=true`;
+16. failed step followed by an in-run retry is schema-invalid;
+17. final report mutation invalidates the final marker;
+18. scanner or signing tool absence fails closed.
+
+Injected faults operate only in Temp fixtures. A generic non-zero is not proof; expected phase and failure class must match.
+
+## GitHub Actions contract
+
+One Windows workflow supports merge and protected release jobs.
+
+- Triggers: `pull_request`, `merge_group`, default-branch push, controlled tag/manual release.
+- No path filters on the required merge job.
+- `fetch-depth: 0`, `persist-credentials: false`.
+- All actions pinned to full commit SHA.
+- Merge permissions are `contents: read`; no repository/environment secrets.
+- Release signing uses a protected environment and only the minimum needed permission (for example OIDC `id-token: write`).
+- PR concurrency cancels superseded commits; release concurrency never cancels in progress.
+- Upload reports with `if: always()` for 30 days.
+- Upload passing unsigned diagnostic artifacts for at most 7 days with an untrusted name.
+- Upload signed release artifacts only when `releaseEligible=true`, for 90 days.
+- Never cache build outputs or evidence.
+
+## Server-side enforcement evidence
+
+A workflow file is not proof of enforcement. Final GOV-04 acceptance requires GitHub service evidence for:
+
+- repository and default branch;
+- active ruleset/branch protection;
+- exact unique required check name and GitHub App source;
+- strict up-to-date or merge queue status;
+- force-push/deletion/bypass policy;
+- workflow permissions and allowed-actions policy;
+- CODEOWNERS protection for workflow/policy/package/test files;
+- artifact/log retention;
+- protected release environment and signing boundary;
+- one failed PR blocked from merge and one successful PR permitted;
+- one signature failure producing no release artifact.
+
+Without a Git repository/remote, local implementation may be developer-complete but cannot receive final Reviewer PASS for remote enforcement.
+
+## Acceptance sequence
+
+1. Close candidate identity gaps, including `models/**` and pipeline/policy inputs.
+2. Add pinned toolchain, typecheck and real lint with zero warnings.
+3. Implement and self-test the GOV-04 report/orchestrator.
+4. Remediate all unapproved critical/high SCA findings.
+5. Configure and validate redacted current/history secret scanning.
+6. Run merge profile from a clean full-history checkout.
+7. Package once in an empty workspace and validate unsigned-test policy plus packaged smoke.
+8. Prove trusted-release rejects the unsigned artifact before release publication.
+9. Deploy immutable-pinned GitHub workflow and CODEOWNERS.
+10. Capture server-side ruleset and real failed/successful run evidence.
+11. Sentinel independently audits secrets, SCA, permissions, signing and artifact upload.
+12. Reviewer verifies exact evidence and stops at user confirmation.
+
+## Explicit non-claims
+
+- GOV-04 does not supply a signing certificate; REL-01 owns signing identity and trusted release enablement.
+- Local snapshot execution does not prove Git history cleanliness or branch protection.
+- npm audit is an advisory gate, not an SBOM or full supply-chain provenance system; REL-05 owns those broader controls.
+- Hosted Windows runner image patches can drift; the pipeline records image provenance but does not claim bit-for-bit OS reproducibility.
+- No current critical/high dependency finding is silently accepted by this architecture.
