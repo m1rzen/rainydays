@@ -35,6 +35,11 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   const bootstrap = provenance.indexOf('runProcess(process.execPath, ["scripts/bootstrap-models.mjs"]');
   const identity = provenance.indexOf("computeCandidateIdentity(workspace)", bootstrap);
   assert(checkout >= 0 && checkout < bootstrap && bootstrap < identity);
+
+  const toolchain = await readFile(path.join(projectRoot, "scripts", "gov04", "ensure-native-toolchain.ps1"), "utf8");
+  assert.match(toolchain, /Microsoft\.VisualStudio\.Component\.VC\.14\.43\.17\.13\.x86\.x64/);
+  assert.match(toolchain, /19\.43\.34808\.0/);
+  assert.match(toolchain, /10\.0\.22621\.0/);
 });
 
 test("GitHub Actions are immutable, read-only and never use pull_request_target", async () => {
@@ -51,6 +56,7 @@ test("GitHub Actions are immutable, read-only and never use pull_request_target"
     assert.match(text, /persist-credentials: false/);
     assert.match(text, /run: npm ci --no-audit --no-fund/);
     assert.match(text, /run: npm run models:bootstrap/);
+    assert.match(text, /run: \.\\scripts\\gov04\\ensure-native-toolchain\.ps1/);
     assert.match(text, /if-no-files-found: error/);
   }
 });

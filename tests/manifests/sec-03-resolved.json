@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "53c8e2a65c751d4cba75d3dc61a95fdc05bc1940a0245361b424ab480df89365",
+      "sha256": "65e05998fd153233a82cf1132d6decba781833b30f399bca8511aa1cfe493faa",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2130,7 +2130,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "53c8e2a65c751d4cba75d3dc61a95fdc05bc1940a0245361b424ab480df89365",
+      "sha256": "65e05998fd153233a82cf1132d6decba781833b30f399bca8511aa1cfe493faa",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -3209,5 +3209,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "9e3a349bc65246028ee249d8d2ee342da17dd0487d913be2ca857bcd28198d86"
+  "canonicalPayloadSha256": "fa9011cfedefdb9497456390ea206469ebb03c06e55de1b5cd183a3eca108865"
 }

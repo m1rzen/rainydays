@@ -47,6 +47,10 @@ jobs:
         shell: pwsh
         run: npm run models:bootstrap
 
+      - name: Ensure frozen native toolchain
+        shell: pwsh
+        run: .\scripts\gov04\ensure-native-toolchain.ps1
+
       - name: Bootstrap checksum-pinned Gitleaks
         shell: pwsh
         run: |
