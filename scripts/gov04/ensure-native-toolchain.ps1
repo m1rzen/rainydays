@@ -93,8 +93,14 @@ if (-not $installed) {
   $process = Start-Process -FilePath $bootstrapper -ArgumentList $arguments -Wait -PassThru -NoNewWindow
   if ($process.ExitCode -notin @(0, 3010)) { throw "Visual Studio 2022 17.13.2 installation failed with exit code $($process.ExitCode)" }
 
-  $instances = @(Get-Vs17Instances)
-  if ($instances.Count -ne 1) { throw "Expected one Visual Studio 2022 instance after installation, found $($instances.Count)" }
+  $installationDeadline = [DateTime]::UtcNow.AddMinutes(10)
+  do {
+    $instances = @(Get-Vs17Instances)
+    if ($instances.Count -gt 1) { throw "Expected at most one Visual Studio 2022 instance after installation, found $($instances.Count)" }
+    if ($instances.Count -eq 1) { break }
+    if ([DateTime]::UtcNow -ge $installationDeadline) { throw 'Visual Studio 2022 17.13.2 installation did not become ready before the deadline' }
+    Start-Sleep -Seconds 10
+  } while ($true)
   $pinnedInstance = Assert-PinnedVsInstance -Instance $instances[0]
 }
 

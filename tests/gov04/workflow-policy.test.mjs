@@ -47,6 +47,9 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   assert.match(toolchain, /19\.43\.34808\.0/);
   assert.match(toolchain, /10\.0\.22621\.0/);
   assert.match(toolchain, /ExitCode -ne 0/);
+  assert.match(toolchain, /AddMinutes\(10\)/);
+  assert.match(toolchain, /instances\.Count -gt 1/);
+  assert.match(toolchain, /installation did not become ready before the deadline/);
 
   const electronHeaders = await readFile(path.join(projectRoot, "scripts", "gov04", "bootstrap-electron-headers.mjs"), "utf8");
   assert.match(electronHeaders, /https:\/\/electronjs\.org\/headers\/v43\.1\.1\/node-v43\.1\.1-headers\.tar\.gz/);
