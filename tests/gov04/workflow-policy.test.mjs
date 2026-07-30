@@ -29,6 +29,12 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   const changedUrl = structuredClone(manifest);
   changedUrl.files[0].url = "https://example.com/config.json";
   assert.throws(() => validateModelManifest(changedUrl), /URL differs/);
+
+  const provenance = await readFile(path.join(projectRoot, "scripts", "gov04", "provenance.mjs"), "utf8");
+  const checkout = provenance.indexOf('git(workspace, ["checkout"');
+  const bootstrap = provenance.indexOf('runProcess(process.execPath, ["scripts/bootstrap-models.mjs"]');
+  const identity = provenance.indexOf("computeCandidateIdentity(workspace)", bootstrap);
+  assert(checkout >= 0 && checkout < bootstrap && bootstrap < identity);
 });
 
 test("GitHub Actions are immutable, read-only and never use pull_request_target", async () => {

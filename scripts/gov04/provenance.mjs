@@ -95,6 +95,8 @@ export async function prepareWorkspace({ projectRoot, workspace, identity, prove
   assert.equal(clone.code, 0, clone.stderr);
   const checkout = await git(workspace, ["checkout", "--quiet", "--detach", provenance.commit], 60_000);
   assert.equal(checkout.code, 0, checkout.stderr);
+  const models = await runProcess(process.execPath, ["scripts/bootstrap-models.mjs"], { cwd: workspace, timeoutMs: 15 * 60_000 });
+  assert.equal(models.code, 0, models.stderr);
   const copied = await computeCandidateIdentity(workspace);
   assert.deepEqual(publicCandidateIdentity(copied), publicCandidateIdentity(identity), "clean clone candidate identity differs from source");
   return { method: "full-history-clone", historyComplete: true };
