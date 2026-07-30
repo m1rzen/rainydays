@@ -16,6 +16,7 @@ $allowedProductIds = @(
 $msvcVersion = '14.43.34808'
 $compilerVersion = '19.43.34808.0'
 $component = 'Microsoft.VisualStudio.Component.VC.14.43.17.13.x86.x64'
+$sdkComponent = 'Microsoft.VisualStudio.Component.Windows11SDK.22621'
 $bootstrapperUrl = 'https://download.visualstudio.microsoft.com/download/pr/84955a63-15ca-4f52-94af-14ea55b50424/e26a4f237c908739caa2ac36e2d90a51d7e3f71746e615207b7db449f82e3c4e/vs_BuildTools.exe'
 $bootstrapperSha256 = 'e26a4f237c908739caa2ac36e2d90a51d7e3f71746e615207b7db449f82e3c4e'
 
@@ -99,6 +100,7 @@ if (-not $installed) {
     'install',
     '--installPath', "`"$installationPath`"",
     '--add', $component,
+    '--add', $sdkComponent,
     '--quiet',
     '--wait',
     '--norestart',

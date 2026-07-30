@@ -38,6 +38,7 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
 
   const toolchain = await readFile(path.join(projectRoot, "scripts", "gov04", "ensure-native-toolchain.ps1"), "utf8");
   assert.match(toolchain, /Microsoft\.VisualStudio\.Component\.VC\.14\.43\.17\.13\.x86\.x64/);
+  assert.match(toolchain, /Microsoft\.VisualStudio\.Component\.Windows11SDK\.22621/);
   assert.match(toolchain, /\[17\.0,18\.0\)/);
   assert.doesNotMatch(toolchain, /-requires Microsoft\.VisualStudio\.Component\.VC\.Tools\.x86\.x64/);
   assert.match(toolchain, /17\.13\.35825\.156/);
