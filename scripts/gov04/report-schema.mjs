@@ -169,11 +169,12 @@ function validateSourceBuildEvidence(value, passed, candidate) {
   assert.match(value.sourceDateEpoch, /^\d+$/);
   for (const key of ["sourceDigest", "buildInfoSha256", "distIntegritySha256", "distTreeSha256"]) assert.match(value[key], sha256Pattern);
   assert.deepEqual(value.commands, [
+    ["node", "scripts/build-sec03-native.mjs"],
     ["node", "scripts/generate-build-info.mjs"],
     ["node", "node_modules/typescript/bin/tsc", "--project", "tsconfig.json"],
     ["node", "scripts/generate-dist-integrity.mjs"],
   ]);
-  assert(Array.isArray(value.outputHashes) && value.outputHashes.length === 3);
+  assert(Array.isArray(value.outputHashes) && value.outputHashes.length === 4);
   for (const hashes of value.outputHashes) {
     exactKeys(hashes, ["stdoutSha256", "stderrSha256"], "source build output hash");
     assert.match(hashes.stdoutSha256, sha256Pattern);

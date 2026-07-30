@@ -7072,7 +7072,7 @@
     },
     {
       "exactCasePath": "scripts/gov04/report-schema.mjs",
-      "sha256": "d3dcd2509eac108b90f7714ecd6dc5b56214efeb2ac8e71dedf9ccef2ec07c63"
+      "sha256": "ff34a25b8dcdc27415fab748d6c5cabeaa80eef3965b96f86e4c57b5aedbb630"
     },
     {
       "exactCasePath": "scripts/sec02-governance.mjs",
@@ -7112,5 +7112,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "a9599815def9bc93aad0f5804c3f5c47df1e01bd9b8ec572e17ea6d0fa741d01"
+  "canonicalPayloadSha256": "cf944573abb18646a2812823795c106690e8621910625efc5268d6070119725a"
 }

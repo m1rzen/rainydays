@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "c91cf6071c33c869b468312f529228b4c7b931c61a6c8c32c5bf1e3edae050aa",
+  "sourceSetSha256": "5ffe3240de1e5d435ac919a6750f0006bc14de23fe9569553cee3b1a4e061962",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -183,8 +183,8 @@
     },
     {
       "sourcePath": "scripts/gov04/report-schema.mjs",
-      "bytes": 30754,
-      "sha256": "d3dcd2509eac108b90f7714ecd6dc5b56214efeb2ac8e71dedf9ccef2ec07c63",
+      "bytes": 30802,
+      "sha256": "ff34a25b8dcdc27415fab748d6c5cabeaa80eef3965b96f86e4c57b5aedbb630",
       "executionClass": "build-test"
     },
     {
@@ -213,8 +213,8 @@
     },
     {
       "sourcePath": "scripts/gov04/steps.mjs",
-      "bytes": 24973,
-      "sha256": "d72e5e09004ee47d869d87979cd92ad658c7e97595e694c956229cb1dd56009a",
+      "bytes": 25065,
+      "sha256": "7d804ba4d7a1a01ac0297a7023f83a123268a8769cad762df70c86937d916c04",
       "executionClass": "build-test"
     },
     {
@@ -861,8 +861,8 @@
     },
     {
       "sourcePath": "tests/gov04/report-fixture.mjs",
-      "bytes": 8951,
-      "sha256": "20d3d7256c74ca4736f013d04b2bc110118ccf7ca66dfa42d379e42bb881835f",
+      "bytes": 9049,
+      "sha256": "1c9170400eeacf3a90e2a9151ca7813b5a7d05e9227c17f935a5461631642886",
       "executionClass": "build-test"
     },
     {
@@ -5456,5 +5456,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "86696894133d01e93e6a7377f25bf8d79e4b45a62816a7b4bef3b8f2be24529d"
+  "canonicalPayloadSha256": "8da798a0360a898031b22997a68f2e87460cbc10d136e65d78f3272b070fe533"
 }

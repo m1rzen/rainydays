@@ -109,6 +109,7 @@ export async function runSourceTestBuild({ workspace, buildId, sourceDateEpoch, 
   catch { return { passed: false, failureClass: "SOURCE_TEST_OUTPUT_PREEXISTS", exitCode: 1, signal: null, timedOut: false, timeoutTermination: null, childReportSha256: null, evidence: { status: "preexisting-output" } }; }
   const env = safeChildEnvironment({ RAINYDAYS_BUILD_ID: buildId, SOURCE_DATE_EPOCH: sourceDateEpoch });
   const commands = [
+    ["scripts/build-sec03-native.mjs"],
     ["scripts/generate-build-info.mjs"],
     ["node_modules/typescript/bin/tsc", "--project", "tsconfig.json"],
     ["scripts/generate-dist-integrity.mjs"],
@@ -135,6 +136,7 @@ export async function runSourceTestBuild({ workspace, buildId, sourceDateEpoch, 
       distIntegritySha256: await sha256File(integrityPath),
       distTreeSha256: await hashTree(path.join(workspace, "dist")),
       commands: [
+        ["node", "scripts/build-sec03-native.mjs"],
         ["node", "scripts/generate-build-info.mjs"],
         ["node", "node_modules/typescript/bin/tsc", "--project", "tsconfig.json"],
         ["node", "scripts/generate-dist-integrity.mjs"],
