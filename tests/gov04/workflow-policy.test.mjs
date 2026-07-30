@@ -31,6 +31,7 @@ test("GitHub Actions are immutable, read-only and never use pull_request_target"
     assert(!/@v\d+(?:\s|$)/m.test(text));
     assert.match(text, /fetch-depth: 0/);
     assert.match(text, /persist-credentials: false/);
+    assert.match(text, /run: npm ci --no-audit --no-fund/);
     assert.match(text, /if-no-files-found: error/);
   }
 });

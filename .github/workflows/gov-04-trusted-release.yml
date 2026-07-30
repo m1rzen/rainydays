@@ -39,6 +39,10 @@ jobs:
           if ((node --version) -ne 'v24.14.1') { throw 'Node version mismatch' }
           if ((npm --version) -ne '11.11.0') { throw 'npm version mismatch' }
 
+      - name: Install locked dependencies
+        shell: pwsh
+        run: npm ci --no-audit --no-fund
+
       - name: Bootstrap checksum-pinned Gitleaks
         shell: pwsh
         run: |
