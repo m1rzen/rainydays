@@ -106,14 +106,14 @@ async function probeIdentity(client, buildInfo, httpPort) {
     } catch { return null; }
   }, { timeoutMs: 25_000, label: "installed renderer identity" });
   assert.equal(identity.ui, expectedUi(buildInfo));
-  assert.equal(identity.documentTitle, `Mini-Lux ${buildInfo.appVersion} (${buildInfo.buildId})`);
+  assert.equal(identity.documentTitle, `RainyDays ${buildInfo.appVersion} (${buildInfo.buildId})`);
   assert.equal(identity.preload.appVersion, buildInfo.appVersion);
   assert.equal(identity.preload.buildId, buildInfo.buildId);
   assert.deepEqual(identity.version, buildInfo);
   assert.deepEqual(identity.status.version, buildInfo);
   assert.deepEqual(identity.diagnostics.version, buildInfo);
   const diagnosticText = JSON.stringify(identity.diagnostics);
-  assert(!/apiKey|miniLuxApiToken|X-Mini-Lux-Token/i.test(diagnosticText));
+  assert(!/apiKey|miniLuxApiToken|X-RainyDays-Token/i.test(diagnosticText));
   assert(!/[A-Za-z]:\\\\Users\\\\/i.test(diagnosticText));
   assert.equal((await boundedFetch(`http://127.0.0.1:${httpPort}/api/version`)).status, 401);
 }
@@ -177,7 +177,8 @@ async function assertPackagedPathPolicy(client, userData, launchIndex) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name: prefix, shell: "cmd", cwd: outside }),
   });
-  assert.equal(terminalDenied.status, 400, `packaged launch ${launchIndex} accepted an external Terminal CWD`);
+  assert.equal(terminalDenied.status, 403, `packaged launch ${launchIndex} bypassed native consent`);
+  assert.equal(terminalDenied.body.code, "EXEC_DIRECT_MUTATION_DENIED");
   const terminalsAfter = await rendererRequest(client, "/api/terminals");
   assert.equal(terminalsAfter.status, 200);
   assert.equal(terminalsAfter.body.terminals.length, terminalsBefore.body.terminals.length, "external CWD denial created a Terminal process record");
@@ -200,13 +201,13 @@ async function knownShortcutPaths() {
   assert.equal(typeof folders.programs, "string");
   assert.equal(typeof folders.desktop, "string");
   return [
-    { key: "programs", filePath: path.join(folders.programs, "Mini-Lux.lnk") },
-    { key: "desktop", filePath: path.join(folders.desktop, "Mini-Lux.lnk") },
+    { key: "programs", filePath: path.join(folders.programs, "RainyDays.lnk") },
+    { key: "desktop", filePath: path.join(folders.desktop, "RainyDays.lnk") },
   ];
 }
 
 async function systemIntegrationSnapshot() {
-  const registryJson = await powershell("$items=@(Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' -ErrorAction Stop|Where-Object{$_.DisplayName -like '*Mini-Lux*'}|Select-Object PSChildName,DisplayName,DisplayVersion,InstallLocation,UninstallString,QuietUninstallString|Sort-Object PSChildName);ConvertTo-Json -InputObject $items -Compress");
+  const registryJson = await powershell("$items=@(Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' -ErrorAction Stop|Where-Object{$_.DisplayName -like '*RainyDays*'}|Select-Object PSChildName,DisplayName,DisplayVersion,InstallLocation,UninstallString,QuietUninstallString|Sort-Object PSChildName);ConvertTo-Json -InputObject $items -Compress");
   const registry = JSON.parse(registryJson);
   assert(Array.isArray(registry), "registry observation must return a canonical array");
   const shortcuts = {};
@@ -248,7 +249,7 @@ async function publishDetails(filePath, details) {
 test("current Windows installer repeats identity, persistence and cleanup smoke", { timeout: 300_000 }, async () => {
   assert.equal(process.platform, "win32", "UNSUPPORTED_PLATFORM: packaged E2E requires Windows");
   const recorder = await createSec02Recorder(import.meta.url, "current Windows installer repeats identity, persistence and cleanup smoke");
-  const detailPath = process.env.MINI_LUX_LAYER_DETAIL_REPORT ? path.resolve(process.env.MINI_LUX_LAYER_DETAIL_REPORT) : null;
+  const detailPath = process.env.RAINYDAYS_LAYER_DETAIL_REPORT ? path.resolve(process.env.RAINYDAYS_LAYER_DETAIL_REPORT) : null;
   const fixture = await makeTempDir("mini-lux-gov03-packaged-");
   const executionDir = path.join(fixture, "artifact-execution");
   const executionTemp = path.join(fixture, "process-temp");
@@ -273,6 +274,17 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
       schemaVersion: null,
       buildId: null,
       sourceDigest: null,
+      stageManifestSha256: null,
+      buildInfoSha256: null,
+      distIntegritySha256: null,
+      native: {
+        architectureSha256: null,
+        manifest: { path: null, bytes: null, sha256: null },
+        sourceDigest: null,
+        toolchainDigest: null,
+        signatureStatus: null,
+        binaries: [],
+      },
       sinkInventorySha256: null,
       detectorPolicySha256: null,
       reviewPolicySha256: null,
@@ -329,10 +341,10 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     const check = await runProcess(process.execPath, ["scripts/generate-build-info.mjs", "--check"], { timeoutMs: 60_000 });
     assert.equal(check.code, 0, check.stderr);
     const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
-    const manifestPath = path.resolve(process.env.MINI_LUX_PACKAGE_ARTIFACT_MANIFEST || path.join(projectRoot, "test-results", "package-artifact.json"));
+    const manifestPath = path.resolve(process.env.RAINYDAYS_PACKAGE_ARTIFACT_MANIFEST || path.join(projectRoot, "test-results", "package-artifact.json"));
     const { installer, manifest } = await verifyInstallerPreflight({
       manifestPath,
-      installerOverride: process.env.MINI_LUX_INSTALLER_OVERRIDE,
+      installerOverride: process.env.RAINYDAYS_INSTALLER_OVERRIDE,
       buildInfo,
       projectRoot,
     });
@@ -367,7 +379,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     details.installerConverged = true;
     details.cleanup.executionCopyReleased = true;
     assert.equal(install.code, 0, `installer execution failed: ${details.installerClassification}`);
-    const executable = path.join(installDir, "Mini-Lux.exe");
+    const executable = path.join(installDir, "RainyDays.exe");
     await waitFor(() => pathExists(executable), { timeoutMs: 30_000, label: "installed executable" });
     details.packageBinding = await validateElectronAsar(projectRoot, path.join(installDir, "resources"));
     if (recorder.enabled) await recorder.observe("SEC02-P36-packaged-asar-bound", {
@@ -386,19 +398,16 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     sessionId = created.session.id;
     details.pathPolicy.launches[0] = await assertPackagedPathPolicy(client, userData, 1);
     const terminalIsolation = await client.evaluate(`(async () => {
+      const before = await fetch('/api/terminals').then(r=>r.json());
       const startedResponse = await fetch('/api/terminals', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'SEC-01 packaged owner',shell:'cmd'})});
       const started = await startedResponse.json();
-      const terminalId = started.terminal.id;
       const secondResponse = await fetch('/api/sessions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:'SEC-01 packaged other session'})});
       const second = await secondResponse.json();
-      const list = await fetch('/api/terminals').then(r=>r.json());
-      const crossRead = await fetch('/api/terminals/' + terminalId + '/output');
+      const after = await fetch('/api/terminals').then(r=>r.json());
       const selected = await fetch('/api/sessions/${sessionId}/select', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-      const ownRead = await fetch('/api/terminals/' + terminalId + '/output');
-      const closed = await fetch('/api/terminals/' + terminalId, {method:'DELETE'});
-      return {started:startedResponse.status,second:secondResponse.status,secondId:second.session.id,listCount:list.terminals.length,crossRead:crossRead.status,selected:selected.status,ownRead:ownRead.status,closed:closed.status};
+      return {started:startedResponse.status,code:started.code,second:secondResponse.status,secondId:second.session.id,beforeCount:before.terminals.length,afterCount:after.terminals.length,selected:selected.status};
     })()`);
-    assert.deepEqual(terminalIsolation, {started:201,second:200,secondId:terminalIsolation.secondId,listCount:0,crossRead:404,selected:200,ownRead:404,closed:404});
+    assert.deepEqual(terminalIsolation, {started:403,code:"EXEC_DIRECT_MUTATION_DENIED",second:200,secondId:terminalIsolation.secondId,beforeCount:0,afterCount:0,selected:200});
     assert.notEqual(terminalIsolation.secondId, sessionId);
     assert(first.logs().stdout.includes(buildInfo.buildId));
     client.close(); client = null;
@@ -418,7 +427,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     await stopInstalled(second, secondPorts[0], secondPorts[1]); second = null;
 
     details.phase = "uninstall";
-    const uninstaller = path.join(installDir, "Uninstall Mini-Lux.exe");
+    const uninstaller = path.join(installDir, "Uninstall RainyDays.exe");
     assert(await pathExists(uninstaller), "uninstaller missing");
     details.cleanup.attemptedOfficialUninstall = true;
     const uninstall = await runProcess(uninstaller, ["/S"], { env: processEnv, timeoutMs: 3 * 60_000 });
@@ -442,7 +451,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
         if (!closed.every(Boolean)) details.cleanup.processesStopped = false;
       }
     }
-    const uninstaller = path.join(installDir, "Uninstall Mini-Lux.exe");
+    const uninstaller = path.join(installDir, "Uninstall RainyDays.exe");
     if (!officialUninstallCompleted && await pathExists(uninstaller)) {
       details.cleanup.attemptedOfficialUninstall = true;
       const uninstall = await runProcess(uninstaller, ["/S"], { env: processEnv, timeoutMs: 180_000 }).catch(() => ({ code: null, signal: "OBSERVATION_FAILURE" }));

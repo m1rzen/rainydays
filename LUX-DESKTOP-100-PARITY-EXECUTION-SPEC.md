@@ -1,8 +1,8 @@
-# Mini-Lux 100% 复刻 Lux Desktop 总执行规范
+# RainyDays 100% 复刻 Lux Desktop 总执行规范
 
 > 文档状态：**后续实施唯一执行基准（Canonical Execution Spec）**  
 > 目标基线：**Lux Desktop v0.1.898**  
-> 项目：`F:\mini-lux`  
+> 项目：`F:\rainydays`
 > 制定日期：2026-07-15  
 > 适用范围：架构、开发、测试、安全、桌面、生态、发布和长期维护  
 > 旧文档：`GAP-ANALYSIS.md` 仅作历史参考，不再作为完成度判据
@@ -77,7 +77,7 @@ Lux Runtime
 
 验收必须证明：
 
-- Z 盘断开时，Mini-Lux 核心功能仍正常；
+- Z 盘断开时，RainyDays 核心功能仍正常；
 - 加载 Z 盘 Persona 不会自动授予整个 Z 盘读写权；
 - 非 Z 盘项目可以完整使用 Agent、终端、浏览器、MCP 和文件工具；
 - 同一 Persona 可以服务不同工作区；同一工作区可以切换不同 Persona。
@@ -656,7 +656,7 @@ P4 Browser/Prism/Anima/Media/Enterprise/Trusted Release
 
 ### TOOL-01　Lux Body Tool 与统一工具协议
 
-- **审计对应**：Mini-Lux 仅支持 OpenAI JSON function；Lux body tools 支持 org-mode block。
+- **审计对应**：RainyDays 仅支持 OpenAI JSON function；Lux body tools 支持 org-mode block。
 - **目标**：工具定义同时描述 schema、body mode、权限、side-effect、host-bound、并行性和超时。
 - **依赖**：GOV-01、RT-05。
 - **Persona**：architect → developer → reviewer。

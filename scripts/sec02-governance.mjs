@@ -8,6 +8,7 @@ import { validateSec02SinkInventory } from "./sec02-sink-inventory.mjs";
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const layerNames = Object.freeze(["unit", "contract", "integration", "electron", "packaged"]);
 export const resolvedManifestPath = "tests/manifests/sec-02-resolved.json";
+export const currentResolvedManifestPath = "tests/manifests/sec-02-current.json";
 const sha256Pattern = /^[a-f0-9]{64}$/;
 const frozenSourceHashes = Object.freeze({
   "SEC-01": "b836976785366f01d1147fef99fe30c53d44d07969708564e64ec3cd2d424964",

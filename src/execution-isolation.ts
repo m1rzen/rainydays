@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { assertResourceOwner, registerOwnedResource, type ResourceOwner } from "./resource-owner.js";
+import { assertResourceOwner, assertResourceOwnerForCleanup, registerOwnedResource, type ResourceOwner } from "./resource-owner.js";
 import { NativeBridgeError, type NativeExecutionBridge, type NativeExecutionHandle, type NativeExecutionProof, type NativeServiceDenialRequest, type NativeServiceDenialState } from "./execution-native.js";
 
 export type ExecutionEntryPoint = "E1" | "E2" | "E3" | "E4";
@@ -167,6 +167,7 @@ interface SessionRecord {
   readonly output: OutputRecord;
   unregister: () => void;
   state: "running" | "terminating" | "closed";
+  termination: Promise<void> | null;
 }
 
 const HEX_64 = /^[a-f0-9]{64}$/u;
@@ -425,6 +426,7 @@ export class ExecutionIsolationService {
         output,
         unregister: () => undefined,
         state: "running",
+        termination: null,
       };
       session.unregister = registerOwnedResource(owner, () => this.#terminateSession(session, "owner-retired"));
       this.#leases.set(token, session);
@@ -539,6 +541,11 @@ export class ExecutionIsolationService {
 
   async terminate(lease: SessionLease, owner: ResourceOwner, reason = "requested"): Promise<void> {
     const session = this.#requireSession(lease, owner, true);
+    await this.#terminateSession(session, reason);
+  }
+
+  async terminateForOwnerRetirement(lease: SessionLease, owner: ResourceOwner, reason: string): Promise<void> {
+    const session = this.#requireSession(lease, owner, true, true);
     await this.#terminateSession(session, reason);
   }
 
@@ -760,31 +767,37 @@ export class ExecutionIsolationService {
     return handle;
   }
 
-  #requireSession(lease: SessionLease, owner: ResourceOwner, allowClosed = false): SessionRecord {
+  #requireSession(lease: SessionLease, owner: ResourceOwner, allowClosed = false, ownerRetirement = false): SessionRecord {
     const record = this.#leases.get(lease);
     if (!record || record.token !== lease) deny("EXEC_GRANT_FORGED", "Session lease is forged");
-    assertOwner(record.owner, owner);
+    if (record.owner !== owner) deny("EXEC_BINDING_MISMATCH", "Execution owner mismatch");
+    if (ownerRetirement) assertResourceOwnerForCleanup(owner);
+    else assertResourceOwner(owner);
     if (!allowClosed && record.state !== "running") deny("EXEC_SESSION_STALE", "Execution session is stale");
     return record;
   }
 
-  async #terminateSession(session: SessionRecord, reason: string): Promise<void> {
-    if (session.state === "closed") return;
-    if (session.state === "running") session.state = "terminating";
-    let failure: unknown = null;
-    try {
-      await session.native.terminate(reason);
-    } catch (error) {
-      failure = error;
-    }
-    try {
-      await session.native.completed;
-    } catch (error) {
-      failure ??= error;
-    } finally {
-      this.#closeSession(session);
-    }
-    if (failure) throw failure;
+  #terminateSession(session: SessionRecord, reason: string): Promise<void> {
+    if (session.state === "closed") return Promise.resolve();
+    if (session.termination) return session.termination;
+    session.state = "terminating";
+    session.termination = (async () => {
+      let failure: unknown = null;
+      try {
+        await session.native.terminate(reason);
+      } catch (error) {
+        failure = error;
+      }
+      try {
+        await session.native.completed;
+      } catch (error) {
+        failure ??= error;
+      } finally {
+        this.#closeSession(session);
+      }
+      if (failure) throw failure;
+    })();
+    return session.termination;
   }
 
   #closeSession(session: SessionRecord): void {

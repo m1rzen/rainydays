@@ -6,7 +6,7 @@ const projectRoot = fileURLToPath(new URL("../..", import.meta.url));
 
 const A01_VARIABLES = Object.freeze({
   "A01-01": "DEEPSEEK_API_KEY",
-  "A01-02": "MINI_LUX_API_TOKEN",
+  "A01-02": "RAINYDAYS_API_TOKEN",
   "A01-03": "AWS_SECRET_ACCESS_KEY",
   "A01-04": "SSH_AUTH_SOCK",
   "A01-05": "SEC03_PARENT_SENTINEL",

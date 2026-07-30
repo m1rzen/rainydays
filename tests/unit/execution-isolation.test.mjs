@@ -66,7 +66,7 @@ function inputRequest(lease, resourceOwner, now, overrides = {}) {
 }
 
 function fakeBridge(options = {}) {
-  const state = { launches: 0, writes: 0, terminations: [], requests: [], writeGate: options.writeGate };
+  const state = { launches: 0, writes: 0, terminations: [], requests: [], writeGate: options.writeGate, terminateGate: options.terminateGate };
   const completion = options.completion ?? Promise.resolve({ exitCode: 0, reason: "completed" });
   const bridge = {
     async launch(nativeRequest, onFrame) {
@@ -83,7 +83,10 @@ function fakeBridge(options = {}) {
           if (options.writeError) throw new Error("synthetic input failure");
           if (state.writeGate) await state.writeGate.promise;
         },
-        async terminate(reason) { state.terminations.push(reason); },
+        async terminate(reason) {
+          state.terminations.push(reason);
+          if (state.terminateGate) await state.terminateGate.promise;
+        },
       };
     },
     async shutdown() { state.shutdown = true; },
@@ -318,6 +321,25 @@ test("SEC-03 E4 input accepts a new direct run only inside the launch authority 
   assert.equal(fake.state.writes, 1);
   completion.resolve({ exitCode: 0, reason: "completed" });
   await service.terminate(lease, resourceOwner);
+});
+
+test("SEC-03 persistent termination linearizes concurrent cleanup to one native frame", async () => {
+  const now = 1_900_000_275_000;
+  const resourceOwner = owner();
+  const completion = deferred();
+  const terminateGate = deferred();
+  const fake = fakeBridge({ completion: completion.promise, terminateGate });
+  const service = new ExecutionIsolationService(fake.bridge, { now: () => now });
+  const approved = request(resourceOwner, now, "E2");
+  const lease = await service.launchPersistent(service.issueExecutionGrant(approved), resourceOwner, approved);
+
+  const first = service.terminate(lease, resourceOwner, "owner-retired");
+  const second = service.terminate(lease, resourceOwner, "service-shutdown");
+  assert.deepEqual(fake.state.terminations, ["owner-retired"]);
+  terminateGate.resolve();
+  completion.resolve({ exitCode: 0, reason: "terminated" });
+  await Promise.all([first, second]);
+  assert.deepEqual(fake.state.terminations, ["owner-retired"]);
 });
 
 test("SEC-03 output limit terminates the native host and returns a stable denial", async () => {

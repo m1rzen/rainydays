@@ -5,7 +5,7 @@
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import type { IsolatedTerminalLease, ScopedExecutionGateway } from "./execution-runtime.js";
 import type { ExecutionRootLease } from "./path-policy.js";
-import { readIsolatedTerminal, terminateIsolatedTerminal } from "./execution-runtime.js";
+import { readIsolatedTerminal, retireIsolatedTerminal, terminateIsolatedTerminal } from "./execution-runtime.js";
 import {
   assertResourceOwner,
   registerOwnedResource,
@@ -87,6 +87,7 @@ function auditTerminalOwnerDenial(
 export interface TerminalIsolationBackend {
   readonly read: (lease: IsolatedTerminalLease, owner: ResourceOwner) => Readonly<{ stdout: string; stderr: string; outputTruncated: boolean; running: boolean }>;
   readonly terminate: (lease: IsolatedTerminalLease, owner: ResourceOwner, reason: string) => Promise<void>;
+  readonly retire?: (lease: IsolatedTerminalLease, owner: ResourceOwner, reason: string) => Promise<void>;
 }
 
 class TerminalManager {
@@ -136,7 +137,7 @@ class TerminalManager {
     };
     this.#sessions.set(id, session);
     try {
-      session.unregisterOwnedResource = registerOwnedResource(owner, () => this.#closeOwnedSession(session));
+      session.unregisterOwnedResource = registerOwnedResource(owner, () => this.#closeOwnedSession(session, true));
       session.poller = setInterval(() => this.#refresh(session), 100);
       session.poller.unref?.();
     } catch (error) {
@@ -239,9 +240,14 @@ class TerminalManager {
     this.#updateStatus(session, "killed", null);
   }
 
-  async #closeOwnedSession(session: TerminalSession): Promise<void> {
+  async #closeOwnedSession(session: TerminalSession, ownerRetirement = false): Promise<void> {
     if (!this.#sessions.has(session.id)) return;
-    if (session.status === "running") await this.#killOwnedSession(session);
+    if (session.status === "running") {
+      if (ownerRetirement && this.#isolation.retire) {
+        await this.#isolation.retire(session.isolationLease, session.owner, "owner-retired");
+        this.#updateStatus(session, "killed", null);
+      } else await this.#killOwnedSession(session);
+    }
     if (session.poller) clearInterval(session.poller);
     session.poller = null;
     session.unregisterOwnedResource();
@@ -327,6 +333,7 @@ function facadeFor(manager: TerminalManager) {
 const productionIsolation: TerminalIsolationBackend = Object.freeze({
   read: readIsolatedTerminal,
   terminate: terminateIsolatedTerminal,
+  retire: retireIsolatedTerminal,
 });
 
 export const terminalFacade = facadeFor(new TerminalManager(productionIsolation));

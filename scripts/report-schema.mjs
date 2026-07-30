@@ -155,10 +155,26 @@ function validateCommand(value, field) {
 
 function validatePackageBinding(value, { passed = false, sinkIdentity = null } = {}) {
   assert(value && typeof value === "object" && !Array.isArray(value), "details.packageBinding must be present");
-  exactKeys(value, ["schemaVersion", "buildId", "sourceDigest", "sinkInventorySha256", "detectorPolicySha256", "reviewPolicySha256", "dialectCheckerSha256", "dialectPolicySha256", "dialectImportSetSha256", "executableManifestSha256", "runtimeSinkSetSha256", "authoredExecutableProjectionSha256", "packagedSinkSetSha256", "packagedDialectImportSetSha256", "asarSha256", "authoredFileCount", "dependencyFileCount", "unpacked", "missing", "extra", "mismatched", "packageInspected", "asarPayloadBound", "producerSummaryTrusted"], "details.packageBinding");
-  assert(value.schemaVersion === null || value.schemaVersion === 2, "details.packageBinding.schemaVersion is invalid");
+  exactKeys(value, ["schemaVersion", "buildId", "sourceDigest", "stageManifestSha256", "buildInfoSha256", "distIntegritySha256", "native", "sinkInventorySha256", "detectorPolicySha256", "reviewPolicySha256", "dialectCheckerSha256", "dialectPolicySha256", "dialectImportSetSha256", "executableManifestSha256", "runtimeSinkSetSha256", "authoredExecutableProjectionSha256", "packagedSinkSetSha256", "packagedDialectImportSetSha256", "asarSha256", "authoredFileCount", "dependencyFileCount", "unpacked", "missing", "extra", "mismatched", "packageInspected", "asarPayloadBound", "producerSummaryTrusted"], "details.packageBinding");
+  assert(value.schemaVersion === null || value.schemaVersion === 3, "details.packageBinding.schemaVersion is invalid");
   assert(value.buildId === null || (typeof value.buildId === "string" && value.buildId.length > 0 && value.buildId.length <= 128), "details.packageBinding.buildId is invalid");
-  for (const key of ["sourceDigest", "sinkInventorySha256", "detectorPolicySha256", "reviewPolicySha256", "dialectCheckerSha256", "dialectPolicySha256", "dialectImportSetSha256", "executableManifestSha256", "runtimeSinkSetSha256", "authoredExecutableProjectionSha256", "packagedSinkSetSha256", "packagedDialectImportSetSha256", "asarSha256"]) assert(value[key] === null || sha256Pattern.test(value[key]), `details.packageBinding.${key} is invalid`);
+  for (const key of ["sourceDigest", "stageManifestSha256", "buildInfoSha256", "distIntegritySha256", "sinkInventorySha256", "detectorPolicySha256", "reviewPolicySha256", "dialectCheckerSha256", "dialectPolicySha256", "dialectImportSetSha256", "executableManifestSha256", "runtimeSinkSetSha256", "authoredExecutableProjectionSha256", "packagedSinkSetSha256", "packagedDialectImportSetSha256", "asarSha256"]) assert(value[key] === null || sha256Pattern.test(value[key]), `details.packageBinding.${key} is invalid`);
+  exactKeys(value.native, ["architectureSha256", "manifest", "sourceDigest", "toolchainDigest", "signatureStatus", "binaries"], "details.packageBinding.native");
+  for (const key of ["architectureSha256", "sourceDigest", "toolchainDigest"]) assert(value.native[key] === null || sha256Pattern.test(value.native[key]), `details.packageBinding.native.${key} is invalid`);
+  assert(value.native.signatureStatus === null || value.native.signatureStatus === "unsigned-local", "details.packageBinding.native.signatureStatus is invalid");
+  exactKeys(value.native.manifest, ["path", "bytes", "sha256"], "details.packageBinding.native.manifest");
+  assert(value.native.manifest.path === null || value.native.manifest.path === "dist/native/sec03-native-manifest.json", "details.packageBinding.native.manifest.path is invalid");
+  assert(value.native.manifest.bytes === null || (Number.isSafeInteger(value.native.manifest.bytes) && value.native.manifest.bytes > 0), "details.packageBinding.native.manifest.bytes is invalid");
+  assert(value.native.manifest.sha256 === null || sha256Pattern.test(value.native.manifest.sha256), "details.packageBinding.native.manifest.sha256 is invalid");
+  assert(Array.isArray(value.native.binaries) && (value.native.binaries.length === 0 || value.native.binaries.length === 2), "details.packageBinding.native.binaries is invalid");
+  const nativePaths = ["dist/native/sandbox-host.exe", "dist/native/sandbox-launcher.node"];
+  for (const [index, binary] of value.native.binaries.entries()) {
+    exactKeys(binary, ["path", "bytes", "sha256", "machine"], `details.packageBinding.native.binaries[${index}]`);
+    assert.equal(binary.path, nativePaths[index], `details.packageBinding.native.binaries[${index}].path is invalid`);
+    assert(Number.isSafeInteger(binary.bytes) && binary.bytes > 0, `details.packageBinding.native.binaries[${index}].bytes is invalid`);
+    assert(sha256Pattern.test(binary.sha256), `details.packageBinding.native.binaries[${index}].sha256 is invalid`);
+    assert.equal(binary.machine, "AMD64", `details.packageBinding.native.binaries[${index}].machine is invalid`);
+  }
   for (const key of ["authoredFileCount", "dependencyFileCount"]) assert(value[key] === null || (Number.isSafeInteger(value[key]) && value[key] >= 0), `details.packageBinding.${key} is invalid`);
   exactKeys(value.unpacked, ["fileCount", "executableFileCount"], "details.packageBinding.unpacked");
   for (const key of ["fileCount", "executableFileCount"]) assert(value.unpacked[key] === null || (Number.isSafeInteger(value.unpacked[key]) && value.unpacked[key] >= 0), `details.packageBinding.unpacked.${key} is invalid`);
@@ -166,9 +182,20 @@ function validatePackageBinding(value, { passed = false, sinkIdentity = null } =
   for (const key of ["packageInspected", "asarPayloadBound", "producerSummaryTrusted"]) assert.equal(typeof value[key], "boolean", `details.packageBinding.${key} must be boolean`);
   assert.equal(value.producerSummaryTrusted, false, "packaged evidence must not trust a producer summary");
   const bound = value.packageInspected
-    && value.schemaVersion === 2
+    && value.schemaVersion === 3
     && value.buildId !== null
     && value.sourceDigest !== null
+    && value.stageManifestSha256 !== null
+    && value.buildInfoSha256 !== null
+    && value.distIntegritySha256 !== null
+    && value.native.architectureSha256 !== null
+    && value.native.manifest.path === "dist/native/sec03-native-manifest.json"
+    && value.native.manifest.bytes !== null
+    && value.native.manifest.sha256 !== null
+    && value.native.sourceDigest !== null
+    && value.native.toolchainDigest !== null
+    && value.native.signatureStatus === "unsigned-local"
+    && value.native.binaries.length === 2
     && value.sinkInventorySha256 !== null
     && value.detectorPolicySha256 !== null
     && value.reviewPolicySha256 !== null

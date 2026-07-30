@@ -116,34 +116,6 @@
       }
     },
     {
-      "siteId": "sink-95fc4d50a74e30b32f251631",
-      "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "79e27362ff1605e363b8302692890a9a2389cd1261d33fe17cde59a3df17ecab",
-      "container": "<top-level>",
-      "family": "module-loader",
-      "api": "require",
-      "pathOperands": [
-        "argument:0"
-      ],
-      "executionClass": "electron-runtime",
-      "packageExpectation": "included-in-asar",
-      "binding": {
-        "kind": "static-module-loader",
-        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
-        "evidenceIds": [
-          "electron-source",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "reviewed-static-module-specifier",
-            "anchor": "electron/main.cjs#<top-level>:argument:0"
-          }
-        ]
-      }
-    },
-    {
       "siteId": "sink-f657afa31b8a30b29f14f007",
       "sourcePath": "electron/main.cjs",
       "normalizedNodeSha256": "25684352d5c4a46cb8638a12def764df0673e7def150db71ae611fc9d7a318fa",
@@ -228,9 +200,9 @@
       }
     },
     {
-      "siteId": "sink-3204e682fbe3e12338aefb90",
+      "siteId": "sink-168eb1caa3924a31a4166843",
       "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "f8d6bd36ee6f7519936b38e1d0c444e3cae234f71c403b098bb9e11ff3ad00f0",
+      "normalizedNodeSha256": "30e10fa869defa8ce0cbf81d75da38c679bdbc7dd0d6214dfde2f0c766f3733f",
       "container": "startPackagedServer",
       "family": "module-loader",
       "api": "import",
@@ -256,9 +228,37 @@
       }
     },
     {
-      "siteId": "sink-6f4e9360771c9a6dd14b7213",
+      "siteId": "sink-e0ad60c2a06fed8386fa7e12",
       "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "9a7d3cb8b3ff729d2c0d0b0f320b3862895dc8cdd293567965ec0a597c890f51",
+      "normalizedNodeSha256": "6c354d1d753a203630e5c906cceda9a7bc16071205262caa2722e8690c1a4a8a",
+      "container": "startServerProcess",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#startServerProcess:module-loader.import",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#startServerProcess:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-ddc6d98368d8f613fa7cde04",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "aec1a2cd48d8740203cc435a4a0bf3b907fab7bf603c38b9a612d337344611e1",
       "container": "startServerProcess",
       "family": "child-process",
       "api": "spawn",
@@ -302,9 +302,9 @@
       }
     },
     {
-      "siteId": "sink-d58f6e164ee3e9fc42885e74",
+      "siteId": "sink-efbedcd0f0d39c6f4af76d06",
       "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "80a3ce3a82ebe19949907b5daeb999842b230d08e0c66d3ccd5f747485db658d",
+      "normalizedNodeSha256": "70073fb32ef99c31508be1c966ed2fe4b5b1bc4419855b82ffca4c8269061106",
       "container": "createWindow",
       "family": "electron-path-property",
       "api": "BrowserWindow",
@@ -364,9 +364,9 @@
       }
     },
     {
-      "siteId": "sink-8e08f83d596e8d35670d9fb3",
+      "siteId": "sink-d4de993c4220516df880bcc1",
       "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "6899fde9d9b46dab3d3893ae273af938c07d71018bffe5e820d2d90d06213c46",
+      "normalizedNodeSha256": "883606c0b9c88840dd620357470e2e3884792aaed94cba85161b862e95c26027",
       "container": "stopDevelopmentServer",
       "family": "child-process",
       "api": "spawn",
@@ -1498,6 +1498,230 @@
       }
     },
     {
+      "siteId": "sink-243bfa6743a911daca9e8d11",
+      "sourcePath": "src/execution-native.ts",
+      "normalizedNodeSha256": "4506161869017b711ca726ab9062e3926fac759a584ad0e460e825635a24fb53",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "createRequire",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/execution-native.ts#<top-level>:module-loader.createRequire",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-module-base-url",
+            "anchor": "src/execution-native.ts#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-357a7720adaf890c6b65dfa9",
+      "sourcePath": "src/execution-native.ts",
+      "normalizedNodeSha256": "cf23f16b8bd134427fc4fd6136419f2765c0cf498c1600b73c1f9e2e6efa295c",
+      "container": "sha256",
+      "family": "node-fs",
+      "api": "createReadStream",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/execution-native.ts#sha256:node-fs.createReadStream",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-native-artifact-path",
+            "anchor": "src/execution-native.ts#sha256:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-61f50282e9c0d14346708830",
+      "sourcePath": "src/execution-native.ts",
+      "normalizedNodeSha256": "43895d3187bd198a0e0a56eb49d3836088b99fee46eb22b8fa1e9f8ff3db46fd",
+      "container": "assertFixedRegularFile",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/execution-native.ts#assertFixedRegularFile:node-fs.lstat",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "native-artifact-identity-check",
+            "anchor": "src/execution-native.ts#assertFixedRegularFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-1e542ebe0677eb880bcde1ab",
+      "sourcePath": "src/execution-native.ts",
+      "normalizedNodeSha256": "d5cf4668c378825af65c7b3d10b6b221de475471dd97d112344395f8e7b25d82",
+      "container": "assertFixedRegularFile",
+      "family": "node-fs",
+      "api": "realpath",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/execution-native.ts#assertFixedRegularFile:node-fs.realpath",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "native-artifact-identity-check",
+            "anchor": "src/execution-native.ts#assertFixedRegularFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-4dfe0c29eb6267848c5f3ce7",
+      "sourcePath": "src/execution-native.ts",
+      "normalizedNodeSha256": "15d1e8538809276e844cd22c4de127cf7f508c894206eb6d2639fff9dd57a6f9",
+      "container": "loadAddon",
+      "family": "module-loader",
+      "api": "createRequire-call",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/execution-native.ts#loadAddon:module-loader.createRequire-call",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/execution-native.ts#loadAddon:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-16b0f6cdadde539943bd7b64",
+      "sourcePath": "src/execution-native.ts",
+      "normalizedNodeSha256": "868c9208620e973c47da63ecb96026112671784ba3ef34e7adcc01aa11312d3b",
+      "container": "loadAddon",
+      "family": "module-loader",
+      "api": "createRequire-call",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/execution-native.ts#loadAddon:module-loader.createRequire-call",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/execution-native.ts#loadAddon:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-ea3e0efb1533dbf7c58965fc",
+      "sourcePath": "src/execution-runtime.ts",
+      "normalizedNodeSha256": "82a853c176397827e775b12d4a43b3a13396c208366fb17545c6a18969893017",
+      "container": "loadNativeIdentity",
+      "family": "node-fs",
+      "api": "readFile",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/execution-runtime.ts#loadNativeIdentity:node-fs.readFile",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-native-identity-file",
+            "anchor": "src/execution-runtime.ts#loadNativeIdentity:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-e147ac29ce8d7a5661ea611b",
+      "sourcePath": "src/execution-runtime.ts",
+      "normalizedNodeSha256": "d683f28517cdb6a71433aa76ef44929dff7016462fd3ca1982016d6c64463587",
+      "container": "loadNativeIdentity",
+      "family": "node-fs",
+      "api": "readFile",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/execution-runtime.ts#loadNativeIdentity:node-fs.readFile",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-native-identity-file",
+            "anchor": "src/execution-runtime.ts#loadNativeIdentity:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "siteId": "sink-299f0d2d0fec82b4102316af",
       "sourcePath": "src/file-viewer.ts",
       "normalizedNodeSha256": "b1794b24dd3772da6bf5f141dba074a3dd38662bf1888ed7ed354bd7b085bcf8",
@@ -1573,6 +1797,62 @@
             "selector": "argument:2.shell",
             "classification": "fixed-shell-false",
             "anchor": "src/file-viewer.ts#FileViewerService.reveal:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-bbb85a2e0ddbe182631872f7",
+      "sourcePath": "src/native-process-consent-transport.ts",
+      "normalizedNodeSha256": "b45be43452dd4948a32c7f6658f109408e85e2926cd1358d879b65c24659819f",
+      "container": "installInheritedNativeProcessConsentTransport",
+      "family": "node-fs",
+      "api": "createReadStream",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/native-process-consent-transport.ts#installInheritedNativeProcessConsentTransport:node-fs.createReadStream",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-inherited-pipe-fd",
+            "anchor": "src/native-process-consent-transport.ts#installInheritedNativeProcessConsentTransport:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-10fec949956cf8f69e429447",
+      "sourcePath": "src/native-process-consent-transport.ts",
+      "normalizedNodeSha256": "2fdd03798a5937abea29995eb5fb146fcd0ec70d1fb82e9224800442fac85e73",
+      "container": "installInheritedNativeProcessConsentTransport",
+      "family": "node-fs",
+      "api": "createWriteStream",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/native-process-consent-transport.ts#installInheritedNativeProcessConsentTransport:node-fs.createWriteStream",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-inherited-pipe-fd",
+            "anchor": "src/native-process-consent-transport.ts#installInheritedNativeProcessConsentTransport:argument:0"
           }
         ]
       }
@@ -2520,52 +2800,6 @@
       }
     },
     {
-      "siteId": "sink-61a335089c8af1571ceebb1d",
-      "sourcePath": "src/terminal.ts",
-      "normalizedNodeSha256": "2000d148b8eaeebb2250c5b78fa8fe9a42aab5314f0182e5a6d58642b0d8bf43",
-      "container": "TerminalManager.start",
-      "family": "child-process",
-      "api": "spawn",
-      "pathOperands": [
-        "argument:0",
-        "argument:1",
-        "argument:2.cwd",
-        "argument:2.shell"
-      ],
-      "executionClass": "product-runtime",
-      "packageExpectation": "compiled-to-asar",
-      "binding": {
-        "kind": "runtime-canary",
-        "anchor": "src/terminal.ts#TerminalManager.start:child-process.spawn",
-        "evidenceIds": [
-          "process-cwd",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "runtime-executable-lease",
-            "anchor": "src/terminal.ts#TerminalManager.start:argument:0"
-          },
-          {
-            "selector": "argument:1",
-            "classification": "fixed-reviewed-argv",
-            "anchor": "src/terminal.ts#TerminalManager.start:argument:1"
-          },
-          {
-            "selector": "argument:2.cwd",
-            "classification": "authority-canonical-cwd",
-            "anchor": "src/terminal.ts#TerminalManager.start:argument:2.cwd"
-          },
-          {
-            "selector": "argument:2.shell",
-            "classification": "fixed-shell-false",
-            "anchor": "src/terminal.ts#TerminalManager.start:argument:2.shell"
-          }
-        ]
-      }
-    },
-    {
       "siteId": "sink-9bcf1e99e867cc31003dd4cf",
       "sourcePath": "src/tools/image-helper.ts",
       "normalizedNodeSha256": "16a9a1f6092d37d3e3c4393138afd797e8161af7114b51c2afaeab6ace08bc7b",
@@ -2801,92 +3035,6 @@
       }
     },
     {
-      "siteId": "sink-ad951cad071b201020ac6e56",
-      "sourcePath": "src/tools/script.ts",
-      "normalizedNodeSha256": "b75843044f39e5401617cd3828ba5745d8c990e6efe7800cdaeba819e9a415d1",
-      "container": "runNodeModule",
-      "family": "child-process",
-      "api": "spawn",
-      "pathOperands": [
-        "argument:0",
-        "argument:1",
-        "argument:2.cwd"
-      ],
-      "executionClass": "product-runtime",
-      "packageExpectation": "compiled-to-asar",
-      "binding": {
-        "kind": "runtime-canary",
-        "anchor": "src/tools/script.ts#runNodeModule:child-process.spawn",
-        "evidenceIds": [
-          "process-cwd",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "runtime-executable-lease",
-            "anchor": "src/tools/script.ts#runNodeModule:argument:0"
-          },
-          {
-            "selector": "argument:1",
-            "classification": "fixed-reviewed-argv",
-            "anchor": "src/tools/script.ts#runNodeModule:argument:1"
-          },
-          {
-            "selector": "argument:2.cwd",
-            "classification": "authority-canonical-cwd",
-            "anchor": "src/tools/script.ts#runNodeModule:argument:2.cwd"
-          }
-        ]
-      }
-    },
-    {
-      "siteId": "sink-4cce55013c70ea46dc927c1c",
-      "sourcePath": "src/tools/shell.ts",
-      "normalizedNodeSha256": "72dfd5c677a0695cfee0e1a203198ba5091d91675186bf5ee80ae3166a988164",
-      "container": "runShellCommand",
-      "family": "child-process",
-      "api": "execFile",
-      "pathOperands": [
-        "argument:0",
-        "argument:1",
-        "argument:2.cwd",
-        "argument:2.shell"
-      ],
-      "executionClass": "product-runtime",
-      "packageExpectation": "compiled-to-asar",
-      "binding": {
-        "kind": "runtime-canary",
-        "anchor": "src/tools/shell.ts#runShellCommand:child-process.execFile",
-        "evidenceIds": [
-          "process-cwd",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "runtime-executable-lease",
-            "anchor": "src/tools/shell.ts#runShellCommand:argument:0"
-          },
-          {
-            "selector": "argument:1",
-            "classification": "fixed-reviewed-argv",
-            "anchor": "src/tools/shell.ts#runShellCommand:argument:1"
-          },
-          {
-            "selector": "argument:2.cwd",
-            "classification": "authority-canonical-cwd",
-            "anchor": "src/tools/shell.ts#runShellCommand:argument:2.cwd"
-          },
-          {
-            "selector": "argument:2.shell",
-            "classification": "fixed-shell-false",
-            "anchor": "src/tools/shell.ts#runShellCommand:argument:2.shell"
-          }
-        ]
-      }
-    },
-    {
       "siteId": "sink-995eabc5492cb075b2e43430",
       "sourcePath": "src/tools/writer.ts",
       "normalizedNodeSha256": "dd63bc25379e2903a838d33f92191648f1683dc8efe09190154e21f023cd1c82",
@@ -2939,7 +3087,181 @@
           }
         ]
       }
+    },
+    {
+      "siteId": "sink-774a674e93013028ec22aa14",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "804cae67bd04bbaad624a454a1f0ebf7e27cc5daad0d1cc11dca296a6d6175cf",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-802a6df7dac2b0fdd4b6fa1d",
+      "sourcePath": "electron/user-data-migration.cjs",
+      "normalizedNodeSha256": "dbcd262637c39e2327bd2c548607f9e082b2ef933fb7dbae2205c182c5bd2d3c",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/user-data-migration.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/user-data-migration.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-acadf05b56acfe8757106622",
+      "sourcePath": "electron/user-data-migration.cjs",
+      "normalizedNodeSha256": "827a8156f2efb8f20f591705bfc5119b5d306fce04052a0afa430ec7b2d0b405",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/user-data-migration.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/user-data-migration.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-7bbeac2138fcaa3b750b2ed9",
+      "sourcePath": "electron/user-data-migration.cjs",
+      "normalizedNodeSha256": "748f3a53a74c496960b7a58a94f41a83cf16e1a344ac51c01598fda6be0791d3",
+      "container": "pathExists",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/user-data-migration.cjs#pathExists:node-fs.lstatSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#pathExists:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-5f0e05280d6e836a74b37400",
+      "sourcePath": "electron/user-data-migration.cjs",
+      "normalizedNodeSha256": "40c19bc96f569f76b26881dc5e6dd3bef6c9b87b7070e93f656146bcb16ea946",
+      "container": "migrateLegacyUserData",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:node-fs.lstatSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-1be97d6ffcbda9bc59706d4f",
+      "sourcePath": "electron/user-data-migration.cjs",
+      "normalizedNodeSha256": "80f07e38a41fe4031b2b1d5440adab00b87cbeca52ea5bea106d6adedfd9da6a",
+      "container": "migrateLegacyUserData",
+      "family": "node-fs",
+      "api": "renameSync",
+      "pathOperands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:node-fs.renameSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:1"
+          }
+        ]
+      }
     }
   ],
-  "canonicalPayloadSha256": "a5e30c4cb227010402781d0b13631e3b5057b807b54170d82d158b8190600e2f"
+  "canonicalPayloadSha256": "799c96f133fb9e8785530b9ccd763d8b2bd011c791a8d5fd26d3ba3f429c586e"
 }

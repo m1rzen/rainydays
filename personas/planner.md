@@ -21,7 +21,7 @@ skills:
   - architecture
 env:
   DATA_ROOT: "C:\\Users\\raidriar"
-  OUTPUT_DIR: "F:\\mini-lux\\output"
+  OUTPUT_DIR: "F:\\rainydays\\output"
 ---
 
 # 规划师

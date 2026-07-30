@@ -96,7 +96,7 @@
     "SEC02-POS-shell-cwd": {"layer": "integration", "testFile": "tests/integration/process-cwd.test.mjs", "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn", "producer": "node-test"},
     "SEC02-POS-script-cwd": {"layer": "integration", "testFile": "tests/integration/process-cwd.test.mjs", "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn", "producer": "node-test"},
     "SEC02-POS-tool-terminal-cwd": {"layer": "integration", "testFile": "tests/integration/process-cwd.test.mjs", "testCaseId": "SEC-02 tool Terminal binds CWD and controls to one runtime authority", "producer": "node-test"},
-    "SEC02-POS-http-terminal-cwd": {"layer": "integration", "testFile": "tests/integration/sec01-terminal-owner.test.mjs", "testCaseId": "SEC-01 local Terminal API is capability-gated and Session-owned", "producer": "node-test"},
+    "SEC02-POS-http-terminal-cwd": {"layer": "integration", "testFile": "tests/integration/sec01-terminal-owner.test.mjs", "testCaseId": "SEC-01/SEC-03 A13 local Terminal API is capability-gated and Session-owned", "producer": "node-test"},
     "SEC02-POS-watcher-create-close": {"layer": "integration", "testFile": "tests/integration/watcher-authority.test.mjs", "testCaseId": "SEC-02 watcher events and controls remain bound to one runtime authority", "producer": "node-test"},
     "SEC02-POS-viewer-range-lease": {"layer": "integration", "testFile": "tests/integration/file-viewer-direct.test.mjs", "testCaseId": "SEC-02 File Viewer uses one authority snapshot for list, preview, resolve and range handles", "producer": "node-test"}
   }

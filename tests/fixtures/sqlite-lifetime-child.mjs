@@ -7,9 +7,9 @@ assert(["normal", "sidecar-link", "main-replacement", "main-hardlink", "crud"].i
 assert(path.isAbsolute(fixture));
 assert(path.isAbsolute(outside));
 
-process.env.MINI_LUX_USER_DATA_DIR = fixture;
-process.env.MINI_LUX_DATA_DIR = path.join(fixture, "data");
-process.env.MINI_LUX_CONFIG_PATH = path.join(fixture, "config.json");
+process.env.RAINYDAYS_USER_DATA_DIR = fixture;
+process.env.RAINYDAYS_DATA_DIR = path.join(fixture, "data");
+process.env.RAINYDAYS_CONFIG_PATH = path.join(fixture, "config.json");
 
 await fs.mkdir(path.join(fixture, "data"), { recursive: true });
 await fs.mkdir(outside, { recursive: true });

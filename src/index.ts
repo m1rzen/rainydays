@@ -99,7 +99,7 @@ export { invalidateNativeProcessConsent, registerNativeProcessConsentHandler };
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || "3111", 10);
 const HOST = "127.0.0.1";
-const API_TOKEN = process.env.MINI_LUX_API_TOKEN || randomBytes(32).toString("hex");
+const API_TOKEN = process.env.RAINYDAYS_API_TOKEN || randomBytes(32).toString("hex");
 
 function artifactSafeBuildId(value: string): string {
   return value.replace(/[^A-Za-z0-9._-]/g, (character) => `~${character.codePointAt(0)!.toString(16).toUpperCase().padStart(2, "0")}`);
@@ -765,7 +765,7 @@ app.use(async (req, res, next) => {
   }
 });
 app.use("/api", (req, res, next) => {
-  const headerCredential = String(req.header("X-Mini-Lux-Token") || "");
+  const headerCredential = String(req.header("X-RainyDays-Token") || "");
   if (constantTimeCredentialMatch(headerCredential, API_TOKEN)) {
     next();
     return;
@@ -1375,13 +1375,13 @@ app.get("/api/version", (_req, res) => {
 app.get("/api/diagnostics", (_req, res) => {
   const profile = getCurrentProfile();
   const safeBuildId = artifactSafeBuildId(BUILD_ID);
-  res.setHeader("Content-Disposition", `attachment; filename="mini-lux-diagnostics-${safeBuildId}.json"`);
+  res.setHeader("Content-Disposition", `attachment; filename="rainydays-diagnostics-${safeBuildId}.json"`);
   res.json({
     generatedAt: new Date().toISOString(),
     version: getPublicVersionInfo(),
     runtime: {
       node: process.versions.node,
-      electron: process.versions.electron || process.env.MINI_LUX_ELECTRON_VERSION || null,
+      electron: process.versions.electron || process.env.RAINYDAYS_ELECTRON_VERSION || null,
       platform: process.platform,
       arch: process.arch,
     },
@@ -1572,7 +1572,7 @@ async function start() {
 
   const activeProfile = getCurrentProfile();
   console.log(JSON.stringify({
-    event: "mini_lux_version",
+    event: "rainydays_version",
     appVersion: APP_VERSION,
     buildId: BUILD_ID,
     databaseSchemaVersion: getDatabaseSchemaVersion(),
@@ -1585,7 +1585,7 @@ async function start() {
 
   await new Promise<void>((resolve, reject) => {
     httpServer = app.listen(PORT, HOST, () => {
-      console.log(`\n🚀 Mini-Lux ${APP_VERSION} (${BUILD_ID}) 已启动: http://${HOST}:${PORT}/\n`);
+      console.log(`\n🚀 RainyDays ${APP_VERSION} (${BUILD_ID}) 已启动: http://${HOST}:${PORT}/\n`);
       resolve();
 
       migrateMissingEmbeddings().catch((err) => {

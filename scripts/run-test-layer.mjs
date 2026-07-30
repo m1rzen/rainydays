@@ -99,8 +99,8 @@ async function loadSec03Inputs(layer) {
   const matrix = JSON.parse(matrixBytes);
   const fallbackIdentity = { runId: null, candidateId: null, buildId: null, sourceSha256: null, launcherSha256: null, hostSha256: null, packageSha256: null, matrixSha256: sha256(matrixBytes), schemaSha256: sha256(schemaBytes) };
   try {
-    const root = await trustedPath(process.env.MINI_LUX_SEC03_RECEIPT_DIR, "directory", "MINI_LUX_SEC03_RECEIPT_DIR");
-    const identityFile = await trustedPath(process.env.MINI_LUX_SEC03_IDENTITY_FILE, "file", "MINI_LUX_SEC03_IDENTITY_FILE");
+    const root = await trustedPath(process.env.RAINYDAYS_SEC03_RECEIPT_DIR, "directory", "RAINYDAYS_SEC03_RECEIPT_DIR");
+    const identityFile = await trustedPath(process.env.RAINYDAYS_SEC03_IDENTITY_FILE, "file", "RAINYDAYS_SEC03_IDENTITY_FILE");
     const identity = { ...JSON.parse(await readFile(identityFile, "utf8")), matrixSha256: sha256(matrixBytes), schemaSha256: sha256(schemaBytes) };
     const nativeVerifier = await createSec03NativeVerifier(identity);
     const runDirectory = path.join(root, identity.runId);
@@ -217,16 +217,16 @@ async function main() {
   if (sec02Resolved) assert(matrixBinding, "SEC-02 matrix binding is missing");
   const childEnvironment = {
     ...process.env,
-    ...(args.layer === "packaged" ? { MINI_LUX_LAYER_DETAIL_REPORT: detailPath } : {}),
+    ...(args.layer === "packaged" ? { RAINYDAYS_LAYER_DETAIL_REPORT: detailPath } : {}),
     ...(sec03Resolved ? {
-      MINI_LUX_SEC03_RECEIPT_DIR: sec03.sidecarDirectory,
-      MINI_LUX_SEC03_IDENTITY_FILE: process.env.MINI_LUX_SEC03_IDENTITY_FILE,
+      RAINYDAYS_SEC03_RECEIPT_DIR: sec03.sidecarDirectory,
+      RAINYDAYS_SEC03_IDENTITY_FILE: process.env.RAINYDAYS_SEC03_IDENTITY_FILE,
     } : {}),
     ...(sec02Resolved ? {
-      MINI_LUX_SEC02_RECEIPT_DIR: receiptDirectory,
-      MINI_LUX_SEC02_RUN_ID: sec02RunId,
-      MINI_LUX_SEC02_RESOLVED_SHA256: sec02Manifest.canonicalPayloadSha256,
-      MINI_LUX_SEC02_MATRIX_SHA256: matrixBinding.sha256,
+      RAINYDAYS_SEC02_RECEIPT_DIR: receiptDirectory,
+      RAINYDAYS_SEC02_RUN_ID: sec02RunId,
+      RAINYDAYS_SEC02_RESOLVED_SHA256: sec02Manifest.canonicalPayloadSha256,
+      RAINYDAYS_SEC02_MATRIX_SHA256: matrixBinding.sha256,
     } : {}),
   };
   let childResult = { code: 1, signal: null, stdout: "", stderr: "" };

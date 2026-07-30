@@ -102,7 +102,7 @@ export function expectedElectronStagePackage(projectRoot, sourcePackage, buildIn
       electronVersion: sourcePackage.devDependencies.electron.replace(/^[^0-9]*/u, ""),
       electronDist: path.join(projectRoot, "node_modules", "electron", "dist"),
       directories: { ...sourcePackage.build.directories, output: "../release" },
-      artifactName: `Mini-Lux Setup ${sourcePackage.version}-${artifactSafeBuildId(buildInfo.buildId)}.\${ext}`,
+      artifactName: `RainyDays Setup ${sourcePackage.version}-${artifactSafeBuildId(buildInfo.buildId)}.\${ext}`,
     },
   };
 }

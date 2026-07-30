@@ -39,7 +39,7 @@ export const fetchUrlExec: ToolExecutor = async (args) => {
   try {
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mini-Lux/0.1 (AI Agent)",
+        "User-Agent": "RainyDays/0.1 (AI Agent)",
         Accept: "text/html,application/json,*/*",
       },
       signal: AbortSignal.timeout(15000),

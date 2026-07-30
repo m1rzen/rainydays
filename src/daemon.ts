@@ -32,7 +32,7 @@ function waitForRuntimeLoaded(child: ChildProcess): Promise<void> {
       else resolve();
     };
     const onMessage = (message: unknown) => {
-      if (message && typeof message === "object" && (message as { type?: unknown }).type === "mini-lux-runtime-loaded") finish();
+      if (message && typeof message === "object" && (message as { type?: unknown }).type === "rainydays-runtime-loaded") finish();
     };
     const onError = (error: Error) => finish(error);
     const onExit = () => finish(new Error("Daemon server exited before runtime code loaded"));
@@ -63,7 +63,7 @@ async function startServer() {
       const childEnvironment = { ...process.env };
       delete childEnvironment.NODE_OPTIONS;
       delete childEnvironment.NODE_PATH;
-      const wrapper = `const runtime = await import(${JSON.stringify(pathToFileURL(serverScript.canonicalPath).href)}); await runtime.ready; process.send?.({ type: "mini-lux-runtime-loaded" });`;
+      const wrapper = `const runtime = await import(${JSON.stringify(pathToFileURL(serverScript.canonicalPath).href)}); await runtime.ready; process.send?.({ type: "rainydays-runtime-loaded" });`;
       const child = spawn(nodeExecutable.canonicalPath, [
         "--import", pathToFileURL(tsxLoader.canonicalPath).href,
         "--input-type=module", "--eval", wrapper,
@@ -162,7 +162,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) process.on(signal, () => fi
 process.on("message", message => {
   if (message && typeof message === "object"
     && Object.keys(message).length === 1
-    && (message as { type?: unknown }).type === "mini-lux-daemon-shutdown") finishShutdown("SIGTERM");
+    && (message as { type?: unknown }).type === "rainydays-daemon-shutdown") finishShutdown("SIGTERM");
 });
 
 // 启动

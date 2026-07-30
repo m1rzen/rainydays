@@ -41,12 +41,12 @@
   "sourceManifest": {
     "taskId": "SEC-03",
     "exactCasePath": "tests/manifests/sec-03.json",
-    "sha256": "ceeb292e2d15fd2d20d52270fd272f0261e327f3fd57f3430d620608a0c7ff7d"
+    "sha256": "365cabfadf6299314749d677752ccb5cddf01c45eb6cd1169f7181912abaf2b3"
   },
   "deltaEntries": [
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "48c78082c4e36b4d99c8f7a0209110095d3689ebeee2ef40857895b1d8abf420",
+      "sha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -59,7 +59,7 @@
     },
     {
       "exactCasePath": "electron/preload.cjs",
-      "sha256": "2e092cdd99aea46474fb525f60d456bd65cbb130a3c44ca5acc85f2ed81357a8",
+      "sha256": "76c928cc1c01fd7efce37202352830bad73a739666715769d9860f178bea41e3",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -71,8 +71,17 @@
       }
     },
     {
+      "exactCasePath": "electron/user-data-migration.cjs",
+      "sha256": "9c9e51e2b5b6bb8123c73a449ebed0c20de8830779e646e46b6ebdff4c53e4c4",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
       "exactCasePath": "src/agent.ts",
-      "sha256": "5e831a3dcc92200520d9e356cad58ac4188f46c1c2de6f15f06f69b01212a587",
+      "sha256": "d0f6c544197abb5fa95f5743ea5dc1a8e74f6ba90bf5f3c737d05c0c71bf3af2",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -98,7 +107,7 @@
     },
     {
       "exactCasePath": "src/execution-isolation.ts",
-      "sha256": "39d3dd0a3b36ad078d23b7ba9a5d54448d5e20d320f1b2634c4538b0a9b65199",
+      "sha256": "2e58c6e123eb9640921a91ed843a43a2ff8a1e1c385149e4ff0d4ff8a17e4fe5",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -107,7 +116,7 @@
     },
     {
       "exactCasePath": "src/execution-native.ts",
-      "sha256": "173f2d1f4d5b49b1c3eaa1c56dc6bfc1a1201534cb2cc4fcb908f63d4e2c75c3",
+      "sha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -116,7 +125,7 @@
     },
     {
       "exactCasePath": "src/execution-runtime.ts",
-      "sha256": "4978ba123ab2f602dfa151611a77d023da612bfb412f68c495882a1fae87f786",
+      "sha256": "270473ff6fdd183fbafb2b1f1f17ca59c2e158476ae8736bd9a2d7665cbe2865",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -125,7 +134,7 @@
     },
     {
       "exactCasePath": "src/manual-execution-consent.ts",
-      "sha256": "aec7054d54450ff0bbe2db2d6745db6b1d44962d3cf8d8ffde845aa936454266",
+      "sha256": "d4fa6ea338b49b204e05d50b813c2a29d3fb334a5c5fea713fb2dab1b51d8c57",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -152,7 +161,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "43db29052054587e10c6646d772fe2996351658a0c32a9de8859778e5d3fda9f",
+      "sha256": "06286bfdc48fe3ee663e491b2ead2172fc774376935c508267447627c41589fb",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -178,7 +187,7 @@
     },
     {
       "exactCasePath": "src/terminal.ts",
-      "sha256": "9d0d9170e063a315ddcdcffb0ee295e33ac587932466012586b9bb9b95c61fd2",
+      "sha256": "442d9506ca2d2b1f1040f35bdbf5e6e3b6973ad810692c7cc79f1eb00a7b3c20",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -204,7 +213,7 @@
     },
     {
       "exactCasePath": "src/types.ts",
-      "sha256": "951d693769ee13d59743968eb3ae4e328d5de4df779c503b4afdc96b5cfd1b3a",
+      "sha256": "4c6bdf4f10db1f6f9a10f70405ca5ab0a085329efe57ea82bd2a1c0cdc5a7494",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -217,7 +226,7 @@
     },
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "79ac13550c0de237570a0ff9a506f7426e5992ad723a53ecfecf2f10cc43e49a",
+      "sha256": "3cab86b4081eba2c8b9e47709df5a5cf35e30781344c265169f0c3e2a4a9238d",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -239,7 +248,7 @@
     },
     {
       "exactCasePath": "dist/execution-isolation.js",
-      "sha256": "e1345ad42f71e632e113b818e474bea4956756a28b317f43330843312765b7ec",
+      "sha256": "47508a537f15a9d6a6c21051285917165757e0803e2e081b3636d15a9081cd40",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -248,7 +257,7 @@
     },
     {
       "exactCasePath": "dist/execution-native.js",
-      "sha256": "10756f7222f3851a2a8404ccb17ee5f1ba9ab6e6b5511ad3f19e47d4dee81b12",
+      "sha256": "8d7def23c6ad7cc5e9ba830a616885ac51ef6045de37277a3e56900c7c937cbb",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -257,7 +266,7 @@
     },
     {
       "exactCasePath": "dist/execution-runtime.js",
-      "sha256": "4a7f7f377ec1b80b8826d558a38ce97f8089908dee422e5ec714e6cc0533308a",
+      "sha256": "0b7f71df1d3e8c62564da7131e71be0f73bdbdfd0481fe509b2601b02d3f508f",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -266,7 +275,7 @@
     },
     {
       "exactCasePath": "dist/manual-execution-consent.js",
-      "sha256": "7d597c95ca68ab039a82018cbbce7512e77713f622009607d35c6bd1c11319d3",
+      "sha256": "3a7d4fe9c79b6300ba8f81616a5b723d972d176d3ac6301117cd4690bd5d1802",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -293,7 +302,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "e1ca4e9d26b7f759a220eb346d5f0426d544640659ab737a4775f807c6940a47",
+      "sha256": "8e46bf97d3285acb2d1a45a51f92dbf7dc0aec03a350fcceb1fb2ba5d83c196a",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -319,7 +328,7 @@
     },
     {
       "exactCasePath": "dist/terminal.js",
-      "sha256": "07b93df8ecfb16880a93c3d668b29591512b9620fb247e94d7928f5f2d3cfded",
+      "sha256": "9d16dd3cce2a1fb5d19b2dcf62951b07319ea72177ac8d68e261cf9f1e1cb443",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -363,7 +372,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
-      "sha256": "a572bf6c731d9411abeea96846a0f7d3bb06cae26ef746e11d7b8167a210ca91",
+      "sha256": "812cf5957694d7eeca50e655fbbfa08f3474d1a520f63de6326fce96bcdf761e",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -372,7 +381,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "50bddb6f2d786c9c422b22f66b87fd65597ce9bbbd40dc47a9183272527f2025",
+      "sha256": "54a5364c45f579830e2c9bf23feb1b9140a96eb55a4f4bbb97995e11e6b5b8db",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -426,7 +435,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "9121d62e4903196cb581d3685c92eaa29d1c365613a7b863a140b572ace1cdda",
+      "sha256": "71aca9db22606d9f73bea3e4aa163f526b9dddb8d75fc001838226aec45aacdc",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -435,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "0a4394ff633e276b525daa650c8c5f9e57515be6ded009156a57c64914ef66b6",
+      "sha256": "7a76b67ec77674ddd7cdaf8aa13f52efbdd7fe1a7758eb40cef1a4e72d8ac1f0",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -453,7 +462,7 @@
     },
     {
       "exactCasePath": "tests/sec03-receipts.mjs",
-      "sha256": "a47c0794a4f339f4745ea6985f229a1395b6ff0ba4bf588d3996dd69b42a502a",
+      "sha256": "91bc9aef9d9ab4d6f8974c872ebaac44fdd1337c7b79a38851ce1988c47fda97",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -462,7 +471,7 @@
     },
     {
       "exactCasePath": "scripts/build-sec03-native.mjs",
-      "sha256": "511db91a462e8aa513b356f6d99666e5f5cd84abe68a69ca0eda6020a8382807",
+      "sha256": "ba3c0c7c4183e1e53dca668f0895ef81ecb3243006a47c92f6b9a024e5c63556",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -480,7 +489,7 @@
     },
     {
       "exactCasePath": "scripts/sec03-execution-crosscheck.mjs",
-      "sha256": "88e2d2d6a4f2e8445253f3561b810d3f7a6e54388184452dff92d5421d1d36d3",
+      "sha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -498,7 +507,7 @@
     },
     {
       "exactCasePath": "scripts/sec03-receipt-set.mjs",
-      "sha256": "af9a349d7ae407bc1fbd0ce829a1d7c3b32175987a10ca5214279a7f24d6afc7",
+      "sha256": "57759c47ac0f2d4d80032bbe730b36a9518baae0cb100a9b3e309cf7949bb4af",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -538,7 +547,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "f66b5fa8406ac459875a7ed36a53019b29610db26894a305ea3f46639efb7388",
+      "sha256": "f3722d0b7576dae9a00b65223cd95c47a5ab69a1ab5275bd3a86b448b3a3f32c",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -551,7 +560,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "89ceb49d2e688e4ac382f7144f3d73e9c60bc80521983bbc508783afb4dedfe3",
+      "sha256": "29c5e80dcb417c490ced66a5fc0f2aa715b520c11c1f8ac729f95b153154a415",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -564,7 +573,7 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "dd1ced0cf800ae236acff816a05e25bcb7b3c0c9f6ea9c818002e30f61f8064d",
+      "sha256": "82dbb376b9290e47187f7ea4d5eef92a4b7d43aba4ea04431f45d3253b440991",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -577,7 +586,7 @@
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
-      "sha256": "6ea80b052f2d5b96ed248c37a2f10a502775cc1da2a14cc74329c0c90f4afd6f",
+      "sha256": "d636c68c3fe9419577d957e724734d7bb5f449acf3c15fa3ee2813f193eeec7e",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -603,7 +612,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "e4569b6c6dda49afdc361cb885d3f5662b87db3c55fbd92dc675ea5be4248296",
+      "sha256": "644aa0dcf569022db011ce1283d417741f59cbd581d245e9a91c5af71d32bc5c",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -629,7 +638,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "7070b4560a6928deef069ba80f4163861107d1fb106f3f28438d422d82fb23a6",
+      "sha256": "7c90f9eb835c72e4f076486889807a2224bd4483179fc4adb6f4508e1677caab",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -642,7 +651,7 @@
     },
     {
       "exactCasePath": "package-lock.json",
-      "sha256": "470ca8f79bd1e5d335135aa352743ca0708d9fcdf8354a1534a3c3b1b2ada1cd",
+      "sha256": "0e1c811e09d899645f5ae67d45b56751943d297930c0d15a89e3376853740fcf",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -655,18 +664,22 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "56162f6d4f4fa73ebd42b2a51b68dab978fb4c20909162d8dfa80cc67afd0271",
+      "sha256": "e5824e69856d7e46bde34a9762c7efb406a3ddedea3afe34ee071571313eaeab",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
       "testCaseIds": [
-        "SEC-03 opaque ExecutionGrant rejects forgery, replay, expiry and failed-launch restoration",
-        "SEC-03 grant consumption is atomic under concurrent use and cross-owner use fails closed",
-        "SEC-03 persistent leases bind owner/session and InputGrant is one-shot under concurrency",
+        "SEC-03 A11 ExecutionGrant variants are exact for E1 and E3 with zero denied launches",
+        "SEC-03 A11 E2 InputGrant variants are exact and denied writes never reach native",
+        "SEC-03 A19 authenticated grant issuance rejects brokered E4 before native launch",
+        "SEC-03 E4 limits match the frozen profile maxima",
         "SEC-03 E4 input accepts a new direct run only inside the launch authority incarnation",
+        "SEC-03 persistent termination linearizes concurrent cleanup to one native frame",
         "SEC-03 output limit terminates the native host and returns a stable denial",
-        "SEC-03 manual consent stores the exact request server-side and atomically rejects replay/concurrent reuse",
-        "SEC-03 manual consent deny/dismiss/invalidation/shutdown have zero execution side effects"
+        "SEC-03 A12-01..08 use exact Frozen codes, consume every attempt and never execute",
+        "A12-06 unknown synthetic challenge becomes replay",
+        "SEC-03 A12 evidence binds the prepared authority and observer failure preserves the denial",
+        "SEC-03 A12-05/A12-09 preserve exact request and distinguish concurrent reuse from replay"
       ],
       "supersedes": null
     },
@@ -685,7 +698,7 @@
     },
     {
       "exactCasePath": "tests/unit/native-process-consent.test.mjs",
-      "sha256": "3659c8a0dbddb5fd656c67f1a8e6ece9c6e18e0fb19495a275501edf00c5ab08",
+      "sha256": "753310e34003d5d12320c5f846a0ed762ee99801433309915c202e9dab048434",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -694,6 +707,7 @@
         "SEC-03 native process consent binds exact bytes, authority and one native decision",
         "SEC-03 native process consent denies invalidation and current-runtime replacement",
         "SEC-03 manual consent rejects authority reincarnation, old A-to-B-to-A and invalidation",
+        "SEC-03 manual consent keeps prepare/shutdown failures outside A12 decision codes",
         "SEC-03 manual terminal start requires and preserves a private root qualification digest"
       ],
       "supersedes": null
@@ -746,7 +760,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "sha256": "6cc358bea00e3d57f770061ade6c105e8967387f344cca9e745f30d1a393ae79",
+      "sha256": "2a69a22b9200d966dea8597884f590d87ef3e1e0614670e0cb0e482736a870c6",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -754,13 +768,13 @@
         "SEC-03 source digest authored set includes native sources, build logic, runtime, governance and matrix inputs",
         "SEC-03 native projection binds the exact manifest, outputs, toolchain, freshness and AMD64 machine",
         "SEC-03 native projection rejects stale native source and manifest toolchain identity",
-        "electron-builder includes only exact SEC-03 native paths and unpacks only the two binaries"
+        "SEC-03 build metadata and electron package bind the exact current native artifacts"
       ],
       "supersedes": null
     },
     {
       "exactCasePath": "tests/contract/sec03-receipts.test.mjs",
-      "sha256": "1c0669a065d49a29cd1068b5fc00ed2ea71d855f4beede5aec37b2bccede603d",
+      "sha256": "be582931ed22dfcc484d7f84e3abfbf7ee76d64b51bb34b53e8be82d3881f880",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -775,12 +789,27 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
-      "sha256": "4e2a129122c063f7d2d7ce21cfe9aa87f1e52f492efbcaee06ce3a5b9a3947e9",
+      "sha256": "13119ff439aa1f6e22a9bea74fdbdb78a2dd94d6f90ef6609289682490558692",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
       "testCaseIds": [
         "SEC-03 native E1 uses real AppContainer/Job, denies ambient user data/env/network, and has no fallback",
+        "SEC-03 native execution proof is fixed-identity, host-produced, and verify-only",
+        "SEC-03 real-host receipt harness authenticates A16 system-volume positives across E1-E4",
+        "SEC-03 real-host receipt harness authenticates A01 exact environment denial across E1-E4",
+        "SEC-03 real-host receipt harness authenticates all 44 A02 root-escape denials",
+        "SEC-03 real-host receipt harness authenticates A03 retained-root replacement barriers",
+        "SEC-03 real-host receipt harness authenticates all 20 A04 direct-network denials",
+        "SEC-03 real-host receipt harness authenticates reachable A06 descendant containment",
+        "SEC-03 real-host receipt harness authenticates reachable A07 handle denials",
+        "SEC-03 real-host receipt harness authenticates all reachable A08 Job limits",
+        "SEC-03 real-host receipt harness authenticates reachable A09 lifecycle reasons",
+        "SEC-03 real-host receipt harness authenticates all 24 A11 grant and input denials",
+        "SEC-03 real-host receipt harness authenticates all 9 A12 manual consent denials",
+        "SEC-03 real-host receipt harness authenticates A19 unsupported E4 broker mode",
+        "SEC-03 real-host receipt harness authenticates A17 restricted Script capabilities",
+        "SEC-03 real-host receipt harness authenticates all 20 A18 unsupported roots before host launch",
         "SEC-03 native rejects malformed launch/non-local root and survives repeated launcher lifecycle",
         "SEC-03 native E3 runs exact stdin module with executable lease and denies ambient authority",
         "SEC-03 native ${entryPoint} uses authenticated ConPTY input/output and graceful cleanup",
@@ -792,11 +821,12 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "sha256": "9548c654f98d26ecb9c5b3340e77ff2720a3ef156742e7bf3fb37d19fc814ac6",
+      "sha256": "50fdacd46d73973da037d2e075354cb1a6c645fac6d2c7f5fefeacae968b1b77",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
       "testCaseIds": [
+        "RainyDays migrates legacy Mini-Lux user data once without overwriting a current profile",
         "SEC-03 local API accepts only the private trusted header and publishes no browser credential"
       ],
       "supersedes": null
@@ -821,7 +851,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "600a16a510f620583cb0db547dcd149091cbd265dddceb4d36d432f32aa11596",
+      "sha256": "81924f0906d68e6f2e33bcb8e33208e519403644c8a6aba1cd179d8d1ab0ee98",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-03",
@@ -836,7 +866,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "7764fec4a53a74e0ac303a5d9614cd9491cf0d0781299c9a7ea4a56a7ddc46bf",
+      "sha256": "0991a725dee204db9da08613e2eeda8ea75fc6f0a297a92b1f86dced232b3319",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -943,7 +973,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "600a16a510f620583cb0db547dcd149091cbd265dddceb4d36d432f32aa11596",
+      "sha256": "81924f0906d68e6f2e33bcb8e33208e519403644c8a6aba1cd179d8d1ab0ee98",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-03",
@@ -958,7 +988,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "7764fec4a53a74e0ac303a5d9614cd9491cf0d0781299c9a7ea4a56a7ddc46bf",
+      "sha256": "0991a725dee204db9da08613e2eeda8ea75fc6f0a297a92b1f86dced232b3319",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -1170,7 +1200,7 @@
     },
     {
       "exactCasePath": "dist/terminal.js",
-      "sha256": "07b93df8ecfb16880a93c3d668b29591512b9620fb247e94d7928f5f2d3cfded",
+      "sha256": "9d16dd3cce2a1fb5d19b2dcf62951b07319ea72177ac8d68e261cf9f1e1cb443",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1192,7 +1222,7 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "5e831a3dcc92200520d9e356cad58ac4188f46c1c2de6f15f06f69b01212a587",
+      "sha256": "d0f6c544197abb5fa95f5743ea5dc1a8e74f6ba90bf5f3c737d05c0c71bf3af2",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1218,7 +1248,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "43db29052054587e10c6646d772fe2996351658a0c32a9de8859778e5d3fda9f",
+      "sha256": "06286bfdc48fe3ee663e491b2ead2172fc774376935c508267447627c41589fb",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1276,7 +1306,7 @@
     },
     {
       "exactCasePath": "src/terminal.ts",
-      "sha256": "9d0d9170e063a315ddcdcffb0ee295e33ac587932466012586b9bb9b95c61fd2",
+      "sha256": "442d9506ca2d2b1f1040f35bdbf5e6e3b6973ad810692c7cc79f1eb00a7b3c20",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1365,7 +1395,7 @@
     },
     {
       "exactCasePath": "src/types.ts",
-      "sha256": "951d693769ee13d59743968eb3ae4e328d5de4df779c503b4afdc96b5cfd1b3a",
+      "sha256": "4c6bdf4f10db1f6f9a10f70405ca5ab0a085329efe57ea82bd2a1c0cdc5a7494",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1378,7 +1408,7 @@
     },
     {
       "exactCasePath": "personas/daily.md",
-      "sha256": "7c5b1ebc13767109cf2c5688b825c6773e2eae64bc2f8ab4ba65cbe488ceaf07",
+      "sha256": "157e3ece3e1653f71089e475d1d115085933ace9d5d378cd454a8b37184f6043",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1387,7 +1417,7 @@
     },
     {
       "exactCasePath": "personas/debugger.md",
-      "sha256": "771620279be5b69221904554215042006051eefb16c3088e9484aa91140c4d8b",
+      "sha256": "c011dcc2e8768d5e385223989ed6f69c2ac38d1133f65cffdbedbf2c95ea2f04",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1396,7 +1426,7 @@
     },
     {
       "exactCasePath": "personas/developer.md",
-      "sha256": "831d8ba9e14b707365fe1829220f864fddc54ae983ee5102c89cc22b33d7db4c",
+      "sha256": "130ae96e9c4e91e7280c7c969ae4f7bec31397d6ee856ca4c4d361ada747c162",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1405,7 +1435,7 @@
     },
     {
       "exactCasePath": "personas/general.md",
-      "sha256": "47fd60ed68ed4a46eb2f3d667f966b9b337e82e95470bc7f8250615a65ad55d2",
+      "sha256": "dc51878bee8ad988c8d4044fdc8eb43a7897b5a76348b7eaf7dd44137fdcfe66",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1414,7 +1444,7 @@
     },
     {
       "exactCasePath": "personas/quick-fix.md",
-      "sha256": "9147cf25cfa035a32192bbc61b1d32a9b7c090a54b3174262fb2e607e7b9681b",
+      "sha256": "3d04c1416d067962fdba0e9aab8cbe5f0ea4f573209ce9011076169d73af7c6a",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1423,7 +1453,7 @@
     },
     {
       "exactCasePath": "personas/rds-assistant.md",
-      "sha256": "68c6d9cecfa2cc224e9e4234d8ed3e7e18bc43c02aa705b8e9222fa1da054971",
+      "sha256": "360cb6da215df8d69274bc6af9cdd50b2007363e7ee0eb722bfb306ad0858eed",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1432,7 +1462,7 @@
     },
     {
       "exactCasePath": "personas/sentinel.md",
-      "sha256": "61c5c370179d5053991b96850611b9738df948d2c2648bb5cf18a05af1d06c88",
+      "sha256": "69750db499623fdb076eda81d89f6f3deb3e1576c6a46c3cf9a4e892012cb7e0",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1441,7 +1471,7 @@
     },
     {
       "exactCasePath": "personas/writer.md",
-      "sha256": "4e57f6d5fe5f7318401ab7e18fd89d22ad9d9ac271075b5859ddcd873a28f885",
+      "sha256": "1ad9ad87affa477bf38ce7a7dbf2542c2dd504d3d1106c47f12b562acc1e6206",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1450,7 +1480,7 @@
     },
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "48c78082c4e36b4d99c8f7a0209110095d3689ebeee2ef40857895b1d8abf420",
+      "sha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1472,7 +1502,7 @@
     },
     {
       "exactCasePath": "electron/preload.cjs",
-      "sha256": "2e092cdd99aea46474fb525f60d456bd65cbb130a3c44ca5acc85f2ed81357a8",
+      "sha256": "76c928cc1c01fd7efce37202352830bad73a739666715769d9860f178bea41e3",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1494,7 +1524,7 @@
     },
     {
       "exactCasePath": "dist/bootstrap-path-store.js",
-      "sha256": "d3c853d366564131605bbd4b89503a3764b3957a39a3adef9b3bc8e01cbe09b2",
+      "sha256": "b235d6e20e99048c32e4a53a5f2fe093abc94283675919de4e19d3c0f81942ab",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1512,7 +1542,7 @@
     },
     {
       "exactCasePath": "dist/daemon.js",
-      "sha256": "613b4e933b6bebf47b2b489f6aa987863bb543e1e3f238d59cc244cfdc96fea2",
+      "sha256": "b93961689bb359f8e32d3c8e8730800c461d57879f0115f810f2ee2b80952cdf",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1548,7 +1578,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "e1ca4e9d26b7f759a220eb346d5f0426d544640659ab737a4775f807c6940a47",
+      "sha256": "8e46bf97d3285acb2d1a45a51f92dbf7dc0aec03a350fcceb1fb2ba5d83c196a",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1601,7 +1631,7 @@
     },
     {
       "exactCasePath": "dist/resource-owner.js",
-      "sha256": "9ed0571c8cac3f781d9f120c7c12a7b766dc31b367d28ef34595f830ca403e3b",
+      "sha256": "b6bfcf3de8ea3d57a2bb78a8b7328235775d059baa2fa4358a4a7a23baa946a1",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1610,7 +1640,7 @@
     },
     {
       "exactCasePath": "dist/runtime-paths.js",
-      "sha256": "2ae847c02b3318a0f30d9ede08de47e7eda3950814573acd4d0c2051babfc2af",
+      "sha256": "4f5d3c98ae12c18065b3086ab76feaa1d2295387a1fa68c28e653ed033dc5603",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1637,7 +1667,7 @@
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "f422e04edd22485f4edf94b49ae7195f441cb08055d439f0f9ae94dbb3092bd4",
+      "sha256": "c7fda4c301e5f40bfb5aa15b93f672acac90b0b15fa5a8a6eb0286a196633eee",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1655,7 +1685,7 @@
     },
     {
       "exactCasePath": "src/bootstrap-path-store.ts",
-      "sha256": "81a3e5894c6d9f54322f384381812a27460fdf550dfe68dbedcc1a17ba648bb7",
+      "sha256": "cb8d0299780514e4791b52bb919e1932dba7bb658a9f11a38f5ad064f5bd896c",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1673,7 +1703,7 @@
     },
     {
       "exactCasePath": "src/daemon.ts",
-      "sha256": "f6b350cf29bddb68efb5c45f4273e4835862bad2aff21af34f1d2ebf4f969c66",
+      "sha256": "7a9789076610e8d5960527851ff51d8c2aa604b9cd29c2aa39f64cabff74c7aa",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1767,7 +1797,7 @@
     },
     {
       "exactCasePath": "src/resource-owner.ts",
-      "sha256": "56f2dc62889febd7bb94f242a91da46e48a810b38222c136f796714a0b3be5b4",
+      "sha256": "a52ea80ee0e89786336ee9eddc886125d1774d7fca3f9315ed828934169e63bc",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1776,7 +1806,7 @@
     },
     {
       "exactCasePath": "src/runtime-paths.ts",
-      "sha256": "6fd02f8410519fe9621419798eb66eeaaaac6f82061a82049659f704a267ff19",
+      "sha256": "f036469b04c3dc475c79aab5d59009b201b86b6013f1a88e15f5d3b29710c3b6",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1794,7 +1824,7 @@
     },
     {
       "exactCasePath": "src/tools/download-tool.ts",
-      "sha256": "89ce9a4eea4ee11f07ce452d983badf23f941343038320c497cd06ef5f5abd62",
+      "sha256": "c57c6b42713ed7ca36e1c17bcf578d81ae5d1510849603434398e26bb149daee",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1866,7 +1896,7 @@
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "637135394fee2929fdec04a8d2bd5fd88ddb93bc4fb475cc159799526147f82d",
+      "sha256": "203a19e142c48bbd678dffb45075ed4c4673fb3d9be161997b3c00f48d34358e",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1883,8 +1913,17 @@
       "supersedes": null
     },
     {
+      "exactCasePath": "electron/user-data-migration.cjs",
+      "sha256": "9c9e51e2b5b6bb8123c73a449ebed0c20de8830779e646e46b6ebdff4c53e4c4",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "testCaseIds": [],
+      "supersedes": null
+    },
+    {
       "exactCasePath": "src/execution-isolation.ts",
-      "sha256": "39d3dd0a3b36ad078d23b7ba9a5d54448d5e20d320f1b2634c4538b0a9b65199",
+      "sha256": "2e58c6e123eb9640921a91ed843a43a2ff8a1e1c385149e4ff0d4ff8a17e4fe5",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1893,7 +1932,7 @@
     },
     {
       "exactCasePath": "src/execution-native.ts",
-      "sha256": "173f2d1f4d5b49b1c3eaa1c56dc6bfc1a1201534cb2cc4fcb908f63d4e2c75c3",
+      "sha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1902,7 +1941,7 @@
     },
     {
       "exactCasePath": "src/execution-runtime.ts",
-      "sha256": "4978ba123ab2f602dfa151611a77d023da612bfb412f68c495882a1fae87f786",
+      "sha256": "270473ff6fdd183fbafb2b1f1f17ca59c2e158476ae8736bd9a2d7665cbe2865",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1911,7 +1950,7 @@
     },
     {
       "exactCasePath": "src/manual-execution-consent.ts",
-      "sha256": "aec7054d54450ff0bbe2db2d6745db6b1d44962d3cf8d8ffde845aa936454266",
+      "sha256": "d4fa6ea338b49b204e05d50b813c2a29d3fb334a5c5fea713fb2dab1b51d8c57",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1938,7 +1977,7 @@
     },
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "79ac13550c0de237570a0ff9a506f7426e5992ad723a53ecfecf2f10cc43e49a",
+      "sha256": "3cab86b4081eba2c8b9e47709df5a5cf35e30781344c265169f0c3e2a4a9238d",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1947,7 +1986,7 @@
     },
     {
       "exactCasePath": "dist/execution-isolation.js",
-      "sha256": "e1345ad42f71e632e113b818e474bea4956756a28b317f43330843312765b7ec",
+      "sha256": "47508a537f15a9d6a6c21051285917165757e0803e2e081b3636d15a9081cd40",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1956,7 +1995,7 @@
     },
     {
       "exactCasePath": "dist/execution-native.js",
-      "sha256": "10756f7222f3851a2a8404ccb17ee5f1ba9ab6e6b5511ad3f19e47d4dee81b12",
+      "sha256": "8d7def23c6ad7cc5e9ba830a616885ac51ef6045de37277a3e56900c7c937cbb",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1965,7 +2004,7 @@
     },
     {
       "exactCasePath": "dist/execution-runtime.js",
-      "sha256": "4a7f7f377ec1b80b8826d558a38ce97f8089908dee422e5ec714e6cc0533308a",
+      "sha256": "0b7f71df1d3e8c62564da7131e71be0f73bdbdfd0481fe509b2601b02d3f508f",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1974,7 +2013,7 @@
     },
     {
       "exactCasePath": "dist/manual-execution-consent.js",
-      "sha256": "7d597c95ca68ab039a82018cbbce7512e77713f622009607d35c6bd1c11319d3",
+      "sha256": "3a7d4fe9c79b6300ba8f81616a5b723d972d176d3ac6301117cd4690bd5d1802",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2019,7 +2058,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
-      "sha256": "a572bf6c731d9411abeea96846a0f7d3bb06cae26ef746e11d7b8167a210ca91",
+      "sha256": "812cf5957694d7eeca50e655fbbfa08f3474d1a520f63de6326fce96bcdf761e",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2028,7 +2067,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "50bddb6f2d786c9c422b22f66b87fd65597ce9bbbd40dc47a9183272527f2025",
+      "sha256": "54a5364c45f579830e2c9bf23feb1b9140a96eb55a4f4bbb97995e11e6b5b8db",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2082,7 +2121,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "9121d62e4903196cb581d3685c92eaa29d1c365613a7b863a140b572ace1cdda",
+      "sha256": "71aca9db22606d9f73bea3e4aa163f526b9dddb8d75fc001838226aec45aacdc",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2091,7 +2130,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "0a4394ff633e276b525daa650c8c5f9e57515be6ded009156a57c64914ef66b6",
+      "sha256": "7a76b67ec77674ddd7cdaf8aa13f52efbdd7fe1a7758eb40cef1a4e72d8ac1f0",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2109,7 +2148,7 @@
     },
     {
       "exactCasePath": "tests/sec03-receipts.mjs",
-      "sha256": "a47c0794a4f339f4745ea6985f229a1395b6ff0ba4bf588d3996dd69b42a502a",
+      "sha256": "91bc9aef9d9ab4d6f8974c872ebaac44fdd1337c7b79a38851ce1988c47fda97",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2118,7 +2157,7 @@
     },
     {
       "exactCasePath": "scripts/build-sec03-native.mjs",
-      "sha256": "511db91a462e8aa513b356f6d99666e5f5cd84abe68a69ca0eda6020a8382807",
+      "sha256": "ba3c0c7c4183e1e53dca668f0895ef81ecb3243006a47c92f6b9a024e5c63556",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2136,7 +2175,7 @@
     },
     {
       "exactCasePath": "scripts/sec03-execution-crosscheck.mjs",
-      "sha256": "88e2d2d6a4f2e8445253f3561b810d3f7a6e54388184452dff92d5421d1d36d3",
+      "sha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2154,7 +2193,7 @@
     },
     {
       "exactCasePath": "scripts/sec03-receipt-set.mjs",
-      "sha256": "af9a349d7ae407bc1fbd0ce829a1d7c3b32175987a10ca5214279a7f24d6afc7",
+      "sha256": "57759c47ac0f2d4d80032bbe730b36a9518baae0cb100a9b3e309cf7949bb4af",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2194,7 +2233,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "f66b5fa8406ac459875a7ed36a53019b29610db26894a305ea3f46639efb7388",
+      "sha256": "f3722d0b7576dae9a00b65223cd95c47a5ab69a1ab5275bd3a86b448b3a3f32c",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2207,7 +2246,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "89ceb49d2e688e4ac382f7144f3d73e9c60bc80521983bbc508783afb4dedfe3",
+      "sha256": "29c5e80dcb417c490ced66a5fc0f2aa715b520c11c1f8ac729f95b153154a415",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2220,7 +2259,7 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "dd1ced0cf800ae236acff816a05e25bcb7b3c0c9f6ea9c818002e30f61f8064d",
+      "sha256": "82dbb376b9290e47187f7ea4d5eef92a4b7d43aba4ea04431f45d3253b440991",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2233,7 +2272,7 @@
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
-      "sha256": "6ea80b052f2d5b96ed248c37a2f10a502775cc1da2a14cc74329c0c90f4afd6f",
+      "sha256": "d636c68c3fe9419577d957e724734d7bb5f449acf3c15fa3ee2813f193eeec7e",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2259,7 +2298,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "e4569b6c6dda49afdc361cb885d3f5662b87db3c55fbd92dc675ea5be4248296",
+      "sha256": "644aa0dcf569022db011ce1283d417741f59cbd581d245e9a91c5af71d32bc5c",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2285,7 +2324,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "7070b4560a6928deef069ba80f4163861107d1fb106f3f28438d422d82fb23a6",
+      "sha256": "7c90f9eb835c72e4f076486889807a2224bd4483179fc4adb6f4508e1677caab",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2298,7 +2337,7 @@
     },
     {
       "exactCasePath": "package-lock.json",
-      "sha256": "470ca8f79bd1e5d335135aa352743ca0708d9fcdf8354a1534a3c3b1b2ada1cd",
+      "sha256": "0e1c811e09d899645f5ae67d45b56751943d297930c0d15a89e3376853740fcf",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2311,18 +2350,22 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "56162f6d4f4fa73ebd42b2a51b68dab978fb4c20909162d8dfa80cc67afd0271",
+      "sha256": "e5824e69856d7e46bde34a9762c7efb406a3ddedea3afe34ee071571313eaeab",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
       "testCaseIds": [
-        "SEC-03 opaque ExecutionGrant rejects forgery, replay, expiry and failed-launch restoration",
-        "SEC-03 grant consumption is atomic under concurrent use and cross-owner use fails closed",
-        "SEC-03 persistent leases bind owner/session and InputGrant is one-shot under concurrency",
+        "SEC-03 A11 ExecutionGrant variants are exact for E1 and E3 with zero denied launches",
+        "SEC-03 A11 E2 InputGrant variants are exact and denied writes never reach native",
+        "SEC-03 A19 authenticated grant issuance rejects brokered E4 before native launch",
+        "SEC-03 E4 limits match the frozen profile maxima",
         "SEC-03 E4 input accepts a new direct run only inside the launch authority incarnation",
+        "SEC-03 persistent termination linearizes concurrent cleanup to one native frame",
         "SEC-03 output limit terminates the native host and returns a stable denial",
-        "SEC-03 manual consent stores the exact request server-side and atomically rejects replay/concurrent reuse",
-        "SEC-03 manual consent deny/dismiss/invalidation/shutdown have zero execution side effects"
+        "SEC-03 A12-01..08 use exact Frozen codes, consume every attempt and never execute",
+        "A12-06 unknown synthetic challenge becomes replay",
+        "SEC-03 A12 evidence binds the prepared authority and observer failure preserves the denial",
+        "SEC-03 A12-05/A12-09 preserve exact request and distinguish concurrent reuse from replay"
       ],
       "supersedes": null
     },
@@ -2341,7 +2384,7 @@
     },
     {
       "exactCasePath": "tests/unit/native-process-consent.test.mjs",
-      "sha256": "3659c8a0dbddb5fd656c67f1a8e6ece9c6e18e0fb19495a275501edf00c5ab08",
+      "sha256": "753310e34003d5d12320c5f846a0ed762ee99801433309915c202e9dab048434",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2350,6 +2393,7 @@
         "SEC-03 native process consent binds exact bytes, authority and one native decision",
         "SEC-03 native process consent denies invalidation and current-runtime replacement",
         "SEC-03 manual consent rejects authority reincarnation, old A-to-B-to-A and invalidation",
+        "SEC-03 manual consent keeps prepare/shutdown failures outside A12 decision codes",
         "SEC-03 manual terminal start requires and preserves a private root qualification digest"
       ],
       "supersedes": null
@@ -2402,7 +2446,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "sha256": "6cc358bea00e3d57f770061ade6c105e8967387f344cca9e745f30d1a393ae79",
+      "sha256": "2a69a22b9200d966dea8597884f590d87ef3e1e0614670e0cb0e482736a870c6",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -2410,13 +2454,13 @@
         "SEC-03 source digest authored set includes native sources, build logic, runtime, governance and matrix inputs",
         "SEC-03 native projection binds the exact manifest, outputs, toolchain, freshness and AMD64 machine",
         "SEC-03 native projection rejects stale native source and manifest toolchain identity",
-        "electron-builder includes only exact SEC-03 native paths and unpacks only the two binaries"
+        "SEC-03 build metadata and electron package bind the exact current native artifacts"
       ],
       "supersedes": null
     },
     {
       "exactCasePath": "tests/contract/sec03-receipts.test.mjs",
-      "sha256": "1c0669a065d49a29cd1068b5fc00ed2ea71d855f4beede5aec37b2bccede603d",
+      "sha256": "be582931ed22dfcc484d7f84e3abfbf7ee76d64b51bb34b53e8be82d3881f880",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -2431,12 +2475,27 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
-      "sha256": "4e2a129122c063f7d2d7ce21cfe9aa87f1e52f492efbcaee06ce3a5b9a3947e9",
+      "sha256": "13119ff439aa1f6e22a9bea74fdbdb78a2dd94d6f90ef6609289682490558692",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
       "testCaseIds": [
         "SEC-03 native E1 uses real AppContainer/Job, denies ambient user data/env/network, and has no fallback",
+        "SEC-03 native execution proof is fixed-identity, host-produced, and verify-only",
+        "SEC-03 real-host receipt harness authenticates A16 system-volume positives across E1-E4",
+        "SEC-03 real-host receipt harness authenticates A01 exact environment denial across E1-E4",
+        "SEC-03 real-host receipt harness authenticates all 44 A02 root-escape denials",
+        "SEC-03 real-host receipt harness authenticates A03 retained-root replacement barriers",
+        "SEC-03 real-host receipt harness authenticates all 20 A04 direct-network denials",
+        "SEC-03 real-host receipt harness authenticates reachable A06 descendant containment",
+        "SEC-03 real-host receipt harness authenticates reachable A07 handle denials",
+        "SEC-03 real-host receipt harness authenticates all reachable A08 Job limits",
+        "SEC-03 real-host receipt harness authenticates reachable A09 lifecycle reasons",
+        "SEC-03 real-host receipt harness authenticates all 24 A11 grant and input denials",
+        "SEC-03 real-host receipt harness authenticates all 9 A12 manual consent denials",
+        "SEC-03 real-host receipt harness authenticates A19 unsupported E4 broker mode",
+        "SEC-03 real-host receipt harness authenticates A17 restricted Script capabilities",
+        "SEC-03 real-host receipt harness authenticates all 20 A18 unsupported roots before host launch",
         "SEC-03 native rejects malformed launch/non-local root and survives repeated launcher lifecycle",
         "SEC-03 native E3 runs exact stdin module with executable lease and denies ambient authority",
         "SEC-03 native ${entryPoint} uses authenticated ConPTY input/output and graceful cleanup",
@@ -2448,11 +2507,12 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "sha256": "9548c654f98d26ecb9c5b3340e77ff2720a3ef156742e7bf3fb37d19fc814ac6",
+      "sha256": "50fdacd46d73973da037d2e075354cb1a6c645fac6d2c7f5fefeacae968b1b77",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
       "testCaseIds": [
+        "RainyDays migrates legacy Mini-Lux user data once without overwriting a current profile",
         "SEC-03 local API accepts only the private trusted header and publishes no browser credential"
       ],
       "supersedes": null
@@ -3149,5 +3209,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "19c7a59183559e2d5dcd0f5fb4c527d8942c4a6b48254cce6d260ac235ce4c51"
+  "canonicalPayloadSha256": "9001badc1641800deacb21c3b107329262f4d5216f973ca643e759791cb126a3"
 }

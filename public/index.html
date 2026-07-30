@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mini-Lux · AI Agent</title>
+  <title>RainyDays · AI Agent</title>
   <script src="/vendor/marked.umd.js"></script>
   <link rel="stylesheet" href="/vendor/github-dark.min.css">
   <script src="/vendor/highlight.min.js"></script>
@@ -260,7 +260,7 @@
   <div id="sidebar">
     <div class="sidebar-header">
       <span class="dot"></span>
-      <span class="title">Mini-Lux</span>
+      <span class="title">RainyDays</span>
       <span class="ver" id="app-version" role="button" tabindex="0" title="下载诊断信息" onclick="downloadDiagnostics()">v--</span>
     </div>
     <button class="new-chat-btn" onclick="newChat()">＋ 新建对话</button>
@@ -292,7 +292,7 @@
       <div id="task-list"></div>
     </div>
     <div id="messages">
-      <div class="msg msg-assistant"><div class="bubble">👋 你好！我是 Mini-Lux。点击左侧「新建对话」开始。输入 <code>/</code> 查看可用命令。</div></div>
+      <div class="msg msg-assistant"><div class="bubble">👋 你好！我是 RainyDays。点击左侧「新建对话」开始。输入 <code>/</code> 查看可用命令。</div></div>
     </div>
     <div id="slash-menu"></div>
     <div id="input-area">
@@ -363,7 +363,7 @@
   <!-- Settings 面板 -->
   <div id="settings-modal" onclick="if(event.target===this) closeSettings()">
     <div id="settings-panel">
-      <div class="settings-header"><h2>⚙️ Mini-Lux Settings</h2><button class="settings-close" onclick="closeSettings()">✕</button></div>
+      <div class="settings-header"><h2>⚙️ RainyDays Settings</h2><button class="settings-close" onclick="closeSettings()">✕</button></div>
       <div class="settings-body">
         <div class="settings-nav">
           <div class="settings-nav-title">Provider Profiles</div>
@@ -1532,8 +1532,8 @@
         if (version) {
           const shortBuild = String(version.buildId || "").split(".").at(-1).slice(0, 8);
           appVersionEl.textContent = `v${version.appVersion}${shortBuild ? ` · ${shortBuild}` : ""}`;
-          appVersionEl.title = `Mini-Lux ${version.appVersion}\nBuild ID: ${version.buildId}\n点击下载诊断信息`;
-          document.title = `Mini-Lux ${version.appVersion} (${version.buildId})`;
+          appVersionEl.title = `RainyDays ${version.appVersion}\nBuild ID: ${version.buildId}\n点击下载诊断信息`;
+          document.title = `RainyDays ${version.appVersion} (${version.buildId})`;
           const electron = window.electronAPI;
           versionMismatch = Boolean(electron?.isElectron && (electron.appVersion !== version.appVersion || electron.buildId !== version.buildId));
         }
@@ -1556,7 +1556,7 @@
         const match = /filename="([^"]+)"/.exec(disposition);
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = match?.[1] || "mini-lux-diagnostics.json";
+        link.download = match?.[1] || "rainydays-diagnostics.json";
         link.click();
         setTimeout(() => URL.revokeObjectURL(link.href), 1000);
       } catch (error) {

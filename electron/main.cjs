@@ -9,6 +9,7 @@ const net = require("node:net");
 const { spawn } = require("node:child_process");
 const { randomBytes } = require("node:crypto");
 const { ElectronBootstrapPathStore } = require("./path-bootstrap.cjs");
+const { migrateLegacyUserData } = require("./user-data-migration.cjs");
 const originalFs = require("original-fs");
 
 let mainWindow = null;
@@ -25,11 +26,23 @@ let mainFrameGeneration = 0;
 let quitCleanupPromise = null;
 let finalQuit = false;
 let port = Number(process.env.PORT || 3111);
-const apiToken = process.env.MINI_LUX_API_TOKEN || randomBytes(32).toString("hex");
+const apiToken = process.env.RAINYDAYS_API_TOKEN || randomBytes(32).toString("hex");
 const terminalConsentChannels = Object.freeze([
-  "mini-lux:terminal-start",
-  "mini-lux:terminal-input",
+  "rainydays:terminal-start",
+  "rainydays:terminal-input",
 ]);
+
+let legacyUserDataMigrationError = null;
+if (app.isPackaged && !process.argv.some(argument => argument === "--user-data-dir" || argument.startsWith("--user-data-dir="))) {
+  try {
+    migrateLegacyUserData({
+      appDataRoot: app.getPath("appData"),
+      currentUserData: app.getPath("userData"),
+    });
+  } catch (error) {
+    legacyUserDataMigrationError = error;
+  }
+}
 
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
@@ -68,11 +81,11 @@ function loadBuildInfo() {
     parsed = JSON.parse(lease.readBytes(256 * 1024).toString("utf8"));
     lease.verify();
   } catch {
-    throw new Error("Mini-Lux 构建元数据缺失或损坏");
+    throw new Error("RainyDays 构建元数据缺失或损坏");
   } finally {
     lease?.close();
   }
-  if (parsed?.schemaVersion !== 1 || parsed?.product !== "Mini-Lux"
+  if (parsed?.schemaVersion !== 1 || parsed?.product !== "RainyDays"
     || typeof parsed.appVersion !== "string" || typeof parsed.buildId !== "string"
     || !/^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$/.test(parsed.buildId)
     || typeof parsed.candidateId !== "string" || !/^[a-f0-9]{64}$/.test(parsed.candidateId)
@@ -80,7 +93,7 @@ function loadBuildInfo() {
     || (parsed.buildIdSource !== "derived" && parsed.buildIdSource !== "ci")
     || (parsed.buildIdSource === "derived" && (parsed.buildId !== `${parsed.appVersion}+local.${parsed.sourceDigest.slice(0, 12)}` || parsed.candidateId !== parsed.sourceDigest))
     || (parsed.buildIdSource === "ci" && parsed.buildId !== `${parsed.appVersion}+ci.${parsed.candidateId}`)) {
-    throw new Error("Mini-Lux 构建元数据格式无效");
+    throw new Error("RainyDays 构建元数据格式无效");
   }
   if (app.getVersion() !== parsed.appVersion) {
     throw new Error(`应用版本不一致: Electron ${app.getVersion()}，构建元数据 ${parsed.appVersion}`);
@@ -105,25 +118,25 @@ function clearUntrustedPathEnvironment() {
 }
 
 function runtimeEnvironment() {
-  if (!buildInfo || !electronPaths) throw new Error("Mini-Lux bootstrap state is unavailable");
+  if (!buildInfo || !electronPaths) throw new Error("RainyDays bootstrap state is unavailable");
   const { appRoot, userData } = electronPaths.runtimeRoots();
   return {
     ...inheritedEnvironment(),
     PORT: String(port),
     HOST: "127.0.0.1",
-    MINI_LUX_API_TOKEN: apiToken,
-    MINI_LUX_APP_VERSION: buildInfo.appVersion,
-    MINI_LUX_BUILD_ID: buildInfo.buildId,
-    MINI_LUX_ELECTRON_VERSION: process.versions.electron || "",
-    MINI_LUX_APP_ROOT: appRoot,
-    MINI_LUX_USER_DATA_DIR: userData,
-    MINI_LUX_DATA_DIR: path.join(userData, "data"),
-    MINI_LUX_CONFIG_PATH: path.join(userData, "config.json"),
-    MINI_LUX_USER_PERSONAS_DIR: path.join(userData, "personas"),
-    MINI_LUX_USER_SKILLS_DIR: path.join(userData, "skills"),
-    MINI_LUX_PLAYBOOKS_DIR: path.join(userData, "playbooks"),
-    MINI_LUX_ORACLE_PATH: path.join(userData, "LUX.oracle"),
-    MINI_LUX_MODELS_DIR: path.join(appRoot, "models"),
+    RAINYDAYS_API_TOKEN: apiToken,
+    RAINYDAYS_APP_VERSION: buildInfo.appVersion,
+    RAINYDAYS_BUILD_ID: buildInfo.buildId,
+    RAINYDAYS_ELECTRON_VERSION: process.versions.electron || "",
+    RAINYDAYS_APP_ROOT: appRoot,
+    RAINYDAYS_USER_DATA_DIR: userData,
+    RAINYDAYS_DATA_DIR: path.join(userData, "data"),
+    RAINYDAYS_CONFIG_PATH: path.join(userData, "config.json"),
+    RAINYDAYS_USER_PERSONAS_DIR: path.join(userData, "personas"),
+    RAINYDAYS_USER_SKILLS_DIR: path.join(userData, "skills"),
+    RAINYDAYS_PLAYBOOKS_DIR: path.join(userData, "playbooks"),
+    RAINYDAYS_ORACLE_PATH: path.join(userData, "LUX.oracle"),
+    RAINYDAYS_MODELS_DIR: path.join(appRoot, "models"),
   };
 }
 
@@ -150,17 +163,17 @@ async function startPackagedServer() {
 }
 
 function selectServerMode() {
-  const requested = process.env.MINI_LUX_E2E_USE_DIST;
-  const nodeExecutable = process.env.MINI_LUX_E2E_NODE_EXECUTABLE;
-  delete process.env.MINI_LUX_E2E_USE_DIST;
-  delete process.env.MINI_LUX_E2E_NODE_EXECUTABLE;
+  const requested = process.env.RAINYDAYS_E2E_USE_DIST;
+  const nodeExecutable = process.env.RAINYDAYS_E2E_NODE_EXECUTABLE;
+  delete process.env.RAINYDAYS_E2E_USE_DIST;
+  delete process.env.RAINYDAYS_E2E_NODE_EXECUTABLE;
   if (app.isPackaged) return { type: "packaged" };
   if (requested === undefined) {
-    if (nodeExecutable !== undefined) throw new Error("MINI_LUX_E2E_NODE_EXECUTABLE requires MINI_LUX_E2E_USE_DIST=1");
+    if (nodeExecutable !== undefined) throw new Error("RAINYDAYS_E2E_NODE_EXECUTABLE requires RAINYDAYS_E2E_USE_DIST=1");
     return { type: "source" };
   }
-  if (requested !== "1") throw new Error("MINI_LUX_E2E_USE_DIST must be exactly 1 when set");
-  if (!nodeExecutable) throw new Error("MINI_LUX_E2E_NODE_EXECUTABLE is required");
+  if (requested !== "1") throw new Error("RAINYDAYS_E2E_USE_DIST must be exactly 1 when set");
+  if (!nodeExecutable) throw new Error("RAINYDAYS_E2E_NODE_EXECUTABLE is required");
   return { type: "compiled", executableLease: electronPaths.openExternalTestExecutable(nodeExecutable) };
 }
 
@@ -207,7 +220,7 @@ async function startServerProcess(commandLease, argumentLeases, extraEnvironment
         serverProcess.once("exit", (code) => {
           childNativeProcessConsentTransport?.close();
           childNativeProcessConsentTransport = null;
-          if (!resolved) reject(new Error(`Mini-Lux 服务启动失败（exit ${code}）`));
+          if (!resolved) reject(new Error(`RainyDays 服务启动失败（exit ${code}）`));
         });
       }),
     ]);
@@ -358,9 +371,9 @@ async function handleManualTerminalConsent(event, operation, request) {
 }
 
 function registerManualTerminalConsentHandlers() {
-  ipcMain.handle("mini-lux:terminal-start", (event, request) =>
+  ipcMain.handle("rainydays:terminal-start", (event, request) =>
     handleManualTerminalConsent(event, "terminal-start", request));
-  ipcMain.handle("mini-lux:terminal-input", (event, request) =>
+  ipcMain.handle("rainydays:terminal-input", (event, request) =>
     handleManualTerminalConsent(event, "terminal-input", request));
 }
 
@@ -381,17 +394,16 @@ function installApiHeaderInjection(window) {
   targetSession.webRequest.onBeforeSendHeaders({ urls: [`${origin}/*`] }, (details, callback) => {
     const requestHeaders = { ...details.requestHeaders };
     for (const key of Object.keys(requestHeaders)) {
-      if (key.toLowerCase() === "x-mini-lux-token") delete requestHeaders[key];
+      if (key.toLowerCase() === "x-rainydays-token") delete requestHeaders[key];
     }
     const current = mainWindow;
     const exactWindow = current === window && !window.isDestroyed()
-      && details.webContentsId === window.webContents.id;
+      && details.webContents === window.webContents
+      && details.frame === window.webContents.mainFrame;
     let exactOrigin = false;
     try { exactOrigin = new URL(details.url).origin === origin; } catch { /* deny */ }
-    const trustedInitiator = details.initiator === origin
-      || (details.resourceType === "mainFrame" && (!details.initiator || details.initiator === "null"));
-    if (exactWindow && exactOrigin && trustedInitiator) {
-      requestHeaders["X-Mini-Lux-Token"] = apiToken;
+    if (exactWindow && exactOrigin) {
+      requestHeaders["X-RainyDays-Token"] = apiToken;
     }
     callback({ requestHeaders });
   });
@@ -422,7 +434,7 @@ function createWindow() {
       height: 800,
       minWidth: 800,
       minHeight: 600,
-      title: `Mini-Lux ${buildInfo.appVersion} (${buildInfo.buildId})`,
+      title: `RainyDays ${buildInfo.appVersion} (${buildInfo.buildId})`,
       icon,
       show: false,
       webPreferences: {
@@ -446,7 +458,7 @@ function createWindow() {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       mainWindow?.destroy();
-      dialog.showErrorBox("Mini-Lux 启动失败", message);
+      dialog.showErrorBox("RainyDays 启动失败", message);
       app.quit();
     } finally {
       lease?.close();
@@ -496,7 +508,7 @@ function createWindow() {
 
 function createTray(icon) {
   tray = new Tray(icon);
-  tray.setToolTip(`Mini-Lux ${buildInfo.appVersion} (${buildInfo.buildId})`);
+  tray.setToolTip(`RainyDays ${buildInfo.appVersion} (${buildInfo.buildId})`);
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: "显示窗口", click: () => { mainWindow?.show(); mainWindow?.focus(); } },
     { type: "separator" },
@@ -546,6 +558,7 @@ async function stopDevelopmentServer() {
 
 app.whenReady().then(async () => {
   try {
+    if (legacyUserDataMigrationError) throw new Error(`RainyDays 用户数据迁移失败: ${legacyUserDataMigrationError.message}`);
     electronPaths = new ElectronBootstrapPathStore({
       appRoot: app.getAppPath(),
       electronRoot: __dirname,
@@ -565,7 +578,7 @@ app.whenReady().then(async () => {
   } catch (error) {
     const message = error instanceof Error ? error.stack || error.message : String(error);
     console.error(message);
-    dialog.showErrorBox("Mini-Lux 启动失败", message);
+    dialog.showErrorBox("RainyDays 启动失败", message);
     app.quit();
   }
 });
@@ -597,8 +610,8 @@ app.on("before-quit", (event) => {
     .catch((error) => {
       quitCleanupPromise = null;
       const message = error instanceof Error ? error.stack || error.message : String(error);
-      console.error("Mini-Lux shutdown did not complete; quit remains blocked", message);
-      dialog.showErrorBox("Mini-Lux 无法安全退出", message);
+      console.error("RainyDays shutdown did not complete; quit remains blocked", message);
+      dialog.showErrorBox("RainyDays 无法安全退出", message);
     });
 });
 

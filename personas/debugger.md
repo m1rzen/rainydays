@@ -26,7 +26,7 @@ skills:
   - coding
 env:
   DATA_ROOT: "C:\\Users\\raidriar"
-  OUTPUT_DIR: "F:\\mini-lux\\output"
+  OUTPUT_DIR: "F:\\rainydays\\output"
 ---
 
 # 调试员

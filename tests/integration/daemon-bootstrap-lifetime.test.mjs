@@ -34,9 +34,9 @@ test("SEC-02 Daemon holds Node, loader and server leases until runtime ready and
     cwd: projectRoot,
     env: {
       ...process.env,
-      MINI_LUX_APP_ROOT: projectRoot,
-      MINI_LUX_USER_DATA_DIR: userData,
-      MINI_LUX_DATA_DIR: path.join(userData, "data"),
+      RAINYDAYS_APP_ROOT: projectRoot,
+      RAINYDAYS_USER_DATA_DIR: userData,
+      RAINYDAYS_DATA_DIR: path.join(userData, "data"),
       PORT: String(port),
       NODE_OPTIONS: "--no-warnings",
       NODE_PATH: path.join(fixture, "must-not-load"),
@@ -62,9 +62,9 @@ test("SEC-02 Daemon holds Node, loader and server leases until runtime ready and
       }
     }, { timeoutMs: 45_000, intervalMs: 100, label: "daemon runtime ready" });
     assert.equal(status, 401);
-    assert.match(stdout, /Mini-Lux .* 已启动/u);
+    assert.match(stdout, /RainyDays .* 已启动/u);
     assert.equal(child.connected, true);
-    child.send({ type: "mini-lux-daemon-shutdown" });
+    child.send({ type: "rainydays-daemon-shutdown" });
     const exited = await waitForExit(child, 20_000);
     assert.deepEqual(exited, { code: 0, signal: null }, `daemon failed\nstdout=${stdout}\nstderr=${stderr}`);
     await waitFor(async () => {

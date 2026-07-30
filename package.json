@@ -1,7 +1,7 @@
 {
-  "name": "mini-lux",
+  "name": "rainydays",
   "version": "0.1.0",
-  "description": "产品研发室微型 AI Agent —— Lux 架构复刻 MVP",
+  "description": "RainyDays — 面向真实工作的本地优先 AI Agent 桌面运行时",
   "type": "module",
   "packageManager": "npm@11.11.0",
   "engines": {
@@ -111,7 +111,7 @@
   },
   "build": {
     "appId": "com.minilux.app",
-    "productName": "Mini-Lux",
+    "productName": "RainyDays",
     "directories": {
       "output": "release"
     },
@@ -137,7 +137,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "Mini-Lux",
+      "shortcutName": "RainyDays",
       "include": "build/installer.nsh"
     },
     "asarUnpack": [

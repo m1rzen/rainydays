@@ -20,7 +20,7 @@ tools:
   - ask_user
 env:
   DATA_ROOT: "C:\\Users\\raidriar"
-  OUTPUT_DIR: "F:\\mini-lux\\output"
+  OUTPUT_DIR: "F:\\rainydays\\output"
 ---
 
 # 架构师

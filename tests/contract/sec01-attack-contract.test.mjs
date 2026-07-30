@@ -176,10 +176,10 @@ test("SEC-01 frozen 31-scenario contract produces complete runtime receipts", as
     const childEnv = { ...process.env, SEC01_PROBE_RECEIPT_PATH: receiptPath, SEC01_PROBE_RUN_ID: runId };
     delete childEnv.NODE_TEST_CONTEXT;
     const nestedEvidenceEnvironment = [
-      "MINI_LUX_SEC02_RECEIPT_DIR",
-      "MINI_LUX_SEC02_RUN_ID",
-      "MINI_LUX_SEC02_RESOLVED_SHA256",
-      "MINI_LUX_SEC02_MATRIX_SHA256",
+      "RAINYDAYS_SEC02_RECEIPT_DIR",
+      "RAINYDAYS_SEC02_RUN_ID",
+      "RAINYDAYS_SEC02_RESOLVED_SHA256",
+      "RAINYDAYS_SEC02_MATRIX_SHA256",
     ];
     for (const key of nestedEvidenceEnvironment) delete childEnv[key];
     assert(nestedEvidenceEnvironment.every(key => !(key in childEnv)), "nested SEC-01 evidence runner inherited SEC-02 producer authority");

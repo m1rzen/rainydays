@@ -6,10 +6,10 @@ const [scenario, appRoot, userDataRoot, outsideRoot] = process.argv.slice(2);
 assert(["stable", "content-change", "entry-added", "redirect", "coverage"].includes(scenario));
 for (const candidate of [appRoot, userDataRoot, outsideRoot]) assert(path.isAbsolute(candidate));
 
-process.env.MINI_LUX_APP_ROOT = appRoot;
-process.env.MINI_LUX_USER_DATA_DIR = userDataRoot;
-process.env.MINI_LUX_DATA_DIR = path.join(userDataRoot, "data");
-process.env.MINI_LUX_MODELS_DIR = path.join(appRoot, "models");
+process.env.RAINYDAYS_APP_ROOT = appRoot;
+process.env.RAINYDAYS_USER_DATA_DIR = userDataRoot;
+process.env.RAINYDAYS_DATA_DIR = path.join(userDataRoot, "data");
+process.env.RAINYDAYS_MODELS_DIR = path.join(appRoot, "models");
 
 const modelRoot = path.join(appRoot, "models", "Xenova", "multilingual-e5-small");
 await fs.mkdir(modelRoot, { recursive: true });
@@ -82,7 +82,7 @@ if (scenario === "coverage") {
 
   const configuredGit = path.join(outsideRoot, "git-probe.exe");
   await fs.writeFile(configuredGit, "git-probe");
-  process.env.MINI_LUX_GIT_EXECUTABLE = configuredGit;
+  process.env.RAINYDAYS_GIT_EXECUTABLE = configuredGit;
   const runtimeLeases = [
     await store.openNodeExecutable(),
     await store.openProcessTreeKiller(),
@@ -105,14 +105,14 @@ if (scenario === "coverage") {
 
   const mutableRuntime = path.join(outsideRoot, "mutable-runtime.exe");
   await fs.writeFile(mutableRuntime, "ORIGINAL-RUNTIME");
-  process.env.MINI_LUX_GIT_EXECUTABLE = mutableRuntime;
+  process.env.RAINYDAYS_GIT_EXECUTABLE = mutableRuntime;
   const mutableLease = await store.openGitExecutable();
   await fs.writeFile(mutableRuntime, "MUTATED!-RUNTIME");
   await assert.rejects(() => mutableLease.assertCurrent(), error => error instanceof PathDeniedError && error.code === "PATH_IDENTITY_CHANGED");
   await mutableLease.close();
   const emptyRuntime = path.join(outsideRoot, "empty-runtime.exe");
   await fs.writeFile(emptyRuntime, Buffer.alloc(0));
-  process.env.MINI_LUX_GIT_EXECUTABLE = emptyRuntime;
+  process.env.RAINYDAYS_GIT_EXECUTABLE = emptyRuntime;
   await assert.rejects(() => store.openGitExecutable(), error => error instanceof PathDeniedError && error.code === "PATH_OPERATION_DENIED");
 
   const databaseLease = await store.openDatabaseFileLease();

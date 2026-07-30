@@ -258,7 +258,7 @@ async function sessionFormats() {
   catch (error) { identityConflictError = error instanceof Error ? error.message : String(error); }
   link.unregisterSession("identity-conflict");
 
-  const rawDb = new Database(path.join(process.env.MINI_LUX_DATA_DIR, "mini-lux.db"));
+  const rawDb = new Database(path.join(process.env.RAINYDAYS_DATA_DIR, "mini-lux.db"));
   const transactionBefore = {
     sessions: rawDb.prepare("SELECT COUNT(*) AS count FROM sessions").get().count,
     messages: rawDb.prepare("SELECT COUNT(*) AS count FROM messages").get().count,

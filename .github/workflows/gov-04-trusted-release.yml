@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 120
     environment: mini-lux-trusted-release
     env:
-      MINI_LUX_TRUSTED_ENVIRONMENT: mini-lux-trusted-release
+      RAINYDAYS_TRUSTED_ENVIRONMENT: mini-lux-trusted-release
     steps:
       - name: Full immutable checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -42,10 +42,10 @@ jobs:
       - name: Bootstrap checksum-pinned Gitleaks
         shell: pwsh
         run: |
-          $destination = Join-Path $env:RUNNER_TEMP 'mini-lux-gitleaks-8.30.1'
+          $destination = Join-Path $env:RUNNER_TEMP 'rainydays-gitleaks-8.30.1'
           $executable = & .\scripts\gov04\install-gitleaks.ps1 -DestinationDirectory $destination
           if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($executable)) { throw 'Gitleaks bootstrap failed' }
-          "MINI_LUX_GITLEAKS_EXE=$executable" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "RAINYDAYS_GITLEAKS_EXE=$executable" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: GOV-04 fixed fault-gate self-test
         shell: pwsh
@@ -70,7 +70,7 @@ jobs:
         if: success() && hashFiles('test-results/gov04-evidence/trusted/*') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: Mini-Lux-trusted-release-${{ github.run_id }}-${{ github.run_attempt }}
+          name: RainyDays-trusted-release-${{ github.run_id }}-${{ github.run_attempt }}
           path: test-results/gov04-evidence/trusted/
           if-no-files-found: error
           retention-days: 90

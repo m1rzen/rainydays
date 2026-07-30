@@ -42,7 +42,7 @@ test("merge and trusted artifact retention/trust domains stay separated", async 
   assert.match(merge, /retention-days: 7/);
   assert(!merge.includes("environment: mini-lux-trusted-release"));
   assert.match(release, /environment: mini-lux-trusted-release/);
-  assert.match(release, /MINI_LUX_TRUSTED_ENVIRONMENT: mini-lux-trusted-release/);
+  assert.match(release, /RAINYDAYS_TRUSTED_ENVIRONMENT: mini-lux-trusted-release/);
   assert.match(release, /cancel-in-progress: false/);
   assert.match(release, /retention-days: 90/);
   assert(!release.includes("pull_request:"));

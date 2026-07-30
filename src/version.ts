@@ -8,7 +8,7 @@ export interface ProtocolCapability {
 
 export interface BuildInfo {
   schemaVersion: 1;
-  product: "Mini-Lux";
+  product: "RainyDays";
   appVersion: string;
   buildId: string;
   buildIdSource: "derived" | "ci";
@@ -81,7 +81,7 @@ function validateBuildInfo(value: unknown): BuildInfo {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("build-info must be an object");
   const info = value as Partial<BuildInfo>;
   assertExactKeys(info as Record<string, unknown>, ["schemaVersion", "product", "appVersion", "buildId", "buildIdSource", "candidateId", "sourceDigest", "distIntegritySha256", "builtAt", "versions"], "root");
-  if (info.schemaVersion !== 1 || info.product !== "Mini-Lux") throw new Error("build-info identity/schema is invalid");
+  if (info.schemaVersion !== 1 || info.product !== "RainyDays") throw new Error("build-info identity/schema is invalid");
   if (typeof info.appVersion !== "string" || !semverPattern.test(info.appVersion)) throw new Error("build-info appVersion is invalid");
   if (typeof info.buildId !== "string" || !buildIdPattern.test(info.buildId)) throw new Error("build-info buildId is invalid");
   if (info.buildIdSource !== "derived" && info.buildIdSource !== "ci") throw new Error("build-info buildIdSource is invalid");
@@ -142,7 +142,7 @@ async function loadBuildInfo(): Promise<BuildInfo> {
       store.readAppFile("package.json"),
     ]).then((values) => values.map((value) => value.toString("utf8")) as [string, string]);
   } catch {
-    throw new Error("Mini-Lux build metadata is missing or inaccessible");
+    throw new Error("RainyDays build metadata is missing or inaccessible");
   }
   try {
     const info = validateBuildInfo(JSON.parse(raw));
@@ -150,7 +150,7 @@ async function loadBuildInfo(): Promise<BuildInfo> {
     if (packageJson.version !== info.appVersion) throw new Error(`package.json version ${String(packageJson.version)} does not match ${info.appVersion}`);
     return info;
   } catch (error) {
-    throw new Error(`Mini-Lux build metadata is invalid: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`RainyDays build metadata is invalid: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

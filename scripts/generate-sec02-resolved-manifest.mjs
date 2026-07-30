@@ -4,8 +4,8 @@ import path from "node:path";
 import process from "node:process";
 import {
   buildSec02ResolvedManifest,
+  currentResolvedManifestPath,
   projectRoot,
-  resolvedManifestPath,
   serializeResolvedManifest,
   validateSec02ResolvedManifest,
 } from "./sec02-governance.mjs";
@@ -25,7 +25,7 @@ async function assertSafeOutput(filePath) {
 }
 
 export async function generateSec02ResolvedManifest({ check = false } = {}) {
-  const output = path.join(projectRoot, ...resolvedManifestPath.split("/"));
+  const output = path.join(projectRoot, ...currentResolvedManifestPath.split("/"));
   const manifest = await buildSec02ResolvedManifest();
   await validateSec02ResolvedManifest(manifest);
   const expectedBytes = serializeResolvedManifest(manifest);

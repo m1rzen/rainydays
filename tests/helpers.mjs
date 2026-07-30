@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  resolvedManifestPath as sec02ResolvedManifestRelative,
+  currentResolvedManifestPath as sec02ResolvedManifestRelative,
   validateSec02ResolvedManifest,
 } from "../scripts/sec02-governance.mjs";
 import {
@@ -173,7 +173,7 @@ export async function formalArtifactSnapshot() {
     buildInfo: buildInfoPath,
     distIntegrity: path.join(projectRoot, "dist-integrity.json"),
     packageArtifactManifest: path.join(projectRoot, "test-results", "package-artifact.json"),
-    installer: path.join(projectRoot, "release", `Mini-Lux Setup ${buildInfo.appVersion}-${artifactSafeBuildId(buildInfo.buildId)}.exe`),
+    installer: path.join(projectRoot, "release", `RainyDays Setup ${buildInfo.appVersion}-${artifactSafeBuildId(buildInfo.buildId)}.exe`),
     appAsar: path.join(projectRoot, "release", "win-unpacked", "resources", "app.asar"),
   };
   const hashes = {};

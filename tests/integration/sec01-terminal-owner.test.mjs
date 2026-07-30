@@ -12,11 +12,16 @@ import {
   waitFor,
   waitForChildExit,
 } from "../helpers.mjs";
+import { createSec02Recorder } from "../sec02-receipts.mjs";
+
+const terminalApiRecorder = await createSec02Recorder(import.meta.url, "SEC-01/SEC-03 A13 local Terminal API is capability-gated and Session-owned");
+test.after(async () => terminalApiRecorder.close());
+
 async function api(base, token, route, options = {}) {
   const response = await fetch(`${base}${route}`, {
     ...options,
     headers: {
-      "X-Mini-Lux-Token": token,
+      "X-RainyDays-Token": token,
       "Content-Type": "application/json",
       ...options.headers,
     },
@@ -37,12 +42,12 @@ test("SEC-01/SEC-03 A13 local Terminal API is capability-gated and Session-owned
     env: {
       ...process.env,
       PORT: String(port),
-      MINI_LUX_API_TOKEN: token,
-      MINI_LUX_USER_DATA_DIR: fixture,
-      MINI_LUX_DATA_DIR: path.join(fixture, "data"),
-      MINI_LUX_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
-      MINI_LUX_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
-      MINI_LUX_PUBLIC_DIR: path.join(projectRoot, "public"),
+      RAINYDAYS_API_TOKEN: token,
+      RAINYDAYS_USER_DATA_DIR: fixture,
+      RAINYDAYS_DATA_DIR: path.join(fixture, "data"),
+      RAINYDAYS_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
+      RAINYDAYS_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
+      RAINYDAYS_PUBLIC_DIR: path.join(projectRoot, "public"),
     },
   });
   let stdout = "";
@@ -54,7 +59,7 @@ test("SEC-01/SEC-03 A13 local Terminal API is capability-gated and Session-owned
 
   try {
     await waitFor(async () => {
-      const response = await fetch(`${base}/status`, { headers: { "X-Mini-Lux-Token": token } });
+      const response = await fetch(`${base}/status`, { headers: { "X-RainyDays-Token": token } });
       return response.ok;
     }, { timeoutMs: 30_000, label: "SEC-01 source server" }).catch(error => {
       throw new Error(`${error.message}\nstdout=${stdout}\nstderr=${stderr}`);
@@ -109,6 +114,7 @@ test("SEC-01/SEC-03 A13 local Terminal API is capability-gated and Session-owned
 
     const deleted = await api(base, token, `/sessions/${firstId}`, { method: "DELETE" });
     assert.equal(deleted.status, 200);
+    if (terminalApiRecorder.enabled) await terminalApiRecorder.positive("SEC02-POS-http-terminal-cwd");
   } finally {
     const termination = await terminateProcessTreeAsync(child);
     assert.equal(termination.childExited, true, `server cleanup failed\nstdout=${stdout}\nstderr=${stderr}`);
@@ -128,12 +134,12 @@ test("SEC-01 shutdown gate prevents runtime publication during asynchronous clea
     env: {
       ...process.env,
       PORT: String(port),
-      MINI_LUX_API_TOKEN: token,
-      MINI_LUX_USER_DATA_DIR: fixture,
-      MINI_LUX_DATA_DIR: path.join(fixture, "data"),
-      MINI_LUX_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
-      MINI_LUX_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
-      MINI_LUX_PUBLIC_DIR: path.join(projectRoot, "public"),
+      RAINYDAYS_API_TOKEN: token,
+      RAINYDAYS_USER_DATA_DIR: fixture,
+      RAINYDAYS_DATA_DIR: path.join(fixture, "data"),
+      RAINYDAYS_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
+      RAINYDAYS_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
+      RAINYDAYS_PUBLIC_DIR: path.join(projectRoot, "public"),
     },
   });
   let stdout = "";
@@ -145,7 +151,7 @@ test("SEC-01 shutdown gate prevents runtime publication during asynchronous clea
 
   try {
     await waitFor(async () => {
-      const response = await fetch(`${base}/status`, { headers: { "X-Mini-Lux-Token": token } });
+      const response = await fetch(`${base}/status`, { headers: { "X-RainyDays-Token": token } });
       return response.ok;
     }, { timeoutMs: 30_000, label: "SEC-01 shutdown server" }).catch(error => {
       throw new Error(`${error.message}\nstdout=${stdout}\nstderr=${stderr}`);

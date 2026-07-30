@@ -32,7 +32,7 @@ skills:
   - zhengqi-business
 env:
   DATA_ROOT: "Z:\\产品研发室"
-  OUTPUT_DIR: "F:\\mini-lux\\output"
+  OUTPUT_DIR: "F:\\rainydays\\output"
 ---
 
 # 产品研发室助理

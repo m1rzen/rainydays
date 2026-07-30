@@ -60,8 +60,8 @@ await fs.mkdir(outside, { recursive: true });
 await fs.mkdir(data, { recursive: true });
 const externalSecret = "EXTERNAL-WATCHER-SECRET";
 await fs.writeFile(path.join(outside, "secret.txt"), externalSecret);
-process.env.MINI_LUX_USER_DATA_DIR = fixture;
-process.env.MINI_LUX_DATA_DIR = data;
+process.env.RAINYDAYS_USER_DATA_DIR = fixture;
+process.env.RAINYDAYS_DATA_DIR = data;
 
 const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule, pathPolicyModule, wireModule] = await Promise.all([
   import("../../dist/persona.js"),

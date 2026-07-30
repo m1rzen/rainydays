@@ -81,7 +81,7 @@ export function createValidGov04Report() {
     expectedSteps: [...gov04StepIds],
     executedSteps: [...gov04StepIds],
     steps: [],
-    artifact: { filename: "Mini-Lux Setup.exe", bytes: 1024, sha256: hash("3"), artifactClass: "test-only", trust: "untrusted", releaseEligible: false },
+    artifact: { filename: "RainyDays Setup.exe", bytes: 1024, sha256: hash("3"), artifactClass: "test-only", trust: "untrusted", releaseEligible: false },
     cleanup: { workspaceRemoved: true, sourceUnchanged: true, artifactUnchanged: true, evidencePreserved: true },
     knownLimitations: ["Remote service enforcement requires separate evidence"],
     reviewerVerdict: null,

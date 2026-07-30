@@ -43,6 +43,13 @@
       "supersedes": true
     },
     {
+      "exactCasePath": "electron/user-data-migration.cjs",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
       "exactCasePath": "src/agent.ts",
       "kind": "runtime",
       "layer": null,

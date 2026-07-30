@@ -20,17 +20,17 @@ async function bootstrapCandidate(
 }
 
 export const APP_ROOT = await bootstrapCandidate(
-  "MINI_LUX_APP_ROOT",
+  "RAINYDAYS_APP_ROOT",
   path.resolve(__dirname, ".."),
   "app"
 );
 export const USER_DATA_DIR = await bootstrapCandidate(
-  "MINI_LUX_USER_DATA_DIR",
+  "RAINYDAYS_USER_DATA_DIR",
   APP_ROOT,
   "user-data"
 );
 export const DATA_DIR = await bootstrapCandidate(
-  "MINI_LUX_DATA_DIR",
+  "RAINYDAYS_DATA_DIR",
   path.join(USER_DATA_DIR, "data"),
   "data",
   USER_DATA_DIR
@@ -40,56 +40,56 @@ export const DEFAULT_WORKSPACE_DIR = await pathPolicy.validateBootstrapCandidate
   { role: "default-workspace", parent: USER_DATA_DIR }
 );
 export const CONFIG_PATH = await bootstrapCandidate(
-  "MINI_LUX_CONFIG_PATH",
+  "RAINYDAYS_CONFIG_PATH",
   path.join(USER_DATA_DIR, "config.json"),
   "config",
   USER_DATA_DIR
 );
 export const PUBLIC_DIR = await bootstrapCandidate(
-  "MINI_LUX_PUBLIC_DIR",
+  "RAINYDAYS_PUBLIC_DIR",
   path.join(APP_ROOT, "public"),
   "public",
   APP_ROOT
 );
 export const MODELS_DIR = await bootstrapCandidate(
-  "MINI_LUX_MODELS_DIR",
+  "RAINYDAYS_MODELS_DIR",
   path.join(APP_ROOT, "models"),
   "models",
   APP_ROOT
 );
 export const BUILTIN_PERSONAS_DIR = await bootstrapCandidate(
-  "MINI_LUX_BUILTIN_PERSONAS_DIR",
+  "RAINYDAYS_BUILTIN_PERSONAS_DIR",
   path.join(APP_ROOT, "personas"),
   "builtin-personas",
   APP_ROOT
 );
 export const USER_PERSONAS_DIR = await bootstrapCandidate(
-  "MINI_LUX_USER_PERSONAS_DIR",
+  "RAINYDAYS_USER_PERSONAS_DIR",
   path.join(DATA_DIR, "personas"),
   "user-personas",
   USER_DATA_DIR
 );
 export const BUILTIN_SKILLS_DIR = await bootstrapCandidate(
-  "MINI_LUX_BUILTIN_SKILLS_DIR",
+  "RAINYDAYS_BUILTIN_SKILLS_DIR",
   path.join(APP_ROOT, "skills"),
   "builtin-skills",
   APP_ROOT
 );
 export const USER_SKILLS_DIR = await bootstrapCandidate(
-  "MINI_LUX_USER_SKILLS_DIR",
+  "RAINYDAYS_USER_SKILLS_DIR",
   path.join(DATA_DIR, "skills"),
   "user-skills",
   USER_DATA_DIR
 );
 export const PLAYBOOKS_DIR = await bootstrapCandidate(
-  "MINI_LUX_PLAYBOOKS_DIR",
+  "RAINYDAYS_PLAYBOOKS_DIR",
   path.join(USER_DATA_DIR, "playbooks"),
   "playbooks",
   USER_DATA_DIR
 );
 // Oracle是可选lazy store：先做纯语法/absolute校验，父子关系和identity在首次使用时验证。
 export const ORACLE_PATH = await bootstrapCandidate(
-  "MINI_LUX_ORACLE_PATH",
+  "RAINYDAYS_ORACLE_PATH",
   path.join(USER_DATA_DIR, "LUX.oracle"),
   "oracle"
 );

@@ -424,9 +424,9 @@ test("SEC-02 current restricted runtime domain and reviewed exceptions are exact
   ]);
   const analyzer = createHash("sha256").update(analyzerBytes).digest("hex");
   const result = await scanSec02RestrictedRuntime(projectRoot, policy, analyzer);
-  assert.equal(result.fileCount, 64);
-  assert.equal(result.importCount, 29);
-  assert.equal(result.exceptionCount, 3);
+  assert.equal(result.fileCount, 71);
+  assert.equal(result.importCount, 33);
+  assert.equal(result.exceptionCount, 2);
   assert.equal(result.complete, true);
   assert.throws(() => validateSec02RestrictedSourceSet(new Map([["src/adapter.ts", `import fs from "node:fs"; fs.readFile(userPath, callback);`]]), policy, "b".repeat(64)), /different checker/);
 });

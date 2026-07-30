@@ -31,7 +31,7 @@ function hostedGitHubFields(repository, commit) {
     workflow,
     runId: /^\d+$/.test(process.env.GITHUB_RUN_ID ?? "") ? process.env.GITHUB_RUN_ID : null,
     runAttempt: Number.isSafeInteger(runAttempt) && runAttempt > 0 ? runAttempt : null,
-    environment: process.env.MINI_LUX_TRUSTED_ENVIRONMENT ?? null,
+    environment: process.env.RAINYDAYS_TRUSTED_ENVIRONMENT ?? null,
     headShaMatches: process.env.GITHUB_SHA === commit,
   };
 }

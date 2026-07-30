@@ -103,8 +103,8 @@ const data = path.join(fixture, "data");
 await fs.mkdir(workspace, { recursive: true });
 await fs.mkdir(outside, { recursive: true });
 await fs.mkdir(data, { recursive: true });
-process.env.MINI_LUX_USER_DATA_DIR = fixture;
-process.env.MINI_LUX_DATA_DIR = data;
+process.env.RAINYDAYS_USER_DATA_DIR = fixture;
+process.env.RAINYDAYS_DATA_DIR = data;
 
 const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule, terminalModule] = await Promise.all([
   import("../../dist/persona.js"),
@@ -158,17 +158,12 @@ async function directTerminalStart(authority, options) {
   });
   try {
     const authorized = toolsModule.capabilityBroker.authorizeDirectOperation(context, "terminal:start", options);
-    const owner = toolsModule.capabilityBroker.getResourceOwner(context);
-    return await toolsModule.capabilityBroker.withDirectInitialCwd(
+    return await toolsModule.capabilityBroker.withDirectExecutionRoot(
       context,
       "terminal:start",
       String(authorized.cwd),
       "WORKSPACE_ROOT",
-      authorizedCwd => terminalModule.terminalFacade.start(owner, {
-        name: String(authorized.name || "") || undefined,
-        shell: authorized.shell,
-        authorizedCwd,
-      })
+      () => { throw new Error("Denied direct Terminal fixture unexpectedly reached execution"); }
     );
   } finally {
     if (toolsModule.capabilityBroker.isContextActive(context)) toolsModule.capabilityBroker.finishContext(context);
@@ -201,17 +196,12 @@ async function directTerminalStartWithPolicy(policy, pathAuthority, options) {
   });
   try {
     const authorized = broker.authorizeDirectOperation(context, "terminal:start", options);
-    const owner = broker.getResourceOwner(context);
-    return await broker.withDirectInitialCwd(
+    return await broker.withDirectExecutionRoot(
       context,
       "terminal:start",
       String(authorized.cwd),
       "WORKSPACE_ROOT",
-      authorizedCwd => terminalModule.terminalFacade.start(owner, {
-        name: String(authorized.name || "") || undefined,
-        shell: authorized.shell,
-        authorizedCwd,
-      })
+      () => { throw new Error("Denied direct Terminal fixture unexpectedly reached execution"); }
     );
   } finally {
     if (broker.isContextActive(context)) broker.finishContext(context);
@@ -243,16 +233,19 @@ async function observeBeforeSpawnSwap(surface) {
     configuredPath: workspace,
     permissions: ["initial-cwd"],
   }]);
-  const withInitialCwd = (input, options, use) => policy.withInitialCwd(authority, {
+  const cwdRequest = (input, options) => ({
     input,
     operation: "initial-cwd",
     defaultRootId: options.defaultRootId,
     auditIdentity: { sessionId: session.id, runId: `sec02-${surface}-swap`, principal: "local-user-api" },
-  }, use);
+  });
+  const withInitialCwd = (input, options, use) => policy.withInitialCwd(authority, cwdRequest(input, options), use);
+  const withExecutionRoot = (input, options, use) => policy.withExecutionRoot(authority, cwdRequest(input, options), "read-write", use);
   const invocation = {
     path: {
       rootIdForEnv: key => key === "WORKSPACE_ROOT" || key === "DATA_ROOT" ? "workspace" : null,
       withInitialCwd,
+      withExecutionRoot,
     },
     resourceOwner: null,
   };
@@ -293,7 +286,7 @@ async function observeBeforeSpawnSwap(surface) {
     processStarts: counter.processStarts,
     ...redactedPathAuditEvidence(events, targetName),
   };
-  assert.equal(swapped, true);
+  assert.equal(swapped, true, `${surface}: beforeProcessSpawn barrier was not reached`);
   assert.deepEqual(actual, {
     denied: true,
     processStarts: 0,
@@ -312,8 +305,8 @@ async function approved(context, name, args) {
     choice: "approve",
     sessionId: context.sessionId,
     runId: context.runId,
-    responsePrincipal: "local-user-api",
-    responseChannel: "ask-user",
+    responsePrincipal: challenge.responsePrincipal,
+    responseChannel: challenge.responseChannel,
   });
   assert(grant);
   try { return await toolsModule.executeInspectedTool(grant, inspected); }
@@ -508,9 +501,8 @@ test("SEC-02 tool Terminal binds CWD and controls to one runtime authority", asy
   try {
     const started = await approved(root, "shell_start", { shell: "cmd", cwd: workspace, name: "sec02-process" });
     const id = /ID:\s*(term_[a-z0-9]+)/i.exec(started)?.[1];
-    const pid = Number(/PID:\s*(\d+)/.exec(started)?.[1]);
     assert(id, started);
-    assert(Number.isInteger(pid) && pid > 0);
+    assert.match(started, /PID:\s*null\b/u, "Terminal projection exposed or invented a host PID");
 
     const cwdCommand = process.platform === "win32"
       ? "echo SEC02_TERMINAL_CWD:%CD%"

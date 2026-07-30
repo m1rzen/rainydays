@@ -10,7 +10,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const runtimeRoot = process.env.MINI_LUX_TEST_RUNTIME_ROOT ? path.resolve(process.env.MINI_LUX_TEST_RUNTIME_ROOT) : projectRoot;
+const runtimeRoot = process.env.RAINYDAYS_TEST_RUNTIME_ROOT ? path.resolve(process.env.RAINYDAYS_TEST_RUNTIME_ROOT) : projectRoot;
 const helper = path.join(runtimeRoot, "scripts", "version-test-child.mjs");
 const generator = path.join(projectRoot, "scripts", "generate-build-info.mjs");
 const distIntegrityGenerator = path.join(projectRoot, "scripts", "generate-dist-integrity.mjs");
@@ -31,10 +31,10 @@ function artifactSafeBuildId(value) {
 function childEnvironment(root, appRoot = runtimeRoot) {
   return {
     ...process.env,
-    MINI_LUX_APP_ROOT: appRoot,
-    MINI_LUX_USER_DATA_DIR: root,
-    MINI_LUX_DATA_DIR: path.join(root, "data"),
-    MINI_LUX_CONFIG_PATH: path.join(root, "config.json"),
+    RAINYDAYS_APP_ROOT: appRoot,
+    RAINYDAYS_USER_DATA_DIR: root,
+    RAINYDAYS_DATA_DIR: path.join(root, "data"),
+    RAINYDAYS_CONFIG_PATH: path.join(root, "config.json"),
     OUTPUT_DIR: path.join(root, "output"),
   };
 }
@@ -81,6 +81,7 @@ async function assertElectronMetadataRejected(root, buildInfoContent, expectedEr
   await cp(path.join(projectRoot, "electron", "main.cjs"), path.join(appRoot, "electron", "main.cjs"));
   await cp(path.join(projectRoot, "electron", "path-bootstrap.cjs"), path.join(appRoot, "electron", "path-bootstrap.cjs"));
   await cp(path.join(projectRoot, "electron", "preload.cjs"), path.join(appRoot, "electron", "preload.cjs"));
+  await cp(path.join(projectRoot, "electron", "user-data-migration.cjs"), path.join(appRoot, "electron", "user-data-migration.cjs"));
   await writeFile(path.join(appRoot, "package.json"), JSON.stringify({
     name: `gov02-metadata-${path.basename(appRoot)}`,
     version: "0.1.0",
@@ -113,7 +114,7 @@ async function assertElectronMetadataRejected(root, buildInfoContent, expectedEr
     }
     const output = `${logs.stdout}\n${logs.stderr}`;
     assert.match(output, expectedError);
-    assert(!output.includes("mini_lux_version"));
+    assert(!output.includes("rainydays_version"));
     assert(!output.includes("已启动"));
     return output;
   } finally {
@@ -127,7 +128,7 @@ async function startServer(root, buildInfo) {
   const logs = { stdout: "", stderr: "" };
   const child = spawn(process.execPath, [path.join(runtimeRoot, "dist", "index.js")], {
     cwd: root,
-    env: { ...childEnvironment(root), MINI_LUX_API_TOKEN: token, MINI_LUX_ELECTRON_VERSION: "33.4.11", PORT: String(port) },
+    env: { ...childEnvironment(root), RAINYDAYS_API_TOKEN: token, RAINYDAYS_ELECTRON_VERSION: "33.4.11", PORT: String(port) },
     windowsHide: true,
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -136,7 +137,7 @@ async function startServer(root, buildInfo) {
   child.stdout.on("data", (chunk) => { logs.stdout += chunk; });
   child.stderr.on("data", (chunk) => { logs.stderr += chunk; });
   const started = Date.now();
-  while (!logs.stdout.includes("Mini-Lux") || !logs.stdout.includes("已启动")) {
+  while (!logs.stdout.includes("RainyDays") || !logs.stdout.includes("已启动")) {
     if (child.exitCode !== null) throw new Error(`version test server exited ${child.exitCode}\n${logs.stdout}\n${logs.stderr}`);
     if (Date.now() - started > 20_000) throw new Error(`version test server timeout\n${logs.stdout}\n${logs.stderr}`);
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -165,7 +166,7 @@ async function main() {
 
     const invalidBuild = spawnSync(process.execPath, [generator], {
       cwd: projectRoot,
-      env: { ...fixedEnv, MINI_LUX_BUILD_ID: "invalid build id" },
+      env: { ...fixedEnv, RAINYDAYS_BUILD_ID: "invalid build id" },
       encoding: "utf8",
     });
     assert.notEqual(invalidBuild.status, 0);
@@ -173,7 +174,7 @@ async function main() {
     for (const invalidCiId of [" CI-ID", "CI-ID ", "\tCI-ID\t", ""]) {
       const invalidCiBuild = spawnSync(process.execPath, [generator], {
         cwd: projectRoot,
-        env: { ...fixedEnv, MINI_LUX_BUILD_ID: invalidCiId },
+        env: { ...fixedEnv, RAINYDAYS_BUILD_ID: invalidCiId },
         encoding: "utf8",
       });
       assert.notEqual(invalidCiBuild.status, 0, `CI Build ID ${JSON.stringify(invalidCiId)} must be rejected`);
@@ -184,6 +185,8 @@ async function main() {
     const fakeProject = path.join(tempRoot, "tampered-project");
     await mkdir(path.join(fakeProject, "scripts"), { recursive: true });
     await mkdir(path.join(fakeProject, "parity", "baselines"), { recursive: true });
+    await mkdir(path.join(fakeProject, "dist", "native"), { recursive: true });
+    await cp(path.join(projectRoot, "dist", "native", "sec03-native-manifest.json"), path.join(fakeProject, "dist", "native", "sec03-native-manifest.json"));
     await cp(generator, path.join(fakeProject, "scripts", "generate-build-info.mjs"));
     await cp(path.join(projectRoot, "scripts", "build-inputs.mjs"), path.join(fakeProject, "scripts", "build-inputs.mjs"));
     await writeFile(path.join(fakeProject, "package.json"), JSON.stringify({ version: "0.1.0" }));
@@ -196,10 +199,11 @@ async function main() {
 
     const digestProject = path.join(tempRoot, "digest-project");
     await mkdir(digestProject, { recursive: true });
-    for (const directory of [".github", "src", "electron", "public", "personas", "skills", "scripts", "tests", "build", "models", "vendor"]) {
+    for (const directory of [".github", "src", "electron", "public", "personas", "skills", "scripts", "tests", "build", "models", "native", "vendor"]) {
       await cp(path.join(projectRoot, directory), path.join(digestProject, directory), { recursive: true });
     }
     await mkdir(path.join(digestProject, "parity", "baselines"), { recursive: true });
+    await cp(path.join(projectRoot, "dist", "native"), path.join(digestProject, "dist", "native"), { recursive: true });
     for (const directory of ["scripts", "schema", "probes", "policies"]) {
       await cp(path.join(projectRoot, "parity", directory), path.join(digestProject, "parity", directory), { recursive: true });
     }
@@ -208,16 +212,16 @@ async function main() {
     }
     await symlink(path.join(projectRoot, "node_modules"), path.join(digestProject, "node_modules"), "junction");
     await cp(path.join(projectRoot, "parity", "baselines", "lux-desktop-0.1.898.json"), path.join(digestProject, "parity", "baselines", "lux-desktop-0.1.898.json"));
-    for (const file of ["BASELINE-DESIGN.md", "GOV-02-VERSION-MODEL.md", "GOV-03-TEST-ARCHITECTURE.md", "GOV-04-CI-ARCHITECTURE.md", "GOV-04-ARCHITECT-AMENDMENT-01.md", "SEC-01-CAPABILITY-BROKER-ARCHITECTURE.md", "SEC-02-PATH-POLICY-ARCHITECTURE.md", "SEC-02-P36-RUNTIME-DIALECT-AMENDMENT-01.md", "README.md"]) {
+    for (const file of ["BASELINE-DESIGN.md", "GOV-02-VERSION-MODEL.md", "GOV-03-TEST-ARCHITECTURE.md", "GOV-04-CI-ARCHITECTURE.md", "GOV-04-ARCHITECT-AMENDMENT-01.md", "SEC-01-CAPABILITY-BROKER-ARCHITECTURE.md", "SEC-02-PATH-POLICY-ARCHITECTURE.md", "SEC-02-P36-RUNTIME-DIALECT-AMENDMENT-01.md", "SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md", "README.md"]) {
       await cp(path.join(projectRoot, "parity", file), path.join(digestProject, "parity", file));
     }
     await mkdir(path.join(digestProject, "parity", "reports"), { recursive: true });
-    for (const file of ["sec-02-architect-freeze.json", "sec-02-p36-runtime-dialect-freeze.json"]) {
+    for (const file of ["sec-02-architect-freeze.json", "sec-02-p36-runtime-dialect-freeze.json", "sec-03-architect-freeze.json"]) {
       await cp(path.join(projectRoot, "parity", "reports", file), path.join(digestProject, "parity", "reports", file));
     }
     const digestGenerator = path.join(digestProject, "scripts", "generate-build-info.mjs");
     const derivedEnv = { ...fixedEnv };
-    delete derivedEnv.MINI_LUX_BUILD_ID;
+    delete derivedEnv.RAINYDAYS_BUILD_ID;
     let digestRun = spawnSync(process.execPath, [digestGenerator], { cwd: digestProject, env: derivedEnv, encoding: "utf8" });
     assert.equal(digestRun.status, 0, digestRun.stderr);
     const digestBefore = JSON.parse(await readFile(path.join(digestProject, "build-info.json"), "utf8"));
@@ -257,7 +261,7 @@ async function main() {
     pass("Electron staging rejects stale build metadata", "source mutation blocked before staging copy or npm install");
 
     const distIntegrityProject = path.join(tempRoot, "dist-integrity-project");
-    for (const directory of [".github", "src", "electron", "public", "personas", "skills", "scripts", "tests", "dist", "build", "models", "vendor"]) {
+    for (const directory of [".github", "src", "electron", "public", "personas", "skills", "scripts", "tests", "dist", "build", "models", "native", "vendor"]) {
       await cp(path.join(projectRoot, directory), path.join(distIntegrityProject, directory), { recursive: true });
     }
     await mkdir(path.join(distIntegrityProject, "parity", "baselines"), { recursive: true });
@@ -269,11 +273,11 @@ async function main() {
     }
     await symlink(path.join(projectRoot, "node_modules"), path.join(distIntegrityProject, "node_modules"), "junction");
     await cp(path.join(projectRoot, "parity", "baselines", "lux-desktop-0.1.898.json"), path.join(distIntegrityProject, "parity", "baselines", "lux-desktop-0.1.898.json"));
-    for (const file of ["BASELINE-DESIGN.md", "GOV-02-VERSION-MODEL.md", "GOV-03-TEST-ARCHITECTURE.md", "GOV-04-CI-ARCHITECTURE.md", "GOV-04-ARCHITECT-AMENDMENT-01.md", "SEC-01-CAPABILITY-BROKER-ARCHITECTURE.md", "SEC-02-PATH-POLICY-ARCHITECTURE.md", "SEC-02-P36-RUNTIME-DIALECT-AMENDMENT-01.md", "README.md"]) {
+    for (const file of ["BASELINE-DESIGN.md", "GOV-02-VERSION-MODEL.md", "GOV-03-TEST-ARCHITECTURE.md", "GOV-04-CI-ARCHITECTURE.md", "GOV-04-ARCHITECT-AMENDMENT-01.md", "SEC-01-CAPABILITY-BROKER-ARCHITECTURE.md", "SEC-02-PATH-POLICY-ARCHITECTURE.md", "SEC-02-P36-RUNTIME-DIALECT-AMENDMENT-01.md", "SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md", "README.md"]) {
       await cp(path.join(projectRoot, "parity", file), path.join(distIntegrityProject, "parity", file));
     }
     await mkdir(path.join(distIntegrityProject, "parity", "reports"), { recursive: true });
-    for (const file of ["sec-02-architect-freeze.json", "sec-02-p36-runtime-dialect-freeze.json"]) {
+    for (const file of ["sec-02-architect-freeze.json", "sec-02-p36-runtime-dialect-freeze.json", "sec-03-architect-freeze.json"]) {
       await cp(path.join(projectRoot, "parity", "reports", file), path.join(distIntegrityProject, "parity", "reports", file));
     }
     await writeFile(path.join(distIntegrityProject, "dist", "version.js"), `${await readFile(path.join(distIntegrityProject, "dist", "version.js"), "utf8")}\n// dist-tamper\n`);
@@ -283,7 +287,7 @@ async function main() {
       encoding: "utf8",
     });
     assert.notEqual(tamperedDistStage.status, 0);
-    assert.match(tamperedDistStage.stderr, /dist fresh compilation byte mismatch|dist integrity mismatch/);
+    assert.match(tamperedDistStage.stderr, /dist fresh (?:JavaScript )?compilation byte mismatch|dist integrity mismatch/);
     await assert.rejects(() => readFile(path.join(distIntegrityProject, ".electron-app", "dist", "version.js")));
     pass("Electron staging rejects tampered dist", "compiled output mismatch blocked before staging copy or npm install");
 
@@ -337,7 +341,7 @@ async function main() {
     await writeFile(path.join(forgedMetadataRoot, "build-info.json"), JSON.stringify({ ...secondBuild, buildIdSource: "derived", buildId: "FORGED.valid-id" }));
     const forgedMetadata = runHelper("version-info", forgedMetadataRoot, forgedMetadataRoot);
     assert.notEqual(forgedMetadata.status, 0);
-    assert.match(forgedMetadata.stderr, /derived Build ID does not match sourceDigest/);
+    assert.match(forgedMetadata.stderr, /derived (?:Build ID|identity) does not match sourceDigest/);
     pass("forged derived Build ID rejected", "Build ID/sourceDigest mismatch rejected");
 
     const unknownMetadataRoot = path.join(tempRoot, "unknown-metadata");
@@ -683,7 +687,7 @@ async function main() {
     const runtimeBuild = JSON.parse(await readFile(path.join(runtimeRoot, "build-info.json"), "utf8"));
     const server = await startServer(serverRoot, runtimeBuild);
     try {
-      const headers = { "X-Mini-Lux-Token": server.token };
+      const headers = { "X-RainyDays-Token": server.token };
       const version = await (await fetch(`http://127.0.0.1:${server.port}/api/version`, { headers })).json();
       const status = await (await fetch(`http://127.0.0.1:${server.port}/api/status`, { headers })).json();
       const diagnosticResponse = await fetch(`http://127.0.0.1:${server.port}/api/diagnostics`, { headers });
@@ -700,7 +704,7 @@ async function main() {
       assert(!serialized.includes(server.token));
       assert(!serialized.includes(serverRoot));
       assert(!/apiKey/i.test(serialized));
-      assert.equal(diagnosticResponse.headers.get("content-disposition"), `attachment; filename="mini-lux-diagnostics-${artifactSafeBuildId(runtimeBuild.buildId)}.json"`);
+      assert.equal(diagnosticResponse.headers.get("content-disposition"), `attachment; filename="rainydays-diagnostics-${artifactSafeBuildId(runtimeBuild.buildId)}.json"`);
       pass("API, log and diagnostics share one Build ID", runtimeBuild.buildId);
     } finally {
       await stopChild(server.child);

@@ -107,7 +107,7 @@ async function runDirectStep(workspace, args, env, timeoutMs = 300_000) {
 export async function runSourceTestBuild({ workspace, buildId, sourceDateEpoch, candidateSourceDigest }) {
   try { await assertEmptyFormalOutputs(workspace); }
   catch { return { passed: false, failureClass: "SOURCE_TEST_OUTPUT_PREEXISTS", exitCode: 1, signal: null, timedOut: false, timeoutTermination: null, childReportSha256: null, evidence: { status: "preexisting-output" } }; }
-  const env = safeChildEnvironment({ MINI_LUX_BUILD_ID: buildId, SOURCE_DATE_EPOCH: sourceDateEpoch });
+  const env = safeChildEnvironment({ RAINYDAYS_BUILD_ID: buildId, SOURCE_DATE_EPOCH: sourceDateEpoch });
   const commands = [
     ["scripts/generate-build-info.mjs"],
     ["node_modules/typescript/bin/tsc", "--project", "tsconfig.json"],
@@ -231,13 +231,13 @@ export async function runPackage({ workspace, evidenceDirectory, artifactsDirect
   const npmCli = await resolveNpmCli();
   const stagingMarker = path.join(evidenceDirectory, "staging-install.json");
   const env = safeChildEnvironment({
-    MINI_LUX_BUILD_ID: buildId,
+    RAINYDAYS_BUILD_ID: buildId,
     SOURCE_DATE_EPOCH: sourceDateEpoch,
-    MINI_LUX_NPM_CLI_PATH: npmCli,
-    MINI_LUX_GOV04_STAGING_INSTALL_MARKER: stagingMarker,
-    MINI_LUX_GOV04_RUN_ID: runId,
-    MINI_LUX_GOV04_CHALLENGE: challenge,
-    MINI_LUX_GOV04_CANDIDATE_ID: candidateId,
+    RAINYDAYS_NPM_CLI_PATH: npmCli,
+    RAINYDAYS_GOV04_STAGING_INSTALL_MARKER: stagingMarker,
+    RAINYDAYS_GOV04_RUN_ID: runId,
+    RAINYDAYS_GOV04_CHALLENGE: challenge,
+    RAINYDAYS_GOV04_CANDIDATE_ID: candidateId,
   });
   let result;
   try { result = await npmInvocation(workspace, ["run", "dist"], { env, timeoutMs: 900_000 }); }
@@ -305,7 +305,7 @@ export async function runPackagedSmoke({ workspace, evidenceDirectory, artifactP
   catch { return { passed: false, failureClass: "PACKAGED_SMOKE_INPUT_INVALID", exitCode: 1, signal: null, timedOut: false, timeoutTermination: null, childReportSha256: null, evidence: { status: "non-frozen-or-mutated-input" } }; }
   let result;
   try {
-    result = await runBoundedProcess(process.execPath, ["scripts/run-test-layer.mjs", "--task", "GOV-03", "--layer", "packaged", "--report", reportPath], { cwd: workspace, env: safeChildEnvironment({ MINI_LUX_INSTALLER_OVERRIDE: artifactPath, MINI_LUX_PACKAGE_ARTIFACT_MANIFEST: artifactManifestPath, MINI_LUX_BUILD_ID: buildId, SOURCE_DATE_EPOCH: sourceDateEpoch }), timeoutMs: 900_000 });
+    result = await runBoundedProcess(process.execPath, ["scripts/run-test-layer.mjs", "--task", "GOV-03", "--layer", "packaged", "--report", reportPath], { cwd: workspace, env: safeChildEnvironment({ RAINYDAYS_INSTALLER_OVERRIDE: artifactPath, RAINYDAYS_PACKAGE_ARTIFACT_MANIFEST: artifactManifestPath, RAINYDAYS_BUILD_ID: buildId, SOURCE_DATE_EPOCH: sourceDateEpoch }), timeoutMs: 900_000 });
   } catch (error) { return processFailure(error, "PACKAGED_SMOKE_FAILED"); }
   try {
     const child = await readJsonReport(reportPath);

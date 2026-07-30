@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="public/icon.png" alt="Mini-Lux Logo" width="112" height="112" />
+  <img src="public/icon.png" alt="RainyDays Logo" width="112" height="112" />
 
-  # Mini-Lux
+  # RainyDays
 
   **一个面向真实工作的本地优先 AI Agent 桌面运行时**
 
@@ -18,9 +18,9 @@
 
 ---
 
-## 关于 Mini-Lux
+## 关于 RainyDays
 
-Mini-Lux 是一个以 **Lux Desktop v0.1.898** 为行为基线构建的微型 AI Agent 系统。它不是简单的聊天界面，而是一套能够管理会话、调用工具、处理文件、维护记忆、拆解任务、调度子 Agent，并在桌面环境中持续工作的 Agent Runtime。
+RainyDays 是一个以 **Lux Desktop v0.1.898** 为行为基线构建的微型 AI Agent 系统。它不是简单的聊天界面，而是一套能够管理会话、调用工具、处理文件、维护记忆、拆解任务、调度子 Agent，并在桌面环境中持续工作的 Agent Runtime。
 
 项目坚持三个核心方向：
 
@@ -29,7 +29,7 @@ Mini-Lux 是一个以 **Lux Desktop v0.1.898** 为行为基线构建的微型 AI
 - **证据驱动**：功能完成度以契约、负向测试、真实环境回执和打包验证为准，而不是只看“代码能跑”。
 
 > [!IMPORTANT]
-> Mini-Lux 仍处于积极开发阶段。项目目标是逐步达到 Lux Desktop 的行为对齐，但当前不宣称已经完成 100% parity，也不建议将未审计构建直接用于高风险生产环境。
+> RainyDays 仍处于积极开发阶段。项目目标是逐步达到 Lux Desktop 的行为对齐，但当前不宣称已经完成 100% parity，也不建议将未审计构建直接用于高风险生产环境。
 
 ## 功能亮点
 
@@ -101,7 +101,7 @@ flowchart LR
     MEMORY --> DB[(SQLite)]
 ```
 
-Mini-Lux 将“模型决定做什么”和“系统允许做什么”分离：LLM 只能提出工具调用，实际参数校验、路径授权、运行时所有权和执行隔离由宿主系统完成。
+RainyDays 将“模型决定做什么”和“系统允许做什么”分离：LLM 只能提出工具调用，实际参数校验、路径授权、运行时所有权和执行隔离由宿主系统完成。
 
 ## 环境要求
 
@@ -123,8 +123,8 @@ Mini-Lux 将“模型决定做什么”和“系统允许做什么”分离：LL
 ### 1. 克隆并安装依赖
 
 ```powershell
-git clone https://github.com/m1rzen/mini-lux.git
-cd mini-lux
+git clone https://github.com/m1rzen/rainydays.git
+cd rainydays
 npm ci
 ```
 
@@ -199,7 +199,7 @@ npm run dev
 
 ## 安全架构
 
-Mini-Lux 将安全约束作为运行时设计的一部分，而不是只依赖 Prompt：
+RainyDays 将安全约束作为运行时设计的一部分，而不是只依赖 Prompt：
 
 1. **Capability Broker**：按 Session、Persona、工具和调用上下文决定能力是否可见、可执行。
 2. **PathPolicy**：使用受管根目录和对象身份校验限制文件访问，阻断路径穿越、链接逃逸与根目录替换。
@@ -231,7 +231,7 @@ Mini-Lux 将安全约束作为运行时设计的一部分，而不是只依赖 P
 ## 项目结构
 
 ```text
-mini-lux/
+rainydays/
 ├─ electron/          # Electron 主进程、preload 与桌面启动链
 ├─ native/            # Windows AppContainer / Job / ConPTY 原生宿主
 ├─ parity/            # Lux 基线、架构冻结、Schema 与治理报告
@@ -266,5 +266,5 @@ npm run test:quick
 ---
 
 <div align="center">
-  <strong>Mini-Lux</strong> — 为复杂工作带来清晰、秩序与可验证的执行力。
+  <strong>RainyDays</strong> — 为复杂工作带来清晰、秩序与可验证的执行力。
 </div>

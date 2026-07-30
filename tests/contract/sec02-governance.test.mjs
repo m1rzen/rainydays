@@ -10,6 +10,7 @@ import {
   buildSec02ResolvedManifest,
   canonicalJson,
   canonicalPayloadSha256,
+  currentResolvedManifestPath,
   projectRoot,
   resolvedManifestPath,
   sha256Bytes,
@@ -19,7 +20,8 @@ import {
 } from "../../scripts/sec02-governance.mjs";
 
 const run = promisify(execFile);
-const resolvedPath = path.join(projectRoot, ...resolvedManifestPath.split("/"));
+const resolvedPath = path.join(projectRoot, ...currentResolvedManifestPath.split("/"));
+const frozenResolvedPath = path.join(projectRoot, ...resolvedManifestPath.split("/"));
 
 async function readJson(relative) {
   return JSON.parse(await readFile(path.join(projectRoot, ...relative.split("/")), "utf8"));
@@ -42,6 +44,8 @@ test("SEC-02 frozen architecture, matrix, predecessor manifests and pipeline inp
 });
 
 test("SEC-02 generator is canonical, byte-stable, and fully bound", async () => {
+  assert.notEqual(resolvedPath, frozenResolvedPath);
+  assert.equal(sha256Bytes(await readFile(frozenResolvedPath)), "a788157aeb96cf6a4ca4ac6878eb902207df4aeffad2b537a782930a98961b5a");
   await run(process.execPath, ["scripts/generate-sec02-resolved-manifest.mjs", "--check"], { cwd: projectRoot });
   const manifest = JSON.parse(await readFile(resolvedPath, "utf8"));
   await validateSec02ResolvedManifest(manifest);

@@ -61,7 +61,7 @@ async function api(base, token, route, options = {}) {
   const response = await fetch(`${base}${route}`, {
     ...options,
     headers: {
-      "X-Mini-Lux-Token": token,
+      "X-RainyDays-Token": token,
       "Content-Type": "application/json",
       ...options.headers,
     },
@@ -80,13 +80,13 @@ async function startServer(fixture, configPath, token) {
     env: {
       ...process.env,
       PORT: String(port),
-      MINI_LUX_API_TOKEN: token,
-      MINI_LUX_USER_DATA_DIR: fixture,
-      MINI_LUX_DATA_DIR: path.join(fixture, "data"),
-      MINI_LUX_CONFIG_PATH: configPath,
-      MINI_LUX_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
-      MINI_LUX_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
-      MINI_LUX_PUBLIC_DIR: path.join(projectRoot, "public"),
+      RAINYDAYS_API_TOKEN: token,
+      RAINYDAYS_USER_DATA_DIR: fixture,
+      RAINYDAYS_DATA_DIR: path.join(fixture, "data"),
+      RAINYDAYS_CONFIG_PATH: configPath,
+      RAINYDAYS_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
+      RAINYDAYS_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
+      RAINYDAYS_PUBLIC_DIR: path.join(projectRoot, "public"),
       WORKSPACE_ROOT: "",
       DEPARTMENT_DATA_ROOT: "",
       OUTPUT_DIR: "",
@@ -99,7 +99,7 @@ async function startServer(fixture, configPath, token) {
   child.stdout.on("data", chunk => { stdout += chunk; });
   child.stderr.on("data", chunk => { stderr += chunk; });
   await waitFor(async () => {
-    const response = await fetch(`${base}/status`, { headers: { "X-Mini-Lux-Token": token } }).catch(() => null);
+    const response = await fetch(`${base}/status`, { headers: { "X-RainyDays-Token": token } }).catch(() => null);
     return response?.ok === true;
   }, { timeoutMs: 30_000, label: "SEC-02 File Viewer Settings server" });
   return { child, base, logs: () => ({ stdout, stderr }) };
@@ -109,11 +109,6 @@ async function stopServer(server) {
   const termination = await terminateProcessTreeAsync(server.child);
   const logs = server.logs();
   assert.equal(termination.childExited, true, `server cleanup failed\nstdout=${logs.stdout}\nstderr=${logs.stderr}`);
-}
-
-async function processExists(pid) {
-  try { process.kill(pid, 0); return true; }
-  catch { return false; }
 }
 
 function configFor(workspaceRoot, departmentDataRoot, outputDir) {
@@ -159,7 +154,7 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
     const origin = server.base.slice(0, -4);
     const publicIndex = await fetch(`${origin}/`);
     assert.equal(publicIndex.status, 200);
-    assert.match(await publicIndex.text(), /Mini-Lux/);
+    assert.match(await publicIndex.text(), /RainyDays/);
     const publicEscape = await fetch(`${origin}/%2e%2e/build-info.json`);
     assert.equal(publicEscape.status, 404);
 
@@ -173,42 +168,38 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
     assert.equal(preview.status, 200);
     assert.equal(preview.body.kind, "image");
 
-    const full = await fetch(`${server.base}/files/content?root=workspace&path=old.png`, { headers: { "X-Mini-Lux-Token": token } });
+    const full = await fetch(`${server.base}/files/content?root=workspace&path=old.png`, { headers: { "X-RainyDays-Token": token } });
     assert.equal(full.status, 200);
     assert.deepEqual(Buffer.from(await full.arrayBuffer()), oldImage);
     const range = await fetch(`${server.base}/files/content?root=workspace&path=old.png`, {
-      headers: { "X-Mini-Lux-Token": token, Range: "bytes=2-5" },
+      headers: { "X-RainyDays-Token": token, Range: "bytes=2-5" },
     });
     assert.equal(range.status, 206);
     assert.equal(range.headers.get("content-range"), `bytes 2-5/${oldImage.length}`);
     assert.equal(Buffer.from(await range.arrayBuffer()).toString("utf8"), "2345");
     const suffix = await fetch(`${server.base}/files/content?root=workspace&path=old.png`, {
-      headers: { "X-Mini-Lux-Token": token, Range: "bytes=-5" },
+      headers: { "X-RainyDays-Token": token, Range: "bytes=-5" },
     });
     assert.equal(suffix.status, 206);
     assert.equal(Buffer.from(await suffix.arrayBuffer()).toString("utf8"), "IMAGE");
     const invalidRange = await fetch(`${server.base}/files/content?root=workspace&path=old.png`, {
-      headers: { "X-Mini-Lux-Token": token, Range: "bytes=999-1000" },
+      headers: { "X-RainyDays-Token": token, Range: "bytes=999-1000" },
     });
     assert.equal(invalidRange.status, 416);
     assert.equal(invalidRange.headers.get("content-range"), `bytes */${oldImage.length}`);
 
-    const oldTerminal = await api(server.base, token, "/terminals", {
+    const directTerminal = await api(server.base, token, "/terminals", {
       method: "POST",
       body: JSON.stringify({ name: "old-authority", shell: "cmd", cwd: oldWorkspace }),
     });
-    assert.equal(oldTerminal.status, 201);
-    const oldTerminalId = oldTerminal.body.terminal.id;
-    const oldPid = oldTerminal.body.terminal.pid;
+    assert.equal(directTerminal.status, 403);
+    assert.equal(directTerminal.body.code, "EXEC_DIRECT_MUTATION_DENIED");
 
     const enrolled = await api(server.base, token, "/settings/general", {
       method: "PUT",
       body: JSON.stringify({ workspaceRoot: newWorkspace, departmentDataRoot: newDepartment, outputDir: newOutput }),
     });
     assert.equal(enrolled.status, 200, JSON.stringify(enrolled.body));
-    await waitFor(() => processExists(oldPid).then(exists => !exists), { timeoutMs: 5_000, label: "old Settings authority Terminal retirement" });
-    const oldTerminalRead = await api(server.base, token, `/terminals/${oldTerminalId}/output`);
-    assert.equal(oldTerminalRead.status, 404);
 
     const currentRoots = await api(server.base, token, "/files/roots");
     assert.equal(currentRoots.status, 200);
@@ -218,13 +209,6 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
     const newPreview = await api(server.base, token, "/files/preview?root=workspace&path=new.png");
     assert.equal(newPreview.status, 200);
 
-    const stableTerminal = await api(server.base, token, "/terminals", {
-      method: "POST",
-      body: JSON.stringify({ name: "candidate-canary", shell: "cmd", cwd: newWorkspace }),
-    });
-    assert.equal(stableTerminal.status, 201);
-    const stableId = stableTerminal.body.terminal.id;
-    const stablePid = stableTerminal.body.terminal.pid;
     const stableConfigBytes = await fs.readFile(configPath);
 
     const unsafeSettings = [
@@ -248,8 +232,7 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
       );
       const events = parsePathDenialEvents(server.logs()).slice(auditOffset).filter(event => event.rootId === vector.rootId);
       assert.deepEqual(await fs.readFile(configPath), stableConfigBytes);
-      assert.equal(await processExists(stablePid), true);
-      assert.equal((await api(server.base, token, `/terminals/${stableId}/output`)).status, 200);
+      assert.equal((await api(server.base, token, "/files/roots")).status, 200);
       const actual = configurationDenialActual(events, vector.raw);
       assert.deepEqual(actual, {
         denied: true,
@@ -270,7 +253,7 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
     assert.equal(rollbackCandidate.status, 400);
     await assert.rejects(() => fs.access(path.join(newWorkspace, "rollback-candidate")));
     assert.deepEqual(await fs.readFile(configPath), stableConfigBytes);
-    assert.equal(await processExists(stablePid), true);
+    assert.equal((await api(server.base, token, "/files/roots")).status, 200);
 
     const generatedOutput = path.join(newWorkspace, "generated", "output");
     const missingOutputEnrolled = await api(server.base, token, "/settings/general", {
@@ -279,8 +262,6 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
     });
     assert.equal(missingOutputEnrolled.status, 200, JSON.stringify(missingOutputEnrolled.body));
     assert.equal((await fs.stat(generatedOutput)).isDirectory(), true);
-    await waitFor(() => processExists(stablePid).then(exists => !exists), { timeoutMs: 5_000, label: "pre-enrollment authority Terminal retirement" });
-    assert.equal((await api(server.base, token, `/terminals/${stableId}/output`)).status, 404);
     assert.equal((await api(server.base, token, "/files/roots")).body.roots.find(root => root.id === "output").path, generatedOutput);
 
     const persisted = JSON.parse(await fs.readFile(configPath, "utf8"));
@@ -331,13 +312,13 @@ test("SEC-02 unsafe disk Settings paths never publish a runtime", async () => {
         env: {
           ...process.env,
           PORT: String(port),
-          MINI_LUX_API_TOKEN: `sec02-disk-${vector.family}`,
-          MINI_LUX_USER_DATA_DIR: fixture,
-          MINI_LUX_DATA_DIR: path.join(fixture, "data"),
-          MINI_LUX_CONFIG_PATH: configPath,
-          MINI_LUX_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
-          MINI_LUX_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
-          MINI_LUX_PUBLIC_DIR: path.join(projectRoot, "public"),
+          RAINYDAYS_API_TOKEN: `sec02-disk-${vector.family}`,
+          RAINYDAYS_USER_DATA_DIR: fixture,
+          RAINYDAYS_DATA_DIR: path.join(fixture, "data"),
+          RAINYDAYS_CONFIG_PATH: configPath,
+          RAINYDAYS_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
+          RAINYDAYS_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
+          RAINYDAYS_PUBLIC_DIR: path.join(projectRoot, "public"),
         },
       });
       let stdout = "";
@@ -350,7 +331,7 @@ test("SEC-02 unsafe disk Settings paths never publish a runtime", async () => {
         assert.equal(await waitForChildExit(child, 20_000), true, `${vector.family} disk config did not terminate`);
         assert.notEqual(child.exitCode, 0, `${vector.family} disk config published a runtime`);
         const reachable = await fetch(`http://127.0.0.1:${port}/api/status`, {
-          headers: { "X-Mini-Lux-Token": `sec02-disk-${vector.family}` },
+          headers: { "X-RainyDays-Token": `sec02-disk-${vector.family}` },
         }).then(() => true, () => false);
         const unchanged = Buffer.compare(await fs.readFile(configPath), original) === 0;
         const events = parsePathDenialEvents({ stdout, stderr }).filter(event => event.rootId === vector.rootId);
@@ -393,13 +374,12 @@ test("SEC-02 real persistence failure retires old authority and stops fail-close
   try {
     server = await startServer(fixture, configPath, token);
     assert.equal((await api(server.base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: "persist failure" }) })).status, 200);
-    const terminal = await api(server.base, token, "/terminals", {
+    const directTerminal = await api(server.base, token, "/terminals", {
       method: "POST",
       body: JSON.stringify({ name: "retirement-canary", shell: "cmd", cwd: workspace }),
     });
-    assert.equal(terminal.status, 201);
-    const terminalId = terminal.body.terminal.id;
-    const terminalPid = terminal.body.terminal.pid;
+    assert.equal(directTerminal.status, 403);
+    assert.equal(directTerminal.body.code, "EXEC_DIRECT_MUTATION_DENIED");
 
     await fs.rename(configDirectory, preservedConfigDirectory);
     await fs.symlink(outside, configDirectory, "junction");
@@ -409,18 +389,14 @@ test("SEC-02 real persistence failure retires old authority and stops fail-close
     });
     assert.equal(failed.status, 400);
     assert.match(failed.body.error, /runtime recovery failed|PATH_ROOT_UNAVAILABLE|PATH_IDENTITY_CHANGED/);
-    await waitFor(() => processExists(terminalPid).then(exists => !exists), { timeoutMs: 5_000, label: "persistence failure old authority retirement" });
-    const terminalAlive = await processExists(terminalPid);
-    const terminalStatus = (await api(server.base, token, `/terminals/${terminalId}/output`)).status;
     const rootsStatus = (await api(server.base, token, "/files/roots")).status;
-    assert.equal(terminalStatus, 404);
     assert.equal(rootsStatus, 400);
     const diskPreserved = Buffer.compare(await fs.readFile(path.join(preservedConfigDirectory, "config.json")), original) === 0;
     assert.equal(diskPreserved, true);
     await assert.rejects(() => fs.access(path.join(outside, "config.json")));
     assert.equal((await api(server.base, token, "/status")).status, 200);
     if (persistenceRecorder.enabled) {
-      const retiredAuthorityReactivated = terminalAlive || terminalStatus !== 404;
+      const retiredAuthorityReactivated = rootsStatus === 200;
       await persistenceRecorder.observe("SEC02-P31-persist-failure", {
         diskRuntimeConsistent: diskPreserved && rootsStatus === 400,
         retiredAuthorityReactivated,
@@ -530,13 +506,13 @@ test("SEC-02 config parent junction fails closed before runtime publication", as
     env: {
       ...process.env,
       PORT: String(port),
-      MINI_LUX_API_TOKEN: "sec02-config-link-test",
-      MINI_LUX_USER_DATA_DIR: fixture,
-      MINI_LUX_DATA_DIR: path.join(fixture, "data"),
-      MINI_LUX_CONFIG_PATH: configPath,
-      MINI_LUX_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
-      MINI_LUX_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
-      MINI_LUX_PUBLIC_DIR: path.join(projectRoot, "public"),
+      RAINYDAYS_API_TOKEN: "sec02-config-link-test",
+      RAINYDAYS_USER_DATA_DIR: fixture,
+      RAINYDAYS_DATA_DIR: path.join(fixture, "data"),
+      RAINYDAYS_CONFIG_PATH: configPath,
+      RAINYDAYS_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
+      RAINYDAYS_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
+      RAINYDAYS_PUBLIC_DIR: path.join(projectRoot, "public"),
     },
   });
   let stdout = "";
@@ -551,7 +527,7 @@ test("SEC-02 config parent junction fails closed before runtime publication", as
     assert.match(`${stdout}\n${stderr}`, /PATH_REDIRECT_DENIED|Path operation denied/);
     assert.deepEqual(await fs.readFile(path.join(outside, "config.json")), original);
     const reachable = await fetch(`http://127.0.0.1:${port}/api/status`, {
-      headers: { "X-Mini-Lux-Token": "sec02-config-link-test" },
+      headers: { "X-RainyDays-Token": "sec02-config-link-test" },
     }).then(() => true, () => false);
     assert.equal(reachable, false);
     const events = parsePathDenialEvents({ stdout, stderr }).filter(event => event.rootId === "config");

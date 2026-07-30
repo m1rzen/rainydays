@@ -71,18 +71,19 @@ async function verifySupervisorBoundary() {
 
 async function verifyTerminalFacadeBoundary() {
   const index = await source("src/index.ts");
-  const operations = [
-    "file:reveal", "terminal:list", "terminal:start", "terminal:output", "terminal:input",
-    "terminal:clear", "terminal:kill", "terminal:close", "terminal:subscribe",
-  ];
-  for (const operation of operations) {
-    assert.equal(index.split(`runDirectOperation("${operation}"`).length - 1, 1, `${operation} must have one facade call`);
+  const operationCounts = new Map([
+    ["file:reveal", 1], ["terminal:list", 1], ["terminal:start", 2], ["terminal:output", 1],
+    ["terminal:input", 1], ["terminal:clear", 1], ["terminal:kill", 1], ["terminal:close", 1],
+    ["terminal:subscribe", 1],
+  ]);
+  for (const [operation, expectedCount] of operationCounts) {
+    assert.equal(index.split(`runDirectOperation("${operation}"`).length - 1, expectedCount, `${operation} direct-operation phase count differs`);
   }
 
   for (const match of index.matchAll(/terminalFacade\.(list|start|output|input|get|clear|kill|close|subscribe)\(/g)) {
     const routeStart = index.lastIndexOf("app.", match.index);
-    const local = index.slice(routeStart, match.index);
-    assert(local.includes("runDirectOperation("), `${match[0]} bypasses direct-operation authorization`);
+    const authorizationStart = index.lastIndexOf("runDirectOperation(", match.index);
+    assert(authorizationStart > routeStart, `${match[0]} bypasses direct-operation authorization`);
   }
   assert.match(index, /terminalFacade\.disposeAllForShutdown\(\)/);
   assert.doesNotMatch(index, /terminalManager/);
@@ -94,15 +95,15 @@ async function verifyTerminalFacadeBoundary() {
   assert.match(terminalTools, /function terminalOwner\(invocation\?/);
   assert.match(terminalTools, /return invocation\.resourceOwner/);
   assert.doesNotMatch(terminalTools, /terminalManager/);
-  assert.match(terminalTools, /invocation\.path\.withInitialCwd\([\s\S]*terminalFacade\.start\(terminalOwner\(invocation\),/);
+  assert.match(terminalTools, /invocation\.path\.withExecutionRoot\([\s\S]*terminalFacade\.start\(terminalOwner\(invocation\),/);
   assert.doesNotMatch(terminalTools, /\{\s*sessionId\s*:[\s\S]*principal\s*:/);
-  assert.match(index, /withDirectInitialCwd\([\s\S]*"terminal:start"[\s\S]*terminalFacade\.start\(owner,/);
+  assert.match(index, /withDirectExecutionRoot\([\s\S]*"terminal:start"[\s\S]*terminalFacade\.start\(owner,/);
   assert.match(terminalFacade, /export\s*\{\s*terminalFacade\s*\}\s*from "\.\/terminal\.js"/);
   assert.doesNotMatch(terminalFacade, /TerminalManager|terminalManager/);
 
   const terminalSource = await source("src/terminal.ts");
   assert.match(terminalSource, /class\s+TerminalManager\s*\{/);
-  assert.match(terminalSource, /const\s+terminalManager\s*=\s*new\s+TerminalManager\(\)/);
+  assert.match(terminalSource, /export\s+const\s+terminalFacade\s*=\s*facadeFor\(new\s+TerminalManager\(productionIsolation\)\)/);
   assert.doesNotMatch(terminalSource, /export\s+(?:class|const)\s+(?:TerminalManager|terminalManager)/);
   for (const absolute of await collectSourceFiles(projectRoot)) {
     const relative = toPosix(path.relative(projectRoot, absolute));

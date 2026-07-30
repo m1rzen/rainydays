@@ -23,6 +23,11 @@ const outputRelative = Object.freeze([
   "dist/native/sandbox-launcher.node",
 ]);
 const manifestRelative = "dist/native/sec03-native-manifest.json";
+const testOutputRelative = Object.freeze([
+  ".sec03-native-test/sandbox-host.exe",
+  ".sec03-native-test/sandbox-launcher.node",
+]);
+const testManifestRelative = ".sec03-native-test/sec03-native-test-manifest.json";
 
 function run(executable, args, options = {}) {
   const result = spawnSync(executable, args, { cwd: projectRoot, encoding: "utf8", windowsHide: true, ...options });
@@ -94,6 +99,14 @@ const canonicalArguments = Object.freeze({
   launcherCompile: [...common, `/DNAPI_VERSION=${versions.napi}`, "/LD", "native/sandbox-host/sandbox-launcher.cpp", "/link", "advapi32.lib", "bcrypt.lib", "crypt32.lib", "userenv.lib", "shell32.lib", "ole32.lib", "delayimp.lib", "/DELAYLOAD:node.exe", nodeLib, "/OPT:REF", "/OPT:ICF", "/DYNAMICBASE", "/NXCOMPAT", "/HIGHENTROPYVA", "/MACHINE:X64"],
   hostCompile: [...common, "native/sandbox-host/sandbox-host.cpp", "/link", "advapi32.lib", "bcrypt.lib", "crypt32.lib", "userenv.lib", "shell32.lib", "ole32.lib", "/OPT:REF", "/OPT:ICF", "/DYNAMICBASE", "/NXCOMPAT", "/HIGHENTROPYVA", "/MACHINE:X64", "/SUBSYSTEM:CONSOLE"],
 });
+function testArguments(args) {
+  const link = args.indexOf("/link");
+  return [...args.slice(0, link), "/DMINI_LUX_SEC03_NATIVE_TEST", ...args.slice(link)];
+}
+const canonicalTestArguments = Object.freeze({
+  launcherCompile: testArguments(canonicalArguments.launcherCompile),
+  hostCompile: testArguments(canonicalArguments.hostCompile),
+});
 
 const sourceFiles = await Promise.all(sourceRelative.map(fileRecord));
 const sourceDigest = await digestRecords(sourceFiles, "mini-lux-sec03-native-source-v1");
@@ -119,26 +132,50 @@ const toolchain = {
 };
 const toolchainDigest = sha256(Buffer.from(JSON.stringify({ toolchain, canonicalArguments })));
 
-async function expectedManifest() {
+async function outputRecords(relativePaths) {
   const outputs = [];
-  for (const relative of outputRelative) {
+  for (const relative of relativePaths) {
     const record = await fileRecord(relative);
     const bytes = await readFile(path.join(projectRoot, ...relative.split("/")));
     const machine = parsePeMachine(bytes);
     if (machine !== versions.machine) throw new Error(`${relative} is not AMD64 PE (machine=0x${machine.toString(16)})`);
     outputs.push({ ...record, machine: "AMD64" });
   }
+  return outputs;
+}
+
+async function expectedManifest() {
   return {
     schemaVersion: 1,
     architecture: "x64",
     canonicalArguments,
-    outputs,
+    outputs: await outputRecords(outputRelative),
     signatureStatus: "unsigned-local",
     sourceDigest,
     sourceFiles,
     toolchain,
     toolchainDigest,
   };
+}
+
+async function expectedTestManifest() {
+  return {
+    schemaVersion: 1,
+    architecture: "x64",
+    canonicalArguments: canonicalTestArguments,
+    outputs: await outputRecords(testOutputRelative),
+    sourceDigest,
+    toolchainDigest,
+  };
+}
+
+async function exactManifest(relative, expected) {
+  try {
+    const actual = await readFile(path.join(projectRoot, ...relative.split("/")), "utf8");
+    return actual === `${JSON.stringify(await expected(), null, 2)}\n`;
+  } catch {
+    return false;
+  }
 }
 
 const distNative = path.join(projectRoot, "dist", "native");
@@ -155,31 +192,49 @@ if (checkOnly) {
 
 const temp = path.join(projectRoot, ".sec03-native-build");
 const testNative = path.join(projectRoot, ".sec03-native-test");
+const productionNames = await readdir(distNative).catch(() => []);
+const productionReusable = JSON.stringify(productionNames.sort()) === JSON.stringify(["sandbox-host.exe", "sandbox-launcher.node", "sec03-native-manifest.json"].sort())
+  && await exactManifest(manifestRelative, expectedManifest);
+const testReusable = await exactManifest(testManifestRelative, expectedTestManifest);
+if (productionReusable && testReusable) {
+  console.log(`SEC-03 native build REUSED ${sourceDigest}`);
+  process.exit(0);
+}
+
+function compile(args, executable, object) {
+  const link = args.indexOf("/link");
+  run(cl, [...args.slice(0, link), `/Fe:${executable}`, `/Fo:${object}`, ...args.slice(link)], { env: buildEnv });
+}
+
 await rm(temp, { recursive: true, force: true });
 await mkdir(temp, { recursive: true });
 await mkdir(distNative, { recursive: true });
 await mkdir(testNative, { recursive: true });
 try {
-  const launcherOut = path.join(temp, "sandbox-launcher.node");
-  const hostOut = path.join(temp, "sandbox-host.exe");
-  const testLauncherOut = path.join(temp, "sandbox-launcher-test.node");
-  const testHostOut = path.join(temp, "sandbox-host-test.exe");
-  const launcherLink = canonicalArguments.launcherCompile.indexOf("/link");
-  const hostLink = canonicalArguments.hostCompile.indexOf("/link");
-  run(cl, [...canonicalArguments.launcherCompile.slice(0, launcherLink), `/Fe:${launcherOut}`, `/Fo:${path.join(temp, "sandbox-launcher.obj")}`, ...canonicalArguments.launcherCompile.slice(launcherLink)], { env: buildEnv });
-  run(cl, [...canonicalArguments.hostCompile.slice(0, hostLink), `/Fe:${hostOut}`, `/Fo:${path.join(temp, "sandbox-host.obj")}`, ...canonicalArguments.hostCompile.slice(hostLink)], { env: buildEnv });
-  run(cl, [...canonicalArguments.launcherCompile.slice(0, launcherLink), "/DMINI_LUX_SEC03_NATIVE_TEST", `/Fe:${testLauncherOut}`, `/Fo:${path.join(temp, "sandbox-launcher-test.obj")}`, ...canonicalArguments.launcherCompile.slice(launcherLink)], { env: buildEnv });
-  run(cl, [...canonicalArguments.hostCompile.slice(0, hostLink), "/DMINI_LUX_SEC03_NATIVE_TEST", `/Fe:${testHostOut}`, `/Fo:${path.join(temp, "sandbox-host-test.obj")}`, ...canonicalArguments.hostCompile.slice(hostLink)], { env: buildEnv });
-  await rm(path.join(distNative, "sandbox-launcher.node"), { force: true });
-  await rm(path.join(distNative, "sandbox-host.exe"), { force: true });
-  await rm(path.join(testNative, "sandbox-launcher.node"), { force: true });
-  await rm(path.join(testNative, "sandbox-host.exe"), { force: true });
-  await rename(launcherOut, path.join(distNative, "sandbox-launcher.node"));
-  await rename(hostOut, path.join(distNative, "sandbox-host.exe"));
-  await rename(testLauncherOut, path.join(testNative, "sandbox-launcher.node"));
-  await rename(testHostOut, path.join(testNative, "sandbox-host.exe"));
-  const manifest = await expectedManifest();
-  await writeFile(path.join(projectRoot, ...manifestRelative.split("/")), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  if (!productionReusable) {
+    const launcherOut = path.join(temp, "sandbox-launcher.node");
+    const hostOut = path.join(temp, "sandbox-host.exe");
+    compile(canonicalArguments.launcherCompile, launcherOut, path.join(temp, "sandbox-launcher.obj"));
+    compile(canonicalArguments.hostCompile, hostOut, path.join(temp, "sandbox-host.obj"));
+    await rm(path.join(distNative, "sandbox-launcher.node"), { force: true });
+    await rm(path.join(distNative, "sandbox-host.exe"), { force: true });
+    await rename(launcherOut, path.join(distNative, "sandbox-launcher.node"));
+    await rename(hostOut, path.join(distNative, "sandbox-host.exe"));
+    const manifest = await expectedManifest();
+    await writeFile(path.join(projectRoot, ...manifestRelative.split("/")), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  }
+  if (!testReusable) {
+    const launcherOut = path.join(temp, "sandbox-launcher-test.node");
+    const hostOut = path.join(temp, "sandbox-host-test.exe");
+    compile(canonicalTestArguments.launcherCompile, launcherOut, path.join(temp, "sandbox-launcher-test.obj"));
+    compile(canonicalTestArguments.hostCompile, hostOut, path.join(temp, "sandbox-host-test.obj"));
+    await rm(path.join(testNative, "sandbox-launcher.node"), { force: true });
+    await rm(path.join(testNative, "sandbox-host.exe"), { force: true });
+    await rename(launcherOut, path.join(testNative, "sandbox-launcher.node"));
+    await rename(hostOut, path.join(testNative, "sandbox-host.exe"));
+    const manifest = await expectedTestManifest();
+    await writeFile(path.join(projectRoot, ...testManifestRelative.split("/")), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  }
   console.log(`SEC-03 native build PASS ${sourceDigest}`);
 } finally {
   await rm(temp, { recursive: true, force: true });

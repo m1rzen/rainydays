@@ -55,9 +55,9 @@ async function main() {
 
   const files = await collectSourceFiles(projectRoot);
   const digest = await sourceDigest(projectRoot, files);
-  const suppliedBuildId = process.env.MINI_LUX_BUILD_ID;
+  const suppliedBuildId = process.env.RAINYDAYS_BUILD_ID;
   if (suppliedBuildId !== undefined && !buildIdPattern.test(suppliedBuildId)) {
-    throw new Error("MINI_LUX_BUILD_ID contains unsupported characters or exceeds 128 characters");
+    throw new Error("RAINYDAYS_BUILD_ID contains unsupported characters or exceeds 128 characters");
   }
   const buildIdSource = suppliedBuildId !== undefined ? "ci" : "derived";
   const buildId = suppliedBuildId ?? `${packageJson.version}+local.${digest.slice(0, 12)}`;
@@ -76,7 +76,7 @@ async function main() {
 
   const buildInfo = {
     schemaVersion: 1,
-    product: "Mini-Lux",
+    product: "RainyDays",
     appVersion: packageJson.version,
     buildId,
     buildIdSource,

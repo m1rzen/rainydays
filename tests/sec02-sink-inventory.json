@@ -2,23 +2,23 @@
   "schemaVersion": 2,
   "task": "SEC-02",
   "detectorPolicySha256": "0d0bf8d8501ef4a9adee3d1437e65dadfa5789770706d7ff7fa1f0e5f2488070",
-  "reviewPolicySha256": "a5e30c4cb227010402781d0b13631e3b5057b807b54170d82d158b8190600e2f",
+  "reviewPolicySha256": "799c96f133fb9e8785530b9ccd763d8b2bd011c791a8d5fd26d3ba3f429c586e",
   "dialectCheckerSha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
-  "dialectPolicySha256": "3ef97c6bdbc872f272cb14cb325fc47890beb85207f1ad9dc64664377355c798",
-  "dialectImportSetSha256": "ad32ee20577c41415d5bfffa8575072cdb209a715c45061d41160e6e44979284",
-  "runtimeSinkSetSha256": "e87dca6e9c58036ce107960de365c89de062be69e2e80ceccc4d6fc5ce6b2b27",
+  "dialectPolicySha256": "75ea44ca15bc7092eca51957cb93f89580aa1a395cb1428c1f3e12baf7b17209",
+  "dialectImportSetSha256": "23efdb5dc6dd02d52c87ff54a03b1368f9e06afd4f37ef8595b0fc546acaef5b",
+  "runtimeSinkSetSha256": "7f6a0d0ea8269878563bee32e81e4fac4d7b829db2152d10ab3b9c3414bbce3b",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
-    "executableFileCount": 64,
-    "executableManifestSha256": "7bbca3cb258dd631d13cdb89cf490ce4a74d2607b698fee552895ce2a617c8ca",
-    "dialectImportCount": 29,
-    "dialectExceptionCount": 3
+    "executableFileCount": 71,
+    "executableManifestSha256": "51ee2eb33d6438acdeea6398ffec8ed67b79dcd967e5c04b5c259f8d59aa076b",
+    "dialectImportCount": 33,
+    "dialectExceptionCount": 2
   },
   "files": [
     {
       "sourcePath": "electron/main.cjs",
-      "bytes": 13047,
-      "sha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
+      "bytes": 23252,
+      "sha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
       "role": "electron-runtime",
       "packageExpectation": "included-in-asar"
     },
@@ -31,15 +31,22 @@
     },
     {
       "sourcePath": "electron/preload.cjs",
-      "bytes": 318,
-      "sha256": "2ea9a2eed986271f3c705b050f3b9fc00f0a204ad83af6cccae512378b80bcd9",
+      "bytes": 503,
+      "sha256": "76c928cc1c01fd7efce37202352830bad73a739666715769d9860f178bea41e3",
+      "role": "electron-runtime",
+      "packageExpectation": "included-in-asar"
+    },
+    {
+      "sourcePath": "electron/user-data-migration.cjs",
+      "bytes": 1385,
+      "sha256": "9c9e51e2b5b6bb8123c73a449ebed0c20de8830779e646e46b6ebdff4c53e4c4",
       "role": "electron-runtime",
       "packageExpectation": "included-in-asar"
     },
     {
       "sourcePath": "src/agent.ts",
-      "bytes": 16307,
-      "sha256": "594ae6b3ad0d22b509bb78fe498dfa1883009b8474507ecb979a8fead55b2d56",
+      "bytes": 18205,
+      "sha256": "d0f6c544197abb5fa95f5743ea5dc1a8e74f6ba90bf5f3c737d05c0c71bf3af2",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -52,15 +59,15 @@
     },
     {
       "sourcePath": "src/bootstrap-path-store.ts",
-      "bytes": 25019,
-      "sha256": "81a3e5894c6d9f54322f384381812a27460fdf550dfe68dbedcc1a17ba648bb7",
+      "bytes": 25021,
+      "sha256": "cb8d0299780514e4791b52bb919e1932dba7bb658a9f11a38f5ad064f5bd896c",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/capability-broker.ts",
-      "bytes": 54158,
-      "sha256": "66bd525c1b4d9fc8a201ca34907c9b60fa8173c8d56d8e07c892765ca215e087",
+      "bytes": 58344,
+      "sha256": "919d448cd6705b5270328a7b435e84257b8c740a5f7aa60c0573139794e97ae0",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -80,8 +87,8 @@
     },
     {
       "sourcePath": "src/daemon.ts",
-      "bytes": 6053,
-      "sha256": "f6b350cf29bddb68efb5c45f4273e4835862bad2aff21af34f1d2ebf4f969c66",
+      "bytes": 6056,
+      "sha256": "7a9789076610e8d5960527851ff51d8c2aa604b9cd29c2aa39f64cabff74c7aa",
       "role": "source-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -107,6 +114,27 @@
       "packageExpectation": "compiled-to-asar"
     },
     {
+      "sourcePath": "src/execution-isolation.ts",
+      "bytes": 40571,
+      "sha256": "2e58c6e123eb9640921a91ed843a43a2ff8a1e1c385149e4ff0d4ff8a17e4fe5",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/execution-native.ts",
+      "bytes": 20630,
+      "sha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/execution-runtime.ts",
+      "bytes": 27152,
+      "sha256": "270473ff6fdd183fbafb2b1f1f17ca59c2e158476ae8736bd9a2d7665cbe2865",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
       "sourcePath": "src/file-viewer.ts",
       "bytes": 19664,
       "sha256": "c9af63fb2ab7a1896aba2c0790cb465c2e7c304c8e9d36b536d418e68e503d80",
@@ -115,8 +143,8 @@
     },
     {
       "sourcePath": "src/index.ts",
-      "bytes": 57955,
-      "sha256": "48e28a7ab2452a49a65f6ab4cb2df6be9e444b6596e04749b846176e0f52d451",
+      "bytes": 66121,
+      "sha256": "06286bfdc48fe3ee663e491b2ead2172fc774376935c508267447627c41589fb",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -149,9 +177,30 @@
       "packageExpectation": "compiled-to-asar"
     },
     {
+      "sourcePath": "src/manual-execution-consent.ts",
+      "bytes": 18816,
+      "sha256": "d4fa6ea338b49b204e05d50b813c2a29d3fb334a5c5fea713fb2dab1b51d8c57",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
       "sourcePath": "src/memory.ts",
       "bytes": 12072,
       "sha256": "fcf69dc974275be636a3b984714acb01f41452520ac01f6c9df3481b97dc22f0",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/native-process-consent-transport.ts",
+      "bytes": 20260,
+      "sha256": "ea7a50e51a402226298e79e44ca7c82a5da1e8ec5de1e05834230eb95bc7a723",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/native-process-consent.ts",
+      "bytes": 6497,
+      "sha256": "ceea309abe64ce506d3d7d217fa7c2f405dadacaffacf135faeaedb920eb8c52",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -164,8 +213,8 @@
     },
     {
       "sourcePath": "src/path-policy.ts",
-      "bytes": 100895,
-      "sha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
+      "bytes": 106656,
+      "sha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -206,15 +255,15 @@
     },
     {
       "sourcePath": "src/resource-owner.ts",
-      "bytes": 3767,
-      "sha256": "56f2dc62889febd7bb94f242a91da46e48a810b38222c136f796714a0b3be5b4",
+      "bytes": 4711,
+      "sha256": "a52ea80ee0e89786336ee9eddc886125d1774d7fca3f9315ed828934169e63bc",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/runtime-paths.ts",
-      "bytes": 2886,
-      "sha256": "6fd02f8410519fe9621419798eb66eeaaaac6f82061a82049659f704a267ff19",
+      "bytes": 2898,
+      "sha256": "f036469b04c3dc475c79aab5d59009b201b86b6013f1a88e15f5d3b29710c3b6",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -262,15 +311,15 @@
     },
     {
       "sourcePath": "src/terminal.ts",
-      "bytes": 13527,
-      "sha256": "d67411e4db83569a9a53e303e5c2f320c50a6751c8283f27b238d698a43a99ff",
+      "bytes": 14923,
+      "sha256": "442d9506ca2d2b1f1040f35bdbf5e6e3b6973ad810692c7cc79f1eb00a7b3c20",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tool-policies.ts",
-      "bytes": 6703,
-      "sha256": "bc6cfd8f76005075236aaabe8ed57ec0eee9342b0ef4cf8253e41700e785473e",
+      "bytes": 6929,
+      "sha256": "1557ce8af3247e55a283eacf573974d06b933772e70891e2f7893fa0acaee452",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -304,8 +353,8 @@
     },
     {
       "sourcePath": "src/tools/download-tool.ts",
-      "bytes": 2934,
-      "sha256": "89ce9a4eea4ee11f07ce452d983badf23f941343038320c497cd06ef5f5abd62",
+      "bytes": 2935,
+      "sha256": "c57c6b42713ed7ca36e1c17bcf578d81ae5d1510849603434398e26bb149daee",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -325,8 +374,8 @@
     },
     {
       "sourcePath": "src/tools/index.ts",
-      "bytes": 14063,
-      "sha256": "2981e39537317c068809b038d784f257c0e9f067ce01f09b343b1160c7babed6",
+      "bytes": 14268,
+      "sha256": "c4a1a6a07537a200fb81124300e20b7919c25dd305f5d65e42e404f1b33d9930",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -381,8 +430,8 @@
     },
     {
       "sourcePath": "src/tools/script.ts",
-      "bytes": 5984,
-      "sha256": "1a6da4d9852b3ecf28b7b17d1d80cf0717f590bd966b4f00b55f97765b921323",
+      "bytes": 2539,
+      "sha256": "f8d03d1d0fdc5d9c41e2138004d571f07a4e3075c7e14a81cbc6cdefa149f3bd",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -395,8 +444,8 @@
     },
     {
       "sourcePath": "src/tools/shell.ts",
-      "bytes": 4104,
-      "sha256": "bd43c7e331e926844936fbc3fbdd542fa25c7c6c1d0da74098790bd0c6ffd1ba",
+      "bytes": 3365,
+      "sha256": "cf60a5d2f2fcfd7cb87be651bd8d771b4b1f7aac83a12d3c22d2b571ef098a6d",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -423,15 +472,15 @@
     },
     {
       "sourcePath": "src/tools/terminal-tools.ts",
-      "bytes": 5805,
-      "sha256": "f9887be27d76327c4984d1b0be8427e5881b1f048007e2b462d4d758df80147a",
+      "bytes": 6008,
+      "sha256": "500b76dc818208a7573ea2caab48277006270feeac7b320038f8c25382015e06",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/web.ts",
-      "bytes": 3259,
-      "sha256": "7b1074486f6292728b503a5ae45628248d37e9d75eac412f59edbb8e0582a768",
+      "bytes": 3260,
+      "sha256": "504563d1ce677238197891368a60eda071ae6af9595ed430722d999c3b7e6191",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -444,15 +493,15 @@
     },
     {
       "sourcePath": "src/types.ts",
-      "bytes": 6527,
-      "sha256": "bf91d08f681ae3fe8ae6ec67a0508942a63c5fae37533363d136cd15b2877398",
+      "bytes": 6865,
+      "sha256": "4c6bdf4f10db1f6f9a10f70405ca5ab0a085329efe57ea82bd2a1c0cdc5a7494",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/version.ts",
-      "bytes": 8211,
-      "sha256": "637135394fee2929fdec04a8d2bd5fd88ddb93bc4fb475cc159799526147f82d",
+      "bytes": 10135,
+      "sha256": "203a19e142c48bbd678dffb45075ed4c4673fb3d9be161997b3c00f48d34358e",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -479,7 +528,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
       "testCaseId": "SEC-02 Daemon holds Node, loader and server leases until runtime ready and cleans the process tree",
-      "testFileSha256": "9363f664728f1c77d441d406003b086c6ff1a0f8b108cf29471808db5eef504e"
+      "testFileSha256": "fc3a593cb628e1d60eab4b08f74ae570608e588d62a14a425cd7b25c5a846637"
     },
     {
       "id": "dispatcher-gateway",
@@ -487,7 +536,7 @@
       "executionContract": "sec02-receipt",
       "testFile": "tests/integration/path-tool-gateway.test.mjs",
       "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
-      "testFileSha256": "8dbda839316b145ca717cb158a47448b1d2a6897e794ce9b99798a3b9b9139ba"
+      "testFileSha256": "4e9a16f8037a7ed23f64a46ff303a84ee719d3ef94cf7a395e76631be3735a3b"
     },
     {
       "id": "electron-source",
@@ -495,7 +544,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/electron/desktop-smoke.test.mjs",
       "testCaseId": "real Electron main, preload and renderer preserve identity and session across restart",
-      "testFileSha256": "5eb3f8fd6a4190acfc4c128fecab231426129e6249e857e11b2c6cd3d5542ce8"
+      "testFileSha256": "81924f0906d68e6f2e33bcb8e33208e519403644c8a6aba1cd179d8d1ab0ee98"
     },
     {
       "id": "file-viewer",
@@ -519,7 +568,7 @@
       "executionContract": "installed-parent-scan",
       "testFile": "tests/packaged/installed-smoke.test.mjs",
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
-      "testFileSha256": "7764fec4a53a74e0ac303a5d9614cd9491cf0d0781299c9a7ea4a56a7ddc46bf"
+      "testFileSha256": "0991a725dee204db9da08613e2eeda8ea75fc6f0a297a92b1f86dced232b3319"
     },
     {
       "id": "process-cwd",
@@ -527,7 +576,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/process-cwd.test.mjs",
       "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
-      "testFileSha256": "5c6b237dd64a50ae2dc1bd34d10ef8a7491c4b39a53a0b313706acc506ae6252"
+      "testFileSha256": "93c326de3ff2b46b1b6dc71bb8b205118755ad0a85d97767c582b98a8963d970"
     },
     {
       "id": "process-tree",
@@ -543,7 +592,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/repo-oracle-path.test.mjs",
       "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
-      "testFileSha256": "28acca9e6fef0f8161ff27f6271a8b351d06d4e561461ee8f38242b02fe05978"
+      "testFileSha256": "5ac5788088a043398e9e844650c25a271616e08e2a89996bd71827bd7eeb5d86"
     },
     {
       "id": "watcher",
@@ -551,7 +600,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/watcher-authority.test.mjs",
       "testCaseId": "SEC-02 watcher events and controls remain bound to one runtime authority",
-      "testFileSha256": "5f3db08b61d2edf9337dd691bd5d8e741c1a0aa771d7dd407a9d23f083cfdba5"
+      "testFileSha256": "53257af4143fcf156bedb2539b245ea30bea1a3da8038e26f19451f8844f49a5"
     }
   ],
   "sinks": [
@@ -559,9 +608,9 @@
       "id": "sink-737e8e7fed0c6358826cae25",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
       "line": 6,
-      "column": 72,
+      "column": 81,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
       "family": "module-loader",
@@ -592,7 +641,7 @@
       "id": "sink-1c1107880edae8240e50bb2b",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
       "line": 7,
       "column": 14,
       "nodeKind": "CallExpression",
@@ -625,7 +674,7 @@
       "id": "sink-96545976fb3945998517b6bd",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
       "line": 8,
       "column": 13,
       "nodeKind": "CallExpression",
@@ -658,7 +707,7 @@
       "id": "sink-92f3102e54ced2cd49a7b044",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
       "line": 9,
       "column": 19,
       "nodeKind": "CallExpression",
@@ -688,44 +737,11 @@
       }
     },
     {
-      "id": "sink-95fc4d50a74e30b32f251631",
-      "occurrence": 1,
-      "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
-      "line": 10,
-      "column": 27,
-      "nodeKind": "CallExpression",
-      "container": "<top-level>",
-      "family": "module-loader",
-      "api": "require",
-      "pathOperands": [
-        "argument:0"
-      ],
-      "normalizedNodeSha256": "79e27362ff1605e363b8302692890a9a2389cd1261d33fe17cde59a3df17ecab",
-      "executionClass": "electron-runtime",
-      "packageExpectation": "included-in-asar",
-      "binding": {
-        "kind": "static-module-loader",
-        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
-        "evidenceIds": [
-          "electron-source",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "reviewed-static-module-specifier",
-            "anchor": "electron/main.cjs#<top-level>:argument:0"
-          }
-        ]
-      }
-    },
-    {
       "id": "sink-f657afa31b8a30b29f14f007",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
-      "line": 11,
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "line": 10,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -757,8 +773,8 @@
       "id": "sink-df1a645fb7d0bcb73bf5a6d0",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
-      "line": 12,
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "line": 11,
       "column": 40,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -787,10 +803,43 @@
       }
     },
     {
+      "id": "sink-774a674e93013028ec22aa14",
+      "occurrence": 1,
+      "sourcePath": "electron/main.cjs",
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "line": 12,
+      "column": 35,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "804cae67bd04bbaad624a454a1f0ebf7e27cc5daad0d1cc11dca296a6d6175cf",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "id": "sink-47a0c025b69dfcbb8f9eec0b",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
       "line": 13,
       "column": 20,
       "nodeKind": "CallExpression",
@@ -820,11 +869,11 @@
       }
     },
     {
-      "id": "sink-3204e682fbe3e12338aefb90",
+      "id": "sink-168eb1caa3924a31a4166843",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
-      "line": 124,
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "line": 152,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "startPackagedServer",
@@ -833,7 +882,7 @@
       "pathOperands": [
         "argument:0"
       ],
-      "normalizedNodeSha256": "f8d6bd36ee6f7519936b38e1d0c444e3cae234f71c403b098bb9e11ff3ad00f0",
+      "normalizedNodeSha256": "30e10fa869defa8ce0cbf81d75da38c679bdbc7dd0d6214dfde2f0c766f3733f",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -853,11 +902,44 @@
       }
     },
     {
-      "id": "sink-6f4e9360771c9a6dd14b7213",
+      "id": "sink-e0ad60c2a06fed8386fa7e12",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
-      "line": 154,
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "line": 183,
+      "column": 63,
+      "nodeKind": "CallExpression",
+      "container": "startServerProcess",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "6c354d1d753a203630e5c906cceda9a7bc16071205262caa2722e8690c1a4a8a",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#startServerProcess:module-loader.import",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#startServerProcess:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-ddc6d98368d8f613fa7cde04",
+      "occurrence": 1,
+      "sourcePath": "electron/main.cjs",
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "line": 187,
       "column": 21,
       "nodeKind": "CallExpression",
       "container": "startServerProcess",
@@ -869,7 +951,7 @@
         "argument:2.cwd",
         "argument:2.shell"
       ],
-      "normalizedNodeSha256": "9a7d3cb8b3ff729d2c0d0b0f320b3862895dc8cdd293567965ec0a597c890f51",
+      "normalizedNodeSha256": "aec1a2cd48d8740203cc435a4a0bf3b907fab7bf603c38b9a612d337344611e1",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -904,11 +986,11 @@
       }
     },
     {
-      "id": "sink-d58f6e164ee3e9fc42885e74",
+      "id": "sink-efbedcd0f0d39c6f4af76d06",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
-      "line": 226,
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "line": 432,
       "column": 18,
       "nodeKind": "NewExpression",
       "container": "createWindow",
@@ -918,7 +1000,7 @@
         "argument:0.icon",
         "argument:0.webPreferences.preload"
       ],
-      "normalizedNodeSha256": "80a3ce3a82ebe19949907b5daeb999842b230d08e0c66d3ccd5f747485db658d",
+      "normalizedNodeSha256": "70073fb32ef99c31508be1c966ed2fe4b5b1bc4419855b82ffca4c8269061106",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -946,8 +1028,8 @@
       "id": "sink-0afcdaf217cac5705bbd68be",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
-      "line": 285,
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "line": 510,
       "column": 10,
       "nodeKind": "NewExpression",
       "container": "createTray",
@@ -976,12 +1058,12 @@
       }
     },
     {
-      "id": "sink-8e08f83d596e8d35670d9fb3",
+      "id": "sink-d4de993c4220516df880bcc1",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "57b04a85c8c52e3fe2fa2ce165e953d0020ed624a84adb39b4047671f8ffd58a",
-      "line": 307,
-      "column": 7,
+      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "line": 538,
+      "column": 24,
       "nodeKind": "CallExpression",
       "container": "stopDevelopmentServer",
       "family": "child-process",
@@ -991,7 +1073,7 @@
         "argument:1",
         "argument:2.shell"
       ],
-      "normalizedNodeSha256": "6899fde9d9b46dab3d3893ae273af938c07d71018bffe5e820d2d90d06213c46",
+      "normalizedNodeSha256": "883606c0b9c88840dd620357470e2e3884792aaed94cba85161b862e95c26027",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -1585,9 +1667,9 @@
       "id": "sink-bb241b0a5b5fc11232f6a343",
       "occurrence": 1,
       "sourcePath": "electron/preload.cjs",
-      "fileSha256": "2ea9a2eed986271f3c705b050f3b9fc00f0a204ad83af6cccae512378b80bcd9",
+      "fileSha256": "76c928cc1c01fd7efce37202352830bad73a739666715769d9860f178bea41e3",
       "line": 2,
-      "column": 27,
+      "column": 40,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
       "family": "module-loader",
@@ -1610,6 +1692,177 @@
             "selector": "argument:0",
             "classification": "reviewed-static-module-specifier",
             "anchor": "electron/preload.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-802a6df7dac2b0fdd4b6fa1d",
+      "occurrence": 1,
+      "sourcePath": "electron/user-data-migration.cjs",
+      "fileSha256": "9c9e51e2b5b6bb8123c73a449ebed0c20de8830779e646e46b6ebdff4c53e4c4",
+      "line": 3,
+      "column": 14,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "dbcd262637c39e2327bd2c548607f9e082b2ef933fb7dbae2205c182c5bd2d3c",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/user-data-migration.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/user-data-migration.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-acadf05b56acfe8757106622",
+      "occurrence": 1,
+      "sourcePath": "electron/user-data-migration.cjs",
+      "fileSha256": "9c9e51e2b5b6bb8123c73a449ebed0c20de8830779e646e46b6ebdff4c53e4c4",
+      "line": 4,
+      "column": 18,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "827a8156f2efb8f20f591705bfc5119b5d306fce04052a0afa430ec7b2d0b405",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/user-data-migration.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/user-data-migration.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-7bbeac2138fcaa3b750b2ed9",
+      "occurrence": 1,
+      "sourcePath": "electron/user-data-migration.cjs",
+      "fileSha256": "9c9e51e2b5b6bb8123c73a449ebed0c20de8830779e646e46b6ebdff4c53e4c4",
+      "line": 8,
+      "column": 5,
+      "nodeKind": "CallExpression",
+      "container": "pathExists",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "748f3a53a74c496960b7a58a94f41a83cf16e1a344ac51c01598fda6be0791d3",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/user-data-migration.cjs#pathExists:node-fs.lstatSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#pathExists:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-5f0e05280d6e836a74b37400",
+      "occurrence": 1,
+      "sourcePath": "electron/user-data-migration.cjs",
+      "fileSha256": "9c9e51e2b5b6bb8123c73a449ebed0c20de8830779e646e46b6ebdff4c53e4c4",
+      "line": 27,
+      "column": 22,
+      "nodeKind": "CallExpression",
+      "container": "migrateLegacyUserData",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "40c19bc96f569f76b26881dc5e6dd3bef6c9b87b7070e93f656146bcb16ea946",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:node-fs.lstatSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-1be97d6ffcbda9bc59706d4f",
+      "occurrence": 1,
+      "sourcePath": "electron/user-data-migration.cjs",
+      "fileSha256": "9c9e51e2b5b6bb8123c73a449ebed0c20de8830779e646e46b6ebdff4c53e4c4",
+      "line": 34,
+      "column": 3,
+      "nodeKind": "CallExpression",
+      "container": "migrateLegacyUserData",
+      "family": "node-fs",
+      "api": "renameSync",
+      "pathOperands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "80f07e38a41fe4031b2b1d5440adab00b87cbeca52ea5bea106d6adedfd9da6a",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:node-fs.renameSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:1"
           }
         ]
       }
@@ -2191,7 +2444,7 @@
       "id": "sink-c6a5b83358de64fded85db21",
       "occurrence": 1,
       "sourcePath": "src/daemon.ts",
-      "fileSha256": "f6b350cf29bddb68efb5c45f4273e4835862bad2aff21af34f1d2ebf4f969c66",
+      "fileSha256": "7a9789076610e8d5960527851ff51d8c2aa604b9cd29c2aa39f64cabff74c7aa",
       "line": 67,
       "column": 21,
       "nodeKind": "CallExpression",
@@ -2305,6 +2558,270 @@
       }
     },
     {
+      "id": "sink-243bfa6743a911daca9e8d11",
+      "occurrence": 1,
+      "sourcePath": "src/execution-native.ts",
+      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
+      "line": 154,
+      "column": 26,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "createRequire",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "4506161869017b711ca726ab9062e3926fac759a584ad0e460e825635a24fb53",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/execution-native.ts#<top-level>:module-loader.createRequire",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-module-base-url",
+            "anchor": "src/execution-native.ts#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-357a7720adaf890c6b65dfa9",
+      "occurrence": 1,
+      "sourcePath": "src/execution-native.ts",
+      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
+      "line": 192,
+      "column": 29,
+      "nodeKind": "CallExpression",
+      "container": "sha256",
+      "family": "node-fs",
+      "api": "createReadStream",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "cf23f16b8bd134427fc4fd6136419f2765c0cf498c1600b73c1f9e2e6efa295c",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/execution-native.ts#sha256:node-fs.createReadStream",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-native-artifact-path",
+            "anchor": "src/execution-native.ts#sha256:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-61f50282e9c0d14346708830",
+      "occurrence": 1,
+      "sourcePath": "src/execution-native.ts",
+      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
+      "line": 197,
+      "column": 61,
+      "nodeKind": "CallExpression",
+      "container": "assertFixedRegularFile",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "43895d3187bd198a0e0a56eb49d3836088b99fee46eb22b8fa1e9f8ff3db46fd",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/execution-native.ts#assertFixedRegularFile:node-fs.lstat",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "native-artifact-identity-check",
+            "anchor": "src/execution-native.ts#assertFixedRegularFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-1e542ebe0677eb880bcde1ab",
+      "occurrence": 1,
+      "sourcePath": "src/execution-native.ts",
+      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
+      "line": 197,
+      "column": 74,
+      "nodeKind": "CallExpression",
+      "container": "assertFixedRegularFile",
+      "family": "node-fs",
+      "api": "realpath",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "d5cf4668c378825af65c7b3d10b6b221de475471dd97d112344395f8e7b25d82",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/execution-native.ts#assertFixedRegularFile:node-fs.realpath",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "native-artifact-identity-check",
+            "anchor": "src/execution-native.ts#assertFixedRegularFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-4dfe0c29eb6267848c5f3ce7",
+      "occurrence": 1,
+      "sourcePath": "src/execution-native.ts",
+      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
+      "line": 294,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "loadAddon",
+      "family": "module-loader",
+      "api": "createRequire-call",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "15d1e8538809276e844cd22c4de127cf7f508c894206eb6d2639fff9dd57a6f9",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/execution-native.ts#loadAddon:module-loader.createRequire-call",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/execution-native.ts#loadAddon:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-16b0f6cdadde539943bd7b64",
+      "occurrence": 1,
+      "sourcePath": "src/execution-native.ts",
+      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
+      "line": 295,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "loadAddon",
+      "family": "module-loader",
+      "api": "createRequire-call",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "868c9208620e973c47da63ecb96026112671784ba3ef34e7adcc01aa11312d3b",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/execution-native.ts#loadAddon:module-loader.createRequire-call",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/execution-native.ts#loadAddon:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-ea3e0efb1533dbf7c58965fc",
+      "occurrence": 1,
+      "sourcePath": "src/execution-runtime.ts",
+      "fileSha256": "270473ff6fdd183fbafb2b1f1f17ca59c2e158476ae8736bd9a2d7665cbe2865",
+      "line": 129,
+      "column": 7,
+      "nodeKind": "CallExpression",
+      "container": "loadNativeIdentity",
+      "family": "node-fs",
+      "api": "readFile",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "82a853c176397827e775b12d4a43b3a13396c208366fb17545c6a18969893017",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/execution-runtime.ts#loadNativeIdentity:node-fs.readFile",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-native-identity-file",
+            "anchor": "src/execution-runtime.ts#loadNativeIdentity:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-e147ac29ce8d7a5661ea611b",
+      "occurrence": 1,
+      "sourcePath": "src/execution-runtime.ts",
+      "fileSha256": "270473ff6fdd183fbafb2b1f1f17ca59c2e158476ae8736bd9a2d7665cbe2865",
+      "line": 130,
+      "column": 7,
+      "nodeKind": "CallExpression",
+      "container": "loadNativeIdentity",
+      "family": "node-fs",
+      "api": "readFile",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "d683f28517cdb6a71433aa76ef44929dff7016462fd3ca1982016d6c64463587",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/execution-runtime.ts#loadNativeIdentity:node-fs.readFile",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-native-identity-file",
+            "anchor": "src/execution-runtime.ts#loadNativeIdentity:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "id": "sink-299f0d2d0fec82b4102316af",
       "occurrence": 1,
       "sourcePath": "src/file-viewer.ts",
@@ -2395,11 +2912,77 @@
       }
     },
     {
+      "id": "sink-bbb85a2e0ddbe182631872f7",
+      "occurrence": 1,
+      "sourcePath": "src/native-process-consent-transport.ts",
+      "fileSha256": "ea7a50e51a402226298e79e44ca7c82a5da1e8ec5de1e05834230eb95bc7a723",
+      "line": 501,
+      "column": 19,
+      "nodeKind": "CallExpression",
+      "container": "installInheritedNativeProcessConsentTransport",
+      "family": "node-fs",
+      "api": "createReadStream",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "b45be43452dd4948a32c7f6658f109408e85e2926cd1358d879b65c24659819f",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/native-process-consent-transport.ts#installInheritedNativeProcessConsentTransport:node-fs.createReadStream",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-inherited-pipe-fd",
+            "anchor": "src/native-process-consent-transport.ts#installInheritedNativeProcessConsentTransport:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-10fec949956cf8f69e429447",
+      "occurrence": 1,
+      "sourcePath": "src/native-process-consent-transport.ts",
+      "fileSha256": "ea7a50e51a402226298e79e44ca7c82a5da1e8ec5de1e05834230eb95bc7a723",
+      "line": 502,
+      "column": 20,
+      "nodeKind": "CallExpression",
+      "container": "installInheritedNativeProcessConsentTransport",
+      "family": "node-fs",
+      "api": "createWriteStream",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "2fdd03798a5937abea29995eb5fb146fcd0ec70d1fb82e9224800442fac85e73",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/native-process-consent-transport.ts#installInheritedNativeProcessConsentTransport:node-fs.createWriteStream",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-inherited-pipe-fd",
+            "anchor": "src/native-process-consent-transport.ts#installInheritedNativeProcessConsentTransport:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "id": "sink-d07b4b2c8cf7ed613e3fd830",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 471,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 528,
       "column": 7,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.constructor",
@@ -2431,8 +3014,8 @@
       "id": "sink-5b4b1a17f54d5de7a7588020",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 614,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 671,
       "column": 55,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.createAuthority",
@@ -2464,8 +3047,8 @@
       "id": "sink-1325c487f00c8b00e5fd4197",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 770,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 827,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#readExistingFile",
@@ -2497,8 +3080,8 @@
       "id": "sink-f2d559c8c06d3799c3e6ff23",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 851,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 908,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.openReadLease",
@@ -2530,8 +3113,8 @@
       "id": "sink-a2b77b03c3ab9d929c4bee3a",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1010,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1067,
       "column": 31,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#listExistingDirectory",
@@ -2563,8 +3146,8 @@
       "id": "sink-78d1b7507b44007ca06340dd",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1021,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1078,
       "column": 35,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#listExistingDirectory",
@@ -2596,8 +3179,8 @@
       "id": "sink-ff4b9c576fb181b9541df431",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1061,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1118,
       "column": 34,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.preflightWrite",
@@ -2629,8 +3212,8 @@
       "id": "sink-de1767bbba819217e62bc36b",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1079,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1136,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.preflightWrite",
@@ -2662,8 +3245,8 @@
       "id": "sink-9b3f2a2f2b60f26b8d97367d",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1268,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1390,
       "column": 39,
       "nodeKind": "CallExpression",
       "container": "authorizeEvent",
@@ -2695,8 +3278,8 @@
       "id": "sink-80da13a0e97e59dbf5610599",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1284,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1406,
       "column": 44,
       "nodeKind": "CallExpression",
       "container": "authorizeEvent",
@@ -2728,8 +3311,8 @@
       "id": "sink-9fde321546e5855e056413c6",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1364,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1486,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.createDirectoryEnrollment",
@@ -2761,8 +3344,8 @@
       "id": "sink-cc26c9c6241404b868cb9ff5",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1383,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1505,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.createDirectoryEnrollment",
@@ -2794,8 +3377,8 @@
       "id": "sink-cde5e810d3ee12c466bbe598",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1419,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1541,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.createDirectoryEnrollment",
@@ -2827,8 +3410,8 @@
       "id": "sink-45aafbf06f3ba6b4b432ca21",
       "occurrence": 3,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1526,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1648,
       "column": 34,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -2860,8 +3443,8 @@
       "id": "sink-e8bd7a921e275c2d076200c9",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1548,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1670,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -2893,8 +3476,8 @@
       "id": "sink-65f60948655b4d38e0a20418",
       "occurrence": 4,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1569,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1691,
       "column": 39,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -2926,8 +3509,8 @@
       "id": "sink-7ef54cffaaf1a40302646bf7",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1576,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1698,
       "column": 15,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -2965,8 +3548,8 @@
       "id": "sink-b6fb1447a514cafa9c331606",
       "occurrence": 5,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1614,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1736,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -2998,8 +3581,8 @@
       "id": "sink-f8da28023c86bcc1887e8d50",
       "occurrence": 3,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1628,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1750,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -3031,8 +3614,8 @@
       "id": "sink-d2a49869e474b75263232be7",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1670,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1792,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -3064,8 +3647,8 @@
       "id": "sink-3a5aaa9e86d75cfa3cf56745",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1692,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1814,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -3097,8 +3680,8 @@
       "id": "sink-62f6be76773c81c611392cc6",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 1779,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 1901,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#replaceFileInternal",
@@ -3130,8 +3713,8 @@
       "id": "sink-d2b3bae251640d085de9f8fb",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 2003,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 2125,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#probeDirectoryIdentity",
@@ -3163,8 +3746,8 @@
       "id": "sink-bc622822b78e0fae61abf411",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 2023,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 2145,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#walkConfiguredRootNoRedirect",
@@ -3196,8 +3779,8 @@
       "id": "sink-b86b6e2c1b8be8f8ebde2a7e",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 2065,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 2187,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#walkNoRedirect",
@@ -3229,8 +3812,8 @@
       "id": "sink-50aa4bbe9ddb4d3050bd9030",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 2075,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 2197,
       "column": 24,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#statIdentity",
@@ -3262,8 +3845,8 @@
       "id": "sink-e980b687cfd4c6b4479cd08a",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 2085,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 2207,
       "column": 24,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#lstatIdentity",
@@ -3295,8 +3878,8 @@
       "id": "sink-d5c18a3016878722c5c3b799",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 2099,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 2221,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -3328,8 +3911,8 @@
       "id": "sink-81e504409c0c68f6a0cf38cd",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 2108,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 2230,
       "column": 56,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -3361,8 +3944,8 @@
       "id": "sink-e4b423b50f51232897635ec7",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 2109,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 2231,
       "column": 20,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -3394,8 +3977,8 @@
       "id": "sink-9ff1eb6f05ac2ab782130c15",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 2114,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 2236,
       "column": 15,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -3427,8 +4010,8 @@
       "id": "sink-d765d63e87811019a1eb8af1",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "85f245c7560f0af241fbe1207c0d4eb71717a20690bc50ba931adbec08dcc567",
-      "line": 2124,
+      "fileSha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "line": 2246,
       "column": 12,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#realpathOrDeny",
@@ -3497,57 +4080,6 @@
             "selector": "argument:2.shell",
             "classification": "fixed-shell-false",
             "anchor": "src/process-tree.ts#runWindowsTreeKiller:argument:2.shell"
-          }
-        ]
-      }
-    },
-    {
-      "id": "sink-61a335089c8af1571ceebb1d",
-      "occurrence": 1,
-      "sourcePath": "src/terminal.ts",
-      "fileSha256": "d67411e4db83569a9a53e303e5c2f320c50a6751c8283f27b238d698a43a99ff",
-      "line": 100,
-      "column": 15,
-      "nodeKind": "CallExpression",
-      "container": "TerminalManager.start",
-      "family": "child-process",
-      "api": "spawn",
-      "pathOperands": [
-        "argument:0",
-        "argument:1",
-        "argument:2.cwd",
-        "argument:2.shell"
-      ],
-      "normalizedNodeSha256": "2000d148b8eaeebb2250c5b78fa8fe9a42aab5314f0182e5a6d58642b0d8bf43",
-      "executionClass": "product-runtime",
-      "packageExpectation": "compiled-to-asar",
-      "binding": {
-        "kind": "runtime-canary",
-        "anchor": "src/terminal.ts#TerminalManager.start:child-process.spawn",
-        "evidenceIds": [
-          "process-cwd",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "runtime-executable-lease",
-            "anchor": "src/terminal.ts#TerminalManager.start:argument:0"
-          },
-          {
-            "selector": "argument:1",
-            "classification": "fixed-reviewed-argv",
-            "anchor": "src/terminal.ts#TerminalManager.start:argument:1"
-          },
-          {
-            "selector": "argument:2.cwd",
-            "classification": "authority-canonical-cwd",
-            "anchor": "src/terminal.ts#TerminalManager.start:argument:2.cwd"
-          },
-          {
-            "selector": "argument:2.shell",
-            "classification": "fixed-shell-false",
-            "anchor": "src/terminal.ts#TerminalManager.start:argument:2.shell"
           }
         ]
       }
@@ -3828,102 +4360,6 @@
       }
     },
     {
-      "id": "sink-ad951cad071b201020ac6e56",
-      "occurrence": 1,
-      "sourcePath": "src/tools/script.ts",
-      "fileSha256": "1a6da4d9852b3ecf28b7b17d1d80cf0717f590bd966b4f00b55f97765b921323",
-      "line": 51,
-      "column": 21,
-      "nodeKind": "CallExpression",
-      "container": "runNodeModule",
-      "family": "child-process",
-      "api": "spawn",
-      "pathOperands": [
-        "argument:0",
-        "argument:1",
-        "argument:2.cwd"
-      ],
-      "normalizedNodeSha256": "b75843044f39e5401617cd3828ba5745d8c990e6efe7800cdaeba819e9a415d1",
-      "executionClass": "product-runtime",
-      "packageExpectation": "compiled-to-asar",
-      "binding": {
-        "kind": "runtime-canary",
-        "anchor": "src/tools/script.ts#runNodeModule:child-process.spawn",
-        "evidenceIds": [
-          "process-cwd",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "runtime-executable-lease",
-            "anchor": "src/tools/script.ts#runNodeModule:argument:0"
-          },
-          {
-            "selector": "argument:1",
-            "classification": "fixed-reviewed-argv",
-            "anchor": "src/tools/script.ts#runNodeModule:argument:1"
-          },
-          {
-            "selector": "argument:2.cwd",
-            "classification": "authority-canonical-cwd",
-            "anchor": "src/tools/script.ts#runNodeModule:argument:2.cwd"
-          }
-        ]
-      }
-    },
-    {
-      "id": "sink-4cce55013c70ea46dc927c1c",
-      "occurrence": 1,
-      "sourcePath": "src/tools/shell.ts",
-      "fileSha256": "bd43c7e331e926844936fbc3fbdd542fa25c7c6c1d0da74098790bd0c6ffd1ba",
-      "line": 41,
-      "column": 7,
-      "nodeKind": "CallExpression",
-      "container": "runShellCommand",
-      "family": "child-process",
-      "api": "execFile",
-      "pathOperands": [
-        "argument:0",
-        "argument:1",
-        "argument:2.cwd",
-        "argument:2.shell"
-      ],
-      "normalizedNodeSha256": "72dfd5c677a0695cfee0e1a203198ba5091d91675186bf5ee80ae3166a988164",
-      "executionClass": "product-runtime",
-      "packageExpectation": "compiled-to-asar",
-      "binding": {
-        "kind": "runtime-canary",
-        "anchor": "src/tools/shell.ts#runShellCommand:child-process.execFile",
-        "evidenceIds": [
-          "process-cwd",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "runtime-executable-lease",
-            "anchor": "src/tools/shell.ts#runShellCommand:argument:0"
-          },
-          {
-            "selector": "argument:1",
-            "classification": "fixed-reviewed-argv",
-            "anchor": "src/tools/shell.ts#runShellCommand:argument:1"
-          },
-          {
-            "selector": "argument:2.cwd",
-            "classification": "authority-canonical-cwd",
-            "anchor": "src/tools/shell.ts#runShellCommand:argument:2.cwd"
-          },
-          {
-            "selector": "argument:2.shell",
-            "classification": "fixed-shell-false",
-            "anchor": "src/tools/shell.ts#runShellCommand:argument:2.shell"
-          }
-        ]
-      }
-    },
-    {
       "id": "sink-995eabc5492cb075b2e43430",
       "occurrence": 1,
       "sourcePath": "src/tools/writer.ts",
@@ -3997,5 +4433,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "f5759c98fa424c24c89c9b5bf92115a7d0029b8ef9256c578b4051ba407a5c07"
+  "canonicalPayloadSha256": "ffae74098c4ad6b8142d5dc018682f10cd39740e24e65a4d1f4a4f98f91bca5e"
 }

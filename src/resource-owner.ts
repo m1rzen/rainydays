@@ -20,6 +20,8 @@ interface ResourceOwnerRecord {
   readonly metadata: ResourceOwnerMetadata;
   readonly closers: Set<ResourceCloser>;
   active: boolean;
+  retiring: boolean;
+  draining: Promise<void> | null;
   retirement: Promise<void> | null;
 }
 
@@ -39,6 +41,8 @@ export function issueResourceOwner(metadata: ResourceOwnerMetadata): ResourceOwn
     metadata: Object.freeze({ ...metadata, rootIds }),
     closers: new Set(),
     active: true,
+    retiring: false,
+    draining: null,
     retirement: null,
   });
   return token;
@@ -48,6 +52,13 @@ export function assertResourceOwner(owner: ResourceOwner): ResourceOwnerMetadata
   const record = owner && records.get(owner);
   if (!record || record.token !== owner) throw new PathDeniedError("PATH_AUTHORITY_FORGED", "Resource owner denied");
   if (!record.active) throw new PathDeniedError("PATH_AUTHORITY_STALE", "Resource owner stale");
+  return record.metadata;
+}
+
+export function assertResourceOwnerForCleanup(owner: ResourceOwner): ResourceOwnerMetadata {
+  const record = owner && records.get(owner);
+  if (!record || record.token !== owner) throw new PathDeniedError("PATH_AUTHORITY_FORGED", "Resource owner denied");
+  if (!record.retiring) throw new PathDeniedError("PATH_AUTHORITY_STALE", "Resource owner cleanup window is unavailable");
   return record.metadata;
 }
 
@@ -78,15 +89,23 @@ export function retireResourceOwner(owner: ResourceOwner, timeoutMs = 5_000): Pr
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60_000) throw new TypeError("Resource retirement timeout is invalid");
 
   record.active = false;
+  record.retiring = true;
   const closers = [...record.closers];
   record.closers.clear();
-  const draining = Promise.all(closers.map(async (closer) => { await closer(); })).then(() => undefined);
+  record.draining = Promise.allSettled(closers.map(async (closer) => { await closer(); }))
+    .then((results) => {
+      const failures = results.filter((result): result is PromiseRejectedResult => result.status === "rejected").map(result => result.reason);
+      if (failures.length === 1) throw failures[0];
+      if (failures.length > 1) throw new AggregateError(failures, "Resource retirement failed");
+    })
+    .finally(() => { record.retiring = false; });
+  void record.draining.catch(() => undefined);
   let timeout: NodeJS.Timeout | null = null;
   const deadline = new Promise<never>((_, reject) => {
     timeout = setTimeout(() => reject(new PathDeniedError("PATH_LIFECYCLE_FAILED", "Resource retirement deadline exceeded")), timeoutMs);
     timeout.unref?.();
   });
-  record.retirement = Promise.race([draining, deadline]).finally(() => {
+  record.retirement = Promise.race([record.draining, deadline]).finally(() => {
     if (timeout) clearTimeout(timeout);
   });
   return record.retirement;

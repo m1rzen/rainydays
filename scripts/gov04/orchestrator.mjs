@@ -203,7 +203,7 @@ export async function runGov04({ projectRoot, profile = "merge", retryOf = null,
   await record("sca-full", ["npm", "audit", "--registry", loadedPolicy.policy.sca.registry, "--audit-level=high", "--json"], () =>
     (adapters.runSca ?? runSca)({ workspace: sourceWorkspace, scope: "full", policy: { ...loadedPolicy.policy.sca, toolchainVersion: loadedPolicy.policy.toolchain.npm }, evidenceDirectory })
   );
-  const scannerExecutable = adapters.gitleaksExecutable ?? process.env.MINI_LUX_GITLEAKS_EXE ?? "";
+  const scannerExecutable = adapters.gitleaksExecutable ?? process.env.RAINYDAYS_GITLEAKS_EXE ?? "";
   await record("secret-current", ["gitleaks", "dir", ".", "--redact=100"], async () => {
     const operation = await (adapters.runSecretScan ?? runSecretScan)({ scanRoot: sourceSnapshot, workspace: sourceSnapshot, history: false, historyComplete: false, policy: loadedPolicy.policy.secretScan, evidenceDirectory, executable: scannerExecutable });
     if (operation.passed) gitleaksVersion = loadedPolicy.policy.secretScan.version;

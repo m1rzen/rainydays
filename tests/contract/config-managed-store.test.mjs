@@ -5,9 +5,9 @@ import path from "node:path";
 import test from "node:test";
 
 const fixture = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec02-config-"));
-process.env.MINI_LUX_USER_DATA_DIR = fixture;
-process.env.MINI_LUX_DATA_DIR = path.join(fixture, "data");
-process.env.MINI_LUX_CONFIG_PATH = path.join(fixture, "config.json");
+process.env.RAINYDAYS_USER_DATA_DIR = fixture;
+process.env.RAINYDAYS_DATA_DIR = path.join(fixture, "data");
+process.env.RAINYDAYS_CONFIG_PATH = path.join(fixture, "config.json");
 const config = await import("../../dist/config.js");
 
 test.after(async () => {

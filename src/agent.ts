@@ -422,7 +422,11 @@ export class Agent {
       };
     } finally {
       this.running = false;
-      if (capabilityBroker.isContextActive(capabilityContext)) capabilityBroker.finishContext(capabilityContext);
+      try {
+        await capabilityBroker.retireSessionResources(runAuthority, runSessionId);
+      } finally {
+        if (capabilityBroker.isContextActive(capabilityContext)) capabilityBroker.finishContext(capabilityContext);
+      }
     }
   }
 }

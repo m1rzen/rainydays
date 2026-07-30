@@ -81,7 +81,7 @@ async function loadSec03Context() {
   const schemaSha256 = createHash("sha256").update(schemaBytes).digest("hex");
   const fallbackIdentity = { runId: null, candidateId: null, buildId: null, sourceSha256: null, launcherSha256: null, hostSha256: null, packageSha256: null, matrixSha256, schemaSha256 };
   try {
-    const identityPath = process.env.MINI_LUX_SEC03_IDENTITY_FILE;
+    const identityPath = process.env.RAINYDAYS_SEC03_IDENTITY_FILE;
     assert(identityPath && path.isAbsolute(identityPath) && path.resolve(identityPath) === identityPath, "SEC-03 trusted identity configuration is missing");
     const info = await lstat(identityPath); assert(info.isFile() && !info.isSymbolicLink()); assert.equal(await realpath(identityPath), identityPath);
     const identity = { ...JSON.parse(await readFile(identityPath, "utf8")), matrixSha256, schemaSha256 };

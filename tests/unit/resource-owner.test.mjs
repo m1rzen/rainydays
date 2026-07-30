@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   assertResourceOwner,
+  assertResourceOwnerForCleanup,
   issueResourceOwner,
   registerOwnedResource,
   retireResourceOwner,
@@ -26,11 +27,18 @@ test("SEC-02 ResourceOwner authenticity uses object identity and exact metadata"
 test("SEC-02 ResourceOwner retirement closes registered resources exactly once", async () => {
   const owner = issueResourceOwner(metadata());
   let closes = 0;
-  const unregister = registerOwnedResource(owner, async () => { closes += 1; });
+  let cleanupMetadata = null;
+  const unregister = registerOwnedResource(owner, async () => {
+    assert.throws(() => assertResourceOwner(owner), error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_STALE");
+    cleanupMetadata = assertResourceOwnerForCleanup(owner);
+    closes += 1;
+  });
   await retireResourceOwner(owner);
   await retireResourceOwner(owner);
   unregister();
   assert.equal(closes, 1);
+  assert.deepEqual(cleanupMetadata, metadata());
+  assert.throws(() => assertResourceOwnerForCleanup(owner), error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_STALE");
   assert.throws(
     () => assertResourceOwner(owner),
     error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_STALE"
@@ -51,17 +59,49 @@ test("SEC-02 ResourceOwner drain failure is a hard lifecycle failure", async () 
   );
 });
 
-test("SEC-02 ResourceOwner drain deadline fails closed", async () => {
+test("SEC-02 ResourceOwner waits for every closer before publishing a drain failure", async () => {
   const owner = issueResourceOwner(metadata());
-  registerOwnedResource(owner, () => new Promise(() => undefined));
+  const gate = Promise.withResolvers();
+  const drained = Promise.withResolvers();
+  registerOwnedResource(owner, async () => { throw new Error("first close failed"); });
+  registerOwnedResource(owner, async () => {
+    await gate.promise;
+    assert.deepEqual(assertResourceOwnerForCleanup(owner), metadata());
+    drained.resolve();
+  });
+  let retirementSettled = false;
+  const retirement = retireResourceOwner(owner).finally(() => { retirementSettled = true; });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(retirementSettled, false);
+  assert.deepEqual(assertResourceOwnerForCleanup(owner), metadata());
+  gate.resolve();
+  await drained.promise;
+  await assert.rejects(() => retirement, /first close failed/);
+  assert.throws(() => assertResourceOwnerForCleanup(owner), error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_STALE");
+});
+
+test("SEC-02 ResourceOwner drain deadline stays poisoned until residual cleanup settles", async () => {
+  const owner = issueResourceOwner(metadata());
+  const gate = Promise.withResolvers();
+  const drained = Promise.withResolvers();
+  registerOwnedResource(owner, async () => {
+    await gate.promise;
+    assert.deepEqual(assertResourceOwnerForCleanup(owner), metadata());
+    drained.resolve();
+  });
   await assert.rejects(
     () => retireResourceOwner(owner, 20),
     error => error instanceof PathDeniedError && error.code === "PATH_LIFECYCLE_FAILED"
   );
+  assert.deepEqual(assertResourceOwnerForCleanup(owner), metadata());
   assert.throws(
     () => assertResourceOwner(owner),
     error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_STALE"
   );
+  gate.resolve();
+  await drained.promise;
+  await new Promise(resolve => setImmediate(resolve));
+  assert.throws(() => assertResourceOwnerForCleanup(owner), error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_STALE");
 });
 
 test("SEC-02 ResourceOwner rejects malformed, forged, stale and duplicate lifecycle operations", async () => {

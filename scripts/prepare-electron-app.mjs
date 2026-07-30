@@ -104,14 +104,14 @@ function runDirect(command, args, cwd) {
 }
 
 async function recordGovernedStagingInstall() {
-  const markerPath = process.env.MINI_LUX_GOV04_STAGING_INSTALL_MARKER;
+  const markerPath = process.env.RAINYDAYS_GOV04_STAGING_INSTALL_MARKER;
   if (!markerPath) return;
   const fields = {
     schemaVersion: 1,
     role: "electron-staging",
-    runId: process.env.MINI_LUX_GOV04_RUN_ID,
-    challenge: process.env.MINI_LUX_GOV04_CHALLENGE,
-    candidateId: process.env.MINI_LUX_GOV04_CANDIDATE_ID,
+    runId: process.env.RAINYDAYS_GOV04_RUN_ID,
+    challenge: process.env.RAINYDAYS_GOV04_CHALLENGE,
+    candidateId: process.env.RAINYDAYS_GOV04_CANDIDATE_ID,
     command: ["npm", "ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"],
   };
   if (!/^[0-9a-f-]{36}$/.test(fields.runId || "") || !/^[a-f0-9]{64}$/.test(fields.challenge || "") || !/^[a-f0-9]{64}$/.test(fields.candidateId || "")) {
@@ -160,7 +160,7 @@ const stagePackage = expectedElectronStagePackage(projectRoot, sourcePackage, bu
 await fs.writeFile(path.join(stageDir, "package.json"), JSON.stringify(stagePackage, null, 2) + "\n");
 
 console.log(`Installing isolated production dependencies in ${stageDir}`);
-const governedNpmCli = process.env.MINI_LUX_NPM_CLI_PATH || process.env.npm_execpath;
+const governedNpmCli = process.env.RAINYDAYS_NPM_CLI_PATH || process.env.npm_execpath;
 if (!governedNpmCli) throw new Error("npm CLI path is unavailable for Electron staging");
 await recordGovernedStagingInstall();
 await runDirect(process.execPath, [governedNpmCli, "ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], stageDir);
@@ -173,7 +173,7 @@ await fs.rm(path.join(sharpDir, "src"), { recursive: true, force: true });
 await fs.rm(path.join(sharpDir, "binding.gyp"), { force: true });
 await fs.writeFile(
   path.join(sharpDir, "lib", "index.js"),
-  '"use strict";\nmodule.exports = function sharpTextRuntimeStub() { throw new Error("Mini-Lux 文本运行时未启用本地图像 Transformer"); };\n',
+  '"use strict";\nmodule.exports = function sharpTextRuntimeStub() { throw new Error("RainyDays 文本运行时未启用本地图像 Transformer"); };\n',
   "utf8"
 );
 const stageIdentity = await writeElectronStageManifest(projectRoot, stageDir);

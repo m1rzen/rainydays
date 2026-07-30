@@ -56,11 +56,11 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
   const fixture = await makeTempDir("mini-lux-sec01-agent-");
   const dataDir = path.join(fixture, "data");
   await mkdir(dataDir, { recursive: true });
-  process.env.MINI_LUX_APP_ROOT = projectRoot;
-  process.env.MINI_LUX_USER_DATA_DIR = fixture;
-  process.env.MINI_LUX_DATA_DIR = dataDir;
-  process.env.MINI_LUX_BUILTIN_PERSONAS_DIR = path.join(projectRoot, "personas");
-  process.env.MINI_LUX_BUILTIN_SKILLS_DIR = path.join(projectRoot, "skills");
+  process.env.RAINYDAYS_APP_ROOT = projectRoot;
+  process.env.RAINYDAYS_USER_DATA_DIR = fixture;
+  process.env.RAINYDAYS_DATA_DIR = dataDir;
+  process.env.RAINYDAYS_BUILTIN_PERSONAS_DIR = path.join(projectRoot, "personas");
+  process.env.RAINYDAYS_BUILTIN_SKILLS_DIR = path.join(projectRoot, "skills");
 
   const [
     { Agent },
@@ -70,6 +70,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     { closeDb },
     { capabilityBroker, registerDynamicTool, executeInspectedTool, executeTool, inspectToolCall },
     { setAskUserSseCallback, submitAnswer },
+    { registerNativeProcessConsentHandler },
     { disableSupervisor, enableSupervisor, initSupervisor, isSupervisorEnabled },
     { terminalFacade },
     { pathPolicy },
@@ -81,6 +82,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     import("../../dist/db.js"),
     import("../../dist/tools/index.js"),
     import("../../dist/tools/ask-user-tool.js"),
+    import("../../dist/native-process-consent.js"),
     import("../../dist/supervisor.js"),
     import("../../dist/terminal-facade.js"),
     import("../../dist/path-runtime.js"),
@@ -146,6 +148,8 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
   agent.setSession(session.id);
   disableSupervisor();
   assert.equal(isSupervisorEnabled(), false);
+  let nativeProcessDecision = "deny";
+  const unregisterNativeProcessConsent = registerNativeProcessConsentHandler(() => nativeProcessDecision);
 
   try {
     llm.queue(
@@ -203,6 +207,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     await collect(agent, "model attempts to disable Supervisor");
     assert.equal(isSupervisorEnabled(), true, "model-visible supervise tool must not mutate control state");
     const stateAfterAgentAttempt = isSupervisorEnabled();
+    await capabilityBroker.retireSessionResources(authority, session.id);
     const supervisorRoot = capabilityBroker.beginAgentRun(authority, session.id);
     const supervisorSubagent = capabilityBroker.deriveChild(supervisorRoot, { principal: "subagent", tools: ["supervise"] });
     const supervisorPlaybook = capabilityBroker.deriveChild(supervisorRoot, { principal: "playbook", tools: ["supervise"] });
@@ -245,7 +250,6 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     const registryBeforeContext = capabilityBroker.beginAgentRun(authority, session.id);
     const unifiedOwner = capabilityBroker.getResourceOwner(registryBeforeContext);
     const registryBefore = capabilityBroker.getToolDefinitions(registryBeforeContext).map((entry) => entry.function.name);
-    capabilityBroker.finishContext(registryBeforeContext);
     const unifiedBefore = {
       executorCalls: calls.count,
       files: [await exists(unifiedScriptMarker), await exists(unifiedShellMarker)],
@@ -253,6 +257,8 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
       supervisorEnabled: isSupervisorEnabled(),
       registry: registryBefore,
     };
+    await capabilityBroker.retireSessionResources(authority, session.id);
+    capabilityBroker.finishContext(registryBeforeContext);
     let unifiedDirectDenial = null;
     try { invokeTerminalManager(undefined); }
     catch (error) { unifiedDirectDenial = error?.code ?? null; }
@@ -279,17 +285,20 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
       assistant("unified denials complete")
     );
     const unifiedEvents = await collect(agent, "unified denial state probe");
+    await capabilityBroker.retireSessionResources(authority, session.id);
     const registryAfterContext = capabilityBroker.beginAgentRun(authority, session.id);
+    const registryAfterOwner = capabilityBroker.getResourceOwner(registryAfterContext);
     const registryAfter = capabilityBroker.getToolDefinitions(registryAfterContext).map((entry) => entry.function.name);
-    capabilityBroker.finishContext(registryAfterContext);
     const unifiedAfter = {
       executorCalls: calls.count,
       files: [await exists(unifiedScriptMarker), await exists(unifiedShellMarker)],
-      terminalResources: terminalFacade.list(unifiedOwner).length,
+      terminalResources: terminalFacade.list(registryAfterOwner).length,
       supervisorEnabled: isSupervisorEnabled(),
       registry: registryAfter,
       managerCalls: unifiedManagerCalls,
     };
+    await capabilityBroker.retireSessionResources(authority, session.id);
+    capabilityBroker.finishContext(registryAfterContext);
     const unifiedApprovalDenied = unifiedEvents.some((event) => event.type === "tool_result" && event.toolName === "subagent" && /拒绝|CAPABILITY/.test(event.content));
     assertSec01Probe("SEC01-A31", "executor-call-count", { before: unifiedBefore.executorCalls, after: unifiedAfter.executorCalls }, { before: 0, after: 0 });
     assertSec01Probe("SEC01-A31", "filesystem-state", { before: unifiedBefore.files, after: unifiedAfter.files }, { before: [false, false], after: [false, false] });
@@ -388,6 +397,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
       capabilityBroker.revokeAuthority(adviceAuthority);
     }
 
+    nativeProcessDecision = "approve";
     setAskUserSseCallback((event) => {
       if (event && typeof event === "object" && "questionId" in event) {
         setTimeout(() => submitAnswer(event.questionId, "确认执行"), 0);
@@ -430,6 +440,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     assert.equal(calls.count, 2, "parallel denial must add no executor calls");
   } finally {
     setAskUserSseCallback(() => undefined);
+    unregisterNativeProcessConsent();
     capabilityBroker.revokeAuthority(authority);
     closeDb();
     await removeFixture(fixture);

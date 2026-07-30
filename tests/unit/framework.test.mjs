@@ -5,7 +5,7 @@ import test from "node:test";
 import { evaluateCoverageSummary, meetsPercent } from "../../scripts/coverage-lib.mjs";
 import { selfTestScenarioContract, validateLayerReport, validatePackagedDetails, validateSelfTestReport } from "../../scripts/report-schema.mjs";
 import { aggregateSec02UnifiedEvidence, validateSec02UnifiedEvidence } from "../../scripts/sec02-receipt-set.mjs";
-import { canonicalJson, sha256Bytes } from "../../scripts/sec02-governance.mjs";
+import { canonicalJson, currentResolvedManifestPath, resolvedManifestPath, sha256Bytes } from "../../scripts/sec02-governance.mjs";
 import { classifyInstallerResult, launchTracked, requireObservedProcessResult } from "../packaged/smoke-helpers.mjs";
 import {
   artifactSafeBuildId,
@@ -107,8 +107,20 @@ test("GOV-03 task manifest consumes the validated SEC-02 resolved cumulative vie
   assert.equal(resolvedManifest.evidence.positives.length, 22);
 });
 
+test("current SEC-02 execution identity is disjoint from the SEC-03 frozen predecessor", async () => {
+  const current = await loadTaskManifest("SEC-02");
+  const governance = await loadTaskManifest("GOV-03");
+  const sec03 = await loadTaskManifest("SEC-03");
+  const currentPath = path.join(projectRoot, ...currentResolvedManifestPath.split("/"));
+  assert.equal(current.resolvedManifestPath, currentPath);
+  assert.equal(governance.resolvedManifestPath, currentPath);
+  assert.equal(sec03.resolvedManifest.predecessor.exactCasePath, resolvedManifestPath);
+  assert.notEqual(current.resolvedManifestPath, path.join(projectRoot, ...resolvedManifestPath.split("/")));
+  assert.equal(sec03.sourceManifestPaths[0], path.join(projectRoot, ...resolvedManifestPath.split("/")));
+});
+
 test("SEC-02 unified runner independently joins raw receipts and rejects receipt-set mutations", async () => {
-  const manifest = JSON.parse(await readFile(path.join(projectRoot, "tests", "manifests", "sec-02-resolved.json"), "utf8"));
+  const manifest = JSON.parse(await readFile(path.join(projectRoot, ...currentResolvedManifestPath.split("/")), "utf8"));
   const matrix = JSON.parse(await readFile(path.join(projectRoot, "tests", "sec02-attack-matrix.json"), "utf8"));
   const runId = "12345678-1234-4234-9234-123456789abc";
   const context = { manifest, matrix, runId };
@@ -211,7 +223,17 @@ test("packaged crash and observation failures are fail-closed", () => {
   assert.throws(() => requireObservedProcessResult({ code: null, signal: "SIGTERM" }, [0], "registry observation"), /crashed/);
   assert.throws(() => validatePackagedDetails(null, { passed: true }), /must be present/);
   const packageBinding = {
-    schemaVersion: 2, buildId: "0.1.0+local.synthetic", sourceDigest: "1".repeat(64),
+    schemaVersion: 3, buildId: "0.1.0+local.synthetic", sourceDigest: "1".repeat(64),
+    stageManifestSha256: "f".repeat(64), buildInfoSha256: "0".repeat(64), distIntegritySha256: "3".repeat(64),
+    native: {
+      architectureSha256: "1".repeat(64),
+      manifest: { path: "dist/native/sec03-native-manifest.json", bytes: 128, sha256: "2".repeat(64) },
+      sourceDigest: "3".repeat(64), toolchainDigest: "4".repeat(64), signatureStatus: "unsigned-local",
+      binaries: [
+        { path: "dist/native/sandbox-host.exe", bytes: 128, sha256: "5".repeat(64), machine: "AMD64" },
+        { path: "dist/native/sandbox-launcher.node", bytes: 128, sha256: "6".repeat(64), machine: "AMD64" },
+      ],
+    },
     sinkInventorySha256: "4".repeat(64), detectorPolicySha256: "5".repeat(64), reviewPolicySha256: "6".repeat(64),
     dialectCheckerSha256: "b".repeat(64), dialectPolicySha256: "c".repeat(64), dialectImportSetSha256: "d".repeat(64),
     executableManifestSha256: "7".repeat(64), runtimeSinkSetSha256: "8".repeat(64),

@@ -473,7 +473,7 @@ async function waitFor(check, timeoutMs = 10_000) {
 
 async function recoveryDirectory() {
   assert.equal(typeof process.env.LOCALAPPDATA, "string");
-  const directory = path.join(process.env.LOCALAPPDATA, "Mini-Lux", "sec03-journal-v2");
+  const directory = path.join(process.env.LOCALAPPDATA, "RainyDays", "sec03-journal-v2");
   await fs.mkdir(directory, { recursive: true });
   return directory;
 }
@@ -497,7 +497,7 @@ async function realHostReceiptContext() {
   const host = manifest.outputs.find(value => value.path === "dist/native/sandbox-host.exe");
   const launcher = manifest.outputs.find(value => value.path === "dist/native/sandbox-launcher.node");
   assert.ok(host && launcher);
-  const configured = process.env.MINI_LUX_SEC03_IDENTITY_FILE ? JSON.parse(await fs.readFile(process.env.MINI_LUX_SEC03_IDENTITY_FILE, "utf8")) : null;
+  const configured = process.env.RAINYDAYS_SEC03_IDENTITY_FILE ? JSON.parse(await fs.readFile(process.env.RAINYDAYS_SEC03_IDENTITY_FILE, "utf8")) : null;
   const identity = {
     runId: configured?.runId ?? randomUUID(),
     candidateId: configured?.candidateId ?? "c".repeat(64),
@@ -1036,7 +1036,7 @@ windowsTest("SEC-03 native execution proof is fixed-identity, host-produced, and
   assert.ok(host && launcher);
   const addon = require(addonPath);
   assert.deepEqual(Object.keys(addon).sort(), ["openEvidenceVerifier", "openExclusiveHostLease", "protocolVersion"]);
-  const configuredIdentity = process.env.MINI_LUX_SEC03_IDENTITY_FILE ? JSON.parse(await fs.readFile(process.env.MINI_LUX_SEC03_IDENTITY_FILE, "utf8")) : null;
+  const configuredIdentity = process.env.RAINYDAYS_SEC03_IDENTITY_FILE ? JSON.parse(await fs.readFile(process.env.RAINYDAYS_SEC03_IDENTITY_FILE, "utf8")) : null;
   const candidateId = configuredIdentity?.candidateId ?? "c".repeat(64);
   const buildIdSha256 = configuredIdentity?.buildId ?? "d".repeat(64);
   const sourceSha256 = configuredIdentity?.sourceSha256 ?? "e".repeat(64);
@@ -1140,7 +1140,7 @@ windowsTest("SEC-03 real-host receipt harness authenticates A16 system-volume po
   const launcher = manifest.outputs.find(value => value.path === "dist/native/sandbox-launcher.node");
   assert.ok(host && launcher);
   const addon = require(addonPath);
-  const configured = process.env.MINI_LUX_SEC03_IDENTITY_FILE ? JSON.parse(await fs.readFile(process.env.MINI_LUX_SEC03_IDENTITY_FILE, "utf8")) : null;
+  const configured = process.env.RAINYDAYS_SEC03_IDENTITY_FILE ? JSON.parse(await fs.readFile(process.env.RAINYDAYS_SEC03_IDENTITY_FILE, "utf8")) : null;
   const identity = {
     runId: configured?.runId ?? randomUUID(),
     candidateId: configured?.candidateId ?? "c".repeat(64),

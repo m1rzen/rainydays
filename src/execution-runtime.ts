@@ -21,7 +21,7 @@ import {
   type NativeServiceDenialRequest,
 } from "./execution-native.js";
 import { consumeExecutionRootLease, type ExecutionRootLease } from "./path-policy.js";
-import { assertResourceOwner, type ResourceOwner } from "./resource-owner.js";
+import { assertResourceOwner, assertResourceOwnerForCleanup, type ResourceOwner } from "./resource-owner.js";
 import type { ManualConsentEvidenceBinding, ManualConsentOperation } from "./manual-execution-consent.js";
 
 export interface IsolatedTerminalLease { readonly leaseId: string }
@@ -150,7 +150,7 @@ async function loadNativeIdentity(): Promise<NativeArtifactIdentity> {
       && artifacts[index]?.machine === entry.machine);
   if (value.schemaVersion !== 1 || value.architecture !== "x64" || value.signatureStatus !== "unsigned-local"
     || !HASH.test(String(value.sourceDigest ?? "")) || !HASH.test(String(value.toolchainDigest ?? ""))
-    || build.schemaVersion !== 1 || build.product !== "Mini-Lux" || !HASH.test(String(build.candidateId ?? ""))
+    || build.schemaVersion !== 1 || build.product !== "RainyDays" || !HASH.test(String(build.candidateId ?? ""))
     || !HASH.test(String(build.sourceDigest ?? "")) || typeof build.buildId !== "string" || build.buildId.length < 1 || build.buildId.length > 128
     || execution.architectureSha256 !== ARCHITECTURE_SHA256 || execution.protocolVersion !== 1
     || execution.nativeSourceDigest !== value.sourceDigest || execution.toolchainDigest !== value.toolchainDigest
@@ -242,16 +242,16 @@ function trustedWindowsEnvironment(entryPoint: "E1" | "E2" | "E3" | "E4", canoni
     PROCESSOR_ARCHITECTURE: "AMD64",
     NUMBER_OF_PROCESSORS: String(Math.max(1, os.cpus().length)),
     PATH: system32,
+    TEMP: canonicalRootPath,
+    TMP: canonicalRootPath,
+    USERPROFILE: canonicalRootPath,
+    HOME: canonicalRootPath,
+    APPDATA: canonicalRootPath,
+    LOCALAPPDATA: canonicalRootPath,
     MINI_LUX_ROOT_0: canonicalRootPath,
   };
   if (entryPoint === "E3") {
     common.NODE_DISABLE_COLORS = "1";
-    common.TEMP = canonicalRootPath;
-    common.TMP = canonicalRootPath;
-    common.USERPROFILE = canonicalRootPath;
-    common.HOME = canonicalRootPath;
-    common.APPDATA = canonicalRootPath;
-    common.LOCALAPPDATA = canonicalRootPath;
     if (process.versions.electron) common.ELECTRON_RUN_AS_NODE = "1";
   } else common.ComSpec = path.win32.join(system32, "cmd.exe");
   return Object.freeze(common);
@@ -516,12 +516,13 @@ export function createManualExecutionGateway(input: Readonly<{
   });
 }
 
-function requirePersistent(lease: IsolatedTerminalLease, owner: ResourceOwner): PersistentRecord {
+function requirePersistent(lease: IsolatedTerminalLease, owner: ResourceOwner, ownerRetirement = false): PersistentRecord {
   const record = persistentRecords.get(lease);
   if (!record || record.token !== lease || record.owner !== owner) {
     throw new ExecutionDeniedError("EXEC_GRANT_FORGED", "Persistent execution lease is unavailable");
   }
-  assertResourceOwner(owner);
+  if (ownerRetirement) assertResourceOwnerForCleanup(owner);
+  else assertResourceOwner(owner);
   return record;
 }
 
@@ -535,6 +536,13 @@ export async function terminateIsolatedTerminal(lease: IsolatedTerminalLease, ow
   if (record.closed) return;
   record.closed = true;
   await record.service.terminate(record.nativeLease, owner, reason);
+}
+
+export async function retireIsolatedTerminal(lease: IsolatedTerminalLease, owner: ResourceOwner, reason: string): Promise<void> {
+  const record = requirePersistent(lease, owner, true);
+  if (record.closed) return;
+  record.closed = true;
+  await record.service.terminateForOwnerRetirement(record.nativeLease, owner, reason);
 }
 
 export async function shutdownExecutionRuntime(): Promise<void> {

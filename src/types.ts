@@ -1,5 +1,5 @@
 // ===========================================
-// 类型定义 —— Mini-Lux 核心数据结构
+// 类型定义 —— RainyDays 核心数据结构
 // ===========================================
 
 import type { CapabilityContext, ChildCapabilityRequest, ToolPolicy } from "./capability-broker.js";

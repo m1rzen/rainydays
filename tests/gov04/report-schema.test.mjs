@@ -188,7 +188,7 @@ test("G04-13 package artifact replacement breaks frozen hash binding", async () 
   try {
     const bytes = Buffer.from("frozen artifact");
     const artifactSha256 = sha256(bytes);
-    const artifactPath = path.join(root, "artifacts", "sha256", artifactSha256, "Mini-Lux Setup.exe");
+    const artifactPath = path.join(root, "artifacts", "sha256", artifactSha256, "RainyDays Setup.exe");
     const manifestPath = path.join(root, "package-artifact.json");
     await mkdir(path.dirname(artifactPath), { recursive: true });
     await writeFile(artifactPath, bytes);

@@ -14,6 +14,10 @@ function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
+function archivePath(relative) {
+  return relative.split("/").join(path.sep);
+}
+
 function parsePeMachine(bytes, field) {
   if (bytes.length < 0x40 || bytes.readUInt16LE(0) !== 0x5a4d) throw new Error(`${field} is not a PE image`);
   const offset = bytes.readUInt32LE(0x3c);
@@ -51,7 +55,7 @@ module.exports = async function afterPack(context) {
   const stageManifestBytes = await regularBytes(path.join(stageDir, stageManifestPath), "Staged Electron identity");
   const stagedNativeManifestBytes = await regularBytes(path.join(stageDir, ...manifestPath.split("/")), "Staged SEC-03 native manifest");
   const archivedStageManifest = asar.extractFile(archive, stageManifestPath, false);
-  const archivedNativeManifest = asar.extractFile(archive, manifestPath, false);
+  const archivedNativeManifest = asar.extractFile(archive, archivePath(manifestPath), false);
   if (!stageManifestBytes.equals(archivedStageManifest)) throw new Error("Packaged Electron stage identity differs byte-for-byte");
   if (!stagedNativeManifestBytes.equals(archivedNativeManifest)) throw new Error("Packaged SEC-03 native manifest differs byte-for-byte");
 
@@ -65,7 +69,7 @@ module.exports = async function afterPack(context) {
   }
 
   for (const relative of binaryPaths) {
-    const metadata = asar.statFile(archive, relative, false);
+    const metadata = asar.statFile(archive, archivePath(relative), false);
     if (metadata.unpacked !== true || "link" in metadata || "files" in metadata) throw new Error(`SEC-03 native binary is not uniquely unpacked: ${relative}`);
     const record = nativeManifest.outputs.find((entry) => entry.path === relative);
     if (!record || record.machine !== "AMD64") throw new Error(`SEC-03 native manifest output is invalid: ${relative}`);
@@ -77,7 +81,7 @@ module.exports = async function afterPack(context) {
     if (parsePeMachine(unpackedBytes, relative) !== 0x8664) throw new Error(`Packaged SEC-03 native machine differs: ${relative}`);
   }
 
-  const manifestMetadata = asar.statFile(archive, manifestPath, false);
+  const manifestMetadata = asar.statFile(archive, archivePath(manifestPath), false);
   const stageMetadata = asar.statFile(archive, stageManifestPath, false);
   if (manifestMetadata.unpacked === true || stageMetadata.unpacked === true) throw new Error("SEC-03 identity manifests must remain only inside ASAR");
   console.log(`  • verified SEC-03 native package identity  manifest=${sha256(stagedNativeManifestBytes)}`);

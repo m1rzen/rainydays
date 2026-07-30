@@ -82,7 +82,7 @@ const gitExecutable = process.platform === "win32"
   ? (await execFileAsync(path.join(process.env.SystemRoot ?? process.env.WINDIR, "System32", "where.exe"), ["git.exe"], { encoding: "utf8", windowsHide: true })).stdout.split(/\r?\n/u).find(Boolean)
   : "/usr/bin/git";
 assert(gitExecutable && path.isAbsolute(gitExecutable), "Git executable fixture is unavailable");
-process.env.MINI_LUX_GIT_EXECUTABLE = await fs.realpath(gitExecutable);
+process.env.RAINYDAYS_GIT_EXECUTABLE = await fs.realpath(gitExecutable);
 const fixture = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec02-repo-oracle-"));
 const repository = path.join(fixture, "repository");
 const outside = path.join(fixture, "outside");
@@ -96,11 +96,11 @@ await fs.writeFile(path.join(repository, "package.json"), JSON.stringify({ name:
 await fs.writeFile(path.join(repository, "src", "main.ts"), "export const governed = true;\n");
 await fs.writeFile(path.join(repository, "README.md"), "# Governed Repository\n");
 await fs.writeFile(externalSecretPath, externalSecret);
-await execFileAsync(process.env.MINI_LUX_GIT_EXECUTABLE, ["init", "--quiet"], { cwd: repository, windowsHide: true });
-await execFileAsync(process.env.MINI_LUX_GIT_EXECUTABLE, ["add", "--", "package.json", "README.md", "src/main.ts"], { cwd: repository, windowsHide: true });
+await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["init", "--quiet"], { cwd: repository, windowsHide: true });
+await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "package.json", "README.md", "src/main.ts"], { cwd: repository, windowsHide: true });
 
-process.env.MINI_LUX_USER_DATA_DIR = fixture;
-process.env.MINI_LUX_DATA_DIR = data;
+process.env.RAINYDAYS_USER_DATA_DIR = fixture;
+process.env.RAINYDAYS_DATA_DIR = data;
 const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule, managedStoreModule] = await Promise.all([
   import("../../dist/persona.js"),
   import("../../dist/session.js"),
@@ -206,17 +206,17 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
     const newlineTrackedPath = `${newlineCarrierName}/${newlineName}`;
     await fs.symlink(outside, newlineCarrier, "junction");
     const { stdout: blobOutput } = await execFileAsync(
-      process.env.MINI_LUX_GIT_EXECUTABLE,
+      process.env.RAINYDAYS_GIT_EXECUTABLE,
       ["hash-object", "package.json"],
       { cwd: repository, encoding: "utf8", windowsHide: true }
     );
     await execFileAsync(
-      process.env.MINI_LUX_GIT_EXECUTABLE,
+      process.env.RAINYDAYS_GIT_EXECUTABLE,
       ["-c", "core.protectNTFS=false", "update-index", "--add", "--cacheinfo", `100644,${blobOutput.trim()},${newlineTrackedPath}`],
       { cwd: repository, windowsHide: true }
     );
     const { stdout: gitEntries } = await execFileAsync(
-      process.env.MINI_LUX_GIT_EXECUTABLE,
+      process.env.RAINYDAYS_GIT_EXECUTABLE,
       ["ls-files", "-z", "--"],
       { cwd: repository, encoding: "buffer", windowsHide: true }
     );
@@ -246,7 +246,7 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
     });
     if (repoRecorder.enabled) await repoRecorder.observe("SEC02-P25-git-newline-name", newlineActual);
     await execFileAsync(
-      process.env.MINI_LUX_GIT_EXECUTABLE,
+      process.env.RAINYDAYS_GIT_EXECUTABLE,
       ["-c", "core.protectNTFS=false", "update-index", "--force-remove", "--", newlineTrackedPath],
       { cwd: repository, windowsHide: true }
     );
@@ -255,7 +255,7 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
     const linkedName = "tracked-external-link";
     const linkedEntry = path.join(repository, linkedName);
     await fs.symlink(outside, linkedEntry, "junction");
-    await execFileAsync(process.env.MINI_LUX_GIT_EXECUTABLE, ["add", "--", linkedName], { cwd: repository, windowsHide: true });
+    await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", linkedName], { cwd: repository, windowsHide: true });
     const linkedBefore = await externalState();
     const linkedAttempt = await captureDenial(() => toolsModule.executeTool(root, "read_repo", { path: "", level: "tree" }));
     const linkedAfter = await externalState();
@@ -275,7 +275,7 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
       rawPathsAbsent: true,
     });
     if (repoRecorder.enabled) await repoRecorder.observe("SEC02-P25-git-linked-entry", linkedActual);
-    await execFileAsync(process.env.MINI_LUX_GIT_EXECUTABLE, ["rm", "--cached", "-r", "--ignore-unmatch", "--", linkedName], { cwd: repository, windowsHide: true });
+    await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["rm", "--cached", "-r", "--ignore-unmatch", "--", linkedName], { cwd: repository, windowsHide: true });
     await fs.unlink(linkedEntry);
 
     const oracleEscapeBefore = await externalState();
@@ -353,7 +353,7 @@ test("SEC-02 Oracle project read and managed snapshot write use disjoint governe
 
     const linked = path.join(repository, "external-link");
     await fs.symlink(outside, linked, "junction");
-    await execFileAsync(process.env.MINI_LUX_GIT_EXECUTABLE, ["add", "--", "external-link"], { cwd: repository, windowsHide: true });
+    await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "external-link"], { cwd: repository, windowsHide: true });
     await assert.rejects(
       () => toolsModule.executeTool(root, "read_repo", { path: "", level: "tree" }),
       error => error?.code === "PATH_REDIRECT_DENIED"

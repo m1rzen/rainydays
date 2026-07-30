@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="RainyDays icon">
+  <defs>
+    <linearGradient id="bg" x1="160" y1="96" x2="864" y2="928" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#172551"/>
+      <stop offset="0.52" stop-color="#101a3d"/>
+      <stop offset="1" stop-color="#090f28"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientTransform="translate(512 492) rotate(90) scale(380)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4d8cff" stop-opacity=".28"/>
+      <stop offset=".7" stop-color="#283b8a" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#0b112d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cloud" x1="322" y1="284" x2="708" y2="650" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#eef6ff"/>
+      <stop offset=".38" stop-color="#cbdcf7"/>
+      <stop offset="1" stop-color="#849dca"/>
+    </linearGradient>
+    <linearGradient id="cloudShade" x1="512" y1="392" x2="512" y2="672" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7188bd" stop-opacity="0"/>
+      <stop offset="1" stop-color="#405684" stop-opacity=".52"/>
+    </linearGradient>
+    <linearGradient id="rain" x1="360" y1="650" x2="664" y2="870" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6de3ff"/>
+      <stop offset=".5" stop-color="#3aa7ff"/>
+      <stop offset="1" stop-color="#6777ff"/>
+    </linearGradient>
+    <radialGradient id="light" cx="0" cy="0" r="1" gradientTransform="translate(516 555) rotate(90) scale(172 230)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffe8a3" stop-opacity=".95"/>
+      <stop offset=".35" stop-color="#ffc85a" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#ffc047" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="180" y="190" width="664" height="578" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="30" stdDeviation="34" flood-color="#020719" flood-opacity=".55"/>
+    </filter>
+    <filter id="rainGlow" x="260" y="590" width="504" height="330" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="13" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="cloudClip">
+      <path d="M302 642c-75 0-136-59-136-132 0-68 53-124 121-131 32-100 126-172 237-172 126 0 232 92 249 213 55 16 95 67 95 127 0 73-61 132-136 132H302z"/>
+    </clipPath>
+  </defs>
+  <rect x="28" y="28" width="968" height="968" rx="238" fill="url(#bg)"/>
+  <rect x="52" y="52" width="920" height="920" rx="216" fill="none" stroke="#6a8cff" stroke-opacity=".12" stroke-width="4"/>
+  <circle cx="512" cy="492" r="392" fill="url(#halo)"/>
+  <g filter="url(#shadow)">
+    <path d="M302 642c-75 0-136-59-136-132 0-68 53-124 121-131 32-100 126-172 237-172 126 0 232 92 249 213 55 16 95 67 95 127 0 73-61 132-136 132H302z" fill="url(#cloud)"/>
+    <ellipse cx="516" cy="555" rx="230" ry="172" fill="url(#light)" clip-path="url(#cloudClip)"/>
+    <path d="M302 642c-75 0-136-59-136-132 0-22 6-43 16-61 32 65 99 109 177 109h367c58 0 109-22 148-58 1 7 2 15 2 23 0 73-61 132-136 132H302z" fill="url(#cloudShade)" opacity=".72"/>
+    <path d="M306 390c38-84 122-143 220-143 92 0 173 52 213 128-53-47-122-75-198-75-91 0-174 35-235 90z" fill="#fff" opacity=".24"/>
+  </g>
+  <g filter="url(#rainGlow)" fill="url(#rain)">
+    <path d="M338 676c0 0-55 73-55 111 0 35 27 61 61 61s61-26 61-61c0-38-67-111-67-111z"/>
+    <path d="M506 698c0 0-61 82-61 125 0 38 30 68 68 68s68-30 68-68c0-43-75-125-75-125z"/>
+    <path d="M681 676c0 0-55 73-55 111 0 35 27 61 61 61s61-26 61-61c0-38-67-111-67-111z"/>
+  </g>
+  <g fill="#dff8ff" opacity=".58">
+    <ellipse cx="324" cy="773" rx="13" ry="22" transform="rotate(24 324 773)"/>
+    <ellipse cx="491" cy="805" rx="14" ry="25" transform="rotate(24 491 805)"/>
+    <ellipse cx="666" cy="773" rx="13" ry="22" transform="rotate(24 666 773)"/>
+  </g>
+</svg>

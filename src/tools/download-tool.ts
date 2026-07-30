@@ -69,7 +69,7 @@ export const downloadExec: ToolExecutor = async (args, _env, invocation) => {
   try {
     const reservation = await gateway.reserveFile(filename, { defaultRootId: rootId, maxBytes: MAX_DOWNLOAD_BYTES });
     const response = await fetch(url, {
-      headers: { "User-Agent": "Mini-Lux/1.0" },
+      headers: { "User-Agent": "RainyDays/1.0" },
       signal: AbortSignal.timeout(60000),
     });
 

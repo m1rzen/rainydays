@@ -33,16 +33,16 @@ network_policy: deny
 ---
 Builtin prompt`);
 
-process.env.MINI_LUX_APP_ROOT = appRoot;
-process.env.MINI_LUX_USER_DATA_DIR = userData;
-process.env.MINI_LUX_DATA_DIR = path.join(userData, "data");
-process.env.MINI_LUX_BUILTIN_PERSONAS_DIR = builtinPersonas;
-process.env.MINI_LUX_BUILTIN_SKILLS_DIR = builtinSkills;
-delete process.env.MINI_LUX_USER_PERSONAS_DIR;
-delete process.env.MINI_LUX_USER_SKILLS_DIR;
-delete process.env.MINI_LUX_PLAYBOOKS_DIR;
+process.env.RAINYDAYS_APP_ROOT = appRoot;
+process.env.RAINYDAYS_USER_DATA_DIR = userData;
+process.env.RAINYDAYS_DATA_DIR = path.join(userData, "data");
+process.env.RAINYDAYS_BUILTIN_PERSONAS_DIR = builtinPersonas;
+process.env.RAINYDAYS_BUILTIN_SKILLS_DIR = builtinSkills;
+delete process.env.RAINYDAYS_USER_PERSONAS_DIR;
+delete process.env.RAINYDAYS_USER_SKILLS_DIR;
+delete process.env.RAINYDAYS_PLAYBOOKS_DIR;
 // This path is intentionally unusable. Persona/Skill/Playbook must not eagerly prepare Oracle.
-process.env.MINI_LUX_ORACLE_PATH = path.join(root, "outside-oracle", "LUX.oracle");
+process.env.RAINYDAYS_ORACLE_PATH = path.join(root, "outside-oracle", "LUX.oracle");
 
 const [{ PathDeniedError }, personaModule, savePersonaModule, playbookModule] = await Promise.all([
   import("../../dist/path-policy.js"),
@@ -410,12 +410,12 @@ test("SEC-02 bootstrap environment path candidates reject relative and escaped r
   const runtimePathsUrl = new URL("../../dist/runtime-paths.js", import.meta.url).href;
   const baseEnv = { ...process.env };
   for (const key of Object.keys(baseEnv)) if (key.startsWith("MINI_LUX_") && key.endsWith("_DIR")) delete baseEnv[key];
-  delete baseEnv.MINI_LUX_CONFIG_PATH;
-  delete baseEnv.MINI_LUX_ORACLE_PATH;
+  delete baseEnv.RAINYDAYS_CONFIG_PATH;
+  delete baseEnv.RAINYDAYS_ORACLE_PATH;
 
   for (const scenario of [
-    { value: "relative-data", key: "MINI_LUX_DATA_DIR", code: "PATH_INPUT_INVALID" },
-    { value: outside, key: "MINI_LUX_PUBLIC_DIR", code: "PATH_ROOT_DENIED" },
+    { value: "relative-data", key: "RAINYDAYS_DATA_DIR", code: "PATH_INPUT_INVALID" },
+    { value: outside, key: "RAINYDAYS_PUBLIC_DIR", code: "PATH_ROOT_DENIED" },
   ]) {
     const childCode = `try { await import(${JSON.stringify(runtimePathsUrl)}); console.log("UNEXPECTED_PASS"); process.exitCode = 2; } catch (error) { console.log(error?.code || error?.name); }`;
     const result = await new Promise((resolve, reject) => {
@@ -423,8 +423,8 @@ test("SEC-02 bootstrap environment path candidates reject relative and escaped r
         windowsHide: true,
         env: {
           ...baseEnv,
-          MINI_LUX_APP_ROOT: candidateApp,
-          MINI_LUX_USER_DATA_DIR: candidateUser,
+          RAINYDAYS_APP_ROOT: candidateApp,
+          RAINYDAYS_USER_DATA_DIR: candidateUser,
           [scenario.key]: scenario.value,
         },
         stdio: ["ignore", "pipe", "pipe"],
@@ -454,12 +454,12 @@ test("SEC-02 a managed user Persona junction is rejected in a fresh process", as
   await fs.mkdir(external, { recursive: true });
   await fs.symlink(external, path.join(childData, "personas"), "junction");
   const childCode = `
-    for (const key of ["MINI_LUX_DATA_DIR", "MINI_LUX_CONFIG_PATH", "MINI_LUX_PUBLIC_DIR", "MINI_LUX_MODELS_DIR", "MINI_LUX_USER_SKILLS_DIR", "MINI_LUX_PLAYBOOKS_DIR", "MINI_LUX_ORACLE_PATH"]) delete process.env[key];
-    process.env.MINI_LUX_APP_ROOT = ${JSON.stringify(childApp)};
-    process.env.MINI_LUX_USER_DATA_DIR = ${JSON.stringify(childData)};
-    process.env.MINI_LUX_USER_PERSONAS_DIR = ${JSON.stringify(path.join(childData, "personas"))};
-    process.env.MINI_LUX_BUILTIN_PERSONAS_DIR = ${JSON.stringify(path.join(childApp, "personas"))};
-    process.env.MINI_LUX_BUILTIN_SKILLS_DIR = ${JSON.stringify(path.join(childApp, "skills"))};
+    for (const key of ["RAINYDAYS_DATA_DIR", "RAINYDAYS_CONFIG_PATH", "RAINYDAYS_PUBLIC_DIR", "RAINYDAYS_MODELS_DIR", "RAINYDAYS_USER_SKILLS_DIR", "RAINYDAYS_PLAYBOOKS_DIR", "RAINYDAYS_ORACLE_PATH"]) delete process.env[key];
+    process.env.RAINYDAYS_APP_ROOT = ${JSON.stringify(childApp)};
+    process.env.RAINYDAYS_USER_DATA_DIR = ${JSON.stringify(childData)};
+    process.env.RAINYDAYS_USER_PERSONAS_DIR = ${JSON.stringify(path.join(childData, "personas"))};
+    process.env.RAINYDAYS_BUILTIN_PERSONAS_DIR = ${JSON.stringify(path.join(childApp, "personas"))};
+    process.env.RAINYDAYS_BUILTIN_SKILLS_DIR = ${JSON.stringify(path.join(childApp, "skills"))};
     const { listPersonas } = await import(${JSON.stringify(new URL("../../dist/persona.js", import.meta.url).href)});
     try { await listPersonas(); console.log("UNEXPECTED_PASS"); process.exitCode = 2; }
     catch (error) { console.log(error?.code || error?.name); }

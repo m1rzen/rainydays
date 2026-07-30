@@ -36,7 +36,7 @@ test("GOV-02 version, persistence, Session and Link integration matrix is side-e
     await copyRegressionSandbox(sandbox);
     const result = await runProcess(process.execPath, ["scripts/test-version-model.mjs"], {
       cwd: sandbox,
-      env: { ...process.env, MINI_LUX_TEST_RUNTIME_ROOT: projectRoot },
+      env: { ...process.env, RAINYDAYS_TEST_RUNTIME_ROOT: projectRoot },
       timeoutMs: 240_000,
     });
     assert.equal(result.code, 0, result.stderr);

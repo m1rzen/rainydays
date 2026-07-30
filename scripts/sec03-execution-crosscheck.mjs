@@ -73,8 +73,15 @@ function staticViolations(sourceSet) {
       if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsToken && (ts.isPropertyAccessExpression(node.left) || ts.isElementAccessExpression(node.left)) && reference(node.right)) report("CALLABLE_ESCAPE", node, "governed callable escapes through property assignment");
       if (ts.isCallExpression(node)) {
         const expression = unwrap(node.expression); const calledName = ts.isIdentifier(expression) ? expression.text : ts.isPropertyAccessExpression(expression) ? expression.name.text : null;
-        const exactCallers = new Map([["consumeExecutionRootLease", "src/execution-runtime.ts"], ["bindNativeRootAuthority", "src/execution-runtime.ts"], ["issueExecutionGrant", "src/execution-runtime.ts"], ["issueInputGrant", "src/execution-runtime.ts"], ["issueResourceOwner", "src/capability-broker.ts"]]);
-        if (exactCallers.has(calledName) && sourcePath !== exactCallers.get(calledName)) report("UNSUPPORTED_RUNTIME_DIALECT", node, `${calledName} may only be called by ${exactCallers.get(calledName)}`);
+        const exactCallers = new Map([
+          ["consumeExecutionRootLease", new Set(["src/execution-runtime.ts"])],
+          ["bindNativeRootAuthority", new Set(["src/execution-runtime.ts"])],
+          ["issueExecutionGrant", new Set(["src/execution-runtime.ts", "src/execution-isolation.ts"])],
+          ["issueInputGrant", new Set(["src/execution-runtime.ts"])],
+          ["issueResourceOwner", new Set(["src/capability-broker.ts"])],
+        ]);
+        const allowedCallers = exactCallers.get(calledName);
+        if (allowedCallers && !allowedCallers.has(sourcePath)) report("UNSUPPORTED_RUNTIME_DIALECT", node, `${calledName} may only be called by ${[...allowedCallers].join(" or ")}`);
         const indirect = ts.isPropertyAccessExpression(expression) && ["call", "apply", "bind"].includes(expression.name.text) && reference(expression.expression); if (indirect) report("UNSUPPORTED_RUNTIME_DIALECT", node, "call/apply/bind on governed callable is forbidden");
         for (const argument of node.arguments) if (reference(argument)) report("CALLABLE_ESCAPE", argument, "governed callable passed to unknown caller");
         if (ts.isIdentifier(expression) && ["eval", "Function"].includes(expression.text)) report("UNSUPPORTED_RUNTIME_DIALECT", node, `${expression.text} is outside the finite dialect`);

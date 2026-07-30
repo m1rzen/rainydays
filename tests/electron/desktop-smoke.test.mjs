@@ -27,8 +27,8 @@ async function startElectron(userData, httpPort, cdpPort) {
     env: {
       ...process.env,
       PORT: String(httpPort),
-      MINI_LUX_E2E_USE_DIST: "1",
-      MINI_LUX_E2E_NODE_EXECUTABLE: process.execPath,
+      RAINYDAYS_E2E_USE_DIST: "1",
+      RAINYDAYS_E2E_NODE_EXECUTABLE: process.execPath,
       ELECTRON_ENABLE_LOGGING: "1",
     },
   });
@@ -77,7 +77,7 @@ async function probeIdentity(client, buildInfo, httpPort) {
     } catch { return null; }
   }, { timeoutMs: 20_000, label: "renderer version state" });
   assert.equal(value.ui, expectedUi(buildInfo));
-  assert.equal(value.documentTitle, `Mini-Lux ${buildInfo.appVersion} (${buildInfo.buildId})`);
+  assert.equal(value.documentTitle, `RainyDays ${buildInfo.appVersion} (${buildInfo.buildId})`);
   assert.equal(value.preload.appVersion, buildInfo.appVersion);
   assert.equal(value.preload.buildId, buildInfo.buildId);
   assert.deepEqual(value.version, buildInfo);
@@ -147,7 +147,7 @@ async function assertCanonicalPathPolicy(client, userData, launchIndex) {
     body: JSON.stringify({ name: prefix, shell: "cmd", cwd: outside }),
   });
   assert.equal(terminalDenied.status, 403, "direct HTTP Terminal mutation bypassed native consent");
-  assert.equal(terminalDenied.body.code, "EXEC_NATIVE_CONSENT_REQUIRED");
+  assert.equal(terminalDenied.body.code, "EXEC_DIRECT_MUTATION_DENIED");
   const terminalsAfter = await rendererRequest(client, "/api/terminals");
   assert.equal(terminalsAfter.status, 200);
   assert.equal(terminalsAfter.body.terminals.length, terminalsBefore.body.terminals.length, "external CWD denial created a Terminal process record");

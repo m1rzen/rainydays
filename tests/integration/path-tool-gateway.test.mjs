@@ -54,12 +54,12 @@ async function realRuntime() {
     await fs.writeFile(path.join(outside, "image.png"), Buffer.from("external-image-buffer"));
 
     const priorEnv = new Map([
-      ["MINI_LUX_USER_DATA_DIR", process.env.MINI_LUX_USER_DATA_DIR],
-      ["MINI_LUX_DATA_DIR", process.env.MINI_LUX_DATA_DIR],
+      ["RAINYDAYS_USER_DATA_DIR", process.env.RAINYDAYS_USER_DATA_DIR],
+      ["RAINYDAYS_DATA_DIR", process.env.RAINYDAYS_DATA_DIR],
       ["LLM_API_KEY", process.env.LLM_API_KEY],
     ]);
-    process.env.MINI_LUX_USER_DATA_DIR = temp;
-    process.env.MINI_LUX_DATA_DIR = data;
+    process.env.RAINYDAYS_USER_DATA_DIR = temp;
+    process.env.RAINYDAYS_DATA_DIR = data;
     delete process.env.LLM_API_KEY;
     const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule] = await Promise.all([
       import("../../dist/persona.js"),

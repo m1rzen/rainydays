@@ -118,10 +118,10 @@ function windowsSystemRoot(): string {
 function executableCandidate(kind: BootstrapExecutableKind): string {
   if (kind === "node") return process.execPath;
   if (kind === "git") {
-    const configured = process.env.MINI_LUX_GIT_EXECUTABLE;
+    const configured = process.env.RAINYDAYS_GIT_EXECUTABLE;
     if (configured) return configured;
     if (process.platform !== "win32") return "/usr/bin/git";
-    throw new PathDeniedError("PATH_ROOT_UNAVAILABLE", "Git executable requires MINI_LUX_GIT_EXECUTABLE");
+    throw new PathDeniedError("PATH_ROOT_UNAVAILABLE", "Git executable requires RAINYDAYS_GIT_EXECUTABLE");
   }
   if (process.platform === "win32") {
     const systemRoot = windowsSystemRoot();

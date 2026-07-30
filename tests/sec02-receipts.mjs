@@ -6,8 +6,8 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import {
   canonicalJson,
+  currentResolvedManifestPath,
   projectRoot,
-  resolvedManifestPath,
   validateSec02ObservationActual,
   validateSec02ResolvedManifest,
 } from "../scripts/sec02-governance.mjs";
@@ -15,10 +15,10 @@ import {
 const sha256Pattern = /^[a-f0-9]{64}$/;
 const runIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const environmentKeys = Object.freeze([
-  "MINI_LUX_SEC02_RECEIPT_DIR",
-  "MINI_LUX_SEC02_RUN_ID",
-  "MINI_LUX_SEC02_RESOLVED_SHA256",
-  "MINI_LUX_SEC02_MATRIX_SHA256",
+  "RAINYDAYS_SEC02_RECEIPT_DIR",
+  "RAINYDAYS_SEC02_RUN_ID",
+  "RAINYDAYS_SEC02_RESOLVED_SHA256",
+  "RAINYDAYS_SEC02_MATRIX_SHA256",
 ]);
 
 function sha256(value) {
@@ -56,7 +56,7 @@ export function sec02EvidenceEnabled(env = process.env) {
 let governedInputsPromise = null;
 async function loadGovernedInputs() {
   if (!governedInputsPromise) governedInputsPromise = (async () => {
-    const manifestFile = path.join(projectRoot, ...resolvedManifestPath.split("/"));
+    const manifestFile = path.join(projectRoot, ...currentResolvedManifestPath.split("/"));
     const manifest = JSON.parse(await readFile(manifestFile, "utf8"));
     await validateSec02ResolvedManifest(manifest, { root: projectRoot });
     const matrixBinding = manifest.governedArtifacts.find(entry => entry.exactCasePath === "tests/sec02-attack-matrix.json");
@@ -109,10 +109,10 @@ export async function createSec02Recorder(moduleUrl, testCaseId, env = process.e
     });
   }
 
-  const receiptDirectory = configured.MINI_LUX_SEC02_RECEIPT_DIR;
-  const runId = configured.MINI_LUX_SEC02_RUN_ID;
-  const resolvedSha256 = configured.MINI_LUX_SEC02_RESOLVED_SHA256;
-  const matrixSha256 = configured.MINI_LUX_SEC02_MATRIX_SHA256;
+  const receiptDirectory = configured.RAINYDAYS_SEC02_RECEIPT_DIR;
+  const runId = configured.RAINYDAYS_SEC02_RUN_ID;
+  const resolvedSha256 = configured.RAINYDAYS_SEC02_RESOLVED_SHA256;
+  const matrixSha256 = configured.RAINYDAYS_SEC02_MATRIX_SHA256;
   assert.match(runId, runIdPattern, "SEC-02 run ID is invalid");
   assert.match(resolvedSha256, sha256Pattern, "SEC-02 resolved digest is invalid");
   assert.match(matrixSha256, sha256Pattern, "SEC-02 matrix digest is invalid");
