@@ -43,6 +43,10 @@ jobs:
         shell: pwsh
         run: npm ci --no-audit --no-fund
 
+      - name: Bootstrap checksum-pinned models
+        shell: pwsh
+        run: npm run models:bootstrap
+
       - name: Bootstrap checksum-pinned Gitleaks
         shell: pwsh
         run: |

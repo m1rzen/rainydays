@@ -26,6 +26,7 @@ export const sourceFiles = Object.freeze([
   ".gitleaks.toml",
   "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md",
   "config.example.json",
+  "models-manifest.json",
   "eslint.config.mjs",
   "package-lock.json",
   "package.json",

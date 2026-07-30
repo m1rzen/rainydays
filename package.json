@@ -10,6 +10,9 @@
   },
   "scripts": {
     "assets": "node scripts/copy-vendor.mjs",
+    "models:bootstrap": "node scripts/bootstrap-models.mjs",
+    "models:check": "node scripts/bootstrap-models.mjs --check",
+    "prebuild": "npm run models:bootstrap",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.ts\" \"electron/**/*.{cjs,mjs,js}\" \"scripts/**/*.{mjs,cjs,js}\" \"tests/**/*.mjs\" \"parity/scripts/**/*.mjs\" --max-warnings 0 --no-inline-config --report-unused-disable-directives",
     "build:native": "node scripts/build-sec03-native.mjs",

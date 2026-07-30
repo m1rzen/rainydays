@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "a731ea1b5f6c7e3e69c95125b5f6d1ae8c9e6eaa44ccca91e664f20624c0c432",
+  "sourceSetSha256": "3fa0960f6097873cd1163068bd95b06fcaf13435df5c61205db80adad1c61a6d",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -74,6 +74,12 @@
       "executionClass": "build-test"
     },
     {
+      "sourcePath": "scripts/bootstrap-models.mjs",
+      "bytes": 7480,
+      "sha256": "d6251645ee62a9903978d4e94ec9859c0cf2b9eae65cf6b489c230e3e7dd3c27",
+      "executionClass": "build-test"
+    },
+    {
       "sourcePath": "scripts/build-electron.mjs",
       "bytes": 1393,
       "sha256": "2051751d6e66095f66d66050a0fd2ad40d24c1c6f4477f7c499cfd77a5b3830d",
@@ -81,8 +87,8 @@
     },
     {
       "sourcePath": "scripts/build-inputs.mjs",
-      "bytes": 14664,
-      "sha256": "a756212c0cb4a14453a2f3754c08b7780565f1d6a261e8289f9e50c4f412e328",
+      "bytes": 14690,
+      "sha256": "bf2b2ef84b897ad15744fc53d4087926e9441759479fe951304c1c494a94e044",
       "executionClass": "build-test"
     },
     {
@@ -867,8 +873,8 @@
     },
     {
       "sourcePath": "tests/gov04/workflow-policy.test.mjs",
-      "bytes": 3319,
-      "sha256": "cdbab07d14c49697ea1acfd3b6a35282d56183bffad6887e1579f4935095b92c",
+      "bytes": 4062,
+      "sha256": "3cd48da95a80784a458881c09add83d09ca6b38e906eee4ac83ad618adc1c53a",
       "executionClass": "build-test"
     },
     {
@@ -2458,6 +2464,24 @@
       "normalizedNodeSha256": "5e00ef346ba3e7d8095fd3e89796e7177b4fb969134f20e8a777d7858705cfd3",
       "executionClass": "product-runtime",
       "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-ed131f54abc3684eb5c2ce90",
+      "occurrence": 1,
+      "sourcePath": "scripts/bootstrap-models.mjs",
+      "line": 112,
+      "column": 28,
+      "nodeKind": "CallExpression",
+      "container": "downloadEntry",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "93231ff1e0fbc8442b9ccbcd661a2f827da43fa8e1a15a64ebcf07ed600b8bf6",
+      "executionClass": "build-test",
+      "classification": "build-test"
     },
     {
       "id": "exec-f633770f86b7249472403063",
@@ -5432,5 +5456,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "32f959c0958c68dd4a28f05b251a6dcb8d97505b3d492b1ceb0af8c8fc891df7"
+  "canonicalPayloadSha256": "71a78bad2754981219923b811df9b9fdb9fcaa8e892a8c7451ee2cf7d721e7e7"
 }

@@ -7016,7 +7016,7 @@
     },
     {
       "exactCasePath": "scripts/build-inputs.mjs",
-      "sha256": "a756212c0cb4a14453a2f3754c08b7780565f1d6a261e8289f9e50c4f412e328"
+      "sha256": "bf2b2ef84b897ad15744fc53d4087926e9441759479fe951304c1c494a94e044"
     },
     {
       "exactCasePath": "scripts/build-electron.mjs",
@@ -7104,7 +7104,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "7c90f9eb835c72e4f076486889807a2224bd4483179fc4adb6f4508e1677caab"
+      "sha256": "fc490e098d7e4797b02385485972786f7ed98232f90db9a6ce6ed2544a82018f"
     },
     {
       "exactCasePath": "package-lock.json",
@@ -7112,5 +7112,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "c2be9b71ac5489bf68b3ac3dceeb5f8289a38dc21d4c74111e0bb5243ccea8ed"
+  "canonicalPayloadSha256": "a9599815def9bc93aad0f5804c3f5c47df1e01bd9b8ec572e17ea6d0fa741d01"
 }

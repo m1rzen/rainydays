@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { validateModelManifest } from "../../scripts/bootstrap-models.mjs";
 import { gov04StepIds } from "../../scripts/gov04/report-schema.mjs";
 import { projectRoot } from "../helpers.mjs";
 
@@ -19,6 +20,17 @@ test("GOV-04 test manifest binds the frozen 16-step state machine", async () => 
   assert.deepEqual(manifest.testFiles, ["tests/gov04/report-schema.test.mjs", "tests/gov04/workflow-policy.test.mjs"]);
 });
 
+test("model bootstrap manifest pins the complete immutable payload", async () => {
+  const manifest = JSON.parse(await readFile(path.join(projectRoot, "models-manifest.json"), "utf8"));
+  assert.equal(validateModelManifest(manifest), manifest);
+  const mutableRevision = structuredClone(manifest);
+  mutableRevision.revision = "main";
+  assert.throws(() => validateModelManifest(mutableRevision), /revision is invalid/);
+  const changedUrl = structuredClone(manifest);
+  changedUrl.files[0].url = "https://example.com/config.json";
+  assert.throws(() => validateModelManifest(changedUrl), /URL differs/);
+});
+
 test("GitHub Actions are immutable, read-only and never use pull_request_target", async () => {
   for (const relative of workflowPaths) {
     const text = await readFile(path.join(projectRoot, ...relative.split("/")), "utf8");
@@ -32,6 +44,7 @@ test("GitHub Actions are immutable, read-only and never use pull_request_target"
     assert.match(text, /fetch-depth: 0/);
     assert.match(text, /persist-credentials: false/);
     assert.match(text, /run: npm ci --no-audit --no-fund/);
+    assert.match(text, /run: npm run models:bootstrap/);
     assert.match(text, /if-no-files-found: error/);
   }
 });
