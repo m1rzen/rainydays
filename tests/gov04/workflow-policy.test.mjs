@@ -38,8 +38,28 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
 
   const toolchain = await readFile(path.join(projectRoot, "scripts", "gov04", "ensure-native-toolchain.ps1"), "utf8");
   assert.match(toolchain, /Microsoft\.VisualStudio\.Component\.VC\.14\.43\.17\.13\.x86\.x64/);
+  assert.match(toolchain, /\[17\.0,18\.0\)/);
+  assert.match(toolchain, /17\.13\.35825\.156/);
+  assert.match(toolchain, /https:\/\/download\.visualstudio\.microsoft\.com\/download\/pr\/84955a63-15ca-4f52-94af-14ea55b50424\/e26a4f237c908739caa2ac36e2d90a51d7e3f71746e615207b7db449f82e3c4e\/vs_BuildTools\.exe/);
+  assert.match(toolchain, /e26a4f237c908739caa2ac36e2d90a51d7e3f71746e615207b7db449f82e3c4e/);
+  assert.match(toolchain, /Microsoft\.VisualStudio\.Product\.BuildTools/);
+  assert.match(toolchain, /Microsoft\.VisualStudio\.Product\.Community/);
   assert.match(toolchain, /19\.43\.34808\.0/);
   assert.match(toolchain, /10\.0\.22621\.0/);
+  assert.match(toolchain, /ExitCode -ne 0/);
+
+  const electronHeaders = await readFile(path.join(projectRoot, "scripts", "gov04", "bootstrap-electron-headers.mjs"), "utf8");
+  assert.match(electronHeaders, /https:\/\/electronjs\.org\/headers\/v43\.1\.1\/node-v43\.1\.1-headers\.tar\.gz/);
+  assert.match(electronHeaders, /b1112989ad4c4807a6bf59bfc96ce8d0f0b16962efe9818fa768e5908cc24d21/);
+  assert.match(electronHeaders, /https:\/\/electronjs\.org\/headers\/v43\.1\.1\/win-x64\/node\.lib/);
+  assert.match(electronHeaders, /757cde97e0dd2f01aed47326440429a1012624892e6e4cbebf59dac964ac8e6d/);
+  assert.match(electronHeaders, /956c2a3dda4622f75093a7adf5e19bbc09d760e166afb092e9d0e62be9e8873d/);
+  assert(!electronHeaders.includes("node-gyp"));
+
+  const nativeBuild = await readFile(path.join(projectRoot, "scripts", "build-sec03-native.mjs"), "utf8");
+  assert.match(nativeBuild, /installationVersion !== "17\.13\.35825\.156"/);
+  assert.match(nativeBuild, /versionProbe\.status !== 0/);
+  assert.match(nativeBuild, /electronHeaders/);
 });
 
 test("GitHub Actions are immutable, read-only and never use pull_request_target", async () => {

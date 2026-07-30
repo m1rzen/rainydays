@@ -207,7 +207,7 @@ async function main() {
     for (const directory of ["scripts", "schema", "probes", "policies"]) {
       await cp(path.join(projectRoot, "parity", directory), path.join(digestProject, "parity", directory), { recursive: true });
     }
-    for (const file of [".gitignore", ".gitleaks.toml", "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md", "config.example.json", "eslint.config.mjs", "package.json", "package-lock.json", "tsconfig.json"]) {
+    for (const file of [".gitignore", ".gitleaks.toml", "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md", "config.example.json", "models-manifest.json", "eslint.config.mjs", "package.json", "package-lock.json", "tsconfig.json"]) {
       await cp(path.join(projectRoot, file), path.join(digestProject, file));
     }
     await symlink(path.join(projectRoot, "node_modules"), path.join(digestProject, "node_modules"), "junction");
@@ -268,7 +268,7 @@ async function main() {
     for (const directory of ["scripts", "schema", "probes", "policies"]) {
       await cp(path.join(projectRoot, "parity", directory), path.join(distIntegrityProject, "parity", directory), { recursive: true });
     }
-    for (const file of [".gitignore", ".gitleaks.toml", "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md", "config.example.json", "eslint.config.mjs", "package.json", "package-lock.json", "tsconfig.json", "build-info.json", "dist-integrity.json"]) {
+    for (const file of [".gitignore", ".gitleaks.toml", "LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md", "config.example.json", "models-manifest.json", "eslint.config.mjs", "package.json", "package-lock.json", "tsconfig.json", "build-info.json", "dist-integrity.json"]) {
       await cp(path.join(projectRoot, file), path.join(distIntegrityProject, file));
     }
     await symlink(path.join(projectRoot, "node_modules"), path.join(distIntegrityProject, "node_modules"), "junction");

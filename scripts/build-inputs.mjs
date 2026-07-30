@@ -149,6 +149,33 @@ function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
+async function digestElectronHeaders(versionRoot) {
+  const records = [];
+  async function walk(directory) {
+    const info = await lstat(directory);
+    if (info.isSymbolicLink() || !info.isDirectory()) throw new Error("SEC-03 Electron header tree contains a non-directory or link");
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        await walk(absolute);
+      } else if (entry.isFile()) {
+        const info = await lstat(absolute);
+        if (info.isSymbolicLink()) throw new Error("SEC-03 Electron header tree contains a link");
+        const bytes = await readFile(absolute);
+        records.push({ path: toPosix(path.relative(versionRoot, absolute)), bytes: bytes.length, sha256: sha256(bytes) });
+      } else {
+        throw new Error("SEC-03 Electron header tree contains a non-file entry");
+      }
+    }
+  }
+  await walk(path.join(versionRoot, "include", "node"));
+  records.sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
+  const digest = createHash("sha256");
+  digest.update("rainydays-electron-header-tree-v1\0");
+  for (const record of records) digest.update(`${record.path}\0${record.bytes}\0${record.sha256}\0`);
+  return { files: records.length, bytes: records.reduce((sum, record) => sum + record.bytes, 0), sha256: digest.digest("hex") };
+}
+
 function assertHash(value, field) {
   if (typeof value !== "string" || !sha256Pattern.test(value)) throw new Error(`${field} is invalid`);
 }
@@ -213,11 +240,18 @@ export async function validateSec03NativeProjection(projectRoot, options = {}) {
   for (const [name, args] of Object.entries(manifest.canonicalArguments)) {
     if (!Array.isArray(args) || args.length === 0 || args.some((entry) => typeof entry !== "string" || entry.length === 0)) throw new Error(`SEC-03 native ${name} is invalid`);
   }
-  exactKeys(manifest.toolchain, ["architecture", "compiler", "electron", "linker", "msvc", "napi", "nodeImportLibrary", "sdk", "vsInstance"], "SEC-03 native toolchain");
+  exactKeys(manifest.toolchain, ["architecture", "compiler", "electron", "electronHeaders", "linker", "msvc", "napi", "nodeImportLibrary", "sdk", "vsInstance"], "SEC-03 native toolchain");
   if (manifest.toolchain.architecture !== "x64" || manifest.toolchain.electron !== "43.1.1" || manifest.toolchain.msvc !== "14.43.34808"
     || manifest.toolchain.napi !== 8 || manifest.toolchain.sdk !== "10.0.22621.0") throw new Error("SEC-03 native pinned toolchain differs");
-  exactKeys(manifest.toolchain.vsInstance, ["installationPath", "installationVersion"], "SEC-03 native toolchain.vsInstance");
-  if (typeof manifest.toolchain.vsInstance.installationPath !== "string" || typeof manifest.toolchain.vsInstance.installationVersion !== "string") throw new Error("SEC-03 native Visual Studio identity is invalid");
+  exactKeys(manifest.toolchain.vsInstance, ["installationPath", "installationVersion", "productId"], "SEC-03 native toolchain.vsInstance");
+  if (typeof manifest.toolchain.vsInstance.installationPath !== "string" || manifest.toolchain.vsInstance.installationVersion !== "17.13.35825.156"
+    || !["Microsoft.VisualStudio.Product.BuildTools", "Microsoft.VisualStudio.Product.Community"].includes(manifest.toolchain.vsInstance.productId)) throw new Error("SEC-03 native Visual Studio identity is invalid");
+  exactKeys(manifest.toolchain.electronHeaders, ["path", "files", "bytes", "sha256"], "SEC-03 native toolchain.electronHeaders");
+  if (typeof manifest.toolchain.electronHeaders.path !== "string" || !path.isAbsolute(manifest.toolchain.electronHeaders.path)
+    || manifest.toolchain.electronHeaders.files !== 124 || manifest.toolchain.electronHeaders.bytes !== 1570824
+    || manifest.toolchain.electronHeaders.sha256 !== "956c2a3dda4622f75093a7adf5e19bbc09d760e166afb092e9d0e62be9e8873d") throw new Error("SEC-03 Electron header identity is invalid");
+  const actualElectronHeaders = await digestElectronHeaders(manifest.toolchain.electronHeaders.path);
+  if (JSON.stringify(actualElectronHeaders) !== JSON.stringify({ files: manifest.toolchain.electronHeaders.files, bytes: manifest.toolchain.electronHeaders.bytes, sha256: manifest.toolchain.electronHeaders.sha256 })) throw new Error("SEC-03 Electron header tree byte identity differs");
   await Promise.all([
     validateToolRecord(manifest.toolchain.compiler, "SEC-03 native toolchain.compiler"),
     validateToolRecord(manifest.toolchain.linker, "SEC-03 native toolchain.linker"),

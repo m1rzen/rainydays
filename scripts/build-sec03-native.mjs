@@ -1,5 +1,6 @@
-import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
+import { lstat, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -47,6 +48,29 @@ async function digestRecords(records, domain) {
   for (const record of records) hash.update(`${record.path}\0${record.bytes}\0${record.sha256}\0`);
   return hash.digest("hex");
 }
+async function electronHeaderTree(versionRoot) {
+  const records = [];
+  async function walk(directory) {
+    const info = await lstat(directory);
+    if (!info.isDirectory() || info.isSymbolicLink()) throw new Error("Electron header tree contains a non-directory or link");
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        await walk(absolute);
+      } else if (entry.isFile()) {
+        const bytes = await readFile(absolute);
+        records.push({ path: path.relative(versionRoot, absolute).replaceAll("\\", "/"), bytes: bytes.length, sha256: sha256(bytes) });
+      } else {
+        throw new Error("Electron header tree contains a non-file entry");
+      }
+    }
+  }
+  await walk(path.join(versionRoot, "include", "node"));
+  records.sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
+  const bytes = records.reduce((sum, record) => sum + record.bytes, 0);
+  const digest = await digestRecords(records, "rainydays-electron-header-tree-v1");
+  return { path: versionRoot, files: records.length, bytes, sha256: digest };
+}
 function parsePeMachine(bytes) {
   if (bytes.length < 0x40 || bytes.readUInt16LE(0) !== 0x5a4d) throw new Error("Output is not a PE image");
   const pe = bytes.readUInt32LE(0x3c);
@@ -56,9 +80,12 @@ function parsePeMachine(bytes) {
 
 const programFilesX86 = process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)";
 const vswhere = path.join(programFilesX86, "Microsoft Visual Studio", "Installer", "vswhere.exe");
-const instances = JSON.parse(run(vswhere, ["-products", "*", "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-format", "json", "-utf8"]));
-if (!Array.isArray(instances) || instances.length !== 1) throw new Error(`Expected exactly one eligible Visual Studio instance, found ${instances.length}`);
-const vsRoot = instances[0].installationPath;
+const instances = JSON.parse(run(vswhere, ["-products", "*", "-version", "[17.0,18.0)", "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-format", "json", "-utf8"]));
+if (!Array.isArray(instances) || instances.length !== 1) throw new Error(`Expected exactly one eligible Visual Studio 2022 instance, found ${instances.length}`);
+const vsInstance = instances[0];
+const allowedVsProducts = new Set(["Microsoft.VisualStudio.Product.BuildTools", "Microsoft.VisualStudio.Product.Community"]);
+if (!allowedVsProducts.has(vsInstance.productId) || vsInstance.installationVersion !== "17.13.35825.156") throw new Error("Pinned Visual Studio 2022 instance identity differs");
+const vsRoot = vsInstance.installationPath;
 const msvcRoot = path.join(vsRoot, "VC", "Tools", "MSVC", versions.msvc);
 const toolBin = path.join(msvcRoot, "bin", "Hostx64", "x64");
 const cl = path.join(toolBin, "cl.exe");
@@ -72,6 +99,10 @@ const required = [cl, link, nodeLib, path.join(nodeInclude, "node_api.h"),
   path.join(sdkRoot, "Include", versions.sdk, "um", "Windows.h"),
   path.join(sdkRoot, "Lib", versions.sdk, "um", "x64", "kernel32.lib")];
 for (const file of required) await stat(file).catch(() => { throw new Error(`Pinned SEC-03 native dependency missing: ${file}`); });
+const electronHeaders = await electronHeaderTree(electronCache);
+if (electronHeaders.files !== 124 || electronHeaders.bytes !== 1570824 || electronHeaders.sha256 !== "956c2a3dda4622f75093a7adf5e19bbc09d760e166afb092e9d0e62be9e8873d") {
+  throw new Error("Pinned Electron 43.1.1 header tree identity differs");
+}
 
 const include = [
   path.join(msvcRoot, "include"),
@@ -114,21 +145,32 @@ const compiler = await fileRecord(path.relative(projectRoot, cl).replaceAll("\\"
   const bytes = await readFile(cl); return { path: cl, bytes: bytes.length, sha256: sha256(bytes) };
 });
 const linker = await (async () => { const bytes = await readFile(link); return { path: link, bytes: bytes.length, sha256: sha256(bytes) }; })();
-const versionProbe = spawnSync(cl, ["/Bv"], { cwd: projectRoot, encoding: "utf8", windowsHide: true, env: buildEnv });
+const probeId = randomUUID();
+const probeSource = path.join(os.tmpdir(), `rainydays-cl-probe-${probeId}.cpp`);
+const probeObject = path.join(os.tmpdir(), `rainydays-cl-probe-${probeId}.obj`);
+await writeFile(probeSource, "int rainydays_toolchain_probe;", { flag: "wx" });
+let versionProbe;
+try {
+  versionProbe = spawnSync(cl, ["/nologo", "/Bv", "/c", probeSource, `/Fo${probeObject}`], { cwd: projectRoot, encoding: "utf8", windowsHide: true, env: buildEnv });
+} finally {
+  await Promise.all([rm(probeSource, { force: true }), rm(probeObject, { force: true })]);
+}
+if (versionProbe.error || versionProbe.status !== 0) throw new Error(`Pinned MSVC compiler version probe failed (${versionProbe.status ?? "spawn"})`);
 const versionText = `${versionProbe.stdout ?? ""}${versionProbe.stderr ?? ""}`;
-const versionMatch = versionText.match(/19\.43\.34808\.0/);
-if (!versionMatch) throw new Error("Pinned MSVC compiler version probe did not report 19.43.34808.0");
-const compilerVersion = versionMatch[0];
+const versionMatch = versionText.match(/\\cl\.exe:[^\r\n]*19\.43\.34808\.0\s*$/im);
+if (!versionMatch) throw new Error("Pinned MSVC compiler version probe did not report the exact cl.exe 19.43.34808.0 identity");
+const compilerVersion = "19.43.34808.0";
 const toolchain = {
   architecture: "x64",
   compiler: { path: cl, bytes: compiler.bytes, sha256: compiler.sha256, version: compilerVersion },
   electron: versions.electron,
+  electronHeaders,
   linker: { path: link, bytes: linker.bytes, sha256: linker.sha256 },
   msvc: versions.msvc,
   napi: versions.napi,
   nodeImportLibrary: await (async () => { const bytes = await readFile(nodeLib); return { path: nodeLib, bytes: bytes.length, sha256: sha256(bytes) }; })(),
   sdk: versions.sdk,
-  vsInstance: { installationPath: vsRoot, installationVersion: instances[0].installationVersion },
+  vsInstance: { installationPath: vsRoot, installationVersion: vsInstance.installationVersion, productId: vsInstance.productId },
 };
 const toolchainDigest = sha256(Buffer.from(JSON.stringify({ toolchain, canonicalArguments })));
 
