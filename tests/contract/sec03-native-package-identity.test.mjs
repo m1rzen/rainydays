@@ -111,8 +111,18 @@ test("SEC-03 native projection rejects stale native source and manifest toolchai
   }
 });
 
-test("electron-builder includes only exact SEC-03 native paths and unpacks only the two binaries", async () => {
-  const packageJson = JSON.parse(await readFile(path.join(projectRoot, "package.json"), "utf8"));
+test("SEC-03 build metadata and electron package bind the exact current native artifacts", async () => {
+  const [packageJson, buildInfo, nativeManifest] = await Promise.all([
+    readFile(path.join(projectRoot, "package.json"), "utf8").then(JSON.parse),
+    readFile(path.join(projectRoot, "build-info.json"), "utf8").then(JSON.parse),
+    readFile(path.join(projectRoot, "dist", "native", "sec03-native-manifest.json"), "utf8").then(JSON.parse),
+  ]);
+  assert.match(packageJson.scripts.build, /^npm run build:native && npm run build:metadata && /u);
+  assert.equal(buildInfo.versions.executionIsolation.architectureSha256, sec03ArchitectureSha256);
+  assert.equal(buildInfo.versions.executionIsolation.nativeSourceDigest, nativeManifest.sourceDigest);
+  assert.equal(buildInfo.versions.executionIsolation.toolchainDigest, nativeManifest.toolchainDigest);
+  assert.equal(buildInfo.versions.executionIsolation.signatureStatus, nativeManifest.signatureStatus);
+  assert.deepEqual(buildInfo.versions.executionIsolation.artifacts, nativeManifest.outputs);
   assert(packageJson.build.files.includes("dist/native/sec03-native-manifest.json"));
   assert(packageJson.build.files.includes("electron-stage-integrity.json"));
   assert.deepEqual(

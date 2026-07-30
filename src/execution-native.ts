@@ -59,6 +59,28 @@ export interface NativeExecutionProof {
   readonly channelMarker: string;
 }
 
+export type NativeServiceDenialState =
+  | "missing" | "forged" | "argument-mismatch" | "expired" | "replayed" | "cross-run" | "cross-session" | "concurrent-reuse"
+  | "consent-denied" | "consent-dismissed" | "consent-expired" | "consent-argument-mismatch" | "consent-replayed"
+  | "consent-synthetic" | "consent-cross-window" | "consent-cross-session" | "consent-concurrent-reuse"
+  | "network-profile-unsupported";
+
+export interface NativeServiceDenialRequest {
+  readonly executionId: string;
+  readonly entryPoint: "E1" | "E2" | "E3" | "E4";
+  readonly profile: "one-shot-shell" | "agent-shell" | "script" | "manual-terminal";
+  readonly contextId: string;
+  readonly sessionId: string;
+  readonly runId: string;
+  readonly authorityEpoch: number;
+  readonly personaDigest: string;
+  readonly policyDigest: string;
+  readonly payloadDigest: string;
+  readonly requestDigest: string;
+  readonly operation: "launch" | "input" | "consent";
+  readonly decisionState: NativeServiceDenialState;
+}
+
 export interface NativeExecutionCompletion {
   readonly exitCode: number | null;
   readonly reason: string;
@@ -75,6 +97,7 @@ export interface NativeExecutionHandle {
 export interface NativeExecutionBridge {
   readonly initialize?: () => Promise<void>;
   readonly launch: (request: NativeLaunchRequest, onFrame: (frame: NativeOutputFrame) => void) => Promise<NativeExecutionHandle>;
+  readonly observeServiceDenial?: (request: NativeServiceDenialRequest) => Promise<NativeExecutionProof>;
   readonly shutdown: () => Promise<void>;
 }
 
@@ -93,7 +116,7 @@ export interface NativeArtifactIdentity {
 export type NativeBridgeFailureCode =
   | "EXEC_NATIVE_UNSUPPORTED"
   | "EXEC_NATIVE_UNAVAILABLE"
-  | "EXEC_NATIVE_IDENTITY"
+  | "EXEC_NATIVE_IDENTITY_INVALID"
   | "EXEC_NATIVE_PROTOCOL"
   | "EXEC_NATIVE_SHUTDOWN";
 
@@ -115,6 +138,7 @@ interface AddonHandle {
 }
 interface AddonLease {
   readonly launchHost: unknown;
+  readonly observeServiceDenial: unknown;
   readonly close: unknown;
 }
 interface LauncherAddon {
@@ -172,11 +196,11 @@ async function sha256(file: string): Promise<string> {
 async function assertFixedRegularFile(file: string, expectedBytes: number, expectedHash: string): Promise<void> {
   const [stat, resolved, observedHash] = await Promise.all([lstat(file), realpath(file), sha256(file)]);
   if (!stat.isFile() || stat.isSymbolicLink() || stat.size !== expectedBytes || path.normalize(resolved) !== path.normalize(file) || observedHash !== expectedHash) {
-    throw failure("EXEC_NATIVE_IDENTITY", "Native artifact identity mismatch");
+    throw failure("EXEC_NATIVE_IDENTITY_INVALID", "Native artifact identity mismatch");
   }
 }
 
-function encodeFrame(type: "launch" | "input" | "terminate", body: Record<string, unknown>): Buffer {
+function encodeFrame(type: "launch" | "input" | "terminate" | "service-denial", body: Record<string, unknown>): Buffer {
   const payload = Buffer.from(JSON.stringify({ v: PROTOCOL_VERSION, type, ...body }), "utf8");
   if (payload.length < 1 || payload.length > MAX_CONTROL_FRAME_BYTES) throw failure("EXEC_NATIVE_PROTOCOL", "Native control frame exceeds its bound");
   const frame = Buffer.allocUnsafe(payload.length + 4);
@@ -198,6 +222,13 @@ function decodeOutputFrame(frame: unknown): NativeOutputFrame {
   const bytes = Buffer.from(value.data, "base64");
   if (bytes.toString("base64") !== value.data || bytes.length > MAX_OUTPUT_FRAME_BYTES) throw failure("EXEC_NATIVE_PROTOCOL", "Native output bytes are invalid");
   return Object.freeze({ stream: value.stream, bytes });
+}
+
+function decodeNativeProof(value: unknown): NativeExecutionProof {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw failure("EXEC_NATIVE_PROTOCOL", "Native proof is invalid");
+  const proof = value as Record<string, unknown>;
+  if (Object.keys(proof).sort().join("\0") !== "channelMarker\0keyId\0mac\0proof" || !Buffer.isBuffer(proof.proof) || proof.proof.byteLength < 1 || proof.proof.byteLength > 64 * 1024 || typeof proof.mac !== "string" || !HASH.test(proof.mac) || typeof proof.keyId !== "string" || !HASH.test(proof.keyId) || typeof proof.channelMarker !== "string" || !HASH.test(proof.channelMarker)) throw failure("EXEC_NATIVE_PROTOCOL", "Native proof is invalid");
+  return Object.freeze({ proof: Buffer.from(proof.proof), mac: proof.mac, keyId: proof.keyId, channelMarker: proof.channelMarker });
 }
 
 function launchBody(request: NativeLaunchRequest, identity: NativeArtifactIdentity): Record<string, unknown> {
@@ -279,7 +310,37 @@ export function createProductionNativeExecutionBridge(identity: NativeArtifactId
       const openLease = addon.openExclusiveHostLease as (expectedSha256: string, expectedBytes: number, launcherSha256: string) => AddonLease;
       const lease = openLease(identity.hostSha256, identity.hostBytes, identity.launcherSha256);
       if (!lease || typeof lease.close !== "function") throw failure("EXEC_NATIVE_PROTOCOL", "Exclusive host lease ABI mismatch");
-      await (lease.close as () => Promise<void>)();
+      await (lease.close as () => Promise<void>).call(lease);
+    },
+    async observeServiceDenial(request: NativeServiceDenialRequest): Promise<NativeExecutionProof> {
+      if (stopped) throw failure("EXEC_NATIVE_SHUTDOWN", "Native execution bridge is shut down");
+      const addon = await loadAddon();
+      const openLease = addon.openExclusiveHostLease as (expectedSha256: string, expectedBytes: number, launcherSha256: string) => AddonLease;
+      const lease = openLease(identity.hostSha256, identity.hostBytes, identity.launcherSha256);
+      if (!lease || typeof lease.observeServiceDenial !== "function" || typeof lease.close !== "function") throw failure("EXEC_NATIVE_PROTOCOL", "Service denial observer ABI mismatch");
+      try {
+        const observe = lease.observeServiceDenial as (frame: Buffer) => NativeExecutionProof;
+        return decodeNativeProof(await observe.call(lease, encodeFrame("service-denial", {
+          candidateId: identity.candidateId,
+          buildIdSha256: identity.buildIdSha256,
+          sourceSha256: identity.sourceSha256,
+          executionId: request.executionId,
+          contextId: request.contextId,
+          sessionId: request.sessionId,
+          runId: request.runId,
+          authorityEpoch: request.authorityEpoch,
+          entryPoint: request.entryPoint,
+          profile: request.profile,
+          personaDigest: request.personaDigest,
+          policyDigest: request.policyDigest,
+          payloadDigest: request.payloadDigest,
+          requestDigest: request.requestDigest,
+          operation: request.operation,
+          decisionState: request.decisionState,
+        })));
+      } finally {
+        await (lease.close as () => Promise<void>).call(lease);
+      }
     },
     async launch(request: NativeLaunchRequest, onFrame: (frame: NativeOutputFrame) => void): Promise<NativeExecutionHandle> {
       if (stopped) throw failure("EXEC_NATIVE_SHUTDOWN", "Native execution bridge is shut down");
@@ -291,32 +352,27 @@ export function createProductionNativeExecutionBridge(identity: NativeArtifactId
       let protocolFailed = false;
       try {
         const launchHost = lease.launchHost as (frame: Buffer, output: (frame: Buffer) => void) => Promise<AddonHandle>;
-        addonHandle = await launchHost(encodeFrame("launch", launchBody(request, identity)), (frame) => {
+        addonHandle = await launchHost.call(lease, encodeFrame("launch", launchBody(request, identity)), (frame) => {
           if (protocolFailed) return;
           try { onFrame(decodeOutputFrame(frame)); }
           catch {
             protocolFailed = true;
-            if (addonHandle && typeof addonHandle.terminateHost === "function") void (addonHandle.terminateHost as (frame: Buffer) => Promise<void>)(encodeFrame("terminate", { secret: "0".repeat(64), reason: "protocol-failure" }));
+            if (addonHandle && typeof addonHandle.terminateHost === "function") void (addonHandle.terminateHost as (frame: Buffer) => Promise<void>).call(addonHandle, encodeFrame("terminate", { secret: "0".repeat(64), reason: "protocol-failure" }));
           }
         });
       } finally {
-        await (lease.close as () => Promise<void>)();
+        await (lease.close as () => Promise<void>).call(lease);
       }
       if (!addonHandle || addonHandle.executionId !== request.executionId || !(addonHandle.completed instanceof Promise) || typeof addonHandle.writeFrame !== "function" || typeof addonHandle.terminateHost !== "function") throw failure("EXEC_NATIVE_PROTOCOL", "Native host ABI mismatch");
       if (protocolFailed) {
-        await (addonHandle.terminateHost as (frame: Buffer) => Promise<void>)(encodeFrame("terminate", { secret: "0".repeat(64), reason: "protocol-failure" })).catch(() => undefined);
+        await (addonHandle.terminateHost as (frame: Buffer) => Promise<void>).call(addonHandle, encodeFrame("terminate", { secret: "0".repeat(64), reason: "protocol-failure" })).catch(() => undefined);
         throw failure("EXEC_NATIVE_PROTOCOL", "Native host emitted a malformed frame");
       }
 
       const completed = (addonHandle.completed as Promise<AddonCompletion>).then(value => {
         if (protocolFailed || !value || (value.exitCode !== null && !Number.isInteger(value.exitCode)) || typeof value.reason !== "string" || value.reason.length < 1 || value.reason.length > 128) throw failure("EXEC_NATIVE_PROTOCOL", "Native completion is invalid");
         let nativeProof: NativeExecutionProof | null = null;
-        if (value.nativeProof !== null) {
-          if (!value.nativeProof || typeof value.nativeProof !== "object" || Array.isArray(value.nativeProof)) throw failure("EXEC_NATIVE_PROTOCOL", "Native execution proof is invalid");
-          const proof = value.nativeProof as Record<string, unknown>;
-          if (Object.keys(proof).sort().join("\0") !== "channelMarker\0keyId\0mac\0proof" || !Buffer.isBuffer(proof.proof) || proof.proof.byteLength < 1 || proof.proof.byteLength > 64 * 1024 || typeof proof.mac !== "string" || !HASH.test(proof.mac) || typeof proof.keyId !== "string" || !HASH.test(proof.keyId) || typeof proof.channelMarker !== "string" || !HASH.test(proof.channelMarker)) throw failure("EXEC_NATIVE_PROTOCOL", "Native execution proof is invalid");
-          nativeProof = Object.freeze({ proof: Buffer.from(proof.proof), mac: proof.mac, keyId: proof.keyId, channelMarker: proof.channelMarker });
-        }
+        if (value.nativeProof !== null) nativeProof = decodeNativeProof(value.nativeProof);
         return Object.freeze({ exitCode: value.exitCode as number | null, reason: value.reason, nativeProof });
       });
       const handle: NativeExecutionHandle = Object.freeze({
@@ -325,12 +381,12 @@ export function createProductionNativeExecutionBridge(identity: NativeArtifactId
         async write(frame: NativeInputFrame): Promise<void> {
           if (protocolFailed || !Buffer.isBuffer(frame.bytes) || !HASH.test(frame.digest) || createHash("sha256").update(frame.bytes).digest("hex") !== frame.digest || typeof frame.appendNewline !== "boolean") throw failure("EXEC_NATIVE_PROTOCOL", "Native input is invalid");
           const writeFrame = addonHandle.writeFrame as (frame: Buffer) => Promise<void>;
-          await writeFrame(encodeFrame("input", { secret: "0".repeat(64), data: Buffer.from(frame.bytes).toString("base64"), digest: frame.digest, appendNewline: frame.appendNewline }));
+          await writeFrame.call(addonHandle, encodeFrame("input", { secret: "0".repeat(64), data: Buffer.from(frame.bytes).toString("base64"), digest: frame.digest, appendNewline: frame.appendNewline }));
         },
         async terminate(reason: string): Promise<void> {
           const safeReason = typeof reason === "string" && /^[a-z0-9-]{1,64}$/u.test(reason) ? reason : "invalid-reason";
           const terminateHost = addonHandle.terminateHost as (frame: Buffer) => Promise<void>;
-          await terminateHost(encodeFrame("terminate", { secret: "0".repeat(64), reason: safeReason }));
+          await terminateHost.call(addonHandle, encodeFrame("terminate", { secret: "0".repeat(64), reason: safeReason }));
         },
       });
       handles.add(handle);

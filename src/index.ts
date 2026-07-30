@@ -66,7 +66,7 @@ import { consolidateDef } from "./tools/knowledge-tools.js";
 import { oracleQueryDef } from "./tools/advanced-tools.js";
 import { museDef } from "./tools/phase1-tools.js";
 import { capabilityBroker, getAllToolNames, registerDynamicTool } from "./tools/index.js";
-import { canonicalDigest, type CapabilityContext, type RuntimeAuthority } from "./capability-broker.js";
+import { type CapabilityContext, type RuntimeAuthority } from "./capability-broker.js";
 import { PathDeniedError, type PathAuditIdentity, type PathAuthority, type PathDirectoryEnrollmentLease, type PathOperation, type PathRootInput } from "./path-policy.js";
 import { pathPolicy } from "./path-runtime.js";
 import { playbookExecuteDef, createPlaybookExecuteExec, playbookAbortDef, playbookAbortExec } from "./playbook.js";
@@ -87,7 +87,7 @@ import {
   type ManualConsentDecision,
   type ManualConsentOperation,
 } from "./manual-execution-consent.js";
-import { createManualExecutionGateway, shutdownExecutionRuntime } from "./execution-runtime.js";
+import { createManualExecutionGateway, manualConsentEvidenceBinding, observeManualConsentDenial, shutdownExecutionRuntime } from "./execution-runtime.js";
 import {
   invalidateNativeProcessConsent,
   registerNativeProcessConsentHandler,
@@ -126,7 +126,7 @@ let httpServer: Server | null = null;
 let childNativeProcessConsentCleanup: (() => void) | null = null;
 let isShuttingDown = false;
 const localApiPrincipal = capabilityBroker.createLocalApiPrincipal();
-const manualExecutionConsent = new ManualExecutionConsentLedger();
+const manualExecutionConsent = new ManualExecutionConsentLedger({ observeDenial: observeManualConsentDenial });
 let manualConsentIncarnationId = randomBytes(32).toString("hex");
 const runtimeSubscriptionClosers = new Map<RuntimeAuthority, Set<() => void>>();
 
@@ -258,6 +258,7 @@ async function currentManualConsentBinding(
   runtimeAuthorityId: string;
   authorityEpoch: number;
   incarnationId: string;
+  evidence: ReturnType<typeof manualConsentEvidenceBinding>;
 }>> {
   ensureRuntimeAccepting();
   const authority = currentAuthority;
@@ -277,6 +278,7 @@ async function currentManualConsentBinding(
       runtimeAuthorityId: authority.authorityId,
       authorityEpoch: context.authorityEpoch,
       incarnationId: manualConsentIncarnationId,
+      evidence: manualConsentEvidenceBinding(context, operation),
     });
   } finally {
     if (capabilityBroker.isContextActive(context)) capabilityBroker.finishContext(context);
@@ -307,6 +309,7 @@ export async function prepareManualTerminalConsent(
     ? await qualifyManualTerminalStart(exactRequest)
     : null;
   const binding = await currentManualConsentBinding(operation, exactRequest);
+  const { evidence, ...consentBinding } = binding;
   const display = operation === "terminal-start"
     ? {
         operationLabel: "启动持久终端",
@@ -325,7 +328,8 @@ export async function prepareManualTerminalConsent(
     request: exactRequest,
     display,
     rootQualificationDigest,
-    presence: { ...presence, ...binding },
+    evidence,
+    presence: { ...presence, ...consentBinding },
   });
 }
 
@@ -337,13 +341,15 @@ export async function decideManualTerminalConsent(
   presence: ManualTerminalPresence
 ): Promise<unknown> {
   const binding = await currentManualConsentBinding(operation, {});
+  const { evidence, ...consentBinding } = binding;
   let result: unknown;
   await manualExecutionConsent.decide({
     challengeId,
     decision,
     operation,
     argumentsDigest,
-    presence: { ...presence, ...binding },
+    evidence,
+    presence: { ...presence, ...consentBinding },
   }, async (storedOperation, exactRequest, storedRootQualificationDigest) => {
     if (storedOperation === "terminal-start") {
       const info = await runDirectOperation("terminal:start", exactRequest, (authorized, owner, _authority, context) =>
@@ -945,8 +951,8 @@ app.get("/api/terminals", async (_req, res) => {
 
 app.post("/api/terminals", (_req, res) => {
   res.status(403).json({
-    code: "EXEC_NATIVE_CONSENT_REQUIRED",
-    error: "Manual terminal start requires native Electron consent",
+    code: "EXEC_DIRECT_MUTATION_DENIED",
+    error: "Direct HTTP terminal start is permanently denied",
   });
 });
 
@@ -972,8 +978,8 @@ app.get("/api/terminals/:id/output", async (req, res) => {
 
 app.post("/api/terminals/:id/input", (_req, res) => {
   res.status(403).json({
-    code: "EXEC_NATIVE_CONSENT_REQUIRED",
-    error: "Manual terminal input requires native Electron consent",
+    code: "EXEC_DIRECT_MUTATION_DENIED",
+    error: "Direct HTTP terminal input is permanently denied",
   });
 });
 
@@ -995,6 +1001,10 @@ app.post("/api/terminals/:id/kill", async (req, res) => {
     });
     res.json({ success: true, terminal });
   } catch (err) {
+    if (err instanceof Error && "code" in err && err.code === "EXEC_OWNER_MISMATCH") {
+      res.status(403).json({ code: err.code, error: err.message });
+      return;
+    }
     res.status(404).json({ error: err instanceof Error ? err.message : String(err) });
   }
 });
@@ -1004,6 +1014,10 @@ app.delete("/api/terminals/:id", async (req, res) => {
     await runDirectOperation("terminal:close", { id: req.params.id }, (authorized, owner) => terminalFacade.close(owner, String(authorized.id)));
     res.json({ success: true });
   } catch (err) {
+    if (err instanceof Error && "code" in err && err.code === "EXEC_OWNER_MISMATCH") {
+      res.status(403).json({ code: err.code, error: err.message });
+      return;
+    }
     res.status(404).json({ error: err instanceof Error ? err.message : String(err) });
   }
 });

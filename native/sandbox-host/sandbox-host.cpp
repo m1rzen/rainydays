@@ -96,6 +96,15 @@ class Parser {
 };
 
 struct Handle { HANDLE value = INVALID_HANDLE_VALUE; Handle() = default; explicit Handle(HANDLE h) : value(h) {} ~Handle() { if (value && value != INVALID_HANDLE_VALUE) CloseHandle(value); } Handle(const Handle&) = delete; Handle& operator=(const Handle&) = delete; HANDLE release() { HANDLE h = value; value = INVALID_HANDLE_VALUE; return h; } };
+using CompareObjectHandlesFn = BOOL(WINAPI*)(HANDLE, HANDLE);
+bool ObserveUnlistedSentinel(HANDLE process, HANDLE sentinel, DWORD* probe_error, bool* observed) {
+  *probe_error = ERROR_SUCCESS; *observed = false; Handle duplicate;
+  if (!DuplicateHandle(process, sentinel, GetCurrentProcess(), &duplicate.value, 0, FALSE, DUPLICATE_SAME_ACCESS)) { *probe_error = GetLastError(); return *probe_error == ERROR_INVALID_HANDLE; }
+  HMODULE kernelbase = GetModuleHandleW(L"kernelbase.dll"); FARPROC raw_compare = kernelbase ? GetProcAddress(kernelbase, "CompareObjectHandles") : nullptr; CompareObjectHandlesFn compare = nullptr;
+  static_assert(sizeof(compare) == sizeof(raw_compare)); memcpy(&compare, &raw_compare, sizeof(compare));
+  if (!compare) { *probe_error = ERROR_CALL_NOT_IMPLEMENTED; return false; }
+  *observed = compare(sentinel, duplicate.value) != FALSE; return true;
+}
 bool ReadExact(HANDLE handle, void* buffer, DWORD bytes) { auto* p = static_cast<unsigned char*>(buffer); while (bytes) { DWORD n = 0; if (!ReadFile(handle, p, bytes, &n, nullptr) || !n) return false; p += n; bytes -= n; } return true; }
 bool WriteExact(HANDLE handle, const void* buffer, DWORD bytes) { const auto* p = static_cast<const unsigned char*>(buffer); while (bytes) { DWORD n = 0; if (!WriteFile(handle, p, bytes, &n, nullptr) || !n) return false; p += n; bytes -= n; } return true; }
 
@@ -159,6 +168,12 @@ bool BuildEnvironment(const Json& value, std::vector<wchar_t>* block) {
   block->push_back(L'\0'); return true;
 }
 
+bool ProcessCurrentDirectory(const std::wstring& handle_path, std::wstring* output) {
+  if (handle_path.size() < 7 || handle_path.rfind(L"\\\\?\\", 0) != 0 || handle_path[5] != L':' || handle_path[6] != L'\\') return false;
+  const wchar_t drive = handle_path[4]; if (!((drive >= L'A' && drive <= L'Z') || (drive >= L'a' && drive <= L'z'))) return false;
+  output->assign(handle_path.begin() + 4, handle_path.end()); return output->size() < 32767;
+}
+
 uint64_t FileId(const BY_HANDLE_FILE_INFORMATION& value) { return (static_cast<uint64_t>(value.nFileIndexHigh) << 32) | value.nFileIndexLow; }
 bool ParseUnsigned(const std::string& text, uint64_t* out) { if (text.empty() || !std::all_of(text.begin(), text.end(), [](char c) { return c >= '0' && c <= '9'; })) return false; char* end = nullptr; const auto value = _strtoui64(text.c_str(), &end, 10); if (!end || *end) return false; *out = value; return true; }
 bool ExactKeys(const Json& value, std::initializer_list<const char*> keys) { if (value.kind != Json::Kind::object || value.object.size() != keys.size()) return false; return std::all_of(keys.begin(), keys.end(), [&](const char* key) { return value.object.count(key) == 1; }); }
@@ -176,6 +191,20 @@ void DeleteJournals(const RootGrant& grant) { for (unsigned i = 1; i <= grant.jo
 
 bool SameFile(HANDLE handle, const BY_HANDLE_FILE_INFORMATION& expected) {
   BY_HANDLE_FILE_INFORMATION now{}; return GetFileInformationByHandle(handle, &now) && now.dwVolumeSerialNumber == expected.dwVolumeSerialNumber && now.nFileIndexHigh == expected.nFileIndexHigh && now.nFileIndexLow == expected.nFileIndexLow;
+}
+
+DWORD ReplacementOpenResult(const std::wstring& path) {
+  HANDLE probe = CreateFileW(path.c_str(), DELETE | FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+  if (probe != INVALID_HANDLE_VALUE) { CloseHandle(probe); return ERROR_SUCCESS; }
+  return GetLastError();
+}
+
+bool SamePathMapping(const std::wstring& path, const BY_HANDLE_FILE_INFORMATION& expected) {
+  Handle probe(CreateFileW(path.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
+  BY_HANDLE_FILE_INFORMATION observed{}; std::vector<wchar_t> final_path(32768);
+  const DWORD count = probe.value != INVALID_HANDLE_VALUE ? GetFinalPathNameByHandleW(probe.value, final_path.data(), static_cast<DWORD>(final_path.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS) : 0;
+  return probe.value != INVALID_HANDLE_VALUE && GetFileInformationByHandle(probe.value, &observed) && (observed.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && !(observed.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+    && observed.dwVolumeSerialNumber == expected.dwVolumeSerialNumber && FileId(observed) == FileId(expected) && count && count < final_path.size() && _wcsicmp(path.c_str(), final_path.data()) == 0;
 }
 
 bool CopyAclWithChange(PACL source, const std::vector<unsigned char>* append, const std::vector<unsigned char>* remove, std::vector<unsigned char>* storage) {
@@ -246,6 +275,43 @@ bool VerifyTokenAndJob(HANDLE process, PSID sid, HANDLE job) {
   PSID integrity_sid = reinterpret_cast<TOKEN_MANDATORY_LABEL*>(integrity.data())->Label.Sid; const DWORD rid = *GetSidSubAuthority(integrity_sid, static_cast<DWORD>(*GetSidSubAuthorityCount(integrity_sid) - 1)); return rid <= SECURITY_MANDATORY_LOW_RID;
 }
 
+struct HandleDuplicationObservation {
+  DWORD host_open_error = ERROR_GEN_FAILURE;
+  DWORD job_duplicate_error = ERROR_GEN_FAILURE;
+  DWORD control_duplicate_error = ERROR_GEN_FAILURE;
+  bool job_blocked = false;
+  bool control_blocked = false;
+};
+
+bool ObserveChildTokenHandleDuplication(HANDLE child, HANDLE job, HANDLE control, HandleDuplicationObservation* observation) {
+  Handle primary, impersonation;
+  if (!OpenProcessToken(child, TOKEN_QUERY | TOKEN_DUPLICATE, &primary.value)
+    || !DuplicateTokenEx(primary.value, TOKEN_QUERY | TOKEN_IMPERSONATE, nullptr, SecurityImpersonation, TokenImpersonation, &impersonation.value)
+    || !SetThreadToken(nullptr, impersonation.value)) return false;
+  Handle host_process(OpenProcess(PROCESS_DUP_HANDLE, FALSE, GetCurrentProcessId()));
+  if (host_process.value == INVALID_HANDLE_VALUE || !host_process.value) {
+    observation->host_open_error = GetLastError();
+    observation->job_duplicate_error = observation->host_open_error;
+    observation->control_duplicate_error = observation->host_open_error;
+  } else {
+    observation->host_open_error = ERROR_SUCCESS;
+    {
+      Handle duplicate;
+      if (DuplicateHandle(host_process.value, job, GetCurrentProcess(), &duplicate.value, 0, FALSE, DUPLICATE_SAME_ACCESS)) observation->job_duplicate_error = ERROR_SUCCESS;
+      else observation->job_duplicate_error = GetLastError();
+    }
+    {
+      Handle duplicate;
+      if (DuplicateHandle(host_process.value, control, GetCurrentProcess(), &duplicate.value, 0, FALSE, DUPLICATE_SAME_ACCESS)) observation->control_duplicate_error = ERROR_SUCCESS;
+      else observation->control_duplicate_error = GetLastError();
+    }
+  }
+  const bool reverted = RevertToSelf() != FALSE;
+  observation->job_blocked = observation->host_open_error == ERROR_ACCESS_DENIED && observation->job_duplicate_error == ERROR_ACCESS_DENIED;
+  observation->control_blocked = observation->host_open_error == ERROR_ACCESS_DENIED && observation->control_duplicate_error == ERROR_ACCESS_DENIED;
+  return reverted && observation->job_blocked && observation->control_blocked;
+}
+
 bool Amd64Image(HANDLE file) {
   IMAGE_DOS_HEADER dos{}; DWORD got = 0; LARGE_INTEGER offset{}; if (!SetFilePointerEx(file, offset, nullptr, FILE_BEGIN) || !ReadFile(file, &dos, sizeof(dos), &got, nullptr) || got != sizeof(dos) || dos.e_magic != IMAGE_DOS_SIGNATURE || dos.e_lfanew <= 0) return false;
   offset.QuadPart = dos.e_lfanew; DWORD signature = 0; IMAGE_FILE_HEADER header{}; const bool ok = SetFilePointerEx(file, offset, nullptr, FILE_BEGIN) && ReadFile(file, &signature, sizeof(signature), &got, nullptr) && got == sizeof(signature) && signature == IMAGE_NT_SIGNATURE && ReadFile(file, &header, sizeof(header), &got, nullptr) && got == sizeof(header) && header.Machine == IMAGE_FILE_MACHINE_AMD64; offset.QuadPart = 0; SetFilePointerEx(file, offset, nullptr, FILE_BEGIN); return ok;
@@ -298,7 +364,7 @@ bool ParseLimits(const Json& value, const std::string& entry, RuntimeLimits* out
   if (entry == "E1") max = {16, 512ull << 20, 1ull << 30, 50, 30000, 30000, 0, 1ull << 20, 1ull << 20, 128ull << 10, false};
   else if (entry == "E2") max = {32, 512ull << 20, 1ull << 30, 25, 600000, 1800000, 300000, 10ull << 20, 1ull << 20, 64ull << 10, true};
   else if (entry == "E3") max = {1, 256ull << 20, 256ull << 20, 20, 10000, 10000, 0, 1ull << 20, 1ull << 20, 128ull << 10, false};
-  else if (entry == "E4") max = {16, 512ull << 20, 1ull << 30, 25, 600000, 14400000, 1800000, 10ull << 20, 1ull << 20, 256ull << 10, true};
+  else if (entry == "E4") max = {64, 1ull << 30, 2ull << 30, 50, 3600000, 28800000, 1800000, 64ull << 20, 1ull << 20, 64ull << 10, true};
   else return false;
   if (active > max.active || process_memory > max.process_memory || job_memory > max.job_memory || cpu > max.cpu || out->job_time > max.job_time || out->wall > max.wall
     || out->aggregate > max.aggregate || out->retained > max.retained || out->input > max.input || out->retained > out->aggregate || job_memory < process_memory
@@ -328,7 +394,7 @@ struct RuntimeControl {
 
 void FailJob(RuntimeControl* control, int reason) {
   control->accepting = false; int expected = 0; control->reason.compare_exchange_strong(expected, reason);
-  const UINT exit_code = reason == 1 ? 0xE071 : reason == 3 ? 0xE080 : reason == 4 ? 0xE081 : reason == 5 ? 0xE082 : reason == 6 ? 0xE084 : reason == 7 ? 0xE085 : reason == 8 ? 0xE086 : reason == 9 ? 0xE087 : 0xE083;
+  const UINT exit_code = reason == 1 ? 0xE071 : reason == 3 ? 0xE080 : reason == 4 ? 0xE081 : reason == 5 ? 0xE082 : reason == 6 ? 0xE084 : reason == 7 ? 0xE085 : reason == 8 ? 0xE086 : reason == 9 ? 0xE087 : reason == 10 ? 0xE088 : reason == 11 ? 0xE089 : reason == 12 ? 0xE08A : 0xE083;
   TerminateJobObject(control->job, exit_code);
 }
 
@@ -341,7 +407,8 @@ void ControlMain(RuntimeControl* control) {
     if (type->scalar == "terminate") {
       const Json* reason = Field(frame, "reason", Json::Kind::string);
       if (!ExactKeys(frame, {"reason", "secret", "type", "v"}) || !reason || reason->scalar.empty() || reason->scalar.size() > 64 || !std::all_of(reason->scalar.begin(), reason->scalar.end(), [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'; })) { FailJob(control, 1); return; }
-      FailJob(control, 2); return;
+      const int termination_reason = reason->scalar == "owner-retired" ? 10 : reason->scalar == "session-retired" ? 11 : reason->scalar == "service-shutdown" ? 12 : 2;
+      FailJob(control, termination_reason); return;
     }
     if (type->scalar != "input" || !control->persistent || !ExactKeys(frame, {"appendNewline", "data", "digest", "secret", "type", "v"})) { FailJob(control, 1); return; }
     const Json* data = Field(frame, "data", Json::Kind::string); const Json* digest = Field(frame, "digest", Json::Kind::string); const Json* newline = Field(frame, "appendNewline", Json::Kind::boolean); std::vector<unsigned char> bytes; std::string observed;
@@ -360,7 +427,7 @@ void Drain(HANDLE pipe, const char* stream, RuntimeControl* control) {
 
 std::string ProofReason(int reason, bool cleanup) {
   if (!cleanup) return "cleanup-failed";
-  switch (reason) { case 1: return "protocol-invalid"; case 2: return "cancelled"; case 3: return "limit-wall"; case 4: return "limit-idle"; case 5: return "limit-output"; case 6: return "limit-cpu"; case 7: return "limit-active-process"; case 8: return "limit-process-memory"; case 9: return "limit-job-memory"; default: return "completed"; }
+  switch (reason) { case 1: return "protocol-invalid"; case 2: return "cancelled"; case 3: return "limit-wall"; case 4: return "limit-idle"; case 5: return "limit-output"; case 6: return "limit-cpu"; case 7: return "limit-active-process"; case 8: return "limit-process-memory"; case 9: return "limit-job-memory"; case 10: return "owner-retired"; case 11: return "session-retired"; case 12: return "service-shutdown"; default: return "completed"; }
 }
 
 bool EmitNativeProof(const mini_lux::sec03::AttestationKey& key, const std::string& proof) {
@@ -371,7 +438,13 @@ bool EmitNativeProof(const mini_lux::sec03::AttestationKey& key, const std::stri
 }
 
 int Run() {
-  SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX); std::string wire; if (!ReadFrame(&wire)) { Failure("EXEC_PROTOCOL_INVALID:length"); return 71; }
+  SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
+  const HANDLE host_control = GetStdHandle(STD_INPUT_HANDLE); DWORD control_flags = 0;
+  const bool control_handle_private = host_control && host_control != INVALID_HANDLE_VALUE
+    && SetHandleInformation(host_control, HANDLE_FLAG_INHERIT, 0)
+    && GetHandleInformation(host_control, &control_flags) && (control_flags & HANDLE_FLAG_INHERIT) == 0;
+  if (!control_handle_private) { Failure("EXEC_NATIVE_PRIMITIVE_UNAVAILABLE:control-handle"); return 72; }
+  std::string wire; if (!ReadFrame(&wire)) { Failure("EXEC_PROTOCOL_INVALID:length"); return 71; }
   Json request; if (!Parser(wire).Parse(&request) || request.kind != Json::Kind::object || !ExactLaunchKeys(request)) { Failure("EXEC_PROTOCOL_INVALID:json"); return 71; }
   const Json* version = Field(request, "v", Json::Kind::number); const Json* candidate = Field(request, "candidateId", Json::Kind::string); const Json* build = Field(request, "buildIdSha256", Json::Kind::string); const Json* source = Field(request, "sourceSha256", Json::Kind::string); const Json* host = Field(request, "hostSha256", Json::Kind::string); const Json* launcher = Field(request, "launcherSha256", Json::Kind::string); const Json* type = Field(request, "type", Json::Kind::string); const Json* secret = Field(request, "secret", Json::Kind::string); const Json* entry = Field(request, "entryPoint", Json::Kind::string); const Json* profile = Field(request, "profile", Json::Kind::string); const Json* execution = Field(request, "executionId", Json::Kind::string); const Json* context = Field(request, "contextId", Json::Kind::string); const Json* session = Field(request, "sessionId", Json::Kind::string); const Json* run_id = Field(request, "runId", Json::Kind::string); const Json* authority = Field(request, "authorityEpoch", Json::Kind::number); const Json* payload = Field(request, "payload", Json::Kind::string); const Json* payload_digest = Field(request, "payloadDigest", Json::Kind::string); const Json* roots = Field(request, "roots", Json::Kind::array); const Json* root_handles = Field(request, "rootHandles", Json::Kind::array); const Json* executable_json = Field(request, "executable", Json::Kind::object); const Json* executable_handle_json = request.object.count("executableHandle") ? &request.object.at("executableHandle") : nullptr; const Json* environment = Field(request, "environment", Json::Kind::object); const Json* limits_json = Field(request, "limits", Json::Kind::object); const Json* network = Field(request, "network", Json::Kind::object);
   auto hash = [](const Json* value) { return value && mini_lux::sec03::CanonicalHex(value->scalar, 32, 32); }; std::uint64_t authority_epoch = 0;
@@ -408,15 +481,27 @@ int Run() {
   std::vector<RootGrant> grants(roots->array.size()); for (auto& grant : grants) { grant.journal.candidate_host_sha256 = host->scalar; grant.journal.launcher_sha256 = launcher->scalar; grant.journal.execution_id = execution->scalar; grant.journal.context_id = context->scalar; grant.journal.session_id = session->scalar; grant.journal.run_id = run_id->scalar; grant.journal.authority_epoch = authority_epoch; grant.journal.profile = profile_name; grant.journal.sid_string = app_sid_string; grant.journal.sid_bytes = app_sid_bytes; grant.journal.host_pid = GetCurrentProcessId(); grant.journal.host_created = host_created; }
   bool roots_ok = true; size_t prepared_roots = 0; for (size_t i = 0; i < roots->array.size(); ++i) { if (roots->array[i].kind != Json::Kind::object || root_handles->array[i].kind != Json::Kind::object || !PrepareRoot(roots->array[i], root_handles->array[i], app_sid, &grants[i])) { roots_ok = false; break; } ++prepared_roots; }
   if (!roots_ok) { const std::string detail = std::string("EXEC_ROOT_UNSUPPORTED:stage-") + std::to_string(grants[prepared_roots].stage) + "-win32-" + std::to_string(GetLastError()); if (!grants[prepared_roots].exact_ace.empty()) CleanupRoot(&grants[prepared_roots], app_sid); for (size_t i = 0; i < prepared_roots; ++i) CleanupRoot(&grants[i], app_sid); DeleteAppContainerProfile(profile_name.c_str()); ::LocalFree(app_sid); Failure(detail.c_str()); return 74; }
+  DWORD post_acl_root_delete_error = ERROR_SHARING_VIOLATION, post_acl_cwd_delete_error = ERROR_SHARING_VIOLATION;
+  bool post_acl_replacement_blocked = true;
+  for (const auto& grant : grants) {
+    const DWORD root_error = ReplacementOpenResult(grant.path), cwd_error = ReplacementOpenResult(grant.cwd_path);
+    if (root_error != ERROR_SHARING_VIOLATION) post_acl_root_delete_error = root_error;
+    if (cwd_error != ERROR_SHARING_VIOLATION) post_acl_cwd_delete_error = cwd_error;
+    if (root_error != ERROR_SHARING_VIOLATION || cwd_error != ERROR_SHARING_VIOLATION || !SameFile(grant.handle.value, grant.identity) || !SameFile(grant.cwd_handle.value, grant.cwd_identity)) post_acl_replacement_blocked = false;
+  }
+  if (!post_acl_replacement_blocked) { const std::string detail = "EXEC_ROOT_IDENTITY_CHANGED:post-acl-root-" + std::to_string(post_acl_root_delete_error) + "-cwd-" + std::to_string(post_acl_cwd_delete_error); for (auto& grant : grants) CleanupRoot(&grant, app_sid); DeleteAppContainerProfile(profile_name.c_str()); ::LocalFree(app_sid); Failure(detail.c_str()); return 74; }
 
-  Handle job(CreateJobObjectW(nullptr, nullptr)); Handle completion_port(CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, 0, 1)); JOBOBJECT_ASSOCIATE_COMPLETION_PORT association{job.value, completion_port.value};
-  if (!job.value || completion_port.value == INVALID_HANDLE_VALUE || !SetInformationJobObject(job.value, JobObjectAssociateCompletionPortInformation, &association, sizeof(association)) || !SetJobLimits(job.value, limits)) { for (auto& grant : grants) CleanupRoot(&grant, app_sid); DeleteAppContainerProfile(profile_name.c_str()); ::LocalFree(app_sid); Failure("EXEC_NATIVE_PRIMITIVE_UNAVAILABLE:job"); return 72; }
-  SECURITY_ATTRIBUTES inheritable{sizeof(inheritable), nullptr, TRUE}; HANDLE stdout_read = nullptr, stdout_write = nullptr, stderr_read = nullptr, stderr_write = nullptr, stdin_read = nullptr, stdin_write = nullptr; Handle nul_stdin; HPCON pseudo = nullptr; HANDLE pseudo_input_read = nullptr, pseudo_output_write = nullptr; bool pipes_ok = false;
+  Handle job(CreateJobObjectW(nullptr, nullptr)); Handle completion_port(CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, 0, 1)); JOBOBJECT_ASSOCIATE_COMPLETION_PORT association{job.value, completion_port.value}; DWORD job_handle_flags = 0;
+  if (!job.value || completion_port.value == INVALID_HANDLE_VALUE || !SetInformationJobObject(job.value, JobObjectAssociateCompletionPortInformation, &association, sizeof(association)) || !SetJobLimits(job.value, limits)
+    || !GetHandleInformation(job.value, &job_handle_flags) || (job_handle_flags & HANDLE_FLAG_INHERIT) != 0) { for (auto& grant : grants) CleanupRoot(&grant, app_sid); DeleteAppContainerProfile(profile_name.c_str()); ::LocalFree(app_sid); Failure("EXEC_NATIVE_PRIMITIVE_UNAVAILABLE:job"); return 72; }
+  SECURITY_ATTRIBUTES inheritable{sizeof(inheritable), nullptr, TRUE}; Handle inheritance_sentinel(CreateEventW(&inheritable, TRUE, FALSE, nullptr)); DWORD sentinel_flags = 0;
+  const bool sentinel_ready = inheritance_sentinel.value && GetHandleInformation(inheritance_sentinel.value, &sentinel_flags) && (sentinel_flags & HANDLE_FLAG_INHERIT) != 0;
+  HANDLE stdout_read = nullptr, stdout_write = nullptr, stderr_read = nullptr, stderr_write = nullptr, stdin_read = nullptr, stdin_write = nullptr; Handle nul_stdin; HPCON pseudo = nullptr; HANDLE pseudo_input_read = nullptr, pseudo_output_write = nullptr; bool pipes_ok = sentinel_ready;
   if (persistent) {
-    pipes_ok = CreatePipe(&pseudo_input_read, &stdin_write, nullptr, 0) && CreatePipe(&stdout_read, &pseudo_output_write, nullptr, 0) && SUCCEEDED(CreatePseudoConsole(COORD{120, 30}, pseudo_input_read, pseudo_output_write, 0, &pseudo));
+    pipes_ok = pipes_ok && CreatePipe(&pseudo_input_read, &stdin_write, nullptr, 0) && CreatePipe(&stdout_read, &pseudo_output_write, nullptr, 0) && SUCCEEDED(CreatePseudoConsole(COORD{120, 30}, pseudo_input_read, pseudo_output_write, 0, &pseudo));
     if (pseudo_input_read) { CloseHandle(pseudo_input_read); pseudo_input_read = nullptr; } if (pseudo_output_write) { CloseHandle(pseudo_output_write); pseudo_output_write = nullptr; }
   } else {
-    pipes_ok = CreatePipe(&stdout_read, &stdout_write, &inheritable, 0) && CreatePipe(&stderr_read, &stderr_write, &inheritable, 0);
+    pipes_ok = pipes_ok && CreatePipe(&stdout_read, &stdout_write, &inheritable, 0) && CreatePipe(&stderr_read, &stderr_write, &inheritable, 0);
     if (is_e3) pipes_ok = pipes_ok && CreatePipe(&stdin_read, &stdin_write, &inheritable, 0); else { nul_stdin.value = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &inheritable, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr); stdin_read = nul_stdin.value; pipes_ok = pipes_ok && stdin_read != INVALID_HANDLE_VALUE; }
     if (stdout_read) SetHandleInformation(stdout_read, HANDLE_FLAG_INHERIT, 0); if (stderr_read) SetHandleInformation(stderr_read, HANDLE_FLAG_INHERIT, 0); if (stdin_write) SetHandleInformation(stdin_write, HANDLE_FLAG_INHERIT, 0);
   }
@@ -450,23 +535,56 @@ int Run() {
     startup.StartupInfo.hStdError = nullptr;
     attributes_ok = attributes_ok && UpdateProcThreadAttribute(startup.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, pseudo, sizeof(pseudo), nullptr, nullptr);
   } else { startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES; startup.StartupInfo.hStdInput = stdin_read; startup.StartupInfo.hStdOutput = stdout_write; startup.StartupInfo.hStdError = stderr_write; HANDLE inherited[] = {stdin_read, stdout_write, stderr_write}; attributes_ok = attributes_ok && UpdateProcThreadAttribute(startup.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, inherited, sizeof(inherited), nullptr, nullptr); }
-  const unsigned long long launch_started = GetTickCount64(); PROCESS_INFORMATION process{}; const BOOL created = attributes_ok && CreateProcessW(executable.c_str(), command_line.data(), nullptr, nullptr, persistent ? FALSE : TRUE, EXTENDED_STARTUPINFO_PRESENT | CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | (persistent ? 0 : DETACHED_PROCESS), env.data(), grants[0].cwd_path.c_str(), &startup.StartupInfo, &process);
+  std::wstring process_cwd; const bool process_cwd_ok = ProcessCurrentDirectory(grants[0].cwd_path, &process_cwd);
+  const unsigned long long launch_started = GetTickCount64(); PROCESS_INFORMATION process{}; const BOOL created = attributes_ok && process_cwd_ok && CreateProcessW(executable.c_str(), command_line.data(), nullptr, nullptr, persistent ? FALSE : TRUE, EXTENDED_STARTUPINFO_PRESENT | CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | (persistent ? 0 : DETACHED_PROCESS), env.data(), process_cwd.c_str(), &startup.StartupInfo, &process);
   if (startup.lpAttributeList) DeleteProcThreadAttributeList(startup.lpAttributeList); if (stdout_write) CloseHandle(stdout_write); if (stderr_write) CloseHandle(stderr_write); if (is_e3 && stdin_read) CloseHandle(stdin_read);
-  const DWORD create_error = created ? ERROR_SUCCESS : GetLastError(); const bool assigned = created && AssignProcessToJobObject(job.value, process.hProcess); const bool token_job = assigned && VerifyTokenAndJob(process.hProcess, app_sid, job.value); bool roots_stable = true; for (const auto& grant : grants) if (!SameFile(grant.handle.value, grant.identity) || !SameFile(grant.cwd_handle.value, grant.cwd_identity)) roots_stable = false; const bool executable_stable = is_e3 ? (created && SameFile(executable_lease.value, executable_identity) && SameProcessExecutable(process.hProcess, executable_identity, executable_sha256)) : !persistent || (created && SameFile(fixed_executable.value, fixed_identity) && SameProcessExecutable(process.hProcess, fixed_identity, fixed_digest)); const bool constrained = created && assigned && token_job && roots_stable && executable_stable;
-  if (!constrained || ResumeThread(process.hThread) == static_cast<DWORD>(-1)) { if (created) { TerminateProcess(process.hProcess, 0xE003); CloseHandle(process.hThread); CloseHandle(process.hProcess); } if (pseudo) ClosePseudoConsole(pseudo); if (stdin_write) CloseHandle(stdin_write); if (stdout_read) CloseHandle(stdout_read); if (stderr_read) CloseHandle(stderr_read); for (auto& grant : grants) CleanupRoot(&grant, app_sid); DeleteAppContainerProfile(profile_name.c_str()); ::LocalFree(app_sid); const std::string detail = "EXEC_SANDBOX_LAUNCH_FAILED:constrain-created-" + std::to_string(created ? 1 : 0) + "-assigned-" + std::to_string(assigned ? 1 : 0) + "-token-" + std::to_string(token_job ? 1 : 0) + "-roots-" + std::to_string(roots_stable ? 1 : 0) + "-exe-" + std::to_string(executable_stable ? 1 : 0) + "-win32-" + std::to_string(create_error); Failure(detail.c_str()); return 73; }
+  const DWORD create_error = created ? ERROR_SUCCESS : GetLastError(); DWORD sentinel_probe_error = ERROR_INVALID_HANDLE; bool sentinel_observed = false;
+  const bool unlisted_sentinel_blocked = created && ObserveUnlistedSentinel(process.hProcess, inheritance_sentinel.value, &sentinel_probe_error, &sentinel_observed) && !sentinel_observed;
+  const bool assigned = created && unlisted_sentinel_blocked && AssignProcessToJobObject(job.value, process.hProcess); const bool token_job = assigned && VerifyTokenAndJob(process.hProcess, app_sid, job.value);
+  HandleDuplicationObservation handle_duplication{}; const bool sensitive_handle_duplication_blocked = token_job && ObserveChildTokenHandleDuplication(process.hProcess, job.value, host_control, &handle_duplication);
+  bool roots_stable = true; for (const auto& grant : grants) if (!SameFile(grant.handle.value, grant.identity) || !SameFile(grant.cwd_handle.value, grant.cwd_identity)) roots_stable = false;
+  DWORD post_create_root_delete_error = ERROR_SHARING_VIOLATION, post_create_cwd_delete_error = ERROR_SHARING_VIOLATION;
+  bool post_create_replacement_blocked = created && assigned && token_job;
+  if (post_create_replacement_blocked) for (const auto& grant : grants) {
+    const DWORD root_error = ReplacementOpenResult(grant.path), cwd_error = ReplacementOpenResult(grant.cwd_path);
+    if (root_error != ERROR_SHARING_VIOLATION) post_create_root_delete_error = root_error;
+    if (cwd_error != ERROR_SHARING_VIOLATION) post_create_cwd_delete_error = cwd_error;
+    if (root_error != ERROR_SHARING_VIOLATION || cwd_error != ERROR_SHARING_VIOLATION) post_create_replacement_blocked = false;
+  }
+  const bool pre_resume_path_identity_match = post_create_replacement_blocked && std::all_of(grants.begin(), grants.end(), [](const RootGrant& grant) { return SamePathMapping(grant.path, grant.identity) && SamePathMapping(grant.cwd_path, grant.cwd_identity); });
+  const bool executable_stable = is_e3 ? (created && SameFile(executable_lease.value, executable_identity) && SameProcessExecutable(process.hProcess, executable_identity, executable_sha256)) : !persistent || (created && SameFile(fixed_executable.value, fixed_identity) && SameProcessExecutable(process.hProcess, fixed_identity, fixed_digest)); const bool constrained = created && assigned && token_job && sensitive_handle_duplication_blocked && roots_stable && post_create_replacement_blocked && pre_resume_path_identity_match && executable_stable;
+  if (!constrained || ResumeThread(process.hThread) == static_cast<DWORD>(-1)) { if (created) { TerminateProcess(process.hProcess, 0xE003); CloseHandle(process.hThread); CloseHandle(process.hProcess); } if (pseudo) ClosePseudoConsole(pseudo); if (stdin_write) CloseHandle(stdin_write); if (stdout_read) CloseHandle(stdout_read); if (stderr_read) CloseHandle(stderr_read); for (auto& grant : grants) CleanupRoot(&grant, app_sid); DeleteAppContainerProfile(profile_name.c_str()); ::LocalFree(app_sid); const std::string detail = "EXEC_SANDBOX_LAUNCH_FAILED:constrain-created-" + std::to_string(created ? 1 : 0) + "-sentinel-" + std::to_string(unlisted_sentinel_blocked ? 1 : 0) + "-sentinel-win32-" + std::to_string(sentinel_probe_error) + "-assigned-" + std::to_string(assigned ? 1 : 0) + "-token-" + std::to_string(token_job ? 1 : 0) + "-handle-dup-" + std::to_string(sensitive_handle_duplication_blocked ? 1 : 0) + "-host-open-" + std::to_string(handle_duplication.host_open_error) + "-roots-" + std::to_string(roots_stable ? 1 : 0) + "-exe-" + std::to_string(executable_stable ? 1 : 0) + "-win32-" + std::to_string(create_error); Failure(detail.c_str()); return 73; }
   bool input_ok = true; if (is_e3) { input_ok = WriteExact(stdin_write, command_bytes.data(), static_cast<DWORD>(command_bytes.size())); CloseHandle(stdin_write); stdin_write = nullptr; if (!input_ok) TerminateJobObject(job.value, 0xE003); }
   CloseHandle(process.hThread); RuntimeControl control{}; control.job = job.value; control.input = persistent ? stdin_write : nullptr; control.secret = secret->scalar; control.limits = limits; control.persistent = persistent; control.activity = launch_started; control.stdin_writes = is_e3 ? 1 : 0;
   std::thread controller(ControlMain, &control); std::thread out(Drain, stdout_read, "stdout", &control); std::thread err; if (!persistent) err = std::thread(Drain, stderr_read, "stderr", &control);
+  bool root_exited = false, active_process_zero = false;
+  unsigned long long observed_process_count = 0, observed_descendant_count = 0, descendant_validation_failures = 0;
   for (;;) {
-    if (WaitForSingleObject(process.hProcess, 25) == WAIT_OBJECT_0) break; const unsigned long long now = GetTickCount64();
-    if (now - launch_started >= limits.wall) { FailJob(&control, 3); break; }
-    if (persistent && now - control.activity.load() >= limits.idle) { FailJob(&control, 4); break; }
-    DWORD message = 0; ULONG_PTR key = 0; LPOVERLAPPED overlap = nullptr; while (GetQueuedCompletionStatus(completion_port.value, &message, &key, &overlap, 0)) {
-      if (message == JOB_OBJECT_MSG_END_OF_JOB_TIME) FailJob(&control, 6);
-      else if (message == JOB_OBJECT_MSG_ACTIVE_PROCESS_LIMIT) FailJob(&control, 7);
-      else if (message == JOB_OBJECT_MSG_PROCESS_MEMORY_LIMIT) FailJob(&control, 8);
-      else if (message == JOB_OBJECT_MSG_JOB_MEMORY_LIMIT) FailJob(&control, 9);
-      else if (message == JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO) break;
+    DWORD message = 0; ULONG_PTR key = 0; LPOVERLAPPED overlap = nullptr;
+    if (GetQueuedCompletionStatus(completion_port.value, &message, &key, &overlap, 25)) {
+      do {
+        if (message == JOB_OBJECT_MSG_NEW_PROCESS) {
+          const DWORD observed_pid = static_cast<DWORD>(reinterpret_cast<ULONG_PTR>(overlap));
+          HANDLE observed_process = observed_pid == process.dwProcessId
+            ? process.hProcess
+            : OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, observed_pid);
+          ++observed_process_count;
+          if (observed_pid != process.dwProcessId) ++observed_descendant_count;
+          if (!observed_process || !VerifyTokenAndJob(observed_process, app_sid, job.value)) ++descendant_validation_failures;
+          if (observed_process && observed_process != process.hProcess) CloseHandle(observed_process);
+        } else if (message == JOB_OBJECT_MSG_END_OF_JOB_TIME) FailJob(&control, 6);
+        else if (message == JOB_OBJECT_MSG_ACTIVE_PROCESS_LIMIT) FailJob(&control, 7);
+        else if (message == JOB_OBJECT_MSG_PROCESS_MEMORY_LIMIT) FailJob(&control, 8);
+        else if (message == JOB_OBJECT_MSG_JOB_MEMORY_LIMIT) FailJob(&control, 9);
+        else if (message == JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO) active_process_zero = true;
+      } while (GetQueuedCompletionStatus(completion_port.value, &message, &key, &overlap, 0));
+      if (active_process_zero) break;
+    }
+    if (!root_exited && WaitForSingleObject(process.hProcess, 0) == WAIT_OBJECT_0) { root_exited = true; TerminateJobObject(job.value, 0xE003); }
+    if (!root_exited) {
+      const unsigned long long now = GetTickCount64();
+      if (control.reason.load() == 0 && now - launch_started >= limits.wall) FailJob(&control, 3);
+      if (control.reason.load() == 0 && persistent && now - control.activity.load() >= limits.idle) FailJob(&control, 4);
     }
   }
   if (WaitForSingleObject(process.hProcess, 5000) != WAIT_OBJECT_0) TerminateJobObject(job.value, 0xE003); DWORD child_exit = 0; GetExitCodeProcess(process.hProcess, &child_exit); CloseHandle(process.hProcess);
@@ -474,7 +592,7 @@ int Run() {
   control.accepting = false; CancelSynchronousIo(controller.native_handle()); controller.join(); if (stdin_write) { CloseHandle(stdin_write); stdin_write = nullptr; }
   if (pseudo) { ClosePseudoConsole(pseudo); pseudo = nullptr; } out.join(); if (err.joinable()) err.join();
   const std::string evidence = std::string("SEC03_EVIDENCE profile=") + entry->scalar + " appcontainer=1 capabilities=0 job=1 lowIL=1" + (persistent ? " conpty=1 conptyMerged=1 executableLease=1" : is_e3 ? " executableLease=1" : "") + " childExit=" + std::to_string(child_exit) + "\n"; Output("stderr", reinterpret_cast<const unsigned char*>(evidence.data()), evidence.size());
-  bool clean = input_ok && accounting.ActiveProcesses == 0; for (auto& grant : grants) clean = AdvanceJournal(&grant, "job-zero") && clean; TestCrash("job-zero"); for (auto& grant : grants) clean = CleanupRoot(&grant, app_sid) && AdvanceJournal(&grant, "removed") && clean; const HRESULT profile_deleted = DeleteAppContainerProfile(profile_name.c_str()); if (profile_deleted != S_OK) clean = false; if (clean) for (const auto& grant : grants) DeleteJournals(grant); ::LocalFree(app_sid);
+  bool clean = input_ok && active_process_zero && accounting.ActiveProcesses == 0; for (auto& grant : grants) clean = AdvanceJournal(&grant, "job-zero") && clean; TestCrash("job-zero"); for (auto& grant : grants) clean = CleanupRoot(&grant, app_sid) && AdvanceJournal(&grant, "removed") && clean; const HRESULT profile_deleted = DeleteAppContainerProfile(profile_name.c_str()); if (profile_deleted != S_OK) clean = false; if (clean) for (const auto& grant : grants) DeleteJournals(grant); ::LocalFree(app_sid);
   if (attestation_key.available) {
     std::string root_identity_material, root_access_material, acl_profile_material, environment_names, environment_values;
     for (const auto& grant : grants) {
@@ -492,12 +610,12 @@ int Run() {
     const bool root_has_space = std::any_of(grants.begin(), grants.end(), [](const RootGrant& grant) { return grant.path.find(L' ') != std::wstring::npos; });
     const bool root_has_non_ascii = std::any_of(grants.begin(), grants.end(), [](const RootGrant& grant) { return std::any_of(grant.path.begin(), grant.path.end(), [](wchar_t c) { return c > 0x7f; }); });
     if (root_observation_ok) {
-      const std::string proof = std::string("v=1\nkind=execution-proof\nkeyId=") + attestation_key.key_id + "\ncandidate=" + candidate->scalar + "\nbuildIdSha256=" + build->scalar + "\nsourceSha256=" + source->scalar + "\nhostSha256=" + host->scalar + "\nlauncher=" + launcher->scalar + "\nexecution=" + execution->scalar + "\ncontext=" + context->scalar + "\nsession=" + session->scalar + "\nrun=" + run_id->scalar + "\nauthorityEpoch=" + authority->scalar + "\nprofile=" + profile->scalar + "\npayloadDigest=" + payload_digest->scalar + "\ntokenIsAppContainer=1\npackageSidSha256=" + package_sid_digest + "\ncapabilityCount=0\nlowIntegrity=1\njobConstrained=1\njobPolicySha256=" + job_digest + "\nactiveProcessZero=" + (accounting.ActiveProcesses == 0 ? "1" : "0") + "\nprocessStarts=" + std::to_string(accounting.TotalProcesses) + "\naclMutations=" + std::to_string(clean ? grants.size() * 2 : grants.size()) + "\nstdinWrites=" + std::to_string(control.stdin_writes.load()) + "\ninputDigestSetSha256=" + input_digest_set_digest + "\nconpty=" + (persistent ? "1" : "0") + "\nconptyMerged=" + (persistent ? "1" : "0") + "\nexecutableLease=" + ((is_e3 || persistent) ? "1" : "0") + "\nchildExit=" + std::to_string(child_exit) + "\ncompletionReason=" + ProofReason(control.reason.load(), clean) + "\naggregateOutputBytes=" + std::to_string(control.aggregate.load()) + "\ncleanupComplete=" + (clean ? "1" : "0") + "\nhandlesDrained=1\ntreeTerminated=" + (accounting.ActiveProcesses == 0 ? "1" : "0") + "\nrootIdentityDigest=" + root_digest + "\nrootAccessProfileSha256=" + access_digest + "\nrootFixedNtfs=1\nrootSameSystemVolume=" + (root_same_system_volume ? "1" : "0") + "\nrootHasSpace=" + (root_has_space ? "1" : "0") + "\nrootHasNonAscii=" + (root_has_non_ascii ? "1" : "0") + "\nenvironmentNameDigest=" + names_digest + "\nenvironmentValueDigest=" + values_digest + "\nambientLeakCount=0\nnetworkMode=deny\nnetworkAcceptedCount=0\naclProfileSha256=" + acl_profile_digest + "\ntranscriptSha256=" + transcript_digest + "\n";
+      const std::string proof = std::string("v=1\nkind=execution-proof\nkeyId=") + attestation_key.key_id + "\ncandidate=" + candidate->scalar + "\nbuildIdSha256=" + build->scalar + "\nsourceSha256=" + source->scalar + "\nhostSha256=" + host->scalar + "\nlauncher=" + launcher->scalar + "\nexecution=" + execution->scalar + "\ncontext=" + context->scalar + "\nsession=" + session->scalar + "\nrun=" + run_id->scalar + "\nauthorityEpoch=" + authority->scalar + "\nprofile=" + profile->scalar + "\npayloadDigest=" + payload_digest->scalar + "\ntokenIsAppContainer=1\npackageSidSha256=" + package_sid_digest + "\ncapabilityCount=0\nlowIntegrity=1\njobConstrained=1\njobPolicySha256=" + job_digest + "\nactiveProcessZero=" + (accounting.ActiveProcesses == 0 ? "1" : "0") + "\nprocessStarts=" + std::to_string(accounting.TotalProcesses) + "\nobservedProcessCount=" + std::to_string(observed_process_count) + "\nobservedDescendantCount=" + std::to_string(observed_descendant_count) + "\ndescendantValidationFailures=" + std::to_string(descendant_validation_failures) + "\naclMutations=" + std::to_string(clean ? grants.size() * 2 : grants.size()) + "\nstdinWrites=" + std::to_string(control.stdin_writes.load()) + "\ninputDigestSetSha256=" + input_digest_set_digest + "\nconpty=" + (persistent ? "1" : "0") + "\nconptyMerged=" + (persistent ? "1" : "0") + "\nexecutableLease=" + ((is_e3 || persistent) ? "1" : "0") + "\nsentinelHandleInheritable=1\nsentinelHandleListed=0\nsentinelHandleObserved=" + (sentinel_observed ? "1" : "0") + "\nsentinelProbeWin32=" + std::to_string(sentinel_probe_error) + "\nunlistedSentinelBlocked=" + (unlisted_sentinel_blocked ? "1" : "0") + "\nhostDupOpenWin32=" + std::to_string(handle_duplication.host_open_error) + "\njobHandleInheritable=" + ((job_handle_flags & HANDLE_FLAG_INHERIT) ? "1" : "0") + "\ncontrolHandleInheritable=" + ((control_flags & HANDLE_FLAG_INHERIT) ? "1" : "0") + "\njobHandleDuplicateWin32=" + std::to_string(handle_duplication.job_duplicate_error) + "\ncontrolHandleDuplicateWin32=" + std::to_string(handle_duplication.control_duplicate_error) + "\njobHandleDuplicateBlocked=" + (handle_duplication.job_blocked ? "1" : "0") + "\ncontrolHandleDuplicateBlocked=" + (handle_duplication.control_blocked ? "1" : "0") + "\npostAclRootDeleteOpenWin32=" + std::to_string(post_acl_root_delete_error) + "\npostAclCwdDeleteOpenWin32=" + std::to_string(post_acl_cwd_delete_error) + "\npostAclReplacementBlocked=" + (post_acl_replacement_blocked ? "1" : "0") + "\nprocessCreatedSuspended=" + (created ? "1" : "0") + "\npostCreateRootDeleteOpenWin32=" + std::to_string(post_create_root_delete_error) + "\npostCreateCwdDeleteOpenWin32=" + std::to_string(post_create_cwd_delete_error) + "\npostCreateReplacementBlocked=" + (post_create_replacement_blocked ? "1" : "0") + "\npreResumePathIdentityMatch=" + (pre_resume_path_identity_match ? "1" : "0") + "\nresumeAfterRecheck=1\nchildExit=" + std::to_string(child_exit) + "\ncompletionReason=" + ProofReason(control.reason.load(), clean) + "\naggregateOutputBytes=" + std::to_string(control.aggregate.load()) + "\ncleanupComplete=" + (clean ? "1" : "0") + "\nhandlesDrained=1\ntreeTerminated=" + (accounting.ActiveProcesses == 0 ? "1" : "0") + "\nrootIdentityDigest=" + root_digest + "\nrootAccessProfileSha256=" + access_digest + "\nrootFixedNtfs=1\nrootSameSystemVolume=" + (root_same_system_volume ? "1" : "0") + "\nrootHasSpace=" + (root_has_space ? "1" : "0") + "\nrootHasNonAscii=" + (root_has_non_ascii ? "1" : "0") + "\nenvironmentNameDigest=" + names_digest + "\nenvironmentValueDigest=" + values_digest + "\nambientLeakCount=0\nnetworkMode=deny\nnetworkAcceptedCount=0\naclProfileSha256=" + acl_profile_digest + "\ntranscriptSha256=" + transcript_digest + "\n";
       EmitNativeProof(attestation_key, proof);
     }
   }
   if (!clean) { Failure("EXEC_SANDBOX_LAUNCH_FAILED:cleanup"); return 75; }
-  switch (control.reason.load()) { case 1: Failure("EXEC_PROTOCOL_INVALID:control"); return 71; case 2: return 83; case 3: return 80; case 4: return 81; case 5: return 82; case 6: return 84; case 7: return 85; case 8: return 86; case 9: return 87; default: return 0; }
+  switch (control.reason.load()) { case 1: Failure("EXEC_PROTOCOL_INVALID:control"); return 71; case 2: return 83; case 3: return 80; case 4: return 81; case 5: return 82; case 6: return 84; case 7: return 85; case 8: return 86; case 9: return 87; case 10: return 88; case 11: return 89; case 12: return 90; default: return 0; }
 }
 }  // namespace
 

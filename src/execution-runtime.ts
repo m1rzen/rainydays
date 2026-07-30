@@ -17,9 +17,12 @@ import {
   bindNativeRootAuthority,
   createProductionNativeExecutionBridge,
   type NativeArtifactIdentity,
+  type NativeExecutionProof,
+  type NativeServiceDenialRequest,
 } from "./execution-native.js";
 import { consumeExecutionRootLease, type ExecutionRootLease } from "./path-policy.js";
 import { assertResourceOwner, type ResourceOwner } from "./resource-owner.js";
+import type { ManualConsentEvidenceBinding, ManualConsentOperation } from "./manual-execution-consent.js";
 
 export interface IsolatedTerminalLease { readonly leaseId: string }
 
@@ -90,16 +93,16 @@ const PROFILE_LIMITS: Readonly<Record<"E1" | "E2" | "E3" | "E4", ExecutionLimits
     inputBytes: 128 * 2 ** 10,
   }),
   E4: Object.freeze({
-    activeProcesses: 16,
-    processMemoryBytes: 512 * 2 ** 20,
-    jobMemoryBytes: 2 ** 30,
-    cpuRatePercent: 25,
-    jobUserTimeMs: 600_000,
-    wallTimeMs: 14_400_000,
+    activeProcesses: 64,
+    processMemoryBytes: 2 ** 30,
+    jobMemoryBytes: 2 * 2 ** 30,
+    cpuRatePercent: 50,
+    jobUserTimeMs: 3_600_000,
+    wallTimeMs: 28_800_000,
     idleTimeMs: 1_800_000,
-    aggregateOutputBytes: 10 * 2 ** 20,
+    aggregateOutputBytes: 64 * 2 ** 20,
     retainedOutputBytes: 2 ** 20,
-    inputBytes: 256 * 2 ** 10,
+    inputBytes: 64 * 2 ** 10,
   }),
 });
 
@@ -127,23 +130,36 @@ async function loadNativeIdentity(): Promise<NativeArtifactIdentity> {
       readFile(buildInfoPath, "utf8").then(value => JSON.parse(value)),
     ]);
   } catch {
-    throw new ExecutionDeniedError("EXEC_NATIVE_FAILED", "SEC-03 native/build identity is unavailable");
+    throw new ExecutionDeniedError("EXEC_NATIVE_IDENTITY_INVALID", "SEC-03 native/build identity is unavailable");
   }
-  if (!manifest || typeof manifest !== "object" || !buildInfo || typeof buildInfo !== "object") throw new ExecutionDeniedError("EXEC_NATIVE_FAILED", "SEC-03 native/build identity is invalid");
+  if (!manifest || typeof manifest !== "object" || !buildInfo || typeof buildInfo !== "object") throw new ExecutionDeniedError("EXEC_NATIVE_IDENTITY_INVALID", "SEC-03 native/build identity is invalid");
   const value = manifest as Record<string, unknown>;
   const build = buildInfo as Record<string, unknown>;
   const outputs = Array.isArray(value.outputs) ? value.outputs as Array<Record<string, unknown>> : [];
-  const host = outputs.find(entry => entry.path === "dist/native/sandbox-host.exe");
-  const launcher = outputs.find(entry => entry.path === "dist/native/sandbox-launcher.node");
+  const versions = build.versions && typeof build.versions === "object" ? build.versions as Record<string, unknown> : {};
+  const execution = versions.executionIsolation && typeof versions.executionIsolation === "object" ? versions.executionIsolation as Record<string, unknown> : {};
+  const artifacts = Array.isArray(execution.artifacts) ? execution.artifacts as Array<Record<string, unknown>> : [];
+  const expectedPaths = ["dist/native/sandbox-host.exe", "dist/native/sandbox-launcher.node"];
+  const host = outputs[0];
+  const launcher = outputs[1];
+  const artifactIdentityMatches = outputs.length === expectedPaths.length && artifacts.length === expectedPaths.length
+    && outputs.every((entry, index) => entry.path === expectedPaths[index]
+      && artifacts[index]?.path === entry.path
+      && artifacts[index]?.bytes === entry.bytes
+      && artifacts[index]?.sha256 === entry.sha256
+      && artifacts[index]?.machine === entry.machine);
   if (value.schemaVersion !== 1 || value.architecture !== "x64" || value.signatureStatus !== "unsigned-local"
     || !HASH.test(String(value.sourceDigest ?? "")) || !HASH.test(String(value.toolchainDigest ?? ""))
     || build.schemaVersion !== 1 || build.product !== "Mini-Lux" || !HASH.test(String(build.candidateId ?? ""))
     || !HASH.test(String(build.sourceDigest ?? "")) || typeof build.buildId !== "string" || build.buildId.length < 1 || build.buildId.length > 128
+    || execution.architectureSha256 !== ARCHITECTURE_SHA256 || execution.protocolVersion !== 1
+    || execution.nativeSourceDigest !== value.sourceDigest || execution.toolchainDigest !== value.toolchainDigest
+    || execution.signatureStatus !== value.signatureStatus || !artifactIdentityMatches
     || !host || !launcher || host.machine !== "AMD64" || launcher.machine !== "AMD64"
     || !HASH.test(String(host.sha256 ?? "")) || !HASH.test(String(launcher.sha256 ?? ""))
     || !Number.isSafeInteger(host.bytes) || Number(host.bytes) < 1
     || !Number.isSafeInteger(launcher.bytes) || Number(launcher.bytes) < 1) {
-    throw new ExecutionDeniedError("EXEC_NATIVE_FAILED", "SEC-03 native artifact identity is invalid");
+    throw new ExecutionDeniedError("EXEC_NATIVE_IDENTITY_INVALID", "SEC-03 native artifact identity is invalid");
   }
   return Object.freeze({
     candidateId: String(build.candidateId),
@@ -156,6 +172,44 @@ async function loadNativeIdentity(): Promise<NativeArtifactIdentity> {
     machine: "x64",
     protocolVersion: 1,
   });
+}
+
+const manualConsentStates = new Set([
+  "consent-denied", "consent-dismissed", "consent-expired", "consent-argument-mismatch", "consent-replayed",
+  "consent-synthetic", "consent-cross-window", "consent-cross-session", "consent-concurrent-reuse",
+]);
+
+export function manualConsentEvidenceBinding(
+  context: CapabilityContext,
+  operation: ManualConsentOperation
+): ManualConsentEvidenceBinding {
+  if (!context || context.principal !== "local-user-api"
+    || (operation !== "terminal-start" && operation !== "terminal-input")) {
+    throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Manual consent evidence binding is invalid");
+  }
+  return Object.freeze({
+    contextId: context.executionDomainId,
+    sessionId: context.sessionId,
+    runId: context.runId,
+    authorityEpoch: context.authorityEpoch,
+    personaDigest: context.persona.digest,
+    policyDigest: sha256Json({ architecture: ARCHITECTURE_SHA256, operation }),
+  });
+}
+
+export async function observeManualConsentDenial(request: NativeServiceDenialRequest): Promise<NativeExecutionProof> {
+  if (!request || request.entryPoint !== "E4" || request.profile !== "manual-terminal" || request.operation !== "consent"
+    || !manualConsentStates.has(request.decisionState)) {
+    throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Manual consent evidence request is invalid");
+  }
+  const bridge = createProductionNativeExecutionBridge(await loadNativeIdentity());
+  try {
+    await bridge.initialize?.();
+    if (!bridge.observeServiceDenial) throw new ExecutionDeniedError("EXEC_NATIVE_FAILED", "Manual consent evidence is unavailable");
+    return await bridge.observeServiceDenial(request);
+  } finally {
+    await bridge.shutdown();
+  }
 }
 
 async function executionService(): Promise<ExecutionIsolationService> {
@@ -261,7 +315,7 @@ export function createScopedExecutionGateway(input: Readonly<{
     const root = consumeNativeRoot(rootLease, context.authorityEpoch);
     try {
       if (!context.allowedRoots.includes(root.rootId) || !ownerMetadata.rootIds.includes(root.rootId)) {
-        throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Execution root is outside the current authority");
+        throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Execution root differs from the approved invocation");
       }
       const payload = Buffer.from(payloadText, "utf8");
     const limits = PROFILE_LIMITS[entryPoint];
@@ -285,7 +339,7 @@ export function createScopedExecutionGateway(input: Readonly<{
       expiresAtMs: Date.now() + 5_000,
     };
       const service = await executionService();
-      return await service.launchOneShot(service.issueExecutionGrant(request), owner);
+      return await service.launchOneShot(await service.issueExecutionGrantAuthenticated(request), owner, request);
     } finally {
       root.revoke();
     }
@@ -299,11 +353,11 @@ export function createScopedExecutionGateway(input: Readonly<{
     const root = consumeNativeRoot(rootLease, context.authorityEpoch);
     try {
       if (!/^term_[a-f0-9]{8}$/u.test(terminalId) || !context.allowedRoots.includes(root.rootId) || !ownerMetadata.rootIds.includes(root.rootId)) {
-        throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Persistent execution root or terminal is invalid");
+        throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Persistent execution root or terminal differs from the approved invocation");
       }
       const approvedShell = inspected.args.shell === undefined ? "cmd" : inspected.args.shell;
       if (shell !== approvedShell || (shell !== "cmd" && shell !== "powershell")) {
-        throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Shell differs from the approved invocation");
+        throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Shell differs from the approved invocation");
       }
       const limits = PROFILE_LIMITS.E2;
       const request: ExecutionGrantRequest = {
@@ -325,7 +379,7 @@ export function createScopedExecutionGateway(input: Readonly<{
         expiresAtMs: Date.now() + 5_000,
       };
       service = await executionService();
-      nativeLease = await service.launchPersistent(service.issueExecutionGrant(request), owner);
+      nativeLease = await service.launchPersistent(await service.issueExecutionGrantAuthenticated(request), owner, request);
     } finally {
       root.revoke();
     }
@@ -336,13 +390,13 @@ export function createScopedExecutionGateway(input: Readonly<{
   return Object.freeze({
     executeCommand: async ({ command, rootLease }: Readonly<{ command: string; rootLease: ExecutionRootLease }>) => {
       if (inspected.name !== "execute_command" || command !== inspected.args.command) {
-        throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Command differs from the approved invocation");
+        throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Command differs from the approved invocation");
       }
       return launch("E1", exactString(command, 128 * 2 ** 10, "Command"), rootLease);
     },
     executeScript: async ({ code, rootLease }: Readonly<{ code: string; rootLease: ExecutionRootLease }>) => {
       if (inspected.name !== "script" || code !== inspected.args.code) {
-        throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Script differs from the approved invocation");
+        throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Script differs from the approved invocation");
       }
       return launch("E3", exactString(code, 128 * 2 ** 10, "Script"), rootLease);
     },
@@ -361,7 +415,7 @@ export function createScopedExecutionGateway(input: Readonly<{
         throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Persistent input differs from the approved invocation or session");
       }
       const payload = Buffer.from(exactString(data, 64 * 2 ** 10, "Terminal input"), "utf8");
-      const inputGrant = record.service.issueInputGrant({
+      const inputRequest = {
         lease: record.nativeLease,
         resourceOwner: owner,
         contextId: context.executionDomainId,
@@ -372,8 +426,9 @@ export function createScopedExecutionGateway(input: Readonly<{
         payload,
         appendNewline,
         expiresAtMs: Date.now() + 5_000,
-      });
-      await record.service.write(record.nativeLease, inputGrant, owner);
+      };
+      const inputGrant = record.service.issueInputGrant(inputRequest);
+      await record.service.write(record.nativeLease, inputGrant, owner, inputRequest);
     },
   });
 }
@@ -423,7 +478,7 @@ export function createManualExecutionGateway(input: Readonly<{
         expiresAtMs: Date.now() + 5_000,
       };
         service = await executionService();
-        nativeLease = await service.launchPersistent(service.issueExecutionGrant(request), owner);
+        nativeLease = await service.launchPersistent(await service.issueExecutionGrantAuthenticated(request), owner, request);
       } finally {
         root.revoke();
       }
@@ -442,8 +497,8 @@ export function createManualExecutionGateway(input: Readonly<{
         || (exactRequest.appendNewline === false ? false : true) !== appendNewline) {
         throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Manual input differs from the approved request or session");
       }
-      const payload = Buffer.from(exactString(data, 256 * 2 ** 10, "Terminal input"), "utf8");
-      const grant = record.service.issueInputGrant({
+      const payload = Buffer.from(exactString(data, 64 * 2 ** 10, "Terminal input"), "utf8");
+      const inputRequest = {
         lease: record.nativeLease,
         resourceOwner: owner,
         contextId: context.executionDomainId,
@@ -454,8 +509,9 @@ export function createManualExecutionGateway(input: Readonly<{
         payload,
         appendNewline,
         expiresAtMs: Date.now() + 5_000,
-      });
-      await record.service.write(record.nativeLease, grant, owner);
+      };
+      const grant = record.service.issueInputGrant(inputRequest);
+      await record.service.write(record.nativeLease, grant, owner, inputRequest);
     },
   });
 }

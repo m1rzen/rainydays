@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { assertResourceOwner, registerOwnedResource, type ResourceOwner } from "./resource-owner.js";
-import type { NativeExecutionBridge, NativeExecutionHandle } from "./execution-native.js";
+import { NativeBridgeError, type NativeExecutionBridge, type NativeExecutionHandle, type NativeExecutionProof, type NativeServiceDenialRequest, type NativeServiceDenialState } from "./execution-native.js";
 
 export type ExecutionEntryPoint = "E1" | "E2" | "E3" | "E4";
 export type ExecutionProfile = "one-shot-shell" | "agent-shell" | "script" | "manual-terminal";
@@ -54,6 +54,26 @@ export interface ExecutionGrant { readonly grantId: string }
 export interface InputGrant { readonly grantId: string }
 export interface SessionLease { readonly leaseId: string; readonly sessionId: string }
 
+export interface ExecutionGrantInvocation extends ExecutionAuthoritySnapshot {
+  readonly entryPoint: ExecutionEntryPoint;
+  readonly profile: ExecutionProfile;
+  readonly payload: Uint8Array;
+  readonly roots: readonly ExecutionRootLeaseSnapshot[];
+  readonly environment: Readonly<Record<string, string>>;
+  readonly network: ExecutionNetworkPolicy;
+  readonly limits: ExecutionLimits;
+}
+
+export interface InputGrantInvocation {
+  readonly contextId: string;
+  readonly sessionId: string;
+  readonly runId: string;
+  readonly principal: string;
+  readonly authorityEpoch: number;
+  readonly payload: Uint8Array;
+  readonly appendNewline: boolean;
+}
+
 export interface ExecutionResult {
   readonly executionId: string;
   readonly exitCode: number | null;
@@ -72,23 +92,31 @@ export interface SessionOutput {
 
 export type ExecutionDenialCode =
   | "EXEC_SERVICE_SHUTDOWN"
+  | "EXEC_GRANT_REQUIRED"
   | "EXEC_GRANT_FORGED"
+  | "EXEC_GRANT_ARGUMENT_MISMATCH"
   | "EXEC_GRANT_REPLAYED"
   | "EXEC_GRANT_EXPIRED"
+  | "EXEC_GRANT_CROSS_RUN"
+  | "EXEC_GRANT_CROSS_SESSION"
+  | "EXEC_GRANT_CONCURRENT_REUSE"
   | "EXEC_BINDING_MISMATCH"
   | "EXEC_PROFILE_INVALID"
   | "EXEC_REQUEST_INVALID"
   | "EXEC_SESSION_STALE"
   | "EXEC_OUTPUT_LIMIT"
   | "EXEC_NETWORK_PROFILE_UNSUPPORTED"
+  | "EXEC_NATIVE_IDENTITY_INVALID"
   | "EXEC_NATIVE_FAILED";
 
 export class ExecutionDeniedError extends Error {
   readonly code: ExecutionDenialCode;
-  constructor(code: ExecutionDenialCode, message: string) {
+  readonly nativeObservation: NativeExecutionProof | null;
+  constructor(code: ExecutionDenialCode, message: string, nativeObservation: NativeExecutionProof | null = null) {
     super(message);
     this.name = "ExecutionDeniedError";
     this.code = code;
+    this.nativeObservation = nativeObservation;
   }
 }
 
@@ -102,7 +130,7 @@ interface GrantRecord {
   readonly environment: Readonly<Record<string, string>>;
   readonly network: ExecutionNetworkPolicy;
   readonly limits: ExecutionLimits;
-  state: "fresh" | "consumed";
+  state: "fresh" | "consuming" | "consumed";
 }
 
 interface InputRecord {
@@ -118,7 +146,7 @@ interface InputRecord {
   readonly payloadDigest: string;
   readonly appendNewline: boolean;
   readonly expiresAtMs: number;
-  state: "fresh" | "consumed";
+  state: "fresh" | "consuming" | "consumed";
 }
 
 interface OutputRecord {
@@ -132,7 +160,7 @@ interface OutputRecord {
 interface SessionRecord {
   readonly token: SessionLease;
   readonly owner: ResourceOwner;
-  readonly authority: Pick<GrantRecord["request"], "contextId" | "sessionId" | "runId" | "principal" | "authorityEpoch">;
+  readonly authority: Pick<GrantRecord["request"], "contextId" | "sessionId" | "runId" | "principal" | "authorityEpoch" | "personaDigest" | "policyDigest">;
   readonly limits: ExecutionLimits;
   readonly entryPoint: "E2" | "E4";
   readonly native: NativeExecutionHandle;
@@ -160,14 +188,62 @@ const PROFILE_MAX: Readonly<Record<ExecutionEntryPoint, ExecutionLimits>> = Obje
   E1: Object.freeze({ activeProcesses: 16, processMemoryBytes: 512 * 2 ** 20, jobMemoryBytes: 2 ** 30, cpuRatePercent: 50, jobUserTimeMs: 30_000, wallTimeMs: 30_000, idleTimeMs: null, aggregateOutputBytes: 1 * 2 ** 20, retainedOutputBytes: 1 * 2 ** 20, inputBytes: 128 * 2 ** 10 }),
   E2: Object.freeze({ activeProcesses: 32, processMemoryBytes: 512 * 2 ** 20, jobMemoryBytes: 2 ** 30, cpuRatePercent: 25, jobUserTimeMs: 600_000, wallTimeMs: 1_800_000, idleTimeMs: 300_000, aggregateOutputBytes: 10 * 2 ** 20, retainedOutputBytes: 2 ** 20, inputBytes: 64 * 2 ** 10 }),
   E3: Object.freeze({ activeProcesses: 1, processMemoryBytes: 256 * 2 ** 20, jobMemoryBytes: 256 * 2 ** 20, cpuRatePercent: 20, jobUserTimeMs: 10_000, wallTimeMs: 10_000, idleTimeMs: null, aggregateOutputBytes: 1 * 2 ** 20, retainedOutputBytes: 1 * 2 ** 20, inputBytes: 128 * 2 ** 10 }),
-  E4: Object.freeze({ activeProcesses: 16, processMemoryBytes: 512 * 2 ** 20, jobMemoryBytes: 2 ** 30, cpuRatePercent: 25, jobUserTimeMs: 600_000, wallTimeMs: 14_400_000, idleTimeMs: 1_800_000, aggregateOutputBytes: 10 * 2 ** 20, retainedOutputBytes: 2 ** 20, inputBytes: 256 * 2 ** 10 }),
+  E4: Object.freeze({ activeProcesses: 64, processMemoryBytes: 2 ** 30, jobMemoryBytes: 2 * 2 ** 30, cpuRatePercent: 50, jobUserTimeMs: 3_600_000, wallTimeMs: 28_800_000, idleTimeMs: 1_800_000, aggregateOutputBytes: 64 * 2 ** 20, retainedOutputBytes: 2 ** 20, inputBytes: 64 * 2 ** 10 }),
 });
 
 function deny(code: ExecutionDenialCode, message: string): never { throw new ExecutionDeniedError(code, message); }
+function nativeFailure(error: unknown, message: string): ExecutionDeniedError {
+  const code = error instanceof NativeBridgeError ? error.code : error && typeof error === "object" && "code" in error ? (error as { code?: unknown }).code : null;
+  return code === "EXEC_NATIVE_IDENTITY_INVALID"
+    ? new ExecutionDeniedError("EXEC_NATIVE_IDENTITY_INVALID", "Native artifact identity is invalid")
+    : new ExecutionDeniedError("EXEC_NATIVE_FAILED", message);
+}
 function digest(bytes: Uint8Array): string { return createHash("sha256").update(bytes).digest("hex"); }
+function canonicalDigest(value: unknown): string {
+  const canonicalize = (input: unknown): unknown => {
+    if (Array.isArray(input)) return input.map(canonicalize);
+    if (input && typeof input === "object") return Object.fromEntries(Object.keys(input as Record<string, unknown>).sort().map(key => [key, canonicalize((input as Record<string, unknown>)[key])]));
+    return input;
+  };
+  return createHash("sha256").update(JSON.stringify(canonicalize(value))).digest("hex");
+}
+const stateByCode = {
+  EXEC_GRANT_REQUIRED: "missing",
+  EXEC_GRANT_FORGED: "forged",
+  EXEC_GRANT_ARGUMENT_MISMATCH: "argument-mismatch",
+  EXEC_GRANT_EXPIRED: "expired",
+  EXEC_GRANT_REPLAYED: "replayed",
+  EXEC_GRANT_CROSS_RUN: "cross-run",
+  EXEC_GRANT_CROSS_SESSION: "cross-session",
+  EXEC_GRANT_CONCURRENT_REUSE: "concurrent-reuse",
+  EXEC_NETWORK_PROFILE_UNSUPPORTED: "network-profile-unsupported",
+} as const satisfies Partial<Record<ExecutionDenialCode, NativeServiceDenialState>>;
+function serviceDenialState(code: ExecutionDenialCode): NativeServiceDenialState | null {
+  return stateByCode[code as keyof typeof stateByCode] ?? null;
+}
 function validId(value: string): boolean { return typeof value === "string" && ID.test(value); }
 function freezeRecord(value: Readonly<Record<string, string>>): Readonly<Record<string, string>> {
   return Object.freeze(Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b))));
+}
+
+function sameFlatRecord(left: unknown, right: unknown): boolean {
+  if (!left || !right || typeof left !== "object" || typeof right !== "object") return false;
+  const leftRecord = left as Readonly<Record<string, unknown>>;
+  const rightRecord = right as Readonly<Record<string, unknown>>;
+  const leftKeys = Object.keys(leftRecord).sort();
+  const rightKeys = Object.keys(rightRecord).sort();
+  return leftKeys.length === rightKeys.length
+    && leftKeys.every((key, index) => key === rightKeys[index] && Object.is(leftRecord[key], rightRecord[key]));
+}
+
+function sameRoots(expected: readonly ExecutionRootLeaseSnapshot[], actual: unknown): boolean {
+  if (!Array.isArray(actual) || expected.length !== actual.length) return false;
+  const sorted = [...actual].sort((left, right) => String(left?.rootId ?? "").localeCompare(String(right?.rootId ?? "")));
+  return expected.every((root, index) => {
+    const candidate = sorted[index] as ExecutionRootLeaseSnapshot | undefined;
+    return candidate?.rootId === root.rootId && candidate.access === root.access
+      && sameFlatRecord(root.identity, candidate.identity);
+  });
 }
 
 function validateLimits(entry: ExecutionEntryPoint, limits: ExecutionLimits): ExecutionLimits {
@@ -271,12 +347,29 @@ export class ExecutionIsolationService {
     return token;
   }
 
-  async launchOneShot(grant: ExecutionGrant, owner: ResourceOwner): Promise<ExecutionResult> {
-    const record = this.#consumeGrant(grant, owner, new Set<ExecutionEntryPoint>(["E1", "E3"]));
+  async issueExecutionGrantAuthenticated(input: ExecutionGrantRequest): Promise<ExecutionGrant> {
+    try {
+      return this.issueExecutionGrant(input);
+    } catch (error) {
+      if (error instanceof ExecutionDeniedError && error.code === "EXEC_NETWORK_PROFILE_UNSUPPORTED") {
+        throw await this.#observeLaunchDenial(error, input, undefined);
+      }
+      throw error;
+    }
+  }
+
+  async launchOneShot(
+    grant: ExecutionGrant | null | undefined,
+    owner: ResourceOwner,
+    invocation: ExecutionGrantInvocation
+  ): Promise<ExecutionResult> {
     const output = newOutput();
+    let record: GrantRecord | null = null;
     let handle: NativeExecutionHandle | null = null;
     let unregister: () => void = () => undefined;
     try {
+      record = this.#beginGrantConsumption(grant);
+      this.#validateGrantInvocation(record, owner, invocation, new Set<ExecutionEntryPoint>(["E1", "E3"]));
       handle = await this.#launchNative(record, output);
       this.#activeHandles.add(handle);
       unregister = registerOwnedResource(owner, () => handle!.terminate("owner-retired"));
@@ -295,19 +388,25 @@ export class ExecutionIsolationService {
         await handle.terminate("launch-failed").catch(() => undefined);
         await handle.completed.catch(() => undefined);
       }
-      if (error instanceof ExecutionDeniedError) throw error;
-      throw new ExecutionDeniedError("EXEC_NATIVE_FAILED", "Native execution failed closed");
+      if (error instanceof ExecutionDeniedError) throw await this.#observeLaunchDenial(error, invocation, grant);
+      throw nativeFailure(error, "Native execution failed closed");
     } finally {
+      if (record) record.state = "consumed";
       unregister();
       if (handle) this.#activeHandles.delete(handle);
     }
   }
 
-  async launchPersistent(grant: ExecutionGrant, owner: ResourceOwner): Promise<SessionLease> {
-    const record = this.#consumeGrant(grant, owner, new Set<ExecutionEntryPoint>(["E2", "E4"]));
+  async launchPersistent(
+    grant: ExecutionGrant | null | undefined,
+    owner: ResourceOwner,
+    invocation: ExecutionGrantInvocation
+  ): Promise<SessionLease> {
+    const record = this.#beginGrantConsumption(grant);
     const output = newOutput();
     let handle: NativeExecutionHandle | null = null;
     try {
+      this.#validateGrantInvocation(record, owner, invocation, new Set<ExecutionEntryPoint>(["E2", "E4"]));
       handle = await this.#launchNative(record, output);
       this.#activeHandles.add(handle);
       const token = Object.freeze({ leaseId: randomUUID(), sessionId: record.request.sessionId });
@@ -317,7 +416,8 @@ export class ExecutionIsolationService {
         authority: Object.freeze({
           contextId: record.request.contextId, sessionId: record.request.sessionId,
           runId: record.request.runId, principal: record.request.principal,
-          authorityEpoch: record.request.authorityEpoch,
+          authorityEpoch: record.request.authorityEpoch, personaDigest: record.request.personaDigest,
+          policyDigest: record.request.policyDigest,
         }),
         limits: record.limits,
         entryPoint: record.request.entryPoint as "E2" | "E4",
@@ -341,7 +441,9 @@ export class ExecutionIsolationService {
         this.#activeHandles.delete(handle);
       }
       if (error instanceof ExecutionDeniedError) throw error;
-      throw new ExecutionDeniedError("EXEC_NATIVE_FAILED", "Native persistent execution failed closed");
+      throw nativeFailure(error, "Native persistent execution failed closed");
+    } finally {
+      record.state = "consumed";
     }
   }
 
@@ -361,10 +463,10 @@ export class ExecutionIsolationService {
     const session = this.#requireSession(input.lease, input.resourceOwner);
     if (session.state !== "running") deny("EXEC_SESSION_STALE", "Execution session is stale");
     const authority = session.authority;
-    const runBound = session.entryPoint === "E4" ? validId(input.runId) : input.runId === authority.runId;
-    if (![input.contextId, input.runId].every(validId)
-      || input.contextId !== authority.contextId || !runBound
-      || input.sessionId !== authority.sessionId || input.principal !== authority.principal
+    if (![input.contextId, input.runId].every(validId)) deny("EXEC_BINDING_MISMATCH", "Input authority is invalid");
+    if (input.sessionId !== authority.sessionId) deny("EXEC_GRANT_CROSS_SESSION", "Input authority crossed sessions");
+    if (session.entryPoint === "E2" && input.runId !== authority.runId) deny("EXEC_GRANT_CROSS_RUN", "Input authority crossed runs");
+    if (input.contextId !== authority.contextId || input.principal !== authority.principal
       || input.authorityEpoch !== authority.authorityEpoch) {
       deny("EXEC_BINDING_MISMATCH", "Input authority differs from the persistent launch authority");
     }
@@ -382,25 +484,46 @@ export class ExecutionIsolationService {
     return token;
   }
 
-  async write(lease: SessionLease, grant: InputGrant, owner: ResourceOwner): Promise<void> {
-    if (this.#shutdown) deny("EXEC_SERVICE_SHUTDOWN", "Execution service is shut down");
-    const session = this.#requireSession(lease, owner);
-    const record = this.#inputGrants.get(grant);
-    if (!record || record.token !== grant) deny("EXEC_GRANT_FORGED", "Input grant is forged");
-    if (record.state !== "fresh") deny("EXEC_GRANT_REPLAYED", "Input grant was already consumed");
-    record.state = "consumed";
-    if (record.expiresAtMs <= this.#now()) deny("EXEC_GRANT_EXPIRED", "Input grant expired");
-    if (record.lease !== lease || record.owner !== owner || session.state !== "running"
-      || record.contextId !== session.authority.contextId || (session.entryPoint === "E2" && record.runId !== session.authority.runId)
-      || record.sessionId !== session.authority.sessionId || record.principal !== session.authority.principal
-      || record.authorityEpoch !== session.authority.authorityEpoch) {
-      deny("EXEC_BINDING_MISMATCH", "Input grant binding mismatch");
-    }
+  async write(
+    lease: SessionLease,
+    grant: InputGrant | null | undefined,
+    owner: ResourceOwner,
+    invocation: InputGrantInvocation
+  ): Promise<void> {
+    let record: InputRecord | null = null;
     try {
-      await session.native.write(Object.freeze({ bytes: Buffer.from(record.payload), digest: record.payloadDigest, appendNewline: record.appendNewline }));
-    } catch {
-      await this.#terminateSession(session, "input-failed").catch(() => undefined);
-      throw new ExecutionDeniedError("EXEC_NATIVE_FAILED", "Native input failed closed");
+      if (this.#shutdown) deny("EXEC_SERVICE_SHUTDOWN", "Execution service is shut down");
+      record = this.#beginInputGrantConsumption(grant);
+      if (record.expiresAtMs <= this.#now()) deny("EXEC_GRANT_EXPIRED", "Input grant expired");
+      if (!invocation || typeof invocation !== "object") deny("EXEC_BINDING_MISMATCH", "Input invocation context is missing");
+      if (record.sessionId !== invocation.sessionId) deny("EXEC_GRANT_CROSS_SESSION", "Input grant crossed sessions");
+      if (record.runId !== invocation.runId) deny("EXEC_GRANT_CROSS_RUN", "Input grant crossed runs");
+      if (!(invocation.payload instanceof Uint8Array) || !record.payload.equals(invocation.payload)
+        || record.appendNewline !== invocation.appendNewline) {
+        deny("EXEC_GRANT_ARGUMENT_MISMATCH", "Input differs from the approved grant");
+      }
+      if (record.lease !== lease || record.owner !== owner || record.contextId !== invocation.contextId
+        || record.principal !== invocation.principal || record.authorityEpoch !== invocation.authorityEpoch) {
+        deny("EXEC_BINDING_MISMATCH", "Input grant binding mismatch");
+      }
+      const session = this.#requireSession(lease, owner);
+      if (record.contextId !== session.authority.contextId
+        || (session.entryPoint === "E2" && record.runId !== session.authority.runId)
+        || record.sessionId !== session.authority.sessionId || record.principal !== session.authority.principal
+        || record.authorityEpoch !== session.authority.authorityEpoch) {
+        deny("EXEC_BINDING_MISMATCH", "Input grant binding mismatch");
+      }
+      try {
+        await session.native.write(Object.freeze({ bytes: Buffer.from(record.payload), digest: record.payloadDigest, appendNewline: record.appendNewline }));
+      } catch (error) {
+        await this.#terminateSession(session, "input-failed").catch(() => undefined);
+        throw nativeFailure(error, "Native input failed closed");
+      }
+    } catch (error) {
+      if (error instanceof ExecutionDeniedError) throw await this.#observeInputDenial(error, lease, owner, invocation);
+      throw error;
+    } finally {
+      if (record) record.state = "consumed";
     }
   }
 
@@ -435,16 +558,165 @@ export class ExecutionIsolationService {
     return this.#shutdownPromise;
   }
 
-  #consumeGrant(grant: ExecutionGrant, owner: ResourceOwner, allowed: ReadonlySet<ExecutionEntryPoint>): GrantRecord {
+  #beginGrantConsumption(grant: ExecutionGrant | null | undefined): GrantRecord {
     if (this.#shutdown) deny("EXEC_SERVICE_SHUTDOWN", "Execution service is shut down");
+    if (grant === null || grant === undefined) deny("EXEC_GRANT_REQUIRED", "Execution grant is required");
     const record = this.#grants.get(grant);
     if (!record || record.token !== grant) deny("EXEC_GRANT_FORGED", "Execution grant is forged");
-    if (record.state !== "fresh") deny("EXEC_GRANT_REPLAYED", "Execution grant was already consumed");
-    record.state = "consumed";
-    assertOwner(record.owner, owner);
-    if (record.request.expiresAtMs <= this.#now()) deny("EXEC_GRANT_EXPIRED", "Execution grant expired");
-    if (!allowed.has(record.request.entryPoint)) deny("EXEC_PROFILE_INVALID", "Execution grant has the wrong lifetime profile");
+    if (record.state === "consuming") deny("EXEC_GRANT_CONCURRENT_REUSE", "Execution grant is already being consumed");
+    if (record.state === "consumed") deny("EXEC_GRANT_REPLAYED", "Execution grant was already consumed");
+    record.state = "consuming";
     return record;
+  }
+
+  #beginInputGrantConsumption(grant: InputGrant | null | undefined): InputRecord {
+    if (grant === null || grant === undefined) deny("EXEC_GRANT_REQUIRED", "Input grant is required");
+    const record = this.#inputGrants.get(grant);
+    if (!record || record.token !== grant) deny("EXEC_GRANT_FORGED", "Input grant is forged");
+    if (record.state === "consuming") deny("EXEC_GRANT_CONCURRENT_REUSE", "Input grant is already being consumed");
+    if (record.state === "consumed") deny("EXEC_GRANT_REPLAYED", "Input grant was already consumed");
+    record.state = "consuming";
+    return record;
+  }
+
+  #validateGrantInvocation(
+    record: GrantRecord,
+    owner: ResourceOwner,
+    invocation: ExecutionGrantInvocation,
+    allowed: ReadonlySet<ExecutionEntryPoint>
+  ): void {
+    if (record.request.expiresAtMs <= this.#now()) deny("EXEC_GRANT_EXPIRED", "Execution grant expired");
+    if (!invocation || typeof invocation !== "object") deny("EXEC_BINDING_MISMATCH", "Execution invocation context is missing");
+    if (record.request.sessionId !== invocation.sessionId) deny("EXEC_GRANT_CROSS_SESSION", "Execution grant crossed sessions");
+    if (record.request.runId !== invocation.runId) deny("EXEC_GRANT_CROSS_RUN", "Execution grant crossed runs");
+    if (!allowed.has(record.request.entryPoint) || record.request.entryPoint !== invocation.entryPoint
+      || record.request.profile !== invocation.profile) {
+      deny("EXEC_PROFILE_INVALID", "Execution grant has the wrong lifetime profile");
+    }
+    assertOwner(record.owner, owner);
+    if (invocation.resourceOwner !== owner || record.request.contextId !== invocation.contextId
+      || record.request.principal !== invocation.principal || record.request.authorityEpoch !== invocation.authorityEpoch
+      || record.request.personaDigest !== invocation.personaDigest || record.request.policyDigest !== invocation.policyDigest) {
+      deny("EXEC_BINDING_MISMATCH", "Execution grant binding mismatch");
+    }
+    if (!(invocation.payload instanceof Uint8Array) || !record.payload.equals(invocation.payload)
+      || !sameRoots(record.roots, invocation.roots) || !sameFlatRecord(record.environment, invocation.environment)
+      || !sameFlatRecord(record.network, invocation.network) || !sameFlatRecord(record.limits, invocation.limits)) {
+      deny("EXEC_GRANT_ARGUMENT_MISMATCH", "Execution differs from the approved grant");
+    }
+  }
+
+  async #observeLaunchDenial(error: ExecutionDeniedError, invocation: ExecutionGrantInvocation, grant: ExecutionGrant | null | undefined): Promise<ExecutionDeniedError> {
+    const decisionState = serviceDenialState(error.code);
+    const observe = this.#bridge.observeServiceDenial;
+    const supportedPair = decisionState === "network-profile-unsupported"
+      ? invocation?.entryPoint === "E4" && invocation?.profile === "manual-terminal"
+      : (invocation?.entryPoint === "E1" || invocation?.entryPoint === "E3") && PROFILE_BY_ENTRY[invocation.entryPoint] === invocation.profile;
+    if (!decisionState || typeof observe !== "function" || !invocation || typeof invocation !== "object"
+      || !supportedPair
+      || ![invocation.contextId, invocation.sessionId, invocation.runId, invocation.principal].every(validId)
+      || !Number.isSafeInteger(invocation.authorityEpoch) || invocation.authorityEpoch < 1
+      || !HEX_64.test(invocation.personaDigest) || !HEX_64.test(invocation.policyDigest)
+      || !(invocation.payload instanceof Uint8Array) || !Array.isArray(invocation.roots)) return error;
+    const profile = invocation.entryPoint === "E1" ? "one-shot-shell" : invocation.entryPoint === "E3" ? "script" : "manual-terminal";
+    const authority = grant ? this.#grants.get(grant) : undefined;
+    const contextId = authority?.request.contextId ?? invocation.contextId;
+    const sessionId = authority?.request.sessionId ?? invocation.sessionId;
+    const runId = authority?.request.runId ?? invocation.runId;
+    const authorityEpoch = authority?.request.authorityEpoch ?? invocation.authorityEpoch;
+    const personaDigest = authority?.request.personaDigest ?? invocation.personaDigest;
+    const policyDigest = authority?.request.policyDigest ?? invocation.policyDigest;
+    const payloadDigest = digest(invocation.payload);
+    const roots = invocation.roots.map(root => ({
+      rootId: root?.rootId,
+      access: root?.access,
+      identity: root?.identity ? { volumeSerial: root.identity.volumeSerial, fileId: root.identity.fileId, type: root.identity.type } : null,
+    }));
+    const requestDigest = canonicalDigest({
+      schema: "mini-lux/sec03/service-denial-request/v1",
+      operation: "launch",
+      entryPoint: invocation.entryPoint,
+      profile: invocation.profile,
+      contextId: invocation.contextId,
+      sessionId: invocation.sessionId,
+      runId: invocation.runId,
+      principal: invocation.principal,
+      authorityEpoch: invocation.authorityEpoch,
+      personaDigest: invocation.personaDigest,
+      policyDigest: invocation.policyDigest,
+      payloadDigest,
+      roots,
+      environment: invocation.environment,
+      network: invocation.network,
+      limits: invocation.limits,
+    });
+    try {
+      const nativeObservation = await observe.call(this.#bridge, Object.freeze({
+        executionId: digest(Buffer.from(randomUUID(), "utf8")),
+        entryPoint: invocation.entryPoint,
+        profile,
+        contextId,
+        sessionId,
+        runId,
+        authorityEpoch,
+        personaDigest,
+        policyDigest,
+        payloadDigest,
+        requestDigest,
+        operation: "launch",
+        decisionState,
+      }));
+      return new ExecutionDeniedError(error.code, error.message, nativeObservation);
+    } catch {
+      return error;
+    }
+  }
+
+  async #observeInputDenial(error: ExecutionDeniedError, lease: SessionLease, owner: ResourceOwner, invocation: InputGrantInvocation): Promise<ExecutionDeniedError> {
+    const decisionState = serviceDenialState(error.code);
+    const observe = this.#bridge.observeServiceDenial;
+    const session = this.#leases.get(lease);
+    if (!decisionState || typeof observe !== "function" || !session || session.token !== lease || session.owner !== owner || session.entryPoint !== "E2"
+      || !invocation || typeof invocation !== "object" || !(invocation.payload instanceof Uint8Array)
+      || ![invocation.contextId, invocation.sessionId, invocation.runId, invocation.principal].every(validId)
+      || !Number.isSafeInteger(invocation.authorityEpoch) || invocation.authorityEpoch < 1
+      || typeof invocation.appendNewline !== "boolean") return error;
+    const payloadDigest = digest(invocation.payload);
+    const requestDigest = canonicalDigest({
+      schema: "mini-lux/sec03/service-denial-request/v1",
+      operation: "input",
+      entryPoint: "E2",
+      profile: "agent-shell",
+      contextId: invocation.contextId,
+      sessionId: invocation.sessionId,
+      runId: invocation.runId,
+      principal: invocation.principal,
+      authorityEpoch: invocation.authorityEpoch,
+      personaDigest: session.authority.personaDigest,
+      policyDigest: session.authority.policyDigest,
+      payloadDigest,
+      appendNewline: invocation.appendNewline,
+    });
+    try {
+      const nativeObservation = await observe.call(this.#bridge, Object.freeze({
+        executionId: digest(Buffer.from(randomUUID(), "utf8")),
+        entryPoint: "E2",
+        profile: "agent-shell",
+        contextId: session.authority.contextId,
+        sessionId: session.authority.sessionId,
+        runId: session.authority.runId,
+        authorityEpoch: session.authority.authorityEpoch,
+        personaDigest: session.authority.personaDigest,
+        policyDigest: session.authority.policyDigest,
+        payloadDigest,
+        requestDigest,
+        operation: "input",
+        decisionState,
+      }));
+      return new ExecutionDeniedError(error.code, error.message, nativeObservation);
+    } catch {
+      return error;
+    }
   }
 
   async #launchNative(record: GrantRecord, output: OutputRecord): Promise<NativeExecutionHandle> {
@@ -466,7 +738,7 @@ export class ExecutionIsolationService {
       }
     };
     handle = await this.#bridge.launch(Object.freeze({
-      executionId: randomUUID(),
+      executionId: digest(Buffer.from(randomUUID(), "utf8")),
       entryPoint: record.request.entryPoint,
       profile: record.request.profile,
       contextId: record.request.contextId,

@@ -18,6 +18,7 @@
 namespace mini_lux::sec03 {
 
 inline constexpr char kAttestationDomain[] = "mini-lux/sec03/native-execution-proof/v1";
+inline constexpr char kLauncherObservationMarkerDomain[] = "mini-lux/sec03/launcher-observation-marker/v1";
 inline constexpr size_t kAttestationKeyBytes = 32;
 inline constexpr size_t kMaxProofBytes = 64u * 1024u;
 
@@ -121,14 +122,97 @@ done: if (hash) BCryptDestroyHash(hash); if (algorithm) BCryptCloseAlgorithmProv
 }
 inline bool ConstantTimeEqual(const unsigned char* left, const unsigned char* right, size_t size) { unsigned char diff = 0; for (size_t i = 0; i < size; ++i) diff |= left[i] ^ right[i]; return diff == 0; }
 inline bool ParseCanonicalProof(const std::string& proof, const std::string& candidate, const std::string& build, const std::string& source, const std::string& host, const std::string& launcher, const std::string& key_id, std::map<std::string, std::string>* fields) {
-  static const std::array<const char*, 48> keys = {"v","kind","keyId","candidate","buildIdSha256","sourceSha256","hostSha256","launcher","execution","context","session","run","authorityEpoch","profile","payloadDigest","tokenIsAppContainer","packageSidSha256","capabilityCount","lowIntegrity","jobConstrained","jobPolicySha256","activeProcessZero","processStarts","aclMutations","stdinWrites","inputDigestSetSha256","conpty","conptyMerged","executableLease","childExit","completionReason","aggregateOutputBytes","cleanupComplete","handlesDrained","treeTerminated","rootIdentityDigest","rootAccessProfileSha256","rootFixedNtfs","rootSameSystemVolume","rootHasSpace","rootHasNonAscii","environmentNameDigest","environmentValueDigest","ambientLeakCount","networkMode","networkAcceptedCount","aclProfileSha256","transcriptSha256"};
+  static const std::array<const char*, 72> keys = {"v","kind","keyId","candidate","buildIdSha256","sourceSha256","hostSha256","launcher","execution","context","session","run","authorityEpoch","profile","payloadDigest","tokenIsAppContainer","packageSidSha256","capabilityCount","lowIntegrity","jobConstrained","jobPolicySha256","activeProcessZero","processStarts","observedProcessCount","observedDescendantCount","descendantValidationFailures","aclMutations","stdinWrites","inputDigestSetSha256","conpty","conptyMerged","executableLease","sentinelHandleInheritable","sentinelHandleListed","sentinelHandleObserved","sentinelProbeWin32","unlistedSentinelBlocked","hostDupOpenWin32","jobHandleInheritable","controlHandleInheritable","jobHandleDuplicateWin32","controlHandleDuplicateWin32","jobHandleDuplicateBlocked","controlHandleDuplicateBlocked","postAclRootDeleteOpenWin32","postAclCwdDeleteOpenWin32","postAclReplacementBlocked","processCreatedSuspended","postCreateRootDeleteOpenWin32","postCreateCwdDeleteOpenWin32","postCreateReplacementBlocked","preResumePathIdentityMatch","resumeAfterRecheck","childExit","completionReason","aggregateOutputBytes","cleanupComplete","handlesDrained","treeTerminated","rootIdentityDigest","rootAccessProfileSha256","rootFixedNtfs","rootSameSystemVolume","rootHasSpace","rootHasNonAscii","environmentNameDigest","environmentValueDigest","ambientLeakCount","networkMode","networkAcceptedCount","aclProfileSha256","transcriptSha256"};
   if (proof.empty() || proof.size() > kMaxProofBytes || proof.back() != '\n' || proof.find('\r') != std::string::npos) return false; size_t start = 0;
   for (const char* expected : keys) { const size_t end = proof.find('\n', start); if (end == std::string::npos || end == start) return false; const std::string line = proof.substr(start, end - start); const size_t equal = line.find('='); if (equal == std::string::npos || line.find('=', equal + 1) != std::string::npos || line.substr(0, equal) != expected) return false; const std::string value = line.substr(equal + 1); if (value.empty() || value.size() > 256 || !std::all_of(value.begin(), value.end(), [](unsigned char c) { return c >= 0x21 && c <= 0x7e; })) return false; fields->emplace(expected, value); start = end + 1; }
   if (start != proof.size() || fields->size() != keys.size() || fields->at("v") != "1" || fields->at("kind") != "execution-proof" || fields->at("candidate") != candidate || fields->at("buildIdSha256") != build || fields->at("sourceSha256") != source || fields->at("hostSha256") != host || fields->at("launcher") != launcher || fields->at("keyId") != key_id) return false;
   for (const char* key : {"candidate","buildIdSha256","sourceSha256","hostSha256","launcher","keyId","payloadDigest","packageSidSha256","jobPolicySha256","inputDigestSetSha256","rootIdentityDigest","rootAccessProfileSha256","environmentNameDigest","environmentValueDigest","aclProfileSha256","transcriptSha256"}) if (!CanonicalHex(fields->at(key), 32, 32)) return false;
-  for (const char* key : {"tokenIsAppContainer","lowIntegrity","jobConstrained","activeProcessZero","conpty","conptyMerged","executableLease","cleanupComplete","handlesDrained","treeTerminated","rootFixedNtfs","rootSameSystemVolume","rootHasSpace","rootHasNonAscii"}) if (fields->at(key) != "0" && fields->at(key) != "1") return false;
-  std::uint64_t number = 0; for (const char* key : {"authorityEpoch","capabilityCount","processStarts","aclMutations","stdinWrites","childExit","aggregateOutputBytes","ambientLeakCount","networkAcceptedCount"}) if (!Decimal(fields->at(key), &number)) return false;
+  for (const char* key : {"tokenIsAppContainer","lowIntegrity","jobConstrained","activeProcessZero","conpty","conptyMerged","executableLease","sentinelHandleInheritable","sentinelHandleListed","sentinelHandleObserved","unlistedSentinelBlocked","jobHandleInheritable","controlHandleInheritable","jobHandleDuplicateBlocked","controlHandleDuplicateBlocked","postAclReplacementBlocked","processCreatedSuspended","postCreateReplacementBlocked","preResumePathIdentityMatch","resumeAfterRecheck","cleanupComplete","handlesDrained","treeTerminated","rootFixedNtfs","rootSameSystemVolume","rootHasSpace","rootHasNonAscii"}) if (fields->at(key) != "0" && fields->at(key) != "1") return false;
+  std::uint64_t number = 0; for (const char* key : {"authorityEpoch","capabilityCount","processStarts","observedProcessCount","observedDescendantCount","descendantValidationFailures","aclMutations","stdinWrites","sentinelProbeWin32","hostDupOpenWin32","jobHandleDuplicateWin32","controlHandleDuplicateWin32","postAclRootDeleteOpenWin32","postAclCwdDeleteOpenWin32","postCreateRootDeleteOpenWin32","postCreateCwdDeleteOpenWin32","childExit","aggregateOutputBytes","ambientLeakCount","networkAcceptedCount"}) if (!Decimal(fields->at(key), &number)) return false;
   if (fields->at("networkMode") != "deny") return false; for (const char* key : {"execution","context","session","run","profile","completionReason"}) if (!BoundedId(fields->at(key))) return false; return true;
+}
+
+inline bool LauncherObservationId(const std::string& value) {
+  return BoundedId(value) && std::all_of(value.begin(), value.end(), [](unsigned char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.' || c == ':'; });
+}
+
+inline bool LauncherObservationSentinel(const char* label, std::string* output) {
+  static constexpr char domain[] = "mini-lux/sec03/launcher-sentinel/v1";
+  std::vector<unsigned char> material(domain, domain + sizeof(domain) - 1); material.push_back(0);
+  const std::string value(label); AppendU32(&material, static_cast<std::uint32_t>(value.size())); material.insert(material.end(), value.begin(), value.end());
+  return Sha256(material.data(), material.size(), output);
+}
+
+inline const char* ServiceDenialCode(const std::string& state) {
+  if (state == "missing") return "EXEC_GRANT_REQUIRED";
+  if (state == "forged") return "EXEC_GRANT_FORGED";
+  if (state == "argument-mismatch") return "EXEC_GRANT_ARGUMENT_MISMATCH";
+  if (state == "expired") return "EXEC_GRANT_EXPIRED";
+  if (state == "replayed") return "EXEC_GRANT_REPLAYED";
+  if (state == "cross-run") return "EXEC_GRANT_CROSS_RUN";
+  if (state == "cross-session") return "EXEC_GRANT_CROSS_SESSION";
+  if (state == "concurrent-reuse") return "EXEC_GRANT_CONCURRENT_REUSE";
+  if (state == "consent-denied") return "EXEC_CONSENT_DENIED";
+  if (state == "consent-dismissed") return "EXEC_CONSENT_DISMISSED";
+  if (state == "consent-expired") return "EXEC_CONSENT_EXPIRED";
+  if (state == "consent-argument-mismatch") return "EXEC_CONSENT_ARGUMENT_MISMATCH";
+  if (state == "consent-replayed") return "EXEC_CONSENT_REPLAYED";
+  if (state == "consent-synthetic") return "EXEC_CONSENT_SYNTHETIC";
+  if (state == "consent-cross-window") return "EXEC_CONSENT_CROSS_WINDOW";
+  if (state == "consent-cross-session") return "EXEC_CONSENT_CROSS_SESSION";
+  if (state == "consent-concurrent-reuse") return "EXEC_CONSENT_CONCURRENT_REUSE";
+  if (state == "network-profile-unsupported") return "EXEC_NETWORK_PROFILE_UNSUPPORTED";
+  return "";
+}
+
+inline bool ParseCanonicalLauncherObservation(const std::string& proof, const std::string& candidate, const std::string& build, const std::string& source, const std::string& host, const std::string& launcher, const std::string& key_id, std::map<std::string, std::string>* fields) {
+  static const std::array<const char*, 68> keys = {"v","kind","keyId","candidate","buildIdSha256","sourceSha256","hostSha256","launcher","execution","context","session","run","authorityEpoch","entryPoint","profile","operation","decisionState","personaDigest","policyDigest","payloadDigest","stimulusDigest","requestDigest","rootRequestDigest","observationClass","raceStage","rootFailureClass","expectedRootIdentityDigest","observedRootIdentityDigest","observedCode","observedSubcode","transcriptSha256","tokenIsAppContainer","packageSidSha256","capabilityCount","lowIntegrity","jobConstrained","jobPolicySha256","activeProcessZero","processStarts","profileCreates","journalWrites","aclMutations","stdinWrites","inputDigestSetSha256","conpty","conptyMerged","executableLease","childExit","completionReason","aggregateOutputBytes","cleanupComplete","jobClosed","handlesDrained","hostExited","treeTerminated","rootIdentityDigest","rootAccessProfileSha256","rootFixedNtfs","rootSameSystemVolume","rootHasSpace","rootHasNonAscii","environmentNameDigest","environmentValueDigest","ambientLeakCount","networkMode","networkAttemptCount","networkAcceptedCount","aclProfileSha256"};
+  if (!fields || proof.empty() || proof.size() > kMaxProofBytes || proof.back() != '\n' || proof.find('\r') != std::string::npos) return false; size_t start = 0;
+  fields->clear();
+  for (const char* expected : keys) { const size_t end = proof.find('\n', start); if (end == std::string::npos || end == start) return false; const std::string line = proof.substr(start, end - start); const size_t equal = line.find('='); if (equal == std::string::npos || line.find('=', equal + 1) != std::string::npos || line.substr(0, equal) != expected) return false; const std::string value = line.substr(equal + 1); if (value.empty() || value.size() > 256 || !std::all_of(value.begin(), value.end(), [](unsigned char c) { return c >= 0x21 && c <= 0x7e; })) return false; fields->emplace(expected, value); start = end + 1; }
+  if (start != proof.size() || fields->size() != keys.size() || fields->at("v") != "1" || fields->at("kind") != "launcher-observation" || fields->at("candidate") != candidate || fields->at("buildIdSha256") != build || fields->at("sourceSha256") != source || fields->at("hostSha256") != host || fields->at("launcher") != launcher || fields->at("keyId") != key_id) return false;
+  for (const char* key : {"candidate","buildIdSha256","sourceSha256","hostSha256","launcher","keyId","personaDigest","policyDigest","payloadDigest","stimulusDigest","requestDigest","rootRequestDigest","expectedRootIdentityDigest","observedRootIdentityDigest","transcriptSha256","packageSidSha256","jobPolicySha256","inputDigestSetSha256","rootIdentityDigest","rootAccessProfileSha256","environmentNameDigest","environmentValueDigest","aclProfileSha256"}) if (!CanonicalHex(fields->at(key), 32, 32)) return false;
+  for (const char* key : {"execution","context","session","run"}) if (!LauncherObservationId(fields->at(key))) return false;
+  std::uint64_t authority = 0; if (!Decimal(fields->at("authorityEpoch"), &authority) || !authority) return false;
+  const bool profile_pair = (fields->at("entryPoint") == "E1" && fields->at("profile") == "one-shot-shell") || (fields->at("entryPoint") == "E2" && fields->at("profile") == "agent-shell") || (fields->at("entryPoint") == "E3" && fields->at("profile") == "script") || (fields->at("entryPoint") == "E4" && fields->at("profile") == "manual-terminal");
+  const std::string& observation_class = fields->at("observationClass"); const std::string& race_stage = fields->at("raceStage"); const std::string& root_failure_class = fields->at("rootFailureClass"); const std::string& expected_identity = fields->at("expectedRootIdentityDigest"); const std::string& observed_identity = fields->at("observedRootIdentityDigest"); const std::string& observed_code = fields->at("observedCode");
+  const bool root_attempt = fields->at("operation") == "launch" && fields->at("decisionState") == "none";
+  const bool unsupported = root_attempt && observation_class == "unsupported-root" && race_stage == "root-qualification" && observed_code == "EXEC_ROOT_UNSUPPORTED" && expected_identity == observed_identity
+    && (root_failure_class == "unc" || root_failure_class == "mapped-remote" || root_failure_class == "non-ntfs" || root_failure_class == "removable-ntfs" || root_failure_class == "reparse-root");
+  const bool identity_changed = root_attempt && observation_class == "root-identity-changed" && race_stage == "before-retained-handle" && root_failure_class == "none" && observed_code == "EXEC_ROOT_IDENTITY_CHANGED" && expected_identity != observed_identity;
+  std::string root_not_consumed; const std::string& denial_state = fields->at("decisionState"); const char* denial_code = ServiceDenialCode(denial_state);
+  const bool consent_state = denial_state.rfind("consent-", 0) == 0;
+  const bool network_profile_unsupported = denial_state == "network-profile-unsupported";
+  const bool grant_denial_pair = !consent_state && !network_profile_unsupported && (((fields->at("entryPoint") == "E1" || fields->at("entryPoint") == "E3") && fields->at("operation") == "launch") || (fields->at("entryPoint") == "E2" && fields->at("operation") == "input"));
+  const bool consent_denial_pair = consent_state && fields->at("entryPoint") == "E4" && fields->at("profile") == "manual-terminal" && fields->at("operation") == "consent";
+  const bool network_denial_pair = network_profile_unsupported && fields->at("entryPoint") == "E4" && fields->at("profile") == "manual-terminal" && fields->at("operation") == "launch";
+  const bool service_denial = LauncherObservationSentinel("root-not-consumed", &root_not_consumed) && (grant_denial_pair || consent_denial_pair || network_denial_pair) && denial_code[0] && observed_code == denial_code
+    && observation_class == "service-denial" && race_stage == "trusted-service-decision" && root_failure_class == "none" && expected_identity == root_not_consumed && observed_identity == root_not_consumed && fields->at("rootIdentityDigest") == root_not_consumed;
+  if (!profile_pair || (!unsupported && !identity_changed && !service_denial) || (!service_denial && fields->at("rootIdentityDigest") != expected_identity) || fields->at("observedSubcode") != "none" || fields->at("completionReason") != "pre-host-denial" || fields->at("childExit") != "none" || fields->at("networkMode") != "deny") return false;
+  for (const char* key : {"tokenIsAppContainer","capabilityCount","lowIntegrity","jobConstrained","processStarts","profileCreates","journalWrites","aclMutations","stdinWrites","conpty","conptyMerged","executableLease","aggregateOutputBytes","rootSameSystemVolume","rootHasSpace","rootHasNonAscii","ambientLeakCount","networkAttemptCount","networkAcceptedCount"}) if (fields->at(key) != "0") return false;
+  if (fields->at("rootFixedNtfs") != (identity_changed ? "1" : "0")) return false;
+  for (const char* key : {"activeProcessZero","cleanupComplete","jobClosed","handlesDrained","hostExited","treeTerminated"}) if (fields->at(key) != "1") return false;
+  return true;
+}
+
+inline std::string LauncherObservationMarkerPayload(const std::map<std::string, std::string>& fields, const std::string& proof_sha256, const std::string& proof_mac) {
+  if (!CanonicalHex(proof_sha256, 32, 32) || !CanonicalHex(proof_mac, 32, 32)) return {};
+  std::string marker(kLauncherObservationMarkerDomain); marker.push_back('\0');
+  marker.append("v=1\nkind=launcher-observation-marker\nkeyId=").append(fields.at("keyId"))
+    .append("\ncandidate=").append(fields.at("candidate")).append("\nbuildIdSha256=").append(fields.at("buildIdSha256"))
+    .append("\nsourceSha256=").append(fields.at("sourceSha256")).append("\nhostSha256=").append(fields.at("hostSha256"))
+    .append("\nlauncher=").append(fields.at("launcher")).append("\nexecution=").append(fields.at("execution"))
+    .append("\ncontext=").append(fields.at("context")).append("\nsession=").append(fields.at("session")).append("\nrun=").append(fields.at("run"))
+    .append("\nauthorityEpoch=").append(fields.at("authorityEpoch")).append("\nentryPoint=").append(fields.at("entryPoint")).append("\nprofile=").append(fields.at("profile"))
+    .append("\noperation=").append(fields.at("operation")).append("\ndecisionState=").append(fields.at("decisionState"))
+    .append("\npersonaDigest=").append(fields.at("personaDigest")).append("\npolicyDigest=").append(fields.at("policyDigest")).append("\npayloadDigest=").append(fields.at("payloadDigest"))
+    .append("\nrequestDigest=").append(fields.at("requestDigest")).append("\nrootRequestDigest=").append(fields.at("rootRequestDigest"))
+    .append("\nobservationClass=").append(fields.at("observationClass")).append("\nraceStage=").append(fields.at("raceStage"))
+    .append("\nrootFailureClass=").append(fields.at("rootFailureClass")).append("\nexpectedRootIdentityDigest=").append(fields.at("expectedRootIdentityDigest"))
+    .append("\nobservedRootIdentityDigest=").append(fields.at("observedRootIdentityDigest")).append("\nobservedCode=").append(fields.at("observedCode"))
+    .append("\nproofSha256=").append(proof_sha256).append("\nproofMac=").append(proof_mac)
+    .append("\nprocessStarts=0\nhostStarted=0\n");
+  return marker;
 }
 
 }  // namespace mini_lux::sec03

@@ -1,17 +1,23 @@
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { createServer } from "node:http";
+import dgram from "node:dgram";
 import fs from "node:fs/promises";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import test from "node:test";
+import { ExecutionDeniedError, ExecutionIsolationService } from "../../dist/execution-isolation.js";
+import { bindNativeRootAuthority, createProductionNativeExecutionBridge } from "../../dist/execution-native.js";
+import { ManualConsentDeniedError, ManualExecutionConsentLedger } from "../../dist/manual-execution-consent.js";
+import { issueResourceOwner } from "../../dist/resource-owner.js";
 import { createSec03NativeVerifier } from "../../scripts/sec03-native-verifier.mjs";
 import { aggregateSec03Receipts } from "../../scripts/sec03-receipt-set.mjs";
 import { createSec03Receipt, createSec03Recorder, validateSec03Matrix, validateSec03Receipt } from "../sec03-receipts.mjs";
-import { A01_OUTPUT_MARKER, A17_OUTPUT_MARKER, a01ParentMutation, a01Probe, a08Case, a17Probe } from "../fixtures/sec03-real-host-plan.mjs";
+import { A01_OUTPUT_MARKER, A02_ANOTHER_DRIVE_PATH, A02_OUTPUT_MARKER, A04_LISTEN_READY_MARKER, A04_OUTPUT_MARKER, A04_PORTS, A08_SUPPORT_FILES, A17_OUTPUT_MARKER, a01ParentMutation, a01Probe, a02Case, a03Case, a04Case, a06Case, a07Case, a08Case, a09Case, a11Case, a12Case, a17Probe, a19Case } from "../fixtures/sec03-real-host-plan.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -160,16 +166,16 @@ async function terminalLaunchBody(root, entryPoint, overrides = {}) {
     profile: e2 ? "agent-shell" : "manual-terminal",
     environment: environment(root),
     limits: {
-      activeProcesses: e2 ? 32 : 16,
-      processMemoryBytes: 512 * 1024 * 1024,
-      jobMemoryBytes: 1024 * 1024 * 1024,
-      cpuRatePercent: 25,
-      jobUserTimeMs: 600_000,
-      wallTimeMs: e2 ? 1_800_000 : 14_400_000,
+      activeProcesses: e2 ? 32 : 64,
+      processMemoryBytes: e2 ? 512 * 1024 * 1024 : 1024 * 1024 * 1024,
+      jobMemoryBytes: e2 ? 1024 * 1024 * 1024 : 2 * 1024 * 1024 * 1024,
+      cpuRatePercent: e2 ? 25 : 50,
+      jobUserTimeMs: e2 ? 600_000 : 3_600_000,
+      wallTimeMs: e2 ? 1_800_000 : 28_800_000,
       idleTimeMs: e2 ? 300_000 : 1_800_000,
-      aggregateOutputBytes: 10 * 1024 * 1024,
+      aggregateOutputBytes: e2 ? 10 * 1024 * 1024 : 64 * 1024 * 1024,
       retainedOutputBytes: 1024 * 1024,
-      inputBytes: e2 ? 64 * 1024 : 256 * 1024,
+      inputBytes: 64 * 1024,
     },
     ...overrides,
   });
@@ -202,7 +208,7 @@ function parseNativeProof(nativeProof) {
   }));
 }
 
-function evidenceFromNativeProof({ nativeProof, host, launcher, layer, familyId, variantId, profileId, observedCode, observedSubcode = null }) {
+function evidenceFromNativeProof({ nativeProof, host, launcher, layer, familyId, variantId, profileId, observedCode, observedSubcode = null, networkAttemptCount = 0, networkAcceptedCount = 0 }) {
   const fields = parseNativeProof(nativeProof);
   return {
     fields,
@@ -216,10 +222,32 @@ function evidenceFromNativeProof({ nativeProof, host, launcher, layer, familyId,
       job: { policySha256: fields.jobPolicySha256, activeProcessZero: fields.activeProcessZero === "1" },
       root: { identitySha256: fields.rootIdentityDigest, accessProfileSha256: fields.rootAccessProfileSha256 },
       environment: { nameSetSha256: fields.environmentNameDigest, valueSetSha256: fields.environmentValueDigest, ambientLeakCount: Number(fields.ambientLeakCount) },
-      network: { mode: fields.networkMode, attemptCount: 0, acceptedCount: Number(fields.networkAcceptedCount) },
+      network: { mode: fields.networkMode, attemptCount: networkAttemptCount, acceptedCount: networkAcceptedCount },
       termination: { reason: fields.completionReason, exitCode: Number(fields.childExit), treeTerminated: fields.treeTerminated === "1", activeProcessZero: fields.activeProcessZero === "1" },
       cleanup: { jobClosed: fields.cleanupComplete === "1", handlesDrained: fields.handlesDrained === "1", hostExited: true, aclProfileSha256: fields.aclProfileSha256 },
       nativeProof: { kind: "execution-proof", proofBase64: nativeProof.proof.toString("base64"), mac: nativeProof.mac, keyId: nativeProof.keyId, channelMarker: nativeProof.channelMarker },
+    },
+  };
+}
+
+function evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId, variantId, profileId }) {
+  const fields = parseNativeProof(nativeObservation);
+  return {
+    fields,
+    envelope: {
+      producer: { kind: "sandbox-host", hostSha256: host.sha256, launcherSha256: launcher.sha256, instanceSha256: createHash("sha256").update(`${nativeObservation.keyId}\0${fields.execution}`).digest("hex") },
+      runId: fields.run, candidateId: fields.candidate, buildId: fields.buildIdSha256, executionNonce: fields.execution,
+      layer: "real-host", familyId, variantId, profileId, observedCode: fields.observedCode, observedSubcode: fields.observedSubcode === "none" ? null : fields.observedSubcode,
+      transcriptSha256: fields.transcriptSha256, transcriptMac: null, launcherChannelMarker: nativeObservation.channelMarker,
+      sideEffects: { processStarts: Number(fields.processStarts), aclMutations: Number(fields.aclMutations), stdinWrites: Number(fields.stdinWrites) },
+      token: { isAppContainer: false, packageSidSha256: fields.packageSidSha256, capabilityCount: Number(fields.capabilityCount), integrity: "other" },
+      job: { policySha256: fields.jobPolicySha256, activeProcessZero: fields.activeProcessZero === "1" },
+      root: { identitySha256: fields.rootIdentityDigest, accessProfileSha256: fields.rootAccessProfileSha256 },
+      environment: { nameSetSha256: fields.environmentNameDigest, valueSetSha256: fields.environmentValueDigest, ambientLeakCount: Number(fields.ambientLeakCount) },
+      network: { mode: fields.networkMode, attemptCount: Number(fields.networkAttemptCount), acceptedCount: Number(fields.networkAcceptedCount) },
+      termination: { reason: fields.completionReason, exitCode: null, treeTerminated: fields.treeTerminated === "1", activeProcessZero: fields.activeProcessZero === "1" },
+      cleanup: { jobClosed: fields.jobClosed === "1", handlesDrained: fields.handlesDrained === "1", hostExited: fields.hostExited === "1", aclProfileSha256: fields.aclProfileSha256 },
+      nativeProof: { kind: "launcher-observation", proofBase64: nativeObservation.proof.toString("base64"), mac: nativeObservation.mac, keyId: nativeObservation.keyId, channelMarker: nativeObservation.channelMarker },
     },
   };
 }
@@ -234,6 +262,48 @@ async function start(addon, host, launcher, body) {
 
 async function launch(addon, host, launcher, body) {
   const started = await start(addon, host, launcher, body);
+  return { ...started, completion: await started.handle.completed };
+}
+
+async function observeRootDenial(addon, host, launcher, body, expectedCode = "EXEC_ROOT_UNSUPPORTED") {
+  const lease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  try {
+    let denial = null;
+    try { lease.launchHost(frame(body), () => assert.fail("pre-host denial emitted an output frame")); }
+    catch (error) { denial = error; }
+    assert.equal(denial?.code, expectedCode);
+    assert(denial.nativeObservation && Object.isFrozen(denial.nativeObservation));
+    assert(Buffer.isBuffer(denial.nativeObservation.proof));
+    return denial.nativeObservation;
+  } finally {
+    await lease.close();
+  }
+}
+
+async function runA06Profile(addon, host, launcher, root, variantId, profileId, identity) {
+  const planned = a06Case(variantId, profileId);
+  const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+  const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 };
+  if (profileId === "E1") return launch(addon, host, launcher, await launchBody(root, planned.payload, overrides));
+  const started = await start(addon, host, launcher, await terminalLaunchBody(root, profileId, overrides));
+  try {
+    await started.handle.writeFrame(inputFrame(planned.input));
+    return { ...started, completion: await started.handle.completed };
+  } catch (error) {
+    try { await started.handle.terminateHost(terminateFrame("test-cleanup")); } catch {}
+    await started.handle.completed.catch(() => undefined);
+    throw error;
+  }
+}
+
+async function runA07Profile(addon, host, launcher, root, variantId, profileId, identity) {
+  const planned = a07Case(variantId, profileId);
+  const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+  const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 };
+  if (profileId === "E1") return launch(addon, host, launcher, await launchBody(root, planned.payload, overrides));
+  if (profileId === "E3") return launch(addon, host, launcher, await scriptLaunchBody(root, planned.payload, overrides));
+  const started = await start(addon, host, launcher, await terminalLaunchBody(root, profileId, overrides));
+  await started.handle.writeFrame(inputFrame(planned.input));
   return { ...started, completion: await started.handle.completed };
 }
 
@@ -281,6 +351,90 @@ async function runA01Profile(addon, host, launcher, root, variantId, profileId, 
   }
 }
 
+async function runExactDenyProfile(addon, host, launcher, root, profileId, identity, planned, marker) {
+  const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+  const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 };
+  if (profileId === "E1") return launch(addon, host, launcher, await launchBody(root, planned.payload, overrides));
+  if (profileId === "E3") return launch(addon, host, launcher, await scriptLaunchBody(root, planned.payload, overrides));
+  const started = await start(addon, host, launcher, await terminalLaunchBody(root, profileId, overrides));
+  try {
+    await started.handle.writeFrame(inputFrame(planned.input));
+    await Promise.race([
+      waitFor(async () => decode(started.frames).some(value => value.text.includes(marker))),
+      started.handle.completed.then(value => { throw new Error(`SEC-03 ${profileId} deny probe completed before denial marker: ${JSON.stringify(value)}`); }),
+    ]);
+    await started.handle.writeFrame(inputFrame("exit"));
+    return { ...started, completion: await started.handle.completed };
+  } catch (error) {
+    try { await started.handle.terminateHost(terminateFrame("test-cleanup")); } catch {}
+    await started.handle.completed.catch(() => undefined);
+    throw error;
+  }
+}
+
+async function attemptInboundConnection(host, port) {
+  return new Promise(resolve => {
+    const socket = net.createConnection({ host, port });
+    let settled = false;
+    const finish = accepted => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      socket.destroy();
+      resolve(accepted ? 1 : 0);
+    };
+    const timer = setTimeout(() => finish(false), 750);
+    socket.once("connect", () => finish(true));
+    socket.once("error", () => finish(false));
+  });
+}
+
+async function runA04Profile(addon, host, launcher, root, variantId, profileId, identity, planned, external) {
+  if (variantId !== "A04-05" || profileId !== "E3") {
+    return { ...await runExactDenyProfile(addon, host, launcher, root, profileId, identity, planned, A04_OUTPUT_MARKER), networkAcceptedCount: 0 };
+  }
+  const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+  const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 };
+  const started = await start(addon, host, launcher, await scriptLaunchBody(root, planned.payload, overrides));
+  try {
+    const state = await Promise.race([
+      waitFor(async () => {
+        const output = decode(started.frames).map(value => value.text).join("");
+        if (output.includes(A04_LISTEN_READY_MARKER)) return "ready";
+        if (output.includes(A04_OUTPUT_MARKER)) return "denied";
+        return null;
+      }),
+      started.handle.completed.then(value => { throw new Error(`SEC-03 E3 inbound probe completed before observation: ${JSON.stringify(value)}`); }),
+    ]);
+    const networkAcceptedCount = state === "ready" ? await attemptInboundConnection(external, A04_PORTS.listen) : 0;
+    return { ...started, completion: await started.handle.completed, networkAcceptedCount };
+  } catch (error) {
+    try { await started.handle.terminateHost(terminateFrame("test-cleanup")); } catch {}
+    await started.handle.completed.catch(() => undefined);
+    throw error;
+  }
+}
+
+async function a03LaunchBody(root, cwd, variantId, profileId, identity) {
+  const planned = a03Case(variantId, profileId);
+  const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+  const [rootInfo, cwdInfo] = await Promise.all([fs.stat(root, { bigint: true }), fs.stat(cwd, { bigint: true })]);
+  const roots = [{ rootId: "integration-root", access: "read-write", canonicalPath: root, identity: { volumeSerial: String(rootInfo.dev), fileId: String(rootInfo.ino), type: "directory" }, canonicalCwd: cwd, cwdIdentity: { volumeSerial: String(cwdInfo.dev), fileId: String(cwdInfo.ino), type: "directory" } }];
+  const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256, roots };
+  if (profileId === "E1") return launchBody(root, planned.payload, overrides);
+  if (profileId === "E3") return scriptLaunchBody(root, planned.payload, overrides);
+  return terminalLaunchBody(root, profileId, overrides);
+}
+
+async function runA03Profile(addon, host, launcher, root, cwd, variantId, profileId, identity) {
+  const planned = a03Case(variantId, profileId);
+  const body = await a03LaunchBody(root, cwd, variantId, profileId, identity);
+  if (profileId === "E1" || profileId === "E3") return launch(addon, host, launcher, body);
+  const started = await start(addon, host, launcher, body);
+  await started.handle.writeFrame(inputFrame(planned.input));
+  return { ...started, completion: await started.handle.completed };
+}
+
 async function runA08Profile(addon, host, launcher, root, variantId, profileId, identity) {
   const planned = a08Case(variantId, profileId);
   const executionId = createHash("sha256").update(randomUUID()).digest("hex");
@@ -289,6 +443,21 @@ async function runA08Profile(addon, host, launcher, root, variantId, profileId, 
   if (profileId === "E3") return launch(addon, host, launcher, await scriptLaunchBody(root, planned.payload, overrides));
   const started = await start(addon, host, launcher, await terminalLaunchBody(root, profileId, overrides));
   if (planned.input !== null) await started.handle.writeFrame(inputFrame(planned.input));
+  return { ...started, completion: await started.handle.completed };
+}
+
+async function runA09Profile(addon, host, launcher, root, variantId, profileId, identity) {
+  const planned = a09Case(variantId, profileId);
+  const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+  const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 };
+  const body = profileId === "E1"
+    ? await launchBody(root, planned.payload, overrides)
+    : profileId === "E3"
+      ? await scriptLaunchBody(root, planned.payload, overrides)
+      : await terminalLaunchBody(root, profileId, overrides);
+  const started = await start(addon, host, launcher, body);
+  if (variantId === "A09-01" && planned.input !== null) await started.handle.writeFrame(inputFrame(planned.input));
+  if (variantId !== "A09-01") await started.handle.terminateHost(terminateFrame(planned.terminateReason));
   return { ...started, completion: await started.handle.completed };
 }
 
@@ -344,6 +513,473 @@ async function realHostReceiptContext() {
   const effectiveIdentity = { ...identity, matrixSha256: createHash("sha256").update(matrixBytes).digest("hex"), schemaSha256: createHash("sha256").update(schemaBytes).digest("hex") };
   const recorder = await receiptRecorder(effectiveIdentity, nativeVerifier);
   return { addon: require(addonPath), host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder };
+}
+
+const A11_PROFILES = Object.freeze({ E1: "one-shot-shell", E2: "agent-shell", E3: "script", E4: "manual-terminal" });
+const A11_CONTEXT_ID = "sec03-a11-context";
+const A11_SESSION_ID = "sec03-a11-session";
+const A11_PRINCIPAL = "sec03-a11-agent";
+const A11_PERSONA_DIGEST = createHash("sha256").update("sec03-a11-persona").digest("hex");
+const A11_POLICY_DIGEST = createHash("sha256").update("sec03-a11-policy").digest("hex");
+
+function a11BridgeIdentity(context) {
+  return Object.freeze({
+    candidateId: context.identity.candidateId,
+    buildIdSha256: context.identity.buildId,
+    sourceSha256: context.identity.sourceSha256,
+    launcherSha256: context.launcher.sha256,
+    launcherBytes: context.launcher.bytes,
+    hostSha256: context.host.sha256,
+    hostBytes: context.host.bytes,
+    machine: "x64",
+    protocolVersion: 1,
+  });
+}
+
+async function a11ExecutionRequest(root, resourceOwner, identity, profileId, payload, now) {
+  const body = profileId === "E1"
+    ? await launchBody(root, payload)
+    : profileId === "E3"
+      ? await scriptLaunchBody(root, payload)
+      : await terminalLaunchBody(root, profileId);
+  const rootIdentity = body.roots[0].identity;
+  const binding = bindNativeRootAuthority(Object.freeze({
+    rootId: "a11-root",
+    access: "read-write",
+    canonicalPath: root,
+    identity: rootIdentity,
+    canonicalCwd: root,
+    cwdIdentity: rootIdentity,
+  }));
+  const identityWithAuthority = Object.freeze({ ...rootIdentity, nativeAuthorityId: binding.nativeAuthorityId });
+  return {
+    request: {
+      contextId: A11_CONTEXT_ID,
+      sessionId: A11_SESSION_ID,
+      runId: identity.runId,
+      principal: A11_PRINCIPAL,
+      authorityEpoch: 1,
+      personaDigest: A11_PERSONA_DIGEST,
+      policyDigest: A11_POLICY_DIGEST,
+      resourceOwner,
+      entryPoint: profileId,
+      profile: A11_PROFILES[profileId],
+      payload: Buffer.from(payload),
+      roots: [Object.freeze({ rootId: "a11-root", access: "read-write", identity: identityWithAuthority })],
+      environment: body.environment,
+      network: { mode: "deny" },
+      limits: body.limits,
+      expiresAtMs: now + 10_000,
+    },
+    revoke: binding.revoke,
+  };
+}
+
+async function captureA11Denial(operation, expectedCode) {
+  let denial = null;
+  await assert.rejects(operation, error => {
+    denial = error;
+    return error instanceof ExecutionDeniedError && error.code === expectedCode;
+  });
+  assert(denial?.nativeObservation, `${expectedCode} lacks native service-denial evidence`);
+  assert(Buffer.isBuffer(denial.nativeObservation.proof));
+  return denial.nativeObservation;
+}
+
+async function runA11LaunchDenial(context, root, variantId, profileId) {
+  const planned = a11Case(variantId, profileId);
+  let now = Date.now();
+  const resourceOwner = issueResourceOwner({ authorityId: `sec03-a11-${profileId.toLowerCase()}`, authorityEpoch: 1, sessionId: A11_SESSION_ID, principal: A11_PRINCIPAL, rootIds: ["a11-root"] });
+  const bridge = createProductionNativeExecutionBridge(a11BridgeIdentity(context));
+  const service = new ExecutionIsolationService(bridge, { now: () => now });
+  const prepared = await a11ExecutionRequest(root, resourceOwner, context.identity, profileId, planned.approvedPayload, now);
+  const approved = prepared.request;
+  try {
+    await bridge.initialize?.();
+    if (variantId === "A11-01") return await captureA11Denial(() => service.launchOneShot(undefined, resourceOwner, approved), planned.expectedCode);
+    if (variantId === "A11-02") return await captureA11Denial(() => service.launchOneShot({ grantId: "forged" }, resourceOwner, approved), planned.expectedCode);
+    const grantRequest = variantId === "A11-04" ? { ...approved, expiresAtMs: now + 10 } : approved;
+    const grant = service.issueExecutionGrant(grantRequest);
+    if (variantId === "A11-03") return await captureA11Denial(() => service.launchOneShot(grant, resourceOwner, { ...approved, payload: Buffer.from(planned.attemptedPayload) }), planned.expectedCode);
+    if (variantId === "A11-04") {
+      now += 11;
+      return await captureA11Denial(() => service.launchOneShot(grant, resourceOwner, grantRequest), planned.expectedCode);
+    }
+    if (variantId === "A11-05") {
+      await service.launchOneShot(grant, resourceOwner, approved);
+      return await captureA11Denial(() => service.launchOneShot(grant, resourceOwner, approved), planned.expectedCode);
+    }
+    if (variantId === "A11-06") return await captureA11Denial(() => service.launchOneShot(grant, resourceOwner, { ...approved, runId: "sec03-a11-cross-run" }), planned.expectedCode);
+    if (variantId === "A11-07") return await captureA11Denial(() => service.launchOneShot(grant, resourceOwner, { ...approved, sessionId: "sec03-a11-cross-session" }), planned.expectedCode);
+    assert.equal(variantId, "A11-08");
+    const first = service.launchOneShot(grant, resourceOwner, approved);
+    const observation = await captureA11Denial(() => service.launchOneShot(grant, resourceOwner, approved), planned.expectedCode);
+    await first;
+    return observation;
+  } finally {
+    prepared.revoke();
+    await service.shutdown();
+  }
+}
+
+async function runA11InputDenial(context, root, variantId) {
+  const planned = a11Case(variantId, "E2");
+  let now = Date.now();
+  const resourceOwner = issueResourceOwner({ authorityId: "sec03-a11-e2", authorityEpoch: 1, sessionId: A11_SESSION_ID, principal: A11_PRINCIPAL, rootIds: ["a11-root"] });
+  const bridge = createProductionNativeExecutionBridge(a11BridgeIdentity(context));
+  const service = new ExecutionIsolationService(bridge, { now: () => now });
+  const prepared = await a11ExecutionRequest(root, resourceOwner, context.identity, "E2", "cmd", now);
+  try {
+    await bridge.initialize?.();
+    const lease = await service.launchPersistent(service.issueExecutionGrant(prepared.request), resourceOwner, prepared.request);
+    const approved = {
+      lease,
+      resourceOwner,
+      contextId: A11_CONTEXT_ID,
+      sessionId: A11_SESSION_ID,
+      runId: context.identity.runId,
+      principal: A11_PRINCIPAL,
+      authorityEpoch: 1,
+      payload: Buffer.from(planned.approvedPayload),
+      appendNewline: true,
+      expiresAtMs: now + 1_000,
+    };
+    const invocation = {
+      contextId: approved.contextId,
+      sessionId: approved.sessionId,
+      runId: approved.runId,
+      principal: approved.principal,
+      authorityEpoch: approved.authorityEpoch,
+      payload: approved.payload,
+      appendNewline: approved.appendNewline,
+    };
+    if (variantId === "A11-01") return await captureA11Denial(() => service.write(lease, undefined, resourceOwner, invocation), planned.expectedCode);
+    if (variantId === "A11-02") return await captureA11Denial(() => service.write(lease, { grantId: "forged" }, resourceOwner, invocation), planned.expectedCode);
+    const inputRequest = variantId === "A11-04" ? { ...approved, expiresAtMs: now + 10 } : approved;
+    const grant = service.issueInputGrant(inputRequest);
+    if (variantId === "A11-03") return await captureA11Denial(() => service.write(lease, grant, resourceOwner, { ...invocation, payload: Buffer.from(planned.attemptedPayload) }), planned.expectedCode);
+    if (variantId === "A11-04") {
+      now += 11;
+      return await captureA11Denial(() => service.write(lease, grant, resourceOwner, invocation), planned.expectedCode);
+    }
+    if (variantId === "A11-05") {
+      await service.write(lease, grant, resourceOwner, invocation);
+      return await captureA11Denial(() => service.write(lease, grant, resourceOwner, invocation), planned.expectedCode);
+    }
+    if (variantId === "A11-06") return await captureA11Denial(() => service.write(lease, grant, resourceOwner, { ...invocation, runId: "sec03-a11-cross-run" }), planned.expectedCode);
+    if (variantId === "A11-07") return await captureA11Denial(() => service.write(lease, grant, resourceOwner, { ...invocation, sessionId: "sec03-a11-cross-session" }), planned.expectedCode);
+    assert.equal(variantId, "A11-08");
+    const first = service.write(lease, grant, resourceOwner, invocation);
+    const observation = await captureA11Denial(() => service.write(lease, grant, resourceOwner, invocation), planned.expectedCode);
+    await first;
+    return observation;
+  } finally {
+    prepared.revoke();
+    await service.shutdown();
+  }
+}
+
+const A12_CONTEXT_ID = "sec03-a12-context";
+const A12_SESSION_ID = "sec03-a12-session";
+const A12_PERSONA_DIGEST = createHash("sha256").update("sec03-a12-persona").digest("hex");
+const A12_POLICY_DIGEST = createHash("sha256").update("sec03-a12-policy").digest("hex");
+
+async function captureA12Denial(operation, expectedCode) {
+  let denial = null;
+  await assert.rejects(operation, error => {
+    denial = error;
+    return error instanceof ManualConsentDeniedError && error.code === expectedCode;
+  });
+  assert(denial?.nativeObservation, `${expectedCode} lacks native consent-denial evidence`);
+  assert(Buffer.isBuffer(denial.nativeObservation.proof));
+  return denial.nativeObservation;
+}
+
+async function runA12Denial(context, variantId) {
+  const planned = a12Case(variantId, "E4");
+  let now = Date.now();
+  let releaseFirst = null;
+  let firstDecision = null;
+  let executeCalls = 0;
+  const bridge = createProductionNativeExecutionBridge(a11BridgeIdentity(context));
+  const ledger = new ManualExecutionConsentLedger({
+    now: () => now,
+    observeDenial: async request => {
+      assert.equal(typeof bridge.observeServiceDenial, "function");
+      return bridge.observeServiceDenial(request);
+    },
+  });
+  const presence = Object.freeze({
+    windowId: 101,
+    webContentsId: 202,
+    sessionId: A12_SESSION_ID,
+    runtimeAuthorityId: "sec03-a12-authority",
+    authorityEpoch: 1,
+    incarnationId: "sec03-a12-incarnation",
+    topFrame: true,
+    windowVisible: true,
+    windowFocused: true,
+  });
+  const evidence = Object.freeze({
+    contextId: A12_CONTEXT_ID,
+    sessionId: A12_SESSION_ID,
+    runId: context.identity.runId,
+    authorityEpoch: 1,
+    personaDigest: A12_PERSONA_DIGEST,
+    policyDigest: A12_POLICY_DIGEST,
+  });
+  const challenge = ledger.prepare({
+    operation: "terminal-input",
+    presence,
+    request: planned.request,
+    display: Object.freeze({ operationLabel: "Send input", targetLabel: "sec03-a12-terminal", rootAlias: "terminal", preview: "echo SEC03_A12_EXACT" }),
+    evidence,
+  });
+  const decision = {
+    challengeId: challenge.challengeId,
+    decision: "approve",
+    operation: "terminal-input",
+    argumentsDigest: challenge.argumentsDigest,
+    presence,
+    evidence,
+  };
+  const executeStored = async () => { executeCalls += 1; };
+  try {
+    await bridge.initialize?.();
+    let observation;
+    if (variantId === "A12-01") {
+      observation = await captureA12Denial(() => ledger.decide({ ...decision, decision: "deny" }, executeStored), planned.expectedCode);
+    } else if (variantId === "A12-02") {
+      observation = await captureA12Denial(() => ledger.decide({ ...decision, decision: "dismiss" }, executeStored), planned.expectedCode);
+    } else if (variantId === "A12-03") {
+      now += 15_001;
+      observation = await captureA12Denial(() => ledger.decide(decision, executeStored), planned.expectedCode);
+    } else if (variantId === "A12-04") {
+      observation = await captureA12Denial(() => ledger.decide({ ...decision, argumentsDigest: "f".repeat(64) }, executeStored), planned.expectedCode);
+    } else if (variantId === "A12-05") {
+      await ledger.decide(decision, executeStored);
+      observation = await captureA12Denial(() => ledger.decide(decision, executeStored), planned.expectedCode);
+    } else if (variantId === "A12-06") {
+      observation = await captureA12Denial(() => ledger.decide({ ...decision, presence: { ...presence, topFrame: false } }, executeStored), planned.expectedCode);
+    } else if (variantId === "A12-07") {
+      observation = await captureA12Denial(() => ledger.decide({ ...decision, presence: { ...presence, windowId: 303 } }, executeStored), planned.expectedCode);
+    } else if (variantId === "A12-08") {
+      observation = await captureA12Denial(() => ledger.decide({ ...decision, presence: { ...presence, sessionId: "sec03-a12-cross-session" } }, executeStored), planned.expectedCode);
+    } else {
+      assert.equal(variantId, "A12-09");
+      const gate = new Promise(resolve => { releaseFirst = resolve; });
+      firstDecision = ledger.decide(decision, async () => { executeCalls += 1; await gate; });
+      observation = await captureA12Denial(() => ledger.decide(decision, executeStored), planned.expectedCode);
+      releaseFirst();
+      await firstDecision;
+      firstDecision = null;
+    }
+    assert.equal(executeCalls, variantId === "A12-05" || variantId === "A12-09" ? 1 : 0);
+    return observation;
+  } finally {
+    if (releaseFirst) releaseFirst();
+    if (firstDecision) await firstDecision.catch(() => undefined);
+    ledger.shutdown();
+    await bridge.shutdown();
+  }
+}
+
+async function runA19Denial(context, root) {
+  const planned = a19Case("A19-01", "E4");
+  const now = Date.now();
+  const resourceOwner = issueResourceOwner({ authorityId: "sec03-a19-e4", authorityEpoch: 1, sessionId: A11_SESSION_ID, principal: "local-user-api", rootIds: ["a11-root"] });
+  const bridge = createProductionNativeExecutionBridge(a11BridgeIdentity(context));
+  const service = new ExecutionIsolationService(bridge, { now: () => now });
+  const prepared = await a11ExecutionRequest(root, resourceOwner, context.identity, "E4", planned.payload, now);
+  const attempted = Object.freeze({
+    ...prepared.request,
+    principal: "local-user-api",
+    network: Object.freeze({ mode: "brokered", operationsDigest: createHash("sha256").update("sec03-a19-broker").digest("hex") }),
+  });
+  try {
+    await bridge.initialize?.();
+    return await captureA11Denial(() => service.issueExecutionGrantAuthenticated(attempted), planned.expectedCode);
+  } finally {
+    prepared.revoke();
+    await service.shutdown();
+  }
+}
+
+async function a18RootDescriptor(canonicalPath, reparse = false) {
+  const info = await (reparse ? fs.lstat(canonicalPath, { bigint: true }) : fs.stat(canonicalPath, { bigint: true }));
+  assert(reparse ? info.isSymbolicLink() : info.isDirectory(), `A18 root object is not the expected directory type: ${canonicalPath}`);
+  const identity = { volumeSerial: String(info.dev), fileId: String(info.ino), type: "directory" };
+  return { rootId: "a18-root", access: "read", canonicalPath, identity, canonicalCwd: canonicalPath, cwdIdentity: identity };
+}
+
+async function discoverA18StorageRoots() {
+  const powershell = `
+    [Console]::OutputEncoding = [Text.UTF8Encoding]::new()
+    $remote = Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DriveType -eq 4 } | Select-Object -First 1
+    $nonNtfs = Get-Volume | Where-Object { $_.DriveLetter -and $_.DriveType -eq 'Fixed' -and $_.FileSystemType -ne 'NTFS' } | Select-Object -First 1
+    $removable = Get-Volume | Where-Object { $_.DriveLetter -and $_.DriveType -eq 'Removable' -and $_.FileSystemType -eq 'NTFS' } | Select-Object -First 1
+    [ordered]@{
+      unc = if ($remote) { $remote.ProviderName } else { $null }
+      mapped = if ($remote) { $remote.DeviceID + '\\' } else { $null }
+      nonNtfs = if ($nonNtfs) { [string]$nonNtfs.DriveLetter + ':\\' } else { $null }
+      removableNtfs = if ($removable) { [string]$removable.DriveLetter + ':\\' } else { $null }
+    } | ConvertTo-Json -Compress
+  `;
+  const { stdout } = await execFileAsync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", powershell], { windowsHide: true, encoding: "utf8" });
+  const discovered = JSON.parse(stdout.trim());
+  return {
+    "A18-01": process.env.MINI_LUX_SEC03_A18_UNC_ROOT ?? discovered.unc,
+    "A18-02": process.env.MINI_LUX_SEC03_A18_MAPPED_ROOT ?? discovered.mapped,
+    "A18-03": process.env.MINI_LUX_SEC03_A18_NON_NTFS_ROOT ?? discovered.nonNtfs,
+    "A18-04": process.env.MINI_LUX_SEC03_A18_REMOVABLE_NTFS_ROOT ?? discovered.removableNtfs,
+  };
+}
+
+async function a18LaunchBody(safeRoot, unsupportedRoot, profileId, identity) {
+  const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+  const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256, roots: [unsupportedRoot] };
+  if (profileId === "E1") return launchBody(safeRoot, "echo MUST_NOT_RUN", overrides);
+  if (profileId === "E3") return scriptLaunchBody(safeRoot, `console.log("MUST_NOT_RUN");`, overrides);
+  return terminalLaunchBody(safeRoot, profileId, overrides);
+}
+
+function blockedCapability(label, error) {
+  const detail = error instanceof Error ? `${error.code ? `${error.code}: ` : ""}${error.message}` : String(error);
+  return Object.assign(new Error(`BLOCKED: SEC-03 ${label}: ${detail}`), { code: "BLOCKED", cause: error });
+}
+
+function adminUnc(target) {
+  const root = path.parse(target).root;
+  return `\\\\localhost\\${root[0]}$\\${target.slice(root.length).split(path.sep).join("\\")}`;
+}
+
+async function createA02Fixture() {
+  await fs.mkdir(testNativeDirectory, { recursive: true });
+  const parent = await fs.mkdtemp(path.join(os.tmpdir(), "sec03-a02-"));
+  const root = path.join(parent, "root");
+  const outside = path.join(parent, "outside-canary.txt");
+  const anotherDrive = A02_ANOTHER_DRIVE_PATH;
+  let anotherDriveCreated = false;
+  try {
+    if (path.parse(parent).root.toLowerCase() === path.parse(anotherDrive).root.toLowerCase()) throw blockedCapability("A02-03 another fixed drive", new Error("repository test volume is the system volume"));
+    await fs.mkdir(root);
+    await fs.writeFile(outside, "SEC03_A02_OUTSIDE", "utf8");
+    await fs.mkdir(path.join(parent, "sec03-a02-sibling"));
+    await fs.writeFile(path.join(parent, "sec03-a02-sibling", "canary.txt"), "SEC03_A02_SIBLING", "utf8");
+    await fs.writeFile(path.join(root, "ads-base.txt"), "base", "utf8");
+    await fs.writeFile(`${path.join(root, "ads-base.txt")}:sec03`, "SEC03_A02_ADS", "utf8");
+    await fs.symlink(outside, path.join(root, "outside-symlink.txt"), "file");
+    const junctionTarget = path.join(parent, "junction-target");
+    await fs.mkdir(junctionTarget);
+    await fs.writeFile(path.join(junctionTarget, "canary.txt"), "SEC03_A02_JUNCTION", "utf8");
+    await fs.symlink(junctionTarget, path.join(root, "outside-junction"), "junction");
+    const hardlinkSource = path.join(parent, "hardlink-source.txt");
+    await fs.writeFile(hardlinkSource, "SEC03_A02_HARDLINK", "utf8");
+    await fs.link(hardlinkSource, path.join(root, "outside-hardlink.txt"));
+    await fs.writeFile(anotherDrive, "SEC03_A02_ANOTHER_DRIVE", { encoding: "utf8", flag: "wx" });
+    anotherDriveCreated = true;
+    const slash = String.fromCharCode(92);
+    const namespaceTargets = [adminUnc(outside), `${slash}${slash}?${slash}${outside}`, `${slash}${slash}.${slash}${outside}`];
+    const readable = [
+      outside,
+      path.join(parent, "sec03-a02-sibling", "canary.txt"),
+      anotherDrive,
+      ...namespaceTargets,
+      `${path.join(root, "ads-base.txt")}:sec03`,
+      path.join(root, "outside-symlink.txt"),
+      path.join(root, "outside-junction", "canary.txt"),
+      path.join(root, "outside-hardlink.txt"),
+    ];
+    for (const target of readable) assert.ok((await fs.readFile(target)).length > 0, `A02 fixture is not host-readable: ${target}`);
+    return {
+      root,
+      async close() {
+        await fs.rm(parent, { recursive: true, force: true });
+        if (anotherDriveCreated) await fs.rm(anotherDrive, { force: true });
+      },
+    };
+  } catch (error) {
+    await fs.rm(parent, { recursive: true, force: true }).catch(() => undefined);
+    if (anotherDriveCreated) await fs.rm(anotherDrive, { force: true }).catch(() => undefined);
+    if (error?.code === "BLOCKED") throw error;
+    throw blockedCapability("A02 authentic fixture construction", error);
+  }
+}
+
+function externalIpv4() {
+  return Object.values(os.networkInterfaces()).flat().find(value => value?.family === "IPv4" && !value.internal)?.address ?? null;
+}
+
+async function closeServer(server) {
+  await new Promise(resolve => server.close(resolve));
+}
+
+async function probeListenAvailable(host, port) {
+  const server = net.createServer();
+  try {
+    await new Promise((resolve, reject) => { server.once("error", reject); server.listen(port, host, resolve); });
+  } finally {
+    if (server.listening) await closeServer(server);
+  }
+}
+
+async function createA04Fixture() {
+  const external = externalIpv4();
+  if (!external) throw blockedCapability("A04 external address", new Error("no non-loopback IPv4 address exists"));
+  const counts = Object.fromEntries(["A04-01", "A04-02", "A04-03", "A04-04", "A04-05"].map(key => [key, 0]));
+  const servers = [];
+  try {
+    const dnsServer = dgram.createSocket("udp4");
+    dnsServer.on("message", (message, remote) => {
+      counts["A04-01"] += 1;
+      const response = Buffer.from(message);
+      if (response.length >= 12) { response[2] |= 0x80; response[3] = (response[3] & 0xf0) | 3; }
+      dnsServer.send(response, remote.port, remote.address);
+    });
+    await new Promise((resolve, reject) => { dnsServer.once("error", reject); dnsServer.bind(A04_PORTS.dns, "127.0.0.1", resolve); });
+    servers.push(dnsServer);
+    const udpServer = dgram.createSocket("udp4");
+    udpServer.on("message", (message, remote) => {
+      counts["A04-03"] += 1;
+      udpServer.send(message, remote.port, remote.address);
+    });
+    await new Promise((resolve, reject) => { udpServer.once("error", reject); udpServer.bind(A04_PORTS.udp, external, resolve); });
+    servers.push(udpServer);
+    for (const [variantId, host, port] of [["A04-02", external, A04_PORTS.externalTcp], ["A04-04", "127.0.0.1", A04_PORTS.loopback]]) {
+      const server = net.createServer(socket => { counts[variantId] += 1; socket.destroy(); });
+      await new Promise((resolve, reject) => { server.once("error", reject); server.listen(port, host, resolve); });
+      servers.push(server);
+    }
+    await probeListenAvailable(external, A04_PORTS.listen);
+    const connect = (host, port) => new Promise((resolve, reject) => { const socket = net.createConnection({ host, port }); socket.once("connect", () => socket.end()); socket.once("close", resolve); socket.once("error", reject); });
+    const send = (bytes, port, host) => new Promise((resolve, reject) => {
+      const socket = dgram.createSocket("udp4");
+      socket.send(bytes, port, host, error => { socket.close(); if (error) reject(error); else resolve(); });
+    });
+    await connect(external, A04_PORTS.externalTcp);
+    await connect("127.0.0.1", A04_PORTS.loopback);
+    await send(Buffer.alloc(12), A04_PORTS.dns, "127.0.0.1");
+    await send(Buffer.from("preflight"), A04_PORTS.udp, external);
+    await waitFor(async () => counts["A04-01"] === 1 && counts["A04-02"] === 1 && counts["A04-03"] === 1 && counts["A04-04"] === 1);
+    for (const key of Object.keys(counts)) counts[key] = 0;
+    return {
+      external,
+      async accepted(variantId) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        if (variantId === "A04-05") await probeListenAvailable(external, A04_PORTS.listen);
+        return counts[variantId];
+      },
+      async close() {
+        for (const server of servers.reverse()) {
+          if ("close" in server) await new Promise(resolve => server.close(resolve));
+        }
+      },
+    };
+  } catch (error) {
+    for (const server of servers.reverse()) await new Promise(resolve => server.close(resolve)).catch(() => undefined);
+    if (error?.code === "BLOCKED") throw error;
+    throw blockedCapability("A04 host-side listeners", error);
+  }
 }
 
 const windowsTest = process.platform === "win32" && process.arch === "x64" ? test : test.skip;
@@ -408,7 +1044,7 @@ windowsTest("SEC-03 native execution proof is fixed-identity, host-produced, and
   assert.throws(() => addon.openEvidenceVerifier(candidateId, buildIdSha256, sourceSha256, host.sha256, "0".repeat(64)), error => error?.code === "EXEC_NATIVE_IDENTITY_INVALID");
 
   const verifier = addon.openEvidenceVerifier(candidateId, buildIdSha256, sourceSha256, host.sha256, launcher.sha256);
-  assert.deepEqual(Object.keys(verifier).sort(), ["keyId", "verifyExecutionProof"]);
+  assert.deepEqual(Object.keys(verifier).sort(), ["keyId", "verifyExecutionProof", "verifyLauncherObservation"]);
   assert.equal("sign" in verifier, false);
   assert.equal("mac" in verifier, false);
   assert.equal("createReceipt" in verifier, false);
@@ -419,8 +1055,9 @@ windowsTest("SEC-03 native execution proof is fixed-identity, host-produced, and
   const executionNonce = createHash("sha256").update(randomUUID()).digest("hex");
   try {
     const result = await launch(addon, host, launcher, await launchBody(root, command, { runId, executionId: executionNonce, candidateId, buildIdSha256, sourceSha256 }));
-    assert.equal(result.completion.exitCode, 0);
-    assert.equal(result.completion.reason, "completed");
+    const proofOutput = decode(result.frames).map(value => value.text).join("");
+    assert.equal(result.completion.exitCode, 0, proofOutput);
+    assert.equal(result.completion.reason, "completed", proofOutput);
     const nativeProof = result.completion.nativeProof;
     assert.ok(nativeProof && Buffer.isBuffer(nativeProof.proof));
     assert.equal(nativeProof.keyId, verifier.keyId);
@@ -591,20 +1228,231 @@ windowsTest("SEC-03 real-host receipt harness authenticates A01 exact environmen
   assert.equal(partial.complete, false);
 });
 
-windowsTest("SEC-03 real-host receipt harness authenticates A08 output, wall, and idle limits", { timeout: 60_000 }, async () => {
+windowsTest("SEC-03 real-host receipt harness authenticates all 44 A02 root-escape denials", { timeout: 180_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const fixture = await createA02Fixture();
+  const receipts = [];
+  try {
+    for (const variantId of ["A02-01", "A02-02", "A02-03", "A02-04", "A02-05", "A02-06", "A02-07", "A02-08", "A02-09", "A02-10", "A02-11"]) {
+      for (const profileId of ["E1", "E2", "E3", "E4"]) {
+        const planned = a02Case(variantId, profileId);
+        const result = await runExactDenyProfile(addon, host, launcher, fixture.root, profileId, identity, planned, A02_OUTPUT_MARKER);
+        const output = decode(result.frames).map(value => value.text).join("");
+        assert.deepEqual({ exitCode: result.completion.exitCode, reason: result.completion.reason }, { exitCode: 0, reason: "completed" }, `${variantId}/${profileId}: ${output}`);
+        assert.match(output, new RegExp(A02_OUTPUT_MARKER), `${variantId}/${profileId}`);
+        const { envelope } = evidenceFromNativeProof({ nativeProof: result.completion.nativeProof, host, launcher, layer: "real-host", familyId: "A02", variantId, profileId, observedCode: "OBS_FS_DENIED" });
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A02" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        if (recorder.enabled) await recorder.record("real-host", "A02", variantId, profileId, envelope);
+      }
+    }
+  } finally {
+    await fixture.close();
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 44);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 438);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates A03 retained-root replacement barriers", { timeout: 60_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const parent = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a03-"));
+  const root = path.join(parent, "root");
+  const cwd = path.join(root, "cwd");
+  await fs.mkdir(cwd, { recursive: true });
+  const receipts = [];
+  try {
+    for (const profileId of ["E1", "E2", "E3", "E4"]) {
+      const raceParent = path.join(parent, `identity-${profileId}`);
+      const raceRoot = path.join(raceParent, "root");
+      const raceCwd = path.join(raceRoot, "cwd");
+      const displacedRoot = path.join(raceParent, "displaced-root");
+      await fs.mkdir(raceCwd, { recursive: true });
+      const body = await a03LaunchBody(raceRoot, raceCwd, "A03-01", profileId, identity);
+      const expected = await fs.stat(raceRoot, { bigint: true });
+      await fs.rename(raceRoot, displacedRoot);
+      await fs.mkdir(raceCwd, { recursive: true });
+      const observed = await fs.stat(raceRoot, { bigint: true });
+      assert(expected.dev !== observed.dev || expected.ino !== observed.ino, `${profileId} root replacement reused its object identity`);
+      const nativeObservation = await observeRootDenial(addon, host, launcher, body, "EXEC_ROOT_IDENTITY_CHANGED");
+      const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId: "A03", variantId: "A03-01", profileId });
+      assert.equal(fields.observationClass, "root-identity-changed");
+      assert.equal(fields.raceStage, "before-retained-handle");
+      assert.notEqual(fields.expectedRootIdentityDigest, fields.observedRootIdentityDigest);
+      const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A03" && value.variantId === "A03-01" && value.profileId === profileId);
+      assert.ok(record);
+      const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+      validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+      receipts.push(receipt);
+      if (recorder.enabled) await recorder.record("real-host", "A03", "A03-01", profileId, envelope);
+    }
+    for (const variantId of ["A03-02", "A03-03"]) {
+      for (const profileId of ["E1", "E2", "E3", "E4"]) {
+        const result = await runA03Profile(addon, host, launcher, root, cwd, variantId, profileId, identity);
+        const output = decode(result.frames).map(value => value.text).join("");
+        assert.deepEqual({ exitCode: result.completion.exitCode, reason: result.completion.reason }, { exitCode: 0, reason: "completed" }, `${variantId}/${profileId}: ${output}`);
+        const { envelope } = evidenceFromNativeProof({ nativeProof: result.completion.nativeProof, host, launcher, layer: "real-host", familyId: "A03", variantId, profileId, observedCode: "OBS_ROOT_REPLACEMENT_BLOCKED" });
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A03" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        if (recorder.enabled) await recorder.record("real-host", "A03", variantId, profileId, envelope);
+      }
+    }
+  } finally {
+    await fs.rm(parent, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 12);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 470);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates all 20 A04 direct-network denials", { timeout: 120_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  await fs.mkdir(testNativeDirectory, { recursive: true });
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "sec03-a04-"));
+  const fixture = await createA04Fixture();
+  const receipts = [];
+  try {
+    for (const variantId of ["A04-01", "A04-02", "A04-03", "A04-04", "A04-05"]) {
+      for (const profileId of ["E1", "E2", "E3", "E4"]) {
+        const planned = a04Case(variantId, profileId, fixture.external);
+        const result = await runA04Profile(addon, host, launcher, root, variantId, profileId, identity, planned, fixture.external);
+        const output = decode(result.frames).map(value => value.text).join("");
+        assert.deepEqual({ exitCode: result.completion.exitCode, reason: result.completion.reason }, { exitCode: 0, reason: "completed" }, `${variantId}/${profileId}: ${output}`);
+        assert.match(output, new RegExp(A04_OUTPUT_MARKER), `${variantId}/${profileId}`);
+        const accepted = result.networkAcceptedCount || await fixture.accepted(variantId);
+        assert.equal(accepted, 0, `${variantId}/${profileId} reached a host-side listener`);
+        const { envelope } = evidenceFromNativeProof({ nativeProof: result.completion.nativeProof, host, launcher, layer: "real-host", familyId: "A04", variantId, profileId, observedCode: "OBS_NETWORK_DENIED", networkAttemptCount: 1, networkAcceptedCount: accepted });
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A04" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        if (recorder.enabled) await recorder.record("real-host", "A04", variantId, profileId, envelope);
+      }
+    }
+  } finally {
+    await fixture.close();
+    await fs.rm(root, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 20);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 462);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates reachable A06 descendant containment", { timeout: 120_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a06-"));
+  const receipts = [];
+  try {
+    for (const variantId of ["A06-01", "A06-02", "A06-03", "A06-04"]) {
+      for (const profileId of ["E1", "E2", "E4"]) {
+        const planned = a06Case(variantId, profileId);
+        const result = await runA06Profile(addon, host, launcher, root, variantId, profileId, identity);
+        const output = decode(result.frames).map(value => value.text).join("");
+        assert.deepEqual({ exitCode: result.completion.exitCode, reason: result.completion.reason }, { exitCode: 0, reason: "completed" }, `${variantId}/${profileId}: ${output}`);
+        const { fields, envelope } = evidenceFromNativeProof({ nativeProof: result.completion.nativeProof, host, launcher, layer: "real-host", familyId: "A06", variantId, profileId, observedCode: planned.expectedCode });
+        assert(Number(fields.observedDescendantCount) >= planned.minimumDescendants, `${variantId}/${profileId}: descendant topology missing ${JSON.stringify({ processStarts: fields.processStarts, observedProcessCount: fields.observedProcessCount, observedDescendantCount: fields.observedDescendantCount, descendantValidationFailures: fields.descendantValidationFailures, output })}`);
+        assert.equal(fields.descendantValidationFailures, "0", `${variantId}/${profileId}: descendant token or Job mismatch`);
+        assert.equal(fields.activeProcessZero, "1");
+        assert.equal(fields.treeTerminated, "1");
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A06" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        if (recorder.enabled) await recorder.record("real-host", "A06", variantId, profileId, envelope);
+      }
+    }
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 12);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 470);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates reachable A07 handle denials", { timeout: 60_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a07-"));
+  const receipts = [];
+  try {
+    for (const variantId of ["A07-04", "A07-05", "A07-06"]) {
+      for (const profileId of ["E1", "E2", "E3", "E4"]) {
+        const planned = a07Case(variantId, profileId);
+        const result = await runA07Profile(addon, host, launcher, root, variantId, profileId, identity);
+        const output = decode(result.frames).map(value => value.text).join("");
+        assert.deepEqual({ exitCode: result.completion.exitCode, reason: result.completion.reason }, { exitCode: 0, reason: "completed" }, `${variantId}/${profileId}: ${output}`);
+        const { fields, envelope } = evidenceFromNativeProof({ nativeProof: result.completion.nativeProof, host, launcher, layer: "real-host", familyId: "A07", variantId, profileId, observedCode: planned.expectedCode });
+        if (variantId === "A07-04") {
+          assert.equal(fields.hostDupOpenWin32, "5");
+          assert.equal(fields.jobHandleInheritable, "0");
+          assert.equal(fields.jobHandleDuplicateBlocked, "1");
+        } else if (variantId === "A07-05") {
+          assert.equal(fields.hostDupOpenWin32, "5");
+          assert.equal(fields.controlHandleInheritable, "0");
+          assert.equal(fields.controlHandleDuplicateBlocked, "1");
+        } else {
+          assert.equal(fields.sentinelHandleInheritable, "1");
+          assert.equal(fields.sentinelHandleListed, "0");
+          assert.equal(fields.sentinelHandleObserved, "0");
+          assert.equal(fields.unlistedSentinelBlocked, "1");
+          assert(["0", "6"].includes(fields.sentinelProbeWin32), `${profileId}: unexpected sentinel probe result ${fields.sentinelProbeWin32}`);
+        }
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A07" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        if (recorder.enabled) await recorder.record("real-host", "A07", variantId, profileId, envelope);
+      }
+    }
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 12);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 470);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates all reachable A08 Job limits", { timeout: 120_000 }, async () => {
   const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a08-"));
+  await Promise.all(Object.entries(A08_SUPPORT_FILES).map(([name, contents]) => fs.writeFile(path.join(root, name), contents, "utf8")));
   const receipts = [];
+  const allProfiles = ["E1", "E2", "E3", "E4"];
+  const shellProfiles = ["E1", "E2", "E4"];
   const records = [
-    ...["E1", "E2", "E3", "E4"].map(profileId => ["A08-05", profileId]),
-    ...["E1", "E2", "E3", "E4"].map(profileId => ["A08-06", profileId]),
+    ...allProfiles.map(profileId => ["A08-01", profileId]),
+    ...shellProfiles.map(profileId => ["A08-02", profileId]),
+    ...allProfiles.map(profileId => ["A08-03", profileId]),
+    ...shellProfiles.map(profileId => ["A08-04", profileId]),
+    ...allProfiles.map(profileId => ["A08-05", profileId]),
+    ...allProfiles.map(profileId => ["A08-06", profileId]),
     ["A08-07", "E2"], ["A08-07", "E4"],
   ];
   try {
     for (const [variantId, profileId] of records) {
       const planned = a08Case(variantId, profileId);
       const result = await runA08Profile(addon, host, launcher, root, variantId, profileId, identity);
-      assert.equal(result.completion.reason, planned.expectedCode, `${variantId}/${profileId}`);
+      const diagnosticFields = parseNativeProof(result.completion.nativeProof);
+      const diagnosticOutput = decode(result.frames).map(value => value.text).join("");
+      assert.equal(result.completion.reason, planned.expectedCode, `${variantId}/${profileId}: childExit=${diagnosticFields.childExit}; output=${JSON.stringify(diagnosticOutput.slice(0, 512))}`);
       const { envelope } = evidenceFromNativeProof({ nativeProof: result.completion.nativeProof, host, launcher, layer: "real-host", familyId: "A08", variantId, profileId, observedCode: planned.expectedCode });
       const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A08" && value.variantId === variantId && value.profileId === profileId);
       assert.ok(record);
@@ -617,10 +1465,142 @@ windowsTest("SEC-03 real-host receipt harness authenticates A08 output, wall, an
     await fs.rm(root, { recursive: true, force: true });
   }
   const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
-  assert.equal(partial.validCount, 10);
+  assert.equal(partial.validCount, 24);
   assert.equal(partial.invalidKeys.length, 0);
-  assert.equal(partial.missingKeys.length, 472);
+  assert.equal(partial.missingKeys.length, 458);
   assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates reachable A09 lifecycle reasons", { timeout: 60_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a09-"));
+  const receipts = [];
+  try {
+    for (const variantId of ["A09-01", "A09-02", "A09-03", "A09-04", "A09-05"]) {
+      for (const profileId of ["E1", "E2", "E3", "E4"]) {
+        const planned = a09Case(variantId, profileId);
+        const result = await runA09Profile(addon, host, launcher, root, variantId, profileId, identity);
+        const output = decode(result.frames).map(value => value.text).join("");
+        assert.equal(result.completion.reason, planned.completionReason, `${variantId}/${profileId}: ${output}`);
+        const { envelope } = evidenceFromNativeProof({ nativeProof: result.completion.nativeProof, host, launcher, layer: "real-host", familyId: "A09", variantId, profileId, observedCode: planned.expectedCode });
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A09" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        if (recorder.enabled) await recorder.record("real-host", "A09", variantId, profileId, envelope);
+      }
+    }
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 20);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 462);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates all 24 A11 grant and input denials", { timeout: 120_000 }, async () => {
+  const context = await realHostReceiptContext();
+  const { host, launcher, effectiveIdentity, matrix, nativeVerifier, recorder } = context;
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a11-"));
+  const receipts = [];
+  try {
+    for (const variantId of ["A11-01", "A11-02", "A11-03", "A11-04", "A11-05", "A11-06", "A11-07", "A11-08"]) {
+      for (const profileId of ["E1", "E2", "E3"]) {
+        const planned = a11Case(variantId, profileId);
+        const nativeObservation = profileId === "E2"
+          ? await runA11InputDenial(context, root, variantId)
+          : await runA11LaunchDenial(context, root, variantId, profileId);
+        const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId: "A11", variantId, profileId });
+        assert.equal(fields.observationClass, "service-denial");
+        assert.equal(fields.operation, planned.operation);
+        assert.equal(fields.decisionState, planned.decisionState);
+        assert.equal(fields.observedCode, planned.expectedCode);
+        assert.equal(fields.processStarts, "0");
+        assert.equal(fields.profileCreates, "0");
+        assert.equal(fields.journalWrites, "0");
+        assert.equal(fields.aclMutations, "0");
+        assert.equal(fields.stdinWrites, "0");
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A11" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        if (recorder.enabled) await recorder.record("real-host", "A11", variantId, profileId, envelope);
+      }
+    }
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 24);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 458);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates all 9 A12 manual consent denials", { timeout: 60_000 }, async () => {
+  const context = await realHostReceiptContext();
+  const { host, launcher, effectiveIdentity, matrix, nativeVerifier, recorder } = context;
+  const receipts = [];
+  for (const variantId of ["A12-01", "A12-02", "A12-03", "A12-04", "A12-05", "A12-06", "A12-07", "A12-08", "A12-09"]) {
+    const planned = a12Case(variantId, "E4");
+    const nativeObservation = await runA12Denial(context, variantId);
+    const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId: "A12", variantId, profileId: "E4" });
+    assert.equal(fields.observationClass, "service-denial");
+    assert.equal(fields.operation, planned.operation);
+    assert.equal(fields.decisionState, planned.decisionState);
+    assert.equal(fields.observedCode, planned.expectedCode);
+    assert.equal(fields.processStarts, "0");
+    assert.equal(fields.profileCreates, "0");
+    assert.equal(fields.journalWrites, "0");
+    assert.equal(fields.aclMutations, "0");
+    assert.equal(fields.stdinWrites, "0");
+    const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A12" && value.variantId === variantId && value.profileId === "E4");
+    assert.ok(record);
+    const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+    validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+    receipts.push(receipt);
+    if (recorder.enabled) await recorder.record("real-host", "A12", variantId, "E4", envelope);
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 9);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 473);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates A19 unsupported E4 broker mode", { timeout: 30_000 }, async () => {
+  const context = await realHostReceiptContext();
+  const { host, launcher, effectiveIdentity, matrix, nativeVerifier, recorder } = context;
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a19-"));
+  try {
+    const planned = a19Case("A19-01", "E4");
+    const nativeObservation = await runA19Denial(context, root);
+    const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId: "A19", variantId: "A19-01", profileId: "E4" });
+    assert.equal(fields.observationClass, "service-denial");
+    assert.equal(fields.operation, planned.operation);
+    assert.equal(fields.decisionState, planned.decisionState);
+    assert.equal(fields.observedCode, planned.expectedCode);
+    assert.equal(fields.processStarts, "0");
+    assert.equal(fields.profileCreates, "0");
+    assert.equal(fields.journalWrites, "0");
+    assert.equal(fields.aclMutations, "0");
+    assert.equal(fields.stdinWrites, "0");
+    const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A19" && value.variantId === "A19-01" && value.profileId === "E4");
+    assert.ok(record);
+    const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+    validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+    const partial = aggregateSec03Receipts([receipt], { matrix, identity: effectiveIdentity, nativeVerifier });
+    assert.equal(partial.validCount, 1);
+    assert.equal(partial.invalidKeys.length, 0);
+    assert.equal(partial.missingKeys.length, 481);
+    if (recorder.enabled) await recorder.record("real-host", "A19", "A19-01", "E4", envelope);
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
 });
 
 windowsTest("SEC-03 real-host receipt harness authenticates A17 restricted Script capabilities", { timeout: 60_000 }, async () => {
@@ -659,6 +1639,54 @@ windowsTest("SEC-03 real-host receipt harness authenticates A17 restricted Scrip
   assert.equal(partial.validCount, 7);
   assert.equal(partial.invalidKeys.length, 0);
   assert.equal(partial.missingKeys.length, 475);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates all 20 A18 unsupported roots before host launch", { timeout: 60_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const parent = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a18-"));
+  const safeRoot = path.join(parent, "safe-root");
+  const junctionTarget = path.join(parent, "junction-target");
+  const junctionRoot = path.join(parent, "reparse-root");
+  const receipts = [];
+  const missing = [];
+  try {
+    await fs.mkdir(safeRoot);
+    await fs.mkdir(junctionTarget);
+    await fs.symlink(junctionTarget, junctionRoot, "junction");
+    const paths = { ...await discoverA18StorageRoots(), "A18-05": junctionRoot };
+    for (const variantId of ["A18-01", "A18-02", "A18-03", "A18-04", "A18-05"]) {
+      const rootPath = paths[variantId];
+      let descriptor = null;
+      if (rootPath) {
+        try { descriptor = await a18RootDescriptor(rootPath, variantId === "A18-05"); }
+        catch (error) { missing.push(`${variantId}:${error.code ?? error.message}`); }
+      } else missing.push(`${variantId}:unavailable`);
+      if (!descriptor) continue;
+      for (const profileId of ["E1", "E2", "E3", "E4"]) {
+        const body = await a18LaunchBody(safeRoot, descriptor, profileId, identity);
+        const nativeObservation = await observeRootDenial(addon, host, launcher, body);
+        const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId: "A18", variantId, profileId });
+        assert.equal(fields.processStarts, "0");
+        assert.equal(fields.profileCreates, "0");
+        assert.equal(fields.journalWrites, "0");
+        assert.equal(fields.aclMutations, "0");
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A18" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        if (recorder.enabled) await recorder.record("real-host", "A18", variantId, profileId, envelope);
+      }
+    }
+  } finally {
+    await fs.rm(parent, { recursive: true, force: true });
+  }
+  assert.deepEqual(missing, [], `BLOCKED: SEC-03 A18 requires real accessible root fixtures: ${missing.join(", ")}`);
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 20);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 462);
   assert.equal(partial.complete, false);
 });
 

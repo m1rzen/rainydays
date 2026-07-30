@@ -60,10 +60,25 @@ const MAX_OUTPUT_CHARS = 1024 * 1024;
 const MAX_INPUT_CHARS = 64 * 1024;
 const terminalAuditKey = randomBytes(32);
 
-function auditTerminalOwnerDenial(operation: string, terminalId: string): void {
+type TerminalOwnerDenialCode = "PATH_AUTHORITY_FORGED" | "EXEC_OWNER_MISMATCH";
+
+class TerminalOwnerMismatchError extends Error {
+  readonly code = "EXEC_OWNER_MISMATCH";
+
+  constructor() {
+    super("Terminal owner mismatch");
+    this.name = "TerminalOwnerMismatchError";
+  }
+}
+
+function auditTerminalOwnerDenial(
+  operation: string,
+  terminalId: string,
+  code: TerminalOwnerDenialCode = "PATH_AUTHORITY_FORGED"
+): void {
   logger.warn("terminal-security", "terminal-owner-denied", {
     event: "terminal-owner-denied",
-    code: "PATH_AUTHORITY_FORGED",
+    code,
     operation,
     terminalFingerprint: createHmac("sha256", terminalAuditKey).update(terminalId).digest("hex"),
   });
@@ -207,7 +222,13 @@ class TerminalManager {
   #requireSession(owner: TerminalOwner, id: string, operation: string): TerminalSession {
     this.#assertOwner(owner);
     const session = this.#sessions.get(id);
-    if (session && !this.#isOwner(session, owner)) auditTerminalOwnerDenial(operation, id);
+    if (session && !this.#isOwner(session, owner)) {
+      if (operation === "kill" || operation === "close") {
+        auditTerminalOwnerDenial(operation, id, "EXEC_OWNER_MISMATCH");
+        throw new TerminalOwnerMismatchError();
+      }
+      auditTerminalOwnerDenial(operation, id);
+    }
     if (!session || !this.#isOwner(session, owner)) throw new Error(`终端不存在: ${id}`);
     return session;
   }

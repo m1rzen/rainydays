@@ -27,7 +27,7 @@ async function api(base, token, route, options = {}) {
   return { status: response.status, body };
 }
 
-test("SEC-01 local Terminal API is capability-gated and Session-owned", async () => {
+test("SEC-01/SEC-03 A13 local Terminal API is capability-gated and Session-owned", async () => {
   const fixture = await makeTempDir("mini-lux-sec01-terminal-");
   const port = await freePort();
   const token = "sec01-terminal-owner-test";
@@ -77,19 +77,22 @@ test("SEC-01 local Terminal API is capability-gated and Session-owned", async ()
       method: "POST",
       body: JSON.stringify({ name: "must-not-start", shell: "cmd", cwd: defaultWorkspace }),
     });
-    assert.equal(startDenied.status, 403);
-    assert.equal(startDenied.body.code, "EXEC_NATIVE_CONSENT_REQUIRED");
+    assert.equal(startDenied.status, 403, "A13-01 HTTP start status drifted");
+    assert.equal(startDenied.body.code, "EXEC_DIRECT_MUTATION_DENIED");
+    const afterStart = await api(base, token, "/terminals");
+    assert.equal(afterStart.status, 200);
+    assert.deepEqual(afterStart.body.terminals, [], "A13-01 created a Terminal lease");
 
     const inputDenied = await api(base, token, "/terminals/term_forged/input", {
       method: "POST",
       body: JSON.stringify({ input: "echo must-not-write", appendNewline: true }),
     });
-    assert.equal(inputDenied.status, 403);
-    assert.equal(inputDenied.body.code, "EXEC_NATIVE_CONSENT_REQUIRED");
+    assert.equal(inputDenied.status, 403, "A13-02 HTTP input status drifted");
+    assert.equal(inputDenied.body.code, "EXEC_DIRECT_MUTATION_DENIED");
 
     const firstList = await api(base, token, "/terminals");
     assert.equal(firstList.status, 200);
-    assert.deepEqual(firstList.body.terminals, [], "denied HTTP mutation created a Terminal session");
+    assert.deepEqual(firstList.body.terminals, [], "A13-02 created a Terminal lease or wrote stdin");
 
     const second = await api(base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: "owner B" }) });
     assert.equal(second.status, 200);
@@ -157,7 +160,7 @@ test("SEC-01 shutdown gate prevents runtime publication during asynchronous clea
       body: JSON.stringify({ name: "shutdown-probe", shell: "cmd", cwd: defaultWorkspace }),
     });
     assert.equal(denied.status, 403);
-    assert.equal(denied.body.code, "EXEC_NATIVE_CONSENT_REQUIRED");
+    assert.equal(denied.body.code, "EXEC_DIRECT_MUTATION_DENIED");
 
     await writeFile(signalPath, "shutdown\n", "utf8");
     await waitFor(async () => {

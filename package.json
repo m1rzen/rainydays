@@ -17,7 +17,7 @@
     "build:metadata": "node scripts/generate-build-info.mjs",
     "build:dist-integrity": "node scripts/generate-dist-integrity.mjs",
     "dev": "npm run build:native && npm run build:metadata && npm run assets && tsx watch src/index.ts",
-    "build": "npm run build:metadata && npm run build:native && tsc && npm run build:dist-integrity && npm run assets",
+    "build": "npm run build:native && npm run build:metadata && tsc && npm run build:dist-integrity && npm run assets",
     "start": "node dist/index.js",
     "electron": "npm run build && electron electron/main.cjs",
     "electron:dev": "npm run build && electron electron/main.cjs",

@@ -127,7 +127,7 @@ test("SEC-03 manual consent rejects authority reincarnation, old A-to-B-to-A and
       operation: challenge.operation,
       argumentsDigest: challenge.argumentsDigest,
     }, () => { executions += 1; }),
-    error => error?.code === "CONSENT_BINDING_MISMATCH",
+    error => error?.code === "EXEC_CONSENT_CROSS_SESSION",
   );
 
   const oldAuthority = prepareManual(ledger);
@@ -139,7 +139,7 @@ test("SEC-03 manual consent rejects authority reincarnation, old A-to-B-to-A and
       operation: oldAuthority.operation,
       argumentsDigest: oldAuthority.argumentsDigest,
     }, () => { executions += 1; }),
-    error => error?.code === "CONSENT_BINDING_MISMATCH",
+    error => error?.code === "EXEC_CONSENT_CROSS_SESSION",
   );
 
   const invalidated = prepareManual(ledger);
@@ -152,9 +152,23 @@ test("SEC-03 manual consent rejects authority reincarnation, old A-to-B-to-A and
       operation: invalidated.operation,
       argumentsDigest: invalidated.argumentsDigest,
     }, () => { executions += 1; }),
-    error => error?.code === "CONSENT_CHALLENGE_REPLAYED",
+    error => error?.code === "EXEC_CONSENT_REPLAYED",
   );
   assert.equal(executions, 0);
+});
+
+test("SEC-03 manual consent keeps prepare/shutdown failures outside A12 decision codes", () => {
+  const ledger = new ManualExecutionConsentLedger();
+  assert.throws(
+    () => prepareManual(ledger, { presence: presence({ windowFocused: false }) }),
+    error => error?.code === "CONSENT_PRESENCE_REQUIRED",
+  );
+  assert.throws(
+    () => prepareManual(ledger, { presence: presence({ windowId: 0 }) }),
+    error => error?.code === "CONSENT_REQUEST_INVALID",
+  );
+  ledger.shutdown();
+  assert.throws(() => prepareManual(ledger), error => error?.code === "CONSENT_LEDGER_SHUTDOWN");
 });
 
 test("SEC-03 manual terminal start requires and preserves a private root qualification digest", async () => {

@@ -12,6 +12,7 @@ function harness() {
   const states = new WeakMap();
   const statesByTerminal = new Map();
   const terminations = [];
+  const mutations = { launches: 0, stdinWrites: 0, terminations: 0 };
   const backend = {
     read(lease) {
       const state = states.get(lease);
@@ -22,6 +23,7 @@ function harness() {
       const state = states.get(lease);
       if (!state) throw new Error("unknown synthetic lease");
       state.running = false;
+      mutations.terminations += 1;
       terminations.push(reason);
     },
   };
@@ -33,17 +35,20 @@ function harness() {
       const state = { stdout: "", stderr: "", running: true, terminalId: input.terminalId };
       states.set(lease, state);
       statesByTerminal.set(input.terminalId, state);
+      mutations.launches += 1;
       return lease;
     },
     async writeShell({ lease, terminalId, data, appendNewline }) {
       const state = states.get(lease);
       if (!state || state.terminalId !== terminalId || !state.running) throw new Error("synthetic lease binding mismatch");
+      mutations.stdinWrites += 1;
       state.stdout += data + (appendNewline ? "\r\n" : "");
     },
   };
   return {
     facade: createTerminalFacadeForTests(backend),
     execution,
+    mutations,
     terminations,
     emit(terminalId, stream, text) {
       const state = statesByTerminal.get(terminalId);
@@ -64,11 +69,11 @@ function startOptions(execution, overrides = {}) {
   };
 }
 
-test("SEC-01 Terminal projection keeps opaque leases Session/principal-owned", async () => {
+test("SEC-01/SEC-03 A13 Terminal projection keeps opaque leases Session/principal-owned", async () => {
   const localOwner = owner("session-a");
   const agentOwner = owner("session-a", "agent");
   const otherSession = owner("session-b");
-  const { facade, execution, terminations } = harness();
+  const { facade, execution, mutations, terminations } = harness();
 
   assert.throws(() => facade.list({ ...localOwner }), error => error?.code === "PATH_AUTHORITY_FORGED");
   await assert.rejects(() => facade.start(localOwner, startOptions(execution, { shell: "invalid" })), /不支持的 Shell/);
@@ -99,6 +104,40 @@ test("SEC-01 Terminal projection keeps opaque leases Session/principal-owned", a
 
     await assert.rejects(() => facade.input(otherSession, terminal.id, "echo denied", true, execution), /终端不存在/);
     assert.throws(() => facade.subscribe(agentOwner, terminal.id, () => undefined), /终端不存在/);
+
+    const beforeOwnerMismatch = { ...mutations };
+    const lifecycleAuditCalls = [];
+    const originalLifecycleConsoleLog = console.log;
+    console.log = (...values) => { lifecycleAuditCalls.push(values); };
+    try {
+      await assert.rejects(
+        () => facade.kill(otherSession, terminal.id),
+        error => error?.code === "EXEC_OWNER_MISMATCH" && error?.message === "Terminal owner mismatch",
+        "A13-03 did not preserve the structured owner-mismatch code"
+      );
+      await assert.rejects(
+        () => facade.close(agentOwner, terminal.id),
+        error => error?.code === "EXEC_OWNER_MISMATCH" && error?.message === "Terminal owner mismatch",
+        "A13-04 did not preserve the structured owner-mismatch code"
+      );
+    } finally {
+      console.log = originalLifecycleConsoleLog;
+    }
+    assert.deepEqual({
+      launches: mutations.launches - beforeOwnerMismatch.launches,
+      stdinWrites: mutations.stdinWrites - beforeOwnerMismatch.stdinWrites,
+      terminations: mutations.terminations - beforeOwnerMismatch.terminations,
+    }, { launches: 0, stdinWrites: 0, terminations: 0 }, "A13-03/04 mutation counters were not zero");
+    assert.equal(facade.get(localOwner, terminal.id)?.status, "running", "A13-03/04 attenuated the target lease");
+    assert.equal(facade.list(localOwner).length, 1, "A13-04 closed the target lease");
+    assert.equal(lifecycleAuditCalls.length, 2);
+    for (const call of lifecycleAuditCalls) {
+      const text = JSON.stringify(call);
+      assert.match(text, /EXEC_OWNER_MISMATCH/);
+      assert.equal(text.includes("PATH_AUTHORITY_FORGED"), false);
+      assert.equal(text.includes(terminal.id), false);
+    }
+
     await assert.rejects(() => facade.input(localOwner, terminal.id, "", true, execution), /输入不能为空/);
     await assert.rejects(() => facade.input(localOwner, terminal.id, "x".repeat(64 * 1024 + 1), true, execution), /单次输入不能超过/);
     await assert.rejects(() => facade.input(localOwner, terminal.id, "bad\0input", true, execution), /空字符/);

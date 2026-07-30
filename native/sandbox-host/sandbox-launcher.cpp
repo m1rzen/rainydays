@@ -4,6 +4,7 @@
 #include <node_api.h>
 #include <delayimp.h>
 #include <userenv.h>
+#include <winnetwk.h>
 
 #include <array>
 #include <atomic>
@@ -27,6 +28,7 @@
 #pragma comment(lib, "userenv.lib")
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "mpr.lib")
 
 FARPROC WINAPI ResolveNodeExecutable(unsigned notification, PDelayLoadInfo info) {
   if (notification == dliNotePreLoadLibrary && info && info->szDll && _stricmp(info->szDll, "node.exe") == 0) {
@@ -99,6 +101,7 @@ struct Lease {
   std::string sha256;
   std::string launcher_sha256;
   BY_HANDLE_FILE_INFORMATION identity{};
+  std::atomic<bool> attempted{false};
   bool closed = false;
 };
 
@@ -184,6 +187,18 @@ std::string Hex(const uint8_t* bytes, size_t size) {
     result[i * 2 + 1] = digits[bytes[i] & 15];
   }
   return result;
+}
+
+std::string CanonicalBase64(const unsigned char* data, size_t size) {
+  static constexpr char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; std::string out; out.reserve((size + 2) / 3 * 4);
+  for (size_t i = 0; i < size; i += 3) { const uint32_t value = (static_cast<uint32_t>(data[i]) << 16) | (i + 1 < size ? static_cast<uint32_t>(data[i + 1]) << 8 : 0) | (i + 2 < size ? data[i + 2] : 0); out.push_back(table[(value >> 18) & 63]); out.push_back(table[(value >> 12) & 63]); out.push_back(i + 1 < size ? table[(value >> 6) & 63] : '='); out.push_back(i + 2 < size ? table[value & 63] : '='); }
+  return out;
+}
+
+bool DecodeCanonicalBase64(const std::string& input, std::vector<unsigned char>* out) {
+  if (input.empty() || input.size() % 4) return false; auto value = [](char c) -> int { if (c >= 'A' && c <= 'Z') return c - 'A'; if (c >= 'a' && c <= 'z') return c - 'a' + 26; if (c >= '0' && c <= '9') return c - '0' + 52; if (c == '+') return 62; if (c == '/') return 63; return -1; };
+  for (size_t i = 0; i < input.size(); i += 4) { const int a = value(input[i]), b = value(input[i + 1]); const int c = input[i + 2] == '=' ? -2 : value(input[i + 2]); const int d = input[i + 3] == '=' ? -2 : value(input[i + 3]); if (a < 0 || b < 0 || c == -1 || d == -1 || (c == -2 && d != -2) || ((c == -2 || d == -2) && i + 4 != input.size())) return false; const uint32_t bits = (a << 18) | (b << 12) | ((c < 0 ? 0 : c) << 6) | (d < 0 ? 0 : d); out->push_back(static_cast<unsigned char>(bits >> 16)); if (c >= 0) out->push_back(static_cast<unsigned char>(bits >> 8)); if (d >= 0) out->push_back(static_cast<unsigned char>(bits)); }
+  return CanonicalBase64(out->data(), out->size()) == input;
 }
 
 bool Sha256Handle(HANDLE file, std::string* output) {
@@ -288,7 +303,7 @@ ProofFrame CaptureProofFrame(Execution* execution, const std::vector<uint8_t>& f
 
 DWORD ProofHostExitCode(const std::map<std::string, std::string>& fields) {
   const auto reason = fields.find("completionReason"); if (reason == fields.end()) return 1;
-  if (reason->second == "completed") return 0; if (reason->second == "protocol-invalid") return 71; if (reason->second == "limit-wall") return 80; if (reason->second == "limit-idle") return 81; if (reason->second == "limit-output") return 82; if (reason->second == "cancelled") return 83; if (reason->second == "cleanup-failed") return 75; return 1;
+  if (reason->second == "completed") return 0; if (reason->second == "protocol-invalid") return 71; if (reason->second == "limit-wall") return 80; if (reason->second == "limit-idle") return 81; if (reason->second == "limit-output") return 82; if (reason->second == "cancelled") return 83; if (reason->second == "limit-cpu") return 84; if (reason->second == "limit-active-process") return 85; if (reason->second == "limit-process-memory") return 86; if (reason->second == "limit-job-memory") return 87; if (reason->second == "owner-retired") return 88; if (reason->second == "session-retired") return 89; if (reason->second == "service-shutdown") return 90; if (reason->second == "cleanup-failed") return 75; return 1;
 }
 
 std::string LauncherMarkerPayload(const Execution& execution, DWORD exit_code) {
@@ -324,6 +339,9 @@ void CallJs(napi_env env, napi_value callback, void*, void* data) {
       case 85: reason = "EXEC_LIMIT_ACTIVE_PROCESS"; break;
       case 86: reason = "EXEC_LIMIT_PROCESS_MEMORY"; break;
       case 87: reason = "EXEC_LIMIT_JOB_MEMORY"; break;
+      case 88: reason = "EXEC_OWNER_RETIRED"; break;
+      case 89: reason = "EXEC_SESSION_RETIRED"; break;
+      case 90: reason = "EXEC_SERVICE_SHUTDOWN"; break;
       default: break;
     }
     napi_create_string_utf8(env, reason, NAPI_AUTO_LENGTH, &value); napi_set_named_property(env, result, "reason", value);
@@ -376,6 +394,11 @@ Lease* GetLease(napi_env env, napi_callback_info info, size_t* argc, napi_value*
   Lease* lease = nullptr;
   if (!Ok(env, napi_unwrap(env, *self, reinterpret_cast<void**>(&lease)), "Invalid host lease") || !lease || lease->closed || lease->file == INVALID_HANDLE_VALUE) { Throw(env, "EXEC_NATIVE_LEASE_CLOSED", "Host lease is closed"); return nullptr; }
   return lease;
+}
+
+bool ConsumeLeaseAttempt(napi_env env, Lease* lease) {
+  if (!lease || lease->attempted.exchange(true)) { Throw(env, "EXEC_GRANT_REPLAYED", "Exclusive host lease attempt was already consumed"); return false; }
+  return true;
 }
 
 Execution* GetExecution(napi_env env, napi_callback_info info, size_t* argc, napi_value* argv) {
@@ -453,31 +476,368 @@ struct TrustedRootHandle {
   TrustedRootHandle(TrustedRootHandle&& other) noexcept : handle(other.handle), cwd_handle(other.cwd_handle), identity(other.identity), cwd_identity(other.cwd_identity) { other.handle = INVALID_HANDLE_VALUE; other.cwd_handle = INVALID_HANDLE_VALUE; }
 };
 
-bool OpenTrustedRoots(const Json& launch, std::vector<TrustedRootHandle>* opened, std::string* handles_json) {
+enum class RootFailureClass { none, unc, mapped_remote, non_ntfs, removable_ntfs, reparse_root };
+enum class RootOpenResult { trusted, unsupported, identity_changed, invalid };
+enum class RootPathKind { drive, unc };
+enum class LauncherObservationOutcome { unsupported_root, root_identity_changed };
+
+struct RootIdentityPair {
+  std::uint32_t expected_root_volume = 0;
+  std::uint64_t expected_root_file = 0;
+  std::uint32_t expected_cwd_volume = 0;
+  std::uint64_t expected_cwd_file = 0;
+  BY_HANDLE_FILE_INFORMATION observed_root{};
+  BY_HANDLE_FILE_INFORMATION observed_cwd{};
+};
+
+struct RootObservationDigests {
+  std::string expected;
+  std::string observed;
+};
+
+const char* RootFailureClassName(RootFailureClass value) {
+  switch (value) {
+    case RootFailureClass::unc: return "unc";
+    case RootFailureClass::mapped_remote: return "mapped-remote";
+    case RootFailureClass::non_ntfs: return "non-ntfs";
+    case RootFailureClass::removable_ntfs: return "removable-ntfs";
+    case RootFailureClass::reparse_root: return "reparse-root";
+    case RootFailureClass::none: return "";
+  }
+  return "";
+}
+
+bool CanonicalRootPath(const std::wstring& path, RootPathKind* kind) {
+  if (path.size() < 3 || path.size() >= 32767 || path.find(L'/') != std::wstring::npos) return false;
+  const bool drive = ((path[0] >= L'A' && path[0] <= L'Z') || (path[0] >= L'a' && path[0] <= L'z')) && path[1] == L':' && path[2] == L'\\';
+  const bool unc = path.size() >= 5 && path[0] == L'\\' && path[1] == L'\\' && path[2] != L'?' && path[2] != L'.' && path[2] != L'\\';
+  if (!drive && !unc) return false;
+  if (unc) { const size_t server_end = path.find(L'\\', 2); if (server_end == std::wstring::npos || server_end == 2 || server_end + 1 >= path.size() || path[server_end + 1] == L'\\') return false; }
+  const DWORD required = GetFullPathNameW(path.c_str(), 0, nullptr, nullptr); if (!required || required > 32767) return false;
+  std::vector<wchar_t> full(static_cast<size_t>(required) + 1); const DWORD count = GetFullPathNameW(path.c_str(), static_cast<DWORD>(full.size()), full.data(), nullptr);
+  if (!count || count >= full.size() || path.size() != count || _wcsicmp(path.c_str(), full.data()) != 0) return false;
+  *kind = drive ? RootPathKind::drive : RootPathKind::unc; return true;
+}
+
+std::wstring DosPathFromHandlePath(const wchar_t* path, DWORD count) {
+  const std::wstring value(path, count);
+  if (value.rfind(L"\\\\?\\UNC\\", 0) == 0) return L"\\\\" + value.substr(8);
+  if (value.rfind(L"\\\\?\\", 0) == 0) return value.substr(4);
+  return value;
+}
+
+bool SameCanonicalPath(std::wstring left, std::wstring right) {
+  const auto trim = [](std::wstring* value) { while (value->size() > 3 && value->back() == L'\\') value->pop_back(); };
+  trim(&left); trim(&right); return _wcsicmp(left.c_str(), right.c_str()) == 0;
+}
+
+bool HandleOpenedAs(HANDLE handle, const std::wstring& canonical) {
+  std::array<wchar_t, 32768> opened{}; const DWORD count = GetFinalPathNameByHandleW(handle, opened.data(), static_cast<DWORD>(opened.size()), FILE_NAME_OPENED | VOLUME_NAME_DOS);
+  if (!count || count >= opened.size()) return false; const std::wstring observed = DosPathFromHandlePath(opened.data(), count); if (SameCanonicalPath(observed, canonical)) return true;
+  if (canonical.size() < 3 || canonical[1] != L':' || GetDriveTypeW(canonical.substr(0, 3).c_str()) != DRIVE_REMOTE) return false;
+  std::vector<unsigned char> storage(128u * 1024u); DWORD bytes = static_cast<DWORD>(storage.size()); auto* universal = reinterpret_cast<UNIVERSAL_NAME_INFOW*>(storage.data());
+  return WNetGetUniversalNameW(canonical.c_str(), UNIVERSAL_NAME_INFO_LEVEL, universal, &bytes) == NO_ERROR && universal->lpUniversalName && SameCanonicalPath(observed, universal->lpUniversalName);
+}
+
+bool PathWithin(const std::wstring& root, const std::wstring& cwd) {
+  if (cwd.size() < root.size() || _wcsnicmp(cwd.c_str(), root.c_str(), root.size()) != 0) return false;
+  return cwd.size() == root.size() || root.back() == L'\\' || cwd[root.size()] == L'\\';
+}
+
+bool RootId(const std::string& value) {
+  return !value.empty() && value.size() <= 64 && ((value[0] >= 'a' && value[0] <= 'z') || (value[0] >= '0' && value[0] <= '9'))
+    && std::all_of(value.begin(), value.end(), [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'; });
+}
+
+void AppendU64(std::vector<unsigned char>* material, std::uint64_t value) {
+  for (unsigned shift = 0; shift < 64; shift += 8) material->push_back(static_cast<unsigned char>(value >> shift));
+}
+
+bool RootIdentityDigest(const std::vector<RootIdentityPair>& identities, bool observed, std::string* output) {
+  static constexpr char domain[] = "mini-lux/sec03/launcher-root-handle-identities/v1";
+  std::vector<unsigned char> material(domain, domain + sizeof(domain) - 1); material.push_back(0);
+  mini_lux::sec03::AppendU32(&material, static_cast<std::uint32_t>(identities.size()));
+  for (size_t index = 0; index < identities.size(); ++index) {
+    const auto& value = identities[index]; mini_lux::sec03::AppendU32(&material, static_cast<std::uint32_t>(index));
+    material.push_back('r'); mini_lux::sec03::AppendU32(&material, observed ? value.observed_root.dwVolumeSerialNumber : value.expected_root_volume); AppendU64(&material, observed ? FileId(value.observed_root) : value.expected_root_file);
+    material.push_back('c'); mini_lux::sec03::AppendU32(&material, observed ? value.observed_cwd.dwVolumeSerialNumber : value.expected_cwd_volume); AppendU64(&material, observed ? FileId(value.observed_cwd) : value.expected_cwd_file);
+  }
+  return mini_lux::sec03::Sha256(material.data(), material.size(), output);
+}
+
+bool FixedNtfsDirectory(HANDLE handle, const BY_HANDLE_FILE_INFORMATION& identity) {
+  if (handle == INVALID_HANDLE_VALUE || !(identity.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || (identity.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) return false;
+  std::array<wchar_t, 32768> final{}; std::array<wchar_t, MAX_PATH> volume{}; std::array<wchar_t, 32> filesystem{}; DWORD serial = 0;
+  const DWORD count = GetFinalPathNameByHandleW(handle, final.data(), static_cast<DWORD>(final.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+  return count && count < final.size() && GetVolumePathNameW(final.data(), volume.data(), static_cast<DWORD>(volume.size())) && GetDriveTypeW(volume.data()) == DRIVE_FIXED
+    && GetVolumeInformationW(volume.data(), nullptr, 0, &serial, nullptr, nullptr, filesystem.data(), static_cast<DWORD>(filesystem.size())) && serial == identity.dwVolumeSerialNumber && _wcsicmp(filesystem.data(), L"NTFS") == 0;
+}
+
+RootOpenResult OpenTrustedRoots(const Json& launch, std::vector<TrustedRootHandle>* opened, std::string* handles_json, RootFailureClass* failure_class, RootObservationDigests* identity_digests) {
   const Json* roots = Field(launch, "roots", Json::Kind::array);
-  if (!roots || roots->array.empty() || roots->array.size() > 8) return false;
+  if (!roots || roots->array.empty() || roots->array.size() > 8 || !opened || !handles_json || !failure_class || !identity_digests) return RootOpenResult::invalid;
+  *failure_class = RootFailureClass::none; identity_digests->expected.clear(); identity_digests->observed.clear();
+  std::vector<TrustedRootHandle> probes; std::vector<RootFailureClass> dispositions; std::vector<RootIdentityPair> identity_records; bool ordinary_unsupported = false; bool identity_mismatch = false;
+  for (const Json& root : roots->array) {
+    if (!ExactKeys(root, {"access", "canonicalCwd", "canonicalPath", "cwdIdentity", "identity", "rootId"})) return RootOpenResult::invalid;
+    const Json* path = Field(root, "canonicalPath", Json::Kind::string); const Json* cwd = Field(root, "canonicalCwd", Json::Kind::string); const Json* cwd_identity = Field(root, "cwdIdentity", Json::Kind::object); const Json* access = Field(root, "access", Json::Kind::string); const Json* identity = Field(root, "identity", Json::Kind::object); const Json* root_id = Field(root, "rootId", Json::Kind::string);
+    if (!path || !cwd || !cwd_identity || !access || !identity || !root_id || !RootId(root_id->scalar) || (access->scalar != "read" && access->scalar != "read-write") || !ExactKeys(*identity, {"fileId", "type", "volumeSerial"}) || !ExactKeys(*cwd_identity, {"fileId", "type", "volumeSerial"})) return RootOpenResult::invalid;
+    const Json* volume = Field(*identity, "volumeSerial", Json::Kind::string); const Json* file = Field(*identity, "fileId", Json::Kind::string); const Json* type = Field(*identity, "type", Json::Kind::string); const Json* cwd_volume = Field(*cwd_identity, "volumeSerial", Json::Kind::string); const Json* cwd_file = Field(*cwd_identity, "fileId", Json::Kind::string); const Json* cwd_type = Field(*cwd_identity, "type", Json::Kind::string);
+    uint64_t expected_volume = 0, expected_file = 0, expected_cwd_volume = 0, expected_cwd_file = 0; const std::wstring canonical = Wide(path->scalar); const std::wstring canonical_cwd = Wide(cwd->scalar); RootPathKind path_kind{}, cwd_kind{};
+    if (!volume || !file || !type || !cwd_volume || !cwd_file || !cwd_type || type->scalar != "directory" || cwd_type->scalar != "directory" || canonical.empty() || canonical_cwd.empty() || !CanonicalRootPath(canonical, &path_kind) || !CanonicalRootPath(canonical_cwd, &cwd_kind) || path_kind != cwd_kind || !PathWithin(canonical, canonical_cwd)
+      || !ParseUnsigned(volume->scalar, &expected_volume) || expected_volume > MAXDWORD || !ParseUnsigned(file->scalar, &expected_file) || !ParseUnsigned(cwd_volume->scalar, &expected_cwd_volume) || expected_cwd_volume > MAXDWORD || !ParseUnsigned(cwd_file->scalar, &expected_cwd_file)) return RootOpenResult::invalid;
+    TrustedRootHandle probe; probe.handle = CreateFileW(canonical.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    probe.cwd_handle = CreateFileW(canonical_cwd.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    if (probe.handle == INVALID_HANDLE_VALUE || probe.cwd_handle == INVALID_HANDLE_VALUE || !GetFileInformationByHandle(probe.handle, &probe.identity) || !GetFileInformationByHandle(probe.cwd_handle, &probe.cwd_identity)
+      || !(probe.identity.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || !(probe.cwd_identity.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+      || !HandleOpenedAs(probe.handle, canonical) || !HandleOpenedAs(probe.cwd_handle, canonical_cwd)) return RootOpenResult::invalid;
+    RootIdentityPair identity_record; identity_record.expected_root_volume = static_cast<std::uint32_t>(expected_volume); identity_record.expected_root_file = expected_file; identity_record.expected_cwd_volume = static_cast<std::uint32_t>(expected_cwd_volume); identity_record.expected_cwd_file = expected_cwd_file; identity_record.observed_root = probe.identity; identity_record.observed_cwd = probe.cwd_identity; identity_records.push_back(identity_record);
+    if (expected_volume != probe.identity.dwVolumeSerialNumber || expected_file != FileId(probe.identity) || expected_cwd_volume != probe.cwd_identity.dwVolumeSerialNumber || expected_cwd_file != FileId(probe.cwd_identity)) identity_mismatch = true;
+    RootFailureClass disposition = RootFailureClass::none;
+    if (probe.identity.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+      disposition = RootFailureClass::reparse_root;
+    } else if (probe.cwd_identity.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+      ordinary_unsupported = true;
+    } else if (path_kind == RootPathKind::unc) {
+      std::array<wchar_t, 32768> final{}; std::array<wchar_t, MAX_PATH> volume_path{}; const DWORD count = GetFinalPathNameByHandleW(probe.handle, final.data(), static_cast<DWORD>(final.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+      if (count && count < final.size() && GetVolumePathNameW(final.data(), volume_path.data(), static_cast<DWORD>(volume_path.size())) && GetDriveTypeW(volume_path.data()) == DRIVE_REMOTE) disposition = RootFailureClass::unc; else ordinary_unsupported = true;
+    } else {
+      const std::wstring drive_root = canonical.substr(0, 3); const UINT input_drive_type = GetDriveTypeW(drive_root.c_str());
+      if (input_drive_type == DRIVE_REMOTE) {
+        disposition = RootFailureClass::mapped_remote;
+      } else {
+        std::array<wchar_t, 32768> final{}; std::array<wchar_t, MAX_PATH> volume_path{}; std::array<wchar_t, 32> filesystem{}; DWORD serial = 0; const DWORD count = GetFinalPathNameByHandleW(probe.handle, final.data(), static_cast<DWORD>(final.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+        if (!count || count >= final.size() || !GetVolumePathNameW(final.data(), volume_path.data(), static_cast<DWORD>(volume_path.size())) || !GetVolumeInformationW(volume_path.data(), nullptr, 0, &serial, nullptr, nullptr, filesystem.data(), static_cast<DWORD>(filesystem.size())) || serial != probe.identity.dwVolumeSerialNumber) ordinary_unsupported = true;
+        else { const UINT actual_drive_type = GetDriveTypeW(volume_path.data()); if (actual_drive_type == DRIVE_FIXED && _wcsicmp(filesystem.data(), L"NTFS") != 0) disposition = RootFailureClass::non_ntfs; else if (actual_drive_type == DRIVE_REMOVABLE && _wcsicmp(filesystem.data(), L"NTFS") == 0) disposition = RootFailureClass::removable_ntfs; else if (actual_drive_type != DRIVE_FIXED || _wcsicmp(filesystem.data(), L"NTFS") != 0) ordinary_unsupported = true; }
+      }
+    }
+    if (disposition == RootFailureClass::none && (!FixedNtfsDirectory(probe.handle, probe.identity) || !FixedNtfsDirectory(probe.cwd_handle, probe.cwd_identity))) ordinary_unsupported = true;
+    dispositions.push_back(disposition); probes.push_back(std::move(probe));
+  }
+  RootFailureClass observed = RootFailureClass::none;
+  for (RootFailureClass disposition : dispositions) if (disposition != RootFailureClass::none) { if (observed != RootFailureClass::none && observed != disposition) ordinary_unsupported = true; else observed = disposition; }
+  if (!RootIdentityDigest(identity_records, false, &identity_digests->expected) || !RootIdentityDigest(identity_records, true, &identity_digests->observed)) ordinary_unsupported = true;
+  probes.clear();
+  if (ordinary_unsupported || (identity_mismatch && observed != RootFailureClass::none)) return RootOpenResult::invalid;
+  if (observed != RootFailureClass::none) { *failure_class = observed; return RootOpenResult::unsupported; }
+  if (identity_mismatch) return RootOpenResult::identity_changed;
   std::ostringstream wire; wire << "[";
   for (size_t index = 0; index < roots->array.size(); ++index) {
-    const Json& root = roots->array[index];
-    if (!ExactKeys(root, {"access", "canonicalCwd", "canonicalPath", "cwdIdentity", "identity", "rootId"})) return false;
-    const Json* path = Field(root, "canonicalPath", Json::Kind::string); const Json* cwd = Field(root, "canonicalCwd", Json::Kind::string); const Json* cwd_identity = Field(root, "cwdIdentity", Json::Kind::object); const Json* access = Field(root, "access", Json::Kind::string); const Json* identity = Field(root, "identity", Json::Kind::object);
-    if (!path || !cwd || !cwd_identity || !access || !identity || (access->scalar != "read" && access->scalar != "read-write") || !ExactKeys(*identity, {"fileId", "type", "volumeSerial"}) || !ExactKeys(*cwd_identity, {"fileId", "type", "volumeSerial"})) return false;
-    const Json* volume = Field(*identity, "volumeSerial", Json::Kind::string); const Json* file = Field(*identity, "fileId", Json::Kind::string); const Json* type = Field(*identity, "type", Json::Kind::string); const Json* cwd_volume = Field(*cwd_identity, "volumeSerial", Json::Kind::string); const Json* cwd_file = Field(*cwd_identity, "fileId", Json::Kind::string); const Json* cwd_type = Field(*cwd_identity, "type", Json::Kind::string);
-    uint64_t expected_volume = 0, expected_file = 0, expected_cwd_volume = 0, expected_cwd_file = 0; const std::wstring canonical = Wide(path->scalar); const std::wstring canonical_cwd = Wide(cwd->scalar);
-    if (!volume || !file || !type || !cwd_volume || !cwd_file || !cwd_type || type->scalar != "directory" || cwd_type->scalar != "directory" || canonical.empty() || canonical_cwd.empty() || !ParseUnsigned(volume->scalar, &expected_volume) || !ParseUnsigned(file->scalar, &expected_file) || !ParseUnsigned(cwd_volume->scalar, &expected_cwd_volume) || !ParseUnsigned(cwd_file->scalar, &expected_cwd_file)) return false;
-    TrustedRootHandle value; value.handle = CreateFileW(canonical.c_str(), READ_CONTROL | WRITE_DAC | FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
-    if (value.handle == INVALID_HANDLE_VALUE || !GetFileInformationByHandle(value.handle, &value.identity) || !(value.identity.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || (value.identity.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) return false;
-    std::array<wchar_t, 32768> final_path{}; const DWORD final_count = GetFinalPathNameByHandleW(value.handle, final_path.data(), static_cast<DWORD>(final_path.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
-    std::array<wchar_t, MAX_PATH> volume_path{}; std::array<wchar_t, 32> filesystem{}; DWORD serial = 0;
-    if (!final_count || final_count >= final_path.size() || !GetVolumePathNameW(final_path.data(), volume_path.data(), static_cast<DWORD>(volume_path.size())) || GetDriveTypeW(volume_path.data()) != DRIVE_FIXED || !GetVolumeInformationW(volume_path.data(), nullptr, 0, &serial, nullptr, nullptr, filesystem.data(), static_cast<DWORD>(filesystem.size())) || _wcsicmp(filesystem.data(), L"NTFS") != 0) return false;
-    if (serial != value.identity.dwVolumeSerialNumber || expected_volume != value.identity.dwVolumeSerialNumber || expected_file != FileId(value.identity) || !SetHandleInformation(value.handle, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) return false;
-    value.cwd_handle = CreateFileW(canonical_cwd.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr); if (value.cwd_handle == INVALID_HANDLE_VALUE || !GetFileInformationByHandle(value.cwd_handle, &value.cwd_identity) || !(value.cwd_identity.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || (value.cwd_identity.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || expected_cwd_volume != value.cwd_identity.dwVolumeSerialNumber || expected_cwd_file != FileId(value.cwd_identity)) return false;
-    std::array<wchar_t, 32768> final_cwd{}; const DWORD cwd_count = GetFinalPathNameByHandleW(value.cwd_handle, final_cwd.data(), static_cast<DWORD>(final_cwd.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS); if (!cwd_count || cwd_count >= final_cwd.size()) return false; std::wstring root_name(final_path.data(), final_count), cwd_name(final_cwd.data(), cwd_count); if (cwd_name.size() < root_name.size() || _wcsnicmp(cwd_name.c_str(), root_name.c_str(), root_name.size()) != 0 || (cwd_name.size() > root_name.size() && cwd_name[root_name.size()] != L'\\')) return false;
-    if (!SetHandleInformation(value.cwd_handle, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) return false;
-    if (index) wire << ','; wire << "{\"cwdHandleValue\":\"" << reinterpret_cast<uintptr_t>(value.cwd_handle) << "\",\"handleValue\":\"" << reinterpret_cast<uintptr_t>(value.handle) << "\",\"rootIndex\":" << index << "}";
-    opened->push_back(std::move(value));
+    const Json& root = roots->array[index]; const Json* path = Field(root, "canonicalPath", Json::Kind::string); const Json* cwd = Field(root, "canonicalCwd", Json::Kind::string); const Json* cwd_identity = Field(root, "cwdIdentity", Json::Kind::object); const Json* identity = Field(root, "identity", Json::Kind::object);
+    const Json* volume = Field(*identity, "volumeSerial", Json::Kind::string); const Json* file = Field(*identity, "fileId", Json::Kind::string); const Json* cwd_volume = Field(*cwd_identity, "volumeSerial", Json::Kind::string); const Json* cwd_file = Field(*cwd_identity, "fileId", Json::Kind::string); uint64_t expected_volume = 0, expected_file = 0, expected_cwd_volume = 0, expected_cwd_file = 0;
+    ParseUnsigned(volume->scalar, &expected_volume); ParseUnsigned(file->scalar, &expected_file); ParseUnsigned(cwd_volume->scalar, &expected_cwd_volume); ParseUnsigned(cwd_file->scalar, &expected_cwd_file); const std::wstring canonical = Wide(path->scalar); const std::wstring canonical_cwd = Wide(cwd->scalar);
+    TrustedRootHandle value; value.handle = CreateFileW(canonical.c_str(), READ_CONTROL | WRITE_DAC | DELETE | FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    if (value.handle == INVALID_HANDLE_VALUE || !GetFileInformationByHandle(value.handle, &value.identity) || !(value.identity.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || (value.identity.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) return RootOpenResult::invalid;
+    std::array<wchar_t, 32768> final_path{}; const DWORD final_count = GetFinalPathNameByHandleW(value.handle, final_path.data(), static_cast<DWORD>(final_path.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS); std::array<wchar_t, MAX_PATH> volume_path{}; std::array<wchar_t, 32> filesystem{}; DWORD serial = 0;
+    if (!final_count || final_count >= final_path.size() || !GetVolumePathNameW(final_path.data(), volume_path.data(), static_cast<DWORD>(volume_path.size())) || GetDriveTypeW(volume_path.data()) != DRIVE_FIXED || !GetVolumeInformationW(volume_path.data(), nullptr, 0, &serial, nullptr, nullptr, filesystem.data(), static_cast<DWORD>(filesystem.size())) || _wcsicmp(filesystem.data(), L"NTFS") != 0) return RootOpenResult::invalid;
+    if (serial != value.identity.dwVolumeSerialNumber || expected_volume != value.identity.dwVolumeSerialNumber || expected_file != FileId(value.identity) || !SetHandleInformation(value.handle, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) return RootOpenResult::invalid;
+    if (expected_cwd_volume == expected_volume && expected_cwd_file == expected_file) {
+      if (!DuplicateHandle(GetCurrentProcess(), value.handle, GetCurrentProcess(), &value.cwd_handle, 0, TRUE, DUPLICATE_SAME_ACCESS)) return RootOpenResult::invalid;
+    } else {
+      value.cwd_handle = CreateFileW(canonical_cwd.c_str(), DELETE | FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    }
+    if (value.cwd_handle == INVALID_HANDLE_VALUE || !GetFileInformationByHandle(value.cwd_handle, &value.cwd_identity) || !(value.cwd_identity.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || (value.cwd_identity.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || expected_cwd_volume != value.cwd_identity.dwVolumeSerialNumber || expected_cwd_file != FileId(value.cwd_identity)) return RootOpenResult::invalid;
+    std::array<wchar_t, 32768> final_cwd{}; const DWORD cwd_count = GetFinalPathNameByHandleW(value.cwd_handle, final_cwd.data(), static_cast<DWORD>(final_cwd.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS); if (!cwd_count || cwd_count >= final_cwd.size()) return RootOpenResult::invalid; std::wstring root_name(final_path.data(), final_count), cwd_name(final_cwd.data(), cwd_count); if (cwd_name.size() < root_name.size() || _wcsnicmp(cwd_name.c_str(), root_name.c_str(), root_name.size()) != 0 || (cwd_name.size() > root_name.size() && cwd_name[root_name.size()] != L'\\')) return RootOpenResult::invalid;
+    if (!SetHandleInformation(value.cwd_handle, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) return RootOpenResult::invalid;
+    if (index) wire << ','; wire << "{\"cwdHandleValue\":\"" << reinterpret_cast<uintptr_t>(value.cwd_handle) << "\",\"handleValue\":\"" << reinterpret_cast<uintptr_t>(value.handle) << "\",\"rootIndex\":" << index << "}"; opened->push_back(std::move(value));
   }
-  wire << "]"; *handles_json = wire.str(); return true;
+  wire << "]"; *handles_json = wire.str(); return RootOpenResult::trusted;
+}
+
+void AppendDigestValue(std::vector<unsigned char>* material, const std::string& value) {
+  mini_lux::sec03::AppendU32(material, static_cast<std::uint32_t>(value.size())); material->insert(material->end(), value.begin(), value.end());
+}
+
+bool AppendCanonicalJsonDigest(const Json& value, std::vector<unsigned char>* material, unsigned depth = 0) {
+  if (depth > 20) return false;
+  switch (value.kind) {
+    case Json::Kind::null_value: material->push_back('n'); return true;
+    case Json::Kind::boolean: material->push_back(value.boolean ? 't' : 'f'); return true;
+    case Json::Kind::number: material->push_back('d'); AppendDigestValue(material, value.scalar); return true;
+    case Json::Kind::string: material->push_back('s'); AppendDigestValue(material, value.scalar); return true;
+    case Json::Kind::array:
+      material->push_back('a'); mini_lux::sec03::AppendU32(material, static_cast<std::uint32_t>(value.array.size()));
+      for (const auto& item : value.array) if (!AppendCanonicalJsonDigest(item, material, depth + 1)) return false; return true;
+    case Json::Kind::object:
+      material->push_back('o'); mini_lux::sec03::AppendU32(material, static_cast<std::uint32_t>(value.object.size()));
+      for (const auto& [key, item] : value.object) { AppendDigestValue(material, key); if (!AppendCanonicalJsonDigest(item, material, depth + 1)) return false; } return true;
+  }
+  return false;
+}
+
+bool CanonicalJsonDigest(const char* domain, const Json& value, std::string* output) {
+  std::vector<unsigned char> material(domain, domain + strlen(domain)); material.push_back(0);
+  return AppendCanonicalJsonDigest(value, &material) && mini_lux::sec03::Sha256(material.data(), material.size(), output);
+}
+
+bool SequenceDigest(const char* domain, std::initializer_list<std::string> values, std::string* output) {
+  std::vector<unsigned char> material(domain, domain + strlen(domain)); material.push_back(0); for (const auto& value : values) AppendDigestValue(&material, value);
+  return mini_lux::sec03::Sha256(material.data(), material.size(), output);
+}
+
+bool EnvironmentDigests(const Json& environment, std::string* names_digest, std::string* values_digest) {
+  if (environment.kind != Json::Kind::object) return false;
+  std::vector<unsigned char> names{'m','i','n','i','-','l','u','x','/','s','e','c','0','3','/','l','a','u','n','c','h','e','r','-','e','n','v','-','n','a','m','e','s','/','v','1',0};
+  std::vector<unsigned char> values{'m','i','n','i','-','l','u','x','/','s','e','c','0','3','/','l','a','u','n','c','h','e','r','-','e','n','v','-','v','a','l','u','e','s','/','v','1',0};
+  for (const auto& [name, value] : environment.object) { if (value.kind != Json::Kind::string) return false; AppendDigestValue(&names, name); AppendDigestValue(&values, name); AppendDigestValue(&values, value.scalar); }
+  return mini_lux::sec03::Sha256(names.data(), names.size(), names_digest) && mini_lux::sec03::Sha256(values.data(), values.size(), values_digest);
+}
+
+struct LauncherObservation {
+  std::vector<unsigned char> proof;
+  std::string mac;
+  std::string key_id;
+  std::string channel_marker;
+};
+
+const char* ObservationClassName(LauncherObservationOutcome outcome) {
+  switch (outcome) {
+    case LauncherObservationOutcome::unsupported_root: return "unsupported-root";
+    case LauncherObservationOutcome::root_identity_changed: return "root-identity-changed";
+  }
+  return "";
+}
+
+const char* ObservationRaceStage(LauncherObservationOutcome outcome) {
+  switch (outcome) {
+    case LauncherObservationOutcome::unsupported_root: return "root-qualification";
+    case LauncherObservationOutcome::root_identity_changed: return "before-retained-handle";
+  }
+  return "";
+}
+
+const char* ObservationCode(LauncherObservationOutcome outcome) {
+  switch (outcome) {
+    case LauncherObservationOutcome::unsupported_root: return "EXEC_ROOT_UNSUPPORTED";
+    case LauncherObservationOutcome::root_identity_changed: return "EXEC_ROOT_IDENTITY_CHANGED";
+  }
+  return "";
+}
+
+bool CreateRootObservation(const Json& launch, LauncherObservationOutcome outcome, RootFailureClass failure_class, const RootObservationDigests& identity_digests, const std::string& candidate, const std::string& build, const std::string& source, const std::string& host, const std::string& launcher, LauncherObservation* output) {
+  const Json* execution = Field(launch, "executionId", Json::Kind::string); const Json* context = Field(launch, "contextId", Json::Kind::string); const Json* session = Field(launch, "sessionId", Json::Kind::string); const Json* run = Field(launch, "runId", Json::Kind::string); const Json* authority = Field(launch, "authorityEpoch", Json::Kind::number);
+  const Json* entry = Field(launch, "entryPoint", Json::Kind::string); const Json* profile = Field(launch, "profile", Json::Kind::string); const Json* persona = Field(launch, "personaDigest", Json::Kind::string); const Json* policy = Field(launch, "policyDigest", Json::Kind::string); const Json* payload = Field(launch, "payload", Json::Kind::string); const Json* payload_digest = Field(launch, "payloadDigest", Json::Kind::string);
+  const Json* roots = Field(launch, "roots", Json::Kind::array); const Json* environment = Field(launch, "environment", Json::Kind::object); const Json* limits = Field(launch, "limits", Json::Kind::object); const Json* network = Field(launch, "network", Json::Kind::object); const Json* network_mode = network && ExactKeys(*network, {"mode"}) ? Field(*network, "mode", Json::Kind::string) : nullptr;
+  const std::string observation_class = ObservationClassName(outcome); const std::string race_stage = ObservationRaceStage(outcome); const std::string observed_code = ObservationCode(outcome);
+  const std::string root_failure_class = outcome == LauncherObservationOutcome::root_identity_changed ? "none" : RootFailureClassName(failure_class); std::uint64_t authority_epoch = 0;
+  const bool profile_pair = entry && profile && ((entry->scalar == "E1" && profile->scalar == "one-shot-shell") || (entry->scalar == "E2" && profile->scalar == "agent-shell") || (entry->scalar == "E3" && profile->scalar == "script") || (entry->scalar == "E4" && profile->scalar == "manual-terminal"));
+  const bool outcome_valid = (outcome == LauncherObservationOutcome::unsupported_root && failure_class != RootFailureClass::none && identity_digests.expected == identity_digests.observed)
+    || (outcome == LauncherObservationOutcome::root_identity_changed && failure_class == RootFailureClass::none && identity_digests.expected != identity_digests.observed);
+  if (!outcome_valid || observation_class.empty() || race_stage.empty() || observed_code.empty() || !output || !execution || !context || !session || !run || !authority || !profile_pair || !persona || !policy || !payload || !payload_digest || !roots || roots->array.empty() || roots->array.size() > 8 || !environment || !limits || !network_mode || network_mode->scalar != "deny"
+    || !mini_lux::sec03::LauncherObservationId(execution->scalar) || !mini_lux::sec03::LauncherObservationId(context->scalar) || !mini_lux::sec03::LauncherObservationId(session->scalar) || !mini_lux::sec03::LauncherObservationId(run->scalar) || !mini_lux::sec03::Decimal(authority->scalar, &authority_epoch) || !authority_epoch
+    || !mini_lux::sec03::CanonicalHex(persona->scalar, 32, 32) || !mini_lux::sec03::CanonicalHex(policy->scalar, 32, 32) || !mini_lux::sec03::CanonicalHex(payload_digest->scalar, 32, 32)
+    || !mini_lux::sec03::CanonicalHex(identity_digests.expected, 32, 32) || !mini_lux::sec03::CanonicalHex(identity_digests.observed, 32, 32)) return false;
+  std::vector<unsigned char> payload_bytes; std::string observed_payload_digest;
+  if (!DecodeCanonicalBase64(payload->scalar, &payload_bytes) || payload_bytes.empty() || payload_bytes.size() > kMaxFrame || std::find(payload_bytes.begin(), payload_bytes.end(), 0) != payload_bytes.end()
+    || !mini_lux::sec03::Sha256(payload_bytes.data(), payload_bytes.size(), &observed_payload_digest) || observed_payload_digest != payload_digest->scalar) return false;
+  std::string request_digest, root_request_digest, root_access_digest, stimulus_digest, job_policy_digest, environment_names_digest, environment_values_digest;
+  std::string transcript_digest, package_sid_digest, input_set_digest, acl_profile_digest;
+  if (!CanonicalJsonDigest("mini-lux/sec03/launcher-request/v1", launch, &request_digest)
+    || !CanonicalJsonDigest("mini-lux/sec03/launcher-root-request/v1", *roots, &root_request_digest)
+    || !CanonicalJsonDigest("mini-lux/sec03/launcher-root-access/v1", *roots, &root_access_digest)
+    || !CanonicalJsonDigest("mini-lux/sec03/launcher-job-policy/v1", *limits, &job_policy_digest)
+    || !EnvironmentDigests(*environment, &environment_names_digest, &environment_values_digest)
+    || !SequenceDigest("mini-lux/sec03/launcher-stimulus/v1", {"launch", "none", observed_code, request_digest, payload_digest->scalar, candidate, build, source, host, launcher, execution->scalar, context->scalar, session->scalar, run->scalar, authority->scalar, entry->scalar, profile->scalar, persona->scalar, policy->scalar, root_request_digest, observation_class, race_stage, root_failure_class, identity_digests.expected, identity_digests.observed}, &stimulus_digest)
+    || !SequenceDigest("mini-lux/sec03/launcher-transcript-sentinel/v1", {request_digest, root_request_digest, observation_class, race_stage, identity_digests.expected, identity_digests.observed, observed_code}, &transcript_digest)
+    || !SequenceDigest("mini-lux/sec03/launcher-sentinel/v1", {"package-sid-not-created"}, &package_sid_digest)
+    || !SequenceDigest("mini-lux/sec03/launcher-sentinel/v1", {"input-set-empty"}, &input_set_digest)
+    || !SequenceDigest("mini-lux/sec03/launcher-sentinel/v1", {"acl-profile-not-created"}, &acl_profile_digest)) return false;
+  std::string binding; mini_lux::sec03::AttestationKey key;
+  if (!mini_lux::sec03::AttestationBindingDigest(candidate, build, source, host, launcher, &binding) || !mini_lux::sec03::ProvisionAttestationKey(binding, launcher, &key)) return false;
+  std::ostringstream proof; proof << "v=1\nkind=launcher-observation\nkeyId=" << key.key_id << "\ncandidate=" << candidate << "\nbuildIdSha256=" << build << "\nsourceSha256=" << source << "\nhostSha256=" << host << "\nlauncher=" << launcher
+    << "\nexecution=" << execution->scalar << "\ncontext=" << context->scalar << "\nsession=" << session->scalar << "\nrun=" << run->scalar << "\nauthorityEpoch=" << authority->scalar << "\nentryPoint=" << entry->scalar << "\nprofile=" << profile->scalar << "\noperation=launch\ndecisionState=none"
+    << "\npersonaDigest=" << persona->scalar << "\npolicyDigest=" << policy->scalar << "\npayloadDigest=" << payload_digest->scalar << "\nstimulusDigest=" << stimulus_digest << "\nrequestDigest=" << request_digest << "\nrootRequestDigest=" << root_request_digest
+    << "\nobservationClass=" << observation_class << "\nraceStage=" << race_stage << "\nrootFailureClass=" << root_failure_class << "\nexpectedRootIdentityDigest=" << identity_digests.expected << "\nobservedRootIdentityDigest=" << identity_digests.observed
+    << "\nobservedCode=" << observed_code << "\nobservedSubcode=none\ntranscriptSha256=" << transcript_digest << "\ntokenIsAppContainer=0\npackageSidSha256=" << package_sid_digest << "\ncapabilityCount=0\nlowIntegrity=0\njobConstrained=0\njobPolicySha256=" << job_policy_digest
+    << "\nactiveProcessZero=1\nprocessStarts=0\nprofileCreates=0\njournalWrites=0\naclMutations=0\nstdinWrites=0\ninputDigestSetSha256=" << input_set_digest << "\nconpty=0\nconptyMerged=0\nexecutableLease=0\nchildExit=none\ncompletionReason=pre-host-denial\naggregateOutputBytes=0\ncleanupComplete=1\njobClosed=1\nhandlesDrained=1\nhostExited=1\ntreeTerminated=1\nrootIdentityDigest=" << identity_digests.expected
+    << "\nrootAccessProfileSha256=" << root_access_digest << "\nrootFixedNtfs=" << (outcome == LauncherObservationOutcome::root_identity_changed ? "1" : "0") << "\nrootSameSystemVolume=0\nrootHasSpace=0\nrootHasNonAscii=0\nenvironmentNameDigest=" << environment_names_digest << "\nenvironmentValueDigest=" << environment_values_digest << "\nambientLeakCount=0\nnetworkMode=deny\nnetworkAttemptCount=0\nnetworkAcceptedCount=0\naclProfileSha256=" << acl_profile_digest << "\n";
+  const std::string proof_text = proof.str(); std::map<std::string, std::string> fields; std::array<unsigned char, 32> mac{}, marker{}; std::string proof_sha256;
+  if (!mini_lux::sec03::ParseCanonicalLauncherObservation(proof_text, candidate, build, source, host, launcher, key.key_id, &fields)
+    || !mini_lux::sec03::HmacSha256(key, reinterpret_cast<const unsigned char*>(proof_text.data()), proof_text.size(), &mac)
+    || !mini_lux::sec03::Sha256(reinterpret_cast<const unsigned char*>(proof_text.data()), proof_text.size(), &proof_sha256)) return false;
+  const std::string mac_hex = mini_lux::sec03::HexBytes(mac.data(), mac.size()); const std::string marker_payload = mini_lux::sec03::LauncherObservationMarkerPayload(fields, proof_sha256, mac_hex);
+  if (marker_payload.empty() || !mini_lux::sec03::HmacSha256(key, reinterpret_cast<const unsigned char*>(marker_payload.data()), marker_payload.size(), &marker)) return false;
+  output->proof.assign(proof_text.begin(), proof_text.end()); output->mac = mac_hex; output->key_id = key.key_id; output->channel_marker = mini_lux::sec03::HexBytes(marker.data(), marker.size()); return true;
+}
+
+bool CreateServiceDenialObservation(const Json& request, const std::string& wire, const Lease& lease, bool* request_valid, LauncherObservation* output) {
+  if (!request_valid || !output) return false; *request_valid = false;
+  if (!ExactKeys(request, {"authorityEpoch", "buildIdSha256", "candidateId", "contextId", "decisionState", "entryPoint", "executionId", "operation", "payloadDigest", "personaDigest", "policyDigest", "profile", "requestDigest", "runId", "sessionId", "sourceSha256", "type", "v"})) return false;
+  const Json* version = Field(request, "v", Json::Kind::number); const Json* type = Field(request, "type", Json::Kind::string);
+  const Json* candidate = Field(request, "candidateId", Json::Kind::string); const Json* build = Field(request, "buildIdSha256", Json::Kind::string); const Json* source = Field(request, "sourceSha256", Json::Kind::string);
+  const Json* execution = Field(request, "executionId", Json::Kind::string); const Json* context = Field(request, "contextId", Json::Kind::string); const Json* session = Field(request, "sessionId", Json::Kind::string); const Json* run = Field(request, "runId", Json::Kind::string); const Json* authority = Field(request, "authorityEpoch", Json::Kind::number);
+  const Json* entry = Field(request, "entryPoint", Json::Kind::string); const Json* profile = Field(request, "profile", Json::Kind::string); const Json* persona = Field(request, "personaDigest", Json::Kind::string); const Json* policy = Field(request, "policyDigest", Json::Kind::string); const Json* payload = Field(request, "payloadDigest", Json::Kind::string); const Json* request_digest = Field(request, "requestDigest", Json::Kind::string); const Json* operation = Field(request, "operation", Json::Kind::string); const Json* state = Field(request, "decisionState", Json::Kind::string);
+  std::uint64_t authority_epoch = 0;
+  const bool identity_valid = candidate && build && source && mini_lux::sec03::CanonicalHex(candidate->scalar, 32, 32) && mini_lux::sec03::CanonicalHex(build->scalar, 32, 32) && mini_lux::sec03::CanonicalHex(source->scalar, 32, 32);
+  const bool ids_valid = execution && context && session && run && mini_lux::sec03::LauncherObservationId(execution->scalar) && mini_lux::sec03::LauncherObservationId(context->scalar) && mini_lux::sec03::LauncherObservationId(session->scalar) && mini_lux::sec03::LauncherObservationId(run->scalar);
+  const bool digests_valid = persona && policy && payload && request_digest && mini_lux::sec03::CanonicalHex(persona->scalar, 32, 32) && mini_lux::sec03::CanonicalHex(policy->scalar, 32, 32) && mini_lux::sec03::CanonicalHex(payload->scalar, 32, 32) && mini_lux::sec03::CanonicalHex(request_digest->scalar, 32, 32);
+  const char* observed_code = state ? mini_lux::sec03::ServiceDenialCode(state->scalar) : "";
+  const bool consent_state = state && state->scalar.rfind("consent-", 0) == 0;
+  const bool network_profile_unsupported = state && state->scalar == "network-profile-unsupported";
+  const bool pair_valid = entry && profile && operation && observed_code[0]
+    && ((!consent_state && !network_profile_unsupported && ((entry->scalar == "E1" && profile->scalar == "one-shot-shell" && operation->scalar == "launch") || (entry->scalar == "E2" && profile->scalar == "agent-shell" && operation->scalar == "input") || (entry->scalar == "E3" && profile->scalar == "script" && operation->scalar == "launch")))
+      || (consent_state && entry->scalar == "E4" && profile->scalar == "manual-terminal" && operation->scalar == "consent")
+      || (network_profile_unsupported && entry->scalar == "E4" && profile->scalar == "manual-terminal" && operation->scalar == "launch"));
+  if (!version || version->scalar != "1" || !type || type->scalar != "service-denial" || !identity_valid || !ids_valid || !digests_valid || !pair_valid || !authority || !mini_lux::sec03::Decimal(authority->scalar, &authority_epoch) || !authority_epoch || authority->scalar != std::to_string(authority_epoch)) return false;
+  std::ostringstream canonical; canonical << "{\"v\":1,\"type\":\"service-denial\",\"candidateId\":\"" << candidate->scalar << "\",\"buildIdSha256\":\"" << build->scalar << "\",\"sourceSha256\":\"" << source->scalar
+    << "\",\"executionId\":\"" << execution->scalar << "\",\"contextId\":\"" << context->scalar << "\",\"sessionId\":\"" << session->scalar << "\",\"runId\":\"" << run->scalar << "\",\"authorityEpoch\":" << authority->scalar
+    << ",\"entryPoint\":\"" << entry->scalar << "\",\"profile\":\"" << profile->scalar << "\",\"personaDigest\":\"" << persona->scalar << "\",\"policyDigest\":\"" << policy->scalar << "\",\"payloadDigest\":\"" << payload->scalar
+    << "\",\"requestDigest\":\"" << request_digest->scalar << "\",\"operation\":\"" << operation->scalar << "\",\"decisionState\":\"" << state->scalar << "\"}";
+  if (canonical.str() != wire) return false;
+  *request_valid = true;
+  std::string root_sentinel, root_request_digest, root_access_digest, job_policy_digest, environment_names_digest, environment_values_digest, package_sid_digest, input_set_digest, acl_profile_digest, stimulus_digest, transcript_digest;
+  if (!mini_lux::sec03::LauncherObservationSentinel("root-not-consumed", &root_sentinel)
+    || !mini_lux::sec03::LauncherObservationSentinel("root-request-not-consumed", &root_request_digest)
+    || !mini_lux::sec03::LauncherObservationSentinel("root-access-not-consumed", &root_access_digest)
+    || !mini_lux::sec03::LauncherObservationSentinel("job-policy-not-created", &job_policy_digest)
+    || !mini_lux::sec03::LauncherObservationSentinel("environment-names-not-created", &environment_names_digest)
+    || !mini_lux::sec03::LauncherObservationSentinel("environment-values-not-created", &environment_values_digest)
+    || !mini_lux::sec03::LauncherObservationSentinel("package-sid-not-created", &package_sid_digest)
+    || !mini_lux::sec03::LauncherObservationSentinel("input-set-empty", &input_set_digest)
+    || !mini_lux::sec03::LauncherObservationSentinel("acl-profile-not-created", &acl_profile_digest)
+    || !SequenceDigest("mini-lux/sec03/service-denial-stimulus/v1", {operation->scalar, state->scalar, observed_code, request_digest->scalar, payload->scalar, candidate->scalar, build->scalar, source->scalar, lease.sha256, lease.launcher_sha256, execution->scalar, context->scalar, session->scalar, run->scalar, authority->scalar, entry->scalar, profile->scalar, persona->scalar, policy->scalar}, &stimulus_digest)) return false;
+  const bool transcript_valid = consent_state || network_profile_unsupported
+    ? SequenceDigest("mini-lux/sec03/service-denial-transcript/v1", {request_digest->scalar, payload->scalar, operation->scalar, state->scalar, observed_code, candidate->scalar, execution->scalar, context->scalar, session->scalar, run->scalar, entry->scalar, profile->scalar, persona->scalar, policy->scalar}, &transcript_digest)
+    : SequenceDigest("mini-lux/sec03/service-denial-transcript/v1", {request_digest->scalar, payload->scalar, operation->scalar, state->scalar, observed_code, execution->scalar, context->scalar, session->scalar, run->scalar, entry->scalar, profile->scalar}, &transcript_digest);
+  if (!transcript_valid) return false;
+  std::string binding; mini_lux::sec03::AttestationKey key;
+  if (!mini_lux::sec03::AttestationBindingDigest(candidate->scalar, build->scalar, source->scalar, lease.sha256, lease.launcher_sha256, &binding) || !mini_lux::sec03::ProvisionAttestationKey(binding, lease.launcher_sha256, &key)) return false;
+  std::ostringstream proof; proof << "v=1\nkind=launcher-observation\nkeyId=" << key.key_id << "\ncandidate=" << candidate->scalar << "\nbuildIdSha256=" << build->scalar << "\nsourceSha256=" << source->scalar << "\nhostSha256=" << lease.sha256 << "\nlauncher=" << lease.launcher_sha256
+    << "\nexecution=" << execution->scalar << "\ncontext=" << context->scalar << "\nsession=" << session->scalar << "\nrun=" << run->scalar << "\nauthorityEpoch=" << authority->scalar << "\nentryPoint=" << entry->scalar << "\nprofile=" << profile->scalar << "\noperation=" << operation->scalar << "\ndecisionState=" << state->scalar
+    << "\npersonaDigest=" << persona->scalar << "\npolicyDigest=" << policy->scalar << "\npayloadDigest=" << payload->scalar << "\nstimulusDigest=" << stimulus_digest << "\nrequestDigest=" << request_digest->scalar << "\nrootRequestDigest=" << root_request_digest
+    << "\nobservationClass=service-denial\nraceStage=trusted-service-decision\nrootFailureClass=none\nexpectedRootIdentityDigest=" << root_sentinel << "\nobservedRootIdentityDigest=" << root_sentinel << "\nobservedCode=" << observed_code
+    << "\nobservedSubcode=none\ntranscriptSha256=" << transcript_digest << "\ntokenIsAppContainer=0\npackageSidSha256=" << package_sid_digest << "\ncapabilityCount=0\nlowIntegrity=0\njobConstrained=0\njobPolicySha256=" << job_policy_digest
+    << "\nactiveProcessZero=1\nprocessStarts=0\nprofileCreates=0\njournalWrites=0\naclMutations=0\nstdinWrites=0\ninputDigestSetSha256=" << input_set_digest << "\nconpty=0\nconptyMerged=0\nexecutableLease=0\nchildExit=none\ncompletionReason=pre-host-denial\naggregateOutputBytes=0\ncleanupComplete=1\njobClosed=1\nhandlesDrained=1\nhostExited=1\ntreeTerminated=1\nrootIdentityDigest=" << root_sentinel
+    << "\nrootAccessProfileSha256=" << root_access_digest << "\nrootFixedNtfs=0\nrootSameSystemVolume=0\nrootHasSpace=0\nrootHasNonAscii=0\nenvironmentNameDigest=" << environment_names_digest << "\nenvironmentValueDigest=" << environment_values_digest << "\nambientLeakCount=0\nnetworkMode=deny\nnetworkAttemptCount=0\nnetworkAcceptedCount=0\naclProfileSha256=" << acl_profile_digest << "\n";
+  const std::string proof_text = proof.str(); std::map<std::string, std::string> fields; std::array<unsigned char, 32> mac{}, marker{}; std::string proof_sha256;
+  if (!mini_lux::sec03::ParseCanonicalLauncherObservation(proof_text, candidate->scalar, build->scalar, source->scalar, lease.sha256, lease.launcher_sha256, key.key_id, &fields)
+    || !mini_lux::sec03::HmacSha256(key, reinterpret_cast<const unsigned char*>(proof_text.data()), proof_text.size(), &mac)
+    || !mini_lux::sec03::Sha256(reinterpret_cast<const unsigned char*>(proof_text.data()), proof_text.size(), &proof_sha256)) return false;
+  const std::string mac_hex = mini_lux::sec03::HexBytes(mac.data(), mac.size()); const std::string marker_payload = mini_lux::sec03::LauncherObservationMarkerPayload(fields, proof_sha256, mac_hex);
+  if (marker_payload.empty() || !mini_lux::sec03::HmacSha256(key, reinterpret_cast<const unsigned char*>(marker_payload.data()), marker_payload.size(), &marker)) return false;
+  output->proof.assign(proof_text.begin(), proof_text.end()); output->mac = mac_hex; output->key_id = key.key_id; output->channel_marker = mini_lux::sec03::HexBytes(marker.data(), marker.size()); return true;
+}
+
+bool FrozenObservationObject(napi_env env, const LauncherObservation& observation, napi_value* result) {
+  napi_value proof, mac, key_id, marker; void* copied = nullptr;
+  if (napi_create_buffer_copy(env, observation.proof.size(), observation.proof.data(), &copied, &proof) != napi_ok || napi_create_string_utf8(env, observation.mac.c_str(), NAPI_AUTO_LENGTH, &mac) != napi_ok
+    || napi_create_string_utf8(env, observation.key_id.c_str(), NAPI_AUTO_LENGTH, &key_id) != napi_ok || napi_create_string_utf8(env, observation.channel_marker.c_str(), NAPI_AUTO_LENGTH, &marker) != napi_ok || napi_create_object(env, result) != napi_ok) return false;
+  napi_property_descriptor properties[] = {{"proof", nullptr, nullptr, nullptr, nullptr, proof, napi_enumerable, nullptr}, {"mac", nullptr, nullptr, nullptr, nullptr, mac, napi_enumerable, nullptr}, {"keyId", nullptr, nullptr, nullptr, nullptr, key_id, napi_enumerable, nullptr}, {"channelMarker", nullptr, nullptr, nullptr, nullptr, marker, napi_enumerable, nullptr}};
+  return napi_define_properties(env, *result, sizeof(properties) / sizeof(properties[0]), properties) == napi_ok && napi_object_freeze(env, *result) == napi_ok;
+}
+
+bool ThrowRootObservation(napi_env env, LauncherObservationOutcome outcome, const LauncherObservation& observation) {
+  const char* observed_code = ObservationCode(outcome); const char* observed_message = outcome == LauncherObservationOutcome::root_identity_changed ? "Root identity changed before retained handle" : "Root identity or local NTFS policy mismatch";
+  napi_value proof, mac, key_id, marker, native_observation, code, message, error; void* copied = nullptr;
+  if (!observed_code[0] || napi_create_buffer_copy(env, observation.proof.size(), observation.proof.data(), &copied, &proof) != napi_ok
+    || napi_create_string_utf8(env, observation.mac.c_str(), NAPI_AUTO_LENGTH, &mac) != napi_ok || napi_create_string_utf8(env, observation.key_id.c_str(), NAPI_AUTO_LENGTH, &key_id) != napi_ok
+    || napi_create_string_utf8(env, observation.channel_marker.c_str(), NAPI_AUTO_LENGTH, &marker) != napi_ok || napi_create_object(env, &native_observation) != napi_ok) return false;
+  napi_property_descriptor properties[] = {{"proof", nullptr, nullptr, nullptr, nullptr, proof, napi_enumerable, nullptr}, {"mac", nullptr, nullptr, nullptr, nullptr, mac, napi_enumerable, nullptr}, {"keyId", nullptr, nullptr, nullptr, nullptr, key_id, napi_enumerable, nullptr}, {"channelMarker", nullptr, nullptr, nullptr, nullptr, marker, napi_enumerable, nullptr}};
+  if (napi_define_properties(env, native_observation, sizeof(properties) / sizeof(properties[0]), properties) != napi_ok || napi_object_freeze(env, native_observation) != napi_ok
+    || napi_create_string_utf8(env, observed_code, NAPI_AUTO_LENGTH, &code) != napi_ok || napi_create_string_utf8(env, observed_message, NAPI_AUTO_LENGTH, &message) != napi_ok
+    || napi_create_error(env, code, message, &error) != napi_ok) return false;
+  napi_property_descriptor native_property = {"nativeObservation", nullptr, nullptr, nullptr, nullptr, native_observation, napi_enumerable, nullptr};
+  return napi_define_properties(env, error, 1, &native_property) == napi_ok && napi_throw(env, error) == napi_ok;
 }
 
 bool OpenCurrentExecutable(TrustedRootHandle* executable, std::string* sha256) {
@@ -542,7 +902,7 @@ bool RecoverJournals(const std::string& candidate, const std::string& launcher) 
 
 napi_value LaunchHost(napi_env env, napi_callback_info info) {
   size_t argc = 2; napi_value argv[2], self; Lease* lease = GetLease(env, info, &argc, argv, &self);
-  if (!lease || argc != 2) return nullptr;
+  if (!lease || !ConsumeLeaseAttempt(env, lease) || argc != 2) return nullptr;
   bool is_buffer = false; napi_is_buffer(env, argv[0], &is_buffer); void* frame_data = nullptr; size_t frame_size = 0;
   napi_valuetype callback_type; napi_typeof(env, argv[1], &callback_type);
   if (!is_buffer || callback_type != napi_function || napi_get_buffer_info(env, argv[0], &frame_data, &frame_size) != napi_ok || frame_size < 5 || frame_size > kMaxFrame + 4) {
@@ -556,8 +916,18 @@ napi_value LaunchHost(napi_env env, napi_callback_info info) {
   const Json* candidate_identity = Field(parsed, "candidateId", Json::Kind::string); const Json* build_identity = Field(parsed, "buildIdSha256", Json::Kind::string); const Json* source_identity = Field(parsed, "sourceSha256", Json::Kind::string); const Json* host_slot = Field(parsed, "hostSha256", Json::Kind::string); const Json* launcher_slot = Field(parsed, "launcherSha256", Json::Kind::string);
   if (!candidate_identity || !build_identity || !source_identity || !host_slot || !launcher_slot || !mini_lux::sec03::CanonicalHex(candidate_identity->scalar, 32, 32) || !mini_lux::sec03::CanonicalHex(build_identity->scalar, 32, 32) || !mini_lux::sec03::CanonicalHex(source_identity->scalar, 32, 32) || host_slot->scalar != std::string(64, '0') || launcher_slot->scalar != std::string(64, '0')) { Throw(env, "EXEC_NATIVE_PROTOCOL", "Launch frame candidate identity is invalid"); return nullptr; }
   const std::string candidate_sha256 = candidate_identity->scalar, build_sha256 = build_identity->scalar, source_sha256 = source_identity->scalar;
-  std::vector<TrustedRootHandle> root_handles; std::string root_handles_json;
-  if (!OpenTrustedRoots(parsed, &root_handles, &root_handles_json)) { Throw(env, "EXEC_ROOT_UNSUPPORTED", "Root identity or local NTFS policy mismatch"); return nullptr; }
+  std::vector<TrustedRootHandle> root_handles; std::string root_handles_json; RootFailureClass root_failure_class = RootFailureClass::none; RootObservationDigests root_identity_digests;
+  const RootOpenResult roots_result = OpenTrustedRoots(parsed, &root_handles, &root_handles_json, &root_failure_class, &root_identity_digests);
+  if (roots_result != RootOpenResult::trusted) {
+    root_handles.clear(); root_handles_json.clear();
+    if (roots_result == RootOpenResult::unsupported || roots_result == RootOpenResult::identity_changed) {
+      const LauncherObservationOutcome outcome = roots_result == RootOpenResult::identity_changed ? LauncherObservationOutcome::root_identity_changed : LauncherObservationOutcome::unsupported_root; LauncherObservation observation;
+      if (!CreateRootObservation(parsed, outcome, root_failure_class, root_identity_digests, candidate_sha256, build_sha256, source_sha256, lease->sha256, lease->launcher_sha256, &observation) || !ThrowRootObservation(env, outcome, observation)) Throw(env, "EXEC_NATIVE_EVIDENCE_UNAVAILABLE", "Native launcher observation is unavailable");
+    } else {
+      Throw(env, "EXEC_ROOT_UNSUPPORTED", "Root identity or local NTFS policy mismatch");
+    }
+    return nullptr;
+  }
   const Json* entry_point = Field(parsed, "entryPoint", Json::Kind::string); TrustedRootHandle executable_handle; std::string executable_sha256; const bool has_executable = entry_point && entry_point->scalar == "E3";
   if (has_executable && !OpenCurrentExecutable(&executable_handle, &executable_sha256)) { Throw(env, "EXEC_NATIVE_IDENTITY_INVALID", "Current script executable lease is invalid"); return nullptr; }
   if (json.empty() || json.back() != '}') { Throw(env, "EXEC_NATIVE_PROTOCOL", "Launch frame body is invalid"); return nullptr; }
@@ -635,9 +1005,28 @@ napi_value LaunchHost(napi_env env, napi_callback_info info) {
   execution.release(); return object;
 }
 
+napi_value ObserveServiceDenial(napi_env env, napi_callback_info info) {
+  size_t argc = 2; napi_value argv[2], self; Lease* lease = GetLease(env, info, &argc, argv, &self);
+  if (!lease || !ConsumeLeaseAttempt(env, lease)) return nullptr;
+  bool is_buffer = false; void* frame_data = nullptr; size_t frame_size = 0;
+  if (argc != 1 || napi_is_buffer(env, argv[0], &is_buffer) != napi_ok || !is_buffer || napi_get_buffer_info(env, argv[0], &frame_data, &frame_size) != napi_ok || frame_size < 6 || frame_size > 16u * 1024u + 4u) { Throw(env, "EXEC_NATIVE_PROTOCOL", "observeServiceDenial requires one bounded canonical frame"); return nullptr; }
+  const auto* frame = static_cast<const unsigned char*>(frame_data); const std::uint32_t declared = (static_cast<std::uint32_t>(frame[0]) << 24) | (static_cast<std::uint32_t>(frame[1]) << 16) | (static_cast<std::uint32_t>(frame[2]) << 8) | frame[3];
+  if (declared != frame_size - 4) { Throw(env, "EXEC_NATIVE_PROTOCOL", "Service-denial frame length is invalid"); return nullptr; }
+  const std::string wire(reinterpret_cast<const char*>(frame + 4), frame_size - 4); Json request;
+  if (!Parser(wire).Parse(&request) || request.kind != Json::Kind::object) { Throw(env, "EXEC_NATIVE_PROTOCOL", "Service-denial frame JSON is invalid"); return nullptr; }
+  LauncherObservation observation; bool request_valid = false;
+  if (!CreateServiceDenialObservation(request, wire, *lease, &request_valid, &observation)) {
+    Throw(env, request_valid ? "EXEC_NATIVE_EVIDENCE_UNAVAILABLE" : "EXEC_NATIVE_PROTOCOL", request_valid ? "Native service-denial evidence is unavailable" : "Service-denial request is invalid"); return nullptr;
+  }
+  napi_value result; if (!FrozenObservationObject(env, observation, &result)) { Throw(env, "EXEC_NATIVE_EVIDENCE_UNAVAILABLE", "Native service-denial evidence result is unavailable"); return nullptr; }
+  return result;
+}
+
 napi_value CloseLease(napi_env env, napi_callback_info info) {
-  size_t argc = 0; napi_value self; Lease* lease = GetLease(env, info, &argc, nullptr, &self); if (!lease) return nullptr;
-  CloseHandle(lease->file); lease->file = INVALID_HANDLE_VALUE; lease->closed = true; return ResolvedPromise(env);
+  size_t argc = 0; napi_value self; if (!Ok(env, napi_get_cb_info(env, info, &argc, nullptr, &self, nullptr), "Cannot read lease close arguments")) return nullptr;
+  Lease* lease = nullptr; if (!Ok(env, napi_unwrap(env, self, reinterpret_cast<void**>(&lease)), "Invalid host lease") || !lease) { Throw(env, "EXEC_NATIVE_LEASE_CLOSED", "Host lease is unavailable"); return nullptr; }
+  if (!lease->closed) { if (lease->file != INVALID_HANDLE_VALUE) CloseHandle(lease->file); lease->file = INVALID_HANDLE_VALUE; lease->closed = true; }
+  return ResolvedPromise(env);
 }
 
 napi_value OpenExclusiveHostLease(napi_env env, napi_callback_info info) {
@@ -656,6 +1045,7 @@ napi_value OpenExclusiveHostLease(napi_env env, napi_callback_info info) {
   }
   napi_value object, fn; napi_create_object(env, &object); napi_wrap(env, object, lease.get(), FinalizeLease, nullptr, nullptr);
   napi_create_function(env, "launchHost", NAPI_AUTO_LENGTH, LaunchHost, nullptr, &fn); napi_set_named_property(env, object, "launchHost", fn);
+  napi_create_function(env, "observeServiceDenial", NAPI_AUTO_LENGTH, ObserveServiceDenial, nullptr, &fn); napi_set_named_property(env, object, "observeServiceDenial", fn);
   napi_create_function(env, "close", NAPI_AUTO_LENGTH, CloseLease, nullptr, &fn); napi_set_named_property(env, object, "close", fn);
   lease.release(); return object;
 }
@@ -690,6 +1080,34 @@ napi_value VerifyExecutionProof(napi_env env, napi_callback_info info) {
   napi_value result, value; napi_create_object(env, &result); napi_get_boolean(env, true, &value); napi_set_named_property(env, result, "authenticated", value); napi_get_boolean(env, false, &value); napi_set_named_property(env, result, "testOnly", value); napi_create_string_utf8(env, attestation_sha256.c_str(), NAPI_AUTO_LENGTH, &value); napi_set_named_property(env, result, "attestationSha256", value); return result;
 }
 
+napi_value VerifyLauncherObservation(napi_env env, napi_callback_info info) {
+  size_t argc = 3; napi_value argv[3], self;
+  if (!Ok(env, napi_get_cb_info(env, info, &argc, argv, &self, nullptr), "Cannot read launcher observation arguments") || argc != 3) return nullptr;
+  EvidenceVerifier* verifier = nullptr; bool is_buffer = false; void* proof_data = nullptr; size_t proof_size = 0, mac_length = 0, marker_length = 0;
+  if (!Ok(env, napi_unwrap(env, self, reinterpret_cast<void**>(&verifier)), "Invalid evidence verifier") || !verifier
+    || napi_is_buffer(env, argv[0], &is_buffer) != napi_ok || !is_buffer || napi_get_buffer_info(env, argv[0], &proof_data, &proof_size) != napi_ok
+    || proof_size < 1 || proof_size > mini_lux::sec03::kMaxProofBytes
+    || napi_get_value_string_utf8(env, argv[1], nullptr, 0, &mac_length) != napi_ok || mac_length != 64
+    || napi_get_value_string_utf8(env, argv[2], nullptr, 0, &marker_length) != napi_ok || marker_length != 64) {
+    Throw(env, "EXEC_NATIVE_EVIDENCE_INVALID", "Native launcher observation arguments are invalid"); return nullptr;
+  }
+  std::vector<char> mac_text(mac_length + 1), marker_text(marker_length + 1); napi_get_value_string_utf8(env, argv[1], mac_text.data(), mac_text.size(), &mac_length); napi_get_value_string_utf8(env, argv[2], marker_text.data(), marker_text.size(), &marker_length);
+  const std::string mac_hex(mac_text.data(), mac_length), marker_hex(marker_text.data(), marker_length), proof(static_cast<const char*>(proof_data), proof_size); std::vector<unsigned char> received, received_marker; std::map<std::string, std::string> fields; std::array<unsigned char, 32> expected{}, expected_marker{};
+  if (!mini_lux::sec03::CanonicalHex(mac_hex, 32, 32) || !mini_lux::sec03::Unhex(mac_hex, &received) || received.size() != expected.size()
+    || !mini_lux::sec03::CanonicalHex(marker_hex, 32, 32) || !mini_lux::sec03::Unhex(marker_hex, &received_marker) || received_marker.size() != expected_marker.size()
+    || !mini_lux::sec03::ParseCanonicalLauncherObservation(proof, verifier->candidate, verifier->build, verifier->source, verifier->host, verifier->launcher, verifier->key.key_id, &fields)
+    || !mini_lux::sec03::HmacSha256(verifier->key, static_cast<const unsigned char*>(proof_data), proof_size, &expected)
+    || !mini_lux::sec03::ConstantTimeEqual(expected.data(), received.data(), expected.size())) {
+    Throw(env, "EXEC_NATIVE_EVIDENCE_INVALID", "Native launcher observation authentication failed"); return nullptr;
+  }
+  std::string proof_sha256; if (!mini_lux::sec03::Sha256(static_cast<const unsigned char*>(proof_data), proof_size, &proof_sha256)) { Throw(env, "EXEC_NATIVE_EVIDENCE_INVALID", "Native launcher observation digest failed"); return nullptr; }
+  const std::string marker_payload = mini_lux::sec03::LauncherObservationMarkerPayload(fields, proof_sha256, mac_hex);
+  if (marker_payload.empty() || !mini_lux::sec03::HmacSha256(verifier->key, reinterpret_cast<const unsigned char*>(marker_payload.data()), marker_payload.size(), &expected_marker) || !mini_lux::sec03::ConstantTimeEqual(expected_marker.data(), received_marker.data(), expected_marker.size())) { Throw(env, "EXEC_NATIVE_EVIDENCE_INVALID", "Native launcher observation marker authentication failed"); return nullptr; }
+  std::vector<unsigned char> attestation(proof.begin(), proof.end()); attestation.push_back(0); attestation.insert(attestation.end(), received.begin(), received.end()); attestation.insert(attestation.end(), received_marker.begin(), received_marker.end()); std::string attestation_sha256;
+  if (!mini_lux::sec03::Sha256(attestation.data(), attestation.size(), &attestation_sha256)) { Throw(env, "EXEC_NATIVE_EVIDENCE_INVALID", "Native launcher observation digest failed"); return nullptr; }
+  napi_value result, value; napi_create_object(env, &result); napi_get_boolean(env, true, &value); napi_set_named_property(env, result, "authenticated", value); napi_get_boolean(env, false, &value); napi_set_named_property(env, result, "testOnly", value); napi_create_string_utf8(env, attestation_sha256.c_str(), NAPI_AUTO_LENGTH, &value); napi_set_named_property(env, result, "attestationSha256", value); return result;
+}
+
 napi_value OpenEvidenceVerifier(napi_env env, napi_callback_info info) {
   size_t argc = 5; napi_value argv[5];
   if (!Ok(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), "Cannot read evidence identity") || argc != 5) return nullptr;
@@ -704,7 +1122,7 @@ napi_value OpenEvidenceVerifier(napi_env env, napi_callback_info info) {
   std::string binding; if (!mini_lux::sec03::AttestationBindingDigest(candidate, build, source, host, launcher, &binding)) { Throw(env, "EXEC_NATIVE_IDENTITY_INVALID", "Evidence binding is invalid"); return nullptr; }
   auto verifier = std::make_unique<EvidenceVerifier>(); verifier->candidate = candidate; verifier->build = build; verifier->source = source; verifier->host = host; verifier->launcher = launcher;
   if (!mini_lux::sec03::ProvisionAttestationKey(binding, launcher, &verifier->key)) { Throw(env, "EXEC_NATIVE_EVIDENCE_UNAVAILABLE", "Native evidence key is unavailable"); return nullptr; }
-  napi_value object, value, fn; napi_create_object(env, &object); napi_wrap(env, object, verifier.get(), FinalizeEvidenceVerifier, nullptr, nullptr); napi_create_string_utf8(env, verifier->key.key_id.c_str(), NAPI_AUTO_LENGTH, &value); napi_set_named_property(env, object, "keyId", value); napi_create_function(env, "verifyExecutionProof", NAPI_AUTO_LENGTH, VerifyExecutionProof, nullptr, &fn); napi_set_named_property(env, object, "verifyExecutionProof", fn); verifier.release(); return object;
+  napi_value object, value, fn; napi_create_object(env, &object); napi_wrap(env, object, verifier.get(), FinalizeEvidenceVerifier, nullptr, nullptr); napi_create_string_utf8(env, verifier->key.key_id.c_str(), NAPI_AUTO_LENGTH, &value); napi_set_named_property(env, object, "keyId", value); napi_create_function(env, "verifyExecutionProof", NAPI_AUTO_LENGTH, VerifyExecutionProof, nullptr, &fn); napi_set_named_property(env, object, "verifyExecutionProof", fn); napi_create_function(env, "verifyLauncherObservation", NAPI_AUTO_LENGTH, VerifyLauncherObservation, nullptr, &fn); napi_set_named_property(env, object, "verifyLauncherObservation", fn); verifier.release(); return object;
 }
 
 napi_value Init(napi_env env, napi_value exports) {
