@@ -80,7 +80,7 @@ function parsePeMachine(bytes) {
 
 const programFilesX86 = process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)";
 const vswhere = path.join(programFilesX86, "Microsoft Visual Studio", "Installer", "vswhere.exe");
-const instances = JSON.parse(run(vswhere, ["-products", "*", "-version", "[17.0,18.0)", "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-format", "json", "-utf8"]));
+const instances = JSON.parse(run(vswhere, ["-products", "*", "-version", "[17.0,18.0)", "-format", "json", "-utf8"]));
 if (!Array.isArray(instances) || instances.length !== 1) throw new Error(`Expected exactly one eligible Visual Studio 2022 instance, found ${instances.length}`);
 const vsInstance = instances[0];
 const allowedVsProducts = new Set(["Microsoft.VisualStudio.Product.BuildTools", "Microsoft.VisualStudio.Product.Community"]);

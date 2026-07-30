@@ -46,7 +46,7 @@ function Invoke-CompilerProbe {
 }
 
 function Get-Vs17Instances {
-  $json = (& $vswhere -products * -version '[17.0,18.0)' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json -utf8 | Out-String)
+  $json = (& $vswhere -products * -version '[17.0,18.0)' -format json -utf8 | Out-String)
   if ($LASTEXITCODE -ne 0) { throw 'vswhere failed while locating Visual Studio 2022' }
   if ([string]::IsNullOrWhiteSpace($json)) { return }
   foreach ($instance in @($json | ConvertFrom-Json)) { Write-Output $instance }

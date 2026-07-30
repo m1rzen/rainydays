@@ -39,6 +39,7 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   const toolchain = await readFile(path.join(projectRoot, "scripts", "gov04", "ensure-native-toolchain.ps1"), "utf8");
   assert.match(toolchain, /Microsoft\.VisualStudio\.Component\.VC\.14\.43\.17\.13\.x86\.x64/);
   assert.match(toolchain, /\[17\.0,18\.0\)/);
+  assert.doesNotMatch(toolchain, /-requires Microsoft\.VisualStudio\.Component\.VC\.Tools\.x86\.x64/);
   assert.match(toolchain, /17\.13\.35825\.156/);
   assert.match(toolchain, /https:\/\/download\.visualstudio\.microsoft\.com\/download\/pr\/84955a63-15ca-4f52-94af-14ea55b50424\/e26a4f237c908739caa2ac36e2d90a51d7e3f71746e615207b7db449f82e3c4e\/vs_BuildTools\.exe/);
   assert.match(toolchain, /e26a4f237c908739caa2ac36e2d90a51d7e3f71746e615207b7db449f82e3c4e/);
@@ -63,6 +64,7 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
 
   const nativeBuild = await readFile(path.join(projectRoot, "scripts", "build-sec03-native.mjs"), "utf8");
   assert.match(nativeBuild, /installationVersion !== "17\.13\.35825\.156"/);
+  assert.doesNotMatch(nativeBuild, /"-requires", "Microsoft\.VisualStudio\.Component\.VC\.Tools\.x86\.x64"/);
   assert.match(nativeBuild, /versionProbe\.status !== 0/);
   assert.match(nativeBuild, /electronHeaders/);
 });
