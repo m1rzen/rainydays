@@ -46,6 +46,8 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   assert.match(toolchain, /Microsoft\.VisualStudio\.Product\.Community/);
   assert.match(toolchain, /19\.43\.34808\.0/);
   assert.match(toolchain, /10\.0\.22621\.0/);
+  assert.match(toolchain, /\$arguments = @\(\s*'install',\s*'--installPath'/);
+  assert.match(toolchain, /Write-BoundedInstallerDiagnostics/);
   assert.match(toolchain, /ExitCode -ne 0/);
   assert.match(toolchain, /AddMinutes\(10\)/);
   assert.match(toolchain, /instances\.Count -gt 1/);

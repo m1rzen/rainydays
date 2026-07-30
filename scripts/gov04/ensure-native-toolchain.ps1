@@ -66,6 +66,19 @@ function Assert-PinnedVsInstance {
   return [PSCustomObject]@{ InstallationPath = $Instance.installationPath; CompilerPath = $compilerPath; ProductId = $Instance.productId }
 }
 
+function Write-BoundedInstallerDiagnostics {
+  $patterns = @('dd_bootstrapper*.log', 'dd_setup*.log', 'dd_client*.log')
+  $logs = @(
+    foreach ($pattern in $patterns) {
+      Get-ChildItem -Path ([System.IO.Path]::GetTempPath()) -Filter $pattern -File -ErrorAction SilentlyContinue
+    }
+  ) | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 3
+  foreach ($log in $logs) {
+    Write-Output "--- Visual Studio installer diagnostic: $($log.Name) ---"
+    Get-Content -LiteralPath $log.FullName -Tail 80 -ErrorAction SilentlyContinue
+  }
+}
+
 $instances = @(Get-Vs17Instances)
 if ($instances.Count -gt 1) { throw "Expected at most one Visual Studio 2022 instance, found $($instances.Count)" }
 $installed = $instances.Count -eq 1
@@ -83,6 +96,7 @@ if (-not $installed) {
 
   $installationPath = Join-Path $env:SystemDrive 'RainyDaysToolchain\VS2022BuildTools-17.13.2'
   $arguments = @(
+    'install',
     '--installPath', "`"$installationPath`"",
     '--add', $component,
     '--quiet',
@@ -91,14 +105,20 @@ if (-not $installed) {
     '--nocache'
   )
   $process = Start-Process -FilePath $bootstrapper -ArgumentList $arguments -Wait -PassThru -NoNewWindow
-  if ($process.ExitCode -notin @(0, 3010)) { throw "Visual Studio 2022 17.13.2 installation failed with exit code $($process.ExitCode)" }
+  if ($process.ExitCode -notin @(0, 3010)) {
+    Write-BoundedInstallerDiagnostics
+    throw "Visual Studio 2022 17.13.2 installation failed with exit code $($process.ExitCode)"
+  }
 
   $installationDeadline = [DateTime]::UtcNow.AddMinutes(10)
   do {
     $instances = @(Get-Vs17Instances)
     if ($instances.Count -gt 1) { throw "Expected at most one Visual Studio 2022 instance after installation, found $($instances.Count)" }
     if ($instances.Count -eq 1) { break }
-    if ([DateTime]::UtcNow -ge $installationDeadline) { throw 'Visual Studio 2022 17.13.2 installation did not become ready before the deadline' }
+    if ([DateTime]::UtcNow -ge $installationDeadline) {
+      Write-BoundedInstallerDiagnostics
+      throw 'Visual Studio 2022 17.13.2 installation did not become ready before the deadline'
+    }
     Start-Sleep -Seconds 10
   } while ($true)
   $pinnedInstance = Assert-PinnedVsInstance -Instance $instances[0]
