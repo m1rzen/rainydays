@@ -73,7 +73,9 @@ function isContained(root, candidate) {
   return relative === "" || (relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
 }
 
-export async function validateReportPath(filePath) {
+const preparedReportTargets = new WeakSet();
+
+async function resolveReportTarget(filePath, { pinnedAllowedRoot = null, createParents = true } = {}) {
   const absolute = path.resolve(filePath);
   assert.equal(path.extname(absolute).toLowerCase(), ".json", "report path must end in .json");
   const projectReports = path.resolve(path.join(projectRoot, "test-results"));
@@ -81,18 +83,19 @@ export async function validateReportPath(filePath) {
   if (isContained(projectAbsolute, absolute)) {
     assert(isContained(projectReports, absolute), "reports inside the project must remain inside test-results");
   }
-  const allowedRoots = [projectReports, processTemporaryRoot];
+  const allowedRoots = pinnedAllowedRoot === null ? [projectReports, processTemporaryRoot] : [pinnedAllowedRoot];
   const allowed = allowedRoots.find((root) => isContained(root, absolute));
   assert(allowed, "report path must be inside test-results or the OS temporary directory");
 
-  await mkdir(allowed, { recursive: true });
+  if (createParents) await mkdir(allowed, { recursive: true });
   assert(!(await lstat(allowed)).isSymbolicLink(), "report root must not be a symbolic link");
   const allowedReal = await realpath(allowed);
+  if (pinnedAllowedRoot !== null) assert.equal(allowedReal, pinnedAllowedRoot, "report root identity changed before publication");
   const requestedParent = path.dirname(absolute);
   let walk = allowed;
   for (const segment of path.relative(allowed, requestedParent).split(path.sep).filter(Boolean)) {
     walk = path.join(walk, segment);
-    if (!await pathExists(walk)) await mkdir(walk);
+    if (createParents && !await pathExists(walk)) await mkdir(walk);
     const info = await lstat(walk);
     assert(!info.isSymbolicLink(), "report path must not traverse a symbolic link");
     assert(info.isDirectory(), "report parent must be a directory");
@@ -102,7 +105,11 @@ export async function validateReportPath(filePath) {
   const canonical = path.join(parentReal, path.basename(absolute));
   assert(isContained(allowedReal, canonical), "canonical report path escapes its allowed root");
   if (await pathExists(canonical)) assert(!(await lstat(canonical)).isSymbolicLink(), "report path must not be a symbolic link");
-  return canonical;
+  return { path: canonical, allowedRoot: allowedReal };
+}
+
+export async function validateReportPath(filePath) {
+  return (await resolveReportTarget(filePath)).path;
 }
 
 export async function prepareReportPath(filePath) {
@@ -111,9 +118,28 @@ export async function prepareReportPath(filePath) {
   return absolute;
 }
 
-export async function atomicWriteJson(filePath, value, observeStage = null) {
+export async function prepareReportTarget(filePath) {
+  const resolved = await resolveReportTarget(filePath);
+  await rm(resolved.path, { force: true });
+  const target = Object.freeze({ path: resolved.path, allowedRoot: resolved.allowedRoot });
+  preparedReportTargets.add(target);
+  return target;
+}
+
+async function resolveAtomicReportPath(filePathOrTarget, createParents) {
+  if (typeof filePathOrTarget === "object" && filePathOrTarget !== null) {
+    assert(preparedReportTargets.has(filePathOrTarget), "report target is not authentic");
+    return (await resolveReportTarget(filePathOrTarget.path, {
+      pinnedAllowedRoot: filePathOrTarget.allowedRoot,
+      createParents,
+    })).path;
+  }
+  return validateReportPath(filePathOrTarget);
+}
+
+export async function atomicWriteJson(filePathOrTarget, value, observeStage = null) {
   observeStage?.("path-validation");
-  const absolute = await validateReportPath(filePath);
+  const absolute = await resolveAtomicReportPath(filePathOrTarget, false);
   const temporary = `${absolute}.${process.pid}.${randomBytes(6).toString("hex")}.tmp`;
   observeStage?.("serialization");
   const serialized = `${JSON.stringify(value, null, 2)}\n`;
@@ -121,7 +147,7 @@ export async function atomicWriteJson(filePath, value, observeStage = null) {
   await writeFile(temporary, serialized, "utf8");
   try {
     observeStage?.("revalidation");
-    const revalidated = await validateReportPath(filePath);
+    const revalidated = await resolveAtomicReportPath(filePathOrTarget, false);
     assert.equal(revalidated, absolute, "canonical report destination changed before publication");
     observeStage?.("rename");
     await rename(temporary, revalidated);

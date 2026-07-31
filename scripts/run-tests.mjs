@@ -11,7 +11,7 @@ import {
   loadCoverageScope,
   loadTaskManifest,
   makeTempDir,
-  prepareReportPath,
+  prepareReportTarget,
   projectRoot,
   removeFixture,
   runProcess,
@@ -117,7 +117,7 @@ const unifiedRunnerCrashCodes = new Set([
   "EACCES", "EBUSY", "EEXIST", "EINVAL", "EIO", "ENOENT", "ENOSPC", "ENOTDIR", "EPERM", "EROFS", "EXDEV",
   "REPORT_PATH_EXTENSION", "REPORT_PROJECT_BOUNDARY", "REPORT_ALLOWED_ROOT", "REPORT_ROOT_IDENTITY",
   "REPORT_ANCESTOR_IDENTITY", "REPORT_PARENT_TYPE", "REPORT_ANCESTOR_BOUNDARY", "REPORT_CANONICAL_BOUNDARY",
-  "REPORT_DESTINATION_IDENTITY", "REPORT_DESTINATION_CHANGED",
+  "REPORT_DESTINATION_IDENTITY", "REPORT_DESTINATION_CHANGED", "REPORT_ROOT_CHANGED", "REPORT_TARGET_FORGED",
 ]);
 const unifiedRunnerCrashCodeByMessage = new Map([
   ["report path must end in .json", "REPORT_PATH_EXTENSION"],
@@ -130,6 +130,8 @@ const unifiedRunnerCrashCodeByMessage = new Map([
   ["canonical report path escapes its allowed root", "REPORT_CANONICAL_BOUNDARY"],
   ["report path must not be a symbolic link", "REPORT_DESTINATION_IDENTITY"],
   ["canonical report destination changed before publication", "REPORT_DESTINATION_CHANGED"],
+  ["report root identity changed before publication", "REPORT_ROOT_CHANGED"],
+  ["report target is not authentic", "REPORT_TARGET_FORGED"],
 ]);
 let unifiedRunnerCrashContext = null;
 
@@ -156,11 +158,12 @@ function withoutSec02ReceiptEnvironment(environment = process.env) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  args.report = await prepareReportPath(args.report);
+  const reportTarget = await prepareReportTarget(args.report);
+  args.report = reportTarget.path;
   const configuredDiagnosticChallenge = process.env[gov04DiagnosticChallengeKey];
   if (configuredDiagnosticChallenge !== undefined) assert.match(configuredDiagnosticChallenge, /^[a-f0-9]{64}$/, "GOV-04 diagnostic challenge is invalid");
   const diagnosticChallenge = configuredDiagnosticChallenge ?? randomBytes(32).toString("hex");
-  unifiedRunnerCrashContext = { taskId: args.task, reportPath: args.report, stage: "task-context", diagnosticChallenge };
+  unifiedRunnerCrashContext = { taskId: args.task, reportTarget, stage: "task-context", diagnosticChallenge };
   const startedAt = new Date();
   const started = Date.now();
   const loadedTask = await loadTaskManifest(args.task);
@@ -313,7 +316,7 @@ async function main() {
     ...(sec03Resolved ? { sec03Context } : {}),
   });
   unifiedRunnerCrashContext.stage = "report-write";
-  await atomicWriteJson(args.report, report, (stage) => {
+  await atomicWriteJson(reportTarget, report, (stage) => {
     const crashStage = `report-${stage}`;
     assert(unifiedRunnerCrashStages.has(crashStage));
     unifiedRunnerCrashContext.stage = crashStage;
@@ -333,7 +336,7 @@ main().catch(async (error) => {
     : unifiedRunnerCrashCodeByMessage.get(error?.message) ?? "UNKNOWN";
   if (context && unifiedRunnerCrashStages.has(context.stage)) {
     try {
-      await atomicWriteJson(context.reportPath, {
+      await atomicWriteJson(context.reportTarget, {
         reportVersion: 0,
         taskId: context.taskId,
         state: "crashed",

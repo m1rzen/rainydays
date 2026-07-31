@@ -17,6 +17,7 @@ import {
   makeTempDir,
   parseTapSummary,
   prepareReportPath,
+  prepareReportTarget,
   projectRoot,
   removeFixture,
   runProcess,
@@ -376,13 +377,14 @@ test("prepared report authority survives ambient temporary-root drift", async ()
   const previous = Object.fromEntries(["TEMP", "TMP", "TMPDIR"].map((key) => [key, process.env[key]]));
   try {
     const report = path.join(root, "report.json");
-    await prepareReportPath(report);
+    const target = await prepareReportTarget(report);
     const driftRoot = path.join(projectRoot, "ambient-temp-root-drift");
     process.env.TEMP = driftRoot;
     process.env.TMP = driftRoot;
     process.env.TMPDIR = driftRoot;
-    await atomicWriteJson(report, { state: "passed" });
+    await atomicWriteJson(target, { state: "passed" });
     assert.deepEqual(JSON.parse(await readFile(report, "utf8")), { state: "passed" });
+    await assert.rejects(() => atomicWriteJson({ ...target }, { state: "forged" }), /not authentic/);
     await assert.rejects(() => validateReportPath(path.join(driftRoot, "forged.json")), /inside test-results/);
   } finally {
     for (const [key, value] of Object.entries(previous)) {

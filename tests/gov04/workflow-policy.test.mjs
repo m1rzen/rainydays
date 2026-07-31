@@ -154,6 +154,9 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   assert.match(unifiedRunner, /GOV-04 SEC-02 run ID is invalid/);
   assert.match(unifiedRunner, /configuredSec02RunId \?\? randomUUID\(\)/);
   assert.match(unifiedRunner, /const sec02ReceiptEnvironmentKeys = Object\.freeze/);
+  assert.match(unifiedRunner, /const reportTarget = await prepareReportTarget\(args\.report\)/);
+  assert.equal(unifiedRunner.match(/atomicWriteJson\(reportTarget,/g)?.length, 1);
+  assert.equal(unifiedRunner.match(/atomicWriteJson\(context\.reportTarget,/g)?.length, 1);
   assert.match(unifiedRunner, /GOV-04 diagnostic challenge is invalid/);
   assert.equal(unifiedRunner.match(/env: withoutGov04DiagnosticChallenge\(\)/g)?.length, 1);
   assert.equal(unifiedRunner.match(/env: withoutSec02ReceiptEnvironment\(withoutGov04DiagnosticChallenge\(\)\)/g)?.length, 2);
