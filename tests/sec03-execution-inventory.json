@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "4aa0aec956714dde8c2ce2e5d64e648908c62b2f9ef40bae3bd6229d5fb47d8c",
+  "sourceSetSha256": "b885b1850eed05d71fc212c7a3797f8efea0c2a55d263dc02580e4615a18e4f2",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -219,8 +219,8 @@
     },
     {
       "sourcePath": "scripts/gov04/steps.mjs",
-      "bytes": 27652,
-      "sha256": "934d185cec6bbdea47281383dc0f13d4d1e50a67d647537e5d13d3da909e7df2",
+      "bytes": 28479,
+      "sha256": "5022a2515e9cfaf32fd98e0dbe0388ffa26a41ffecf68db63c47f513fdb05f1d",
       "executionClass": "build-test"
     },
     {
@@ -879,8 +879,8 @@
     },
     {
       "sourcePath": "tests/gov04/workflow-policy.test.mjs",
-      "bytes": 10863,
-      "sha256": "f905cc170d0476ab73d00fe042c5bd626426c14768fe3867580c5da84ec6f10b",
+      "bytes": 11562,
+      "sha256": "e446f4b5860ec9f64f4a3b65adebd93da9a1b9cc60aa3c6b42aea9078795e978",
       "executionClass": "build-test"
     },
     {
@@ -5538,5 +5538,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "8fd48730800ab0c4dfc5077175ad078e3d1843dfabcaceeb077677d94040a7ff"
+  "canonicalPayloadSha256": "05d68d73051cf32796c1e076b90366c96615a819dec4a2ee63bedb39c237c20a"
 }

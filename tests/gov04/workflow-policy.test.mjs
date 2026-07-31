@@ -4,7 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { validateModelManifest } from "../../scripts/bootstrap-models.mjs";
 import { gov04StepIds } from "../../scripts/gov04/report-schema.mjs";
-import { summarizeInvalidUnifiedReport } from "../../scripts/gov04/steps.mjs";
+import { extractUnifiedRunnerCrashStage, summarizeInvalidUnifiedReport } from "../../scripts/gov04/steps.mjs";
 import { projectRoot } from "../helpers.mjs";
 
 const workflowPaths = [
@@ -63,6 +63,21 @@ test("GOV-04 invalid child diagnostics retain only fixed enums", () => {
     state: "crashed",
     crashStage: "C:\\sensitive\\checkout",
   }).crashStage, null);
+  assert.equal(extractUnifiedRunnerCrashStage(
+    "untrusted diagnostic\n[GOV-03] unified runner crashed at layer-unit\n",
+  ), "layer-unit");
+  assert.equal(extractUnifiedRunnerCrashStage(
+    "[GOV-03] unified runner crashed at layer-unit\n[GOV-03] unified runner crashed at coverage\n",
+  ), null);
+  assert.equal(extractUnifiedRunnerCrashStage(
+    "[GOV-03] unified runner crashed at C:\\sensitive\\checkout\n",
+  ), null);
+  assert.equal(extractUnifiedRunnerCrashStage(
+    "prefix [GOV-03] unified runner crashed at layer-unit\n",
+  ), null);
+  assert.equal(extractUnifiedRunnerCrashStage(
+    "[OTHER-03] unified runner crashed at layer-unit\n",
+  ), null);
 });
 
 test("GOV-04 test manifest binds the frozen 16-step state machine", async () => {

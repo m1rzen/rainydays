@@ -173,6 +173,16 @@ const unifiedCrashStages = new Set([
   "report-write",
 ]);
 
+export function extractUnifiedRunnerCrashStage(stderr, taskId = "GOV-03") {
+  if (typeof stderr !== "string" || stderr.length > 16 * 1024 * 1024 || !/^[A-Z]+-\d{2}$/.test(taskId)) return null;
+  const prefix = `[${taskId}] unified runner crashed at `;
+  const matches = stderr.split(/\r?\n/u)
+    .filter((line) => line.startsWith(prefix))
+    .map((line) => line.slice(prefix.length))
+    .filter((stage) => unifiedCrashStages.has(stage));
+  return matches.length === 1 ? matches[0] : null;
+}
+
 export function summarizeInvalidUnifiedReport(report) {
   if (!report || typeof report !== "object" || Array.isArray(report)) {
     return { status: "invalid-child-report", childReadable: false, childState: null, resultCount: null, firstFailure: null, crashStage: null };
@@ -231,6 +241,8 @@ export async function runGov03Quick({ workspace, evidenceDirectory, candidateSou
     const passed = result.code === 0 && child.report.state === "passed" && sourceUnchanged;
     return { passed, failureClass: passed ? null : !sourceUnchanged ? "SOURCE_MUTATION" : "GOV03_QUICK_FAILED", exitCode: passed ? 0 : result.code, signal: result.signal, timedOut: false, timeoutTermination: null, childReportSha256: child.sha256, evidence: { childState: child.report.state, childBuildId: child.report.build.buildId, childSourceDigest: child.report.build.sourceDigest, sourceUnchanged, reportSha256: child.sha256, stdoutSha256: result.stdoutSha256, stderrSha256: result.stderrSha256 } };
   } catch {
+    const summary = summarizeInvalidUnifiedReport(child?.report ?? null);
+    const crashStage = summary.crashStage ?? extractUnifiedRunnerCrashStage(result.stderr);
     return {
       passed: false,
       failureClass: "GOV03_REPORT_INVALID",
@@ -239,7 +251,15 @@ export async function runGov03Quick({ workspace, evidenceDirectory, candidateSou
       timedOut: false,
       timeoutTermination: null,
       childReportSha256: child?.sha256 ?? null,
-      evidence: { ...summarizeInvalidUnifiedReport(child?.report ?? null), reportSha256: child?.sha256 ?? null },
+      evidence: {
+        ...summary,
+        crashStage,
+        reportSha256: child?.sha256 ?? null,
+        stdoutBytes: result.stdoutBytes,
+        stderrBytes: result.stderrBytes,
+        stdoutSha256: result.stdoutSha256,
+        stderrSha256: result.stderrSha256,
+      },
     };
   }
 }
