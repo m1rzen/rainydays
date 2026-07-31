@@ -3,7 +3,6 @@ import { createHash, randomUUID } from "node:crypto";
 import { lstat, mkdir, readFile, readdir, realpath, rm } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { createSec03NativeVerifier } from "./sec03-native-verifier.mjs";
 import {
   atomicWriteJson,
   classifyProcessResult,
@@ -102,6 +101,7 @@ async function loadSec03Inputs(layer) {
     const root = await trustedPath(process.env.RAINYDAYS_SEC03_RECEIPT_DIR, "directory", "RAINYDAYS_SEC03_RECEIPT_DIR");
     const identityFile = await trustedPath(process.env.RAINYDAYS_SEC03_IDENTITY_FILE, "file", "RAINYDAYS_SEC03_IDENTITY_FILE");
     const identity = { ...JSON.parse(await readFile(identityFile, "utf8")), matrixSha256: sha256(matrixBytes), schemaSha256: sha256(schemaBytes) };
+    const { createSec03NativeVerifier } = await import("./sec03-native-verifier.mjs");
     const nativeVerifier = await createSec03NativeVerifier(identity);
     const runDirectory = path.join(root, identity.runId);
     await mkdir(runDirectory, { recursive: true });

@@ -10,7 +10,7 @@
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
     "executableFileCount": 71,
-    "executableManifestSha256": "51ee2eb33d6438acdeea6398ffec8ed67b79dcd967e5c04b5c259f8d59aa076b",
+    "executableManifestSha256": "ca0fd7d5bd67a71215aa431edae0eab0a4b50a3f09db5451a15fcdb1f7399152",
     "dialectImportCount": 33,
     "dialectExceptionCount": 2
   },
@@ -45,8 +45,8 @@
     },
     {
       "sourcePath": "src/agent.ts",
-      "bytes": 18205,
-      "sha256": "d0f6c544197abb5fa95f5743ea5dc1a8e74f6ba90bf5f3c737d05c0c71bf3af2",
+      "bytes": 18126,
+      "sha256": "661b33e2a1fd7e7aff26e27c1990cec47b1042419bc076e08ce5183a053cf7cf",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -528,7 +528,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
       "testCaseId": "SEC-02 Daemon holds Node, loader and server leases until runtime ready and cleans the process tree",
-      "testFileSha256": "fc3a593cb628e1d60eab4b08f74ae570608e588d62a14a425cd7b25c5a846637"
+      "testFileSha256": "4d7a13b8013b07c63f548e68c067aa5108a6eb5abee1cd94d02ad76bc8acf988"
     },
     {
       "id": "dispatcher-gateway",
@@ -560,7 +560,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/embedding-path-lifetime.test.mjs",
       "testCaseId": "SEC-02 model tree lease binds every descendant identity and content for its lifetime",
-      "testFileSha256": "44ca24a62160383deb1a189790ca967edcb234f857034bdf6bc9729443340e70"
+      "testFileSha256": "4dcb9bd7067e5f9393542de9a01b231aeb4d59e8bac90ffd48de56275c125a04"
     },
     {
       "id": "packaged-asar",
@@ -584,7 +584,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/unit/process-tree.test.mjs",
       "testCaseId": "SEC-02 Windows process-tree termination fails closed on taskkill failure",
-      "testFileSha256": "14a5a35f9538da490e368b1687b50e0464838e3e3ad1c3169632bd5fd6b3aeef"
+      "testFileSha256": "4d710dcadbd75dcf19d1f68e6c686fa1bf57b3e4208d637e6bd2451413027ace"
     },
     {
       "id": "repo-oracle",
@@ -4433,5 +4433,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "ffae74098c4ad6b8142d5dc018682f10cd39740e24e65a4d1f4a4f98f91bca5e"
+  "canonicalPayloadSha256": "66cc2ad0c6d219996f6bf8ee1f16a6fa5cebf876a6849f89a5bca5893cdf43c4"
 }

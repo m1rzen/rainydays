@@ -129,3 +129,30 @@ test("SEC-02 Settings candidates validate paths before managed persistence", asy
   assert.equal(publicConfig.currentProfile, "default");
   assert.equal(publicConfig.configPath, path.join(fixture, "config.json"));
 });
+
+test("SEC-02 config rejects invalid persisted JSON and preserves runtime profile fallbacks", async () => {
+  const persisted = await fs.readFile(process.env.RAINYDAYS_CONFIG_PATH);
+  await fs.writeFile(process.env.RAINYDAYS_CONFIG_PATH, "{not-json");
+  try {
+    const isolatedConfig = await import(`../../dist/config.js?invalid-json=${Date.now()}`);
+    await assert.rejects(() => isolatedConfig.initializeConfig(), /不是合法 JSON/u);
+  } finally {
+    await fs.writeFile(process.env.RAINYDAYS_CONFIG_PATH, persisted);
+  }
+
+  const snapshot = config.getConfigSnapshot();
+  snapshot.profiles["raw-provider"] = {
+    model: "raw-model", apiKey: "", baseURL: "https://raw-provider.test", providerType: "",
+  };
+  await config.commitConfigSnapshot(snapshot);
+  assert.equal(config.listProfiles().find(profile => profile.name === "raw-provider")?.providerType, "openai-compatible");
+
+  await config.upsertProfile("runtime-fallback", { model: "fallback", baseURL: "https://runtime-fallback.test" });
+  assert.equal(config.switchProfile("runtime-fallback"), true);
+  const live = config.loadConfig();
+  const saved = live.profiles["runtime-fallback"];
+  delete live.profiles["runtime-fallback"];
+  assert.equal(config.getCurrentProfileName(), live.defaultProfile);
+  live.profiles["runtime-fallback"] = saved;
+  assert.equal(config.switchProfile(live.defaultProfile), true);
+});

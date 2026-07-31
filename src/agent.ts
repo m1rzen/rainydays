@@ -77,10 +77,9 @@ export class Agent {
 
     // 追加到当前 system prompt
     // 注意：injectMemories 已经设置了 system prompt，这里需要追加
-    const msgs = this.memory.getAll();
-    const systemIdx = msgs.findIndex(m => m.role === "system" && !m.content.startsWith("## 对话摘要"));
-    if (systemIdx >= 0 && !msgs[systemIdx].content.includes("## 固定指令")) {
-      msgs[systemIdx] = { ...msgs[systemIdx], content: msgs[systemIdx].content + pinBlock };
+    const system = this.memory.getAll().find(m => m.role === "system" && !m.content.startsWith("## 对话摘要"));
+    if (system && !system.content.includes("## 固定指令")) {
+      this.memory.setSystemPrompt(system.content + pinBlock);
     }
   }
 

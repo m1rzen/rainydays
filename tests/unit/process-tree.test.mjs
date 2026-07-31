@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { EventEmitter } from "node:events";
+import { EventEmitter, once } from "node:events";
+import { spawn } from "node:child_process";
 import test from "node:test";
 import { terminateProcessTree } from "../../dist/process-tree.js";
 
@@ -41,4 +42,19 @@ test("SEC-02 Windows process-tree termination fails closed on taskkill failure",
     error => error?.code === "PATH_LIFECYCLE_FAILED"
   );
   assert.equal(fakeChild.killCalls, 1, "failure path did not attempt best-effort direct-child cleanup");
+});
+
+test("SEC-02 Windows process-tree termination proves a live child tree exited", { skip: process.platform !== "win32" }, async () => {
+  const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], {
+    windowsHide: true,
+    shell: false,
+    stdio: "ignore",
+  });
+  await once(child, "spawn");
+  try {
+    await terminateProcessTree(child, 10_000);
+    assert.notEqual(child.exitCode, null);
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+  }
 });

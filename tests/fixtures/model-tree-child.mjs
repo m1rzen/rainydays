@@ -3,21 +3,33 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const [scenario, appRoot, userDataRoot, outsideRoot] = process.argv.slice(2);
-assert(["stable", "content-change", "entry-added", "redirect", "coverage"].includes(scenario));
+assert(["stable", "content-change", "entry-added", "redirect", "coverage", "empty-model", "invalid-model-root", "tree-limit", "managed-read-errors"].includes(scenario));
 for (const candidate of [appRoot, userDataRoot, outsideRoot]) assert(path.isAbsolute(candidate));
 
 process.env.RAINYDAYS_APP_ROOT = appRoot;
 process.env.RAINYDAYS_USER_DATA_DIR = userDataRoot;
 process.env.RAINYDAYS_DATA_DIR = path.join(userDataRoot, "data");
-process.env.RAINYDAYS_MODELS_DIR = path.join(appRoot, "models");
+process.env.RAINYDAYS_MODELS_DIR = scenario === "invalid-model-root" ? appRoot : path.join(appRoot, "models");
+if (scenario === "managed-read-errors") {
+  process.env.RAINYDAYS_CONFIG_PATH = path.join(userDataRoot, "config.json");
+  process.env.RAINYDAYS_ORACLE_PATH = path.join(userDataRoot, "oracle", "LUX.oracle");
+}
 
 const modelRoot = path.join(appRoot, "models", "Xenova", "multilingual-e5-small");
 await fs.mkdir(modelRoot, { recursive: true });
 await fs.mkdir(userDataRoot, { recursive: true });
 await fs.mkdir(outsideRoot, { recursive: true });
+if (scenario === "managed-read-errors") {
+  await fs.mkdir(process.env.RAINYDAYS_CONFIG_PATH);
+  await fs.mkdir(path.dirname(process.env.RAINYDAYS_ORACLE_PATH), { recursive: true });
+  await fs.mkdir(process.env.RAINYDAYS_ORACLE_PATH);
+}
 const configPath = path.join(modelRoot, "config.json");
 const original = "ORIGINAL-MODEL-CONTENT";
-await fs.writeFile(configPath, original);
+await fs.writeFile(configPath, scenario === "empty-model" ? Buffer.alloc(0) : original);
+if (scenario === "tree-limit") {
+  await Promise.all(Array.from({ length: 2_001 }, (_, index) => fs.writeFile(path.join(modelRoot, `entry-${String(index).padStart(4, "0")}.bin`), "x")));
+}
 const fixedModelTime = new Date("2024-01-01T00:00:00.000Z");
 if (scenario === "content-change") await fs.utimes(configPath, fixedModelTime, fixedModelTime);
 if (scenario === "coverage") {
@@ -37,9 +49,30 @@ if (scenario === "redirect") {
   await fs.symlink(outsideRoot, path.join(modelRoot, "redirected"), "junction");
 }
 
-const { getBootstrapPathStore } = await import("../../dist/bootstrap-path-store.js");
 const { PathDeniedError } = await import("../../dist/path-policy.js");
-const store = getBootstrapPathStore();
+if (scenario === "managed-read-errors") {
+  const { ManagedPathStore } = await import("../../dist/managed-path-store.js");
+  const managed = new ManagedPathStore();
+  const codes = [];
+  for (const operation of [() => managed.readConfig(), () => managed.readOracle()]) {
+    await assert.rejects(operation, error => {
+      codes.push(error instanceof PathDeniedError ? error.code : null);
+      return error instanceof PathDeniedError && error.code === "PATH_TYPE_MISMATCH";
+    });
+  }
+  console.log(JSON.stringify({ scenario, codes, cleanClose: true }));
+  process.exit(0);
+}
+let bootstrapModule;
+try {
+  bootstrapModule = await import("../../dist/bootstrap-path-store.js");
+} catch (error) {
+  if (scenario !== "invalid-model-root") throw error;
+  assert(error instanceof PathDeniedError);
+  console.log(JSON.stringify({ scenario, code: error.code, cleanClose: true }));
+  process.exit(0);
+}
+const store = bootstrapModule.getBootstrapPathStore();
 
 if (scenario === "coverage") {
   assert.deepEqual(await store.readAppFile("app-file.txt"), Buffer.from("app-file"));
@@ -80,6 +113,8 @@ if (scenario === "coverage") {
   if (originalWindir === undefined) delete process.env.WINDIR;
   else process.env.WINDIR = originalWindir;
 
+  process.env.RAINYDAYS_GIT_EXECUTABLE = "relative-git.exe";
+  await assert.rejects(() => store.openGitExecutable(), error => error instanceof PathDeniedError && error.code === "PATH_INPUT_INVALID");
   const configuredGit = path.join(outsideRoot, "git-probe.exe");
   await fs.writeFile(configuredGit, "git-probe");
   process.env.RAINYDAYS_GIT_EXECUTABLE = configuredGit;
@@ -103,6 +138,17 @@ if (scenario === "coverage") {
     await assert.rejects(() => runtimeLease.assertCurrent(), error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_STALE");
   }
 
+  const digestRuntime = path.join(outsideRoot, "digest-runtime.exe");
+  const digestTime = new Date("2024-01-02T00:00:00.000Z");
+  await fs.writeFile(digestRuntime, "ORIGINAL-RUNTIME");
+  await fs.utimes(digestRuntime, digestTime, digestTime);
+  process.env.RAINYDAYS_GIT_EXECUTABLE = digestRuntime;
+  const digestLease = await store.openGitExecutable();
+  await fs.writeFile(digestRuntime, "MUTATED!-RUNTIME");
+  await fs.utimes(digestRuntime, digestTime, digestTime);
+  await assert.rejects(() => digestLease.assertCurrent(), error => error instanceof PathDeniedError && error.code === "PATH_IDENTITY_CHANGED");
+  await digestLease.close();
+
   const mutableRuntime = path.join(outsideRoot, "mutable-runtime.exe");
   await fs.writeFile(mutableRuntime, "ORIGINAL-RUNTIME");
   process.env.RAINYDAYS_GIT_EXECUTABLE = mutableRuntime;
@@ -115,6 +161,16 @@ if (scenario === "coverage") {
   process.env.RAINYDAYS_GIT_EXECUTABLE = emptyRuntime;
   await assert.rejects(() => store.openGitExecutable(), error => error instanceof PathDeniedError && error.code === "PATH_OPERATION_DENIED");
 
+  const dataDirectory = path.join(userDataRoot, "data");
+  await fs.writeFile(dataDirectory, "not-a-directory");
+  await assert.rejects(() => store.openDatabaseFileLease(), error => error instanceof PathDeniedError && error.code === "PATH_TYPE_MISMATCH");
+  await fs.rm(dataDirectory);
+  await fs.mkdir(dataDirectory);
+  const invalidDatabase = path.join(dataDirectory, "mini-lux.db");
+  await fs.mkdir(invalidDatabase);
+  await assert.rejects(() => store.openDatabaseFileLease(), error => error instanceof PathDeniedError && error.code === "PATH_TYPE_MISMATCH");
+  await fs.rm(invalidDatabase, { recursive: true });
+
   const databaseLease = await store.openDatabaseFileLease();
   await databaseLease.assertPathCurrent();
   await databaseLease.close();
@@ -124,6 +180,9 @@ if (scenario === "coverage") {
   await reusedDatabaseLease.close();
 
   assert.equal(await store.withModelsDirectory(canonical => path.basename(canonical)), "models");
+  const closedModelLease = await store.openModelsTreeLease();
+  await closedModelLease.close();
+  await assert.rejects(() => closedModelLease.assertCurrent(), error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_STALE");
   const injectedModel = path.join(modelRoot, "injected.json");
   await assert.rejects(() => store.withModelsDirectory(async () => {
     await fs.writeFile(injectedModel, "injected");
@@ -156,6 +215,17 @@ if (scenario === "redirect") {
   });
   await store.close();
   console.log(JSON.stringify({ scenario, code, externalUnchanged: await fs.readFile(path.join(outsideRoot, "sentinel.bin"), "utf8") === "EXTERNAL-SENTINEL" }));
+  process.exit(0);
+}
+
+if (scenario === "empty-model" || scenario === "tree-limit") {
+  let code = null;
+  await assert.rejects(() => store.openModelsTreeLease(), error => {
+    code = error instanceof PathDeniedError ? error.code : null;
+    return code === "PATH_OPERATION_DENIED";
+  });
+  await store.close();
+  console.log(JSON.stringify({ scenario, code, cleanClose: true }));
   process.exit(0);
 }
 

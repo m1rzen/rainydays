@@ -1,5 +1,13 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "additionalTestsByTask": {
+    "GOV-03": [
+      "tests/unit/execution-isolation.test.mjs",
+      "tests/unit/execution-root-lease.test.mjs",
+      "tests/unit/native-process-consent.test.mjs",
+      "tests/integration/sec03-child-consent-transport.test.mjs"
+    ]
+  },
   "overall": [
     "dist/version.js",
     "dist/db.js",

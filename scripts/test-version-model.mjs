@@ -35,6 +35,7 @@ function childEnvironment(root, appRoot = runtimeRoot) {
     RAINYDAYS_USER_DATA_DIR: root,
     RAINYDAYS_DATA_DIR: path.join(root, "data"),
     RAINYDAYS_CONFIG_PATH: path.join(root, "config.json"),
+    DEPARTMENT_DATA_ROOT: path.join(root, "department"),
     OUTPUT_DIR: path.join(root, "output"),
   };
 }
@@ -389,10 +390,16 @@ async function main() {
       ["appVersion type", { ...secondBuild, appVersion: 1 }, /appVersion is invalid/],
       ["buildId syntax", { ...secondBuild, buildId: "" }, /buildId is invalid/],
       ["buildId source", { ...secondBuild, buildIdSource: "manual" }, /buildIdSource is invalid/],
+      ["candidate digest", { ...secondBuild, candidateId: "bad" }, /candidateId is invalid/],
+      ["CI identity", { ...secondBuild, buildIdSource: "ci" }, /CI identity is inconsistent/],
+      ["builtAt type", { ...secondBuild, builtAt: 1 }, /builtAt is invalid/],
       ["source digest", { ...secondBuild, sourceDigest: "bad" }, /sourceDigest is invalid/],
       ["dist integrity", { ...secondBuild, distIntegritySha256: "bad" }, /distIntegritySha256 is invalid/],
       ["versions missing", { ...secondBuild, versions: null }, /versions are missing/],
       ["session export version", { ...secondBuild, versions: { ...secondBuild.versions, sessionExport: 2 } }, /Session Export version is unsupported/],
+      ["isolation missing", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: null } }, /execution isolation metadata is missing/],
+      ["isolation identity", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, architectureSha256: "bad" } } }, /execution isolation metadata is invalid/],
+      ["isolation artifact", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, artifacts: [{ ...secondBuild.versions.executionIsolation.artifacts[0], bytes: 0 }, secondBuild.versions.executionIsolation.artifacts[1]] } } }, /execution isolation artifact is invalid/],
       ["protocols missing", { ...secondBuild, versions: { ...secondBuild.versions, protocols: null } }, /protocols are missing/],
       ["protocol keys", { ...secondBuild, versions: { ...secondBuild.versions, protocols: { ...secondBuild.versions.protocols, extra: null } } }, /protocols fields are invalid/],
       ["protocol missing", { ...secondBuild, versions: { ...secondBuild.versions, protocols: { ...secondBuild.versions.protocols, link: null } } }, /protocol link is missing/],
@@ -647,7 +654,7 @@ async function main() {
     });
     assert.match(sessionRun.payload.forkRollback.error, /forced fork failure/);
     assert.deepEqual(sessionRun.payload.forkRollback.after, sessionRun.payload.forkRollback.before);
-    assert.equal(sessionRun.payload.branchMatrix.failures.length, 19);
+    assert.equal(sessionRun.payload.branchMatrix.failures.length, 21);
     assert(sessionRun.payload.branchMatrix.failures.every((entry) => entry === "INVALID_SESSION_EXPORT"));
     assert.equal(sessionRun.payload.branchMatrix.emptyAutoTitle, "");
     assert.equal(sessionRun.payload.branchMatrix.longAutoTitle, "x".repeat(30));
@@ -656,7 +663,10 @@ async function main() {
     assert(sessionRun.payload.branchMatrix.allSessionCount > 0);
     assert.equal(sessionRun.payload.branchMatrix.touchedOrder.firstId, "touch-order-old");
     assert(Date.parse(sessionRun.payload.branchMatrix.touchedOrder.touchedAt) > Date.parse(sessionRun.payload.branchMatrix.touchedOrder.peerAt));
+    assert.equal(sessionRun.payload.branchMatrix.registeredPost, true);
+    assert.deepEqual(sessionRun.payload.branchMatrix.registeredPostMessages, ["registered identity"]);
     assert.equal(sessionRun.payload.branchMatrix.missingPost, false);
+    assert.equal(sessionRun.payload.branchMatrix.missingExport, null);
     assert.match(sessionRun.payload.branchMatrix.missingForkError, /源会话不存在/);
     assert.match(sessionRun.payload.branchMatrix.boundedForkTitle, /\(fork\)$/);
     assert.match(sessionRun.payload.branchMatrix.identityConflictError, /身份冲突/);
@@ -669,6 +679,8 @@ async function main() {
     assert.equal(linkRun.payload.invalidRegistration, false);
     assert.equal(linkRun.payload.bareId, false);
     assert.equal(linkRun.payload.malformed, false);
+    assert.equal(linkRun.payload.missingCapability, false);
+    assert.equal(linkRun.payload.invalidMessage, false);
     assert.equal(linkRun.payload.spoofed, false);
     assert.equal(linkRun.payload.incompatible, false);
     assert.equal(linkRun.payload.afterIncompatible.length, 0);

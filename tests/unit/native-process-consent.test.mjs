@@ -16,7 +16,7 @@ function deferred() {
 
 function processRequest(overrides = {}) {
   const authority = Object.freeze({ authorityId: "runtime-authority-a" });
-  const args = { cwd: "C:/workspace", command: "x".repeat(1200) };
+  const args = { cwd: "C:/workspace", command: "x".repeat(1200), roots: ["workspace"] };
   return {
     authority,
     authorityEpoch: 1,
@@ -57,7 +57,7 @@ test("SEC-03 native process consent binds exact bytes, authority and one native 
     assert.equal(observed.registrationId, request.registrationId);
     assert.equal(observed.toolName, request.toolName);
     assert.equal(observed.argumentsDigest, request.argumentsDigest);
-    const encoded = Buffer.from(JSON.stringify({ command: request.args.command, cwd: request.args.cwd }), "utf8");
+    const encoded = Buffer.from(JSON.stringify({ command: request.args.command, cwd: request.args.cwd, roots: request.args.roots }), "utf8");
     assert.equal(observed.argumentsUtf8Bytes, encoded.length);
     assert.equal(observed.argumentsBytesSha256, createHash("sha256").update(encoded).digest("hex"));
     assert.equal(observed.previewTruncated, true);
@@ -65,6 +65,53 @@ test("SEC-03 native process consent binds exact bytes, authority and one native 
   } finally {
     cleanup();
   }
+});
+
+test("SEC-03 native process consent rejects malformed authority, arguments and handler lifecycle", async () => {
+  assert.throws(() => registerNativeProcessConsentHandler(null), TypeError);
+  let calls = 0;
+  const cleanup = registerNativeProcessConsentHandler(() => { calls += 1; return "approve"; });
+  assert.throws(() => registerNativeProcessConsentHandler(() => "approve"), /already registered/u);
+  try {
+    const invalid = [
+      { authority: null },
+      { authority: {} },
+      { authorityEpoch: 1.5 },
+      { authorityEpoch: 0 },
+      { sessionId: "" },
+      { runId: "" },
+      { contextId: "" },
+      { registrationId: "" },
+      { toolName: "" },
+      { argumentsDigest: "bad" },
+      { validateCurrent: null },
+      { args: undefined },
+      { args: 0 },
+    ];
+    for (const overrides of invalid) assert.equal(await requestNativeProcessConsent(processRequest(overrides)), false);
+    const cyclic = {};
+    cyclic.self = cyclic;
+    assert.equal(await requestNativeProcessConsent(processRequest({ args: cyclic })), false);
+    assert.equal(calls, 0, "malformed requests reached the private handler");
+  } finally {
+    cleanup();
+    cleanup();
+  }
+
+  const throwingHandler = registerNativeProcessConsentHandler(() => { throw new Error("dialog failure"); });
+  try { assert.equal(await requestNativeProcessConsent(processRequest()), false); }
+  finally { throwingHandler(); }
+
+  const throwingCurrent = registerNativeProcessConsentHandler(() => "approve");
+  try {
+    assert.equal(await requestNativeProcessConsent(processRequest({
+      args: { command: "dir" },
+      profile: " \0 ",
+      rootAliases: [" \0 "],
+      cwd: " \0 ",
+      validateCurrent: () => { throw new Error("runtime replaced"); },
+    })), false);
+  } finally { throwingCurrent(); }
 });
 
 test("SEC-03 native process consent denies invalidation and current-runtime replacement", async () => {

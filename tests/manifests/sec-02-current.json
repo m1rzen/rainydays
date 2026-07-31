@@ -40,7 +40,7 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "98ea1c343280ae6fd3cd845c0016ef703a3befabc8babee299f3dca9799dbc1b",
+          "sha256": "d123452da50fa77acc7dc8a10ee53f07d53b14c7deb09a8c31cc5a60e7bb82c2",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -70,13 +70,13 @@
         },
         {
           "exactCasePath": "tests/integration/sec01-agent.test.mjs",
-          "sha256": "a4cbcc2f309bac10d2862a6afdf2e549352dc10134fbea827efacd0e30a8f92f",
+          "sha256": "b6d3077ebf51e368b6c6793b8d7df9c53b23df8d0b7e3f8dcab30465e90f3598",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/integration/sec01-terminal-owner.test.mjs",
-          "sha256": "47263cca37755558a57167ee79f08eff08b33bac29d7bb275a9554e8eef430f4",
+          "sha256": "c0055c7df41036c0c4f9475976450cf23119a3a46c1fd831b29cc40f5b2a3273",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -308,7 +308,7 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "98ea1c343280ae6fd3cd845c0016ef703a3befabc8babee299f3dca9799dbc1b",
+          "sha256": "d123452da50fa77acc7dc8a10ee53f07d53b14c7deb09a8c31cc5a60e7bb82c2",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -338,13 +338,13 @@
         },
         {
           "exactCasePath": "tests/integration/sec01-agent.test.mjs",
-          "sha256": "a4cbcc2f309bac10d2862a6afdf2e549352dc10134fbea827efacd0e30a8f92f",
+          "sha256": "b6d3077ebf51e368b6c6793b8d7df9c53b23df8d0b7e3f8dcab30465e90f3598",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/integration/sec01-terminal-owner.test.mjs",
-          "sha256": "47263cca37755558a57167ee79f08eff08b33bac29d7bb275a9554e8eef430f4",
+          "sha256": "c0055c7df41036c0c4f9475976450cf23119a3a46c1fd831b29cc40f5b2a3273",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -368,13 +368,13 @@
         },
         {
           "exactCasePath": "tests/unit/resource-owner.test.mjs",
-          "sha256": "8aecb69fc0c392ee4237f844cfeebbcc15fd0f6caf16f02daa7a13a1b61fdff1",
+          "sha256": "3cc59ac0b8ed1d707f2eadf66f65af0152f15f8ed94f8fa633c4387e8128910f",
           "layer": "unit",
           "sourceTask": "SEC-02"
         },
         {
           "exactCasePath": "tests/contract/config-managed-store.test.mjs",
-          "sha256": "6f377651bcb67014ffed388afc3d578f733b95cd4732dc7def107c9ea320cd5f",
+          "sha256": "2e9f859b0558d3ba8685aee66b4985331c80764e2d948dec58de83b66dcba5d6",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -404,13 +404,13 @@
         },
         {
           "exactCasePath": "tests/unit/process-tree.test.mjs",
-          "sha256": "14a5a35f9538da490e368b1687b50e0464838e3e3ad1c3169632bd5fd6b3aeef",
+          "sha256": "4d710dcadbd75dcf19d1f68e6c686fa1bf57b3e4208d637e6bd2451413027ace",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
         {
           "exactCasePath": "tests/unit/settings-enrollment.test.mjs",
-          "sha256": "f7206395d1b16ca5344fff8893924e844766e2ff2b5bf62d203acc3a5e422e6e",
+          "sha256": "cab1370bde84c25def714c23d2f42b894a08c76a6b855643880ab6dcacc48678",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -422,13 +422,13 @@
         },
         {
           "exactCasePath": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
-          "sha256": "fc3a593cb628e1d60eab4b08f74ae570608e588d62a14a425cd7b25c5a846637",
+          "sha256": "4d7a13b8013b07c63f548e68c067aa5108a6eb5abee1cd94d02ad76bc8acf988",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
         {
           "exactCasePath": "tests/integration/embedding-path-lifetime.test.mjs",
-          "sha256": "44ca24a62160383deb1a189790ca967edcb234f857034bdf6bc9729443340e70",
+          "sha256": "4dcb9bd7067e5f9393542de9a01b231aeb4d59e8bac90ffd48de56275c125a04",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1000,7 +1000,7 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "98ea1c343280ae6fd3cd845c0016ef703a3befabc8babee299f3dca9799dbc1b",
+          "sha256": "d123452da50fa77acc7dc8a10ee53f07d53b14c7deb09a8c31cc5a60e7bb82c2",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -1030,13 +1030,13 @@
         },
         {
           "exactCasePath": "tests/integration/sec01-agent.test.mjs",
-          "sha256": "a4cbcc2f309bac10d2862a6afdf2e549352dc10134fbea827efacd0e30a8f92f",
+          "sha256": "b6d3077ebf51e368b6c6793b8d7df9c53b23df8d0b7e3f8dcab30465e90f3598",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/integration/sec01-terminal-owner.test.mjs",
-          "sha256": "47263cca37755558a57167ee79f08eff08b33bac29d7bb275a9554e8eef430f4",
+          "sha256": "c0055c7df41036c0c4f9475976450cf23119a3a46c1fd831b29cc40f5b2a3273",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -1060,13 +1060,13 @@
         },
         {
           "exactCasePath": "tests/unit/resource-owner.test.mjs",
-          "sha256": "8aecb69fc0c392ee4237f844cfeebbcc15fd0f6caf16f02daa7a13a1b61fdff1",
+          "sha256": "3cc59ac0b8ed1d707f2eadf66f65af0152f15f8ed94f8fa633c4387e8128910f",
           "layer": "unit",
           "sourceTask": "SEC-02"
         },
         {
           "exactCasePath": "tests/contract/config-managed-store.test.mjs",
-          "sha256": "6f377651bcb67014ffed388afc3d578f733b95cd4732dc7def107c9ea320cd5f",
+          "sha256": "2e9f859b0558d3ba8685aee66b4985331c80764e2d948dec58de83b66dcba5d6",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -1096,13 +1096,13 @@
         },
         {
           "exactCasePath": "tests/unit/process-tree.test.mjs",
-          "sha256": "14a5a35f9538da490e368b1687b50e0464838e3e3ad1c3169632bd5fd6b3aeef",
+          "sha256": "4d710dcadbd75dcf19d1f68e6c686fa1bf57b3e4208d637e6bd2451413027ace",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
         {
           "exactCasePath": "tests/unit/settings-enrollment.test.mjs",
-          "sha256": "f7206395d1b16ca5344fff8893924e844766e2ff2b5bf62d203acc3a5e422e6e",
+          "sha256": "cab1370bde84c25def714c23d2f42b894a08c76a6b855643880ab6dcacc48678",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -1114,13 +1114,13 @@
         },
         {
           "exactCasePath": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
-          "sha256": "fc3a593cb628e1d60eab4b08f74ae570608e588d62a14a425cd7b25c5a846637",
+          "sha256": "4d7a13b8013b07c63f548e68c067aa5108a6eb5abee1cd94d02ad76bc8acf988",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
         {
           "exactCasePath": "tests/integration/embedding-path-lifetime.test.mjs",
-          "sha256": "44ca24a62160383deb1a189790ca967edcb234f857034bdf6bc9729443340e70",
+          "sha256": "4dcb9bd7067e5f9393542de9a01b231aeb4d59e8bac90ffd48de56275c125a04",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1168,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "d07d3418a90fb36aeadd841c8afa0a202025ac00273f419c99bbbe1ba8f38848",
+          "sha256": "68b17338969e2c008cfabe2568d52e6540497351fca79f31597fffa6401135d5",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -1691,7 +1691,7 @@
   "coverageScope": {
     "source": {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "5376cea77eab4741593f680f41d95c9a4ebb8d14dd9fccf24db994e6f9c5c34b"
+      "sha256": "bbaa2c1036f401839c0d57e1b939fb1e2a439392f79cc84299e8a084776dff3d"
     },
     "overallFiles": [
       "dist/version.js",
@@ -5436,7 +5436,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "98ea1c343280ae6fd3cd845c0016ef703a3befabc8babee299f3dca9799dbc1b"
+          "sha256": "d123452da50fa77acc7dc8a10ee53f07d53b14c7deb09a8c31cc5a60e7bb82c2"
         },
         "testCaseId": "SEC-02 Session deletion closes PathPolicy leases before removing the session identity",
         "producer": "node-test"
@@ -6540,7 +6540,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/settings-enrollment.test.mjs",
-          "sha256": "f7206395d1b16ca5344fff8893924e844766e2ff2b5bf62d203acc3a5e422e6e"
+          "sha256": "cab1370bde84c25def714c23d2f42b894a08c76a6b855643880ab6dcacc48678"
         },
         "testCaseId": "SEC-02 concurrent winner makes the stale Settings base permanently unusable",
         "producer": "node-test"
@@ -6564,7 +6564,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "98ea1c343280ae6fd3cd845c0016ef703a3befabc8babee299f3dca9799dbc1b"
+          "sha256": "d123452da50fa77acc7dc8a10ee53f07d53b14c7deb09a8c31cc5a60e7bb82c2"
         },
         "testCaseId": "SEC-02 child PathAuthority and ResourceOwner preserve only the exact root subset",
         "producer": "node-test"
@@ -6576,7 +6576,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "98ea1c343280ae6fd3cd845c0016ef703a3befabc8babee299f3dca9799dbc1b"
+          "sha256": "d123452da50fa77acc7dc8a10ee53f07d53b14c7deb09a8c31cc5a60e7bb82c2"
         },
         "testCaseId": "SEC-02 same configured root string cannot substitute a new filesystem identity",
         "producer": "node-test"
@@ -6588,7 +6588,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "98ea1c343280ae6fd3cd845c0016ef703a3befabc8babee299f3dca9799dbc1b"
+          "sha256": "d123452da50fa77acc7dc8a10ee53f07d53b14c7deb09a8c31cc5a60e7bb82c2"
         },
         "testCaseId": "SEC-02 Broker gateway denies root object replacement during an in-flight read",
         "producer": "node-test"
@@ -6600,7 +6600,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "98ea1c343280ae6fd3cd845c0016ef703a3befabc8babee299f3dca9799dbc1b"
+          "sha256": "d123452da50fa77acc7dc8a10ee53f07d53b14c7deb09a8c31cc5a60e7bb82c2"
         },
         "testCaseId": "SEC-02 attenuated child gateway cannot fall back to broader parent roots",
         "producer": "node-test"
@@ -6922,7 +6922,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/sec01-terminal-owner.test.mjs",
-          "sha256": "47263cca37755558a57167ee79f08eff08b33bac29d7bb275a9554e8eef430f4"
+          "sha256": "c0055c7df41036c0c4f9475976450cf23119a3a46c1fd831b29cc40f5b2a3273"
         },
         "testCaseId": "SEC-01/SEC-03 A13 local Terminal API is capability-gated and Session-owned",
         "producer": "node-test"
@@ -6984,11 +6984,11 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "5376cea77eab4741593f680f41d95c9a4ebb8d14dd9fccf24db994e6f9c5c34b"
+      "sha256": "bbaa2c1036f401839c0d57e1b939fb1e2a439392f79cc84299e8a084776dff3d"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "644aa0dcf569022db011ce1283d417741f59cbd581d245e9a91c5af71d32bc5c"
+      "sha256": "4c05d3e2ad5b0be83a65a899969e3a308685684dbfb0347752a84af76effda25"
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
@@ -6996,11 +6996,11 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "82dbb376b9290e47187f7ea4d5eef92a4b7d43aba4ea04431f45d3253b440991"
+      "sha256": "c641a166e3fec320961418e495d6b61f73d16c46811f681cc50914b105476d50"
     },
     {
       "exactCasePath": "scripts/run-coverage.mjs",
-      "sha256": "dddb9f2800f5cc2cb299a0651488a17380d6abb29bda967feaf58073d9557968"
+      "sha256": "3477ca2b244348fd65e5d3b331b477f8a83fca1b5ee96e97156a8f7483ec880e"
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
@@ -7008,7 +7008,7 @@
     },
     {
       "exactCasePath": "scripts/test-gate-selftest.mjs",
-      "sha256": "4f5ba37817f94c93a082b0912e248fea001cf2e0c267d0dc10377859ddd7261b"
+      "sha256": "bd020c0ce1412fd54e133885ad2b02364f2505cfac730077afbdbf3cab977303"
     },
     {
       "exactCasePath": "scripts/run-gov04.mjs",
@@ -7048,7 +7048,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "4ca54b2199a99806198cb9a798c7d9033c8e7abcd93d64bd1009e80d41fdc64e"
+      "sha256": "829e815e5a45a2e9b66e96d8a3b2ccfff28d7451c9aa535629f6a89eeab88d1a"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7112,5 +7112,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "9ef1051939fda7bc745e8528ba1e9f5c8ff8def4df8a98519256f1670126738e"
+  "canonicalPayloadSha256": "5549094111a65427e42035327b49b43c1f5566f8c3f2fe9e3b90cf1a45e9f447"
 }

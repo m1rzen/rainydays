@@ -53,16 +53,16 @@ export async function pathExists(filePath) {
   try { await access(filePath); return true; } catch { return false; }
 }
 
-export async function assertRegularProjectFile(relative, field = "path") {
+export async function assertRegularProjectFile(relative, field = "path", root = projectRoot) {
   safeRelativePath(relative, field);
-  let cursor = projectRoot;
+  let cursor = root;
   for (const segment of relative.split("/")) {
     cursor = path.join(cursor, segment);
     const info = await lstat(cursor);
     assert(!info.isSymbolicLink(), `${field} must not traverse a symbolic link: ${relative}`);
   }
   assert((await stat(cursor)).isFile(), `${field} must name a regular file: ${relative}`);
-  const containment = path.relative(await realpath(projectRoot), await realpath(cursor));
+  const containment = path.relative(await realpath(root), await realpath(cursor));
   assert(containment && containment !== ".." && !containment.startsWith(`..${path.sep}`) && !path.isAbsolute(containment), `${field} escapes project root: ${relative}`);
   return cursor;
 }
@@ -194,9 +194,9 @@ function assertUniquePaths(entries, field) {
   }
 }
 
-export async function loadSourceTaskManifest(taskId) {
+export async function loadSourceTaskManifest(taskId, root = projectRoot) {
   assert.match(taskId, /^[A-Z]+-\d{2}$/);
-  const filePath = path.join(projectRoot, "tests", "manifests", `${taskId.toLowerCase()}.json`);
+  const filePath = path.join(root, "tests", "manifests", `${taskId.toLowerCase()}.json`);
   const manifest = JSON.parse(await readFile(filePath, "utf8"));
   assertExactKeys(manifest, ["schemaVersion", "taskId", "baseline", "personaChain", "changedRuntimeFiles", "coverageExemptions", "layers"], "manifest");
   assert.equal(manifest.schemaVersion, 1);
@@ -208,7 +208,7 @@ export async function loadSourceTaskManifest(taskId) {
   assert.deepEqual(manifest.personaChain, expectedPersonaChain);
   assert(Array.isArray(manifest.changedRuntimeFiles));
   assertUniquePaths(manifest.changedRuntimeFiles, "changedRuntimeFiles");
-  for (const entry of manifest.changedRuntimeFiles) await assertRegularProjectFile(entry, "changedRuntimeFiles entry");
+  for (const entry of manifest.changedRuntimeFiles) await assertRegularProjectFile(entry, "changedRuntimeFiles entry", root);
   assert(manifest.coverageExemptions && typeof manifest.coverageExemptions === "object" && !Array.isArray(manifest.coverageExemptions));
   assertUniquePaths(Object.keys(manifest.coverageExemptions), "coverage exemptions");
   for (const [entry, exemption] of Object.entries(manifest.coverageExemptions)) {
@@ -226,24 +226,24 @@ export async function loadSourceTaskManifest(taskId) {
     assertUniquePaths(manifest.layers[layer], `${layer} tests`);
     for (const entry of manifest.layers[layer]) {
       allTests.push(entry);
-      await assertRegularProjectFile(entry, `${layer} test path`);
+      await assertRegularProjectFile(entry, `${layer} test path`, root);
     }
   }
   assertUniquePaths(allTests, "all layer tests");
   return { manifest, filePath };
 }
 
-export async function loadResolvedManifest() {
-  const filePath = path.join(projectRoot, ...sec02ResolvedManifestRelative.split("/"));
+export async function loadResolvedManifest(root = projectRoot) {
+  const filePath = path.join(root, ...sec02ResolvedManifestRelative.split("/"));
   const manifest = JSON.parse(await readFile(filePath, "utf8"));
-  await validateSec02ResolvedManifest(manifest, { root: projectRoot });
+  await validateSec02ResolvedManifest(manifest, { root });
   return { manifest, filePath };
 }
 
-export async function loadResolvedTaskView(taskId) {
+export async function loadResolvedTaskView(taskId, root = projectRoot) {
   assert(["SEC-02", "GOV-03"].includes(taskId), `task has no SEC-02 resolved view: ${taskId}`);
-  const target = await loadSourceTaskManifest(taskId);
-  const resolved = await loadResolvedManifest();
+  const target = await loadSourceTaskManifest(taskId, root);
+  const resolved = await loadResolvedManifest(root);
   const view = resolved.manifest.cumulativeViews.find(entry => entry.taskId === taskId);
   assert(view, `resolved task view is missing: ${taskId}`);
   const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
@@ -268,26 +268,26 @@ export async function loadResolvedTaskView(taskId) {
     coverageExemptions,
     layers,
   };
-  await validateCoverageGovernance(manifest, (await loadCoverageScope()).scope);
+  await validateCoverageGovernance(manifest, (await loadCoverageScope(undefined, root)).scope);
   return {
     manifest,
     filePath: target.filePath,
-    sourceManifestPaths: resolved.manifest.sourceManifests.map(source => path.join(projectRoot, ...source.exactCasePath.split("/"))),
+    sourceManifestPaths: resolved.manifest.sourceManifests.map(source => path.join(root, ...source.exactCasePath.split("/"))),
     resolvedManifest: resolved.manifest,
     resolvedManifestPath: resolved.filePath,
   };
 }
 
-export async function loadSec03ResolvedManifest() {
-  const filePath = path.join(projectRoot, ...sec03ResolvedManifestRelative.split("/"));
+export async function loadSec03ResolvedManifest(root = projectRoot) {
+  const filePath = path.join(root, ...sec03ResolvedManifestRelative.split("/"));
   const manifest = JSON.parse(await readFile(filePath, "utf8"));
-  await validateSec03ResolvedManifest(manifest, { root: projectRoot });
+  await validateSec03ResolvedManifest(manifest, { root });
   return { manifest, filePath };
 }
 
-export async function loadSec03ResolvedTaskView() {
-  const resolved = await loadSec03ResolvedManifest();
-  const sourcePath = path.join(projectRoot, "tests", "manifests", "sec-03.json");
+export async function loadSec03ResolvedTaskView(root = projectRoot) {
+  const resolved = await loadSec03ResolvedManifest(root);
+  const sourcePath = path.join(root, "tests", "manifests", "sec-03.json");
   const source = JSON.parse(await readFile(sourcePath, "utf8"));
   const layers = Object.fromEntries(layerNames.map((layer) => [layer, []]));
   for (const record of resolved.manifest.cumulativeEntries) {
@@ -309,27 +309,34 @@ export async function loadSec03ResolvedTaskView() {
       layers,
     },
     filePath: sourcePath,
-    sourceManifestPaths: [path.join(projectRoot, ...resolved.manifest.predecessor.exactCasePath.split("/")), sourcePath],
+    sourceManifestPaths: [path.join(root, ...resolved.manifest.predecessor.exactCasePath.split("/")), sourcePath],
     resolvedManifest: resolved.manifest,
     resolvedManifestPath: resolved.filePath,
   };
 }
 
-export async function loadTaskManifest(taskId = "GOV-03") {
-  if (taskId === "SEC-03") return loadSec03ResolvedTaskView();
-  if (taskId === "SEC-02" || taskId === "GOV-03") return loadResolvedTaskView(taskId);
-  return loadSourceTaskManifest(taskId);
+export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
+  if (taskId === "SEC-03") return loadSec03ResolvedTaskView(root);
+  if (taskId === "SEC-02" || taskId === "GOV-03") return loadResolvedTaskView(taskId, root);
+  return loadSourceTaskManifest(taskId, root);
 }
 
 function assertPercent(value, field, minimum = 0) {
   assert(Number.isInteger(value) && value >= minimum && value <= 100, `${field} must be an integer in ${minimum}..100`);
 }
 
-export async function loadCoverageScope(scopePath) {
-  const filePath = scopePath ? path.resolve(scopePath) : path.join(projectRoot, "tests", "coverage-scope.json");
+export async function loadCoverageScope(scopePath, root = projectRoot) {
+  const filePath = scopePath ? path.resolve(scopePath) : path.join(root, "tests", "coverage-scope.json");
   const scope = JSON.parse(await readFile(filePath, "utf8"));
-  assertExactKeys(scope, ["schemaVersion", "overall", "securityCritical", "thresholds", "perFileLineMinimum"], "coverage scope");
-  assert.equal(scope.schemaVersion, 1);
+  assertExactKeys(scope, ["schemaVersion", "additionalTestsByTask", "overall", "securityCritical", "thresholds", "perFileLineMinimum"], "coverage scope");
+  assert.equal(scope.schemaVersion, 2);
+  assert(scope.additionalTestsByTask && typeof scope.additionalTestsByTask === "object" && !Array.isArray(scope.additionalTestsByTask), "additionalTestsByTask must be an object");
+  for (const [taskId, entries] of Object.entries(scope.additionalTestsByTask)) {
+    assert.match(taskId, /^[A-Z]+-\d{2}$/, "additional coverage task ID is invalid");
+    assert(Array.isArray(entries) && entries.length > 0, `additional coverage tests are empty: ${taskId}`);
+    assertUniquePaths(entries, `additional coverage tests ${taskId}`);
+    for (const entry of entries) await assertRegularProjectFile(entry, `additional coverage test ${taskId}`, root);
+  }
   assert(Array.isArray(scope.overall) && scope.overall.length > 0);
   assert(Array.isArray(scope.securityCritical) && scope.securityCritical.length > 0);
   assertUniquePaths(scope.overall, "coverage overall");
@@ -341,7 +348,7 @@ export async function loadCoverageScope(scopePath) {
   assertUniquePaths(Object.keys(scope.perFileLineMinimum), "perFileLineMinimum");
   const overallIdentities = new Set(scope.overall.map(pathIdentity));
   const exactOverall = new Set(scope.overall);
-  for (const entry of scope.overall) await assertRegularProjectFile(entry, "coverage path");
+  for (const entry of scope.overall) await assertRegularProjectFile(entry, "coverage path", root);
   for (const entry of scope.securityCritical) assert(overallIdentities.has(pathIdentity(entry)), `security file not in overall scope: ${entry}`);
   for (const [entry, minimum] of Object.entries(scope.perFileLineMinimum)) {
     safeRelativePath(entry, "per-file minimum path");

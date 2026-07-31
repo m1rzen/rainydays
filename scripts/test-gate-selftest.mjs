@@ -46,6 +46,14 @@ function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
+async function readChildReport(reportPath, child) {
+  try {
+    return JSON.parse(await readFile(reportPath, "utf8"));
+  } catch (error) {
+    throw new Error(`child report unavailable (${child.code}/${child.signal ?? "no-signal"}): ${reportPath}\nstdout:\n${child.stdout}\nstderr:\n${child.stderr}`, { cause: error });
+  }
+}
+
 function summaryEntry(linesCovered, linesTotal, branchesCovered, branchesTotal) {
   return {
     lines: { covered: linesCovered, total: linesTotal },
@@ -153,6 +161,7 @@ async function createGateSandbox(root, name, mode) {
   ]) await mkdir(path.join(sandbox, ...directory.split("/")), { recursive: true });
   await cp(path.join(projectRoot, "scripts"), path.join(sandbox, "scripts"), { recursive: true });
   await cp(path.join(projectRoot, "tests", "helpers.mjs"), path.join(sandbox, "tests", "helpers.mjs"));
+  await cp(path.join(projectRoot, "tests", "sec03-receipts.mjs"), path.join(sandbox, "tests", "sec03-receipts.mjs"));
   await cp(path.join(projectRoot, "parity", "scripts"), path.join(sandbox, "parity", "scripts"), { recursive: true });
   await cp(path.join(projectRoot, "parity", "baselines", "lux-desktop-0.1.898.json"), path.join(sandbox, "parity", "baselines", "lux-desktop-0.1.898.json"));
   for (const file of ["build-info.json", "dist-integrity.json", "package.json"]) await cp(path.join(projectRoot, file), path.join(sandbox, file));
@@ -200,7 +209,8 @@ async function createGateSandbox(root, name, mode) {
   };
   await writeFile(path.join(sandbox, "tests", "manifests", "sec-01.json"), JSON.stringify(manifest, null, 2));
   const scope = {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    additionalTestsByTask: {},
     overall: ["dist/proof.js"],
     securityCritical: ["dist/proof.js"],
     thresholds: { overallLines: 80, securityBranches: 90 },
@@ -246,7 +256,7 @@ async function main() {
     const assertion = await runProcess(process.execPath, [
       path.join(assertionSandbox, "scripts", "run-test-layer.mjs"), "--task", "SEC-01", "--layer", "unit", "--report", assertionReportPath,
     ], { cwd: assertionSandbox, timeoutMs: 60_000 });
-    const assertionReport = JSON.parse(await readFile(assertionReportPath, "utf8"));
+    const assertionReport = await readChildReport(assertionReportPath, assertion);
     record(
       "intentional assertion failure through layer runner",
       "TEST_ASSERTION/non-zero",
@@ -261,7 +271,7 @@ async function main() {
     const contract = await runProcess(process.execPath, [
       path.join(contractSandbox, "scripts", "run-test-layer.mjs"), "--task", "SEC-01", "--layer", "contract", "--report", contractReportPath,
     ], { cwd: contractSandbox, timeoutMs: 90_000 });
-    const contractReport = JSON.parse(await readFile(contractReportPath, "utf8"));
+    const contractReport = await readChildReport(contractReportPath, contract);
     const corruptUnchanged = await sha256File(corruptBaseline) === corruptHashBefore;
     record(
       "corrupt contract through layer runner",
@@ -315,7 +325,7 @@ async function main() {
       "scripts/run-coverage.mjs", "--task", args.task, "--scope", forcedScopePath,
       "--seed-stale-coverage", seedDirectory, "--no-preserve-output", "--report", forcedReportPath,
     ], { timeoutMs: 660_000 });
-    const forcedReport = JSON.parse(await readFile(forcedReportPath, "utf8"));
+    const forcedReport = await readChildReport(forcedReportPath, forcedCoverage);
     const preservedAfter = await hashTree(path.join(projectRoot, "test-results", "coverage"));
     record(
       "forced coverage threshold zero-hit and preserved-output isolation",
@@ -378,7 +388,7 @@ async function main() {
     const failingCoverage = await runProcess(process.execPath, [
       path.join(failingCoverageSandbox, "scripts", "run-coverage.mjs"), "--task", "SEC-01", "--no-preserve-output", "--report", failingCoverageReportPath,
     ], { cwd: failingCoverageSandbox, timeoutMs: 120_000 });
-    const failingCoverageReport = JSON.parse(await readFile(failingCoverageReportPath, "utf8"));
+    const failingCoverageReport = await readChildReport(failingCoverageReportPath, failingCoverage);
     record(
       "passing ratio cannot mask failing coverage child",
       "COVERAGE_TEST_FAILURE with passing evaluation",
@@ -391,7 +401,7 @@ async function main() {
     const mutationCoverage = await runProcess(process.execPath, [
       path.join(mutationSandbox, "scripts", "run-coverage.mjs"), "--task", "SEC-01", "--no-preserve-output", "--report", mutationReportPath,
     ], { cwd: mutationSandbox, timeoutMs: 120_000 });
-    const mutationReport = JSON.parse(await readFile(mutationReportPath, "utf8"));
+    const mutationReport = await readChildReport(mutationReportPath, mutationCoverage);
     record(
       "passing ratio cannot mask formal artifact mutation",
       "ARTIFACT_MUTATION with passing evaluation",
@@ -405,7 +415,7 @@ async function main() {
     const manifestMutationCoverage = await runProcess(process.execPath, [
       path.join(manifestMutationSandbox, "scripts", "run-coverage.mjs"), "--task", "SEC-01", "--no-preserve-output", "--report", manifestMutationReportPath,
     ], { cwd: manifestMutationSandbox, timeoutMs: 120_000 });
-    const manifestMutationReport = JSON.parse(await readFile(manifestMutationReportPath, "utf8"));
+    const manifestMutationReport = await readChildReport(manifestMutationReportPath, manifestMutationCoverage);
     record(
       "package manifest mutation is a formal artifact mutation",
       "ARTIFACT_MUTATION with package manifest changed",
@@ -421,7 +431,7 @@ async function main() {
       path.join(timeoutSandbox, "scripts", "run-coverage.mjs"), "--task", "SEC-01", "--timeout-ms", "1000",
       "--no-preserve-output", "--report", timeoutReportPath,
     ], { cwd: timeoutSandbox, timeoutMs: 30_000 });
-    const timeoutReport = JSON.parse(await readFile(timeoutReportPath, "utf8"));
+    const timeoutReport = await readChildReport(timeoutReportPath, timeoutCoverage);
     const forgedTimeoutCleanup = structuredClone(timeoutReport);
     forgedTimeoutCleanup.timeoutTermination.exitCode = 1;
     forgedTimeoutCleanup.timeoutTermination.childExited = false;
@@ -455,6 +465,7 @@ async function main() {
         buildId: buildInfo.buildId,
         sourceDigest: buildInfo.sourceDigest,
         buildInfoSha256: await fileSha256(path.join(fakeProject, "build-info.json")),
+        executionIsolation: buildInfo.versions.executionIsolation,
       },
       artifact: { filename, bytes: expectedBytes.length, sha256: sha256(expectedBytes) },
     };

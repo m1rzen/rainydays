@@ -1269,6 +1269,10 @@ test("SEC-02 coverage recovery closes Broker constructor, root mapping and direc
   assert.throws(() => broker.registerStaticTool(registered("bad_empty_risk", { riskClasses: [""], approval: "none", effects: [] }).tool), TypeError);
   assert.throws(() => broker.registerStaticTool(registered("bad_null_risk", { riskClasses: null, approval: "none", effects: [] }).tool), TypeError);
   assert.throws(() => broker.registerStaticTool(registered("bad_path_effect", { riskClasses: ["read"], approval: "none", effects: [], pathOperations: ["read-file"] }).tool), TypeError);
+  assert.throws(() => broker.registerStaticTool(registered("bad_execution_access", { riskClasses: ["read", "process"], approval: "none", effects: ["process"], pathOperations: ["initial-cwd"], executionRootAccess: "write" }).tool), TypeError);
+  assert.throws(() => broker.registerStaticTool(registered("bad_execution_path", { riskClasses: ["read", "process"], approval: "none", effects: ["process"], pathOperations: [], executionRootAccess: "read" }).tool), TypeError);
+  assert.throws(() => broker.registerStaticTool(registered("bad_execution_write_risk", { riskClasses: ["read", "process"], approval: "none", effects: ["process"], pathOperations: ["initial-cwd"], executionRootAccess: "read-write" }).tool), TypeError);
+  assert.throws(() => broker.registerStaticTool(registered("bad_approval", { riskClasses: ["read"], approval: "maybe", effects: [] }).tool), TypeError);
 
   const authorityFor = (rootEnv, env = {}) => broker.createRuntimeAuthority({
     name: "developer",
@@ -1291,7 +1295,25 @@ test("SEC-02 coverage recovery closes Broker constructor, root mapping and direc
   const approvedCall = broker.inspectToolCall(root, "coverage_approved", { value: "x" });
   assert.throws(() => broker.createApprovalChallenge(root, approvedCall, 0), /lifetime is invalid/);
   assert.throws(() => broker.createApprovalChallenge(root, approvedCall, 60_001), /lifetime is invalid/);
+  const invocationChild = broker.deriveInvocationChild(root, { principal: "subagent", tools: ["coverage_read"] });
+  const childCall = broker.inspectToolCall(invocationChild, "coverage_read", { value: "child" });
+  expectCode(() => broker.createApprovalChallenge(root, childCall), "CAPABILITY_APPROVAL_CHALLENGE_INVALID");
+  broker.finishContext(invocationChild);
+
+  const replayCall = broker.inspectToolCall(root, "coverage_approved", { value: "replay" });
+  const replayChallenge = broker.createApprovalChallenge(root, replayCall);
+  const replayGrant = broker.resolveApprovalChallenge({
+    ...approvalResponse, challengeId: replayChallenge.challengeId, choice: "approve", sessionId: "session-a", runId: root.runId,
+  });
+  await broker.invokeTool(replayGrant, replayCall);
+  const secondReplayCall = broker.inspectToolCall(root, "coverage_approved", { value: "replay" });
+  expectCode(() => broker.invokeTool(replayGrant, secondReplayCall), "CAPABILITY_GRANT_REPLAYED");
+  broker.finishContext(replayGrant);
+
   await assert.rejects(() => broker.retireSessionResources(authority, ""), TypeError);
+  await assert.rejects(() => broker.retireSessionResources({}, "session-a"), error => error?.code === "CAPABILITY_CONTEXT_FORGED");
+  await broker.retireSessionResources(authority, "session-b");
+  await assert.rejects(() => broker.retireAuthority({}), error => error?.code === "CAPABILITY_CONTEXT_FORGED");
 
   broker.registerDirectOperation("coverage:user", writePolicy);
   broker.registerDirectOperation("coverage:network", networkPolicy);
@@ -1303,6 +1325,8 @@ test("SEC-02 coverage recovery closes Broker constructor, root mapping and direc
   expectCode(() => broker.authorizeDirectOperation(root, "coverage:cwd", {}), "CAPABILITY_DIRECT_OPERATION_DENIED");
 
   const direct = broker.issueLocalApiContext({ authority, principal, sessionId: "session-a", operation: "coverage:cwd", args: { cwd: "" } });
+  assert.equal(assertResourceOwner(broker.getResourceOwner(direct)).principal, "local-user-api");
+  await assert.rejects(() => broker.withDirectExecutionRoot(root, "coverage:cwd", "", "WORKSPACE_ROOT", () => undefined), error => error?.code === "CAPABILITY_DIRECT_OPERATION_DENIED");
   await assert.rejects(() => broker.withDirectExecutionRoot(direct, "coverage:cwd", "", "WORKSPACE_ROOT", () => undefined), error => error?.code === "CAPABILITY_DIRECT_OPERATION_DENIED");
   expectCode(() => broker.authorizeDirectOperation(direct, "coverage:other", { cwd: "" }), "CAPABILITY_DIRECT_OPERATION_DENIED");
   expectCode(() => broker.authorizeDirectOperation(direct, "coverage:cwd", { cwd: "changed" }), "CAPABILITY_DIRECT_OPERATION_DENIED");

@@ -10,6 +10,7 @@ import {
   loadCoverageScope,
   loadTaskManifest,
   makeTempDir,
+  pathIdentity,
   prepareReportPath,
   projectRoot,
   removeFixture,
@@ -96,6 +97,13 @@ async function main() {
   const { manifest } = await loadTaskManifest(args.task);
   const { scope, filePath: scopePath } = await loadCoverageScope(args.scope);
   await validateCoverageGovernance(manifest, scope);
+  const coverageTests = [
+    ...manifest.layers.unit,
+    ...manifest.layers.contract,
+    ...manifest.layers.integration,
+    ...(scope.additionalTestsByTask[manifest.taskId] ?? []),
+  ];
+  assert.equal(new Set(coverageTests.map(pathIdentity)).size, coverageTests.length, "coverage test registry contains duplicate or case-alias paths");
   const before = await formalArtifactSnapshot();
   const temporary = await makeTempDir("mini-lux-gov03-coverage-");
   let child = { code: 1, signal: null, stdout: "", stderr: "" };
@@ -127,8 +135,7 @@ async function main() {
       process.execPath,
       "--test",
       "--test-concurrency=1",
-      ...manifest.layers.contract,
-      ...manifest.layers.integration,
+      ...coverageTests,
       ], { timeoutMs: args.timeoutMs, echo: true });
     } catch (error) {
       timedOut = error?.timedOut === true;

@@ -66,6 +66,7 @@ function harness(options = {}) {
     commitCandidate: candidate => {
       events.push("commit-candidate");
       assert.equal(candidate.lease, "issued");
+      if (options.commitFailure) throw new Error("commit failed");
       candidate.lease = "committed";
     },
     discardCandidate: async candidate => {
@@ -169,4 +170,31 @@ test("SEC-02 retirement or recovery failure leaves the runtime stopped fail-clos
   assert.deepEqual(recovery.events, ["capture", "prepare", "cas", "retire-base", "persist-candidate", "discard-candidate", "recover-base", "stop"]);
   assert.equal(recovery.state.stopped, true);
   assert.equal(recovery.state.authority, null);
+
+  const publicationRecovery = harness({ publicationFailure: true, recoveryFailure: true });
+  await assert.rejects(
+    () => executeSettingsEnrollment(publicationRecovery.adapter),
+    error => error instanceof AggregateError && error.errors.length === 2 && /publication failed and runtime recovery failed/.test(error.message),
+  );
+  assert.deepEqual(publicationRecovery.events, ["capture", "prepare", "cas", "retire-base", "persist-candidate", "publish-candidate", "discard-candidate", "recover-base", "stop"]);
+  assert.equal(publicationRecovery.state.stopped, true);
+  assert.equal(publicationRecovery.state.authority, null);
+});
+
+test("SEC-02 commit failure stops fail-closed without discarding a finalized candidate twice", async () => {
+  const commit = harness({ commitFailure: true });
+  await assert.rejects(() => executeSettingsEnrollment(commit.adapter), /commit failed/);
+  assert.deepEqual(commit.events, ["capture", "prepare", "cas", "retire-base", "persist-candidate", "publish-candidate", "commit-candidate", "stop"]);
+  assert.equal(commit.state.stopped, true);
+  assert.equal(commit.state.authority, null);
+
+  let discardCalls = 0;
+  const candidate = {};
+  const adapter = {
+    captureBase: () => ({}), prepareCandidate: async () => candidate, isBaseCurrent: () => false,
+    retireBase: async () => {}, persistCandidate: async () => {}, publishCandidate: async () => {}, commitCandidate: () => {},
+    discardCandidate: async () => { discardCalls += 1; }, recoverBase: async () => {}, stopFailClosed: () => {},
+  };
+  await assert.rejects(() => executeSettingsEnrollment(adapter), SettingsEnrollmentStaleError);
+  assert.equal(discardCalls, 1);
 });

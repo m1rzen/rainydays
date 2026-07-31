@@ -59,6 +59,16 @@ test("SEC-02 ResourceOwner drain failure is a hard lifecycle failure", async () 
   );
 });
 
+test("SEC-02 ResourceOwner aggregates multiple independent cleanup failures", async () => {
+  const owner = issueResourceOwner(metadata("authority-aggregate"));
+  registerOwnedResource(owner, async () => { throw new Error("first close failed"); });
+  registerOwnedResource(owner, async () => { throw new Error("second close failed"); });
+  await assert.rejects(
+    () => retireResourceOwner(owner),
+    error => error instanceof AggregateError && error.errors.length === 2,
+  );
+});
+
 test("SEC-02 ResourceOwner waits for every closer before publishing a drain failure", async () => {
   const owner = issueResourceOwner(metadata());
   const gate = Promise.withResolvers();
@@ -116,6 +126,7 @@ test("SEC-02 ResourceOwner rejects malformed, forged, stale and duplicate lifecy
   ]) assert.throws(() => issueResourceOwner(invalid), TypeError);
 
   const forged = Object.freeze({ ownerId: "forged" });
+  assert.throws(() => assertResourceOwnerForCleanup(forged), error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_FORGED");
   assert.throws(() => registerOwnedResource(forged, () => undefined), error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_FORGED");
   await assert.rejects(() => retireResourceOwner(forged), error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_FORGED");
 

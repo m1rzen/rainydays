@@ -36,6 +36,19 @@ test("SEC-03 execution-root lease is opaque, one-use, exact-mask and epoch bound
   let now = 1_000;
   const policy = new PathPolicy({ platform: "win32", now: () => now, auditKey: Buffer.alloc(32, 31) });
   const auth = await authority(policy, root);
+  assert.throws(() => consumeExecutionRootLease(Object.freeze({}), { authorityEpoch: auth.epoch }, null), TypeError);
+  await assert.rejects(
+    () => policy.withExecutionRoot(auth, { input: "cwd", operation: "read-directory", defaultRootId: "workspace" }, "read", () => undefined),
+    TypeError,
+  );
+  await assert.rejects(
+    () => policy.withExecutionRoot(auth, { input: "cwd", operation: "initial-cwd", defaultRootId: "workspace" }, "write", () => undefined),
+    TypeError,
+  );
+  await assert.rejects(
+    () => policy.withExecutionRoot(auth, { input: "cwd", operation: "initial-cwd", defaultRootId: "workspace" }, "read", null),
+    TypeError,
+  );
   const observed = await policy.withExecutionRoot(
     auth,
     { input: "cwd", operation: "initial-cwd", defaultRootId: "workspace" },

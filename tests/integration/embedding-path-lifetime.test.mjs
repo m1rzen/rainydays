@@ -57,6 +57,15 @@ test("SEC-02 bootstrap path store exercises pinned app, public, runtime, databas
   });
 });
 
+test("SEC-02 bootstrap path store rejects invalid model roots, empty runtime files, and oversized trees", async () => {
+  assert.deepEqual(await runTreeScenario("invalid-model-root"), { scenario: "invalid-model-root", code: "PATH_ROOT_DENIED", cleanClose: true });
+  assert.deepEqual(await runTreeScenario("empty-model"), { scenario: "empty-model", code: "PATH_OPERATION_DENIED", cleanClose: true });
+  assert.deepEqual(await runTreeScenario("tree-limit"), { scenario: "tree-limit", code: "PATH_OPERATION_DENIED", cleanClose: true });
+  assert.deepEqual(await runTreeScenario("managed-read-errors"), {
+    scenario: "managed-read-errors", codes: ["PATH_TYPE_MISMATCH", "PATH_TYPE_MISMATCH"], cleanClose: true,
+  });
+});
+
 test("SEC-02 real Transformers pipeline performs local inference under the model tree lifetime lease", { timeout: 120_000 }, async () => {
   const originalFetch = globalThis.fetch;
   let networkCalls = 0;

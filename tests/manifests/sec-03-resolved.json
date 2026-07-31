@@ -41,7 +41,7 @@
   "sourceManifest": {
     "taskId": "SEC-03",
     "exactCasePath": "tests/manifests/sec-03.json",
-    "sha256": "365cabfadf6299314749d677752ccb5cddf01c45eb6cd1169f7181912abaf2b3"
+    "sha256": "1e7d9287fc03927a42b82605321b677141ed9f4bdf6d8db5d34ee8bffc3f357c"
   },
   "deltaEntries": [
     {
@@ -81,7 +81,7 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "d0f6c544197abb5fa95f5743ea5dc1a8e74f6ba90bf5f3c737d05c0c71bf3af2",
+      "sha256": "661b33e2a1fd7e7aff26e27c1990cec47b1042419bc076e08ce5183a053cf7cf",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -226,7 +226,7 @@
     },
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "3cab86b4081eba2c8b9e47709df5a5cf35e30781344c265169f0c3e2a4a9238d",
+      "sha256": "a691a0ee4b9ec06e40d51c441ca5aadc9e107f8543b1b796877ad82b74c87ef7",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "b593205086aace9d4ac91c0508d8cdad8858d6080cac30bda25a3de6fd96d020",
+      "sha256": "3adcf3aff89f1e9cd18bd71552d7c8a0dcf33b88226670eaf5ef143122f89c84",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -573,7 +573,7 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "82dbb376b9290e47187f7ea4d5eef92a4b7d43aba4ea04431f45d3253b440991",
+      "sha256": "c641a166e3fec320961418e495d6b61f73d16c46811f681cc50914b105476d50",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -599,7 +599,7 @@
     },
     {
       "exactCasePath": "scripts/run-coverage.mjs",
-      "sha256": "dddb9f2800f5cc2cb299a0651488a17380d6abb29bda967feaf58073d9557968",
+      "sha256": "3477ca2b244348fd65e5d3b331b477f8a83fca1b5ee96e97156a8f7483ec880e",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -612,7 +612,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "644aa0dcf569022db011ce1283d417741f59cbd581d245e9a91c5af71d32bc5c",
+      "sha256": "4c05d3e2ad5b0be83a65a899969e3a308685684dbfb0347752a84af76effda25",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -625,7 +625,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "5376cea77eab4741593f680f41d95c9a4ebb8d14dd9fccf24db994e6f9c5c34b",
+      "sha256": "bbaa2c1036f401839c0d57e1b939fb1e2a439392f79cc84299e8a084776dff3d",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -664,28 +664,44 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "e5824e69856d7e46bde34a9762c7efb406a3ddedea3afe34ee071571313eaeab",
+      "sha256": "e5cc06c269165a456b41d0d817ba16ed28d634513ac29e5bf877fc66e2070dff",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
       "testCaseIds": [
         "SEC-03 A11 ExecutionGrant variants are exact for E1 and E3 with zero denied launches",
         "SEC-03 A11 E2 InputGrant variants are exact and denied writes never reach native",
+        "SEC-03 input grants fail closed for every malformed binding and lifecycle state",
+        "SEC-03 native input and termination failures retire the persistent session",
+        "SEC-03 residual service lifecycle branches remain fail-closed and observable",
         "SEC-03 A19 authenticated grant issuance rejects brokered E4 before native launch",
+        "SEC-03 launch denial observer authenticates only exact E1/E3 invocation bindings",
+        "SEC-03 input denial observer requires one exact live E2 session binding",
         "SEC-03 E4 limits match the frozen profile maxima",
         "SEC-03 E4 input accepts a new direct run only inside the launch authority incarnation",
         "SEC-03 persistent termination linearizes concurrent cleanup to one native frame",
         "SEC-03 output limit terminates the native host and returns a stable denial",
+        "SEC-03 execution service closes remaining invocation, native failure and output timing branches",
+        "SEC-03 execution service rejects residual owner, authority, shutdown and frame variants",
         "SEC-03 A12-01..08 use exact Frozen codes, consume every attempt and never execute",
         "A12-06 unknown synthetic challenge becomes replay",
         "SEC-03 A12 evidence binds the prepared authority and observer failure preserves the denial",
-        "SEC-03 A12-05/A12-09 preserve exact request and distinguish concurrent reuse from replay"
+        "SEC-03 A12-05/A12-09 preserve exact request and distinguish concurrent reuse from replay",
+        "SEC-03 native bridge identity and shutdown remain fail-closed without loading an addon",
+        "SEC-03 runtime gateways reject mismatched public requests before native authority use",
+        "SEC-03 runtime gateway binding matrix rejects each mismatched authority before root or native use",
+        "SEC-03 manual runtime binding and observation matrices reject every untrusted variant",
+        "SEC-03 manual runtime denial observation uses the fixed production identity",
+        "SEC-03 production runtime rejects every native/build identity drift before observation",
+        "SEC-03 manual runtime evidence and opaque leases reject invalid public use",
+        "SEC-03 execution request validation rejects every public boundary variant",
+        "SEC-03 manual consent preparation rejects malformed JSON, bindings, display and evidence"
       ],
       "supersedes": null
     },
     {
       "exactCasePath": "tests/unit/execution-root-lease.test.mjs",
-      "sha256": "92f18c8da6de0056a13b53459d766635eb56ef8fbb9a780560e823793532d1ac",
+      "sha256": "22a6ca90a73fc956387fe4c91fd2d96f61668f6f81238dbd3dde4b2c3ca55d69",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -698,13 +714,14 @@
     },
     {
       "exactCasePath": "tests/unit/native-process-consent.test.mjs",
-      "sha256": "753310e34003d5d12320c5f846a0ed762ee99801433309915c202e9dab048434",
+      "sha256": "0a43a5f45ff6da80a0db9d857f68335f4bb5b701a9bbdcd34c05446d6b9e5d73",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
       "testCaseIds": [
         "SEC-03 native process consent is unavailable without the private main-process handler",
         "SEC-03 native process consent binds exact bytes, authority and one native decision",
+        "SEC-03 native process consent rejects malformed authority, arguments and handler lifecycle",
         "SEC-03 native process consent denies invalidation and current-runtime replacement",
         "SEC-03 manual consent rejects authority reincarnation, old A-to-B-to-A and invalidation",
         "SEC-03 manual consent keeps prepare/shutdown failures outside A12 decision codes",
@@ -833,7 +850,7 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-child-consent-transport.test.mjs",
-      "sha256": "571126f1e0e65b7dc5f0cd9d83e5b1908ff748baa53b28fb5436d3b6618564f6",
+      "sha256": "e1835a7d9c0f54c4b1060bcbfed76663a5c320bbec14fed2a50afe6e387075ab",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
@@ -844,6 +861,14 @@
         "SEC-03 child transport rejects a valid-MAC decision bound to another request",
         "SEC-03 child transport rejects decision MAC tampering",
         "SEC-03 replayed decision invalidates the private channel",
+        "SEC-03 bounded frame reader rejects malformed, noncanonical, empty, partial and oversized bytes",
+        "SEC-03 child handshake rejects every untrusted hello field",
+        "SEC-03 parent handshake rejects exact-key, kind, protocol and challenge drift",
+        "SEC-03 parent rejects authenticated prepare kind and challenge-digest drift",
+        "SEC-03 parent closure during a decision denies the pending child request",
+        "SEC-03 consent transport rejects malformed public inputs before authenticated IPC",
+        "SEC-03 child challenge validation denies every malformed field without reaching the parent",
+        "SEC-03 parent normalizes invalid decisions and timeout closes pending consent",
         "SEC-03 child EOF invalidates the private channel",
         "SEC-03 direct server mode has no inherited consent handler"
       ],
@@ -1222,7 +1247,7 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "d0f6c544197abb5fa95f5743ea5dc1a8e74f6ba90bf5f3c737d05c0c71bf3af2",
+      "sha256": "661b33e2a1fd7e7aff26e27c1990cec47b1042419bc076e08ce5183a053cf7cf",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1977,7 +2002,7 @@
     },
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "3cab86b4081eba2c8b9e47709df5a5cf35e30781344c265169f0c3e2a4a9238d",
+      "sha256": "a691a0ee4b9ec06e40d51c441ca5aadc9e107f8543b1b796877ad82b74c87ef7",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2130,7 +2155,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "b593205086aace9d4ac91c0508d8cdad8858d6080cac30bda25a3de6fd96d020",
+      "sha256": "3adcf3aff89f1e9cd18bd71552d7c8a0dcf33b88226670eaf5ef143122f89c84",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2259,7 +2284,7 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "82dbb376b9290e47187f7ea4d5eef92a4b7d43aba4ea04431f45d3253b440991",
+      "sha256": "c641a166e3fec320961418e495d6b61f73d16c46811f681cc50914b105476d50",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2285,7 +2310,7 @@
     },
     {
       "exactCasePath": "scripts/run-coverage.mjs",
-      "sha256": "dddb9f2800f5cc2cb299a0651488a17380d6abb29bda967feaf58073d9557968",
+      "sha256": "3477ca2b244348fd65e5d3b331b477f8a83fca1b5ee96e97156a8f7483ec880e",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2298,7 +2323,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "644aa0dcf569022db011ce1283d417741f59cbd581d245e9a91c5af71d32bc5c",
+      "sha256": "4c05d3e2ad5b0be83a65a899969e3a308685684dbfb0347752a84af76effda25",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2311,7 +2336,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "5376cea77eab4741593f680f41d95c9a4ebb8d14dd9fccf24db994e6f9c5c34b",
+      "sha256": "bbaa2c1036f401839c0d57e1b939fb1e2a439392f79cc84299e8a084776dff3d",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2350,28 +2375,44 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "e5824e69856d7e46bde34a9762c7efb406a3ddedea3afe34ee071571313eaeab",
+      "sha256": "e5cc06c269165a456b41d0d817ba16ed28d634513ac29e5bf877fc66e2070dff",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
       "testCaseIds": [
         "SEC-03 A11 ExecutionGrant variants are exact for E1 and E3 with zero denied launches",
         "SEC-03 A11 E2 InputGrant variants are exact and denied writes never reach native",
+        "SEC-03 input grants fail closed for every malformed binding and lifecycle state",
+        "SEC-03 native input and termination failures retire the persistent session",
+        "SEC-03 residual service lifecycle branches remain fail-closed and observable",
         "SEC-03 A19 authenticated grant issuance rejects brokered E4 before native launch",
+        "SEC-03 launch denial observer authenticates only exact E1/E3 invocation bindings",
+        "SEC-03 input denial observer requires one exact live E2 session binding",
         "SEC-03 E4 limits match the frozen profile maxima",
         "SEC-03 E4 input accepts a new direct run only inside the launch authority incarnation",
         "SEC-03 persistent termination linearizes concurrent cleanup to one native frame",
         "SEC-03 output limit terminates the native host and returns a stable denial",
+        "SEC-03 execution service closes remaining invocation, native failure and output timing branches",
+        "SEC-03 execution service rejects residual owner, authority, shutdown and frame variants",
         "SEC-03 A12-01..08 use exact Frozen codes, consume every attempt and never execute",
         "A12-06 unknown synthetic challenge becomes replay",
         "SEC-03 A12 evidence binds the prepared authority and observer failure preserves the denial",
-        "SEC-03 A12-05/A12-09 preserve exact request and distinguish concurrent reuse from replay"
+        "SEC-03 A12-05/A12-09 preserve exact request and distinguish concurrent reuse from replay",
+        "SEC-03 native bridge identity and shutdown remain fail-closed without loading an addon",
+        "SEC-03 runtime gateways reject mismatched public requests before native authority use",
+        "SEC-03 runtime gateway binding matrix rejects each mismatched authority before root or native use",
+        "SEC-03 manual runtime binding and observation matrices reject every untrusted variant",
+        "SEC-03 manual runtime denial observation uses the fixed production identity",
+        "SEC-03 production runtime rejects every native/build identity drift before observation",
+        "SEC-03 manual runtime evidence and opaque leases reject invalid public use",
+        "SEC-03 execution request validation rejects every public boundary variant",
+        "SEC-03 manual consent preparation rejects malformed JSON, bindings, display and evidence"
       ],
       "supersedes": null
     },
     {
       "exactCasePath": "tests/unit/execution-root-lease.test.mjs",
-      "sha256": "92f18c8da6de0056a13b53459d766635eb56ef8fbb9a780560e823793532d1ac",
+      "sha256": "22a6ca90a73fc956387fe4c91fd2d96f61668f6f81238dbd3dde4b2c3ca55d69",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2384,13 +2425,14 @@
     },
     {
       "exactCasePath": "tests/unit/native-process-consent.test.mjs",
-      "sha256": "753310e34003d5d12320c5f846a0ed762ee99801433309915c202e9dab048434",
+      "sha256": "0a43a5f45ff6da80a0db9d857f68335f4bb5b701a9bbdcd34c05446d6b9e5d73",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
       "testCaseIds": [
         "SEC-03 native process consent is unavailable without the private main-process handler",
         "SEC-03 native process consent binds exact bytes, authority and one native decision",
+        "SEC-03 native process consent rejects malformed authority, arguments and handler lifecycle",
         "SEC-03 native process consent denies invalidation and current-runtime replacement",
         "SEC-03 manual consent rejects authority reincarnation, old A-to-B-to-A and invalidation",
         "SEC-03 manual consent keeps prepare/shutdown failures outside A12 decision codes",
@@ -2519,7 +2561,7 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-child-consent-transport.test.mjs",
-      "sha256": "571126f1e0e65b7dc5f0cd9d83e5b1908ff748baa53b28fb5436d3b6618564f6",
+      "sha256": "e1835a7d9c0f54c4b1060bcbfed76663a5c320bbec14fed2a50afe6e387075ab",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
@@ -2530,6 +2572,14 @@
         "SEC-03 child transport rejects a valid-MAC decision bound to another request",
         "SEC-03 child transport rejects decision MAC tampering",
         "SEC-03 replayed decision invalidates the private channel",
+        "SEC-03 bounded frame reader rejects malformed, noncanonical, empty, partial and oversized bytes",
+        "SEC-03 child handshake rejects every untrusted hello field",
+        "SEC-03 parent handshake rejects exact-key, kind, protocol and challenge drift",
+        "SEC-03 parent rejects authenticated prepare kind and challenge-digest drift",
+        "SEC-03 parent closure during a decision denies the pending child request",
+        "SEC-03 consent transport rejects malformed public inputs before authenticated IPC",
+        "SEC-03 child challenge validation denies every malformed field without reaching the parent",
+        "SEC-03 parent normalizes invalid decisions and timeout closes pending consent",
         "SEC-03 child EOF invalidates the private channel",
         "SEC-03 direct server mode has no inherited consent handler"
       ],
@@ -3036,6 +3086,13 @@
     },
     {
       "sourceTask": "SEC-03",
+      "exactCasePath": "electron/user-data-migration.cjs",
+      "reason": "The Electron user-data migration helper is outside Node c8 scope and is exercised by the integration layer.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": []
+    },
+    {
+      "sourceTask": "SEC-03",
       "exactCasePath": "native/sandbox-host/journal.h",
       "reason": "Native journal behavior is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
       "evidenceLayer": "integration",
@@ -3209,5 +3266,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "b1c1fb56395719f73488bd6fc34bc43a70ca1b7a9b4127ae71586ef7055a9356"
+  "canonicalPayloadSha256": "7f0e12aff08e3f895ef4aa1e270f65dcf14a1c086ad4f12d47f19e9d916b02db"
 }

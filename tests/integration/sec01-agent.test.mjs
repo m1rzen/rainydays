@@ -67,7 +67,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     { ConversationMemory },
     { createEffectivePersona },
     { createSession },
-    { closeDb },
+    { closeDb, insertMemory, insertPin },
     { capabilityBroker, registerDynamicTool, executeInspectedTool, executeTool, inspectToolCall },
     { setAskUserSseCallback, submitAnswer },
     { registerNativeProcessConsentHandler },
@@ -151,6 +151,151 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
   let nativeProcessDecision = "deny";
   const unregisterNativeProcessConsent = registerNativeProcessConsentHandler(() => nativeProcessDecision);
 
+  const detached = new Agent(new FakeLlm(), new ConversationMemory(10), persona, authority);
+  const detachedEvents = await collect(detached, "no selected session");
+  assert(detachedEvents.some(event => event.type === "error" && event.content.includes("未绑定会话")));
+
+  const cleanLlm = {
+    async chat() { throw new Error("unexpected compact call"); },
+    async *chatStream() { yield { type: "result", message: assistant("clean first response") }; },
+  };
+  const cleanAgent = new Agent(cleanLlm, new ConversationMemory(10), persona, authority);
+  const cleanSession = createSession(persona, "SEC-01 no memory or pin branch");
+  cleanAgent.setSession(cleanSession.id);
+  const cleanEvents = await collect(cleanAgent, "clean first run");
+  assert(cleanEvents.some(event => event.type === "answer_done" && event.content === "clean first response"));
+
+  const streamingLlm = {
+    iteration: 0,
+    async chat() { throw new Error("unexpected compact call"); },
+    async *chatStream() {
+      this.iteration += 1;
+      if (this.iteration === 1) {
+        yield { type: "delta", content: "partial" };
+        yield { type: "result", message: assistant("", [toolCall("stream-tool", "supervise", JSON.stringify({ action: "status" }))]) };
+      } else yield { type: "result", message: assistant("stream complete") };
+    },
+  };
+  const streamingAgent = new Agent(streamingLlm, new ConversationMemory(10), persona, authority);
+  const streamingSession = createSession(persona, "SEC-01 streamed tool branch");
+  streamingAgent.setSession(streamingSession.id);
+  const streamingEvents = await collect(streamingAgent, "stream then tool");
+  assert(streamingEvents.some(event => event.type === "answer_chunk" && event.content === "partial"));
+  assert(streamingEvents.some(event => event.type === "answer_done" && event.content === ""));
+
+  const emptyAgent = new Agent({
+    async chat() { throw new Error("unexpected compact call"); },
+    async *chatStream() {},
+  }, new ConversationMemory(10), persona, authority);
+  const emptySession = createSession(persona, "SEC-01 empty provider branch");
+  emptyAgent.setSession(emptySession.id);
+  assert((await collect(emptyAgent, "empty response")).some(event => event.type === "error" && event.content.includes("LLM 返回为空")));
+
+  const throwingAgent = new Agent({
+    async chat() { throw new Error("unexpected compact call"); },
+    async *chatStream() { yield await Promise.reject("non-error provider failure"); },
+  }, new ConversationMemory(10), persona, authority);
+  const throwingSession = createSession(persona, "SEC-01 provider error branch");
+  throwingAgent.setSession(throwingSession.id);
+  assert((await collect(throwingAgent, "provider failure")).some(event => event.type === "error" && event.content.includes("non-error provider failure")));
+
+  const errorAgent = new Agent({
+    async chat() { throw new Error("unexpected compact call"); },
+    async *chatStream() { yield await Promise.reject(new Error("provider error object")); },
+  }, new ConversationMemory(10), persona, authority);
+  const errorSession = createSession(persona, "SEC-01 Error provider branch");
+  errorAgent.setSession(errorSession.id);
+  assert((await collect(errorAgent, "provider Error failure")).some(event => event.type === "error" && event.content.includes("provider error object")));
+
+  const boundedLlm = new FakeLlm();
+  boundedLlm.queue(...Array.from({ length: 25 }, (_, index) =>
+    assistant("", [toolCall(`bounded-${index}`, "supervise", JSON.stringify({ action: "status" }))])
+  ));
+  const boundedAgent = new Agent(boundedLlm, new ConversationMemory(80), persona, authority);
+  const boundedSession = createSession(persona, "SEC-01 bounded iteration branch");
+  boundedAgent.setSession(boundedSession.id);
+  const boundedEvents = await collect(boundedAgent, "bounded iterations");
+  assert(boundedEvents.some(event => event.type === "error" && event.content.includes("最大循环次数")));
+
+  const taskPersona = createEffectivePersona({
+    name: "sec01-task-mode", displayName: "SEC01 Task Mode", description: "Agent task-mode coverage",
+    tools: ["create_tasks", "update_task"], env: { WORKSPACE_ROOT: fixture }, allowedRoots: [fixture],
+    networkPolicy: { mode: "deny" }, systemPrompt: "SEC-01 task mode",
+  });
+  const taskAuthority = capabilityBroker.createRuntimeAuthority({
+    name: taskPersona.name, tools: taskPersona.tools, env: taskPersona.env, systemPrompt: taskPersona.systemPrompt,
+    allowedRoots: taskPersona.allowedRoots, rootEnv: { WORKSPACE_ROOT: "workspace" },
+    pathAuthority: await prepareWorkspacePathAuthority(), networkPolicy: taskPersona.networkPolicy, digest: taskPersona.digest,
+  });
+  const taskLlm = new FakeLlm();
+  taskLlm.queue(
+    assistant("", [toolCall("tasks-create", "create_tasks", JSON.stringify({ tasks: ["first task"] }))]),
+    assistant("intermediate task explanation"),
+    assistant("", [toolCall("tasks-complete", "update_task", JSON.stringify({ id: 1, status: "completed" }))]),
+    assistant("task summary"),
+  );
+  const taskAgent = new Agent(taskLlm, new ConversationMemory(30), taskPersona, taskAuthority);
+  const taskSession = createSession(taskPersona, "SEC-01 task mode branches");
+  taskAgent.setSession(taskSession.id);
+  const taskEvents = await collect(taskAgent, "execute task mode");
+  assert(taskEvents.some(event => event.type === "task_created"));
+  assert(taskEvents.some(event => event.type === "task_update"));
+  assert(taskEvents.some(event => event.type === "answer_chunk" && event.content === "intermediate task explanation"));
+  capabilityBroker.revokeAuthority(taskAuthority);
+
+  const supervisorPersona = createEffectivePersona({
+    name: "sec01-supervisor-outcomes", displayName: "SEC01 Supervisor Outcomes", description: "Dangerous tool advice coverage",
+    tools: ["execute_command"], env: { WORKSPACE_ROOT: fixture }, allowedRoots: [fixture],
+    networkPolicy: { mode: "unrestricted" }, systemPrompt: "SEC-01 Supervisor outcome branches",
+  });
+  const supervisorAuthority = capabilityBroker.createRuntimeAuthority({
+    name: supervisorPersona.name, tools: supervisorPersona.tools, env: supervisorPersona.env,
+    systemPrompt: supervisorPersona.systemPrompt, allowedRoots: supervisorPersona.allowedRoots,
+    rootEnv: { WORKSPACE_ROOT: "workspace" }, pathAuthority: await prepareWorkspacePathAuthority(),
+    networkPolicy: supervisorPersona.networkPolicy, digest: supervisorPersona.digest,
+  });
+  const supervisorProbeLlm = new FakeLlm();
+  const supervisorProbeAgent = new Agent(supervisorProbeLlm, new ConversationMemory(20), supervisorPersona, supervisorAuthority);
+  const supervisorProbeSession = createSession(supervisorPersona, "SEC-01 Supervisor outcome branches");
+  supervisorProbeAgent.setSession(supervisorProbeSession.id);
+  try {
+    initSupervisor({ chat: async () => ({ content: '{"decision":"deny","reason":"policy denial"}' }) });
+    enableSupervisor("deny outcome branch");
+    supervisorProbeLlm.queue(
+      assistant("", [toolCall("supervisor-deny", "execute_command", JSON.stringify({ command: "echo denied" }))]),
+      assistant("denial complete"),
+    );
+    const supervisorDenied = await collect(supervisorProbeAgent, "Supervisor deny branch");
+    assert(
+      supervisorDenied.some(event => event.type === "tool_result" && event.content.includes("Supervisor 拒绝执行")),
+      JSON.stringify(supervisorDenied.filter(event => event.type === "tool_result")),
+    );
+
+    initSupervisor({ chat: async () => ({ content: '{"decision":"escalate","reason":"confirm locally"}' }) });
+    enableSupervisor("escalate outcome branch");
+    nativeProcessDecision = "deny";
+    supervisorProbeLlm.queue(
+      assistant("", [toolCall("supervisor-escalate", "execute_command", JSON.stringify({ command: "echo denied" }))]),
+      assistant("escalation complete"),
+    );
+    const supervisorEscalated = await collect(supervisorProbeAgent, "Supervisor escalate branch");
+    assert(supervisorEscalated.some(event => event.type === "tool_result" && event.content.includes("用户拒绝执行")));
+  } finally {
+    capabilityBroker.revokeAuthority(supervisorAuthority);
+    initSupervisor(llm);
+    disableSupervisor();
+  }
+
+  assert.equal(agent.getPersona(), persona);
+  assert.equal(agent.getSessionId(), session.id);
+  assert.equal(agent.isRunning(), false);
+  agent.switchPersona(persona, authority);
+  assert.equal(agent.getSessionId(), null);
+  agent.setSession(session.id);
+  insertMemory("SEC-01 untagged fixture", "observation", []);
+  insertMemory("SEC-01 remembered fixture", "observation", ["coverage"]);
+  insertPin(session.id, "SEC-01 pinned fixture");
+
   try {
     llm.queue(
       assistant("", [toolCall("bad-json", "subagent", "{not-json")]),
@@ -159,6 +304,9 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     const malformed = await collect(agent, "malformed provider arguments");
     assert.equal(calls.count, 0);
     assert(malformed.some((event) => event.type === "tool_result" && event.content.includes("不是合法 JSON")));
+    const injectedSystem = memory.getAll().find(message => message.role === "system" && message.content.includes("跨会话记忆"));
+    assert(injectedSystem?.content.includes("SEC-01 remembered fixture"));
+    assert(injectedSystem?.content.includes("SEC-01 pinned fixture"));
 
     for (const [id, payload, expected] of [
       ["null", "null", "必须是 JSON object"],
@@ -434,6 +582,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     assertSec01Probe("SEC01-A09", "memory-message-count", { before: messagesBeforeRejectedRun, after: memory.getMessageCount() }, { before: messagesBeforeRejectedRun, after: messagesBeforeRejectedRun });
     assertSec01Probe("SEC01-A09", "executor-call-count", calls.count, 2);
     assert.throws(() => agent.setSession(session.id), /正在运行/);
+    assert.throws(() => agent.switchPersona(persona, authority), /正在运行/);
     release();
     await firstNext;
     await firstIterator.return();

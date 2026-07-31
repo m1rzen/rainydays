@@ -68,6 +68,15 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   assert.doesNotMatch(nativeBuild, /"-requires", "Microsoft\.VisualStudio\.Component\.VC\.Tools\.x86\.x64"/);
   assert.match(nativeBuild, /versionProbe\.status !== 0/);
   assert.match(nativeBuild, /electronHeaders/);
+
+  const gov04Steps = await readFile(path.join(projectRoot, "scripts", "gov04", "steps.mjs"), "utf8");
+  assert.equal(gov04Steps.match(/loadTaskManifest\("GOV-03", workspace\)/g)?.length, 2);
+  assert.doesNotMatch(gov04Steps, /tests["'],\s*["']manifests["'],\s*["']gov-03\.json/);
+
+  const coverageRunner = await readFile(path.join(projectRoot, "scripts", "run-coverage.mjs"), "utf8");
+  assert.match(coverageRunner, /\.\.\.manifest\.layers\.unit[\s\S]*\.\.\.manifest\.layers\.contract[\s\S]*\.\.\.manifest\.layers\.integration/);
+  assert.match(coverageRunner, /scope\.additionalTestsByTask\[manifest\.taskId\]/);
+  assert.match(coverageRunner, /coverage test registry contains duplicate or case-alias paths/);
 });
 
 test("GitHub Actions are immutable, read-only and never use pull_request_target", async () => {

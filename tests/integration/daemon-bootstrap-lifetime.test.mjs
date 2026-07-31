@@ -37,6 +37,7 @@ test("SEC-02 Daemon holds Node, loader and server leases until runtime ready and
       RAINYDAYS_APP_ROOT: projectRoot,
       RAINYDAYS_USER_DATA_DIR: userData,
       RAINYDAYS_DATA_DIR: path.join(userData, "data"),
+      DEPARTMENT_DATA_ROOT: path.join(userData, "department"),
       PORT: String(port),
       NODE_OPTIONS: "--no-warnings",
       NODE_PATH: path.join(fixture, "must-not-load"),

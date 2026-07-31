@@ -3,7 +3,7 @@ import { constants as fsConstants, access, copyFile, lstat, mkdir, readFile, sta
 import path from "node:path";
 import { validateLayerReport, validateSelfTestReport, validateUnifiedReport } from "../report-schema.mjs";
 import { expectedInstallerName, fileSha256, verifyInstallerPreflight } from "../package-artifact-lib.mjs";
-import { hashTree, sha256File } from "../../tests/helpers.mjs";
+import { hashTree, loadTaskManifest, sha256File } from "../../tests/helpers.mjs";
 import { resolveNpmCli, runBoundedProcess, safeChildEnvironment } from "./process.mjs";
 import { assertEmptyFormalOutputs, computeCandidateIdentity, publicCandidateIdentity, sha256 } from "./identity.mjs";
 
@@ -160,7 +160,7 @@ export async function runGov03Quick({ workspace, evidenceDirectory, candidateSou
   catch (error) { return processFailure(error, "GOV03_QUICK_FAILED"); }
   try {
     const child = await readJsonReport(reportPath);
-    const manifest = JSON.parse(await readFile(path.join(workspace, "tests", "manifests", "gov-03.json"), "utf8"));
+    const { manifest } = await loadTaskManifest("GOV-03", workspace);
     const coverageScope = JSON.parse(await readFile(path.join(workspace, "tests", "coverage-scope.json"), "utf8"));
     validateUnifiedReport(child.report, { taskId: "GOV-03", build: { appVersion: "0.1.0", buildId, sourceDigest: candidateSourceDigest }, coverageScope, layerExpectedFiles: manifest.layers });
     const sourceAfter = publicCandidateIdentity(await computeCandidateIdentity(workspace));
@@ -311,7 +311,7 @@ export async function runPackagedSmoke({ workspace, evidenceDirectory, artifactP
   } catch (error) { return processFailure(error, "PACKAGED_SMOKE_FAILED"); }
   try {
     const child = await readJsonReport(reportPath);
-    const manifest = JSON.parse(await readFile(path.join(workspace, "tests", "manifests", "gov-03.json"), "utf8"));
+    const { manifest } = await loadTaskManifest("GOV-03", workspace);
     const buildInfo = JSON.parse(await readFile(path.join(workspace, "build-info.json"), "utf8"));
     validateLayerReport(child.report, { taskId: "GOV-03", layer: "packaged", build: { appVersion: buildInfo.appVersion, buildId: buildInfo.buildId, sourceDigest: buildInfo.sourceDigest }, expectedFiles: manifest.layers.packaged });
     const executedHash = child.report.details?.artifactExecution?.executedSha256;

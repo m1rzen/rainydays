@@ -99,6 +99,8 @@ test("manifest paths reject traversal, absolute and Windows separators", () => {
 
 test("GOV-03 task manifest consumes the validated SEC-02 resolved cumulative view", async () => {
   const { manifest, resolvedManifest } = await loadTaskManifest("GOV-03");
+  const explicitRoot = await loadTaskManifest("GOV-03", projectRoot);
+  assert.deepEqual(explicitRoot.manifest, manifest);
   assert.deepEqual(Object.keys(manifest.layers).sort(), ["contract", "electron", "integration", "packaged", "unit"]);
   assert.equal(manifest.baseline.manifestSha256, "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df");
   assert.equal(resolvedManifest.task, "SEC-02");
@@ -198,6 +200,13 @@ test("SEC-02 unified runner independently joins raw receipts and rejects receipt
 test("coverage scope is explicit and changed runtime files are governed", async () => {
   const { manifest } = await loadTaskManifest("GOV-03");
   const { scope } = await loadCoverageScope();
+  assert.equal(scope.schemaVersion, 2);
+  assert.deepEqual(scope.additionalTestsByTask["GOV-03"], [
+    "tests/unit/execution-isolation.test.mjs",
+    "tests/unit/execution-root-lease.test.mjs",
+    "tests/unit/native-process-consent.test.mjs",
+    "tests/integration/sec03-child-consent-transport.test.mjs",
+  ]);
   assert(scope.thresholds.overallLines >= 80);
   assert(scope.thresholds.securityBranches >= 90);
   for (const entry of scope.securityCritical) assert(scope.overall.includes(entry));

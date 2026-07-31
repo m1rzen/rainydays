@@ -202,7 +202,9 @@ async function sessionFormats() {
     { ...exported, messages: [null] },
     { ...exported, messages: [{ ...exported.messages[0], id: 0 }] },
     { ...exported, messages: [{ ...exported.messages[0], session_id: "other-session" }] },
+    { ...exported, session: { ...exported.session, title: "" } },
     { ...exported, messages: [{ ...exported.messages[0], created_at: "not-a-timestamp" }] },
+    { ...exported, messages: [{ ...exported.messages[0], role: "assistant", tool_calls: "{" }] },
     { ...exported, messages: [{ ...exported.messages[0], role: "user", tool_calls: JSON.stringify([]) }] },
     { ...exported, messages: [{ ...exported.messages[0], role: "assistant", tool_calls: JSON.stringify(oversizedCalls) }] },
     { ...exported, messages: [{ ...exported.messages[0], role: "assistant", tool_calls: JSON.stringify([null]) }] },
@@ -245,7 +247,10 @@ async function sessionFormats() {
   };
   session.removeSession("touch-order-old");
   session.removeSession("touch-order-new");
+  const registeredPost = session.postSessionLinkMessage(source.id, current.id, "registered identity");
+  const registeredPostMessages = link.getMessages(current.id).map(message => message.content);
   const missingPost = session.postSessionLinkMessage("missing-session", source.id, "no identity");
+  const missingExport = session.exportSession("missing-session");
   let missingForkError = null;
   try { session.forkSession("missing-session", null, persona); }
   catch (error) { missingForkError = error instanceof Error ? error.message : String(error); }
@@ -339,7 +344,10 @@ async function sessionFormats() {
       renamedTitle: untitledInfo?.title,
       allSessionCount,
       touchedOrder,
+      registeredPost,
+      registeredPostMessages,
       missingPost,
+      missingExport,
       missingForkError,
       boundedForkTitle: boundedFork.title,
       identityConflictError,
@@ -357,6 +365,8 @@ async function linkProtocol() {
   const bareId = link.postFromSession("source", "target", "bare-id");
   const forgedIdentity = { sessionId: "source", capability: Symbol("forged") };
   const malformed = link.postFromSession(forgedIdentity, "target", "malformed");
+  const missingCapability = link.postFromSession({ sessionId: "source" }, "target", "missing capability");
+  const invalidMessage = link.postFromSession(source, 42, "invalid target");
   const spoofed = link.postFromSession({ sessionId: "target", capability: source.capability }, "target", "spoofed");
   const incompatible = link.postFromSession({ ...source, capability: Symbol("wrong-version-cannot-be-forged") }, "target", "bad");
   const conflictingRegistration = link.registerSession("source", "Source forged", Symbol("different"));
@@ -375,7 +385,7 @@ async function linkProtocol() {
   link.unregisterSession("target");
   const unsubscribeAfterRemoval = unsubscribe() ?? null;
   link.updateSessionStatus("missing-target", "running");
-  console.log(JSON.stringify({ invalidRegistration, bareId, malformed, spoofed, incompatible, conflictingRegistration, repeatedRegistration, missingTarget, emptyMissingQueue, afterIncompatible, compatible, afterCompatible, queueAfterDrain, callbackMessages, unsubscribeAfterRemoval }));
+  console.log(JSON.stringify({ invalidRegistration, bareId, malformed, missingCapability, invalidMessage, spoofed, incompatible, conflictingRegistration, repeatedRegistration, missingTarget, emptyMissingQueue, afterIncompatible, compatible, afterCompatible, queueAfterDrain, callbackMessages, unsubscribeAfterRemoval }));
 }
 
 if (action === "db-version") await databaseVersion();
