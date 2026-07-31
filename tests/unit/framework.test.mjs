@@ -371,6 +371,28 @@ test("atomic JSON reports publish complete parseable content", async () => {
   }
 });
 
+test("prepared report authority survives ambient temporary-root drift", async () => {
+  const root = await makeTempDir("mini-lux-gov03-temp-root-drift-");
+  const previous = Object.fromEntries(["TEMP", "TMP", "TMPDIR"].map((key) => [key, process.env[key]]));
+  try {
+    const report = path.join(root, "report.json");
+    await prepareReportPath(report);
+    const driftRoot = path.join(projectRoot, "ambient-temp-root-drift");
+    process.env.TEMP = driftRoot;
+    process.env.TMP = driftRoot;
+    process.env.TMPDIR = driftRoot;
+    await atomicWriteJson(report, { state: "passed" });
+    assert.deepEqual(JSON.parse(await readFile(report, "utf8")), { state: "passed" });
+    await assert.rejects(() => validateReportPath(path.join(driftRoot, "forged.json")), /inside test-results/);
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    await removeFixture(root);
+  }
+});
+
 test("current runs remove stale reports before execution", async () => {
   const root = await makeTempDir("mini-lux-gov03-stale-report-");
   try {

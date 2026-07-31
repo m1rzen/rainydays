@@ -16,6 +16,7 @@ import {
 } from "../scripts/sec03-governance.mjs";
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const processTemporaryRoot = path.resolve(os.tmpdir());
 export const layerNames = Object.freeze(["unit", "contract", "integration", "electron", "packaged"]);
 const expectedBaselineHash = "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df";
 const expectedPersonaChains = Object.freeze({
@@ -80,7 +81,7 @@ export async function validateReportPath(filePath) {
   if (isContained(projectAbsolute, absolute)) {
     assert(isContained(projectReports, absolute), "reports inside the project must remain inside test-results");
   }
-  const allowedRoots = [projectReports, path.resolve(os.tmpdir())];
+  const allowedRoots = [projectReports, processTemporaryRoot];
   const allowed = allowedRoots.find((root) => isContained(root, absolute));
   assert(allowed, "report path must be inside test-results or the OS temporary directory");
 
@@ -395,7 +396,7 @@ export async function validateCoverageGovernance(manifest, scope) {
 }
 
 export async function makeTempDir(prefix) {
-  return mkdtemp(path.join(os.tmpdir(), prefix));
+  return mkdtemp(path.join(processTemporaryRoot, prefix));
 }
 
 export async function removeFixture(directory, junctionNames = []) {
