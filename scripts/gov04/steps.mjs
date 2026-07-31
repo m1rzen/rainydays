@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { constants as fsConstants, access, copyFile, lstat, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { validateLayerReport, validateSelfTestReport, validateUnifiedReport } from "../report-schema.mjs";
@@ -155,14 +156,30 @@ async function readJsonReport(reportPath) {
 export async function runGov03Quick({ workspace, evidenceDirectory, candidateSourceDigest, candidateId, buildId }) {
   const sourceBefore = publicCandidateIdentity(await computeCandidateIdentity(workspace));
   const reportPath = path.join(evidenceDirectory, "gov03-quick.json");
+  const sec02RunId = randomUUID();
   let result;
-  try { result = await runBoundedProcess(process.execPath, ["scripts/run-tests.mjs", "--profile", "quick", "--report", reportPath], { cwd: workspace, env: safeChildEnvironment(), timeoutMs: 900_000 }); }
+  try {
+    result = await runBoundedProcess(process.execPath, ["scripts/run-tests.mjs", "--profile", "quick", "--report", reportPath], {
+      cwd: workspace,
+      env: safeChildEnvironment({ RAINYDAYS_SEC02_RUN_ID: sec02RunId }),
+      timeoutMs: 900_000,
+    });
+  }
   catch (error) { return processFailure(error, "GOV03_QUICK_FAILED"); }
   try {
     const child = await readJsonReport(reportPath);
-    const { manifest } = await loadTaskManifest("GOV-03", workspace);
+    const loadedTask = await loadTaskManifest("GOV-03", workspace);
+    const sec02Matrix = JSON.parse(await readFile(path.join(workspace, "tests", "sec02-attack-matrix.json"), "utf8"));
     const coverageScope = JSON.parse(await readFile(path.join(workspace, "tests", "coverage-scope.json"), "utf8"));
-    validateUnifiedReport(child.report, { taskId: "GOV-03", build: { appVersion: "0.1.0", buildId, sourceDigest: candidateSourceDigest }, coverageScope, layerExpectedFiles: manifest.layers });
+    validateUnifiedReport(child.report, {
+      taskId: "GOV-03",
+      build: { appVersion: "0.1.0", buildId, sourceDigest: candidateSourceDigest },
+      coverageScope,
+      layerExpectedFiles: loadedTask.manifest.layers,
+      sec02Manifest: loadedTask.resolvedManifest,
+      sec02Matrix,
+      sec02RunId,
+    });
     const sourceAfter = publicCandidateIdentity(await computeCandidateIdentity(workspace));
     const sourceUnchanged = sourceBefore.releaseCandidateId === candidateId && sourceAfter.releaseCandidateId === candidateId;
     const passed = result.code === 0 && child.report.state === "passed" && sourceUnchanged;

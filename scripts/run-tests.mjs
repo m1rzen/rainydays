@@ -105,7 +105,11 @@ async function main() {
   const sec02Matrix = sec02Resolved
     ? JSON.parse(await readFile(path.join(projectRoot, "tests", "sec02-attack-matrix.json"), "utf8"))
     : null;
-  const sec02RunId = sec02Resolved ? randomUUID() : null;
+  const configuredSec02RunId = sec02Resolved ? process.env.RAINYDAYS_SEC02_RUN_ID : undefined;
+  if (configuredSec02RunId !== undefined) {
+    assert.match(configuredSec02RunId, /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, "GOV-04 SEC-02 run ID is invalid");
+  }
+  const sec02RunId = sec02Resolved ? (configuredSec02RunId ?? randomUUID()) : null;
   const sec02Context = sec02Resolved ? { sec02Manifest, sec02Matrix, sec02RunId } : null;
   const sec03Context = sec03Resolved ? await loadSec03Context() : null;
   const { scope } = await loadCoverageScope();
