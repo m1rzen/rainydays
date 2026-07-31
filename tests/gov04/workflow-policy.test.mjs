@@ -4,7 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { validateModelManifest } from "../../scripts/bootstrap-models.mjs";
 import { gov04StepIds } from "../../scripts/gov04/report-schema.mjs";
-import { extractUnifiedRunnerCrashStage, summarizeInvalidUnifiedReport } from "../../scripts/gov04/steps.mjs";
+import { extractUnifiedRunnerCrashEvidence, reconcileUnifiedRunnerCrashEvidence, summarizeInvalidUnifiedReport } from "../../scripts/gov04/steps.mjs";
 import { projectRoot } from "../helpers.mjs";
 
 const workflowPaths = [
@@ -12,14 +12,17 @@ const workflowPaths = [
   ".github/workflows/gov-04-trusted-release.yml",
 ];
 
-test("GOV-04 invalid child diagnostics retain only fixed enums", () => {
-  assert.deepEqual(summarizeInvalidUnifiedReport(null), {
+test("GOV-04 invalid child diagnostics require an exact private challenge binding", () => {
+  const challenge = "a".repeat(64);
+  const expectedContext = { taskId: "GOV-03", diagnosticChallenge: challenge };
+  assert.deepEqual(summarizeInvalidUnifiedReport(null, expectedContext), {
     status: "invalid-child-report",
     childReadable: false,
     childState: null,
     resultCount: null,
     firstFailure: null,
     crashStage: null,
+    crashCode: null,
   });
   const summary = summarizeInvalidUnifiedReport({
     state: "failed",
@@ -31,7 +34,7 @@ test("GOV-04 invalid child diagnostics retain only fixed enums", () => {
       reportValidation: "REPORT_SCHEMA_INVALID",
       report: { state: "failed", error: "C:\\sensitive\\checkout" },
     }],
-  });
+  }, expectedContext);
   assert.deepEqual(summary, {
     status: "invalid-child-report",
     childReadable: true,
@@ -45,39 +48,36 @@ test("GOV-04 invalid child diagnostics retain only fixed enums", () => {
       reportState: "failed",
     },
     crashStage: null,
+    crashCode: null,
   });
   assert.doesNotMatch(JSON.stringify(summary), /sensitive|checkout/u);
-  assert.deepEqual(summarizeInvalidUnifiedReport({
-    state: "C:\\sensitive",
-    results: [{ kind: "C:\\sensitive", name: "secret", exitCode: "1", reportValidation: "raw error", report: { state: "secret" } }],
-  }).firstFailure, { kind: null, name: null, exitCode: null, reportValidation: null, reportState: null });
-  assert.equal(summarizeInvalidUnifiedReport({
+
+  const marker = {
     reportVersion: 0,
     taskId: "GOV-03",
     state: "crashed",
-    crashStage: "unified-validation",
-  }).crashStage, "unified-validation");
-  assert.equal(summarizeInvalidUnifiedReport({
-    reportVersion: 0,
-    taskId: "GOV-03",
-    state: "crashed",
-    crashStage: "C:\\sensitive\\checkout",
-  }).crashStage, null);
-  assert.equal(extractUnifiedRunnerCrashStage(
-    "untrusted diagnostic\n[GOV-03] unified runner crashed at layer-unit\n",
-  ), "layer-unit");
-  assert.equal(extractUnifiedRunnerCrashStage(
-    "[GOV-03] unified runner crashed at layer-unit\n[GOV-03] unified runner crashed at coverage\n",
-  ), null);
-  assert.equal(extractUnifiedRunnerCrashStage(
-    "[GOV-03] unified runner crashed at C:\\sensitive\\checkout\n",
-  ), null);
-  assert.equal(extractUnifiedRunnerCrashStage(
-    "prefix [GOV-03] unified runner crashed at layer-unit\n",
-  ), null);
-  assert.equal(extractUnifiedRunnerCrashStage(
-    "[OTHER-03] unified runner crashed at layer-unit\n",
-  ), null);
+    diagnosticChallenge: challenge,
+    crashStage: "report-rename",
+    crashCode: "EPERM",
+  };
+  const trusted = summarizeInvalidUnifiedReport(marker, expectedContext);
+  assert.equal(trusted.crashStage, "report-rename");
+  assert.equal(trusted.crashCode, "EPERM");
+  assert.equal(summarizeInvalidUnifiedReport({ ...marker, taskId: "OTHER-03" }, expectedContext).crashStage, null);
+  assert.equal(summarizeInvalidUnifiedReport({ ...marker, diagnosticChallenge: "b".repeat(64) }, expectedContext).crashStage, null);
+  assert.equal(summarizeInvalidUnifiedReport({ ...marker, extra: "forged" }, expectedContext).crashStage, null);
+
+  const line = `[GOV-03:${challenge}] unified runner crashed at report-rename code EPERM`;
+  const stderrMarker = extractUnifiedRunnerCrashEvidence(`untrusted diagnostic\n${line}\n`, expectedContext);
+  assert.deepEqual(stderrMarker, { stage: "report-rename", code: "EPERM" });
+  assert.equal(extractUnifiedRunnerCrashEvidence(`${line}\n${line}\n`, expectedContext), null);
+  assert.equal(extractUnifiedRunnerCrashEvidence(`[GOV-03:${"b".repeat(64)}] unified runner crashed at report-rename code EPERM\n`, expectedContext), null);
+  assert.equal(extractUnifiedRunnerCrashEvidence(`prefix ${line}\n`, expectedContext), null);
+  assert.equal(extractUnifiedRunnerCrashEvidence(`[GOV-03:${challenge}] unified runner crashed at C:\\sensitive\\checkout code EPERM\n`, expectedContext), null);
+  assert.deepEqual(reconcileUnifiedRunnerCrashEvidence(trusted, stderrMarker), { stage: "report-rename", code: "EPERM" });
+  assert.equal(reconcileUnifiedRunnerCrashEvidence(trusted, { stage: "report-revalidation", code: "EPERM" }), null);
+  assert.equal(reconcileUnifiedRunnerCrashEvidence(trusted, null), null);
+  assert.deepEqual(reconcileUnifiedRunnerCrashEvidence(summary, stderrMarker), stderrMarker);
 });
 
 test("GOV-04 test manifest binds the frozen 16-step state machine", async () => {
@@ -142,16 +142,19 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   assert.equal(gov04Steps.match(/loadTaskManifest\("GOV-03", workspace\)/g)?.length, 2);
   assert.doesNotMatch(gov04Steps, /tests["'],\s*["']manifests["'],\s*["']gov-03\.json/);
   assert.match(gov04Steps, /const sec02RunId = randomUUID\(\)/);
-  assert.match(gov04Steps, /safeChildEnvironment\(\{ RAINYDAYS_SEC02_RUN_ID: sec02RunId \}\)/);
+  assert.match(gov04Steps, /const diagnosticChallenge = randomBytes\(32\)\.toString\("hex"\)/);
+  assert.match(gov04Steps, /RAINYDAYS_SEC02_RUN_ID: sec02RunId,[\s\S]*RAINYDAYS_GOV04_DIAGNOSTIC_CHALLENGE: diagnosticChallenge/);
   assert.match(gov04Steps, /sec02Manifest: loadedTask\.resolvedManifest,[\s\S]*sec02Matrix,[\s\S]*sec02RunId/);
   const unifiedRunner = await readFile(path.join(projectRoot, "scripts", "run-tests.mjs"), "utf8");
   assert.match(unifiedRunner, /process\.env\.RAINYDAYS_SEC02_RUN_ID/);
   assert.match(unifiedRunner, /GOV-04 SEC-02 run ID is invalid/);
   assert.match(unifiedRunner, /configuredSec02RunId \?\? randomUUID\(\)/);
   assert.match(unifiedRunner, /const sec02ReceiptEnvironmentKeys = Object\.freeze/);
-  assert.equal(unifiedRunner.match(/env: withoutSec02ReceiptEnvironment\(\)/g)?.length, 2);
-  assert.match(unifiedRunner, /reportVersion: 0,[\s\S]*state: "crashed",[\s\S]*crashStage: context\.stage/);
-  assert.match(unifiedRunner, /unified runner crashed at \$\{context\.stage\}/);
+  assert.match(unifiedRunner, /GOV-04 diagnostic challenge is invalid/);
+  assert.equal(unifiedRunner.match(/env: withoutGov04DiagnosticChallenge\(\)/g)?.length, 1);
+  assert.equal(unifiedRunner.match(/env: withoutSec02ReceiptEnvironment\(withoutGov04DiagnosticChallenge\(\)\)/g)?.length, 2);
+  assert.match(unifiedRunner, /reportVersion: 0,[\s\S]*state: "crashed",[\s\S]*diagnosticChallenge: context\.diagnosticChallenge,[\s\S]*crashStage: context\.stage/);
+  assert.match(unifiedRunner, /\[\$\{context\.taskId\}:\$\{context\.diagnosticChallenge\}\] unified runner crashed at \$\{context\.stage\} code \$\{crashCode\}/);
 
   const coverageRunner = await readFile(path.join(projectRoot, "scripts", "run-coverage.mjs"), "utf8");
   assert.match(coverageRunner, /\.\.\.manifest\.layers\.unit[\s\S]*\.\.\.manifest\.layers\.contract[\s\S]*\.\.\.manifest\.layers\.integration/);

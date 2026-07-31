@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { constants as fsConstants, access, copyFile, lstat, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { validateLayerReport, validateSelfTestReport, validateUnifiedReport } from "../report-schema.mjs";
@@ -171,21 +171,37 @@ const unifiedCrashStages = new Set([
   "artifact-after",
   "unified-validation",
   "report-write",
+  "report-path-validation",
+  "report-serialization",
+  "report-temporary-write",
+  "report-revalidation",
+  "report-rename",
+  "report-cleanup",
+]);
+const unifiedCrashCodes = new Set([
+  "EACCES", "EBUSY", "EEXIST", "EINVAL", "EIO", "ENOENT", "ENOSPC", "ENOTDIR", "EPERM", "EROFS", "EXDEV", "UNKNOWN",
 ]);
 
-export function extractUnifiedRunnerCrashStage(stderr, taskId = "GOV-03") {
-  if (typeof stderr !== "string" || stderr.length > 16 * 1024 * 1024 || !/^[A-Z]+-\d{2}$/.test(taskId)) return null;
-  const prefix = `[${taskId}] unified runner crashed at `;
-  const matches = stderr.split(/\r?\n/u)
-    .filter((line) => line.startsWith(prefix))
-    .map((line) => line.slice(prefix.length))
-    .filter((stage) => unifiedCrashStages.has(stage));
+const crashMarkerKeys = ["crashCode", "crashStage", "diagnosticChallenge", "reportVersion", "state", "taskId"];
+
+export function extractUnifiedRunnerCrashEvidence(stderr, { taskId = "GOV-03", diagnosticChallenge } = {}) {
+  if (typeof stderr !== "string" || stderr.length > 16 * 1024 * 1024 || !/^[A-Z]+-\d{2}$/.test(taskId) || !/^[a-f0-9]{64}$/.test(diagnosticChallenge ?? "")) return null;
+  const prefix = `[${taskId}:${diagnosticChallenge}] unified runner crashed at `;
+  const matches = stderr.split(/\r?\n/u).flatMap((line) => {
+    if (!line.startsWith(prefix)) return [];
+    const payload = line.slice(prefix.length);
+    const separator = payload.indexOf(" code ");
+    if (separator <= 0 || payload.indexOf(" code ", separator + 1) !== -1) return [];
+    const stage = payload.slice(0, separator);
+    const code = payload.slice(separator + " code ".length);
+    return unifiedCrashStages.has(stage) && unifiedCrashCodes.has(code) ? [{ stage, code }] : [];
+  });
   return matches.length === 1 ? matches[0] : null;
 }
 
-export function summarizeInvalidUnifiedReport(report) {
+export function summarizeInvalidUnifiedReport(report, { taskId = "GOV-03", diagnosticChallenge = null } = {}) {
   if (!report || typeof report !== "object" || Array.isArray(report)) {
-    return { status: "invalid-child-report", childReadable: false, childState: null, resultCount: null, firstFailure: null, crashStage: null };
+    return { status: "invalid-child-report", childReadable: false, childState: null, resultCount: null, firstFailure: null, crashStage: null, crashCode: null };
   }
   const results = Array.isArray(report.results) && report.results.length <= 10 ? report.results : null;
   const failed = results?.find((entry) => entry?.exitCode !== 0 || entry?.reportValidation !== null || entry?.report?.state !== "passed") ?? null;
@@ -198,25 +214,48 @@ export function summarizeInvalidUnifiedReport(report) {
         reportState: unifiedReportStates.has(failed.report?.state) ? failed.report.state : null,
       }
     : null;
+  const markerTrusted = Object.keys(report).sort().join("\0") === crashMarkerKeys.join("\0")
+    && report.reportVersion === 0
+    && report.taskId === taskId
+    && report.state === "crashed"
+    && report.diagnosticChallenge === diagnosticChallenge
+    && /^[a-f0-9]{64}$/.test(diagnosticChallenge ?? "")
+    && unifiedCrashStages.has(report.crashStage)
+    && unifiedCrashCodes.has(report.crashCode);
   return {
     status: "invalid-child-report",
     childReadable: true,
     childState: unifiedReportStates.has(report.state) ? report.state : null,
     resultCount: results?.length ?? null,
     firstFailure,
-    crashStage: report.reportVersion === 0 && report.state === "crashed" && unifiedCrashStages.has(report.crashStage) ? report.crashStage : null,
+    crashStage: markerTrusted ? report.crashStage : null,
+    crashCode: markerTrusted ? report.crashCode : null,
   };
+}
+
+export function reconcileUnifiedRunnerCrashEvidence(summary, stderrEvidence) {
+  const reportEvidence = summary?.crashStage && summary?.crashCode
+    ? { stage: summary.crashStage, code: summary.crashCode }
+    : null;
+  if (!reportEvidence) return stderrEvidence ?? null;
+  return stderrEvidence?.stage === reportEvidence.stage && stderrEvidence?.code === reportEvidence.code
+    ? reportEvidence
+    : null;
 }
 
 export async function runGov03Quick({ workspace, evidenceDirectory, candidateSourceDigest, candidateId, buildId }) {
   const sourceBefore = publicCandidateIdentity(await computeCandidateIdentity(workspace));
   const reportPath = path.join(evidenceDirectory, "gov03-quick.json");
   const sec02RunId = randomUUID();
+  const diagnosticChallenge = randomBytes(32).toString("hex");
   let result;
   try {
     result = await runBoundedProcess(process.execPath, ["scripts/run-tests.mjs", "--profile", "quick", "--report", reportPath], {
       cwd: workspace,
-      env: safeChildEnvironment({ RAINYDAYS_SEC02_RUN_ID: sec02RunId }),
+      env: safeChildEnvironment({
+        RAINYDAYS_SEC02_RUN_ID: sec02RunId,
+        RAINYDAYS_GOV04_DIAGNOSTIC_CHALLENGE: diagnosticChallenge,
+      }),
       timeoutMs: 900_000,
     });
   }
@@ -241,8 +280,9 @@ export async function runGov03Quick({ workspace, evidenceDirectory, candidateSou
     const passed = result.code === 0 && child.report.state === "passed" && sourceUnchanged;
     return { passed, failureClass: passed ? null : !sourceUnchanged ? "SOURCE_MUTATION" : "GOV03_QUICK_FAILED", exitCode: passed ? 0 : result.code, signal: result.signal, timedOut: false, timeoutTermination: null, childReportSha256: child.sha256, evidence: { childState: child.report.state, childBuildId: child.report.build.buildId, childSourceDigest: child.report.build.sourceDigest, sourceUnchanged, reportSha256: child.sha256, stdoutSha256: result.stdoutSha256, stderrSha256: result.stderrSha256 } };
   } catch {
-    const summary = summarizeInvalidUnifiedReport(child?.report ?? null);
-    const crashStage = summary.crashStage ?? extractUnifiedRunnerCrashStage(result.stderr);
+    const summary = summarizeInvalidUnifiedReport(child?.report ?? null, { taskId: "GOV-03", diagnosticChallenge });
+    const stderrMarker = extractUnifiedRunnerCrashEvidence(result.stderr, { taskId: "GOV-03", diagnosticChallenge });
+    const marker = reconcileUnifiedRunnerCrashEvidence(summary, stderrMarker);
     return {
       passed: false,
       failureClass: "GOV03_REPORT_INVALID",
@@ -253,7 +293,8 @@ export async function runGov03Quick({ workspace, evidenceDirectory, candidateSou
       childReportSha256: child?.sha256 ?? null,
       evidence: {
         ...summary,
-        crashStage,
+        crashStage: marker?.stage ?? null,
+        crashCode: marker?.code ?? null,
         reportSha256: child?.sha256 ?? null,
         stdoutBytes: result.stdoutBytes,
         stderrBytes: result.stderrBytes,

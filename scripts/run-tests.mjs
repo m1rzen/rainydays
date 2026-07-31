@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { lstat, readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
@@ -106,8 +106,19 @@ const unifiedRunnerCrashStages = new Set([
   "artifact-after",
   "unified-validation",
   "report-write",
+  "report-path-validation",
+  "report-serialization",
+  "report-temporary-write",
+  "report-revalidation",
+  "report-rename",
+  "report-cleanup",
+]);
+const unifiedRunnerCrashCodes = new Set([
+  "EACCES", "EBUSY", "EEXIST", "EINVAL", "EIO", "ENOENT", "ENOSPC", "ENOTDIR", "EPERM", "EROFS", "EXDEV",
 ]);
 let unifiedRunnerCrashContext = null;
+
+const gov04DiagnosticChallengeKey = "RAINYDAYS_GOV04_DIAGNOSTIC_CHALLENGE";
 
 const sec02ReceiptEnvironmentKeys = Object.freeze([
   "RAINYDAYS_SEC02_RECEIPT_DIR",
@@ -115,6 +126,12 @@ const sec02ReceiptEnvironmentKeys = Object.freeze([
   "RAINYDAYS_SEC02_RESOLVED_SHA256",
   "RAINYDAYS_SEC02_MATRIX_SHA256",
 ]);
+
+function withoutGov04DiagnosticChallenge(environment = process.env) {
+  const sanitized = { ...environment };
+  delete sanitized[gov04DiagnosticChallengeKey];
+  return sanitized;
+}
 
 function withoutSec02ReceiptEnvironment(environment = process.env) {
   const sanitized = { ...environment };
@@ -125,7 +142,10 @@ function withoutSec02ReceiptEnvironment(environment = process.env) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   args.report = await prepareReportPath(args.report);
-  unifiedRunnerCrashContext = { taskId: args.task, reportPath: args.report, stage: "task-context" };
+  const configuredDiagnosticChallenge = process.env[gov04DiagnosticChallengeKey];
+  if (configuredDiagnosticChallenge !== undefined) assert.match(configuredDiagnosticChallenge, /^[a-f0-9]{64}$/, "GOV-04 diagnostic challenge is invalid");
+  const diagnosticChallenge = configuredDiagnosticChallenge ?? randomBytes(32).toString("hex");
+  unifiedRunnerCrashContext = { taskId: args.task, reportPath: args.report, stage: "task-context", diagnosticChallenge };
   const startedAt = new Date();
   const started = Date.now();
   const loadedTask = await loadTaskManifest(args.task);
@@ -167,7 +187,11 @@ async function main() {
         "--layer", layer,
         "--report", reportPath,
         ...(sec02RunId ? ["--run-id", sec02RunId] : []),
-      ], { timeoutMs: layer === "packaged" ? 600_000 : 360_000, echo: true });
+      ], {
+        timeoutMs: layer === "packaged" ? 600_000 : 360_000,
+        echo: true,
+        env: withoutGov04DiagnosticChallenge(),
+      });
       const report = await readJsonIfPresent(reportPath);
       const reportValidation = childReportValidation("layer", layer, report, manifest.taskId, {
         appVersion: buildInfo.appVersion,
@@ -198,7 +222,7 @@ async function main() {
       const coverage = await runProcess(process.execPath, ["scripts/run-coverage.mjs", "--task", args.task, "--report", coveragePath], {
         timeoutMs: 660_000,
         echo: true,
-        env: withoutSec02ReceiptEnvironment(),
+        env: withoutSec02ReceiptEnvironment(withoutGov04DiagnosticChallenge()),
       });
       const report = await readJsonIfPresent(coveragePath);
       const reportValidation = childReportValidation("gate", "coverage", report, manifest.taskId, null, scope, manifest.layers);
@@ -211,7 +235,7 @@ async function main() {
       const selfTest = await runProcess(process.execPath, ["scripts/test-gate-selftest.mjs", "--task", args.task, "--report", selfPath], {
         timeoutMs: 900_000,
         echo: true,
-        env: withoutSec02ReceiptEnvironment(),
+        env: withoutSec02ReceiptEnvironment(withoutGov04DiagnosticChallenge()),
       });
       const report = await readJsonIfPresent(selfPath);
       const reportValidation = childReportValidation("gate", "self-test", report, manifest.taskId, null, scope, manifest.layers);
@@ -274,7 +298,11 @@ async function main() {
     ...(sec03Resolved ? { sec03Context } : {}),
   });
   unifiedRunnerCrashContext.stage = "report-write";
-  await atomicWriteJson(args.report, report);
+  await atomicWriteJson(args.report, report, (stage) => {
+    const crashStage = `report-${stage}`;
+    assert(unifiedRunnerCrashStages.has(crashStage));
+    unifiedRunnerCrashContext.stage = crashStage;
+  });
   unifiedRunnerCrashContext = null;
   console.log(`[${args.task}] ${args.profile}: ${state} (${report.durationMs} ms)`);
   if (state !== "passed") {
@@ -283,18 +311,25 @@ async function main() {
   }
 }
 
-main().catch(async () => {
+main().catch(async (error) => {
   const context = unifiedRunnerCrashContext;
+  const crashCode = unifiedRunnerCrashCodes.has(error?.code) ? error.code : "UNKNOWN";
   if (context && unifiedRunnerCrashStages.has(context.stage)) {
     try {
       await atomicWriteJson(context.reportPath, {
         reportVersion: 0,
         taskId: context.taskId,
         state: "crashed",
+        diagnosticChallenge: context.diagnosticChallenge,
         crashStage: context.stage,
+        crashCode,
       });
     } catch {}
   }
-  console.error(context ? `[${context.taskId}] unified runner crashed at ${context.stage}` : "Unified runner crashed before report initialization");
+  if (context) {
+    console.error(`[${context.taskId}:${context.diagnosticChallenge}] unified runner crashed at ${context.stage} code ${crashCode}`);
+  } else {
+    console.error("Unified runner crashed before report initialization");
+  }
   process.exitCode = 1;
 });

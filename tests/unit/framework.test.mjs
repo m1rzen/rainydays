@@ -362,7 +362,9 @@ test("atomic JSON reports publish complete parseable content", async () => {
   const root = await makeTempDir("mini-lux-gov03-report-");
   try {
     const report = path.join(root, "nested", "report.json");
-    await atomicWriteJson(report, { state: "passed", count: 2 });
+    const stages = [];
+    await atomicWriteJson(report, { state: "passed", count: 2 }, (stage) => stages.push(stage));
+    assert.deepEqual(stages, ["path-validation", "serialization", "temporary-write", "revalidation", "rename"]);
     assert.deepEqual(JSON.parse(await readFile(report, "utf8")), { state: "passed", count: 2 });
   } finally {
     await removeFixture(root);

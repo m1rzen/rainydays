@@ -110,15 +110,25 @@ export async function prepareReportPath(filePath) {
   return absolute;
 }
 
-export async function atomicWriteJson(filePath, value) {
+export async function atomicWriteJson(filePath, value, observeStage = null) {
+  observeStage?.("path-validation");
   const absolute = await validateReportPath(filePath);
   const temporary = `${absolute}.${process.pid}.${randomBytes(6).toString("hex")}.tmp`;
-  await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  observeStage?.("serialization");
+  const serialized = `${JSON.stringify(value, null, 2)}\n`;
+  observeStage?.("temporary-write");
+  await writeFile(temporary, serialized, "utf8");
   try {
+    observeStage?.("revalidation");
     const revalidated = await validateReportPath(filePath);
     assert.equal(revalidated, absolute, "canonical report destination changed before publication");
+    observeStage?.("rename");
     await rename(temporary, revalidated);
-  } catch (error) { await rm(temporary, { force: true }); throw error; }
+  } catch (error) {
+    try { await rm(temporary, { force: true }); }
+    catch (cleanupError) { observeStage?.("cleanup"); throw cleanupError; }
+    throw error;
+  }
 }
 
 export async function sha256File(filePath) {
