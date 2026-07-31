@@ -23,7 +23,7 @@ import {
   loadCoverageScope,
   loadTaskManifest,
   makeTempDir,
-  prepareReportPath,
+  prepareReportTarget,
   projectRoot,
   removeFixture,
   runProcess,
@@ -222,7 +222,7 @@ async function createGateSandbox(root, name, mode) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  args.report = await prepareReportPath(args.report);
+  const reportTarget = await prepareReportTarget(args.report);
   const { manifest: taskManifest } = await loadTaskManifest(args.task);
   const startedAt = new Date();
   const started = Date.now();
@@ -507,7 +507,7 @@ async function main() {
     maxRssBytes: process.memoryUsage().rss,
   };
   validateSelfTestReport(report, { taskId: args.task });
-  await atomicWriteJson(args.report, report);
+  await atomicWriteJson(reportTarget, report);
   console.log(`[${args.task}] self-test: ${report.state} (${report.durationMs} ms)`);
   if (!passed) process.exitCode = 1;
 }

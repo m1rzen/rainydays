@@ -12,7 +12,7 @@ import {
   loadTaskManifest,
   makeTempDir,
   parseTapSummary,
-  prepareReportPath,
+  prepareReportTarget,
   projectRoot,
   removeFixture,
   runProcess,
@@ -129,7 +129,8 @@ async function readRawSec03Receipts(directory) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  args.report = await prepareReportPath(args.report);
+  const reportTarget = await prepareReportTarget(args.report);
+  args.report = reportTarget.path;
   const detailPath = `${args.report}.${process.pid}.details.json`;
   await rm(detailPath, { force: true });
   const startedAt = new Date();
@@ -164,7 +165,7 @@ async function main() {
       artifactSnapshot: { before, after: before, unchanged: true }, details: null, sec02Evidence: null, sec03Evidence,
     };
     validateLayerReport(report, { taskId: manifest.taskId, layer: args.layer, build: report.build, expectedFiles: manifest.layers[args.layer], sec03Context: sec03 });
-    await atomicWriteJson(args.report, report);
+    await atomicWriteJson(reportTarget, report);
     console.error("SEC03_BLOCKED_NATIVE_EVIDENCE");
     process.exitCode = 3;
     return;
@@ -203,7 +204,7 @@ async function main() {
       sec02Matrix,
       sec02RunId,
     });
-    await atomicWriteJson(args.report, report);
+    await atomicWriteJson(reportTarget, report);
     console.error(`[${args.task}] packaged layer is unsupported on this platform`);
     process.exitCode = 2;
     return;
@@ -354,7 +355,7 @@ async function main() {
     sec02SinkIdentity,
     ...(sec03Resolved ? { sec03Context: sec03 } : {}),
   });
-  await atomicWriteJson(args.report, report);
+  await atomicWriteJson(reportTarget, report);
   console.log(`[${args.task}] ${args.layer}: ${state} (${report.durationMs} ms)`);
   if (state !== "passed") process.exitCode = 1;
 }

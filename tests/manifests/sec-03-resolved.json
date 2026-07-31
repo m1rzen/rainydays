@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "3831ba841d7a1e298ad2b9df85625711bb88603ca341589a13da89e850acd76f",
+      "sha256": "05136054238484611e53f6fc3ebbf5fb5a8d22912f34e3ef9cfd88985ed52fac",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -573,7 +573,7 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "c641a166e3fec320961418e495d6b61f73d16c46811f681cc50914b105476d50",
+      "sha256": "bb4902c160a6071c2020ef67ebd0692048fe2ff6eae4e460930831310f755f79",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -599,7 +599,7 @@
     },
     {
       "exactCasePath": "scripts/run-coverage.mjs",
-      "sha256": "63fb30bb8adfab793150a134a0914ab0394f0b0a6536b9da8e741cd73d710d73",
+      "sha256": "7dd6b92a66eb38a3027409f40e3003055f09898e933eea8f7ed9dc0ea8afecb1",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2156,7 +2156,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "3831ba841d7a1e298ad2b9df85625711bb88603ca341589a13da89e850acd76f",
+      "sha256": "05136054238484611e53f6fc3ebbf5fb5a8d22912f34e3ef9cfd88985ed52fac",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2285,7 +2285,7 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "c641a166e3fec320961418e495d6b61f73d16c46811f681cc50914b105476d50",
+      "sha256": "bb4902c160a6071c2020ef67ebd0692048fe2ff6eae4e460930831310f755f79",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2311,7 +2311,7 @@
     },
     {
       "exactCasePath": "scripts/run-coverage.mjs",
-      "sha256": "63fb30bb8adfab793150a134a0914ab0394f0b0a6536b9da8e741cd73d710d73",
+      "sha256": "7dd6b92a66eb38a3027409f40e3003055f09898e933eea8f7ed9dc0ea8afecb1",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -3261,5 +3261,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "dd03408977b1ee91dccc7cac57d943085716b8c39363693931facce5ab654ca0"
+  "canonicalPayloadSha256": "c4d1572ae4f3c7cf4a639dd3c758ca30168663161ba2f61ea7e346e84828e550"
 }

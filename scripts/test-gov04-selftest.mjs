@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
-import { atomicWriteJson, prepareReportPath, projectRoot, runProcess } from "../tests/helpers.mjs";
+import { atomicWriteJson, prepareReportTarget, projectRoot, runProcess } from "../tests/helpers.mjs";
 import { gov04SelfTestIds, validateGov04SelfTestReport } from "./gov04/report-schema.mjs";
 
 function parseArgs(argv) {
@@ -21,7 +21,7 @@ function digest(value) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  args.report = await prepareReportPath(args.report);
+  const reportTarget = await prepareReportTarget(args.report);
   const startedAt = new Date();
   const started = Date.now();
   let child;
@@ -56,7 +56,7 @@ async function main() {
   };
   if (report.state === "failed") report.failureClass = "SELF_TEST_PROOF_FAILED";
   validateGov04SelfTestReport(report);
-  await atomicWriteJson(args.report, report);
+  await atomicWriteJson(reportTarget, report);
   console.log(`[GOV-04 self-test] ${report.state}: ${scenarios.filter((scenario) => scenario.passed).length}/${scenarios.length}`);
   if (report.state !== "passed") process.exitCode = 1;
 }

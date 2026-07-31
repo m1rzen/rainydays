@@ -163,7 +163,18 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   assert.match(unifiedRunner, /reportVersion: 0,[\s\S]*state: "crashed",[\s\S]*diagnosticChallenge: context\.diagnosticChallenge,[\s\S]*crashStage: context\.stage/);
   assert.match(unifiedRunner, /\[\$\{context\.taskId\}:\$\{context\.diagnosticChallenge\}\] unified runner crashed at \$\{context\.stage\} code \$\{crashCode\}/);
 
+  const layerRunner = await readFile(path.join(projectRoot, "scripts", "run-test-layer.mjs"), "utf8");
   const coverageRunner = await readFile(path.join(projectRoot, "scripts", "run-coverage.mjs"), "utf8");
+  const gateSelfTest = await readFile(path.join(projectRoot, "scripts", "test-gate-selftest.mjs"), "utf8");
+  const gov04SelfTest = await readFile(path.join(projectRoot, "scripts", "test-gov04-selftest.mjs"), "utf8");
+  for (const publisher of [layerRunner, coverageRunner, gateSelfTest, gov04SelfTest]) {
+    assert.match(publisher, /const reportTarget = await prepareReportTarget\(args\.report\)/);
+    assert.doesNotMatch(publisher, /atomicWriteJson\(args\.report,/);
+  }
+  assert.equal(layerRunner.match(/atomicWriteJson\(reportTarget,/g)?.length, 3);
+  assert.equal(coverageRunner.match(/atomicWriteJson\(reportTarget,/g)?.length, 1);
+  assert.equal(gateSelfTest.match(/atomicWriteJson\(reportTarget,/g)?.length, 1);
+  assert.equal(gov04SelfTest.match(/atomicWriteJson\(reportTarget,/g)?.length, 1);
   assert.match(coverageRunner, /\.\.\.manifest\.layers\.unit[\s\S]*\.\.\.manifest\.layers\.contract[\s\S]*\.\.\.manifest\.layers\.integration/);
   assert.match(coverageRunner, /scope\.additionalTestsByTask\[manifest\.taskId\]/);
   assert.match(coverageRunner, /\.map\(entry => entry\.exactCasePath\)/);

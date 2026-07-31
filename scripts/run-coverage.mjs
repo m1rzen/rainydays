@@ -11,7 +11,7 @@ import {
   loadTaskManifest,
   makeTempDir,
   pathIdentity,
-  prepareReportPath,
+  prepareReportTarget,
   projectRoot,
   removeFixture,
   runProcess,
@@ -91,7 +91,7 @@ async function authoredInventory(scope) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  args.report = await prepareReportPath(args.report);
+  const reportTarget = await prepareReportTarget(args.report);
   const startedAt = new Date();
   const started = Date.now();
   const { manifest } = await loadTaskManifest(args.task);
@@ -204,7 +204,7 @@ async function main() {
     staleSeedFiles,
   };
   validateCoverageReport(report, { taskId: manifest.taskId, coverageScope: scope });
-  await atomicWriteJson(args.report, report);
+  await atomicWriteJson(reportTarget, report);
   console.log(`[${args.task}] coverage: ${state} (${report.durationMs} ms)`);
   if (state !== "passed") process.exitCode = 1;
 }

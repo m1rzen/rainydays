@@ -6999,11 +6999,11 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "c641a166e3fec320961418e495d6b61f73d16c46811f681cc50914b105476d50"
+      "sha256": "bb4902c160a6071c2020ef67ebd0692048fe2ff6eae4e460930831310f755f79"
     },
     {
       "exactCasePath": "scripts/run-coverage.mjs",
-      "sha256": "63fb30bb8adfab793150a134a0914ab0394f0b0a6536b9da8e741cd73d710d73"
+      "sha256": "7dd6b92a66eb38a3027409f40e3003055f09898e933eea8f7ed9dc0ea8afecb1"
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
@@ -7011,7 +7011,7 @@
     },
     {
       "exactCasePath": "scripts/test-gate-selftest.mjs",
-      "sha256": "146d655bc4ecfd81aaa353b124b122e1b73785d3e5ee136236064b2d39adad5a"
+      "sha256": "05e34febbfcae8d1e191c8de00e99fa9d7484150f3cb8ed71ce10c3c8447110a"
     },
     {
       "exactCasePath": "scripts/run-gov04.mjs",
@@ -7115,5 +7115,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "d43c2e2191a43c568fca36933a3ddc84ce12ef80f04d65a149d3c8ed734d58fc"
+  "canonicalPayloadSha256": "2ae35221d06345bc84f04b7c0d799ea6ee2cb3fe5e917ad55d5af71b5469898f"
 }
