@@ -92,6 +92,23 @@ async function loadSec03Context() {
   }
 }
 
+const unifiedRunnerCrashStages = new Set([
+  "task-context",
+  "coverage-governance",
+  "artifact-before",
+  "layer-unit",
+  "layer-contract",
+  "layer-integration",
+  "layer-electron",
+  "layer-packaged",
+  "coverage",
+  "self-test",
+  "artifact-after",
+  "unified-validation",
+  "report-write",
+]);
+let unifiedRunnerCrashContext = null;
+
 const sec02ReceiptEnvironmentKeys = Object.freeze([
   "RAINYDAYS_SEC02_RECEIPT_DIR",
   "RAINYDAYS_SEC02_RUN_ID",
@@ -108,6 +125,7 @@ function withoutSec02ReceiptEnvironment(environment = process.env) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   args.report = await prepareReportPath(args.report);
+  unifiedRunnerCrashContext = { taskId: args.task, reportPath: args.report, stage: "task-context" };
   const startedAt = new Date();
   const started = Date.now();
   const loadedTask = await loadTaskManifest(args.task);
@@ -125,9 +143,11 @@ async function main() {
   const sec02RunId = sec02Resolved ? (configuredSec02RunId ?? randomUUID()) : null;
   const sec02Context = sec02Resolved ? { sec02Manifest, sec02Matrix, sec02RunId } : null;
   const sec03Context = sec03Resolved ? await loadSec03Context() : null;
+  unifiedRunnerCrashContext.stage = "coverage-governance";
   const { scope } = await loadCoverageScope();
   await validateCoverageGovernance(manifest, scope);
   const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
+  unifiedRunnerCrashContext.stage = "artifact-before";
   const before = await formalArtifactSnapshot();
   const runRoot = await makeTempDir("mini-lux-gov03-run-");
   const results = [];
@@ -137,6 +157,9 @@ async function main() {
   try {
     const requiredLayers = args.profile === "full" ? layerNames : layerNames.filter((layer) => layer !== "packaged");
     for (const layer of requiredLayers) {
+      const layerStage = `layer-${layer}`;
+      assert(unifiedRunnerCrashStages.has(layerStage));
+      unifiedRunnerCrashContext.stage = layerStage;
       const reportPath = path.join(runRoot, `${layer}.json`);
       const child = await runProcess(process.execPath, [
         "scripts/run-test-layer.mjs",
@@ -170,6 +193,7 @@ async function main() {
     const sec02AggregationPassed = !sec02Resolved || args.profile === "quick" || sec02Evidence?.complete === true;
     const sec03AggregationPassed = !sec03Resolved || sec03Evidence?.status === "complete";
     if (sec02AggregationPassed && sec03AggregationPassed && (!sec03Resolved || args.profile === "full") && results.every((entry) => entry.exitCode === 0 && !entry.reportValidation && entry.report?.state === "passed")) {
+      unifiedRunnerCrashContext.stage = "coverage";
       const coveragePath = path.join(runRoot, "coverage.json");
       const coverage = await runProcess(process.execPath, ["scripts/run-coverage.mjs", "--task", args.task, "--report", coveragePath], {
         timeoutMs: 660_000,
@@ -182,6 +206,7 @@ async function main() {
     }
 
     if (args.profile === "full" && sec02AggregationPassed && sec03AggregationPassed && results.every((entry) => entry.exitCode === 0 && !entry.reportValidation && entry.report?.state === "passed")) {
+      unifiedRunnerCrashContext.stage = "self-test";
       const selfPath = path.join(runRoot, "self-test.json");
       const selfTest = await runProcess(process.execPath, ["scripts/test-gate-selftest.mjs", "--task", args.task, "--report", selfPath], {
         timeoutMs: 900_000,
@@ -197,6 +222,7 @@ async function main() {
     cleanupPassed = true;
   }
 
+  unifiedRunnerCrashContext.stage = "artifact-after";
   const after = await formalArtifactSnapshot();
   const artifactsUnchanged = sameSnapshot(before, after);
   const expected = args.profile === "full"
@@ -238,6 +264,7 @@ async function main() {
     reviewerVerdict: null,
     userStatus: "not-reviewed",
   };
+  unifiedRunnerCrashContext.stage = "unified-validation";
   validateUnifiedReport(report, {
     taskId: manifest.taskId,
     build: report.build,
@@ -246,7 +273,9 @@ async function main() {
     ...(sec02Context ?? {}),
     ...(sec03Resolved ? { sec03Context } : {}),
   });
+  unifiedRunnerCrashContext.stage = "report-write";
   await atomicWriteJson(args.report, report);
+  unifiedRunnerCrashContext = null;
   console.log(`[${args.task}] ${args.profile}: ${state} (${report.durationMs} ms)`);
   if (state !== "passed") {
     const nativeEvidenceBlocked = sec03Resolved && results.some((entry) => entry.exitCode === 3 && entry.report?.failureClass === "SEC03_BLOCKED_NATIVE_EVIDENCE");
@@ -254,7 +283,18 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.stack || error.message : String(error));
+main().catch(async () => {
+  const context = unifiedRunnerCrashContext;
+  if (context && unifiedRunnerCrashStages.has(context.stage)) {
+    try {
+      await atomicWriteJson(context.reportPath, {
+        reportVersion: 0,
+        taskId: context.taskId,
+        state: "crashed",
+        crashStage: context.stage,
+      });
+    } catch {}
+  }
+  console.error(context ? `[${context.taskId}] unified runner crashed at ${context.stage}` : "Unified runner crashed before report initialization");
   process.exitCode = 1;
 });

@@ -157,10 +157,25 @@ const unifiedResultKinds = new Set(["layer", "gate"]);
 const unifiedResultNames = new Set(["unit", "contract", "integration", "electron", "packaged", "coverage", "self-test"]);
 const unifiedReportStates = new Set(["passed", "failed", "blocked", "unsupported"]);
 const unifiedValidationCodes = new Set(["REPORT_MISSING_OR_INVALID_JSON", "REPORT_KIND_UNKNOWN", "REPORT_SCHEMA_INVALID"]);
+const unifiedCrashStages = new Set([
+  "task-context",
+  "coverage-governance",
+  "artifact-before",
+  "layer-unit",
+  "layer-contract",
+  "layer-integration",
+  "layer-electron",
+  "layer-packaged",
+  "coverage",
+  "self-test",
+  "artifact-after",
+  "unified-validation",
+  "report-write",
+]);
 
 export function summarizeInvalidUnifiedReport(report) {
   if (!report || typeof report !== "object" || Array.isArray(report)) {
-    return { status: "invalid-child-report", childReadable: false, childState: null, resultCount: null, firstFailure: null };
+    return { status: "invalid-child-report", childReadable: false, childState: null, resultCount: null, firstFailure: null, crashStage: null };
   }
   const results = Array.isArray(report.results) && report.results.length <= 10 ? report.results : null;
   const failed = results?.find((entry) => entry?.exitCode !== 0 || entry?.reportValidation !== null || entry?.report?.state !== "passed") ?? null;
@@ -179,6 +194,7 @@ export function summarizeInvalidUnifiedReport(report) {
     childState: unifiedReportStates.has(report.state) ? report.state : null,
     resultCount: results?.length ?? null,
     firstFailure,
+    crashStage: report.reportVersion === 0 && report.state === "crashed" && unifiedCrashStages.has(report.crashStage) ? report.crashStage : null,
   };
 }
 

@@ -19,6 +19,7 @@ test("GOV-04 invalid child diagnostics retain only fixed enums", () => {
     childState: null,
     resultCount: null,
     firstFailure: null,
+    crashStage: null,
   });
   const summary = summarizeInvalidUnifiedReport({
     state: "failed",
@@ -43,12 +44,25 @@ test("GOV-04 invalid child diagnostics retain only fixed enums", () => {
       reportValidation: "REPORT_SCHEMA_INVALID",
       reportState: "failed",
     },
+    crashStage: null,
   });
   assert.doesNotMatch(JSON.stringify(summary), /sensitive|checkout/u);
   assert.deepEqual(summarizeInvalidUnifiedReport({
     state: "C:\\sensitive",
     results: [{ kind: "C:\\sensitive", name: "secret", exitCode: "1", reportValidation: "raw error", report: { state: "secret" } }],
   }).firstFailure, { kind: null, name: null, exitCode: null, reportValidation: null, reportState: null });
+  assert.equal(summarizeInvalidUnifiedReport({
+    reportVersion: 0,
+    taskId: "GOV-03",
+    state: "crashed",
+    crashStage: "unified-validation",
+  }).crashStage, "unified-validation");
+  assert.equal(summarizeInvalidUnifiedReport({
+    reportVersion: 0,
+    taskId: "GOV-03",
+    state: "crashed",
+    crashStage: "C:\\sensitive\\checkout",
+  }).crashStage, null);
 });
 
 test("GOV-04 test manifest binds the frozen 16-step state machine", async () => {
@@ -121,6 +135,8 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   assert.match(unifiedRunner, /configuredSec02RunId \?\? randomUUID\(\)/);
   assert.match(unifiedRunner, /const sec02ReceiptEnvironmentKeys = Object\.freeze/);
   assert.equal(unifiedRunner.match(/env: withoutSec02ReceiptEnvironment\(\)/g)?.length, 2);
+  assert.match(unifiedRunner, /reportVersion: 0,[\s\S]*state: "crashed",[\s\S]*crashStage: context\.stage/);
+  assert.match(unifiedRunner, /unified runner crashed at \$\{context\.stage\}/);
 
   const coverageRunner = await readFile(path.join(projectRoot, "scripts", "run-coverage.mjs"), "utf8");
   assert.match(coverageRunner, /\.\.\.manifest\.layers\.unit[\s\S]*\.\.\.manifest\.layers\.contract[\s\S]*\.\.\.manifest\.layers\.integration/);
