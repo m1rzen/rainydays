@@ -153,6 +153,35 @@ async function readJsonReport(reportPath) {
   return { report: JSON.parse(bytes.toString("utf8")), sha256: sha256(bytes) };
 }
 
+const unifiedResultKinds = new Set(["layer", "gate"]);
+const unifiedResultNames = new Set(["unit", "contract", "integration", "electron", "packaged", "coverage", "self-test"]);
+const unifiedReportStates = new Set(["passed", "failed", "blocked", "unsupported"]);
+const unifiedValidationCodes = new Set(["REPORT_MISSING_OR_INVALID_JSON", "REPORT_KIND_UNKNOWN", "REPORT_SCHEMA_INVALID"]);
+
+export function summarizeInvalidUnifiedReport(report) {
+  if (!report || typeof report !== "object" || Array.isArray(report)) {
+    return { status: "invalid-child-report", childReadable: false, childState: null, resultCount: null, firstFailure: null };
+  }
+  const results = Array.isArray(report.results) && report.results.length <= 10 ? report.results : null;
+  const failed = results?.find((entry) => entry?.exitCode !== 0 || entry?.reportValidation !== null || entry?.report?.state !== "passed") ?? null;
+  const firstFailure = failed && typeof failed === "object" && !Array.isArray(failed)
+    ? {
+        kind: unifiedResultKinds.has(failed.kind) ? failed.kind : null,
+        name: unifiedResultNames.has(failed.name) ? failed.name : null,
+        exitCode: Number.isSafeInteger(failed.exitCode) ? failed.exitCode : null,
+        reportValidation: unifiedValidationCodes.has(failed.reportValidation) ? failed.reportValidation : null,
+        reportState: unifiedReportStates.has(failed.report?.state) ? failed.report.state : null,
+      }
+    : null;
+  return {
+    status: "invalid-child-report",
+    childReadable: true,
+    childState: unifiedReportStates.has(report.state) ? report.state : null,
+    resultCount: results?.length ?? null,
+    firstFailure,
+  };
+}
+
 export async function runGov03Quick({ workspace, evidenceDirectory, candidateSourceDigest, candidateId, buildId }) {
   const sourceBefore = publicCandidateIdentity(await computeCandidateIdentity(workspace));
   const reportPath = path.join(evidenceDirectory, "gov03-quick.json");
@@ -166,8 +195,9 @@ export async function runGov03Quick({ workspace, evidenceDirectory, candidateSou
     });
   }
   catch (error) { return processFailure(error, "GOV03_QUICK_FAILED"); }
+  let child = null;
   try {
-    const child = await readJsonReport(reportPath);
+    child = await readJsonReport(reportPath);
     const loadedTask = await loadTaskManifest("GOV-03", workspace);
     const sec02Matrix = JSON.parse(await readFile(path.join(workspace, "tests", "sec02-attack-matrix.json"), "utf8"));
     const coverageScope = JSON.parse(await readFile(path.join(workspace, "tests", "coverage-scope.json"), "utf8"));
@@ -184,7 +214,18 @@ export async function runGov03Quick({ workspace, evidenceDirectory, candidateSou
     const sourceUnchanged = sourceBefore.releaseCandidateId === candidateId && sourceAfter.releaseCandidateId === candidateId;
     const passed = result.code === 0 && child.report.state === "passed" && sourceUnchanged;
     return { passed, failureClass: passed ? null : !sourceUnchanged ? "SOURCE_MUTATION" : "GOV03_QUICK_FAILED", exitCode: passed ? 0 : result.code, signal: result.signal, timedOut: false, timeoutTermination: null, childReportSha256: child.sha256, evidence: { childState: child.report.state, childBuildId: child.report.build.buildId, childSourceDigest: child.report.build.sourceDigest, sourceUnchanged, reportSha256: child.sha256, stdoutSha256: result.stdoutSha256, stderrSha256: result.stderrSha256 } };
-  } catch { return { passed: false, failureClass: "GOV03_REPORT_INVALID", exitCode: result.code, signal: result.signal, timedOut: false, timeoutTermination: null, childReportSha256: null, evidence: { status: "invalid-child-report" } }; }
+  } catch {
+    return {
+      passed: false,
+      failureClass: "GOV03_REPORT_INVALID",
+      exitCode: result.code,
+      signal: result.signal,
+      timedOut: false,
+      timeoutTermination: null,
+      childReportSha256: child?.sha256 ?? null,
+      evidence: { ...summarizeInvalidUnifiedReport(child?.report ?? null), reportSha256: child?.sha256 ?? null },
+    };
+  }
 }
 
 export async function runGov03SelfTest({ workspace, evidenceDirectory, candidateId }) {

@@ -4,12 +4,52 @@ import path from "node:path";
 import test from "node:test";
 import { validateModelManifest } from "../../scripts/bootstrap-models.mjs";
 import { gov04StepIds } from "../../scripts/gov04/report-schema.mjs";
+import { summarizeInvalidUnifiedReport } from "../../scripts/gov04/steps.mjs";
 import { projectRoot } from "../helpers.mjs";
 
 const workflowPaths = [
   ".github/workflows/gov-04-merge.yml",
   ".github/workflows/gov-04-trusted-release.yml",
 ];
+
+test("GOV-04 invalid child diagnostics retain only fixed enums", () => {
+  assert.deepEqual(summarizeInvalidUnifiedReport(null), {
+    status: "invalid-child-report",
+    childReadable: false,
+    childState: null,
+    resultCount: null,
+    firstFailure: null,
+  });
+  const summary = summarizeInvalidUnifiedReport({
+    state: "failed",
+    rawPath: "C:\\sensitive\\checkout",
+    results: [{
+      kind: "layer",
+      name: "unit",
+      exitCode: 1,
+      reportValidation: "REPORT_SCHEMA_INVALID",
+      report: { state: "failed", error: "C:\\sensitive\\checkout" },
+    }],
+  });
+  assert.deepEqual(summary, {
+    status: "invalid-child-report",
+    childReadable: true,
+    childState: "failed",
+    resultCount: 1,
+    firstFailure: {
+      kind: "layer",
+      name: "unit",
+      exitCode: 1,
+      reportValidation: "REPORT_SCHEMA_INVALID",
+      reportState: "failed",
+    },
+  });
+  assert.doesNotMatch(JSON.stringify(summary), /sensitive|checkout/u);
+  assert.deepEqual(summarizeInvalidUnifiedReport({
+    state: "C:\\sensitive",
+    results: [{ kind: "C:\\sensitive", name: "secret", exitCode: "1", reportValidation: "raw error", report: { state: "secret" } }],
+  }).firstFailure, { kind: null, name: null, exitCode: null, reportValidation: null, reportState: null });
+});
 
 test("GOV-04 test manifest binds the frozen 16-step state machine", async () => {
   const manifest = JSON.parse(await readFile(path.join(projectRoot, "tests", "manifests", "gov-04.json"), "utf8"));
