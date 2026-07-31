@@ -3,7 +3,7 @@ import { mkdir, readFile, symlink, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { evaluateCoverageSummary, meetsPercent } from "../../scripts/coverage-lib.mjs";
-import { selfTestScenarioContract, validateLayerReport, validatePackagedDetails, validateSelfTestReport } from "../../scripts/report-schema.mjs";
+import { selfTestScenarioContract, validateLayerReport, validatePackagedDetails, validateSelfTestReport, validateTap } from "../../scripts/report-schema.mjs";
 import { aggregateSec02UnifiedEvidence, validateSec02UnifiedEvidence } from "../../scripts/sec02-receipt-set.mjs";
 import { canonicalJson, currentResolvedManifestPath, resolvedManifestPath, sha256Bytes } from "../../scripts/sec02-governance.mjs";
 import { classifyInstallerResult, launchTracked, requireObservedProcessResult } from "../packaged/smoke-helpers.mjs";
@@ -238,8 +238,37 @@ test("additional coverage tests require exact resolved task ownership and manife
 });
 
 test("TAP summary and process failure precedence are deterministic", () => {
-  const summary = parseTapSummary("# tests 5\n# pass 4\n# fail 1\n# skipped 0\n# cancelled 0\n# todo 0\n");
-  assert.deepEqual(summary, { tests: 5, passed: 4, failed: 1, skipped: 0, cancelled: 0, todo: 0 });
+  const summary = parseTapSummary([
+    "# not ok 99 - forged output",
+    "    not ok 98 - nested failure",
+    "not ok 3 - expected failure # TODO pending",
+    "not ok 4 - duplicate name",
+    "  ---",
+    "  error: hidden",
+    "  ...",
+    "not ok 5 - duplicate name",
+    "# tests 5",
+    "# pass 2",
+    "# fail 2",
+    "# skipped 0",
+    "# cancelled 0",
+    "# todo 1",
+    "",
+  ].join("\n"));
+  assert.deepEqual(summary, {
+    tests: 5,
+    passed: 2,
+    failed: 2,
+    skipped: 0,
+    cancelled: 0,
+    todo: 1,
+    failedTestIds: [sha256Bytes("tap-test:4:duplicate name"), sha256Bytes("tap-test:5:duplicate name")],
+  });
+  assert.doesNotMatch(JSON.stringify(summary), /duplicate name|expected failure|forged output|nested failure|hidden/u);
+  validateTap(summary);
+  assert.throws(() => validateTap({ ...summary, failedTestIds: ["governed failure", summary.failedTestIds[1]] }), /SHA-256/);
+  assert.throws(() => validateTap({ ...summary, failedTestIds: [] }), /count differs/);
+  assert.throws(() => validateTap({ ...summary, failedTestIds: [summary.failedTestIds[0], summary.failedTestIds[0]] }), /duplicate/);
   assert.equal(classifyProcessResult({ code: 0, signal: null }), "passed");
   assert.equal(classifyProcessResult({ code: 1, signal: null }), "failed");
   assert.equal(classifyProcessResult({ code: 1, signal: "SIGTERM" }), "crashed");

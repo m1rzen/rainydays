@@ -549,11 +549,17 @@ export async function runProcess(command, args, { cwd = projectRoot, env = proce
 }
 
 export function parseTapSummary(output) {
+  const lines = output.split(/\r?\n/);
   const number = (label) => {
     const prefix = `# ${label} `;
-    const line = output.split(/\r?\n/).find((entry) => entry.startsWith(prefix));
+    const line = lines.find((entry) => entry.startsWith(prefix));
     return line ? Number(line.slice(prefix.length).trim()) : null;
   };
+  const failedTestIds = lines.flatMap((line) => {
+    const match = /^not ok ([1-9]\d*) - (.*?)(?: # (TODO|SKIP)(?: .*)?)?$/u.exec(line);
+    if (!match || match[3]) return [];
+    return [createHash("sha256").update(`tap-test:${match[1]}:${match[2]}`).digest("hex")];
+  });
   return {
     tests: number("tests"),
     passed: number("pass"),
@@ -561,6 +567,7 @@ export function parseTapSummary(output) {
     skipped: number("skipped"),
     cancelled: number("cancelled"),
     todo: number("todo"),
+    failedTestIds,
   };
 }
 

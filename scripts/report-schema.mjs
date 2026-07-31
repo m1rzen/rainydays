@@ -134,9 +134,15 @@ function validateArtifactSnapshot(value) {
   assert.equal(value.unchanged, JSON.stringify(value.before) === JSON.stringify(value.after), "artifactSnapshot.unchanged is inconsistent");
 }
 
-function validateTap(value) {
-  exactKeys(value, ["tests", "passed", "failed", "skipped", "cancelled", "todo"], "tap");
-  for (const [key, count] of Object.entries(value)) assert(count === null || (Number.isSafeInteger(count) && count >= 0), `tap.${key} is invalid`);
+export function validateTap(value) {
+  exactKeys(value, ["tests", "passed", "failed", "skipped", "cancelled", "todo", "failedTestIds"], "tap");
+  for (const key of ["tests", "passed", "failed", "skipped", "cancelled", "todo"]) {
+    const count = value[key];
+    assert(count === null || (Number.isSafeInteger(count) && count >= 0), `tap.${key} is invalid`);
+  }
+  assertUniqueStrings(value.failedTestIds, "tap.failedTestIds");
+  assert(value.failedTestIds.every((entry) => sha256Pattern.test(entry)), "tap.failedTestIds must contain only SHA-256 identifiers");
+  if (value.failed !== null) assert.equal(value.failedTestIds.length, value.failed, "tap.failedTestIds count differs from tap.failed");
 }
 
 function exactPercentPassed(covered, total, threshold) {
