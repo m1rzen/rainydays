@@ -79,6 +79,8 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   assert.match(unifiedRunner, /process\.env\.RAINYDAYS_SEC02_RUN_ID/);
   assert.match(unifiedRunner, /GOV-04 SEC-02 run ID is invalid/);
   assert.match(unifiedRunner, /configuredSec02RunId \?\? randomUUID\(\)/);
+  assert.match(unifiedRunner, /const sec02ReceiptEnvironmentKeys = Object\.freeze/);
+  assert.equal(unifiedRunner.match(/env: withoutSec02ReceiptEnvironment\(\)/g)?.length, 2);
 
   const coverageRunner = await readFile(path.join(projectRoot, "scripts", "run-coverage.mjs"), "utf8");
   assert.match(coverageRunner, /\.\.\.manifest\.layers\.unit[\s\S]*\.\.\.manifest\.layers\.contract[\s\S]*\.\.\.manifest\.layers\.integration/);

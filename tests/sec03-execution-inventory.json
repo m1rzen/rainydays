@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "b902e766e22ae7bc1bc4b2549549c930a576c60162a337ba48ad1fb9e50e3256",
+  "sourceSetSha256": "bab08cb49c1bdcc9eccac6fef03e590e1b3c5905198f94250ebfb6bbc339e2f1",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -261,8 +261,8 @@
     },
     {
       "sourcePath": "scripts/run-tests.mjs",
-      "bytes": 13246,
-      "sha256": "d1d8bdc5878301ed1fe126baa030e7bec812e6f0617ae909ec2e3a5e646135c4",
+      "bytes": 13780,
+      "sha256": "a283853a68f2669e1d471a4da778aca4c2b3dd10e2f95f1c6ae5aac4748b20bf",
       "executionClass": "build-test"
     },
     {
@@ -879,8 +879,8 @@
     },
     {
       "sourcePath": "tests/gov04/workflow-policy.test.mjs",
-      "bytes": 8712,
-      "sha256": "babf6bc6f4bc8dd29131a0f3b440fc56af4bcb30de4ea1a9859d47e671b1abb6",
+      "bytes": 8889,
+      "sha256": "af353b9a3a2e9a59eea6e1903d62002804cf48704884c6d1d3dee5f63df1fc2b",
       "executionClass": "build-test"
     },
     {
@@ -2669,6 +2669,23 @@
       "column": 8,
       "nodeKind": "PropertyAccessExpression",
       "container": "main",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-6e86c14d1b9d06c1ba5c5b1a",
+      "occurrence": 1,
+      "sourcePath": "scripts/run-tests.mjs",
+      "line": 102,
+      "column": 55,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "withoutSec02ReceiptEnvironment",
       "family": "process-environment",
       "api": "process.env",
       "operands": [
@@ -5521,5 +5538,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "b220afad9828a3468b9e68971889919a7565a2b73a5a7ae3db3a5e002cdc2afa"
+  "canonicalPayloadSha256": "b330e51e5eaf2716d1f1e1a5a48aac45f41556d8fc6fffd73e3c823e9ba5b3f1"
 }

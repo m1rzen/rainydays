@@ -92,6 +92,19 @@ async function loadSec03Context() {
   }
 }
 
+const sec02ReceiptEnvironmentKeys = Object.freeze([
+  "RAINYDAYS_SEC02_RECEIPT_DIR",
+  "RAINYDAYS_SEC02_RUN_ID",
+  "RAINYDAYS_SEC02_RESOLVED_SHA256",
+  "RAINYDAYS_SEC02_MATRIX_SHA256",
+]);
+
+function withoutSec02ReceiptEnvironment(environment = process.env) {
+  const sanitized = { ...environment };
+  for (const key of sec02ReceiptEnvironmentKeys) delete sanitized[key];
+  return sanitized;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   args.report = await prepareReportPath(args.report);
@@ -158,7 +171,11 @@ async function main() {
     const sec03AggregationPassed = !sec03Resolved || sec03Evidence?.status === "complete";
     if (sec02AggregationPassed && sec03AggregationPassed && (!sec03Resolved || args.profile === "full") && results.every((entry) => entry.exitCode === 0 && !entry.reportValidation && entry.report?.state === "passed")) {
       const coveragePath = path.join(runRoot, "coverage.json");
-      const coverage = await runProcess(process.execPath, ["scripts/run-coverage.mjs", "--task", args.task, "--report", coveragePath], { timeoutMs: 660_000, echo: true });
+      const coverage = await runProcess(process.execPath, ["scripts/run-coverage.mjs", "--task", args.task, "--report", coveragePath], {
+        timeoutMs: 660_000,
+        echo: true,
+        env: withoutSec02ReceiptEnvironment(),
+      });
       const report = await readJsonIfPresent(coveragePath);
       const reportValidation = childReportValidation("gate", "coverage", report, manifest.taskId, null, scope, manifest.layers);
       results.push({ kind: "gate", name: "coverage", exitCode: coverage.code, report: reportValidation ? null : report, reportValidation });
@@ -166,7 +183,11 @@ async function main() {
 
     if (args.profile === "full" && sec02AggregationPassed && sec03AggregationPassed && results.every((entry) => entry.exitCode === 0 && !entry.reportValidation && entry.report?.state === "passed")) {
       const selfPath = path.join(runRoot, "self-test.json");
-      const selfTest = await runProcess(process.execPath, ["scripts/test-gate-selftest.mjs", "--task", args.task, "--report", selfPath], { timeoutMs: 900_000, echo: true });
+      const selfTest = await runProcess(process.execPath, ["scripts/test-gate-selftest.mjs", "--task", args.task, "--report", selfPath], {
+        timeoutMs: 900_000,
+        echo: true,
+        env: withoutSec02ReceiptEnvironment(),
+      });
       const report = await readJsonIfPresent(selfPath);
       const reportValidation = childReportValidation("gate", "self-test", report, manifest.taskId, null, scope, manifest.layers);
       results.push({ kind: "gate", name: "self-test", exitCode: selfTest.code, report: reportValidation ? null : report, reportValidation });
