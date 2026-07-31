@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "a9d77311e6035d8bedd4134dd2a7fd6e95bbc869d0e2f66cf62718104ea006e7",
+  "sourceSetSha256": "b68f43a44c1e3ee00c28149a38ae6295b1fbef141ba33f918eed154bcedfeb67",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -219,8 +219,8 @@
     },
     {
       "sourcePath": "scripts/gov04/steps.mjs",
-      "bytes": 30543,
-      "sha256": "017adc9f2c70d52df31aed14665b3a23502adcfbc90a4bea36432c3a43294169",
+      "bytes": 30816,
+      "sha256": "0ffa9f2f7c795c0a3f0d72afda9ce2018ee3f84ed3291a43434b8832984d8650",
       "executionClass": "build-test"
     },
     {
@@ -261,8 +261,8 @@
     },
     {
       "sourcePath": "scripts/run-tests.mjs",
-      "bytes": 16656,
-      "sha256": "953af133b42d9c251fbd5a80563e79de0016ce1e800b0c54e9b104458f6cc67a",
+      "bytes": 17851,
+      "sha256": "9ecb8158059d634701446cfc22109889f13018e422a06ff459f18af92b51309e",
       "executionClass": "build-test"
     },
     {
@@ -879,8 +879,8 @@
     },
     {
       "sourcePath": "tests/gov04/workflow-policy.test.mjs",
-      "bytes": 12840,
-      "sha256": "e7c882b03f941d8f6747a3daca41662f34ac3a9ea831a50b6d191ae41435fa15",
+      "bytes": 13092,
+      "sha256": "92be4ac28bba44cd5d1496f13749542af87407ee8dfbf00ce5a79e1984368328",
       "executionClass": "build-test"
     },
     {
@@ -2682,7 +2682,7 @@
       "id": "exec-cca933722fc2b2c1b5d2c4b2",
       "occurrence": 1,
       "sourcePath": "scripts/run-tests.mjs",
-      "line": 130,
+      "line": 145,
       "column": 56,
       "nodeKind": "PropertyAccessExpression",
       "container": "withoutGov04DiagnosticChallenge",
@@ -2699,7 +2699,7 @@
       "id": "exec-6e86c14d1b9d06c1ba5c5b1a",
       "occurrence": 1,
       "sourcePath": "scripts/run-tests.mjs",
-      "line": 136,
+      "line": 151,
       "column": 55,
       "nodeKind": "PropertyAccessExpression",
       "container": "withoutSec02ReceiptEnvironment",
@@ -5555,5 +5555,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "52b0f9b956ea8b53e0842f90a25ba0999752650e3a262d3dbe82cccdb36670bd"
+  "canonicalPayloadSha256": "4d1bede92b5f9f25d92cfd3d8d4202375746cc341eeeb97b1b023d07431e099c"
 }

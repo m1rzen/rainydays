@@ -115,6 +115,21 @@ const unifiedRunnerCrashStages = new Set([
 ]);
 const unifiedRunnerCrashCodes = new Set([
   "EACCES", "EBUSY", "EEXIST", "EINVAL", "EIO", "ENOENT", "ENOSPC", "ENOTDIR", "EPERM", "EROFS", "EXDEV",
+  "REPORT_PATH_EXTENSION", "REPORT_PROJECT_BOUNDARY", "REPORT_ALLOWED_ROOT", "REPORT_ROOT_IDENTITY",
+  "REPORT_ANCESTOR_IDENTITY", "REPORT_PARENT_TYPE", "REPORT_ANCESTOR_BOUNDARY", "REPORT_CANONICAL_BOUNDARY",
+  "REPORT_DESTINATION_IDENTITY", "REPORT_DESTINATION_CHANGED",
+]);
+const unifiedRunnerCrashCodeByMessage = new Map([
+  ["report path must end in .json", "REPORT_PATH_EXTENSION"],
+  ["reports inside the project must remain inside test-results", "REPORT_PROJECT_BOUNDARY"],
+  ["report path must be inside test-results or the OS temporary directory", "REPORT_ALLOWED_ROOT"],
+  ["report root must not be a symbolic link", "REPORT_ROOT_IDENTITY"],
+  ["report path must not traverse a symbolic link", "REPORT_ANCESTOR_IDENTITY"],
+  ["report parent must be a directory", "REPORT_PARENT_TYPE"],
+  ["report path ancestor escapes its allowed root", "REPORT_ANCESTOR_BOUNDARY"],
+  ["canonical report path escapes its allowed root", "REPORT_CANONICAL_BOUNDARY"],
+  ["report path must not be a symbolic link", "REPORT_DESTINATION_IDENTITY"],
+  ["canonical report destination changed before publication", "REPORT_DESTINATION_CHANGED"],
 ]);
 let unifiedRunnerCrashContext = null;
 
@@ -313,7 +328,9 @@ async function main() {
 
 main().catch(async (error) => {
   const context = unifiedRunnerCrashContext;
-  const crashCode = unifiedRunnerCrashCodes.has(error?.code) ? error.code : "UNKNOWN";
+  const crashCode = unifiedRunnerCrashCodes.has(error?.code)
+    ? error.code
+    : unifiedRunnerCrashCodeByMessage.get(error?.message) ?? "UNKNOWN";
   if (context && unifiedRunnerCrashStages.has(context.stage)) {
     try {
       await atomicWriteJson(context.reportPath, {

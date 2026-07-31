@@ -74,6 +74,10 @@ test("GOV-04 invalid child diagnostics require an exact private challenge bindin
   assert.equal(extractUnifiedRunnerCrashEvidence(`[GOV-03:${"b".repeat(64)}] unified runner crashed at report-rename code EPERM\n`, expectedContext), null);
   assert.equal(extractUnifiedRunnerCrashEvidence(`prefix ${line}\n`, expectedContext), null);
   assert.equal(extractUnifiedRunnerCrashEvidence(`[GOV-03:${challenge}] unified runner crashed at C:\\sensitive\\checkout code EPERM\n`, expectedContext), null);
+  assert.deepEqual(extractUnifiedRunnerCrashEvidence(
+    `[GOV-03:${challenge}] unified runner crashed at report-path-validation code REPORT_ALLOWED_ROOT\n`,
+    expectedContext,
+  ), { stage: "report-path-validation", code: "REPORT_ALLOWED_ROOT" });
   assert.deepEqual(reconcileUnifiedRunnerCrashEvidence(trusted, stderrMarker), { stage: "report-rename", code: "EPERM" });
   assert.equal(reconcileUnifiedRunnerCrashEvidence(trusted, { stage: "report-revalidation", code: "EPERM" }), null);
   assert.equal(reconcileUnifiedRunnerCrashEvidence(trusted, null), null);
