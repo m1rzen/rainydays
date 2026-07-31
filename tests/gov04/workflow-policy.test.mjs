@@ -76,7 +76,11 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   const coverageRunner = await readFile(path.join(projectRoot, "scripts", "run-coverage.mjs"), "utf8");
   assert.match(coverageRunner, /\.\.\.manifest\.layers\.unit[\s\S]*\.\.\.manifest\.layers\.contract[\s\S]*\.\.\.manifest\.layers\.integration/);
   assert.match(coverageRunner, /scope\.additionalTestsByTask\[manifest\.taskId\]/);
+  assert.match(coverageRunner, /\.map\(entry => entry\.exactCasePath\)/);
   assert.match(coverageRunner, /coverage test registry contains duplicate or case-alias paths/);
+  const testHelpers = await readFile(path.join(projectRoot, "tests", "helpers.mjs"), "utf8");
+  assert.match(testHelpers, /additional coverage test hash differs/);
+  assert.match(testHelpers, /record\.owner, entry\.sourceTask/);
 });
 
 test("GitHub Actions are immutable, read-only and never use pull_request_target", async () => {

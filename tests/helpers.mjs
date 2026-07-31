@@ -329,13 +329,28 @@ export async function loadCoverageScope(scopePath, root = projectRoot) {
   const filePath = scopePath ? path.resolve(scopePath) : path.join(root, "tests", "coverage-scope.json");
   const scope = JSON.parse(await readFile(filePath, "utf8"));
   assertExactKeys(scope, ["schemaVersion", "additionalTestsByTask", "overall", "securityCritical", "thresholds", "perFileLineMinimum"], "coverage scope");
-  assert.equal(scope.schemaVersion, 2);
+  assert.equal(scope.schemaVersion, 3);
   assert(scope.additionalTestsByTask && typeof scope.additionalTestsByTask === "object" && !Array.isArray(scope.additionalTestsByTask), "additionalTestsByTask must be an object");
+  const sourceManifestCache = new Map();
   for (const [taskId, entries] of Object.entries(scope.additionalTestsByTask)) {
     assert.match(taskId, /^[A-Z]+-\d{2}$/, "additional coverage task ID is invalid");
     assert(Array.isArray(entries) && entries.length > 0, `additional coverage tests are empty: ${taskId}`);
-    assertUniquePaths(entries, `additional coverage tests ${taskId}`);
-    for (const entry of entries) await assertRegularProjectFile(entry, `additional coverage test ${taskId}`, root);
+    assertUniquePaths(entries.map(entry => entry?.exactCasePath), `additional coverage tests ${taskId}`);
+    for (const entry of entries) {
+      assertExactKeys(entry, ["sourceTask", "exactCasePath"], `additional coverage test ${taskId}`);
+      assert.match(entry.sourceTask, /^[A-Z]+-\d{2}$/, "additional coverage source task ID is invalid");
+      await assertRegularProjectFile(entry.exactCasePath, `additional coverage test ${taskId}`, root);
+      if (!sourceManifestCache.has(entry.sourceTask)) sourceManifestCache.set(entry.sourceTask, await loadTaskManifest(entry.sourceTask, root));
+      const source = sourceManifestCache.get(entry.sourceTask);
+      assert(source.resolvedManifest?.cumulativeEntries, `additional coverage source task lacks a resolved manifest: ${entry.sourceTask}`);
+      const records = source.resolvedManifest.cumulativeEntries.filter(record => record.exactCasePath === entry.exactCasePath);
+      assert.equal(records.length, 1, `additional coverage test is not exact in ${entry.sourceTask}: ${entry.exactCasePath}`);
+      const record = records[0];
+      assert.equal(record.owner, entry.sourceTask, `additional coverage test owner differs: ${entry.exactCasePath}`);
+      assert.equal(record.kind, "test", `additional coverage entry is not a test: ${entry.exactCasePath}`);
+      assert(layerNames.includes(record.layer), `additional coverage test layer is invalid: ${entry.exactCasePath}`);
+      assert.equal(await sha256File(path.join(root, ...entry.exactCasePath.split("/"))), record.sha256, `additional coverage test hash differs: ${entry.exactCasePath}`);
+    }
   }
   assert(Array.isArray(scope.overall) && scope.overall.length > 0);
   assert(Array.isArray(scope.securityCritical) && scope.securityCritical.length > 0);

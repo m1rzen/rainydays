@@ -41,7 +41,7 @@
   "sourceManifest": {
     "taskId": "SEC-03",
     "exactCasePath": "tests/manifests/sec-03.json",
-    "sha256": "1e7d9287fc03927a42b82605321b677141ed9f4bdf6d8db5d34ee8bffc3f357c"
+    "sha256": "365cabfadf6299314749d677752ccb5cddf01c45eb6cd1169f7181912abaf2b3"
   },
   "deltaEntries": [
     {
@@ -81,7 +81,7 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "661b33e2a1fd7e7aff26e27c1990cec47b1042419bc076e08ce5183a053cf7cf",
+      "sha256": "017832f696ffc2fb3ae892d7431e1d1863721f8d42aef31c623f2368189ffb25",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -125,7 +125,7 @@
     },
     {
       "exactCasePath": "src/execution-runtime.ts",
-      "sha256": "270473ff6fdd183fbafb2b1f1f17ca59c2e158476ae8736bd9a2d7665cbe2865",
+      "sha256": "043f96954a7f86dd5d5df15a5189fd90de04a9a1cee305b2754d0941fb1d0dbe",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -226,7 +226,7 @@
     },
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "a691a0ee4b9ec06e40d51c441ca5aadc9e107f8543b1b796877ad82b74c87ef7",
+      "sha256": "24d79887ab9a4f26a61cb7e716bcef60f5bde0703cb163b0ada18a2235433d7a",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -266,7 +266,7 @@
     },
     {
       "exactCasePath": "dist/execution-runtime.js",
-      "sha256": "0b7f71df1d3e8c62564da7131e71be0f73bdbdfd0481fe509b2601b02d3f508f",
+      "sha256": "7ff221a9ee2a82e507ffc4f58147dde3dc5b3b0dc9a15bfc0f5813ba66bd540a",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "3adcf3aff89f1e9cd18bd71552d7c8a0dcf33b88226670eaf5ef143122f89c84",
+      "sha256": "d1c99cade317993ddfd7253e94a9d79c02cc250f56573d83b7307a5bfd2db6d5",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -599,7 +599,7 @@
     },
     {
       "exactCasePath": "scripts/run-coverage.mjs",
-      "sha256": "3477ca2b244348fd65e5d3b331b477f8a83fca1b5ee96e97156a8f7483ec880e",
+      "sha256": "63fb30bb8adfab793150a134a0914ab0394f0b0a6536b9da8e741cd73d710d73",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -612,7 +612,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "4c05d3e2ad5b0be83a65a899969e3a308685684dbfb0347752a84af76effda25",
+      "sha256": "4f18360a410b75ecdc36ef507f179b5363c8113b391a2bdb3e6a010b316fb869",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -625,7 +625,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "bbaa2c1036f401839c0d57e1b939fb1e2a439392f79cc84299e8a084776dff3d",
+      "sha256": "01c01bff78abacb337eddfcf9926a810df011be9330609058f4ebfce52d2d69d",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -664,7 +664,7 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "e5cc06c269165a456b41d0d817ba16ed28d634513ac29e5bf877fc66e2070dff",
+      "sha256": "8c7ec8da9d29362dbec30300f0701381c48e22c29eb85e096c8c6a98a5335832",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -692,7 +692,7 @@
         "SEC-03 runtime gateway binding matrix rejects each mismatched authority before root or native use",
         "SEC-03 manual runtime binding and observation matrices reject every untrusted variant",
         "SEC-03 manual runtime denial observation uses the fixed production identity",
-        "SEC-03 production runtime rejects every native/build identity drift before observation",
+        "SEC-03 production identity parser rejects every native/build drift without mutating checkout",
         "SEC-03 manual runtime evidence and opaque leases reject invalid public use",
         "SEC-03 execution request validation rejects every public boundary variant",
         "SEC-03 manual consent preparation rejects malformed JSON, bindings, display and evidence"
@@ -838,12 +838,13 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "sha256": "50fdacd46d73973da037d2e075354cb1a6c645fac6d2c7f5fefeacae968b1b77",
+      "sha256": "d9671999b95a1e5ffb52b2b92689baa4b10d25fedcb2277aac90220782e8dc98",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
       "testCaseIds": [
         "RainyDays migrates legacy Mini-Lux user data once without overwriting a current profile",
+        "RainyDays user-data migration rejects unsafe roots and reports every no-op state",
         "SEC-03 local API accepts only the private trusted header and publishes no browser credential"
       ],
       "supersedes": null
@@ -1247,7 +1248,7 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "661b33e2a1fd7e7aff26e27c1990cec47b1042419bc076e08ce5183a053cf7cf",
+      "sha256": "017832f696ffc2fb3ae892d7431e1d1863721f8d42aef31c623f2368189ffb25",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1966,7 +1967,7 @@
     },
     {
       "exactCasePath": "src/execution-runtime.ts",
-      "sha256": "270473ff6fdd183fbafb2b1f1f17ca59c2e158476ae8736bd9a2d7665cbe2865",
+      "sha256": "043f96954a7f86dd5d5df15a5189fd90de04a9a1cee305b2754d0941fb1d0dbe",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2002,7 +2003,7 @@
     },
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "a691a0ee4b9ec06e40d51c441ca5aadc9e107f8543b1b796877ad82b74c87ef7",
+      "sha256": "24d79887ab9a4f26a61cb7e716bcef60f5bde0703cb163b0ada18a2235433d7a",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2029,7 +2030,7 @@
     },
     {
       "exactCasePath": "dist/execution-runtime.js",
-      "sha256": "0b7f71df1d3e8c62564da7131e71be0f73bdbdfd0481fe509b2601b02d3f508f",
+      "sha256": "7ff221a9ee2a82e507ffc4f58147dde3dc5b3b0dc9a15bfc0f5813ba66bd540a",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2155,7 +2156,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "3adcf3aff89f1e9cd18bd71552d7c8a0dcf33b88226670eaf5ef143122f89c84",
+      "sha256": "d1c99cade317993ddfd7253e94a9d79c02cc250f56573d83b7307a5bfd2db6d5",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2310,7 +2311,7 @@
     },
     {
       "exactCasePath": "scripts/run-coverage.mjs",
-      "sha256": "3477ca2b244348fd65e5d3b331b477f8a83fca1b5ee96e97156a8f7483ec880e",
+      "sha256": "63fb30bb8adfab793150a134a0914ab0394f0b0a6536b9da8e741cd73d710d73",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2323,7 +2324,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "4c05d3e2ad5b0be83a65a899969e3a308685684dbfb0347752a84af76effda25",
+      "sha256": "4f18360a410b75ecdc36ef507f179b5363c8113b391a2bdb3e6a010b316fb869",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2336,7 +2337,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "bbaa2c1036f401839c0d57e1b939fb1e2a439392f79cc84299e8a084776dff3d",
+      "sha256": "01c01bff78abacb337eddfcf9926a810df011be9330609058f4ebfce52d2d69d",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2375,7 +2376,7 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "e5cc06c269165a456b41d0d817ba16ed28d634513ac29e5bf877fc66e2070dff",
+      "sha256": "8c7ec8da9d29362dbec30300f0701381c48e22c29eb85e096c8c6a98a5335832",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2403,7 +2404,7 @@
         "SEC-03 runtime gateway binding matrix rejects each mismatched authority before root or native use",
         "SEC-03 manual runtime binding and observation matrices reject every untrusted variant",
         "SEC-03 manual runtime denial observation uses the fixed production identity",
-        "SEC-03 production runtime rejects every native/build identity drift before observation",
+        "SEC-03 production identity parser rejects every native/build drift without mutating checkout",
         "SEC-03 manual runtime evidence and opaque leases reject invalid public use",
         "SEC-03 execution request validation rejects every public boundary variant",
         "SEC-03 manual consent preparation rejects malformed JSON, bindings, display and evidence"
@@ -2549,12 +2550,13 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "sha256": "50fdacd46d73973da037d2e075354cb1a6c645fac6d2c7f5fefeacae968b1b77",
+      "sha256": "d9671999b95a1e5ffb52b2b92689baa4b10d25fedcb2277aac90220782e8dc98",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
       "testCaseIds": [
         "RainyDays migrates legacy Mini-Lux user data once without overwriting a current profile",
+        "RainyDays user-data migration rejects unsafe roots and reports every no-op state",
         "SEC-03 local API accepts only the private trusted header and publishes no browser credential"
       ],
       "supersedes": null
@@ -3086,13 +3088,6 @@
     },
     {
       "sourceTask": "SEC-03",
-      "exactCasePath": "electron/user-data-migration.cjs",
-      "reason": "The Electron user-data migration helper is outside Node c8 scope and is exercised by the integration layer.",
-      "evidenceLayer": "integration",
-      "evidenceOwners": []
-    },
-    {
-      "sourceTask": "SEC-03",
       "exactCasePath": "native/sandbox-host/journal.h",
       "reason": "Native journal behavior is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
       "evidenceLayer": "integration",
@@ -3266,5 +3261,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "7f0e12aff08e3f895ef4aa1e270f65dcf14a1c086ad4f12d47f19e9d916b02db"
+  "canonicalPayloadSha256": "d9cb22075b9fe369f54608a5e5e673824f301e88dd2d0900abee323ecacedc3b"
 }

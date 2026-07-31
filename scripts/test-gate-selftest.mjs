@@ -209,7 +209,7 @@ async function createGateSandbox(root, name, mode) {
   };
   await writeFile(path.join(sandbox, "tests", "manifests", "sec-01.json"), JSON.stringify(manifest, null, 2));
   const scope = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     additionalTestsByTask: {},
     overall: ["dist/proof.js"],
     securityCritical: ["dist/proof.js"],
@@ -313,6 +313,7 @@ async function main() {
     const { scope } = await loadCoverageScope();
     const forcedScope = {
       ...scope,
+      additionalTestsByTask: {},
       overall: [...scope.overall, "scripts/write-package-artifact.mjs"],
       thresholds: { overallLines: 100, securityBranches: 100 },
       perFileLineMinimum: { ...scope.perFileLineMinimum, "scripts/write-package-artifact.mjs": 100 },

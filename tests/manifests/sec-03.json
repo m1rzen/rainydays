@@ -540,12 +540,6 @@
       "evidenceOwners": []
     },
     {
-      "exactCasePath": "electron/user-data-migration.cjs",
-      "reason": "The Electron user-data migration helper is outside Node c8 scope and is exercised by the integration layer.",
-      "evidenceLayer": "integration",
-      "evidenceOwners": []
-    },
-    {
       "exactCasePath": "native/sandbox-host/journal.h",
       "reason": "Native journal behavior is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
       "evidenceLayer": "integration",

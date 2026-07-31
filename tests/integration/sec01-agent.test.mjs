@@ -67,7 +67,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     { ConversationMemory },
     { createEffectivePersona },
     { createSession },
-    { closeDb, insertMemory, insertPin },
+    { closeDb, deletePin, insertMemory, insertPin },
     { capabilityBroker, registerDynamicTool, executeInspectedTool, executeTool, inspectToolCall },
     { setAskUserSseCallback, submitAnswer },
     { registerNativeProcessConsentHandler },
@@ -294,7 +294,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
   agent.setSession(session.id);
   insertMemory("SEC-01 untagged fixture", "observation", []);
   insertMemory("SEC-01 remembered fixture", "observation", ["coverage"]);
-  insertPin(session.id, "SEC-01 pinned fixture");
+  const firstPinId = insertPin(session.id, "SEC-01 pinned fixture");
 
   try {
     llm.queue(
@@ -307,6 +307,25 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     const injectedSystem = memory.getAll().find(message => message.role === "system" && message.content.includes("跨会话记忆"));
     assert(injectedSystem?.content.includes("SEC-01 remembered fixture"));
     assert(injectedSystem?.content.includes("SEC-01 pinned fixture"));
+
+    memory.add({ role: "system", content: "## 对话摘要\nSEC-01 preserved summary" });
+    deletePin(firstPinId);
+    const replacementPinId = insertPin(session.id, "SEC-01 replacement pin");
+    llm.queue(assistant("replacement pin active"));
+    await collect(agent, "replace the current pin");
+    const replacedSystem = memory.getAll().find(message => message.role === "system" && !message.content.startsWith("## 对话摘要"));
+    assert(replacedSystem?.content.includes("SEC-01 replacement pin"));
+    assert.equal(replacedSystem?.content.includes("SEC-01 pinned fixture"), false);
+    assert.equal(replacedSystem?.content.match(/## 固定指令/gu)?.length, 1);
+    assert(memory.getAll().some(message => message.role === "system" && message.content === "## 对话摘要\nSEC-01 preserved summary"));
+
+    deletePin(replacementPinId);
+    llm.queue(assistant("pin cleared"));
+    await collect(agent, "clear all current pins");
+    const clearedSystem = memory.getAll().find(message => message.role === "system" && !message.content.startsWith("## 对话摘要"));
+    assert.equal(clearedSystem?.content.includes("## 固定指令"), false);
+    assert.equal(clearedSystem?.content.includes("SEC-01 replacement pin"), false);
+    assert(memory.getAll().some(message => message.role === "system" && message.content === "## 对话摘要\nSEC-01 preserved summary"));
 
     for (const [id, payload, expected] of [
       ["null", "null", "必须是 JSON object"],

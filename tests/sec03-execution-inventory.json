@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "16658fd600ae414362b59dd1e5c08c3d64c3eda7d0d26b083b4917ebc0fdcdb3",
+  "sourceSetSha256": "27661b88338e3e7406ea9cb002eb2ffcb793b8e8dcde2f6b4c7665da484c7a0e",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -243,8 +243,8 @@
     },
     {
       "sourcePath": "scripts/run-coverage.mjs",
-      "bytes": 9285,
-      "sha256": "3477ca2b244348fd65e5d3b331b477f8a83fca1b5ee96e97156a8f7483ec880e",
+      "bytes": 9319,
+      "sha256": "63fb30bb8adfab793150a134a0914ab0394f0b0a6536b9da8e741cd73d710d73",
       "executionClass": "build-test"
     },
     {
@@ -333,8 +333,8 @@
     },
     {
       "sourcePath": "scripts/test-gate-selftest.mjs",
-      "bytes": 29898,
-      "sha256": "bd020c0ce1412fd54e133885ad2b02364f2505cfac730077afbdbf3cab977303",
+      "bytes": 29931,
+      "sha256": "146d655bc4ecfd81aaa353b124b122e1b73785d3e5ee136236064b2d39adad5a",
       "executionClass": "build-test"
     },
     {
@@ -363,8 +363,8 @@
     },
     {
       "sourcePath": "src/agent.ts",
-      "bytes": 18126,
-      "sha256": "661b33e2a1fd7e7aff26e27c1990cec47b1042419bc076e08ce5183a053cf7cf",
+      "bytes": 17376,
+      "sha256": "017832f696ffc2fb3ae892d7431e1d1863721f8d42aef31c623f2368189ffb25",
       "executionClass": "product-runtime"
     },
     {
@@ -435,8 +435,8 @@
     },
     {
       "sourcePath": "src/execution-runtime.ts",
-      "bytes": 27152,
-      "sha256": "270473ff6fdd183fbafb2b1f1f17ca59c2e158476ae8736bd9a2d7665cbe2865",
+      "bytes": 27348,
+      "sha256": "043f96954a7f86dd5d5df15a5189fd90de04a9a1cee305b2754d0941fb1d0dbe",
       "executionClass": "product-runtime"
     },
     {
@@ -879,14 +879,14 @@
     },
     {
       "sourcePath": "tests/gov04/workflow-policy.test.mjs",
-      "bytes": 7824,
-      "sha256": "6bfad63a2ca86a198f88c811bf756ee6af17d13413fcf698bbfdec165a15dc6b",
+      "bytes": 8127,
+      "sha256": "39303cea1aac4b16b90ed1e15c82948958bf3008797b2921bb5a509d68417a91",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/helpers.mjs",
-      "bytes": 28171,
-      "sha256": "4c05d3e2ad5b0be83a65a899969e3a308685684dbfb0347752a84af76effda25",
+      "bytes": 29632,
+      "sha256": "4f18360a410b75ecdc36ef507f179b5363c8113b391a2bdb3e6a010b316fb869",
       "executionClass": "build-test"
     },
     {
@@ -945,8 +945,8 @@
     },
     {
       "sourcePath": "tests/integration/sec01-agent.test.mjs",
-      "bytes": 31035,
-      "sha256": "b6d3077ebf51e368b6c6793b8d7df9c53b23df8d0b7e3f8dcab30465e90f3598",
+      "bytes": 32442,
+      "sha256": "0022c5547cfddfb953f54ccaa723be96c5fb28aa11946b690aa61b342f920a7d",
       "executionClass": "build-test"
     },
     {
@@ -963,8 +963,8 @@
     },
     {
       "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "bytes": 4879,
-      "sha256": "50fdacd46d73973da037d2e075354cb1a6c645fac6d2c7f5fefeacae968b1b77",
+      "bytes": 6479,
+      "sha256": "d9671999b95a1e5ffb52b2b92689baa4b10d25fedcb2277aac90220782e8dc98",
       "executionClass": "build-test"
     },
     {
@@ -1035,8 +1035,8 @@
     },
     {
       "sourcePath": "tests/unit/execution-isolation.test.mjs",
-      "bytes": 81796,
-      "sha256": "e5cc06c269165a456b41d0d817ba16ed28d634513ac29e5bf877fc66e2070dff",
+      "bytes": 80901,
+      "sha256": "8c7ec8da9d29362dbec30300f0701381c48e22c29eb85e096c8c6a98a5335832",
       "executionClass": "build-test"
     },
     {
@@ -1047,8 +1047,8 @@
     },
     {
       "sourcePath": "tests/unit/framework.test.mjs",
-      "bytes": 25160,
-      "sha256": "68b17338969e2c008cfabe2568d52e6540497351fca79f31597fffa6401135d5",
+      "bytes": 26414,
+      "sha256": "344981227b84833aadaba370f55d81067263d23df066f9024811a6296917d80c",
       "executionClass": "build-test"
     },
     {
@@ -3638,7 +3638,7 @@
       "id": "exec-bcbbaefc6ec031a60417f9af",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 388,
+      "line": 403,
       "column": 22,
       "nodeKind": "CallExpression",
       "container": "freeDistinctPorts",
@@ -3656,7 +3656,7 @@
       "id": "exec-4d72e263650070e4f46172c4",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 423,
+      "line": 438,
       "column": 20,
       "nodeKind": "CallExpression",
       "container": "terminateProcessTree",
@@ -3680,7 +3680,7 @@
       "id": "exec-5ca156ed0e47fcaccab0e746",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 447,
+      "line": 462,
       "column": 18,
       "nodeKind": "CallExpression",
       "container": "terminateProcessTreeAsync",
@@ -3704,7 +3704,7 @@
       "id": "exec-999da31ec8e4290d5f14aa2b",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 460,
+      "line": 475,
       "column": 10,
       "nodeKind": "CallExpression",
       "container": "spawnManaged",
@@ -3728,7 +3728,7 @@
       "id": "exec-f7aa761fead066c536dd3da6",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 462,
+      "line": 477,
       "column": 25,
       "nodeKind": "PropertyAccessExpression",
       "container": "spawnManaged",
@@ -3745,7 +3745,7 @@
       "id": "exec-46682c665cc52273d2e4f0ca",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 470,
+      "line": 485,
       "column": 76,
       "nodeKind": "PropertyAccessExpression",
       "container": "runProcess",
@@ -3762,7 +3762,7 @@
       "id": "exec-ce5fbce477083f7b7ebcaab4",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 530,
+      "line": 545,
       "column": 10,
       "nodeKind": "CallExpression",
       "container": "boundedFetch",
@@ -3780,7 +3780,7 @@
       "id": "exec-fbfde060896b05d25c1d123f",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 555,
+      "line": 570,
       "column": 19,
       "nodeKind": "NewExpression",
       "container": "CdpClient.constructor",
@@ -4348,7 +4348,7 @@
       "id": "exec-02c8dca0838dcec8a8681a20",
       "occurrence": 1,
       "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "line": 51,
+      "line": 86,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -4365,7 +4365,7 @@
       "id": "exec-94203819f8e022d1706aaaff",
       "occurrence": 1,
       "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "line": 70,
+      "line": 105,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -4383,7 +4383,7 @@
       "id": "exec-35afc2c92cdb15a79d986e6f",
       "occurrence": 1,
       "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "line": 76,
+      "line": 111,
       "column": 24,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -4401,7 +4401,7 @@
       "id": "exec-d5cbe15e26f74df0bf841697",
       "occurrence": 1,
       "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "line": 81,
+      "line": 116,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -4419,7 +4419,7 @@
       "id": "exec-f30a280f98f06d178b3ec85a",
       "occurrence": 1,
       "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "line": 82,
+      "line": 117,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -4437,7 +4437,7 @@
       "id": "exec-b2c9509a1130fa2f138b2780",
       "occurrence": 1,
       "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "line": 83,
+      "line": 118,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -4455,7 +4455,7 @@
       "id": "exec-0ffbac2ad17e3175cc895843",
       "occurrence": 1,
       "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "line": 84,
+      "line": 119,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -4473,7 +4473,7 @@
       "id": "exec-f3a9c43df1b199ce5baaa5f4",
       "occurrence": 1,
       "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "line": 87,
+      "line": 122,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -4491,7 +4491,7 @@
       "id": "exec-c4584f105e2f4eda6aa62d94",
       "occurrence": 1,
       "sourcePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "line": 94,
+      "line": 129,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -5464,7 +5464,7 @@
       "id": "exec-4b7f1f53bc07e63b8b5cbfc3",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 329,
+      "line": 349,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5521,5 +5521,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "c4ba4db82683721c7732c722b694a9e92632dd33fd529fe278304778c5d9216f"
+  "canonicalPayloadSha256": "8b55a8568a3b6984633fe5b7a3ba023a20897cb394e81be594560e9413d06f80"
 }

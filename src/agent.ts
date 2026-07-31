@@ -65,45 +65,28 @@ export class Agent {
     return this.running;
   }
 
-  /**
-   * 注入固定指令（Pin）到 system prompt
-   */
-  private injectPins(sessionId: string): void {
-    const pins = getPinsBySession(sessionId);
-    if (pins.length === 0) return;
-
-    const pinBlock = "\n\n## 固定指令\n以下是用户设定的持久指令，在整个会话中持续生效：\n" +
-      pins.map((p, i) => `${i + 1}. ${p.content}`).join("\n");
-
-    // 追加到当前 system prompt
-    // 注意：injectMemories 已经设置了 system prompt，这里需要追加
-    const system = this.memory.getAll().find(m => m.role === "system" && !m.content.startsWith("## 对话摘要"));
-    if (system && !system.content.includes("## 固定指令")) {
-      this.memory.setSystemPrompt(system.content + pinBlock);
-    }
-  }
-
-  /**
-   * 注入跨会话记忆到 system prompt
-   * 取最近 N 条记忆，格式化为一行摘要，追加到 system prompt 尾部
-   * 仿 Lux 的 <knowledge> 区域：让 agent 不需要主动 recall 就能看到记忆
-   */
-  private injectMemories(): void {
+  /** 每次 run 都从当前 persona、跨会话记忆和 Pin 重建唯一主 system prompt。 */
+  private refreshSystemPrompt(sessionId: string): void {
     const memories = getRecentMemories(10);
-    if (memories.length === 0) return;
+    const pins = getPinsBySession(sessionId);
+    const blocks = [this.persona.systemPrompt];
 
-    // 每条记忆浓缩为一行摘要
-    const lines = memories.map((m) => {
-      let tags: string[] = [];
-      try { tags = JSON.parse(m.tags || "[]"); } catch { /* ignore */ }
-      const tagStr = tags.length > 0 ? ` [${tags.join(", ")}]` : "";
-      return `- [${m.kind}]${tagStr} ${m.content}`;
-    });
+    if (memories.length > 0) {
+      const lines = memories.map((memory) => {
+        let tags: string[] = [];
+        try { tags = JSON.parse(memory.tags || "[]"); } catch { /* ignore */ }
+        const tagStr = tags.length > 0 ? ` [${tags.join(", ")}]` : "";
+        return `- [${memory.kind}]${tagStr} ${memory.content}`;
+      });
+      blocks.push(`## 跨会话记忆\n以下是之前对话中记住的重要信息。相关的记忆会自动出现在这里，不需要主动搜索。如果需要更详细的信息，使用 recall 工具搜索。\n${lines.join("\n")}`);
+    }
 
-    const memoryBlock = `\n\n## 跨会话记忆\n以下是之前对话中记住的重要信息。相关的记忆会自动出现在这里，不需要主动搜索。如果需要更详细的信息，使用 recall 工具搜索。\n${lines.join("\n")}`;
+    if (pins.length > 0) {
+      blocks.push("## 固定指令\n以下是用户设定的持久指令，在整个会话中持续生效：\n" +
+        pins.map((pin, index) => `${index + 1}. ${pin.content}`).join("\n"));
+    }
 
-    // 更新 system prompt：原始 persona prompt + 记忆区域
-    this.memory.setSystemPrompt(this.persona.systemPrompt + memoryBlock);
+    this.memory.setSystemPrompt(blocks.join("\n\n"));
   }
 
   /**
@@ -142,9 +125,7 @@ export class Agent {
 
       if (isFirstMessage) autoGenerateTitle(runSessionId, userInput);
 
-      // 注入跨会话记忆到 system prompt（仿 Lux <knowledge> 区域）
-      this.injectMemories();
-      this.injectPins(runSessionId);
+      this.refreshSystemPrompt(runSessionId);
 
       const tools = getToolDefinitions(capabilityContext);
 

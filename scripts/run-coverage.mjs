@@ -101,7 +101,7 @@ async function main() {
     ...manifest.layers.unit,
     ...manifest.layers.contract,
     ...manifest.layers.integration,
-    ...(scope.additionalTestsByTask[manifest.taskId] ?? []),
+    ...(scope.additionalTestsByTask[manifest.taskId] ?? []).map(entry => entry.exactCasePath),
   ];
   assert.equal(new Set(coverageTests.map(pathIdentity)).size, coverageTests.length, "coverage test registry contains duplicate or case-alias paths");
   const before = await formalArtifactSnapshot();

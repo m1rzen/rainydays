@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import {
   ExecutionDeniedError,
   ExecutionIsolationService,
@@ -20,6 +20,7 @@ import {
   createScopedExecutionGateway,
   manualConsentEvidenceBinding,
   observeManualConsentDenial,
+  parseNativeArtifactIdentity,
   readIsolatedTerminal,
   retireIsolatedTerminal,
   shutdownExecutionRuntime,
@@ -1252,27 +1253,23 @@ test("SEC-03 manual runtime denial observation uses the fixed production identit
   assert.match(proof.channelMarker, /^[a-f0-9]{64}$/u);
 });
 
-test("SEC-03 production runtime rejects every native/build identity drift before observation", { skip: process.platform !== "win32" || process.arch !== "x64" }, async () => {
-  const buildPath = new URL("../../build-info.json", import.meta.url);
-  const manifestPath = new URL("../../dist/native/sec03-native-manifest.json", import.meta.url);
-  const [buildBytes, manifestBytes] = await Promise.all([readFile(buildPath), readFile(manifestPath)]);
-  const build = JSON.parse(buildBytes.toString("utf8"));
-  const manifest = JSON.parse(manifestBytes.toString("utf8"));
-  const denialRequest = {
-    executionId: HASH, entryPoint: "E4", profile: "manual-terminal", contextId: "context-a", sessionId: "session-a", runId: "run-a",
-    authorityEpoch: 1, personaDigest: HASH, policyDigest: HASH, payloadDigest: HASH, requestDigest: HASH,
-    operation: "consent", decisionState: "consent-denied",
-  };
-  const expectRejected = async () => assert.rejects(
-    () => observeManualConsentDenial(denialRequest),
-    error => code(error, "EXEC_NATIVE_IDENTITY_INVALID"),
-  );
+test("SEC-03 production identity parser rejects every native/build drift without mutating checkout", { skip: process.platform !== "win32" || process.arch !== "x64" }, async () => {
+  const [build, manifest] = await Promise.all([
+    readFile(new URL("../../build-info.json", import.meta.url), "utf8").then(JSON.parse),
+    readFile(new URL("../../dist/native/sec03-native-manifest.json", import.meta.url), "utf8").then(JSON.parse),
+  ]);
   const mutate = (value, apply) => {
     const copy = structuredClone(value);
     apply(copy);
     return copy;
   };
-  const manifestMutations = [
+  const expectRejected = (candidateManifest, candidateBuild) => assert.throws(
+    () => parseNativeArtifactIdentity(candidateManifest, candidateBuild),
+    error => code(error, "EXEC_NATIVE_IDENTITY_INVALID"),
+  );
+  expectRejected(null, build);
+  expectRejected(manifest, null);
+  for (const apply of [
     value => { value.schemaVersion = 2; },
     value => { value.architecture = "arm64"; },
     value => { value.signatureStatus = "signed"; },
@@ -1288,8 +1285,8 @@ test("SEC-03 production runtime rejects every native/build identity drift before
     value => { value.outputs[1].bytes = 0; },
     value => { value.outputs[1].sha256 = "bad"; },
     value => { value.outputs[1].machine = "ARM64"; },
-  ];
-  const buildMutations = [
+  ]) expectRejected(mutate(manifest, apply), build);
+  for (const apply of [
     value => { value.schemaVersion = 2; },
     value => { value.product = "Other"; },
     value => { value.candidateId = "bad"; },
@@ -1314,25 +1311,8 @@ test("SEC-03 production runtime rejects every native/build identity drift before
     value => { value.versions.executionIsolation.artifacts[1].bytes = 0; },
     value => { value.versions.executionIsolation.artifacts[1].sha256 = "bad"; },
     value => { value.versions.executionIsolation.artifacts[1].machine = "ARM64"; },
-  ];
-  try {
-    await writeFile(buildPath, "{not-json", "utf8");
-    await expectRejected();
-    await writeFile(buildPath, buildBytes);
-    for (const apply of manifestMutations) {
-      await writeFile(manifestPath, JSON.stringify(mutate(manifest, apply)), "utf8");
-      await expectRejected();
-    }
-    await writeFile(manifestPath, manifestBytes);
-    for (const apply of buildMutations) {
-      await writeFile(buildPath, JSON.stringify(mutate(build, apply)), "utf8");
-      await expectRejected();
-    }
-  } finally {
-    await Promise.all([writeFile(buildPath, buildBytes), writeFile(manifestPath, manifestBytes)]);
-  }
-  assert.deepEqual(await readFile(buildPath), buildBytes);
-  assert.deepEqual(await readFile(manifestPath), manifestBytes);
+  ]) expectRejected(manifest, mutate(build, apply));
+  assert.equal(parseNativeArtifactIdentity(manifest, build).candidateId, build.candidateId);
 });
 
 test("SEC-03 manual runtime evidence and opaque leases reject invalid public use", async () => {

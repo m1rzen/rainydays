@@ -200,12 +200,13 @@ test("SEC-02 unified runner independently joins raw receipts and rejects receipt
 test("coverage scope is explicit and changed runtime files are governed", async () => {
   const { manifest } = await loadTaskManifest("GOV-03");
   const { scope } = await loadCoverageScope();
-  assert.equal(scope.schemaVersion, 2);
+  assert.equal(scope.schemaVersion, 3);
   assert.deepEqual(scope.additionalTestsByTask["GOV-03"], [
-    "tests/unit/execution-isolation.test.mjs",
-    "tests/unit/execution-root-lease.test.mjs",
-    "tests/unit/native-process-consent.test.mjs",
-    "tests/integration/sec03-child-consent-transport.test.mjs",
+    { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-isolation.test.mjs" },
+    { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-root-lease.test.mjs" },
+    { sourceTask: "SEC-03", exactCasePath: "tests/unit/native-process-consent.test.mjs" },
+    { sourceTask: "SEC-03", exactCasePath: "tests/integration/sec03-child-consent-transport.test.mjs" },
+    { sourceTask: "SEC-03", exactCasePath: "tests/integration/sec03-electron-auth.test.mjs" },
   ]);
   assert(scope.thresholds.overallLines >= 80);
   assert(scope.thresholds.securityBranches >= 90);
@@ -214,6 +215,25 @@ test("coverage scope is explicit and changed runtime files are governed", async 
   assert.equal(scope.perFileLineMinimum["dist/path-runtime.js"], 100);
   await validateCoverageGovernance(manifest, scope);
   assert.equal(manifest.coverageExemptions["electron/main.cjs"].evidenceLayer, "electron");
+});
+
+test("additional coverage tests require exact resolved task ownership and manifest identity", async () => {
+  const root = await makeTempDir("mini-lux-gov03-additional-binding-");
+  try {
+    const current = structuredClone((await loadCoverageScope()).scope);
+    current.additionalTestsByTask["GOV-03"][0].sourceTask = "GOV-03";
+    const wrongOwnerPath = path.join(root, "wrong-owner.json");
+    await writeFile(wrongOwnerPath, JSON.stringify(current, null, 2));
+    await assert.rejects(() => loadCoverageScope(wrongOwnerPath), /lacks a resolved manifest|not exact|owner differs/u);
+
+    const malformed = structuredClone((await loadCoverageScope()).scope);
+    malformed.additionalTestsByTask["GOV-03"][0].layer = "unit";
+    const malformedPath = path.join(root, "malformed.json");
+    await writeFile(malformedPath, JSON.stringify(malformed, null, 2));
+    await assert.rejects(() => loadCoverageScope(malformedPath), /keys differ/u);
+  } finally {
+    await removeFixture(root);
+  }
 });
 
 test("TAP summary and process failure precedence are deterministic", () => {

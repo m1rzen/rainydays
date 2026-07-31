@@ -121,17 +121,7 @@ function sha256Json(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(canonicalize(value))).digest("hex");
 }
 
-async function loadNativeIdentity(): Promise<NativeArtifactIdentity> {
-  let manifest: unknown;
-  let buildInfo: unknown;
-  try {
-    [manifest, buildInfo] = await Promise.all([
-      readFile(manifestPath, "utf8").then(value => JSON.parse(value)),
-      readFile(buildInfoPath, "utf8").then(value => JSON.parse(value)),
-    ]);
-  } catch {
-    throw new ExecutionDeniedError("EXEC_NATIVE_IDENTITY_INVALID", "SEC-03 native/build identity is unavailable");
-  }
+export function parseNativeArtifactIdentity(manifest: unknown, buildInfo: unknown): NativeArtifactIdentity {
   if (!manifest || typeof manifest !== "object" || !buildInfo || typeof buildInfo !== "object") throw new ExecutionDeniedError("EXEC_NATIVE_IDENTITY_INVALID", "SEC-03 native/build identity is invalid");
   const value = manifest as Record<string, unknown>;
   const build = buildInfo as Record<string, unknown>;
@@ -172,6 +162,19 @@ async function loadNativeIdentity(): Promise<NativeArtifactIdentity> {
     machine: "x64",
     protocolVersion: 1,
   });
+}
+
+async function loadNativeIdentity(): Promise<NativeArtifactIdentity> {
+  try {
+    const [manifest, buildInfo] = await Promise.all([
+      readFile(manifestPath, "utf8").then(value => JSON.parse(value)),
+      readFile(buildInfoPath, "utf8").then(value => JSON.parse(value)),
+    ]);
+    return parseNativeArtifactIdentity(manifest, buildInfo);
+  } catch (error) {
+    if (error instanceof ExecutionDeniedError) throw error;
+    throw new ExecutionDeniedError("EXEC_NATIVE_IDENTITY_INVALID", "SEC-03 native/build identity is unavailable");
+  }
 }
 
 const manualConsentStates = new Set([

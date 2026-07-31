@@ -1,11 +1,27 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "additionalTestsByTask": {
     "GOV-03": [
-      "tests/unit/execution-isolation.test.mjs",
-      "tests/unit/execution-root-lease.test.mjs",
-      "tests/unit/native-process-consent.test.mjs",
-      "tests/integration/sec03-child-consent-transport.test.mjs"
+      {
+        "sourceTask": "SEC-03",
+        "exactCasePath": "tests/unit/execution-isolation.test.mjs"
+      },
+      {
+        "sourceTask": "SEC-03",
+        "exactCasePath": "tests/unit/execution-root-lease.test.mjs"
+      },
+      {
+        "sourceTask": "SEC-03",
+        "exactCasePath": "tests/unit/native-process-consent.test.mjs"
+      },
+      {
+        "sourceTask": "SEC-03",
+        "exactCasePath": "tests/integration/sec03-child-consent-transport.test.mjs"
+      },
+      {
+        "sourceTask": "SEC-03",
+        "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs"
+      }
     ]
   },
   "overall": [
@@ -37,7 +53,8 @@
     "dist/manual-execution-consent.js",
     "dist/native-process-consent.js",
     "dist/native-process-consent-transport.js",
-    "dist/agent.js"
+    "dist/agent.js",
+    "electron/user-data-migration.cjs"
   ],
   "securityCritical": [
     "dist/version.js",
@@ -67,7 +84,8 @@
     "dist/manual-execution-consent.js",
     "dist/native-process-consent.js",
     "dist/native-process-consent-transport.js",
-    "dist/agent.js"
+    "dist/agent.js",
+    "electron/user-data-migration.cjs"
   ],
   "thresholds": {
     "overallLines": 80,
@@ -102,6 +120,7 @@
     "dist/manual-execution-consent.js": 80,
     "dist/native-process-consent.js": 80,
     "dist/native-process-consent-transport.js": 80,
-    "dist/agent.js": 80
+    "dist/agent.js": 80,
+    "electron/user-data-migration.cjs": 80
   }
 }

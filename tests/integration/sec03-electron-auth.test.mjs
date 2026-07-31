@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { createRequire } from "node:module";
@@ -37,6 +37,41 @@ test("RainyDays migrates legacy Mini-Lux user data once without overwriting a cu
     assert.equal(await readFile(path.join(legacy, "sentinel.txt"), "utf8"), "do-not-merge");
   } finally {
     await removeFixture(fixture);
+  }
+});
+
+test("RainyDays user-data migration rejects unsafe roots and reports every no-op state", async () => {
+  assert.throws(
+    () => migrateLegacyUserData({ appDataRoot: "relative", currentUserData: "also-relative" }),
+    /paths must be absolute/u,
+  );
+
+  const sameRoot = await makeTempDir("rainydays-user-data-same-");
+  const absentRoot = await makeTempDir("rainydays-user-data-absent-");
+  const fileRoot = await makeTempDir("rainydays-user-data-file-");
+  const linkRoot = await makeTempDir("rainydays-user-data-link-");
+  try {
+    const same = path.join(sameRoot, "Mini-Lux");
+    assert.equal(migrateLegacyUserData({ appDataRoot: sameRoot, currentUserData: same }).state, "same-path");
+
+    const absent = migrateLegacyUserData({ appDataRoot: absentRoot, currentUserData: path.join(absentRoot, "RainyDays") });
+    assert.equal(absent.state, "legacy-absent");
+
+    await writeFile(path.join(fileRoot, "Mini-Lux"), "not-a-directory");
+    assert.throws(
+      () => migrateLegacyUserData({ appDataRoot: fileRoot, currentUserData: path.join(fileRoot, "RainyDays") }),
+      /not a real directory/u,
+    );
+
+    const target = path.join(linkRoot, "target");
+    await mkdir(target);
+    await symlink(target, path.join(linkRoot, "Mini-Lux"), process.platform === "win32" ? "junction" : "dir");
+    assert.throws(
+      () => migrateLegacyUserData({ appDataRoot: linkRoot, currentUserData: path.join(linkRoot, "RainyDays") }),
+      /not a real directory/u,
+    );
+  } finally {
+    await Promise.all([sameRoot, absentRoot, fileRoot, linkRoot].map(root => removeFixture(root)));
   }
 });
 
