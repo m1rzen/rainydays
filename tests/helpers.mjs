@@ -619,7 +619,7 @@ export function parseTapSummary(output) {
   const failedStackSiteIds = [];
   let stackIndent = null;
   for (const line of lines) {
-    const stackHeader = /^(\s{4,})stack: \|-\s*$/u.exec(line);
+    const stackHeader = /^(\s{2,})stack: \|-\s*$/u.exec(line);
     if (stackHeader) {
       stackIndent = stackHeader[1].length;
       continue;
@@ -630,7 +630,7 @@ export function parseTapSummary(output) {
       stackIndent = null;
       continue;
     }
-    const site = /(tests[\\/](?:(?:unit|contract|integration|electron|packaged)[\\/][A-Za-z0-9._-]+\.mjs|sec01-probe\.mjs)):([1-9]\d*):([1-9]\d*)\)?\s*$/u.exec(line);
+    const site = /(tests[\\/](?:helpers\.mjs|(?:unit|contract|integration|electron|packaged)[\\/][A-Za-z0-9._-]+\.mjs|sec01-probe\.mjs)):([1-9]\d*):([1-9]\d*)\)?\s*$/u.exec(line);
     if (!site) continue;
     const canonicalSite = `${site[1].replaceAll("\\", "/")}:${site[2]}:${site[3]}`;
     failedStackSiteIds.push(createHash("sha256").update(`tap-stack-site:${canonicalSite}`).digest("hex"));
