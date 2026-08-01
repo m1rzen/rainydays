@@ -243,6 +243,7 @@ test("TAP summary and process failure precedence are deterministic", () => {
     "    not ok 98 - nested failure",
     "      stack: |-",
     "        TestContext.<anonymous> (file:///C:/private/checkout/tests/unit/nested.test.mjs:42:7)",
+    "        assertSec01Probe (file:///C:/private/checkout/tests/sec01-probe.mjs:75:3)",
     "      ...",
     "not ok 3 - expected failure # TODO pending",
     "not ok 4 - duplicate name",
@@ -267,9 +268,12 @@ test("TAP summary and process failure precedence are deterministic", () => {
     todo: 1,
     failedTestIds: [sha256Bytes("tap-test:4:duplicate name"), sha256Bytes("tap-test:5:duplicate name")],
     nestedFailedTestIds: [sha256Bytes("tap-nested-test:98:nested failure")],
-    failedStackSiteIds: [sha256Bytes("tap-stack-site:tests/unit/nested.test.mjs:42:7")],
+    failedStackSiteIds: [
+      sha256Bytes("tap-stack-site:tests/unit/nested.test.mjs:42:7"),
+      sha256Bytes("tap-stack-site:tests/sec01-probe.mjs:75:3"),
+    ],
   });
-  assert.doesNotMatch(JSON.stringify(summary), /duplicate name|expected failure|forged output|nested failure|hidden|private|nested\.test/u);
+  assert.doesNotMatch(JSON.stringify(summary), /duplicate name|expected failure|forged output|nested failure|hidden|private|nested\.test|sec01-probe/u);
   validateTap(summary);
   assert.throws(() => validateTap({ ...summary, failedTestIds: ["governed failure", summary.failedTestIds[1]] }), /SHA-256/);
   assert.throws(() => validateTap({ ...summary, nestedFailedTestIds: ["nested failure"] }), /SHA-256/);
