@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "e714006eff0832ba95b9477f3ca6fca683b8978d2edf3d931d66507b630aa16e",
+  "sourceSetSha256": "4f150d8f945571aea037b172940346a02d4a6e3894ccaf330880ed5807ac666b",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -237,8 +237,8 @@
     },
     {
       "sourcePath": "scripts/report-schema.mjs",
-      "bytes": 51719,
-      "sha256": "25b1d13c12b2b94b9873ca8e2ad79b42baaa692c54eba32c6eeb9d095abce5e9",
+      "bytes": 51875,
+      "sha256": "ddbac5eece05fc8f3dabd98a0c6652ef37da3bd5bc36b6847a3e8976567b2f3e",
       "executionClass": "build-test"
     },
     {
@@ -255,8 +255,8 @@
     },
     {
       "sourcePath": "scripts/run-test-layer.mjs",
-      "bytes": 17545,
-      "sha256": "13d14365a23de19fb0ab1db39a59f465ec7144e872cbec7f43089f8cd045d72c",
+      "bytes": 17593,
+      "sha256": "abbd26a2893dae316cc1f3e869ed28d3934b8903d2988fbad96686c38c77bbc5",
       "executionClass": "build-test"
     },
     {
@@ -885,8 +885,8 @@
     },
     {
       "sourcePath": "tests/helpers.mjs",
-      "bytes": 32307,
-      "sha256": "7728a2ae53526c3a469b2e0d45f6db7e4feef5a57e959398faa7a4114ff0d88c",
+      "bytes": 33192,
+      "sha256": "59f1f0a716ed9af41450c7f6b8b64490f775cc990901ac003bf51a66dc6f37bf",
       "executionClass": "build-test"
     },
     {
@@ -1047,8 +1047,8 @@
     },
     {
       "sourcePath": "tests/unit/framework.test.mjs",
-      "bytes": 32154,
-      "sha256": "e46d65df385a93e0532ef6ff5fe5339fd0ba98ddeca223b3b95bd3bbb033eb2d",
+      "bytes": 32692,
+      "sha256": "823f764d3ed94fbbded89b9634447effa7e5d1dc2ffda319cce552f1152891a3",
       "executionClass": "build-test"
     },
     {
@@ -2662,7 +2662,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-423fbbff1e7187def33d4e90",
+      "id": "exec-0760c8f2ffec341ba453e985",
       "occurrence": 1,
       "sourcePath": "scripts/run-test-layer.mjs",
       "line": 220,
@@ -3796,7 +3796,7 @@
       "id": "exec-ce5fbce477083f7b7ebcaab4",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 598,
+      "line": 618,
       "column": 10,
       "nodeKind": "CallExpression",
       "container": "boundedFetch",
@@ -3814,7 +3814,7 @@
       "id": "exec-fbfde060896b05d25c1d123f",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 623,
+      "line": 643,
       "column": 19,
       "nodeKind": "NewExpression",
       "container": "CdpClient.constructor",
@@ -5498,7 +5498,7 @@
       "id": "exec-4b7f1f53bc07e63b8b5cbfc3",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 391,
+      "line": 397,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5515,7 +5515,7 @@
       "id": "exec-387dfc51837d56e5b8a74941",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 448,
+      "line": 454,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5532,7 +5532,7 @@
       "id": "exec-f329446239415582c8492047",
       "occurrence": 2,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 465,
+      "line": 471,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5549,7 +5549,7 @@
       "id": "exec-72508e1a9a55a21b5002012a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 491,
+      "line": 497,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5606,5 +5606,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "01e8d6f126dfdfc5a7b7fe603142bee4ff6530c9f6c779f86b95668c4a0021cc"
+  "canonicalPayloadSha256": "c355a1eb1c5de8ed5e5ba61f57f714c5c983b68c45f55d7c3916ff92ca665856"
 }

@@ -135,16 +135,17 @@ function validateArtifactSnapshot(value) {
 }
 
 export function validateTap(value) {
-  exactKeys(value, ["tests", "passed", "failed", "skipped", "cancelled", "todo", "failedTestIds", "nestedFailedTestIds"], "tap");
+  exactKeys(value, ["tests", "passed", "failed", "skipped", "cancelled", "todo", "failedTestIds", "nestedFailedTestIds", "failedStackSiteIds"], "tap");
   for (const key of ["tests", "passed", "failed", "skipped", "cancelled", "todo"]) {
     const count = value[key];
     assert(count === null || (Number.isSafeInteger(count) && count >= 0), `tap.${key} is invalid`);
   }
-  for (const key of ["failedTestIds", "nestedFailedTestIds"]) {
+  for (const key of ["failedTestIds", "nestedFailedTestIds", "failedStackSiteIds"]) {
     assertUniqueStrings(value[key], `tap.${key}`);
     assert(value[key].every((entry) => sha256Pattern.test(entry)), `tap.${key} must contain only SHA-256 identifiers`);
   }
   assert(value.nestedFailedTestIds.length <= 64, "tap.nestedFailedTestIds exceeds the bounded diagnostic limit");
+  assert(value.failedStackSiteIds.length <= 64, "tap.failedStackSiteIds exceeds the bounded diagnostic limit");
   if (value.failed !== null) assert.equal(value.failedTestIds.length, value.failed, "tap.failedTestIds count differs from tap.failed");
 }
 

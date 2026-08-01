@@ -568,6 +568,25 @@ export function parseTapSummary(output) {
     if (!match || match[3]) return [];
     return [createHash("sha256").update(`tap-nested-test:${match[1]}:${match[2]}`).digest("hex")];
   }))].slice(0, 64);
+  const failedStackSiteIds = [];
+  let stackIndent = null;
+  for (const line of lines) {
+    const stackHeader = /^(\s{4,})stack: \|-\s*$/u.exec(line);
+    if (stackHeader) {
+      stackIndent = stackHeader[1].length;
+      continue;
+    }
+    if (stackIndent === null) continue;
+    const contentIndent = /^(\s*)/u.exec(line)?.[1].length ?? 0;
+    if (line.trim() && contentIndent <= stackIndent) {
+      stackIndent = null;
+      continue;
+    }
+    const site = /(tests[\\/](?:unit|contract|integration|electron|packaged)[\\/][A-Za-z0-9._-]+\.mjs):([1-9]\d*):([1-9]\d*)\)?\s*$/u.exec(line);
+    if (!site) continue;
+    const canonicalSite = `${site[1].replaceAll("\\", "/")}:${site[2]}:${site[3]}`;
+    failedStackSiteIds.push(createHash("sha256").update(`tap-stack-site:${canonicalSite}`).digest("hex"));
+  }
   return {
     tests: number("tests"),
     passed: number("pass"),
@@ -577,6 +596,7 @@ export function parseTapSummary(output) {
     todo: number("todo"),
     failedTestIds,
     nestedFailedTestIds,
+    failedStackSiteIds: [...new Set(failedStackSiteIds)].slice(0, 64),
   };
 }
 

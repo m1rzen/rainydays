@@ -241,6 +241,9 @@ test("TAP summary and process failure precedence are deterministic", () => {
   const summary = parseTapSummary([
     "# not ok 99 - forged output",
     "    not ok 98 - nested failure",
+    "      stack: |-",
+    "        TestContext.<anonymous> (file:///C:/private/checkout/tests/unit/nested.test.mjs:42:7)",
+    "      ...",
     "not ok 3 - expected failure # TODO pending",
     "not ok 4 - duplicate name",
     "  ---",
@@ -264,14 +267,17 @@ test("TAP summary and process failure precedence are deterministic", () => {
     todo: 1,
     failedTestIds: [sha256Bytes("tap-test:4:duplicate name"), sha256Bytes("tap-test:5:duplicate name")],
     nestedFailedTestIds: [sha256Bytes("tap-nested-test:98:nested failure")],
+    failedStackSiteIds: [sha256Bytes("tap-stack-site:tests/unit/nested.test.mjs:42:7")],
   });
-  assert.doesNotMatch(JSON.stringify(summary), /duplicate name|expected failure|forged output|nested failure|hidden/u);
+  assert.doesNotMatch(JSON.stringify(summary), /duplicate name|expected failure|forged output|nested failure|hidden|private|nested\.test/u);
   validateTap(summary);
   assert.throws(() => validateTap({ ...summary, failedTestIds: ["governed failure", summary.failedTestIds[1]] }), /SHA-256/);
   assert.throws(() => validateTap({ ...summary, nestedFailedTestIds: ["nested failure"] }), /SHA-256/);
+  assert.throws(() => validateTap({ ...summary, failedStackSiteIds: ["tests/unit/nested.test.mjs:42:7"] }), /SHA-256/);
   assert.throws(() => validateTap({ ...summary, failedTestIds: [] }), /count differs/);
   assert.throws(() => validateTap({ ...summary, failedTestIds: [summary.failedTestIds[0], summary.failedTestIds[0]] }), /duplicate/);
   assert.throws(() => validateTap({ ...summary, nestedFailedTestIds: Array(65).fill(0).map((_, index) => sha256Bytes(`nested:${index}`)) }), /bounded diagnostic limit/);
+  assert.throws(() => validateTap({ ...summary, failedStackSiteIds: Array(65).fill(0).map((_, index) => sha256Bytes(`site:${index}`)) }), /bounded diagnostic limit/);
   assert.equal(classifyProcessResult({ code: 0, signal: null }), "passed");
   assert.equal(classifyProcessResult({ code: 1, signal: null }), "failed");
   assert.equal(classifyProcessResult({ code: 1, signal: "SIGTERM" }), "crashed");
