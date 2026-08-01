@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "4c682b8758ddf28bf3b8d6f57eb8f7c7d293456c8a4778531675cbb6fa321f27",
+  "sourceSetSha256": "19ab267bcff794bc0d8ef1f00bfda4fe081683ee1e8e1fa443486fb3983c1fb9",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -777,8 +777,8 @@
     },
     {
       "sourcePath": "tests/contract/sec01-attack-contract.test.mjs",
-      "bytes": 13396,
-      "sha256": "bb7ed2a71be2b33579fdd05cb27b7a1667dfb91e57a66565bee5b61696c5c2e0",
+      "bytes": 13484,
+      "sha256": "a16462ab21bf74f3b1f4723bbca08893c249ffcfb1e7aadd26fb3756df02f3db",
       "executionClass": "build-test"
     },
     {
@@ -3635,7 +3635,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-19d2ace7dc7becf1aa2616b2",
+      "id": "exec-35ae8a645202eba0d7ca4d67",
       "occurrence": 1,
       "sourcePath": "tests/contract/sec01-attack-contract.test.mjs",
       "line": 122,
@@ -3655,7 +3655,7 @@
       "id": "exec-95f5fa5004d754c3f0b24c5e",
       "occurrence": 1,
       "sourcePath": "tests/contract/sec01-attack-contract.test.mjs",
-      "line": 207,
+      "line": 208,
       "column": 27,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5623,5 +5623,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "f5c9a3876ef2c9b1576b8c9f22d180ce0758c0333e3ba3257e61884d59c9834a"
+  "canonicalPayloadSha256": "407dc06b0e84830cfa1268cc0d73697f375b15ddb3553b9998a5cacfa12d0709"
 }

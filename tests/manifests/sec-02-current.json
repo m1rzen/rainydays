@@ -58,7 +58,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec01-attack-contract.test.mjs",
-          "sha256": "bb7ed2a71be2b33579fdd05cb27b7a1667dfb91e57a66565bee5b61696c5c2e0",
+          "sha256": "a16462ab21bf74f3b1f4723bbca08893c249ffcfb1e7aadd26fb3756df02f3db",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -326,7 +326,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec01-attack-contract.test.mjs",
-          "sha256": "bb7ed2a71be2b33579fdd05cb27b7a1667dfb91e57a66565bee5b61696c5c2e0",
+          "sha256": "a16462ab21bf74f3b1f4723bbca08893c249ffcfb1e7aadd26fb3756df02f3db",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -1018,7 +1018,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec01-attack-contract.test.mjs",
-          "sha256": "bb7ed2a71be2b33579fdd05cb27b7a1667dfb91e57a66565bee5b61696c5c2e0",
+          "sha256": "a16462ab21bf74f3b1f4723bbca08893c249ffcfb1e7aadd26fb3756df02f3db",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -7115,5 +7115,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "07dec06deee0a02c9ab0695f6ea9b046b4031e4056849c814933eb32d5b4d1cd"
+  "canonicalPayloadSha256": "06278d6699c52d0a5f1ade813b3bd4e934e05e060fce6dd034fbcb323cd02dd9"
 }

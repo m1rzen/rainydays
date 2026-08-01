@@ -134,7 +134,8 @@ test("SEC-01 receipt authority recognizes Windows temporary-root aliases by dire
   process.env.TMP = aliasRoot;
   try {
     assert.equal(resolveSec01ReceiptDestination(destination), path.join(await realpath(fixture), "receipts.jsonl"));
-    assert.throws(() => resolveSec01ReceiptDestination(path.join(projectRoot, "forbidden-sec01-receipt.jsonl")), /outside allowed test roots/);
+    const outsideRootDestination = path.join(path.parse(temporaryRoot).root, "rainydays-sec01-forbidden-receipt.jsonl");
+    assert.throws(() => resolveSec01ReceiptDestination(outsideRootDestination), /outside allowed test roots/);
   } finally {
     if (previousTemp === undefined) delete process.env.TEMP; else process.env.TEMP = previousTemp;
     if (previousTmp === undefined) delete process.env.TMP; else process.env.TMP = previousTmp;
