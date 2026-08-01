@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { logger } from "../../dist/logger.js";
 import { createTerminalFacadeForTests } from "../../dist/terminal.js";
 import { issueResourceOwner, retireResourceOwner } from "../../dist/resource-owner.js";
 import { assertSec01Probe } from "../sec01-probe.mjs";
@@ -92,13 +93,13 @@ test("SEC-01/SEC-03 A13 Terminal projection keeps opaque leases Session/principa
     assert.deepEqual(facade.list(otherSession), []);
 
     const auditCalls = [];
-    const originalConsoleLog = console.log;
-    console.log = (...values) => { auditCalls.push(values); };
+    const originalLoggerWarn = logger.warn;
+    logger.warn = (...values) => { auditCalls.push(values); };
     try { assert.throws(() => facade.output(agentOwner, terminal.id), /终端不存在/); }
-    finally { console.log = originalConsoleLog; }
+    finally { logger.warn = originalLoggerWarn; }
     assert.equal(auditCalls.length, 1);
-    const auditText = JSON.stringify(auditCalls[0]);
-    assert.match(auditText, /terminal-owner-denied/);
+    assert.deepEqual(auditCalls[0].slice(0, 2), ["terminal-security", "terminal-owner-denied"]);
+    const auditText = JSON.stringify(auditCalls[0][2]);
     assert.match(auditText, /[a-f0-9]{64}/);
     assert.equal(auditText.includes(terminal.id), false);
 
@@ -107,8 +108,8 @@ test("SEC-01/SEC-03 A13 Terminal projection keeps opaque leases Session/principa
 
     const beforeOwnerMismatch = { ...mutations };
     const lifecycleAuditCalls = [];
-    const originalLifecycleConsoleLog = console.log;
-    console.log = (...values) => { lifecycleAuditCalls.push(values); };
+    const originalLifecycleLoggerWarn = logger.warn;
+    logger.warn = (...values) => { lifecycleAuditCalls.push(values); };
     try {
       await assert.rejects(
         () => facade.kill(otherSession, terminal.id),
@@ -121,7 +122,7 @@ test("SEC-01/SEC-03 A13 Terminal projection keeps opaque leases Session/principa
         "A13-04 did not preserve the structured owner-mismatch code"
       );
     } finally {
-      console.log = originalLifecycleConsoleLog;
+      logger.warn = originalLifecycleLoggerWarn;
     }
     assert.deepEqual({
       launches: mutations.launches - beforeOwnerMismatch.launches,
@@ -132,7 +133,8 @@ test("SEC-01/SEC-03 A13 Terminal projection keeps opaque leases Session/principa
     assert.equal(facade.list(localOwner).length, 1, "A13-04 closed the target lease");
     assert.equal(lifecycleAuditCalls.length, 2);
     for (const call of lifecycleAuditCalls) {
-      const text = JSON.stringify(call);
+      assert.deepEqual(call.slice(0, 2), ["terminal-security", "terminal-owner-denied"]);
+      const text = JSON.stringify(call[2]);
       assert.match(text, /EXEC_OWNER_MISMATCH/);
       assert.equal(text.includes("PATH_AUTHORITY_FORGED"), false);
       assert.equal(text.includes(terminal.id), false);
