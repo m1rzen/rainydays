@@ -267,10 +267,12 @@ test("SEC-02 configured root aliases cannot publish duplicate object identities"
     const longIdentity = await fs.stat(root, { bigint: true });
     const shortIdentity = await fs.stat(shortPath, { bigint: true });
     const canonicalSelectionSameRoot = longIdentity.dev === shortIdentity.dev && longIdentity.ino === shortIdentity.ino;
-    const canonicalFile = path.join(root, "canonical-child.txt");
-    const excludedDirectory = path.join(root, "excluded");
+    const canonicalRoot = await fs.realpath(root);
+    const canonicalBase = await fs.realpath(base);
+    const canonicalFile = path.join(canonicalRoot, "canonical-child.txt");
+    const excludedDirectory = path.join(canonicalRoot, "excluded");
     const excludedFile = path.join(excludedDirectory, "secret.txt");
-    const outsideFile = path.join(base, "outside.txt");
+    const outsideFile = path.join(canonicalBase, "outside.txt");
     await fs.mkdir(excludedDirectory);
     await fs.writeFile(canonicalFile, "inside");
     await fs.writeFile(excludedFile, "excluded");

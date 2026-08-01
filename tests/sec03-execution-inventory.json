@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "3510805172268e637bdc7564ac750c5c63b16424d430eb3971500ff2e5e1cdd7",
+  "sourceSetSha256": "88a4789fb60856c46a1d8c342db2b08b93036cdd65482c3f3edadede56bb220b",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -1059,8 +1059,8 @@
     },
     {
       "sourcePath": "tests/unit/path-policy.test.mjs",
-      "bytes": 114625,
-      "sha256": "a71f6d54713c489995607e59f9bbecd22f816d9190ba6d8a12144219e28a8959",
+      "bytes": 114754,
+      "sha256": "4309ae49e72048fbbd55b87d89fb9e71385fbef09a7f93325afade32cbeea6e4",
       "executionClass": "build-test"
     },
     {
@@ -5580,7 +5580,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-467cd05b9c8afa9797ce9583",
+      "id": "exec-49af193df1a25b8622fb79db",
       "occurrence": 1,
       "sourcePath": "tests/unit/path-policy.test.mjs",
       "line": 249,
@@ -5623,5 +5623,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "7d7e60a6369b4f6bbb60aec9932b6740cd6abd2914521fb112444c424b4f852c"
+  "canonicalPayloadSha256": "aeafb6c501908ae3e3d542d9c058b61b23439f5e9d056f0ffc96b1db394bfea2"
 }
