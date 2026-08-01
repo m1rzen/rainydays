@@ -4,6 +4,7 @@
 
 import express, { type NextFunction, type Request, type Response } from "express";
 import type { Server } from "http";
+import { once } from "events";
 import { randomBytes, timingSafeEqual } from "crypto";
 import cors from "cors";
 import path from "path";
@@ -888,51 +889,66 @@ app.get("/api/files/content", async (req, res) => {
       range: typeof req.headers.range === "string" ? req.headers.range : null,
     };
     if (!args.path) throw new Error("缺少文件路径");
-    const result = await runDirectOperation("file:content", args, async (authorized, owner, authority, context) => {
+    await runDirectOperation("file:content", args, async (authorized, owner, authority, context) => {
       const content = await fileViewerService.content(authority, directPathAudit(context), owner, String(authorized.root), String(authorized.path));
       try {
         const requestedRange = authorized.range === null ? null : String(authorized.range);
         let start = 0;
         let end = content.size - 1;
         let partial = false;
+        let invalidRange = false;
         if (requestedRange !== null) {
           const match = /^bytes=(\d*)-(\d*)$/u.exec(requestedRange.trim());
-          if (!match || (!match[1] && !match[2])) return { content, invalidRange: true as const };
-          partial = true;
-          if (!match[1]) {
-            const suffixLength = Number(match[2]);
-            start = Math.max(content.size - suffixLength, 0);
-          } else {
-            start = Number(match[1]);
-            end = match[2] ? Number(match[2]) : content.size - 1;
+          if (!match || (!match[1] && !match[2])) invalidRange = true;
+          else {
+            partial = true;
+            if (!match[1]) {
+              const suffixLength = Number(match[2]);
+              start = Math.max(content.size - suffixLength, 0);
+            } else {
+              start = Number(match[1]);
+              end = match[2] ? Number(match[2]) : content.size - 1;
+            }
+            if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || end < start || start >= content.size) invalidRange = true;
+            else end = Math.min(end, content.size - 1);
           }
-          if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || end < start || start >= content.size) {
-            return { content, invalidRange: true as const };
-          }
-          end = Math.min(end, content.size - 1);
         }
-        const data = await content.readRange(start, end);
-        return { content, invalidRange: false as const, partial, start, end, data };
+
+        res.setHeader("Accept-Ranges", "bytes");
+        res.setHeader("Content-Type", content.mime);
+        res.setHeader("Cache-Control", "private, no-store");
+        res.setHeader("Last-Modified", content.modifiedAt.toUTCString());
+        res.setHeader("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(content.name)}`);
+        if (invalidRange) {
+          res.setHeader("Content-Range", `bytes */${content.size}`);
+          res.status(416).end();
+          return;
+        }
+        if (partial) res.setHeader("Content-Range", `bytes ${start}-${end}/${content.size}`);
+        res.setHeader("Content-Length", end - start + 1);
+        res.status(partial ? 206 : 200);
+        const responseClosed = new AbortController();
+        const abortResponse = () => responseClosed.abort(new Error("File content response closed"));
+        res.once("close", abortResponse);
+        try {
+          res.flushHeaders();
+          const chunkBytes = 1024 * 1024;
+          for (let offset = start; offset <= end; offset += chunkBytes) {
+            const chunkEnd = Math.min(offset + chunkBytes - 1, end);
+            const data = await content.readRange(offset, chunkEnd);
+            if (!res.write(data)) await once(res, "drain", { signal: responseClosed.signal });
+          }
+          res.end();
+        } finally {
+          res.off("close", abortResponse);
+        }
       } finally {
         await content.close();
       }
     });
-
-    res.setHeader("Accept-Ranges", "bytes");
-    res.setHeader("Content-Type", result.content.mime);
-    res.setHeader("Cache-Control", "private, no-store");
-    res.setHeader("Last-Modified", result.content.modifiedAt.toUTCString());
-    res.setHeader("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(result.content.name)}`);
-    if (result.invalidRange) {
-      res.setHeader("Content-Range", `bytes */${result.content.size}`);
-      res.status(416).end();
-      return;
-    }
-    if (result.partial) res.setHeader("Content-Range", `bytes ${result.start}-${result.end}/${result.content.size}`);
-    res.setHeader("Content-Length", result.data.length);
-    res.status(result.partial ? 206 : 200).end(result.data);
   } catch (err) {
     if (!res.headersSent) res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
+    else res.destroy(err instanceof Error ? err : undefined);
   }
 });
 

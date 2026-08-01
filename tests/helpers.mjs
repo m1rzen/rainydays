@@ -14,6 +14,7 @@ import {
   resolvedManifestPath as sec03ResolvedManifestRelative,
   validateSec03ResolvedManifest,
 } from "../scripts/sec03-governance.mjs";
+import { windowsFileHandleObserverScript } from "./fixtures/windows-file-handle-observer.mjs";
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const processTemporaryRootRequest = path.resolve(os.tmpdir());
@@ -549,6 +550,35 @@ export async function runProcess(command, args, { cwd = projectRoot, env = proce
     child.once("close", (code, signal) => { if (!timedOut) resolve({ code, signal }); });
   }).finally(() => clearTimeout(timer));
   return { ...result, stdout, stderr };
+}
+
+export async function observeWindowsFileHandleInProcessTree(filePath, rootProcessId) {
+  assert.equal(process.platform, "win32", "file handle observation requires Windows");
+  assert.equal(path.isAbsolute(filePath), true, "observed file path must be absolute");
+  assert(Number.isInteger(rootProcessId) && rootProcessId > 0 && rootProcessId <= 0xFFFFFFFF, "observed process root PID is invalid");
+  const encodedObserver = Buffer.from(windowsFileHandleObserverScript, "utf16le").toString("base64");
+  const result = await runProcess("powershell.exe", [
+    "-NoLogo", "-NoProfile", "-NonInteractive", "-EncodedCommand", encodedObserver,
+  ], {
+    env: {
+      ...process.env,
+      RAINYDAYS_HANDLE_OBSERVER_PATH: filePath,
+      RAINYDAYS_HANDLE_OBSERVER_ROOT_PID: String(rootProcessId),
+    },
+    timeoutMs: 15_000,
+  });
+  assert.equal(result.signal, null, "file handle observer crashed");
+  assert.equal(result.code, 0, `file handle observer failed: ${result.stderr.slice(-1000)}`);
+  assert.equal(result.stderr.trim(), "", "file handle observer emitted stderr");
+  assert(result.stdout.length > 0 && result.stdout.length <= 256, "file handle observation is not bounded");
+  const observation = JSON.parse(result.stdout);
+  assertExactKeys(observation, ["holderCount", "matchingCount", "matched"], "file handle observation");
+  for (const field of ["holderCount", "matchingCount"]) {
+    assert(Number.isInteger(observation[field]) && observation[field] >= 0 && observation[field] <= 4096, `${field} is invalid`);
+  }
+  assert(observation.matchingCount <= observation.holderCount, "matching holder count exceeds total holders");
+  assert.equal(observation.matched, observation.matchingCount > 0, "matched state differs from holder count");
+  return Object.freeze(observation);
 }
 
 export function parseTapSummary(output) {

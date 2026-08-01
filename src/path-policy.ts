@@ -2150,7 +2150,10 @@ export class PathPolicy {
     for (const component of ["", ...components]) {
       if (component) current = pathApi.join(current, component);
       const info = await fs.lstat(current, { bigint: true }).catch((error: NodeJS.ErrnoException) => {
-        if (error.code === "ENOENT") deny("PATH_ROOT_UNAVAILABLE");
+        if (error.code === "ENOENT"
+          || (component === "" && this.#platform === "win32" && ["UNKNOWN", "ENODEV", "ENXIO"].includes(error.code ?? ""))) {
+          deny("PATH_ROOT_UNAVAILABLE");
+        }
         deny("PATH_ROOT_UNSUPPORTED");
       });
       if (info.isSymbolicLink()) deny("PATH_REDIRECT_DENIED");

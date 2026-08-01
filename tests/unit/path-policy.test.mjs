@@ -1905,6 +1905,36 @@ test("SEC-02 coverage recovery closes bootstrap, root selection, and authority r
   await assert.rejects(() => policy.createAuthority([{ rootId: "root", role: "bad", configuredPath: root, permissions: ["invalid"] }]), TypeError);
   await expectCodeAsync(() => policy.createAuthority([{ rootId: "missing", role: "missing", configuredPath: path.join(root, "missing"), permissions: [] }]), "PATH_ROOT_UNAVAILABLE");
 
+  const unavailableDriveRoot = "Q:\\";
+  const unsupportedChild = path.join(root, "unsupported-child");
+  const lstatDescriptor = Object.getOwnPropertyDescriptor(fs, "lstat");
+  assert.equal(typeof lstatDescriptor?.value, "function");
+  Object.defineProperty(fs, "lstat", {
+    ...lstatDescriptor,
+    value: async function (candidate, ...args) {
+      const normalized = path.normalize(String(candidate)).toLowerCase();
+      if (normalized === path.normalize(unavailableDriveRoot).toLowerCase()
+        || normalized === path.normalize(unsupportedChild).toLowerCase()) {
+        const error = new Error("simulated unavailable Windows root");
+        error.code = "UNKNOWN";
+        throw error;
+      }
+      return lstatDescriptor.value.call(this, candidate, ...args);
+    },
+  });
+  try {
+    await expectCodeAsync(() => policy.createAuthority([{
+      rootId: "unavailable-drive", role: "unavailable-drive",
+      configuredPath: path.join(unavailableDriveRoot, "missing"), permissions: [],
+    }]), "PATH_ROOT_UNAVAILABLE");
+    await expectCodeAsync(() => policy.createAuthority([{
+      rootId: "unsupported-child", role: "unsupported-child",
+      configuredPath: unsupportedChild, permissions: [],
+    }]), "PATH_ROOT_UNSUPPORTED");
+  } finally {
+    Object.defineProperty(fs, "lstat", lstatDescriptor);
+  }
+
   const authority = await policy.createAuthority([rootInput(root, ["read-file"])]);
   const forged = Object.freeze({ authorityId: "forged", epoch: 1, rootIds: Object.freeze(["workspace"]) });
   expectCode(() => policy.describeAuthority(forged), "PATH_AUTHORITY_FORGED");

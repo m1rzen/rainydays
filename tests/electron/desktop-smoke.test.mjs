@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { mkdir, readFile, rename, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { setTimeout as delay } from "node:timers/promises";
 import {
   boundedFetch,
   connectCdp,
   freeDistinctPorts,
   makeTempDir,
+  observeWindowsFileHandleInProcessTree,
   pathExists,
   projectRoot,
   removeFixture,
@@ -22,7 +24,7 @@ function expectedUi(buildInfo) {
   return `v${buildInfo.appVersion}${shortBuild ? ` · ${shortBuild}` : ""}`;
 }
 
-async function startElectron(userData, httpPort, cdpPort) {
+async function startElectron(userData, httpPort, cdpPort, signal) {
   const child = spawnManaged(electronExecutable, [projectRoot, `--user-data-dir=${userData}`, `--remote-debugging-port=${cdpPort}`, "--disable-gpu"], {
     env: {
       ...process.env,
@@ -40,12 +42,22 @@ async function startElectron(userData, httpPort, cdpPort) {
   child.stdout.on("data", (chunk) => { stdout += chunk; });
   child.stderr.on("data", (chunk) => { stderr += chunk; });
   try {
-    await waitFor(async () => {
+    while (true) {
+      if (signal.aborted) throw signal.reason ?? new Error("Electron test deadline reached");
       if (child.exitCode !== null) throw new Error(`Electron exited ${child.exitCode}: ${stdout}\n${stderr}`);
-      try { return (await boundedFetch(`http://127.0.0.1:${httpPort}/`)).ok; } catch { return false; }
-    }, { timeoutMs: 40_000, label: "Electron application service" });
+      try {
+        const response = await boundedFetch(`http://127.0.0.1:${httpPort}/`, {
+          signal: AbortSignal.any([signal, AbortSignal.timeout(2_000)]),
+        });
+        if (response.ok) break;
+      } catch (error) {
+        if (signal.aborted) throw signal.reason ?? error;
+      }
+      await delay(100, undefined, { signal });
+    }
   } catch (error) {
-    throw new Error(`${error instanceof Error ? error.message : String(error)}\nElectron stdout:\n${stdout}\nElectron stderr:\n${stderr}`);
+    const termination = await terminateProcessTreeAsync(child).catch(() => ({ attempted: true, exitCode: 1, childExited: false }));
+    throw new Error(`${error instanceof Error ? error.message : String(error)}\nElectron cleanup: ${JSON.stringify(termination)}\nElectron stdout:\n${stdout}\nElectron stderr:\n${stderr}`);
   }
   return { child, logs: () => ({ stdout, stderr }) };
 }
@@ -90,7 +102,7 @@ async function rendererRequest(client, route, options = undefined) {
   return client.evaluate(`(async()=>{const response=await fetch(${JSON.stringify(route)},${JSON.stringify(options)});let body;try{body=await response.json()}catch{body=await response.text()}return {status:response.status,body}})()`);
 }
 
-async function assertCanonicalPathPolicy(client, userData, launchIndex) {
+async function assertCanonicalPathPolicy(client, userData, launchIndex, applicationRootPid) {
   assert.equal(process.platform, "win32", "SEC-02 Electron junction assertion requires Windows");
   const workspace = path.join(userData, "workspace");
   const prefix = `sec02-electron-launch-${launchIndex}`;
@@ -124,14 +136,19 @@ async function assertCanonicalPathPolicy(client, userData, launchIndex) {
   const mediaSize = 96 * 1024 * 1024;
   await writeFile(mediaPath, Buffer.alloc(mediaSize, 0x41));
   await writeFile(replacementPath, "ATTACKER-REPLACEMENT");
-  const rangePromise = client.evaluate(`(async()=>{const response=await fetch('/api/files/content?root=workspace&path=${encodeURIComponent(mediaName)}',{headers:{Range:'bytes=0-${mediaSize - 1}'}});const bytes=new Uint8Array(await response.arrayBuffer());let originalOnly=true;for(let i=0;i<bytes.length;i++){if(bytes[i]!==65){originalOnly=false;break}}return {status:response.status,length:bytes.length,originalOnly,contentRange:response.headers.get('content-range')}})()`);
-  let rangeSettled = false;
-  rangePromise.then(() => { rangeSettled = true; }, () => { rangeSettled = true; });
-  await new Promise(resolve => setTimeout(resolve, 75));
-  assert.equal(rangeSettled, false, "File Viewer range completed before replacement fixture could exercise the open handle");
+  await client.evaluate(`(()=>{const state={error:null,ready:null,response:null};window.__rainydaysRangeProbe=state;fetch('/api/files/content?root=workspace&path=${encodeURIComponent(mediaName)}',{headers:{Range:'bytes=0-${mediaSize - 1}'}}).then(response=>{state.response=response;state.ready={status:response.status,contentRange:response.headers.get('content-range')}}).catch(error=>{state.error=String(error)});return true})()`);
+  const rangeReady = await waitFor(async () => client.evaluate(`(()=>{const state=window.__rainydaysRangeProbe;return state?.error?{error:state.error}:state?.ready})()`), {
+    timeoutMs: 20_000,
+    label: "File Viewer range lease headers",
+  });
+  assert.deepEqual(rangeReady, { status: 206, contentRange: `bytes 0-${mediaSize - 1}/${mediaSize}` });
+  const beforeReplacement = await observeWindowsFileHandleInProcessTree(mediaPath, applicationRootPid);
+  assert.equal(beforeReplacement.matched, true, "Electron application tree did not hold the original media object before pathname replacement");
   await rename(mediaPath, originalPath);
   await rename(replacementPath, mediaPath);
-  const range = await rangePromise;
+  const afterReplacement = await observeWindowsFileHandleInProcessTree(originalPath, applicationRootPid);
+  assert.equal(afterReplacement.matched, true, "Electron application tree did not retain the original media object after pathname replacement");
+  const range = await client.evaluate(`(async()=>{const state=window.__rainydaysRangeProbe;const response=state.response;const bytes=new Uint8Array(await response.arrayBuffer());let originalOnly=true;for(let i=0;i<bytes.length;i++){if(bytes[i]!==65){originalOnly=false;break}}delete window.__rainydaysRangeProbe;return {status:response.status,length:bytes.length,originalOnly,contentRange:response.headers.get('content-range')}})()`);
   assert.deepEqual(range, {
     status: 206,
     length: mediaSize,
@@ -153,7 +170,7 @@ async function assertCanonicalPathPolicy(client, userData, launchIndex) {
   assert.equal(terminalsAfter.body.terminals.length, terminalsBefore.body.terminals.length, "external CWD denial created a Terminal process record");
 }
 
-test("real Electron main, preload and renderer preserve identity and session across restart", { timeout: 180_000 }, async () => {
+test("real Electron main, preload and renderer preserve identity and session across restart", { timeout: 180_000 }, async (context) => {
   const fixture = await makeTempDir("mini-lux-gov03-electron-");
   const userData = path.join(fixture, "user-data");
   const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
@@ -165,7 +182,7 @@ test("real Electron main, preload and renderer preserve identity and session acr
     console.log("[electron-e2e] first launch");
     const [firstHttpPort, firstCdpPort] = await freeDistinctPorts(2);
     console.log("[electron-e2e] ports allocated");
-    first = await startElectron(userData, firstHttpPort, firstCdpPort);
+    first = await startElectron(userData, firstHttpPort, firstCdpPort, context.signal);
     console.log("[electron-e2e] first CDP");
     try { client = await connectCdp(firstCdpPort); }
     catch (error) {
@@ -177,7 +194,7 @@ test("real Electron main, preload and renderer preserve identity and session acr
     const created = await client.evaluate(`fetch('/api/sessions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:'GOV-03 Electron persistence'})}).then(r=>r.json())`);
     sessionId = created.session.id;
     assert.match(sessionId, /^[0-9a-f-]{36}$/);
-    await assertCanonicalPathPolicy(client, userData, 1);
+    await assertCanonicalPathPolicy(client, userData, 1, first.child.pid);
     await client.evaluate("location.reload(); true");
     const afterReload = await waitFor(async () => {
       try {
@@ -194,11 +211,11 @@ test("real Electron main, preload and renderer preserve identity and session acr
 
     const [secondHttpPort, secondCdpPort] = await freeDistinctPorts(2);
     console.log("[electron-e2e] second launch");
-    second = await startElectron(userData, secondHttpPort, secondCdpPort);
+    second = await startElectron(userData, secondHttpPort, secondCdpPort, context.signal);
     client = await connectCdp(secondCdpPort);
     await probeIdentity(client, buildInfo, secondHttpPort);
     console.log("[electron-e2e] second identity passed");
-    await assertCanonicalPathPolicy(client, userData, 2);
+    await assertCanonicalPathPolicy(client, userData, 2, second.child.pid);
     const afterRestart = await client.evaluate("fetch('/api/sessions').then(r=>r.json())");
     assert(afterRestart.sessions.some((entry) => entry.id === sessionId));
     assert.equal(afterRestart.current, sessionId);

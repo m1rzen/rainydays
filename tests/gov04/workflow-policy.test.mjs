@@ -180,6 +180,7 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   assert.equal(layerRunner.match(/atomicWriteJson\(reportTarget,/g)?.length, 3);
   assert.equal(coverageRunner.match(/atomicWriteJson\(reportTarget,/g)?.length, 1);
   assert.equal(gateSelfTest.match(/atomicWriteJson\(reportTarget,/g)?.length, 1);
+  assert.match(gateSelfTest, /tests", "fixtures", "windows-file-handle-observer\.mjs"/);
   assert.equal(gov04SelfTest.match(/atomicWriteJson\(reportTarget,/g)?.length, 1);
   assert.match(coverageRunner, /\.\.\.manifest\.layers\.unit[\s\S]*\.\.\.manifest\.layers\.contract[\s\S]*\.\.\.manifest\.layers\.integration/);
   assert.match(coverageRunner, /scope\.additionalTestsByTask\[manifest\.taskId\]/);

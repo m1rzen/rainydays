@@ -15,12 +15,14 @@ import {
   loadCoverageScope,
   loadTaskManifest,
   makeTempDir,
+  observeWindowsFileHandleInProcessTree,
   parseTapSummary,
   prepareReportPath,
   prepareReportTarget,
   projectRoot,
   removeFixture,
   runProcess,
+  spawnManaged,
   terminateProcessTreeAsync,
   safeRelativePath,
   sha256File,
@@ -394,6 +396,45 @@ test("process capture waits for inherited output pipes to close", async () => {
   ]);
   assert.equal(child.code, 0);
   assert.equal(child.stdout, "late-output");
+});
+
+test("Windows file handle observation binds holders to the exact process tree", async () => {
+  assert.equal(process.platform, "win32", "file handle observation contract requires Windows");
+  const root = await makeTempDir("rainydays-file-handle-observer-");
+  let holder;
+  try {
+    const target = path.join(root, "target.bin");
+    await writeFile(target, Buffer.alloc(4096, 0x41));
+    holder = spawnManaged(process.execPath, [
+      "-e",
+      "const fs=require('node:fs');const handle=fs.openSync(process.env.RAINYDAYS_HANDLE_FILE,'r');process.stdout.write('ready\\n');setInterval(()=>{},1000);process.on('SIGTERM',()=>{fs.closeSync(handle);process.exit(0)})",
+    ], { env: { ...process.env, RAINYDAYS_HANDLE_FILE: target } });
+    await new Promise((resolve, reject) => {
+      let output = "";
+      holder.stdout.setEncoding("utf8");
+      holder.stdout.on("data", (chunk) => {
+        output += chunk;
+        if (output.includes("ready\n")) resolve();
+      });
+      holder.once("error", reject);
+      holder.once("exit", (code) => reject(new Error(`file holder exited before readiness: ${code}`)));
+    });
+    const matched = await observeWindowsFileHandleInProcessTree(target, holder.pid);
+    assert.equal(matched.matchingCount, 1);
+    assert.equal(matched.matched, true);
+    const unrelated = await observeWindowsFileHandleInProcessTree(target, 4);
+    assert.equal(unrelated.matchingCount, 0);
+    assert.equal(unrelated.matched, false);
+    const termination = await terminateProcessTreeAsync(holder);
+    assert.equal(termination.exitCode, 0);
+    assert.equal(termination.childExited, true);
+    const closed = await observeWindowsFileHandleInProcessTree(target, holder.pid);
+    assert.equal(closed.matchingCount, 0);
+    assert.equal(closed.matched, false);
+  } finally {
+    if (holder?.exitCode === null) await terminateProcessTreeAsync(holder);
+    await removeFixture(root);
+  }
 });
 
 test("readiness failure leaves a tracked child available for cleanup", async () => {

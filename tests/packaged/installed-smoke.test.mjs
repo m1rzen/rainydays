@@ -11,6 +11,7 @@ import {
   connectCdp,
   freeDistinctPorts,
   makeTempDir,
+  observeWindowsFileHandleInProcessTree,
   pathExists,
   projectRoot,
   removeFixture,
@@ -122,7 +123,7 @@ async function rendererRequest(client, route, options = undefined) {
   return client.evaluate(`(async()=>{const response=await fetch(${JSON.stringify(route)},${JSON.stringify(options)});let body;try{body=await response.json()}catch{body=await response.text()}return {status:response.status,body}})()`);
 }
 
-async function assertPackagedPathPolicy(client, userData, launchIndex) {
+async function assertPackagedPathPolicy(client, userData, launchIndex, applicationRootPid) {
   const workspace = path.join(userData, "workspace");
   const prefix = `sec02-packaged-launch-${launchIndex}`;
   const outside = path.join(userData, `${prefix}-outside`);
@@ -155,14 +156,19 @@ async function assertPackagedPathPolicy(client, userData, launchIndex) {
   const mediaSize = 96 * 1024 * 1024;
   await writeFile(mediaPath, Buffer.alloc(mediaSize, 0x41));
   await writeFile(replacementPath, "ATTACKER-REPLACEMENT");
-  const rangePromise = client.evaluate(`(async()=>{const response=await fetch('/api/files/content?root=workspace&path=${encodeURIComponent(mediaName)}',{headers:{Range:'bytes=0-${mediaSize - 1}'}});const bytes=new Uint8Array(await response.arrayBuffer());let originalOnly=true;for(let i=0;i<bytes.length;i++){if(bytes[i]!==65){originalOnly=false;break}}return {status:response.status,length:bytes.length,originalOnly,contentRange:response.headers.get('content-range')}})()`);
-  let rangeSettled = false;
-  rangePromise.then(() => { rangeSettled = true; }, () => { rangeSettled = true; });
-  await new Promise(resolve => setTimeout(resolve, 75));
-  assert.equal(rangeSettled, false, "File Viewer range completed before replacement fixture could exercise the open handle");
+  await client.evaluate(`(()=>{const state={error:null,ready:null,response:null};window.__rainydaysRangeProbe=state;fetch('/api/files/content?root=workspace&path=${encodeURIComponent(mediaName)}',{headers:{Range:'bytes=0-${mediaSize - 1}'}}).then(response=>{state.response=response;state.ready={status:response.status,contentRange:response.headers.get('content-range')}}).catch(error=>{state.error=String(error)});return true})()`);
+  const rangeReady = await waitFor(async () => client.evaluate(`(()=>{const state=window.__rainydaysRangeProbe;return state?.error?{error:state.error}:state?.ready})()`), {
+    timeoutMs: 20_000,
+    label: "packaged File Viewer range lease headers",
+  });
+  assert.deepEqual(rangeReady, { status: 206, contentRange: `bytes 0-${mediaSize - 1}/${mediaSize}` });
+  const beforeReplacement = await observeWindowsFileHandleInProcessTree(mediaPath, applicationRootPid);
+  assert.equal(beforeReplacement.matched, true, `packaged launch ${launchIndex} did not hold the original media object before pathname replacement`);
   await rename(mediaPath, originalPath);
   await rename(replacementPath, mediaPath);
-  const range = await rangePromise;
+  const afterReplacement = await observeWindowsFileHandleInProcessTree(originalPath, applicationRootPid);
+  assert.equal(afterReplacement.matched, true, `packaged launch ${launchIndex} did not retain the original media object after pathname replacement`);
+  const range = await client.evaluate(`(async()=>{const state=window.__rainydaysRangeProbe;const response=state.response;const bytes=new Uint8Array(await response.arrayBuffer());let originalOnly=true;for(let i=0;i<bytes.length;i++){if(bytes[i]!==65){originalOnly=false;break}}delete window.__rainydaysRangeProbe;return {status:response.status,length:bytes.length,originalOnly,contentRange:response.headers.get('content-range')}})()`);
   assert.deepEqual(range, {
     status: 206,
     length: mediaSize,
@@ -396,7 +402,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     await probeIdentity(client, buildInfo, firstPorts[0]);
     const created = await client.evaluate(`fetch('/api/sessions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:'GOV-03 packaged persistence'})}).then(r=>r.json())`);
     sessionId = created.session.id;
-    details.pathPolicy.launches[0] = await assertPackagedPathPolicy(client, userData, 1);
+    details.pathPolicy.launches[0] = await assertPackagedPathPolicy(client, userData, 1, first.child.pid);
     const terminalIsolation = await client.evaluate(`(async () => {
       const before = await fetch('/api/terminals').then(r=>r.json());
       const startedResponse = await fetch('/api/terminals', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'SEC-01 packaged owner',shell:'cmd'})});
@@ -419,7 +425,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     await second.ready;
     client = await connectCdp(secondPorts[1]);
     await probeIdentity(client, buildInfo, secondPorts[0]);
-    details.pathPolicy.launches[1] = await assertPackagedPathPolicy(client, userData, 2);
+    details.pathPolicy.launches[1] = await assertPackagedPathPolicy(client, userData, 2, second.child.pid);
     const sessions = await client.evaluate("fetch('/api/sessions').then(r=>r.json())");
     assert(sessions.sessions.some((entry) => entry.id === sessionId));
     assert.equal(sessions.current, sessionId);
