@@ -267,6 +267,34 @@ test("SEC-02 configured root aliases cannot publish duplicate object identities"
     const longIdentity = await fs.stat(root, { bigint: true });
     const shortIdentity = await fs.stat(shortPath, { bigint: true });
     const canonicalSelectionSameRoot = longIdentity.dev === shortIdentity.dev && longIdentity.ino === shortIdentity.ino;
+    const canonicalFile = path.join(root, "canonical-child.txt");
+    const excludedDirectory = path.join(root, "excluded");
+    const excludedFile = path.join(excludedDirectory, "secret.txt");
+    const outsideFile = path.join(base, "outside.txt");
+    await fs.mkdir(excludedDirectory);
+    await fs.writeFile(canonicalFile, "inside");
+    await fs.writeFile(excludedFile, "excluded");
+    await fs.writeFile(outsideFile, "outside");
+    const registeredSpellingPolicy = new PathPolicy({ auditKey: Buffer.alloc(32, 73), auditSink: () => undefined });
+    const registeredSpellingAuthority = await registeredSpellingPolicy.createAuthority([
+      rootSpec(shortPath),
+      { rootId: "excluded", role: "exclusion", configuredPath: path.join(shortPath, "excluded"), permissions: ["read-file"], exclusionOnly: true },
+    ]);
+    try {
+      const qualified = await registeredSpellingPolicy.qualifyExisting(registeredSpellingAuthority, {
+        input: canonicalFile,
+        operation: "read-file",
+      }, "file");
+      assert.equal(qualified.canonicalPath, await fs.realpath(canonicalFile));
+      for (const deniedFile of [excludedFile, outsideFile]) {
+        await expectCodeAsync(() => registeredSpellingPolicy.qualifyExisting(registeredSpellingAuthority, {
+          input: deniedFile,
+          operation: "read-file",
+        }, "file"), "PATH_ROOT_DENIED");
+      }
+    } finally {
+      registeredSpellingPolicy.revoke(registeredSpellingAuthority);
+    }
     let published = false;
     let duplicateOrAmbiguousRejected = false;
     try {

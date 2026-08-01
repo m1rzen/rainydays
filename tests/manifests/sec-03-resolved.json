@@ -174,7 +174,7 @@
     },
     {
       "exactCasePath": "src/path-policy.ts",
-      "sha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "sha256": "606af05c79b5b78ef758480fc73e6fe137c57c2232c64089d8b26f36e4163a12",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -315,7 +315,7 @@
     },
     {
       "exactCasePath": "dist/path-policy.js",
-      "sha256": "9580f14fc4862a9fbbb2dc8af8f419b775ddb77f3e4472cbd43a9bf08f075abf",
+      "sha256": "39742b9d7b3b9848ef9fefc0c806de8b24887308078e0c5f3b4f1a9bbea12932",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "019708d64e8fc2d00a872a0ad1dfffcc2ec1eb93f5d75f9ad2d17f686b01f049",
+      "sha256": "4b8f2ad2d63f373d4cf821004281825d0e734eac4d18b957ab6bc186ccc0f599",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -1595,7 +1595,7 @@
     },
     {
       "exactCasePath": "dist/file-viewer.js",
-      "sha256": "78cb6e470fe31452d903574165c36824f218c0beced505c31979b750ba31ac55",
+      "sha256": "6fd488fdf955f837ca5a8e45171a74150f6a50a96b3968211b46713c6aa7a8fc",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1626,7 +1626,7 @@
     },
     {
       "exactCasePath": "dist/path-policy.js",
-      "sha256": "9580f14fc4862a9fbbb2dc8af8f419b775ddb77f3e4472cbd43a9bf08f075abf",
+      "sha256": "39742b9d7b3b9848ef9fefc0c806de8b24887308078e0c5f3b4f1a9bbea12932",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1765,7 +1765,7 @@
     },
     {
       "exactCasePath": "src/file-viewer.ts",
-      "sha256": "c9af63fb2ab7a1896aba2c0790cb465c2e7c304c8e9d36b536d418e68e503d80",
+      "sha256": "00d8c415cd6308d8890069da7e727a44725a7a27bf89f64c91a1d705f7f9a0b7",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1792,7 +1792,7 @@
     },
     {
       "exactCasePath": "src/path-policy.ts",
-      "sha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "sha256": "606af05c79b5b78ef758480fc73e6fe137c57c2232c64089d8b26f36e4163a12",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2156,7 +2156,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "019708d64e8fc2d00a872a0ad1dfffcc2ec1eb93f5d75f9ad2d17f686b01f049",
+      "sha256": "4b8f2ad2d63f373d4cf821004281825d0e734eac4d18b957ab6bc186ccc0f599",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -3261,5 +3261,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "3d5731c1263cb6dcbe14371be5fae5b3c653f2496eda8185c0fc9a0bd24251b0"
+  "canonicalPayloadSha256": "fd94c53e2e49b11fbe2ffb9c9c12bcf6b596014c5d441204fde7889e6fdb7f1e"
 }

@@ -58,6 +58,8 @@ const data = path.join(fixture, "data");
 await fs.mkdir(workspace, { recursive: true });
 await fs.mkdir(outside, { recursive: true });
 await fs.mkdir(data, { recursive: true });
+const canonicalWorkspace = await fs.realpath(workspace);
+const canonicalOutside = await fs.realpath(outside);
 const externalSecret = "EXTERNAL-WATCHER-SECRET";
 await fs.writeFile(path.join(outside, "secret.txt"), externalSecret);
 process.env.RAINYDAYS_USER_DATA_DIR = fixture;
@@ -136,7 +138,7 @@ async function observeExternalTarget() {
     auditSink: event => audits.push(event),
     watchFactory: (target, options, listener) => {
       watchCreateCalls += 1;
-      const relative = path.relative(outside, target);
+      const relative = path.relative(canonicalOutside, target);
       if (relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative))) externalAccesses += 1;
       return nodeFs.watch(target, options, listener);
     },
@@ -201,6 +203,7 @@ async function observeRejectedEvent(observationId, nested) {
   const stopEvents = wireModule.onEvent(owner, subscriptionId, event => events.push(event));
   const linkName = "external-link";
   const linkedEntry = path.join(parent, linkName);
+  const canonicalLinkedEntry = path.join(await fs.realpath(parent), linkName);
   const auditStart = pathAuditEvents.length;
   try {
     await fs.symlink(outside, linkedEntry, "junction");
@@ -210,12 +213,12 @@ async function observeRejectedEvent(observationId, nested) {
     );
     const audits = pathAuditEvents.slice(auditStart);
     const common = {
-      escapedWatcherPublished: events.some(event => event.path.toLowerCase() === linkedEntry.toLowerCase())
-        || outsideEventCount(events, outside) > 0,
+      escapedWatcherPublished: events.some(event => event.path.toLowerCase() === canonicalLinkedEntry.toLowerCase())
+        || outsideEventCount(events, canonicalOutside) > 0,
       revokedWatcherClosed: (await toolsModule.executeTool(root, "poll_list", {})) === "没有活跃的订阅。",
       auditAttempts: audits.length,
-      externalAccesses: outsideEventCount(events, outside),
-      eventRejected: events.every(event => event.path.toLowerCase() !== linkedEntry.toLowerCase()),
+      externalAccesses: outsideEventCount(events, canonicalOutside),
+      eventRejected: events.every(event => event.path.toLowerCase() !== canonicalLinkedEntry.toLowerCase()),
       denied: audits.some(event => event.code === "PATH_REDIRECT_DENIED"),
       ...auditEvidence(audits, [linkName, linkedEntry]),
     };
@@ -290,10 +293,10 @@ async function observeBeforePublishSwap() {
     await fs.writeFile(path.join(watchRoot, eventName), "value");
     await waitFor(() => audits.length === 1 && !lease.isOpen(), "before-publish denial did not close the watcher");
     const actual = {
-      escapedWatcherPublished: outsideEventCount(published, outside) > 0,
+      escapedWatcherPublished: outsideEventCount(published, canonicalOutside) > 0,
       revokedWatcherClosed: !lease.isOpen(),
       auditAttempts: audits.length,
-      externalAccesses: outsideEventCount(published, outside),
+      externalAccesses: outsideEventCount(published, canonicalOutside),
       denied: audits.some(event => event.code === "PATH_AUTHORITY_STALE"),
       watcherPublished: published.length > 0,
       auditAllowedFieldsExact: audits.every(event => JSON.stringify(Object.keys(event).sort()) === JSON.stringify(auditKeys)),
@@ -342,8 +345,9 @@ test("SEC-02 watcher events and controls remain bound to one runtime authority",
 
   const validFile = path.join(workspace, "valid.txt");
   await fs.writeFile(validFile, "value");
+  const canonicalValidFile = path.join(canonicalWorkspace, "valid.txt");
   await waitFor(
-    () => events.find(event => event.path.toLowerCase() === validFile.toLowerCase()),
+    () => events.find(event => event.path.toLowerCase() === canonicalValidFile.toLowerCase()),
     "authorized watcher event was not published"
   );
 
@@ -373,7 +377,7 @@ test("SEC-02 watcher events and controls remain bound to one runtime authority",
     oldResourceClosedOrIsolated: oldOwnerStale && events.length === eventCountBeforeSessionRetirement,
     newAuthorityControlDenied: secondList === "没有活跃的订阅。" && /不存在/.test(secondUnsubscribe),
     auditAttempts: pathAuditEvents.length - sessionAuditStart,
-    externalAccesses: outsideEventCount(events, outside),
+    externalAccesses: outsideEventCount(events, canonicalOutside),
   };
   assert.deepEqual(sessionActual, {
     oldResourceClosedOrIsolated: true,
@@ -407,10 +411,10 @@ test("SEC-02 watcher events and controls remain bound to one runtime authority",
   await fs.writeFile(path.join(workspace, "after-authority-retirement.txt"), "value");
   await new Promise(resolve => setTimeout(resolve, 250));
   const revokeActual = {
-    escapedWatcherPublished: outsideEventCount(revokeEvents, outside) > 0,
+    escapedWatcherPublished: outsideEventCount(revokeEvents, canonicalOutside) > 0,
     revokedWatcherClosed: revokedOwnerStale && revokeEvents.length === revokeEventCount,
     auditAttempts: pathAuditEvents.length - revokeAuditStart,
-    externalAccesses: outsideEventCount(revokeEvents, outside),
+    externalAccesses: outsideEventCount(revokeEvents, canonicalOutside),
   };
   assert.deepEqual(revokeActual, {
     escapedWatcherPublished: false,

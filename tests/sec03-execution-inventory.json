@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "19ab267bcff794bc0d8ef1f00bfda4fe081683ee1e8e1fa443486fb3983c1fb9",
+  "sourceSetSha256": "3510805172268e637bdc7564ac750c5c63b16424d430eb3971500ff2e5e1cdd7",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -441,8 +441,8 @@
     },
     {
       "sourcePath": "src/file-viewer.ts",
-      "bytes": 19664,
-      "sha256": "c9af63fb2ab7a1896aba2c0790cb465c2e7c304c8e9d36b536d418e68e503d80",
+      "bytes": 19850,
+      "sha256": "00d8c415cd6308d8890069da7e727a44725a7a27bf89f64c91a1d705f7f9a0b7",
       "executionClass": "product-runtime"
     },
     {
@@ -507,8 +507,8 @@
     },
     {
       "sourcePath": "src/path-policy.ts",
-      "bytes": 106656,
-      "sha256": "f71abf2410973d4f6cbe56918c721171ad3b882b47afd460c156c09fa0b61a46",
+      "bytes": 107670,
+      "sha256": "606af05c79b5b78ef758480fc73e6fe137c57c2232c64089d8b26f36e4163a12",
       "executionClass": "product-runtime"
     },
     {
@@ -909,8 +909,8 @@
     },
     {
       "sourcePath": "tests/integration/file-viewer-direct.test.mjs",
-      "bytes": 27452,
-      "sha256": "297854cb70059b2cbeb7daead20d4b304a81d7cc62e22aab9e75e6a77de5a758",
+      "bytes": 27594,
+      "sha256": "61f451d2b5eb2c978dcf36d3209b1f96008b4871de213592be8d1a458165af38",
       "executionClass": "build-test"
     },
     {
@@ -933,8 +933,8 @@
     },
     {
       "sourcePath": "tests/integration/process-cwd.test.mjs",
-      "bytes": 21802,
-      "sha256": "93c326de3ff2b46b1b6dc71bb8b205118755ad0a85d97767c582b98a8963d970",
+      "bytes": 21781,
+      "sha256": "bd19eba227366eed983d046f8568098e2bf45ac2d8918c3046e6ade0b987df62",
       "executionClass": "build-test"
     },
     {
@@ -981,8 +981,8 @@
     },
     {
       "sourcePath": "tests/integration/watcher-authority.test.mjs",
-      "bytes": 20008,
-      "sha256": "53257af4143fcf156bedb2539b245ea30bea1a3da8038e26f19451f8844f49a5",
+      "bytes": 20369,
+      "sha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000",
       "executionClass": "build-test"
     },
     {
@@ -1059,8 +1059,8 @@
     },
     {
       "sourcePath": "tests/unit/path-policy.test.mjs",
-      "bytes": 113157,
-      "sha256": "dfa1f9d731660ed1907d57729d4d4dc3c1cd1ac58b68971978636fff3d00f392",
+      "bytes": 114625,
+      "sha256": "a71f6d54713c489995607e59f9bbecd22f816d9190ba6d8a12144219e28a8959",
       "executionClass": "build-test"
     },
     {
@@ -3495,7 +3495,7 @@
       "id": "exec-cab8f8559e3c6cb603514356",
       "occurrence": 1,
       "sourcePath": "src/file-viewer.ts",
-      "line": 389,
+      "line": 392,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "FileViewerService.reveal",
@@ -5580,7 +5580,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-c91e568cf872466bd99bb950",
+      "id": "exec-467cd05b9c8afa9797ce9583",
       "occurrence": 1,
       "sourcePath": "tests/unit/path-policy.test.mjs",
       "line": 249,
@@ -5623,5 +5623,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "407dc06b0e84830cfa1268cc0d73697f375b15ddb3553b9998a5cacfa12d0709"
+  "canonicalPayloadSha256": "7d7e60a6369b4f6bbb60aec9932b6740cd6abd2914521fb112444c424b4f852c"
 }

@@ -2071,7 +2071,14 @@ export class PathPolicy {
       if (!defaultRoot || defaultRoot.exclusionOnly) deny("PATH_ROOT_DENIED");
       target = this.#resolve(defaultRoot.lexicalPath, request.input);
     }
-    const root = this.#mostSpecificRoot(record.roots, target, "lexicalPath");
+    const lexicalRoot = this.#mostSpecificRoot(record.roots, target, "lexicalPath");
+    const canonicalRoot = this.#mostSpecificRoot(record.roots, target, "canonicalPath");
+    let root = lexicalRoot ?? canonicalRoot;
+    if (lexicalRoot && canonicalRoot && lexicalRoot.rootId !== canonicalRoot.rootId) {
+      if (this.#contains(lexicalRoot.lexicalPath, canonicalRoot.canonicalPath)) root = canonicalRoot;
+      else if (this.#contains(canonicalRoot.canonicalPath, lexicalRoot.lexicalPath)) root = lexicalRoot;
+      else deny("PATH_ROOT_DENIED");
+    }
     if (!root || root.exclusionOnly || !root.permissions.has(request.operation)) deny("PATH_ROOT_DENIED");
     return { root, lexicalTarget: target };
   }
@@ -2179,10 +2186,19 @@ export class PathPolicy {
   }
 
   async #walkNoRedirect(root: CanonicalRootRecord, lexicalTarget: string): Promise<void> {
-    const relative = this.#relative(root.lexicalPath, lexicalTarget);
+    const trustedRoot = [root.lexicalPath, root.canonicalPath]
+      .filter((candidate, index, values) => values.findIndex((value) => this.#samePath(value, candidate)) === index)
+      .filter((candidate) => this.#contains(candidate, lexicalTarget))
+      .sort((left, right) => right.length - left.length)[0];
+    if (!trustedRoot) deny("PATH_ROOT_DENIED");
+    const relative = this.#relative(trustedRoot, lexicalTarget);
     if (relative === "") return;
-    let current = root.lexicalPath;
-    for (const component of relative.split(this.#separator()).filter(Boolean)) {
+    const components = relative.split(this.#separator()).filter(Boolean);
+    if (this.#isAbsolute(relative) || components.some((component) => component === "." || component === "..")) {
+      deny("PATH_ROOT_DENIED");
+    }
+    let current = trustedRoot;
+    for (const component of components) {
       current = this.#join(current, component);
       const info = await fs.lstat(current, { bigint: true }).catch((error: NodeJS.ErrnoException) => {
         if (error.code === "ENOENT") deny("PATH_NOT_FOUND");

@@ -103,6 +103,7 @@ const data = path.join(fixture, "data");
 await fs.mkdir(workspace, { recursive: true });
 await fs.mkdir(outside, { recursive: true });
 await fs.mkdir(data, { recursive: true });
+const canonicalWorkspace = await fs.realpath(workspace);
 process.env.RAINYDAYS_USER_DATA_DIR = fixture;
 process.env.RAINYDAYS_DATA_DIR = data;
 
@@ -337,7 +338,7 @@ test("SEC-02 Shell and Script use authorized initial CWD and deny external CWD b
   const root = toolsModule.capabilityBroker.beginAgentRun(authority, session.id);
   try {
     const shell = await approved(root, "execute_command", { command: process.platform === "win32" ? "cd" : "pwd", cwd: workspace });
-    assert.match(shell.toLowerCase(), new RegExp(workspace.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").toLowerCase()));
+    assert(shell.toLowerCase().includes(canonicalWorkspace.toLowerCase()));
     if (processRecorder.enabled) await processRecorder.positive("SEC02-POS-shell-cwd");
 
     const script = await approved(root, "script", {
@@ -509,7 +510,7 @@ test("SEC-02 tool Terminal binds CWD and controls to one runtime authority", asy
       : "printf 'SEC02_TERMINAL_CWD:%s\\n' \"$PWD\"";
     await approved(root, "shell_input", { terminalId: id, input: cwdCommand });
     const output = await waitForTerminalOutput(owner, id, "SEC02_TERMINAL_CWD:");
-    assert.match(output.toLowerCase(), new RegExp(workspace.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").toLowerCase()));
+    assert(output.toLowerCase().includes(canonicalWorkspace.toLowerCase()));
     if (toolTerminalRecorder.enabled) await toolTerminalRecorder.positive("SEC02-POS-tool-terminal-cwd");
   } finally {
     if (toolsModule.capabilityBroker.isContextActive(root)) toolsModule.capabilityBroker.finishContext(root);

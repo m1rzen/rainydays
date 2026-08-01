@@ -221,9 +221,10 @@ test("SEC-02 File Viewer uses one authority snapshot for list, preview, resolve 
   });
   if (viewerRecorder.enabled) await viewerRecorder.observe("SEC02-P30-roots-snapshot", rootsActual);
 
+  const canonicalWorkspace = await fs.realpath(roots.workspace);
   const listed = await fileViewerService.list(authority, audit, "workspace", "", 0, 20);
   assert.deepEqual(listed.entries.map(entry => entry.name), ["notes.txt", "pixel.png"]);
-  assert(listed.entries.every(entry => entry.absolutePath.startsWith(roots.workspace)));
+  assert(listed.entries.every(entry => entry.absolutePath.startsWith(canonicalWorkspace)));
 
   const preview = await fileViewerService.preview(authority, audit, owner, "workspace", "notes.txt", 2, 1);
   assert.equal(preview.kind, "text");
@@ -325,6 +326,7 @@ test("SEC-02 File Viewer uses one authority snapshot for list, preview, resolve 
   const revealSentinel = path.join(revealOutside, "secret.txt");
   await fs.mkdir(revealOutside);
   await fs.mkdir(revealTarget);
+  const canonicalRevealTarget = await fs.realpath(revealTarget);
   await fs.writeFile(revealSentinel, outsideBytes);
   const statDescriptor = Object.getOwnPropertyDescriptor(fs, "stat");
   assert.equal(typeof statDescriptor?.value, "function", "fs.promises.stat is unavailable");
@@ -333,7 +335,7 @@ test("SEC-02 File Viewer uses one authority snapshot for list, preview, resolve 
     ...statDescriptor,
     value: async function (input, ...args) {
       const result = await statDescriptor.value.call(this, input, ...args);
-      if (!revealSwapped && path.resolve(String(input)).toLowerCase() === revealTarget.toLowerCase()) {
+      if (!revealSwapped && path.resolve(String(input)).toLowerCase() === canonicalRevealTarget.toLowerCase()) {
         revealSwapped = true;
         await fs.rename(revealTarget, revealPreserved);
         await fs.symlink(revealOutside, revealTarget, "junction");

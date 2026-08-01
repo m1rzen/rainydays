@@ -366,7 +366,10 @@ export class FileViewerService {
       input: absolutePath, operation: "read-file", auditIdentity: audit,
     });
     const root = this.#root(binding, qualified.rootId);
-    const relative = path.relative(path.resolve(root.configuredPath), qualified.canonicalPath);
+    const canonicalRoot = await pathPolicy.qualifyExisting(binding.pathAuthority, {
+      input: "", operation: "read-file", defaultRootId: root.id, auditIdentity: audit,
+    }, "directory");
+    const relative = path.relative(canonicalRoot.canonicalPath, qualified.canonicalPath);
     return { rootId: root.id, path: relative, root: this.#rootInfo(root), type: qualified.identity.type };
   }
 
