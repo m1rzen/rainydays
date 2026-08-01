@@ -593,11 +593,29 @@ export function parseTapSummary(output) {
     if (!match || match[3]) return [];
     return [createHash("sha256").update(`tap-test:${match[1]}:${match[2]}`).digest("hex")];
   });
-  const nestedFailedTestIds = [...new Set(lines.flatMap((line) => {
+  const nestedFailureOccurrences = new Map();
+  const nestedFailedTestIds = [];
+  let diagnosticIndent = null;
+  for (const line of lines) {
+    if (diagnosticIndent !== null) {
+      const diagnosticEnd = /^(\s*)\.\.\.\s*$/u.exec(line);
+      if (diagnosticEnd && diagnosticEnd[1].length === diagnosticIndent) diagnosticIndent = null;
+      continue;
+    }
+    const diagnosticStart = /^(\s+)---\s*$/u.exec(line);
+    if (diagnosticStart) {
+      diagnosticIndent = diagnosticStart[1].length;
+      continue;
+    }
     const match = /^\s{4,}not ok ([1-9]\d*) - (.*?)(?: # (TODO|SKIP)(?: .*)?)?$/u.exec(line);
-    if (!match || match[3]) return [];
-    return [createHash("sha256").update(`tap-nested-test:${match[1]}:${match[2]}`).digest("hex")];
-  }))].slice(0, 64);
+    if (!match || match[3]) continue;
+    const identity = `tap-nested-test:${match[1]}:${match[2]}`;
+    const occurrence = (nestedFailureOccurrences.get(identity) ?? 0) + 1;
+    nestedFailureOccurrences.set(identity, occurrence);
+    const hashInput = occurrence === 1 ? identity : `${identity}:occurrence:${occurrence}`;
+    nestedFailedTestIds.push(createHash("sha256").update(hashInput).digest("hex"));
+    if (nestedFailedTestIds.length === 64) break;
+  }
   const failedStackSiteIds = [];
   let stackIndent = null;
   for (const line of lines) {

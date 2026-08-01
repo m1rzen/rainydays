@@ -146,7 +146,13 @@ export function validateTap(value) {
   }
   assert(value.nestedFailedTestIds.length <= 64, "tap.nestedFailedTestIds exceeds the bounded diagnostic limit");
   assert(value.failedStackSiteIds.length <= 64, "tap.failedStackSiteIds exceeds the bounded diagnostic limit");
-  if (value.failed !== null) assert.equal(value.failedTestIds.length, value.failed, "tap.failedTestIds count differs from tap.failed");
+  if (value.failed !== null) {
+    const identifiedFailures = value.failedTestIds.length + value.nestedFailedTestIds.length;
+    assert(identifiedFailures <= value.failed, "tap failure identifier count exceeds tap.failed");
+    if (value.nestedFailedTestIds.length < 64) {
+      assert.equal(identifiedFailures, value.failed, "tap failure identifier count differs from tap.failed");
+    }
+  }
 }
 
 function exactPercentPassed(covered, total, threshold) {

@@ -247,42 +247,52 @@ test("TAP summary and process failure precedence are deterministic", () => {
     "        TestContext.<anonymous> (file:///C:/private/checkout/tests/unit/nested.test.mjs:42:7)",
     "        assertSec01Probe (file:///C:/private/checkout/tests/sec01-probe.mjs:75:3)",
     "      ...",
+    "    not ok 98 - nested failure",
     "not ok 3 - expected failure # TODO pending",
     "not ok 4 - duplicate name",
     "  ---",
-    "  error: hidden",
+    "  error: |-",
+    "    hidden diagnostic text",
+    "    not ok 77 - diagnostic text only",
     "  ...",
     "not ok 5 - duplicate name",
-    "# tests 5",
+    "# tests 7",
     "# pass 2",
-    "# fail 2",
+    "# fail 4",
     "# skipped 0",
     "# cancelled 0",
     "# todo 1",
     "",
   ].join("\n"));
   assert.deepEqual(summary, {
-    tests: 5,
+    tests: 7,
     passed: 2,
-    failed: 2,
+    failed: 4,
     skipped: 0,
     cancelled: 0,
     todo: 1,
     failedTestIds: [sha256Bytes("tap-test:4:duplicate name"), sha256Bytes("tap-test:5:duplicate name")],
-    nestedFailedTestIds: [sha256Bytes("tap-nested-test:98:nested failure")],
+    nestedFailedTestIds: [
+      sha256Bytes("tap-nested-test:98:nested failure"),
+      sha256Bytes("tap-nested-test:98:nested failure:occurrence:2"),
+    ],
     failedStackSiteIds: [
       sha256Bytes("tap-stack-site:tests/unit/nested.test.mjs:42:7"),
       sha256Bytes("tap-stack-site:tests/sec01-probe.mjs:75:3"),
     ],
   });
-  assert.doesNotMatch(JSON.stringify(summary), /duplicate name|expected failure|forged output|nested failure|hidden|private|nested\.test|sec01-probe/u);
+  assert.doesNotMatch(JSON.stringify(summary), /duplicate name|expected failure|forged output|nested failure|diagnostic text|hidden|private|nested\.test|sec01-probe/u);
   validateTap(summary);
   assert.throws(() => validateTap({ ...summary, failedTestIds: ["governed failure", summary.failedTestIds[1]] }), /SHA-256/);
   assert.throws(() => validateTap({ ...summary, nestedFailedTestIds: ["nested failure"] }), /SHA-256/);
   assert.throws(() => validateTap({ ...summary, failedStackSiteIds: ["tests/unit/nested.test.mjs:42:7"] }), /SHA-256/);
   assert.throws(() => validateTap({ ...summary, failedTestIds: [] }), /count differs/);
+  assert.throws(() => validateTap({ ...summary, nestedFailedTestIds: summary.nestedFailedTestIds.slice(0, 1) }), /count differs/);
   assert.throws(() => validateTap({ ...summary, failedTestIds: [summary.failedTestIds[0], summary.failedTestIds[0]] }), /duplicate/);
-  assert.throws(() => validateTap({ ...summary, nestedFailedTestIds: Array(65).fill(0).map((_, index) => sha256Bytes(`nested:${index}`)) }), /bounded diagnostic limit/);
+  const boundedNestedFailures = Array(64).fill(0).map((_, index) => sha256Bytes(`nested:${index}`));
+  validateTap({ ...summary, failed: 67, nestedFailedTestIds: boundedNestedFailures });
+  assert.throws(() => validateTap({ ...summary, failed: 65, nestedFailedTestIds: boundedNestedFailures }), /count exceeds/);
+  assert.throws(() => validateTap({ ...summary, nestedFailedTestIds: [...boundedNestedFailures, sha256Bytes("nested:64")] }), /bounded diagnostic limit/);
   assert.throws(() => validateTap({ ...summary, failedStackSiteIds: Array(65).fill(0).map((_, index) => sha256Bytes(`site:${index}`)) }), /bounded diagnostic limit/);
   assert.equal(classifyProcessResult({ code: 0, signal: null }), "passed");
   assert.equal(classifyProcessResult({ code: 1, signal: null }), "failed");
