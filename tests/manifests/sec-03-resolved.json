@@ -125,7 +125,7 @@
     },
     {
       "exactCasePath": "src/execution-runtime.ts",
-      "sha256": "043f96954a7f86dd5d5df15a5189fd90de04a9a1cee305b2754d0941fb1d0dbe",
+      "sha256": "b283c0f9a0272ac15ec84380aa234968b1949875d316516b4178272c9bcb6292",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -266,7 +266,7 @@
     },
     {
       "exactCasePath": "dist/execution-runtime.js",
-      "sha256": "7ff221a9ee2a82e507ffc4f58147dde3dc5b3b0dc9a15bfc0f5813ba66bd540a",
+      "sha256": "68af95114c8aefd5c15a242497b2a35559b56923e8e71ce0b605590ba43fd956",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -381,7 +381,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "54a5364c45f579830e2c9bf23feb1b9140a96eb55a4f4bbb97995e11e6b5b8db",
+      "sha256": "025c08243a32689c6a81b0583ca788b43783610982eff9c647f5553e3f79ffb4",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -435,7 +435,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "71aca9db22606d9f73bea3e4aa163f526b9dddb8d75fc001838226aec45aacdc",
+      "sha256": "636202b77fb4d9ee21afa47ddbf96a9b6f2e247486711cea3a8fc3806ce13d20",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "0a59d2f4ed292898245b261e1968d5fb8a1b34d85cadc2cd0656e56bb076b634",
+      "sha256": "f8251573590a516a1dcbd2ccb2417e410993c2ba92161eab4cc76ed60a7b5b9d",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -471,7 +471,7 @@
     },
     {
       "exactCasePath": "scripts/build-sec03-native.mjs",
-      "sha256": "f97b6aa851475f1a01e52ca7e40673e133a9d3e08fea49e96325414f0c8a63ae",
+      "sha256": "1154c784dd3f27b4ef102c30a4eaf8277b95def0a2e5f5187f98e365d753c86f",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -534,7 +534,7 @@
     },
     {
       "exactCasePath": "scripts/build-inputs.mjs",
-      "sha256": "0641195ae78d4e9fe976b5caec2569631832dd52bd83d70c94ee4fd28527cb13",
+      "sha256": "04290016fe750f26962212f473be6b3fe8db41bc9ee413c8db50ea7e71ce7a13",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -547,7 +547,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "f3722d0b7576dae9a00b65223cd95c47a5ab69a1ab5275bd3a86b448b3a3f32c",
+      "sha256": "54b7988cb21eff0ded9f8de36826da718b74577320ea0c0727693681fe569a29",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -560,7 +560,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "72d5976988e1bb04fdd0b8b17226846a4067ea0387d088bc528bb7761cf875b6",
+      "sha256": "fc7cfef7fd2f9912197df5db62886fcc4c3bc2a6767b60f66c99226e05f03d06",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -612,7 +612,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "9d4bd7b0b42f62b3f86bee2169227df42af90c6b83711b2726c3c660c2b9500f",
+      "sha256": "acafb1011775521ef273e80c031cedd2edde55549783869849385bc26a1bc42a",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -664,7 +664,7 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "8c7ec8da9d29362dbec30300f0701381c48e22c29eb85e096c8c6a98a5335832",
+      "sha256": "8576fcc99b395eb37b0513b942e0313d99f98ac9297c9980741b23cf32b8fe3e",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -777,7 +777,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "sha256": "2a69a22b9200d966dea8597884f590d87ef3e1e0614670e0cb0e482736a870c6",
+      "sha256": "c387bb9600b86f3bc45f9ec0be4aa6f97fb90299fd74f1eb3cc97063998d38d0",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -785,6 +785,9 @@
         "SEC-03 source digest authored set includes native sources, build logic, runtime, governance and matrix inputs",
         "SEC-03 native projection binds the exact manifest, outputs, toolchain, freshness and AMD64 machine",
         "SEC-03 native projection rejects stale native source and manifest toolchain identity",
+        "SEC-03 native test projection is committed by production identity and cannot self-sign",
+        "SEC-03 native test projection permits only the one test define and production source identity",
+        "SEC-03 native addons expose exact production and test-only top-level APIs",
         "SEC-03 build metadata and electron package bind the exact current native artifacts"
       ],
       "supersedes": null
@@ -838,7 +841,7 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "sha256": "d9671999b95a1e5ffb52b2b92689baa4b10d25fedcb2277aac90220782e8dc98",
+      "sha256": "798afd35158a8cdc254d10a012f8e4f58e4f24f12f19157c5518c770f51f7bae",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
@@ -892,7 +895,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "e0a259c9847526dcdfc38ffab44717498d6ab186697ddf18bcac4f972c207489",
+      "sha256": "1739ad9f197bf02b00928cbbce6a89ab96cabbcd6977ef52d939870b2b694118",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -1014,7 +1017,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "e0a259c9847526dcdfc38ffab44717498d6ab186697ddf18bcac4f972c207489",
+      "sha256": "1739ad9f197bf02b00928cbbce6a89ab96cabbcd6977ef52d939870b2b694118",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -1693,7 +1696,7 @@
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "c7fda4c301e5f40bfb5aa15b93f672acac90b0b15fa5a8a6eb0286a196633eee",
+      "sha256": "2fea541e7a53a4eef0ae9b5d7bc0602e8d794dd61760715b30d65f0c6af5b38c",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1922,7 +1925,7 @@
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "203a19e142c48bbd678dffb45075ed4c4673fb3d9be161997b3c00f48d34358e",
+      "sha256": "0b74a08c85fb10f6e75e386ed9bf68b2dcaebf972705daf9166de132ad530d34",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1967,7 +1970,7 @@
     },
     {
       "exactCasePath": "src/execution-runtime.ts",
-      "sha256": "043f96954a7f86dd5d5df15a5189fd90de04a9a1cee305b2754d0941fb1d0dbe",
+      "sha256": "b283c0f9a0272ac15ec84380aa234968b1949875d316516b4178272c9bcb6292",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2030,7 +2033,7 @@
     },
     {
       "exactCasePath": "dist/execution-runtime.js",
-      "sha256": "7ff221a9ee2a82e507ffc4f58147dde3dc5b3b0dc9a15bfc0f5813ba66bd540a",
+      "sha256": "68af95114c8aefd5c15a242497b2a35559b56923e8e71ce0b605590ba43fd956",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2093,7 +2096,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "54a5364c45f579830e2c9bf23feb1b9140a96eb55a4f4bbb97995e11e6b5b8db",
+      "sha256": "025c08243a32689c6a81b0583ca788b43783610982eff9c647f5553e3f79ffb4",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2147,7 +2150,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "71aca9db22606d9f73bea3e4aa163f526b9dddb8d75fc001838226aec45aacdc",
+      "sha256": "636202b77fb4d9ee21afa47ddbf96a9b6f2e247486711cea3a8fc3806ce13d20",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2156,7 +2159,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "0a59d2f4ed292898245b261e1968d5fb8a1b34d85cadc2cd0656e56bb076b634",
+      "sha256": "f8251573590a516a1dcbd2ccb2417e410993c2ba92161eab4cc76ed60a7b5b9d",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2183,7 +2186,7 @@
     },
     {
       "exactCasePath": "scripts/build-sec03-native.mjs",
-      "sha256": "f97b6aa851475f1a01e52ca7e40673e133a9d3e08fea49e96325414f0c8a63ae",
+      "sha256": "1154c784dd3f27b4ef102c30a4eaf8277b95def0a2e5f5187f98e365d753c86f",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2246,7 +2249,7 @@
     },
     {
       "exactCasePath": "scripts/build-inputs.mjs",
-      "sha256": "0641195ae78d4e9fe976b5caec2569631832dd52bd83d70c94ee4fd28527cb13",
+      "sha256": "04290016fe750f26962212f473be6b3fe8db41bc9ee413c8db50ea7e71ce7a13",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2259,7 +2262,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "f3722d0b7576dae9a00b65223cd95c47a5ab69a1ab5275bd3a86b448b3a3f32c",
+      "sha256": "54b7988cb21eff0ded9f8de36826da718b74577320ea0c0727693681fe569a29",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2272,7 +2275,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "72d5976988e1bb04fdd0b8b17226846a4067ea0387d088bc528bb7761cf875b6",
+      "sha256": "fc7cfef7fd2f9912197df5db62886fcc4c3bc2a6767b60f66c99226e05f03d06",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2324,7 +2327,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "9d4bd7b0b42f62b3f86bee2169227df42af90c6b83711b2726c3c660c2b9500f",
+      "sha256": "acafb1011775521ef273e80c031cedd2edde55549783869849385bc26a1bc42a",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2376,7 +2379,7 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "8c7ec8da9d29362dbec30300f0701381c48e22c29eb85e096c8c6a98a5335832",
+      "sha256": "8576fcc99b395eb37b0513b942e0313d99f98ac9297c9980741b23cf32b8fe3e",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2489,7 +2492,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "sha256": "2a69a22b9200d966dea8597884f590d87ef3e1e0614670e0cb0e482736a870c6",
+      "sha256": "c387bb9600b86f3bc45f9ec0be4aa6f97fb90299fd74f1eb3cc97063998d38d0",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -2497,6 +2500,9 @@
         "SEC-03 source digest authored set includes native sources, build logic, runtime, governance and matrix inputs",
         "SEC-03 native projection binds the exact manifest, outputs, toolchain, freshness and AMD64 machine",
         "SEC-03 native projection rejects stale native source and manifest toolchain identity",
+        "SEC-03 native test projection is committed by production identity and cannot self-sign",
+        "SEC-03 native test projection permits only the one test define and production source identity",
+        "SEC-03 native addons expose exact production and test-only top-level APIs",
         "SEC-03 build metadata and electron package bind the exact current native artifacts"
       ],
       "supersedes": null
@@ -2550,7 +2556,7 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs",
-      "sha256": "d9671999b95a1e5ffb52b2b92689baa4b10d25fedcb2277aac90220782e8dc98",
+      "sha256": "798afd35158a8cdc254d10a012f8e4f58e4f24f12f19157c5518c770f51f7bae",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
@@ -3261,5 +3267,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "852e8fe41582bcf7152fd21d9496c4838f78ea31ff1809627854b88d7b240f5e"
+  "canonicalPayloadSha256": "1f10b6afdeece13d43c26519d71e7c43e82c20452af38d8321f8c27517f30553"
 }

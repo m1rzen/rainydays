@@ -175,13 +175,18 @@ function validatePackageBinding(value, { passed = false, sinkIdentity = null } =
   assert(value.schemaVersion === null || value.schemaVersion === 3, "details.packageBinding.schemaVersion is invalid");
   assert(value.buildId === null || (typeof value.buildId === "string" && value.buildId.length > 0 && value.buildId.length <= 128), "details.packageBinding.buildId is invalid");
   for (const key of ["sourceDigest", "stageManifestSha256", "buildInfoSha256", "distIntegritySha256", "sinkInventorySha256", "detectorPolicySha256", "reviewPolicySha256", "dialectCheckerSha256", "dialectPolicySha256", "dialectImportSetSha256", "executableManifestSha256", "runtimeSinkSetSha256", "authoredExecutableProjectionSha256", "packagedSinkSetSha256", "packagedDialectImportSetSha256", "asarSha256"]) assert(value[key] === null || sha256Pattern.test(value[key]), `details.packageBinding.${key} is invalid`);
-  exactKeys(value.native, ["architectureSha256", "manifest", "sourceDigest", "toolchainDigest", "signatureStatus", "binaries"], "details.packageBinding.native");
+  exactKeys(value.native, ["architectureSha256", "manifest", "sourceDigest", "toolchainDigest", "signatureStatus", "binaries", "testProjection"], "details.packageBinding.native");
   for (const key of ["architectureSha256", "sourceDigest", "toolchainDigest"]) assert(value.native[key] === null || sha256Pattern.test(value.native[key]), `details.packageBinding.native.${key} is invalid`);
   assert(value.native.signatureStatus === null || value.native.signatureStatus === "unsigned-local", "details.packageBinding.native.signatureStatus is invalid");
   exactKeys(value.native.manifest, ["path", "bytes", "sha256"], "details.packageBinding.native.manifest");
   assert(value.native.manifest.path === null || value.native.manifest.path === "dist/native/sec03-native-manifest.json", "details.packageBinding.native.manifest.path is invalid");
   assert(value.native.manifest.bytes === null || (Number.isSafeInteger(value.native.manifest.bytes) && value.native.manifest.bytes > 0), "details.packageBinding.native.manifest.bytes is invalid");
   assert(value.native.manifest.sha256 === null || sha256Pattern.test(value.native.manifest.sha256), "details.packageBinding.native.manifest.sha256 is invalid");
+  exactKeys(value.native.testProjection, ["manifest"], "details.packageBinding.native.testProjection");
+  exactKeys(value.native.testProjection.manifest, ["path", "bytes", "sha256"], "details.packageBinding.native.testProjection.manifest");
+  assert(value.native.testProjection.manifest.path === null || value.native.testProjection.manifest.path === ".sec03-native-test/sec03-native-test-manifest.json", "details.packageBinding.native.testProjection.manifest.path is invalid");
+  assert(value.native.testProjection.manifest.bytes === null || (Number.isSafeInteger(value.native.testProjection.manifest.bytes) && value.native.testProjection.manifest.bytes > 0), "details.packageBinding.native.testProjection.manifest.bytes is invalid");
+  assert(value.native.testProjection.manifest.sha256 === null || sha256Pattern.test(value.native.testProjection.manifest.sha256), "details.packageBinding.native.testProjection.manifest.sha256 is invalid");
   assert(Array.isArray(value.native.binaries) && (value.native.binaries.length === 0 || value.native.binaries.length === 2), "details.packageBinding.native.binaries is invalid");
   const nativePaths = ["dist/native/sandbox-host.exe", "dist/native/sandbox-launcher.node"];
   for (const [index, binary] of value.native.binaries.entries()) {
@@ -212,6 +217,9 @@ function validatePackageBinding(value, { passed = false, sinkIdentity = null } =
     && value.native.toolchainDigest !== null
     && value.native.signatureStatus === "unsigned-local"
     && value.native.binaries.length === 2
+    && value.native.testProjection.manifest.path === ".sec03-native-test/sec03-native-test-manifest.json"
+    && value.native.testProjection.manifest.bytes !== null
+    && value.native.testProjection.manifest.sha256 !== null
     && value.sinkInventorySha256 !== null
     && value.detectorPolicySha256 !== null
     && value.reviewPolicySha256 !== null

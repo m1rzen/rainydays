@@ -129,9 +129,22 @@ export function parseNativeArtifactIdentity(manifest: unknown, buildInfo: unknow
   const versions = build.versions && typeof build.versions === "object" ? build.versions as Record<string, unknown> : {};
   const execution = versions.executionIsolation && typeof versions.executionIsolation === "object" ? versions.executionIsolation as Record<string, unknown> : {};
   const artifacts = Array.isArray(execution.artifacts) ? execution.artifacts as Array<Record<string, unknown>> : [];
+  const manifestTestProjection = value.testProjection && typeof value.testProjection === "object" ? value.testProjection as Record<string, unknown> : {};
+  const manifestTestRecord = manifestTestProjection.manifest && typeof manifestTestProjection.manifest === "object" ? manifestTestProjection.manifest as Record<string, unknown> : {};
+  const buildTestProjection = execution.testProjection && typeof execution.testProjection === "object" ? execution.testProjection as Record<string, unknown> : {};
+  const buildTestRecord = buildTestProjection.manifest && typeof buildTestProjection.manifest === "object" ? buildTestProjection.manifest as Record<string, unknown> : {};
   const expectedPaths = ["dist/native/sandbox-host.exe", "dist/native/sandbox-launcher.node"];
   const host = outputs[0];
   const launcher = outputs[1];
+  const testProjectionMatches = JSON.stringify(Object.keys(manifestTestProjection).sort()) === JSON.stringify(["manifest"])
+    && JSON.stringify(Object.keys(buildTestProjection).sort()) === JSON.stringify(["manifest"])
+    && JSON.stringify(Object.keys(manifestTestRecord).sort()) === JSON.stringify(["bytes", "path", "sha256"])
+    && JSON.stringify(Object.keys(buildTestRecord).sort()) === JSON.stringify(["bytes", "path", "sha256"])
+    && manifestTestRecord.path === ".sec03-native-test/sec03-native-test-manifest.json"
+    && Number.isSafeInteger(manifestTestRecord.bytes) && Number(manifestTestRecord.bytes) > 0
+    && HASH.test(String(manifestTestRecord.sha256 ?? ""))
+    && buildTestRecord.path === manifestTestRecord.path && buildTestRecord.bytes === manifestTestRecord.bytes
+    && buildTestRecord.sha256 === manifestTestRecord.sha256;
   const artifactIdentityMatches = outputs.length === expectedPaths.length && artifacts.length === expectedPaths.length
     && outputs.every((entry, index) => entry.path === expectedPaths[index]
       && artifacts[index]?.path === entry.path
@@ -144,7 +157,7 @@ export function parseNativeArtifactIdentity(manifest: unknown, buildInfo: unknow
     || !HASH.test(String(build.sourceDigest ?? "")) || typeof build.buildId !== "string" || build.buildId.length < 1 || build.buildId.length > 128
     || execution.architectureSha256 !== ARCHITECTURE_SHA256 || execution.protocolVersion !== 1
     || execution.nativeSourceDigest !== value.sourceDigest || execution.toolchainDigest !== value.toolchainDigest
-    || execution.signatureStatus !== value.signatureStatus || !artifactIdentityMatches
+    || execution.signatureStatus !== value.signatureStatus || !artifactIdentityMatches || !testProjectionMatches
     || !host || !launcher || host.machine !== "AMD64" || launcher.machine !== "AMD64"
     || !HASH.test(String(host.sha256 ?? "")) || !HASH.test(String(launcher.sha256 ?? ""))
     || !Number.isSafeInteger(host.bytes) || Number(host.bytes) < 1

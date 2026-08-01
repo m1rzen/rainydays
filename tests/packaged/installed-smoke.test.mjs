@@ -290,6 +290,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
         toolchainDigest: null,
         signatureStatus: null,
         binaries: [],
+        testProjection: { manifest: { path: null, bytes: null, sha256: null } },
       },
       sinkInventorySha256: null,
       detectorPolicySha256: null,

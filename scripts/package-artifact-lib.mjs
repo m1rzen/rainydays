@@ -42,7 +42,7 @@ export async function verifyInstallerPreflight({ manifestPath, installerOverride
     exactKeys(manifest, ["schemaVersion", "createdAt", "build", "artifact"], "artifact manifest");
     assert.equal(manifest.schemaVersion, 1);
     exactKeys(manifest.build, ["appVersion", "buildId", "sourceDigest", "buildInfoSha256", "executionIsolation"], "artifact manifest build");
-    exactKeys(manifest.build.executionIsolation, ["architectureSha256", "protocolVersion", "nativeSourceDigest", "toolchainDigest", "signatureStatus", "artifacts"], "artifact manifest execution isolation");
+    exactKeys(manifest.build.executionIsolation, ["architectureSha256", "protocolVersion", "nativeSourceDigest", "toolchainDigest", "signatureStatus", "artifacts", "testProjection"], "artifact manifest execution isolation");
     assert(Array.isArray(manifest.build.executionIsolation.artifacts) && manifest.build.executionIsolation.artifacts.length === 2, "artifact manifest native artifacts differ");
     for (const artifact of manifest.build.executionIsolation.artifacts) {
       exactKeys(artifact, ["path", "bytes", "sha256", "machine"], "artifact manifest native artifact");
@@ -50,6 +50,11 @@ export async function verifyInstallerPreflight({ manifestPath, installerOverride
       assert.match(artifact.sha256, /^[a-f0-9]{64}$/);
       assert.equal(artifact.machine, "AMD64");
     }
+    exactKeys(manifest.build.executionIsolation.testProjection, ["manifest"], "artifact manifest native test projection");
+    exactKeys(manifest.build.executionIsolation.testProjection.manifest, ["path", "bytes", "sha256"], "artifact manifest native test projection manifest");
+    assert.equal(manifest.build.executionIsolation.testProjection.manifest.path, ".sec03-native-test/sec03-native-test-manifest.json");
+    assert(Number.isSafeInteger(manifest.build.executionIsolation.testProjection.manifest.bytes) && manifest.build.executionIsolation.testProjection.manifest.bytes > 0);
+    assert.match(manifest.build.executionIsolation.testProjection.manifest.sha256, /^[a-f0-9]{64}$/);
     exactKeys(manifest.artifact, ["filename", "bytes", "sha256"], "artifact manifest artifact");
     assert.match(manifest.createdAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     assert.match(manifest.build.sourceDigest, /^[a-f0-9]{64}$/);

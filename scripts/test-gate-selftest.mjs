@@ -161,7 +161,6 @@ async function createGateSandbox(root, name, mode) {
   ]) await mkdir(path.join(sandbox, ...directory.split("/")), { recursive: true });
   await cp(path.join(projectRoot, "scripts"), path.join(sandbox, "scripts"), { recursive: true });
   await cp(path.join(projectRoot, "tests", "helpers.mjs"), path.join(sandbox, "tests", "helpers.mjs"));
-  await cp(path.join(projectRoot, "tests", "fixtures", "windows-file-handle-observer.mjs"), path.join(sandbox, "tests", "fixtures", "windows-file-handle-observer.mjs"));
   await cp(path.join(projectRoot, "tests", "sec03-receipts.mjs"), path.join(sandbox, "tests", "sec03-receipts.mjs"));
   await cp(path.join(projectRoot, "parity", "scripts"), path.join(sandbox, "parity", "scripts"), { recursive: true });
   await cp(path.join(projectRoot, "parity", "baselines", "lux-desktop-0.1.898.json"), path.join(sandbox, "parity", "baselines", "lux-desktop-0.1.898.json"));

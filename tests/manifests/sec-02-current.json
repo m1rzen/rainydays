@@ -82,7 +82,7 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "986eebdc84dad45b5cf1184d2602eee6c4da922c93ea24eddab1a387037e81ea",
+          "sha256": "0d957d8c64569aaa93e70bbaf7fc3e59fb99ac3d2dde33abf7d91096ca30820f",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -94,7 +94,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "e0a259c9847526dcdfc38ffab44717498d6ab186697ddf18bcac4f972c207489",
+          "sha256": "1739ad9f197bf02b00928cbbce6a89ab96cabbcd6977ef52d939870b2b694118",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         }
@@ -350,7 +350,7 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "986eebdc84dad45b5cf1184d2602eee6c4da922c93ea24eddab1a387037e81ea",
+          "sha256": "0d957d8c64569aaa93e70bbaf7fc3e59fb99ac3d2dde33abf7d91096ca30820f",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -362,7 +362,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "e0a259c9847526dcdfc38ffab44717498d6ab186697ddf18bcac4f972c207489",
+          "sha256": "1739ad9f197bf02b00928cbbce6a89ab96cabbcd6977ef52d939870b2b694118",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -1042,7 +1042,7 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "986eebdc84dad45b5cf1184d2602eee6c4da922c93ea24eddab1a387037e81ea",
+          "sha256": "0d957d8c64569aaa93e70bbaf7fc3e59fb99ac3d2dde33abf7d91096ca30820f",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -1054,7 +1054,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "e0a259c9847526dcdfc38ffab44717498d6ab186697ddf18bcac4f972c207489",
+          "sha256": "1739ad9f197bf02b00928cbbce6a89ab96cabbcd6977ef52d939870b2b694118",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -1168,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "ef486fa0b33fc5e6462835de333024d7e27b5ff60c8fe4292783f87cdf0cc909",
+          "sha256": "c9080cf1bfd4ea72e450a16c98580cca87847aa95dd4778a9c4388ea5d37a4b1",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -6723,7 +6723,7 @@
         "layer": "packaged",
         "test": {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "e0a259c9847526dcdfc38ffab44717498d6ab186697ddf18bcac4f972c207489"
+          "sha256": "1739ad9f197bf02b00928cbbce6a89ab96cabbcd6977ef52d939870b2b694118"
         },
         "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
         "producer": "node-test"
@@ -6991,7 +6991,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "9d4bd7b0b42f62b3f86bee2169227df42af90c6b83711b2726c3c660c2b9500f"
+      "sha256": "acafb1011775521ef273e80c031cedd2edde55549783869849385bc26a1bc42a"
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
@@ -7007,11 +7007,11 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "72d5976988e1bb04fdd0b8b17226846a4067ea0387d088bc528bb7761cf875b6"
+      "sha256": "fc7cfef7fd2f9912197df5db62886fcc4c3bc2a6767b60f66c99226e05f03d06"
     },
     {
       "exactCasePath": "scripts/test-gate-selftest.mjs",
-      "sha256": "7f1802f6d6e811a079a169ad1ba651aee0118100c9bca43e63985b998bc86bd5"
+      "sha256": "affe5c1b87658c9adae9e8d303378100427f1cfe660320fb90d181a3578f06da"
     },
     {
       "exactCasePath": "scripts/run-gov04.mjs",
@@ -7019,7 +7019,7 @@
     },
     {
       "exactCasePath": "scripts/build-inputs.mjs",
-      "sha256": "0641195ae78d4e9fe976b5caec2569631832dd52bd83d70c94ee4fd28527cb13"
+      "sha256": "04290016fe750f26962212f473be6b3fe8db41bc9ee413c8db50ea7e71ce7a13"
     },
     {
       "exactCasePath": "scripts/build-electron.mjs",
@@ -7027,7 +7027,7 @@
     },
     {
       "exactCasePath": "scripts/electron-asar-integrity.mjs",
-      "sha256": "850e9158829464b5ca71bf87ce7e988f54cf359f8105e93c87895c329eb3547a"
+      "sha256": "ae0c1a96964a25c9986347f03b93f03c9348e4a067cac91d1355e90c7fc932bd"
     },
     {
       "exactCasePath": "scripts/electron-stage-integrity.mjs",
@@ -7035,7 +7035,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "f3722d0b7576dae9a00b65223cd95c47a5ab69a1ab5275bd3a86b448b3a3f32c"
+      "sha256": "54b7988cb21eff0ded9f8de36826da718b74577320ea0c0727693681fe569a29"
     },
     {
       "exactCasePath": "scripts/sec02-sink-scanner.mjs",
@@ -7051,7 +7051,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "9742bdec7debf4c9428ddc75f304c2259ec0727252a8f1a51a45af1f8812a92d"
+      "sha256": "a85939dfaea3f462c085e10df6d9af9b069fd267a6af41cabf47e354b86008ca"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7115,5 +7115,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "217dd127bc6b698ec807aeec716c0ba635699104e3fd0083e1a32c32736d7740"
+  "canonicalPayloadSha256": "282138dafde27ca71f1e6a9970913f1b468aabd9c9ab2df369e911a88dad26a1"
 }

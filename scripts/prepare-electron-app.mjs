@@ -140,6 +140,10 @@ if (!/^[a-f0-9]{64}$/.test(buildInfo.candidateId)
   || buildInfo.versions?.executionIsolation?.signatureStatus !== "unsigned-local"
   || !Array.isArray(buildInfo.versions?.executionIsolation?.artifacts)
   || buildInfo.versions.executionIsolation.artifacts.length !== 2
+  || buildInfo.versions?.executionIsolation?.testProjection?.manifest?.path !== ".sec03-native-test/sec03-native-test-manifest.json"
+  || !Number.isSafeInteger(buildInfo.versions?.executionIsolation?.testProjection?.manifest?.bytes)
+  || buildInfo.versions.executionIsolation.testProjection.manifest.bytes < 1
+  || !/^[a-f0-9]{64}$/.test(buildInfo.versions?.executionIsolation?.testProjection?.manifest?.sha256 || "")
   || buildInfo.versions?.luxBaseline?.schemaVersion !== 1
   || buildInfo.versions?.luxBaseline?.targetVersion !== "0.1.898"
   || buildInfo.versions?.luxBaseline?.manifestSha256 !== "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df") {

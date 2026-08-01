@@ -36,6 +36,7 @@ buildInfo.versions.executionIsolation = {
   toolchainDigest: native.toolchainDigest,
   signatureStatus: native.signatureStatus,
   artifacts: native.binaries,
+  testProjection: native.testProjection,
 };
 await validateSec03NativeProjection(projectRoot, { buildInfo });
 

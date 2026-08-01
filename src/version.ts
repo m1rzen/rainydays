@@ -26,6 +26,7 @@ export interface BuildInfo {
       toolchainDigest: string;
       signatureStatus: "unsigned-local";
       artifacts: readonly Readonly<{ path: string; bytes: number; sha256: string; machine: "AMD64" }>[];
+      testProjection: Readonly<{ manifest: Readonly<{ path: string; bytes: number; sha256: string }> }>;
     };
     protocols: {
       link: ProtocolCapability;
@@ -103,13 +104,21 @@ function validateBuildInfo(value: unknown): BuildInfo {
   if (info.versions.sessionExport !== SUPPORTED_SESSION_EXPORT_VERSION) throw new Error("build-info Session Export version is unsupported");
   const isolation = info.versions.executionIsolation;
   if (!isolation || typeof isolation !== "object") throw new Error("build-info execution isolation metadata is missing");
-  assertExactKeys(isolation as unknown as Record<string, unknown>, ["architectureSha256", "protocolVersion", "nativeSourceDigest", "toolchainDigest", "signatureStatus", "artifacts"], "execution isolation");
+  assertExactKeys(isolation as unknown as Record<string, unknown>, ["architectureSha256", "protocolVersion", "nativeSourceDigest", "toolchainDigest", "signatureStatus", "artifacts", "testProjection"], "execution isolation");
   if (!hashPattern.test(isolation.architectureSha256) || isolation.protocolVersion !== 1 || !hashPattern.test(isolation.nativeSourceDigest)
     || !hashPattern.test(isolation.toolchainDigest) || isolation.signatureStatus !== "unsigned-local" || !Array.isArray(isolation.artifacts) || isolation.artifacts.length !== 2) throw new Error("build-info execution isolation metadata is invalid");
   for (const artifact of isolation.artifacts) {
     assertExactKeys(artifact as unknown as Record<string, unknown>, ["path", "bytes", "sha256", "machine"], "execution isolation artifact");
     if (typeof artifact.path !== "string" || !Number.isSafeInteger(artifact.bytes) || artifact.bytes < 1 || !hashPattern.test(artifact.sha256) || artifact.machine !== "AMD64") throw new Error("build-info execution isolation artifact is invalid");
   }
+  const testProjection = isolation.testProjection;
+  if (!testProjection || typeof testProjection !== "object" || Array.isArray(testProjection)) throw new Error("build-info execution isolation test projection is invalid");
+  assertExactKeys(testProjection as unknown as Record<string, unknown>, ["manifest"], "execution isolation test projection");
+  const testManifest = testProjection.manifest;
+  if (!testManifest || typeof testManifest !== "object" || Array.isArray(testManifest)) throw new Error("build-info execution isolation test projection is invalid");
+  assertExactKeys(testManifest as unknown as Record<string, unknown>, ["path", "bytes", "sha256"], "execution isolation test projection manifest");
+  if (testManifest.path !== ".sec03-native-test/sec03-native-test-manifest.json" || !Number.isSafeInteger(testManifest.bytes)
+    || testManifest.bytes < 1 || !hashPattern.test(testManifest.sha256)) throw new Error("build-info execution isolation test projection is invalid");
   if (!info.versions.protocols || typeof info.versions.protocols !== "object") throw new Error("build-info protocols are missing");
   assertExactKeys(info.versions.protocols as unknown as Record<string, unknown>, ["link", "worker", "mcp"], "protocols");
   assertProtocol("link", info.versions.protocols?.link);

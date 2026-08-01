@@ -642,7 +642,28 @@
       "api": "DeleteAppContainerProfile",
       "container": "RecoverJournals",
       "occurrenceId": "exec-0515df0a9b409e806a87b2d4"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "family": "native-addon",
+      "api": "LoadLibraryExW",
+      "container": "LoadValidatedTestProjection",
+      "occurrenceId": "exec-64790978bfb03de86b5ddb6d"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "family": "native-addon",
+      "api": "GetProcAddress",
+      "container": "LoadValidatedTestProjection",
+      "occurrenceId": "exec-630302637c7988c485579ae7"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "family": "native-addon",
+      "api": "GetProcAddress",
+      "container": "ResolveTestFileHolderQuery",
+      "occurrenceId": "exec-133b0689e5afcbccad3666fc"
     }
   ],
-  "canonicalPayloadSha256": "2ad447e66484a7a4cf67103e697dae583ffa3b02ee69c753b0c1b829cf0e6741"
+  "canonicalPayloadSha256": "10b0ad2dc45107dc698ddcf30e6803fdcab1ecadcf3a542c1c0c7781abf1094b"
 }

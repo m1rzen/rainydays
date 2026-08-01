@@ -8,10 +8,13 @@ import {
   sec03ArchitectureSha256,
   sec03NativeBinaryRelatives,
   sec03NativeManifestRelative,
+  sec03NativeTestBinaryRelatives,
+  sec03NativeTestManifestRelative,
   toPosix,
   validateSec03NativeProjection,
+  validateSec03NativeTestProjection,
 } from "../../scripts/build-inputs.mjs";
-import { makeTempDir, projectRoot, removeFixture } from "../helpers.mjs";
+import { loadWindowsHandleObserverProjectionForTest, makeTempDir, projectRoot, removeFixture, runProcess } from "../helpers.mjs";
 
 async function fixture() {
   const root = await makeTempDir("mini-lux-sec03-native-identity-");
@@ -21,6 +24,8 @@ async function fixture() {
   await cp(path.join(projectRoot, "native", "sandbox-host"), path.join(root, "native", "sandbox-host"), { recursive: true });
   await cp(path.join(projectRoot, "scripts", "build-sec03-native.mjs"), path.join(root, "scripts", "build-sec03-native.mjs"));
   await cp(path.join(projectRoot, "dist", "native"), path.join(root, "dist", "native"), { recursive: true });
+  await cp(path.join(projectRoot, ".sec03-native-test"), path.join(root, ".sec03-native-test"), { recursive: true });
+  await cp(path.join(projectRoot, "build-info.json"), path.join(root, "build-info.json"));
   return root;
 }
 
@@ -36,6 +41,29 @@ async function rewriteMachine(root, relative, machine) {
   record.bytes = bytes.length;
   record.sha256 = createHash("sha256").update(bytes).digest("hex");
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+}
+
+async function mutateTestManifest(root, mutate, { commit = false } = {}) {
+  const testManifestPath = path.join(root, ...sec03NativeTestManifestRelative.split("/"));
+  const testManifest = JSON.parse(await readFile(testManifestPath, "utf8"));
+  await mutate(testManifest);
+  const bytes = Buffer.from(`${JSON.stringify(testManifest, null, 2)}\n`, "utf8");
+  await writeFile(testManifestPath, bytes);
+  if (commit) {
+    const record = { path: sec03NativeTestManifestRelative, bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
+    const productionManifestPath = path.join(root, ...sec03NativeManifestRelative.split("/"));
+    const productionManifest = JSON.parse(await readFile(productionManifestPath, "utf8"));
+    productionManifest.testProjection = { manifest: record };
+    await writeFile(productionManifestPath, `${JSON.stringify(productionManifest, null, 2)}\n`);
+    const buildInfoPath = path.join(root, "build-info.json");
+    const buildInfo = JSON.parse(await readFile(buildInfoPath, "utf8"));
+    buildInfo.versions.executionIsolation.testProjection = { manifest: record };
+    await writeFile(buildInfoPath, `${JSON.stringify(buildInfo, null, 2)}\n`);
+  }
+}
+
+async function fixtureBuildInfo(root) {
+  return JSON.parse(await readFile(path.join(root, "build-info.json"), "utf8"));
 }
 
 test("SEC-03 source digest authored set includes native sources, build logic, runtime, governance and matrix inputs", async () => {
@@ -111,6 +139,122 @@ test("SEC-03 native projection rejects stale native source and manifest toolchai
   }
 });
 
+test("SEC-03 native test projection is committed by production identity and cannot self-sign", async () => {
+  const root = await fixture();
+  try {
+    const buildInfo = await fixtureBuildInfo(root);
+    const identity = await validateSec03NativeTestProjection(root, { buildInfo });
+    assert.deepEqual(identity.binaries.map((entry) => entry.path), sec03NativeTestBinaryRelatives);
+    assert.equal(identity.manifest.path, sec03NativeTestManifestRelative);
+    assert.equal(identity.addon.path, sec03NativeTestBinaryRelatives[1]);
+
+    const addonPath = path.join(root, ...sec03NativeTestBinaryRelatives[1].split("/"));
+    const changedAddon = Buffer.concat([await readFile(addonPath), Buffer.from([0])]);
+    await writeFile(addonPath, changedAddon);
+    await mutateTestManifest(root, (manifest) => {
+      const addon = manifest.outputs[1];
+      addon.bytes = changedAddon.length;
+      addon.sha256 = createHash("sha256").update(changedAddon).digest("hex");
+    });
+    await assert.rejects(
+      () => validateSec03NativeTestProjection(root, { buildInfo }),
+      /native test manifest byte identity differs/u,
+    );
+  } finally {
+    await removeFixture(root);
+  }
+});
+
+test("SEC-03 native test projection permits only the one test define and production source identity", async () => {
+  const sourceRoot = await fixture();
+  try {
+    await mutateTestManifest(sourceRoot, (manifest) => { manifest.sourceDigest = "0".repeat(64); }, { commit: true });
+    await assert.rejects(
+      () => fixtureBuildInfo(sourceRoot).then((buildInfo) => validateSec03NativeTestProjection(sourceRoot, { buildInfo })),
+      /test manifest identity differs from production/u,
+    );
+  } finally {
+    await removeFixture(sourceRoot);
+  }
+
+  const argumentsRoot = await fixture();
+  try {
+    await mutateTestManifest(argumentsRoot, (manifest) => {
+      const link = manifest.canonicalArguments.launcherCompile.indexOf("/link");
+      manifest.canonicalArguments.launcherCompile.splice(link, 0, "/DUNREVIEWED_TEST_DEFINE");
+    }, { commit: true });
+    await assert.rejects(
+      () => fixtureBuildInfo(argumentsRoot).then((buildInfo) => validateSec03NativeTestProjection(argumentsRoot, { buildInfo })),
+      /differs from the one allowed test define/u,
+    );
+  } finally {
+    await removeFixture(argumentsRoot);
+  }
+});
+
+test("SEC-03 native addons expose exact production and test-only top-level APIs", async () => {
+  assert.equal(process.platform, "win32");
+  assert.equal(process.arch, "x64");
+  const { production, nativeTest } = await loadWindowsHandleObserverProjectionForTest();
+  assert.deepEqual(Reflect.ownKeys(production).sort(), ["openEvidenceVerifier", "openExclusiveHostLease", "protocolVersion"]);
+  assert.deepEqual(Reflect.ownKeys(nativeTest).sort(), [
+    "observeWindowsFileHandleInProcessTreeForTest",
+    "openEvidenceVerifier",
+    "openExclusiveHostLease",
+    "protocolVersion",
+  ]);
+  assert.equal(production.observeWindowsFileHandleInProcessTreeForTest, undefined);
+  assert.equal(typeof production.openExclusiveHostLease.loadValidatedTestProjection, "function");
+  assert.equal(typeof nativeTest.observeWindowsFileHandleInProcessTreeForTest, "function");
+  assert.equal(nativeTest.protocolVersion, 1);
+  const observe = nativeTest.observeWindowsFileHandleInProcessTreeForTest;
+  const canonicalPath = path.join(projectRoot, "package.json");
+  const casingAlias = canonicalPath.toLowerCase();
+  assert.notEqual(casingAlias, canonicalPath);
+  for (const args of [["relative.bin", 1], [`\\\\?\\${canonicalPath}`, 1], [casingAlias, 1], [canonicalPath, 0], [canonicalPath, 1.5], [canonicalPath, 0x1_0000_0000]]) {
+    assert.throws(() => observe(...args), (error) => error?.code === "EXEC_NATIVE_TEST_OBSERVER_INPUT" && !String(error.message).includes(projectRoot));
+  }
+  const uncPath = `\\\\localhost\\${canonicalPath[0]}` + "$" + canonicalPath.slice(2);
+  assert.throws(
+    () => observe(uncPath, 0xFFFFFFFF),
+    (error) => error?.code === "EXEC_NATIVE_TEST_OBSERVER_DOMAIN" && !String(error.message).includes(uncPath),
+  );
+  assert.throws(
+    () => observe(uncPath.toUpperCase(), 0xFFFFFFFF),
+    (error) => error?.code === "EXEC_NATIVE_TEST_OBSERVER_INPUT" && !String(error.message).includes(uncPath),
+  );
+
+  const aliasRoot = await makeTempDir("RainyDays Observer Canonical Fixture ");
+  try {
+    const longDirectory = path.join(aliasRoot, "Long Component Name");
+    const longPath = path.join(longDirectory, "Target File.bin");
+    await mkdir(longDirectory);
+    await writeFile(longPath, "canonical-alias-probe");
+    const shortResult = await runProcess(process.env.ComSpec || "cmd.exe", [
+      "/d", "/c", 'for %I in ("%RAINYDAYS_OBSERVER_ALIAS_TARGET%") do @echo %~sI',
+    ], {
+      env: { ...process.env, RAINYDAYS_OBSERVER_ALIAS_TARGET: longPath },
+      windowsVerbatimArguments: true,
+    });
+    assert.equal(shortResult.code, 0, shortResult.stderr);
+    const shortPath = shortResult.stdout.trim().replace(/^"|"$/gu, "");
+    assert.notEqual(shortPath.toLowerCase(), longPath.toLowerCase(), "8.3 alias was not exposed for canonical observer coverage");
+    assert.throws(() => observe(shortPath, 0xFFFFFFFF), (error) => error?.code === "EXEC_NATIVE_TEST_OBSERVER_INPUT");
+    assert.throws(() => observe(longPath, 0xFFFFFFFF), (error) => error?.code === "EXEC_NATIVE_TEST_OBSERVER_DOMAIN");
+  } finally {
+    await removeFixture(aliasRoot);
+  }
+
+  assert.throws(
+    () => observe(canonicalPath, 0xFFFFFFFF),
+    (error) => error?.code === "EXEC_NATIVE_TEST_OBSERVER_DOMAIN" && !String(error.message).includes(String(0xFFFFFFFF)),
+  );
+  assert.throws(
+    () => observe(canonicalPath, process.pid),
+    (error) => error?.code === "EXEC_NATIVE_TEST_OBSERVER_DOMAIN" && !String(error.message).includes(String(process.pid)),
+  );
+});
+
 test("SEC-03 build metadata and electron package bind the exact current native artifacts", async () => {
   const [packageJson, buildInfo, nativeManifest] = await Promise.all([
     readFile(path.join(projectRoot, "package.json"), "utf8").then(JSON.parse),
@@ -123,6 +267,8 @@ test("SEC-03 build metadata and electron package bind the exact current native a
   assert.equal(buildInfo.versions.executionIsolation.toolchainDigest, nativeManifest.toolchainDigest);
   assert.equal(buildInfo.versions.executionIsolation.signatureStatus, nativeManifest.signatureStatus);
   assert.deepEqual(buildInfo.versions.executionIsolation.artifacts, nativeManifest.outputs);
+  assert.deepEqual(buildInfo.versions.executionIsolation.testProjection, nativeManifest.testProjection);
+  assert.equal(nativeManifest.testProjection.manifest.path, sec03NativeTestManifestRelative);
   assert(packageJson.build.files.includes("dist/native/sec03-native-manifest.json"));
   assert(packageJson.build.files.includes("electron-stage-integrity.json"));
   assert.deepEqual(
@@ -134,5 +280,7 @@ test("SEC-03 build metadata and electron package bind the exact current native a
     ["dist/native/sandbox-host.exe", "dist/native/sandbox-launcher.node"],
   );
   assert(!packageJson.build.files.some((entry) => entry === "dist/**/*" || entry.startsWith("dist/native/*")));
+  assert(!packageJson.build.files.some((entry) => entry.includes(".sec03-native-test")));
   assert(!packageJson.build.asarUnpack.some((entry) => entry.startsWith("dist/native/*")));
+  assert(!packageJson.build.asarUnpack.some((entry) => entry.includes(".sec03-native-test")));
 });

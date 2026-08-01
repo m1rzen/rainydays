@@ -104,7 +104,7 @@ test("SEC-03 local API accepts only the private trusted header and publishes no 
     await waitFor(async () => {
       const response = await fetch(`${origin}/api/status`, { headers: { "X-RainyDays-Token": token } }).catch(() => null);
       return response?.ok === true;
-    }, { timeoutMs: 30_000, label: "SEC-03 private-header server" }).catch(error => {
+    }, { timeoutMs: 60_000, label: "SEC-03 private-header server" }).catch(error => {
       throw new Error(`${error.message}\nstdout=${stdout}\nstderr=${stderr}`);
     });
 

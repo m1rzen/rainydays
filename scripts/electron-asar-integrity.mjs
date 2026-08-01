@@ -263,6 +263,7 @@ export async function validateElectronAsar(projectRoot, appResourcesDirectory) {
       toolchainDigest: native.toolchainDigest,
       signatureStatus: native.signatureStatus,
       binaries: native.binaries,
+      testProjection: native.testProjection,
     }),
     sinkInventorySha256: sinkInventory.canonicalPayloadSha256,
     detectorPolicySha256: sinkInventory.detectorPolicySha256,

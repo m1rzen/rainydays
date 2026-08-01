@@ -34,11 +34,16 @@ async function main() {
   const nativeManifest = JSON.parse(await readFile(path.join(projectRoot, "dist", "native", "sec03-native-manifest.json"), "utf8"));
   const nativeOutputs = Array.isArray(nativeManifest.outputs) ? nativeManifest.outputs : [];
   const expectedNativePaths = ["dist/native/sandbox-host.exe", "dist/native/sandbox-launcher.node"];
+  const testManifest = nativeManifest.testProjection?.manifest;
   if (nativeManifest.schemaVersion !== 1 || nativeManifest.architecture !== "x64"
     || !hashPattern.test(nativeManifest.sourceDigest || "") || !hashPattern.test(nativeManifest.toolchainDigest || "")
     || nativeManifest.signatureStatus !== "unsigned-local" || nativeOutputs.length !== expectedNativePaths.length
     || nativeOutputs.some((entry, index) => !entry || entry.path !== expectedNativePaths[index]
-      || entry.machine !== "AMD64" || !Number.isSafeInteger(entry.bytes) || entry.bytes < 1 || !hashPattern.test(entry.sha256 || ""))) {
+      || entry.machine !== "AMD64" || !Number.isSafeInteger(entry.bytes) || entry.bytes < 1 || !hashPattern.test(entry.sha256 || ""))
+    || JSON.stringify(Object.keys(nativeManifest.testProjection ?? {}).sort()) !== JSON.stringify(["manifest"])
+    || !testManifest || JSON.stringify(Object.keys(testManifest).sort()) !== JSON.stringify(["bytes", "path", "sha256"])
+    || testManifest.path !== ".sec03-native-test/sec03-native-test-manifest.json"
+    || !Number.isSafeInteger(testManifest.bytes) || testManifest.bytes < 1 || !hashPattern.test(testManifest.sha256 || "")) {
     throw new Error("SEC-03 native manifest is missing, stale, or has an invalid artifact identity");
   }
 
@@ -94,6 +99,7 @@ async function main() {
         toolchainDigest: nativeManifest.toolchainDigest,
         signatureStatus: nativeManifest.signatureStatus,
         artifacts: nativeOutputs.map((entry) => ({ path: entry.path, bytes: entry.bytes, sha256: entry.sha256, machine: entry.machine })),
+        testProjection: { manifest: { ...testManifest } },
       },
       protocols: {
         link: { version: 1, enabled: true, transport: "in-process" },

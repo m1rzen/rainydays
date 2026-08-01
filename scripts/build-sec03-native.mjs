@@ -186,7 +186,27 @@ async function outputRecords(relativePaths) {
   return outputs;
 }
 
+async function expectedTestManifest() {
+  return {
+    schemaVersion: 1,
+    architecture: "x64",
+    canonicalArguments: canonicalTestArguments,
+    outputs: await outputRecords(testOutputRelative),
+    sourceDigest,
+    toolchainDigest,
+  };
+}
+
+async function expectedTestManifestBytes() {
+  return Buffer.from(`${JSON.stringify(await expectedTestManifest(), null, 2)}\n`, "utf8");
+}
+
+function testManifestRecord(bytes) {
+  return { path: testManifestRelative, bytes: bytes.length, sha256: sha256(bytes) };
+}
+
 async function expectedManifest() {
+  const testManifestBytes = await expectedTestManifestBytes();
   return {
     schemaVersion: 1,
     architecture: "x64",
@@ -195,18 +215,8 @@ async function expectedManifest() {
     signatureStatus: "unsigned-local",
     sourceDigest,
     sourceFiles,
+    testProjection: { manifest: testManifestRecord(testManifestBytes) },
     toolchain,
-    toolchainDigest,
-  };
-}
-
-async function expectedTestManifest() {
-  return {
-    schemaVersion: 1,
-    architecture: "x64",
-    canonicalArguments: canonicalTestArguments,
-    outputs: await outputRecords(testOutputRelative),
-    sourceDigest,
     toolchainDigest,
   };
 }
@@ -220,11 +230,29 @@ async function exactManifest(relative, expected) {
   }
 }
 
+async function productionCommitsCurrentTestManifest() {
+  try {
+    const [production, testManifestBytes] = await Promise.all([
+      readFile(path.join(projectRoot, ...manifestRelative.split("/")), "utf8").then(JSON.parse),
+      readFile(path.join(projectRoot, ...testManifestRelative.split("/"))),
+    ]);
+    return JSON.stringify(production.testProjection) === JSON.stringify({ manifest: testManifestRecord(testManifestBytes) });
+  } catch {
+    return false;
+  }
+}
+
 const distNative = path.join(projectRoot, "dist", "native");
+const testNative = path.join(projectRoot, ".sec03-native-test");
+const productionExpectedNames = ["sandbox-host.exe", "sandbox-launcher.node", "sec03-native-manifest.json"].sort();
+const testExpectedNames = ["sandbox-host.exe", "sandbox-launcher.node", "sec03-native-test-manifest.json"].sort();
 if (checkOnly) {
-  const names = (await readdir(distNative)).sort();
-  const expectedNames = ["sandbox-host.exe", "sandbox-launcher.node", "sec03-native-manifest.json"].sort();
-  if (JSON.stringify(names) !== JSON.stringify(expectedNames)) throw new Error(`SEC-03 native output set mismatch: ${names.join(", ")}`);
+  const [names, testNames] = await Promise.all([readdir(distNative), readdir(testNative)]);
+  names.sort();
+  testNames.sort();
+  if (JSON.stringify(names) !== JSON.stringify(productionExpectedNames)) throw new Error(`SEC-03 native output set mismatch: ${names.join(", ")}`);
+  if (JSON.stringify(testNames) !== JSON.stringify(testExpectedNames)) throw new Error(`SEC-03 native test output set mismatch: ${testNames.join(", ")}`);
+  if (!await exactManifest(testManifestRelative, expectedTestManifest)) throw new Error("SEC-03 native test manifest is stale or does not match source/toolchain/output identity");
   const actual = JSON.parse(await readFile(path.join(projectRoot, ...manifestRelative.split("/")), "utf8"));
   const expected = await expectedManifest();
   if (`${JSON.stringify(actual, null, 2)}\n` !== `${JSON.stringify(expected, null, 2)}\n`) throw new Error("SEC-03 native manifest is stale or does not match source/toolchain/output identity");
@@ -233,11 +261,13 @@ if (checkOnly) {
 }
 
 const temp = path.join(projectRoot, ".sec03-native-build");
-const testNative = path.join(projectRoot, ".sec03-native-test");
 const productionNames = await readdir(distNative).catch(() => []);
-const productionReusable = JSON.stringify(productionNames.sort()) === JSON.stringify(["sandbox-host.exe", "sandbox-launcher.node", "sec03-native-manifest.json"].sort())
+const productionReusable = JSON.stringify(productionNames.sort()) === JSON.stringify(productionExpectedNames)
   && await exactManifest(manifestRelative, expectedManifest);
-const testReusable = await exactManifest(testManifestRelative, expectedTestManifest);
+const testNames = await readdir(testNative).catch(() => []);
+const testReusable = JSON.stringify(testNames.sort()) === JSON.stringify(testExpectedNames)
+  && await exactManifest(testManifestRelative, expectedTestManifest)
+  && await productionCommitsCurrentTestManifest();
 if (productionReusable && testReusable) {
   console.log(`SEC-03 native build REUSED ${sourceDigest}`);
   process.exit(0);
@@ -262,8 +292,6 @@ try {
     await rm(path.join(distNative, "sandbox-host.exe"), { force: true });
     await rename(launcherOut, path.join(distNative, "sandbox-launcher.node"));
     await rename(hostOut, path.join(distNative, "sandbox-host.exe"));
-    const manifest = await expectedManifest();
-    await writeFile(path.join(projectRoot, ...manifestRelative.split("/")), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   }
   if (!testReusable) {
     const launcherOut = path.join(temp, "sandbox-launcher-test.node");
@@ -274,8 +302,11 @@ try {
     await rm(path.join(testNative, "sandbox-host.exe"), { force: true });
     await rename(launcherOut, path.join(testNative, "sandbox-launcher.node"));
     await rename(hostOut, path.join(testNative, "sandbox-host.exe"));
-    const manifest = await expectedTestManifest();
-    await writeFile(path.join(projectRoot, ...testManifestRelative.split("/")), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+    await writeFile(path.join(projectRoot, ...testManifestRelative.split("/")), await expectedTestManifestBytes());
+  }
+  if (!productionReusable || !testReusable) {
+    const manifest = await expectedManifest();
+    await writeFile(path.join(projectRoot, ...manifestRelative.split("/")), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   }
   console.log(`SEC-03 native build PASS ${sourceDigest}`);
 } finally {

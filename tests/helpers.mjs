@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, realpath, readdir, rename, rm, stat, unlink, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateSec03NativeTestProjection } from "../scripts/build-inputs.mjs";
 import {
   currentResolvedManifestPath as sec02ResolvedManifestRelative,
   validateSec02ResolvedManifest,
@@ -14,7 +16,6 @@ import {
   resolvedManifestPath as sec03ResolvedManifestRelative,
   validateSec03ResolvedManifest,
 } from "../scripts/sec03-governance.mjs";
-import { windowsFileHandleObserverScript } from "./fixtures/windows-file-handle-observer.mjs";
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const processTemporaryRootRequest = path.resolve(os.tmpdir());
@@ -518,13 +519,14 @@ export function spawnManaged(command, args, options = {}) {
     env: options.env ?? process.env,
     stdio: options.stdio ?? ["ignore", "pipe", "pipe"],
     windowsHide: true,
+    windowsVerbatimArguments: options.windowsVerbatimArguments ?? false,
     detached: process.platform !== "win32",
     shell: false,
   });
 }
 
-export async function runProcess(command, args, { cwd = projectRoot, env = process.env, timeoutMs = 120_000, echo = false } = {}) {
-  const child = spawnManaged(command, args, { cwd, env });
+export async function runProcess(command, args, { cwd = projectRoot, env = process.env, timeoutMs = 120_000, echo = false, windowsVerbatimArguments = false } = {}) {
+  const child = spawnManaged(command, args, { cwd, env, windowsVerbatimArguments });
   let stdout = "";
   let stderr = "";
   child.stdout?.setEncoding("utf8");
@@ -552,33 +554,72 @@ export async function runProcess(command, args, { cwd = projectRoot, env = proce
   return { ...result, stdout, stderr };
 }
 
+const nativeTestRequire = createRequire(import.meta.url);
+const productionAddonKeys = Object.freeze(["openEvidenceVerifier", "openExclusiveHostLease", "protocolVersion"].sort());
+const nativeTestAddonKeys = Object.freeze([
+  "observeWindowsFileHandleInProcessTreeForTest",
+  "openEvidenceVerifier",
+  "openExclusiveHostLease",
+  "protocolVersion",
+].sort());
+let windowsHandleObserverProjectionPromise;
+
+async function validateAndLoadWindowsHandleObserverProjection() {
+  assert.equal(process.platform, "win32", "file handle observation requires Windows");
+  assert.equal(process.arch, "x64", "file handle observation requires Windows x64");
+  const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
+  const identity = await validateSec03NativeTestProjection(projectRoot, { buildInfo });
+  const productionRecord = buildInfo.versions.executionIsolation.artifacts[1];
+  const productionPath = path.join(projectRoot, ...productionRecord.path.split("/"));
+  const resolvedProductionPath = nativeTestRequire.resolve(productionPath);
+  assert.equal(nativeTestRequire.cache[resolvedProductionPath], undefined, "production native addon was loaded before identity validation");
+  let production;
+  try {
+    production = nativeTestRequire(resolvedProductionPath);
+    assert.deepEqual(Reflect.ownKeys(production).sort(), productionAddonKeys, "production native addon exports differ");
+    assert.equal(production.protocolVersion, 1, "production native addon protocol differs");
+    const load = production.openExclusiveHostLease?.loadValidatedTestProjection;
+    assert.equal(typeof load, "function", "production native test projection loader is unavailable");
+    const nativeTest = load(identity.addon.sha256, identity.addon.bytes);
+    const ownKeys = Reflect.ownKeys(nativeTest);
+    assert(ownKeys.every((key) => typeof key === "string"), "native test addon has non-string exports");
+    assert.deepEqual([...ownKeys].sort(), nativeTestAddonKeys, "native test addon exports differ");
+    assert.equal(nativeTest.protocolVersion, 1, "native test addon protocol differs");
+    for (const operation of ["openEvidenceVerifier", "openExclusiveHostLease", "observeWindowsFileHandleInProcessTreeForTest"]) {
+      assert.equal(typeof nativeTest[operation], "function", `native test addon ${operation} export is invalid`);
+    }
+    return Object.freeze({ production, nativeTest });
+  } catch (error) {
+    delete nativeTestRequire.cache[resolvedProductionPath];
+    throw error;
+  }
+}
+
+export function loadWindowsHandleObserverProjectionForTest() {
+  if (!windowsHandleObserverProjectionPromise) {
+    const attempt = validateAndLoadWindowsHandleObserverProjection();
+    windowsHandleObserverProjectionPromise = attempt;
+    void attempt.catch(() => {
+      if (windowsHandleObserverProjectionPromise === attempt) windowsHandleObserverProjectionPromise = undefined;
+    });
+  }
+  return windowsHandleObserverProjectionPromise;
+}
+
 export async function observeWindowsFileHandleInProcessTree(filePath, rootProcessId) {
   assert.equal(process.platform, "win32", "file handle observation requires Windows");
   assert.equal(path.isAbsolute(filePath), true, "observed file path must be absolute");
   assert(Number.isInteger(rootProcessId) && rootProcessId > 0 && rootProcessId <= 0xFFFFFFFF, "observed process root PID is invalid");
-  const encodedObserver = Buffer.from(windowsFileHandleObserverScript, "utf16le").toString("base64");
-  const result = await runProcess("powershell.exe", [
-    "-NoLogo", "-NoProfile", "-NonInteractive", "-EncodedCommand", encodedObserver,
-  ], {
-    env: {
-      ...process.env,
-      RAINYDAYS_HANDLE_OBSERVER_PATH: filePath,
-      RAINYDAYS_HANDLE_OBSERVER_ROOT_PID: String(rootProcessId),
-    },
-    timeoutMs: 15_000,
-  });
-  assert.equal(result.signal, null, "file handle observer crashed");
-  assert.equal(result.code, 0, `file handle observer failed: ${result.stderr.slice(-1000)}`);
-  assert.equal(result.stderr.trim(), "", "file handle observer emitted stderr");
-  assert(result.stdout.length > 0 && result.stdout.length <= 256, "file handle observation is not bounded");
-  const observation = JSON.parse(result.stdout);
+  const { nativeTest } = await loadWindowsHandleObserverProjectionForTest();
+  const observation = nativeTest.observeWindowsFileHandleInProcessTreeForTest(filePath, rootProcessId);
   assertExactKeys(observation, ["holderCount", "matchingCount", "matched"], "file handle observation");
   for (const field of ["holderCount", "matchingCount"]) {
     assert(Number.isInteger(observation[field]) && observation[field] >= 0 && observation[field] <= 4096, `${field} is invalid`);
   }
   assert(observation.matchingCount <= observation.holderCount, "matching holder count exceeds total holders");
   assert.equal(observation.matched, observation.matchingCount > 0, "matched state differs from holder count");
-  return Object.freeze(observation);
+  assert.equal(Object.isFrozen(observation), true, "file handle observation must be frozen");
+  return observation;
 }
 
 export function parseTapSummary(output) {

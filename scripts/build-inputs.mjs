@@ -57,6 +57,15 @@ export const sec03NativeOutputRelatives = Object.freeze([
   ...sec03NativeBinaryRelatives,
   sec03NativeManifestRelative,
 ]);
+export const sec03NativeTestManifestRelative = ".sec03-native-test/sec03-native-test-manifest.json";
+export const sec03NativeTestBinaryRelatives = Object.freeze([
+  ".sec03-native-test/sandbox-host.exe",
+  ".sec03-native-test/sandbox-launcher.node",
+]);
+export const sec03NativeTestOutputRelatives = Object.freeze([
+  ...sec03NativeTestBinaryRelatives,
+  sec03NativeTestManifestRelative,
+]);
 
 const sha256Pattern = /^[a-f0-9]{64}$/u;
 const sec03NativeSourceDomain = "mini-lux-sec03-native-source-v1";
@@ -231,10 +240,12 @@ export async function validateSec03NativeProjection(projectRoot, options = {}) {
 
   const manifestBytes = await readFile(path.join(projectRoot, ...sec03NativeManifestRelative.split("/")));
   const manifest = JSON.parse(manifestBytes.toString("utf8"));
-  exactKeys(manifest, ["schemaVersion", "architecture", "canonicalArguments", "outputs", "signatureStatus", "sourceDigest", "sourceFiles", "toolchain", "toolchainDigest"], "SEC-03 native manifest");
+  exactKeys(manifest, ["schemaVersion", "architecture", "canonicalArguments", "outputs", "signatureStatus", "sourceDigest", "sourceFiles", "testProjection", "toolchain", "toolchainDigest"], "SEC-03 native manifest");
   if (manifest.schemaVersion !== 1 || manifest.architecture !== "x64" || manifest.signatureStatus !== "unsigned-local") throw new Error("SEC-03 native manifest semantic identity is invalid");
   assertHash(manifest.sourceDigest, "SEC-03 native sourceDigest");
   assertHash(manifest.toolchainDigest, "SEC-03 native toolchainDigest");
+  exactKeys(manifest.testProjection, ["manifest"], "SEC-03 native testProjection");
+  assertSafeRecord(manifest.testProjection.manifest, sec03NativeTestManifestRelative, "SEC-03 native testProjection.manifest");
 
   exactKeys(manifest.canonicalArguments, ["launcherCompile", "hostCompile"], "SEC-03 native canonicalArguments");
   for (const [name, args] of Object.entries(manifest.canonicalArguments)) {
@@ -288,11 +299,21 @@ export async function validateSec03NativeProjection(projectRoot, options = {}) {
     binaries.push(Object.freeze({ path: expectedPath, bytes: bytes.length, sha256: sha256(bytes), machine: "AMD64" }));
   }
 
+  const testProjection = Object.freeze({
+    manifest: Object.freeze({ ...manifest.testProjection.manifest }),
+  });
   if (options.buildInfo) {
     const isolation = options.buildInfo.versions?.executionIsolation;
+    if (isolation) {
+      exactKeys(isolation, ["architectureSha256", "protocolVersion", "nativeSourceDigest", "toolchainDigest", "signatureStatus", "artifacts", "testProjection"], "build-info SEC-03 executionIsolation");
+      exactKeys(isolation.testProjection, ["manifest"], "build-info SEC-03 testProjection");
+      assertSafeRecord(isolation.testProjection.manifest, sec03NativeTestManifestRelative, "build-info SEC-03 testProjection.manifest");
+    }
     if (!isolation || isolation.architectureSha256 !== sec03ArchitectureSha256 || isolation.protocolVersion !== 1
       || isolation.nativeSourceDigest !== manifest.sourceDigest || isolation.toolchainDigest !== manifest.toolchainDigest
-      || isolation.signatureStatus !== manifest.signatureStatus || JSON.stringify(isolation.artifacts) !== JSON.stringify(binaries)) {
+      || isolation.signatureStatus !== manifest.signatureStatus || JSON.stringify(isolation.artifacts) !== JSON.stringify(binaries)
+      || isolation.testProjection.manifest.bytes !== testProjection.manifest.bytes
+      || isolation.testProjection.manifest.sha256 !== testProjection.manifest.sha256) {
       throw new Error("build-info SEC-03 native identity differs from current outputs");
     }
   }
@@ -304,5 +325,76 @@ export async function validateSec03NativeProjection(projectRoot, options = {}) {
     toolchainDigest: manifest.toolchainDigest,
     signatureStatus: manifest.signatureStatus,
     binaries: Object.freeze(binaries),
+    testProjection,
+  });
+}
+
+function expectedTestCompileArguments(argumentsList, field) {
+  const linkIndexes = argumentsList.flatMap((entry, index) => entry === "/link" ? [index] : []);
+  if (linkIndexes.length !== 1 || argumentsList.includes("/DMINI_LUX_SEC03_NATIVE_TEST")) {
+    throw new Error(`${field} cannot derive the SEC-03 native test argument identity`);
+  }
+  const linkIndex = linkIndexes[0];
+  return [...argumentsList.slice(0, linkIndex), "/DMINI_LUX_SEC03_NATIVE_TEST", ...argumentsList.slice(linkIndex)];
+}
+
+export async function validateSec03NativeTestProjection(projectRoot, options = {}) {
+  if (!options.buildInfo) throw new Error("build-info is required for SEC-03 native test projection validation");
+  const production = await validateSec03NativeProjection(projectRoot, { buildInfo: options.buildInfo });
+  const productionManifestBytes = await readFile(path.join(projectRoot, ...sec03NativeManifestRelative.split("/")));
+  if (productionManifestBytes.length !== production.manifest.bytes || sha256(productionManifestBytes) !== production.manifest.sha256) {
+    throw new Error("SEC-03 native manifest changed during test projection validation");
+  }
+  const productionManifest = JSON.parse(productionManifestBytes.toString("utf8"));
+  if (JSON.stringify(productionManifest.testProjection) !== JSON.stringify(production.testProjection)) {
+    throw new Error("SEC-03 native test projection commitment differs");
+  }
+
+  const testDirectory = path.join(projectRoot, ".sec03-native-test");
+  const testDirectoryInfo = await lstat(testDirectory);
+  if (testDirectoryInfo.isSymbolicLink() || !testDirectoryInfo.isDirectory()) throw new Error("SEC-03 native test output directory is invalid");
+  const actualPaths = (await listRegularFiles(testDirectory, projectRoot))
+    .map((absolute) => toPosix(path.relative(projectRoot, absolute)))
+    .sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+  const expectedPaths = [...sec03NativeTestOutputRelatives].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+  if (JSON.stringify(actualPaths) !== JSON.stringify(expectedPaths)) throw new Error(`SEC-03 native test output set mismatch: ${actualPaths.join(", ")}`);
+
+  const committedManifest = production.testProjection.manifest;
+  const testManifestBytes = await assertFileRecord(projectRoot, committedManifest, "SEC-03 native test manifest");
+  const testManifest = JSON.parse(testManifestBytes.toString("utf8"));
+  exactKeys(testManifest, ["schemaVersion", "architecture", "canonicalArguments", "outputs", "sourceDigest", "toolchainDigest"], "SEC-03 native test manifest");
+  if (testManifest.schemaVersion !== 1 || testManifest.architecture !== "x64"
+    || testManifest.sourceDigest !== production.sourceDigest || testManifest.toolchainDigest !== production.toolchainDigest) {
+    throw new Error("SEC-03 native test manifest identity differs from production");
+  }
+
+  exactKeys(testManifest.canonicalArguments, ["launcherCompile", "hostCompile"], "SEC-03 native test canonicalArguments");
+  for (const name of ["launcherCompile", "hostCompile"]) {
+    const productionArguments = productionManifest.canonicalArguments[name];
+    const testArguments = testManifest.canonicalArguments[name];
+    if (!Array.isArray(productionArguments) || !Array.isArray(testArguments)
+      || JSON.stringify(testArguments) !== JSON.stringify(expectedTestCompileArguments(productionArguments, `SEC-03 native ${name}`))) {
+      throw new Error(`SEC-03 native test ${name} differs from the one allowed test define`);
+    }
+  }
+
+  if (!Array.isArray(testManifest.outputs) || testManifest.outputs.length !== sec03NativeTestBinaryRelatives.length) {
+    throw new Error("SEC-03 native test outputs are invalid");
+  }
+  const binaries = [];
+  for (const [index, expectedPath] of sec03NativeTestBinaryRelatives.entries()) {
+    const record = testManifest.outputs[index];
+    exactKeys(record, ["path", "bytes", "sha256", "machine"], `SEC-03 native test outputs[${index}]`);
+    if (record.machine !== "AMD64") throw new Error(`SEC-03 native test output machine differs: ${expectedPath}`);
+    assertSafeRecord({ path: record.path, bytes: record.bytes, sha256: record.sha256 }, expectedPath, `SEC-03 native test outputs[${index}]`);
+    const bytes = await assertFileRecord(projectRoot, record, `SEC-03 native test output ${expectedPath}`);
+    if (parsePeMachine(bytes, expectedPath) !== 0x8664) throw new Error(`${expectedPath} is not AMD64 PE`);
+    binaries.push(Object.freeze({ path: expectedPath, bytes: bytes.length, sha256: sha256(bytes), machine: "AMD64" }));
+  }
+
+  return Object.freeze({
+    manifest: Object.freeze({ ...committedManifest }),
+    binaries: Object.freeze(binaries),
+    addon: binaries[1],
   });
 }

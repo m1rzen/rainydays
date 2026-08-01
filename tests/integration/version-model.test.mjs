@@ -25,6 +25,7 @@ async function copyRegressionSandbox(root) {
     await cp(source, target);
   }
   await cp(path.join(projectRoot, "dist"), path.join(root, "dist"), { recursive: true });
+  await cp(path.join(projectRoot, ".sec03-native-test"), path.join(root, ".sec03-native-test"), { recursive: true });
   for (const file of ["build-info.json", "dist-integrity.json"]) await cp(path.join(projectRoot, file), path.join(root, file));
   await symlink(path.join(projectRoot, "node_modules"), path.join(root, "node_modules"), "junction");
 }

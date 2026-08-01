@@ -24,6 +24,7 @@ import {
   runProcess,
   spawnManaged,
   terminateProcessTreeAsync,
+  waitFor,
   safeRelativePath,
   sha256File,
   validateCoverageGovernance,
@@ -319,6 +320,7 @@ test("packaged crash and observation failures are fail-closed", () => {
         { path: "dist/native/sandbox-host.exe", bytes: 128, sha256: "5".repeat(64), machine: "AMD64" },
         { path: "dist/native/sandbox-launcher.node", bytes: 128, sha256: "6".repeat(64), machine: "AMD64" },
       ],
+      testProjection: { manifest: { path: ".sec03-native-test/sec03-native-test-manifest.json", bytes: 128, sha256: "7".repeat(64) } },
     },
     sinkInventorySha256: "4".repeat(64), detectorPolicySha256: "5".repeat(64), reviewPolicySha256: "6".repeat(64),
     dialectCheckerSha256: "b".repeat(64), dialectPolicySha256: "c".repeat(64), dialectImportSetSha256: "d".repeat(64),
@@ -418,11 +420,11 @@ test("Windows file handle observation binds holders to the exact process tree", 
   try {
     const target = path.join(root, "target.bin");
     await writeFile(target, Buffer.alloc(4096, 0x41));
+    const holderScript = "const fs=require('node:fs');fs.openSync(process.env.RAINYDAYS_HANDLE_FILE,'r');process.on('message',message=>{if(message==='stop')process.exit(0)});process.on('disconnect',()=>process.exit(0));process.send('ready');setInterval(()=>{},1000)";
     holder = spawnManaged(process.execPath, [
       "-e",
-      "const fs=require('node:fs');fs.openSync(process.env.RAINYDAYS_HANDLE_FILE,'r');process.stdout.write('ready\\n');setInterval(()=>{},1000)",
-    ], { env: { ...process.env, RAINYDAYS_HANDLE_FILE: target } });
-    unrelatedRoot = spawnManaged(process.execPath, ["-e", "process.stdout.write('ready\\n');setInterval(()=>{},1000)"]);
+      "const {spawn}=require('node:child_process');const child=spawn(process.execPath,['-e',process.env.RAINYDAYS_HOLDER_SCRIPT],{env:process.env,stdio:['ignore','ignore','ignore','ipc'],windowsHide:true});child.once('message',()=>process.stdout.write('ready\\n'));process.on('message',message=>{if(message==='stop')child.send('stop')});child.once('exit',()=>process.exit(0));setInterval(()=>{},1000)",
+    ], { env: { ...process.env, RAINYDAYS_HANDLE_FILE: target, RAINYDAYS_HOLDER_SCRIPT: holderScript }, stdio: ["ignore", "pipe", "pipe", "ipc"] });
     const waitForReady = (child, label) => new Promise((resolve, reject) => {
       let output = "";
       child.stdout.setEncoding("utf8");
@@ -433,13 +435,17 @@ test("Windows file handle observation binds holders to the exact process tree", 
       child.once("error", reject);
       child.once("exit", (code) => reject(new Error(`${label} exited before readiness: ${code}`)));
     });
-    await Promise.all([waitForReady(holder, "file holder"), waitForReady(unrelatedRoot, "unrelated process root")]);
+    await waitForReady(holder, "file holder");
+    unrelatedRoot = spawnManaged(process.execPath, ["-e", "process.stdout.write('ready\\n');setInterval(()=>{},1000)"]);
+    await waitForReady(unrelatedRoot, "unrelated process root");
     assert.notEqual(holder.pid, unrelatedRoot.pid);
 
     let matchedFailed = false;
     await t.test("matched holder is attributed to the managed holder root", async () => {
       try {
         const matched = await observeWindowsFileHandleInProcessTree(target, holder.pid);
+        assert.deepEqual(Object.keys(matched).sort(), ["holderCount", "matched", "matchingCount"]);
+        assert.equal(Object.isFrozen(matched), true);
         assert.equal(matched.matchingCount, 1);
         assert.equal(matched.matched, true);
       } catch (error) {
@@ -462,12 +468,31 @@ test("Windows file handle observation binds holders to the exact process tree", 
     });
     if (unrelatedFailed) return;
 
+    let uncFailed = false;
+    await t.test("canonical UNC spelling completes a bounded observation", async () => {
+      try {
+        const packagePath = path.join(projectRoot, "package.json");
+        const uncPath = `\\\\localhost\\${packagePath[0]}` + "$" + packagePath.slice(2);
+        const observation = await observeWindowsFileHandleInProcessTree(uncPath, unrelatedRoot.pid);
+        assert.equal(Object.isFrozen(observation), true);
+        assert.equal(observation.matchingCount, 0);
+        assert.equal(observation.matched, false);
+      } catch (error) {
+        uncFailed = true;
+        throw error;
+      }
+    });
+    if (uncFailed) return;
+
     let terminationFailed = false;
     await t.test("managed holder tree terminates cleanly", async () => {
       try {
-        const termination = await terminateProcessTreeAsync(holder);
-        assert.equal(termination.exitCode, 0);
-        assert.equal(termination.childExited, true);
+        const exited = new Promise((resolve, reject) => {
+          holder.once("error", reject);
+          holder.once("exit", (code) => resolve(code));
+        });
+        holder.send("stop");
+        assert.equal(await exited, 0);
       } catch (error) {
         terminationFailed = true;
         throw error;
@@ -475,14 +500,86 @@ test("Windows file handle observation binds holders to the exact process tree", 
     });
     if (terminationFailed) return;
 
-    await t.test("closed holder is absent from its former process root", async () => {
-      const closed = await observeWindowsFileHandleInProcessTree(target, holder.pid);
+    await t.test("closed holder is absent while an unrelated managed root remains live", async () => {
+      const closed = await observeWindowsFileHandleInProcessTree(target, unrelatedRoot.pid);
+      assert.equal(closed.holderCount, 0);
       assert.equal(closed.matchingCount, 0);
       assert.equal(closed.matched, false);
     });
   } finally {
     if (holder?.exitCode === null) await terminateProcessTreeAsync(holder);
     if (unrelatedRoot?.exitCode === null) await terminateProcessTreeAsync(unrelatedRoot);
+    await removeFixture(root);
+  }
+});
+
+test("Windows file handle observation fails closed when an intermediate ancestor exits", async () => {
+  assert.equal(process.platform, "win32", "file handle observation contract requires Windows");
+  const root = await makeTempDir("rainydays-file-handle-observer-gap-");
+  const target = path.join(root, "target.bin");
+  await writeFile(target, Buffer.alloc(4096, 0x42));
+  const holderScript = "const fs=require('node:fs');fs.openSync(process.env.RAINYDAYS_HANDLE_FILE,'r');process.send({holderPid:process.pid});setInterval(()=>{try{process.kill(Number(process.env.RAINYDAYS_ROOT_PID),0)}catch{process.exit(0)}},50)";
+  const intermediateScript = "const {spawn}=require('node:child_process');const child=spawn(process.execPath,['-e',process.env.RAINYDAYS_HOLDER_SCRIPT],{env:process.env,stdio:['ignore','ignore','ignore','ipc'],windowsHide:true,detached:true});child.once('message',message=>{process.send(message,()=>{child.disconnect();child.unref();process.exit(0)})})";
+  const rootScript = "const {spawn}=require('node:child_process');const child=spawn(process.execPath,['-e',process.env.RAINYDAYS_INTERMEDIATE_SCRIPT],{env:{...process.env,RAINYDAYS_ROOT_PID:String(process.pid)},stdio:['ignore','ignore','ignore','ipc'],windowsHide:true});let holderPid=0,intermediateExited=false;const publish=()=>{if(holderPid&&intermediateExited)process.send({holderPid})};child.once('message',message=>{holderPid=message.holderPid;publish()});child.once('exit',()=>{intermediateExited=true;publish()});setInterval(()=>{},1000)";
+  const managedRoot = spawnManaged(process.execPath, ["-e", rootScript], {
+    env: {
+      ...process.env,
+      RAINYDAYS_HANDLE_FILE: target,
+      RAINYDAYS_HOLDER_SCRIPT: holderScript,
+      RAINYDAYS_INTERMEDIATE_SCRIPT: intermediateScript,
+    },
+    stdio: ["ignore", "pipe", "pipe", "ipc"],
+  });
+  let holderPid = 0;
+  try {
+    holderPid = await new Promise((resolve, reject) => {
+      managedRoot.once("message", (message) => resolve(Number(message?.holderPid)));
+      managedRoot.once("error", reject);
+      managedRoot.once("exit", (code) => reject(new Error(`managed ancestry root exited before readiness: ${code}`)));
+    });
+    assert(Number.isInteger(holderPid) && holderPid > 0);
+    const laterRoot = spawnManaged(process.execPath, ["-e", "process.stdout.write('ready\\n');setInterval(()=>{},1000)"]);
+    try {
+      await new Promise((resolve, reject) => {
+        laterRoot.stdout.setEncoding("utf8");
+        laterRoot.stdout.once("data", resolve);
+        laterRoot.once("error", reject);
+        laterRoot.once("exit", (code) => reject(new Error(`later observation root exited before readiness: ${code}`)));
+      });
+      const present = await observeWindowsFileHandleInProcessTree(target, laterRoot.pid);
+      assert.equal(present.holderCount, 1);
+      assert.equal(present.matchingCount, 0);
+    } finally {
+      if (laterRoot.exitCode === null) await terminateProcessTreeAsync(laterRoot);
+    }
+    await assert.rejects(
+      observeWindowsFileHandleInProcessTree(target, managedRoot.pid),
+      (error) => error?.code === "EXEC_NATIVE_TEST_OBSERVER_DOMAIN" && !String(error.message).includes(String(holderPid)),
+    );
+  } finally {
+    if (managedRoot.exitCode === null) {
+      const termination = await terminateProcessTreeAsync(managedRoot);
+      assert.equal(termination.exitCode, 0);
+      assert.equal(termination.childExited, true);
+    }
+    const cleanupRoot = spawnManaged(process.execPath, ["-e", "process.stdout.write('ready\\n');setInterval(()=>{},1000)"]);
+    try {
+      await new Promise((resolve, reject) => {
+        cleanupRoot.stdout.setEncoding("utf8");
+        cleanupRoot.stdout.once("data", resolve);
+        cleanupRoot.once("error", reject);
+        cleanupRoot.once("exit", (code) => reject(new Error(`cleanup observation root exited before readiness: ${code}`)));
+      });
+      let closed;
+      await waitFor(async () => {
+        closed = await observeWindowsFileHandleInProcessTree(target, cleanupRoot.pid);
+        return closed.holderCount === 0;
+      }, { timeoutMs: 5_000, intervalMs: 50, label: "orphaned holder kernel release" });
+      assert.equal(closed.matchingCount, 0);
+      assert.equal(closed.matched, false);
+    } finally {
+      if (cleanupRoot.exitCode === null) await terminateProcessTreeAsync(cleanupRoot);
+    }
     await removeFixture(root);
   }
 });

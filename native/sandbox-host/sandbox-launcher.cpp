@@ -5,6 +5,12 @@
 #include <delayimp.h>
 #include <userenv.h>
 #include <winnetwk.h>
+#include <tlhelp32.h>
+#ifdef MINI_LUX_SEC03_NATIVE_TEST
+#include <cmath>
+#include <cstddef>
+#include <iterator>
+#endif
 
 #include <array>
 #include <atomic>
@@ -249,6 +255,68 @@ std::wstring FixedHostPath() {
   std::wstring result = CurrentLauncherPath(); const auto slash = result.find_last_of(L"\\/");
   if (slash == std::wstring::npos) return {};
   result.resize(slash + 1); result += L"sandbox-host.exe"; return result;
+}
+
+std::wstring FixedTestProjectionPath() {
+  std::wstring launcher = CurrentLauncherPath();
+  if (launcher.rfind(L"\\\\?\\UNC\\", 0) == 0) launcher = L"\\\\" + launcher.substr(8); else if (launcher.rfind(L"\\\\?\\", 0) == 0) launcher = launcher.substr(4);
+  constexpr wchar_t suffix[] = L"\\dist\\native\\sandbox-launcher.node";
+  constexpr size_t suffix_length = (sizeof(suffix) / sizeof(suffix[0])) - 1;
+  if (launcher.size() <= suffix_length || _wcsicmp(launcher.c_str() + launcher.size() - suffix_length, suffix) != 0) return {};
+  launcher.resize(launcher.size() - suffix_length);
+  launcher += L"\\.sec03-native-test\\sandbox-launcher.node";
+  return launcher;
+}
+
+bool FixedModulePathIsAbsent(const std::wstring& path) {
+  HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, GetCurrentProcessId());
+  if (snapshot == INVALID_HANDLE_VALUE) return false;
+  MODULEENTRY32W entry{}; entry.dwSize = static_cast<DWORD>(sizeof(entry));
+  bool valid = Module32FirstW(snapshot, &entry) != FALSE; size_t count = 0;
+  while (valid) {
+    if (++count > 4096 || _wcsicmp(entry.szExePath, path.c_str()) == 0) { valid = false; break; }
+    entry.dwSize = static_cast<DWORD>(sizeof(entry)); SetLastError(ERROR_SUCCESS);
+    if (!Module32NextW(snapshot, &entry)) { valid = GetLastError() == ERROR_NO_MORE_FILES; break; }
+  }
+  CloseHandle(snapshot); return valid;
+}
+
+napi_value LoadValidatedTestProjection(napi_env env, napi_callback_info info) {
+  size_t argc = 3; napi_value argv[3]; size_t hash_length = 0; int64_t expected_bytes = 0;
+  if (!Ok(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), "Cannot read native test projection identity") || argc != 2
+      || napi_get_value_string_utf8(env, argv[0], nullptr, 0, &hash_length) != napi_ok || hash_length != 64
+      || napi_get_value_int64(env, argv[1], &expected_bytes) != napi_ok || expected_bytes <= 0 || expected_bytes > 16 * 1024 * 1024) {
+    Throw(env, "EXEC_NATIVE_TEST_PROJECTION_INVALID", "Native test projection identity is invalid"); return nullptr;
+  }
+  std::vector<char> expected_text(hash_length + 1); napi_get_value_string_utf8(env, argv[0], expected_text.data(), expected_text.size(), &hash_length);
+  const std::string expected(expected_text.data(), hash_length); const std::wstring path = FixedTestProjectionPath();
+  if (!mini_lux::sec03::CanonicalHex(expected, 32, 32)) { Throw(env, "EXEC_NATIVE_TEST_PROJECTION_INVALID", "Native test projection identity is invalid"); return nullptr; }
+  if (path.empty()) { Throw(env, "EXEC_NATIVE_TEST_PROJECTION_LOCATION", "Native test projection location is invalid"); return nullptr; }
+  HANDLE file = CreateFileW(path.c_str(), GENERIC_READ | FILE_READ_ATTRIBUTES, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+  LARGE_INTEGER size{}; BY_HANDLE_FILE_INFORMATION identity{}; std::string digest; std::array<wchar_t, 32768> final_path{};
+  const DWORD final_count = file == INVALID_HANDLE_VALUE ? 0 : GetFinalPathNameByHandleW(file, final_path.data(), static_cast<DWORD>(final_path.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+  std::wstring opened = final_count && final_count < final_path.size() ? std::wstring(final_path.data(), final_count) : std::wstring{};
+  if (opened.rfind(L"\\\\?\\UNC\\", 0) == 0) opened = L"\\\\" + opened.substr(8); else if (opened.rfind(L"\\\\?\\", 0) == 0) opened = opened.substr(4);
+  const bool file_identity = file != INVALID_HANDLE_VALUE && GetFileInformationByHandle(file, &identity)
+    && !(identity.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) && GetFileSizeEx(file, &size) && size.QuadPart == expected_bytes
+    && IsAmd64Pe(file) && Sha256Handle(file, &digest) && digest == expected;
+  if (!file_identity) { if (file != INVALID_HANDLE_VALUE) CloseHandle(file); Throw(env, "EXEC_NATIVE_TEST_PROJECTION_INVALID", "Native test projection identity is invalid"); return nullptr; }
+  if (opened != path) { CloseHandle(file); Throw(env, "EXEC_NATIVE_TEST_PROJECTION_PATH", "Native test projection path is not canonical"); return nullptr; }
+  if (!FixedModulePathIsAbsent(path)) { CloseHandle(file); Throw(env, "EXEC_NATIVE_TEST_PROJECTION_LOADED", "Native test projection was already loaded"); return nullptr; }
+  HMODULE module = LoadLibraryExW(path.c_str(), nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+  using RegisterModule = napi_value (*)(napi_env, napi_value);
+  FARPROC raw_register = module ? GetProcAddress(module, "napi_register_module_v1") : nullptr; RegisterModule register_module = nullptr;
+  static_assert(sizeof(register_module) == sizeof(raw_register)); memcpy(&register_module, &raw_register, sizeof(register_module));
+  std::array<wchar_t, 32768> loaded_path{}; const DWORD loaded_count = module ? GetModuleFileNameW(module, loaded_path.data(), static_cast<DWORD>(loaded_path.size())) : 0;
+  HMODULE registration_module = nullptr;
+  const bool loaded = module && register_module && loaded_count && loaded_count < loaded_path.size() && std::wstring(loaded_path.data(), loaded_count) == path
+    && GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, reinterpret_cast<LPCWSTR>(register_module), &registration_module)
+    && registration_module == module;
+  if (!loaded) { if (module) FreeLibrary(module); CloseHandle(file); Throw(env, "EXEC_NATIVE_TEST_PROJECTION_LOAD_INVALID", "Native test projection load is invalid"); return nullptr; }
+  napi_value exports; if (napi_create_object(env, &exports) != napi_ok) { CloseHandle(file); Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot create native test projection exports"); return nullptr; }
+  napi_value initialized = register_module(env, exports); CloseHandle(file);
+  if (!initialized) { Throw(env, "EXEC_NATIVE_ABI_ERROR", "Native test projection initialization failed"); return nullptr; }
+  return initialized;
 }
 
 bool FixedEvidenceIdentity(const std::string& candidate, const std::string& launcher) {
@@ -518,6 +586,212 @@ bool CanonicalRootPath(const std::wstring& path, RootPathKind* kind) {
   if (!count || count >= full.size() || path.size() != count || _wcsicmp(path.c_str(), full.data()) != 0) return false;
   *kind = drive ? RootPathKind::drive : RootPathKind::unc; return true;
 }
+
+#ifdef MINI_LUX_SEC03_NATIVE_TEST
+constexpr size_t kTestObserverMaxHolders = 4096;
+constexpr size_t kTestObserverMaxProcesses = 65536;
+
+class TestObserverHandle {
+ public:
+  explicit TestObserverHandle(HANDLE value) : value_(value) {}
+  ~TestObserverHandle() { if (value_ && value_ != INVALID_HANDLE_VALUE) CloseHandle(value_); }
+  TestObserverHandle(const TestObserverHandle&) = delete;
+  TestObserverHandle& operator=(const TestObserverHandle&) = delete;
+  HANDLE get() const { return value_; }
+ private:
+  HANDLE value_;
+};
+
+struct TestFileProcessIds {
+  ULONG count;
+  ULONG_PTR process_ids[1];
+};
+
+constexpr size_t kTestObserverQueryBytes = offsetof(TestFileProcessIds, process_ids) + kTestObserverMaxHolders * sizeof(ULONG_PTR);
+static_assert(kTestObserverQueryBytes <= UINT32_MAX);
+
+using NtQueryInformationFileForTest = LONG(NTAPI*)(HANDLE, void*, void*, ULONG, ULONG);
+
+enum class TestTreeMembership { outside, inside, invalid };
+
+bool StrictTestObserverPath(const std::wstring& path) {
+  RootPathKind kind{};
+  if (!CanonicalRootPath(path, &kind)) return false;
+  const bool drive_root = kind == RootPathKind::drive && path.size() == 3;
+  if (!drive_root && path.back() == L'\\') return false;
+  const size_t first = kind == RootPathKind::drive ? 3 : 2;
+  size_t start = first;
+  while (start < path.size()) {
+    const size_t end = path.find(L'\\', start);
+    const size_t count = (end == std::wstring::npos ? path.size() : end) - start;
+    if (!count) return false;
+    const std::wstring component = path.substr(start, count);
+    if (component == L"." || component == L".." || component.back() == L'.' || component.back() == L' ' || component.find(L':') != std::wstring::npos) return false;
+    if (end == std::wstring::npos) break;
+    start = end + 1;
+  }
+  return true;
+}
+
+bool ReadTestObserverPath(napi_env env, napi_value value, std::wstring* path) {
+  napi_valuetype type = napi_undefined;
+  if (napi_typeof(env, value, &type) != napi_ok || type != napi_string) return false;
+  size_t length = 0;
+  if (napi_get_value_string_utf16(env, value, nullptr, 0, &length) != napi_ok || !length || length >= 32767) return false;
+  std::vector<char16_t> text(length + 1);
+  size_t received = 0;
+  if (napi_get_value_string_utf16(env, value, text.data(), text.size(), &received) != napi_ok || received != length) return false;
+  path->clear(); path->reserve(length);
+  for (size_t index = 0; index < length; ++index) {
+    if (!text[index]) return false;
+    path->push_back(static_cast<wchar_t>(text[index]));
+  }
+  return StrictTestObserverPath(*path);
+}
+
+NtQueryInformationFileForTest ResolveTestFileHolderQuery() {
+  HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+  FARPROC raw_query = ntdll ? GetProcAddress(ntdll, "NtQueryInformationFile") : nullptr;
+  NtQueryInformationFileForTest query = nullptr;
+  static_assert(sizeof(query) == sizeof(raw_query));
+  memcpy(&query, &raw_query, sizeof(query));
+  return query;
+}
+
+bool QueryTestFileHolders(NtQueryInformationFileForTest query, HANDLE file, std::set<DWORD>* holders) {
+  alignas(ULONG_PTR) std::array<unsigned char, kTestObserverQueryBytes> storage{};
+  std::array<ULONG_PTR, 2> io_status{};
+  if (!query || query(file, io_status.data(), storage.data(), static_cast<ULONG>(storage.size()), 47) != 0) return false;
+  const auto* information = reinterpret_cast<const TestFileProcessIds*>(storage.data());
+  constexpr size_t first_pid = offsetof(TestFileProcessIds, process_ids);
+  constexpr ULONG capacity = static_cast<ULONG>((kTestObserverQueryBytes - first_pid) / sizeof(ULONG_PTR));
+  if (information->count > capacity) return false;
+  holders->clear();
+  for (ULONG index = 0; index < information->count; ++index) {
+    const ULONG_PTR value = information->process_ids[index];
+    if (!value || value > UINT32_MAX) return false;
+    holders->insert(static_cast<DWORD>(value));
+  }
+  return true;
+}
+
+bool SnapshotTestProcessParents(std::map<DWORD, DWORD>* parents) {
+  TestObserverHandle snapshot(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
+  if (snapshot.get() == INVALID_HANDLE_VALUE) return false;
+  PROCESSENTRY32W entry{}; entry.dwSize = static_cast<DWORD>(sizeof(entry));
+  if (!Process32FirstW(snapshot.get(), &entry)) return false;
+  parents->clear();
+  for (;;) {
+    if (!parents->emplace(entry.th32ProcessID, entry.th32ParentProcessID).second || parents->size() > kTestObserverMaxProcesses) return false;
+    entry.dwSize = static_cast<DWORD>(sizeof(entry));
+    SetLastError(ERROR_SUCCESS);
+    if (!Process32NextW(snapshot.get(), &entry)) return GetLastError() == ERROR_NO_MORE_FILES;
+  }
+}
+
+bool TestProcessCreationTime(DWORD process, uint64_t* creation) {
+  HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, process);
+  if (!handle) return false;
+  FILETIME created{}, exited{}, kernel{}, user{}; const bool valid = GetProcessTimes(handle, &created, &exited, &kernel, &user) != FALSE; CloseHandle(handle);
+  if (!valid) return false;
+  *creation = (static_cast<uint64_t>(created.dwHighDateTime) << 32) | created.dwLowDateTime; return true;
+}
+
+bool CaptureTestProcessIdentities(const std::set<DWORD>& processes, std::map<DWORD, uint64_t>* identities) {
+  identities->clear();
+  for (DWORD process : processes) {
+    uint64_t creation = 0;
+    if (!TestProcessCreationTime(process, &creation) || !identities->emplace(process, creation).second) return false;
+  }
+  return true;
+}
+
+TestTreeMembership TestProcessInTree(DWORD process, uint64_t expected_creation, DWORD root, uint64_t root_creation, const std::map<DWORD, DWORD>& parents, const char** invalid_stage) {
+  if (!parents.count(process)) { *invalid_stage = "Native test observer process snapshot is invalid"; return TestTreeMembership::invalid; }
+  uint64_t current_creation = 0;
+  if (!TestProcessCreationTime(process, &current_creation) || current_creation != expected_creation) { *invalid_stage = "Native test observer process identity is invalid"; return TestTreeMembership::invalid; }
+  if (root_creation > current_creation) return TestTreeMembership::outside;
+  std::set<DWORD> seen;
+  DWORD current = process;
+  for (size_t depth = 0; depth <= parents.size(); ++depth) {
+    if (current == root) {
+      if (current_creation == root_creation) return TestTreeMembership::inside;
+      *invalid_stage = "Native test observer root identity is invalid"; return TestTreeMembership::invalid;
+    }
+    if (!current || !seen.insert(current).second) { *invalid_stage = "Native test observer ancestry is invalid"; return TestTreeMembership::invalid; }
+    const auto parent = parents.find(current);
+    if (parent == parents.end()) { *invalid_stage = "Native test observer ancestry is incomplete"; return TestTreeMembership::invalid; }
+    const DWORD parent_process = parent->second;
+    if (!parent_process) { *invalid_stage = "Native test observer ancestry is incomplete"; return TestTreeMembership::invalid; }
+    uint64_t parent_creation = 0;
+    if (!TestProcessCreationTime(parent_process, &parent_creation)) { *invalid_stage = "Native test observer ancestor identity is unavailable"; return TestTreeMembership::invalid; }
+    if (parent_creation > current_creation) { *invalid_stage = "Native test observer ancestry chronology is invalid"; return TestTreeMembership::invalid; }
+    current = parent_process;
+    current_creation = parent_creation;
+  }
+  *invalid_stage = "Native test observer ancestry depth is invalid"; return TestTreeMembership::invalid;
+}
+
+napi_value ObserveWindowsFileHandleInProcessTreeForTest(napi_env env, napi_callback_info info) {
+  size_t argc = 3; napi_value argv[3];
+  if (!Ok(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), "Cannot read native test observer arguments")) return nullptr;
+  napi_valuetype pid_type = napi_undefined; double pid_number = 0;
+  std::wstring canonical_path;
+  if (argc != 2 || !ReadTestObserverPath(env, argv[0], &canonical_path) || napi_typeof(env, argv[1], &pid_type) != napi_ok || pid_type != napi_number
+      || napi_get_value_double(env, argv[1], &pid_number) != napi_ok || !std::isfinite(pid_number) || pid_number < 1 || pid_number > UINT32_MAX
+      || pid_number != static_cast<double>(static_cast<uint32_t>(pid_number))) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_INPUT", "Native test observer arguments are invalid"); return nullptr;
+  }
+  const DWORD root = static_cast<DWORD>(pid_number);
+  TestObserverHandle file(CreateFileW(canonical_path.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
+  if (file.get() == INVALID_HANDLE_VALUE) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_UNAVAILABLE", "Native test observer target is unavailable"); return nullptr; }
+  std::array<wchar_t, 32768> normalized{}; const DWORD normalized_count = GetFinalPathNameByHandleW(file.get(), normalized.data(), static_cast<DWORD>(normalized.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+  std::wstring opened = normalized_count && normalized_count < normalized.size() ? std::wstring(normalized.data(), normalized_count) : std::wstring{};
+  if (opened.rfind(L"\\\\?\\UNC\\", 0) == 0) opened = L"\\\\" + opened.substr(8); else if (opened.rfind(L"\\\\?\\", 0) == 0) opened = opened.substr(4);
+  if (opened != canonical_path) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_INPUT", "Native test observer arguments are invalid"); return nullptr; }
+  const NtQueryInformationFileForTest query = ResolveTestFileHolderQuery();
+  std::set<DWORD> before, after;
+  std::map<DWORD, uint64_t> before_identities;
+  std::map<DWORD, DWORD> parents;
+  if (!QueryTestFileHolders(query, file.get(), &before) || !CaptureTestProcessIdentities(before, &before_identities)
+      || !SnapshotTestProcessParents(&parents) || !QueryTestFileHolders(query, file.get(), &after)) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_QUERY", "Native test observer query failed"); return nullptr;
+  }
+  uint64_t root_creation = 0;
+  if (!parents.count(root) || !TestProcessCreationTime(root, &root_creation)) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_DOMAIN", "Native test observer domain is invalid"); return nullptr; }
+  const DWORD observer = GetCurrentProcessId();
+  uint64_t observer_creation = 0;
+  if (!TestProcessCreationTime(observer, &observer_creation)) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_DOMAIN", "Native test observer domain is invalid"); return nullptr; }
+  const char* invalid_stage = "Native test observer domain is invalid";
+  const TestTreeMembership observer_membership = TestProcessInTree(observer, observer_creation, root, root_creation, parents, &invalid_stage);
+  if (observer_membership != TestTreeMembership::outside) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_DOMAIN", observer_membership == TestTreeMembership::invalid ? invalid_stage : "Native test observer domain is invalid"); return nullptr; }
+  std::vector<DWORD> holders;
+  std::set_intersection(before.begin(), before.end(), after.begin(), after.end(), std::back_inserter(holders));
+  holders.erase(std::remove(holders.begin(), holders.end(), observer), holders.end());
+  uint32_t matching = 0;
+  for (DWORD holder : holders) {
+    const auto holder_identity = before_identities.find(holder);
+    if (holder_identity == before_identities.end()) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_DOMAIN", "Native test observer domain is invalid"); return nullptr; }
+    const TestTreeMembership membership = TestProcessInTree(holder, holder_identity->second, root, root_creation, parents, &invalid_stage);
+    if (membership == TestTreeMembership::invalid) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_DOMAIN", invalid_stage); return nullptr; }
+    if (membership == TestTreeMembership::inside) ++matching;
+  }
+  napi_value holder_count, matching_count, matched, result;
+  if (napi_create_uint32(env, static_cast<uint32_t>(holders.size()), &holder_count) != napi_ok || napi_create_uint32(env, matching, &matching_count) != napi_ok
+      || napi_get_boolean(env, matching != 0, &matched) != napi_ok || napi_create_object(env, &result) != napi_ok) {
+    Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot create native test observer result"); return nullptr;
+  }
+  napi_property_descriptor properties[] = {
+    {"holderCount", nullptr, nullptr, nullptr, nullptr, holder_count, napi_enumerable, nullptr},
+    {"matchingCount", nullptr, nullptr, nullptr, nullptr, matching_count, napi_enumerable, nullptr},
+    {"matched", nullptr, nullptr, nullptr, nullptr, matched, napi_enumerable, nullptr},
+  };
+  if (napi_define_properties(env, result, sizeof(properties) / sizeof(properties[0]), properties) != napi_ok || napi_object_freeze(env, result) != napi_ok) {
+    Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot freeze native test observer result"); return nullptr;
+  }
+  return result;
+}
+#endif
 
 std::wstring DosPathFromHandlePath(const wchar_t* path, DWORD count) {
   const std::wstring value(path, count);
@@ -1126,9 +1400,13 @@ napi_value OpenEvidenceVerifier(napi_env env, napi_callback_info info) {
 }
 
 napi_value Init(napi_env env, napi_value exports) {
-  napi_value fn, version; napi_create_function(env, "openExclusiveHostLease", NAPI_AUTO_LENGTH, OpenExclusiveHostLease, nullptr, &fn); napi_set_named_property(env, exports, "openExclusiveHostLease", fn);
+  napi_value fn, loader, version; napi_create_function(env, "openExclusiveHostLease", NAPI_AUTO_LENGTH, OpenExclusiveHostLease, nullptr, &fn); napi_create_function(env, "loadValidatedTestProjection", NAPI_AUTO_LENGTH, LoadValidatedTestProjection, nullptr, &loader); napi_set_named_property(env, fn, "loadValidatedTestProjection", loader); napi_set_named_property(env, exports, "openExclusiveHostLease", fn);
   napi_create_function(env, "openEvidenceVerifier", NAPI_AUTO_LENGTH, OpenEvidenceVerifier, nullptr, &fn); napi_set_named_property(env, exports, "openEvidenceVerifier", fn);
-  napi_create_uint32(env, kProtocolVersion, &version); napi_set_named_property(env, exports, "protocolVersion", version); return exports;
+  napi_create_uint32(env, kProtocolVersion, &version); napi_set_named_property(env, exports, "protocolVersion", version);
+#ifdef MINI_LUX_SEC03_NATIVE_TEST
+  napi_create_function(env, "observeWindowsFileHandleInProcessTreeForTest", NAPI_AUTO_LENGTH, ObserveWindowsFileHandleInProcessTreeForTest, nullptr, &fn); napi_set_named_property(env, exports, "observeWindowsFileHandleInProcessTreeForTest", fn);
+#endif
+  return exports;
 }
 }  // namespace
 

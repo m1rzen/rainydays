@@ -6,11 +6,11 @@
   "dialectCheckerSha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
   "dialectPolicySha256": "75ea44ca15bc7092eca51957cb93f89580aa1a395cb1428c1f3e12baf7b17209",
   "dialectImportSetSha256": "23efdb5dc6dd02d52c87ff54a03b1368f9e06afd4f37ef8595b0fc546acaef5b",
-  "runtimeSinkSetSha256": "cfba8eb65aa1417a5674ad41e4eda4a8f53bc949b042e8ee8de92cf7556a40db",
+  "runtimeSinkSetSha256": "c4d5c227fe4a25a07361393868564b5174a2bf185888882f8b8de4b9765813ef",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
     "executableFileCount": 71,
-    "executableManifestSha256": "fb2741d64fceabb59523413b53faa0b66346b5d3accc61a161d5583fcc34698e",
+    "executableManifestSha256": "99fa0696c36b9249c68f7f3dcf4da5814187a16007a611829056528a77ce794c",
     "dialectImportCount": 33,
     "dialectExceptionCount": 2
   },
@@ -129,8 +129,8 @@
     },
     {
       "sourcePath": "src/execution-runtime.ts",
-      "bytes": 27348,
-      "sha256": "043f96954a7f86dd5d5df15a5189fd90de04a9a1cee305b2754d0941fb1d0dbe",
+      "bytes": 28893,
+      "sha256": "b283c0f9a0272ac15ec84380aa234968b1949875d316516b4178272c9bcb6292",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -500,8 +500,8 @@
     },
     {
       "sourcePath": "src/version.ts",
-      "bytes": 10135,
-      "sha256": "203a19e142c48bbd678dffb45075ed4c4673fb3d9be161997b3c00f48d34358e",
+      "bytes": 11246,
+      "sha256": "0b74a08c85fb10f6e75e386ed9bf68b2dcaebf972705daf9166de132ad530d34",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -568,7 +568,7 @@
       "executionContract": "installed-parent-scan",
       "testFile": "tests/packaged/installed-smoke.test.mjs",
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
-      "testFileSha256": "e0a259c9847526dcdfc38ffab44717498d6ab186697ddf18bcac4f972c207489"
+      "testFileSha256": "1739ad9f197bf02b00928cbbce6a89ab96cabbcd6977ef52d939870b2b694118"
     },
     {
       "id": "process-cwd",
@@ -2792,8 +2792,8 @@
       "id": "sink-ea3e0efb1533dbf7c58965fc",
       "occurrence": 1,
       "sourcePath": "src/execution-runtime.ts",
-      "fileSha256": "043f96954a7f86dd5d5df15a5189fd90de04a9a1cee305b2754d0941fb1d0dbe",
-      "line": 170,
+      "fileSha256": "b283c0f9a0272ac15ec84380aa234968b1949875d316516b4178272c9bcb6292",
+      "line": 183,
       "column": 7,
       "nodeKind": "CallExpression",
       "container": "loadNativeIdentity",
@@ -2825,8 +2825,8 @@
       "id": "sink-e147ac29ce8d7a5661ea611b",
       "occurrence": 1,
       "sourcePath": "src/execution-runtime.ts",
-      "fileSha256": "043f96954a7f86dd5d5df15a5189fd90de04a9a1cee305b2754d0941fb1d0dbe",
-      "line": 171,
+      "fileSha256": "b283c0f9a0272ac15ec84380aa234968b1949875d316516b4178272c9bcb6292",
+      "line": 184,
       "column": 7,
       "nodeKind": "CallExpression",
       "container": "loadNativeIdentity",
@@ -4466,5 +4466,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "cebb179df6092dc12f3bbb1be81baa53769c6d524634d523038e40a9451a70d2"
+  "canonicalPayloadSha256": "e55fb854902c93e9f05713a5b7055cc0890b2ff6d5fce3c2545af1f7c11baa12"
 }

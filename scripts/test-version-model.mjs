@@ -205,6 +205,7 @@ async function main() {
     }
     await mkdir(path.join(digestProject, "parity", "baselines"), { recursive: true });
     await cp(path.join(projectRoot, "dist", "native"), path.join(digestProject, "dist", "native"), { recursive: true });
+    await cp(path.join(projectRoot, ".sec03-native-test"), path.join(digestProject, ".sec03-native-test"), { recursive: true });
     for (const directory of ["scripts", "schema", "probes", "policies"]) {
       await cp(path.join(projectRoot, "parity", directory), path.join(digestProject, "parity", directory), { recursive: true });
     }
@@ -265,6 +266,7 @@ async function main() {
     for (const directory of [".github", "src", "electron", "public", "personas", "skills", "scripts", "tests", "dist", "build", "models", "native", "vendor"]) {
       await cp(path.join(projectRoot, directory), path.join(distIntegrityProject, directory), { recursive: true });
     }
+    await cp(path.join(projectRoot, ".sec03-native-test"), path.join(distIntegrityProject, ".sec03-native-test"), { recursive: true });
     await mkdir(path.join(distIntegrityProject, "parity", "baselines"), { recursive: true });
     for (const directory of ["scripts", "schema", "probes", "policies"]) {
       await cp(path.join(projectRoot, "parity", directory), path.join(distIntegrityProject, "parity", directory), { recursive: true });
@@ -400,6 +402,8 @@ async function main() {
       ["isolation missing", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: null } }, /execution isolation metadata is missing/],
       ["isolation identity", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, architectureSha256: "bad" } } }, /execution isolation metadata is invalid/],
       ["isolation artifact", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, artifacts: [{ ...secondBuild.versions.executionIsolation.artifacts[0], bytes: 0 }, secondBuild.versions.executionIsolation.artifacts[1]] } } }, /execution isolation artifact is invalid/],
+      ["isolation test projection", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, testProjection: null } } }, /execution isolation test projection is invalid/],
+      ["isolation test manifest", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, testProjection: { manifest: { ...secondBuild.versions.executionIsolation.testProjection.manifest, sha256: "bad" } } } } }, /execution isolation test projection is invalid/],
       ["protocols missing", { ...secondBuild, versions: { ...secondBuild.versions, protocols: null } }, /protocols are missing/],
       ["protocol keys", { ...secondBuild, versions: { ...secondBuild.versions, protocols: { ...secondBuild.versions.protocols, extra: null } } }, /protocols fields are invalid/],
       ["protocol missing", { ...secondBuild, versions: { ...secondBuild.versions, protocols: { ...secondBuild.versions.protocols, link: null } } }, /protocol link is missing/],
