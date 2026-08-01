@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, readFile, symlink, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, realpath, symlink, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { evaluateCoverageSummary, meetsPercent } from "../../scripts/coverage-lib.mjs";
@@ -429,7 +429,9 @@ test("current runs remove stale reports before execution", async () => {
   try {
     const report = path.join(root, "stale.json");
     await writeFile(report, JSON.stringify({ state: "passed" }));
-    assert.equal(await prepareReportPath(report), report);
+    const prepared = await prepareReportPath(report);
+    assert.equal(await realpath(path.dirname(prepared)), await realpath(root));
+    assert.equal(path.basename(prepared), path.basename(report));
     await assert.rejects(() => readFile(report, "utf8"));
   } finally {
     await removeFixture(root);

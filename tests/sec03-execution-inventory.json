@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "5db8baf4dc6f425ce67e0a41a051965b44636b7bb2dc87b7ac83e8bb13763256",
+  "sourceSetSha256": "69fb97f2d5800a4426dde95a027057b141e1585bd33e9ca39d3b9ef961da3ecf",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -1047,8 +1047,8 @@
     },
     {
       "sourcePath": "tests/unit/framework.test.mjs",
-      "bytes": 28654,
-      "sha256": "4389d13c3646681f9bd7e6cd786da92e47fc026716e01d8bd3e114ce8605ca92",
+      "bytes": 28805,
+      "sha256": "e35d60578df122e7a23dbeea5cc5f2124a0e1dab944a98ae98d0bdf518dcfd1c",
       "executionClass": "build-test"
     },
     {
@@ -5555,5 +5555,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "bf92d4e0e535ccad5a9eb8ffe9f705164bdb5b6d369da5ede506c8ed5a07b3b7"
+  "canonicalPayloadSha256": "6705ca6fc54d469c44dbdfe8e5017d08560f4d507c477be0c4328a5f27dcebdf"
 }
