@@ -424,6 +424,73 @@ test("prepared report authority survives ambient temporary-root drift", async ()
   }
 });
 
+test("canonical report paths remain authorized when TEMP uses an 8.3 alias", { skip: process.platform !== "win32" }, async (context) => {
+  const root = await makeTempDir("mini-lux-gov03-report-alias-");
+  try {
+    if (root.includes(" ")) {
+      context.skip("8.3 alias probe root contains spaces");
+      return;
+    }
+    const aliasProbe = await runProcess(process.env.ComSpec || "cmd.exe", [
+      "/d", "/c", "for %I in (%RAINYDAYS_ALIAS_ROOT%) do @echo %~sI",
+    ], { env: { ...process.env, RAINYDAYS_ALIAS_ROOT: root } });
+    assert.equal(aliasProbe.code, 0, aliasProbe.stderr);
+    const shortOutput = aliasProbe.stdout.trim();
+    const shortRoot = shortOutput.startsWith('"') && shortOutput.endsWith('"') ? shortOutput.slice(1, -1) : shortOutput;
+    const canonicalRoot = await realpath(root);
+    if (shortRoot.toLowerCase() === canonicalRoot.toLowerCase()) {
+      context.skip("8.3 aliases are not exposed on this volume");
+      return;
+    }
+
+    const report = path.join(canonicalRoot, "nested", "report.json");
+    const child = await runProcess(process.execPath, [
+      "--input-type=module",
+      "--eval",
+      "import { prepareReportTarget } from './tests/helpers.mjs'; const target = await prepareReportTarget(process.env.RAINYDAYS_REPORT_PATH); console.log(target.path);",
+    ], {
+      env: {
+        ...process.env,
+        TEMP: shortRoot,
+        TMP: shortRoot,
+        TMPDIR: shortRoot,
+        RAINYDAYS_REPORT_PATH: report,
+      },
+    });
+    assert.equal(child.code, 0, child.stderr);
+    assert.equal(child.stdout.trim(), report);
+  } finally {
+    await removeFixture(root);
+  }
+});
+
+test("ambient temporary-root junctions remain fail-closed", { skip: process.platform !== "win32" }, async () => {
+  const root = await makeTempDir("mini-lux-gov03-report-root-target-");
+  const junction = `${root}-junction`;
+  try {
+    await symlink(root, junction, "junction");
+    const report = path.join(await realpath(root), "junction-report.json");
+    const child = await runProcess(process.execPath, [
+      "--input-type=module",
+      "--eval",
+      "import { prepareReportTarget } from './tests/helpers.mjs'; await prepareReportTarget(process.env.RAINYDAYS_REPORT_PATH);",
+    ], {
+      env: {
+        ...process.env,
+        TEMP: junction,
+        TMP: junction,
+        TMPDIR: junction,
+        RAINYDAYS_REPORT_PATH: report,
+      },
+    });
+    assert.notEqual(child.code, 0);
+    assert.match(child.stderr, /report root must not be a symbolic link/);
+  } finally {
+    await unlink(junction).catch(() => {});
+    await removeFixture(root);
+  }
+});
+
 test("current runs remove stale reports before execution", async () => {
   const root = await makeTempDir("mini-lux-gov03-stale-report-");
   try {

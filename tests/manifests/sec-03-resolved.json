@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "eea0d6b9a3d4b474510fbe76b117238c4be76c2cc5ddf26027c6ce60a4643cf7",
+      "sha256": "c43fbd781c3494ddea52c2e4e15309551d4d9692a0da29cb70b61f76258c8fbd",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -612,7 +612,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "24be3eb64bb198e680a7569ce7c4a0439e8821e02254b6ac16a6c63cc7d67c84",
+      "sha256": "aaac7c606dcc30919b010a751c320bb2d1a3bb4b93dfbaabec08fe4e92f299b1",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2156,7 +2156,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "eea0d6b9a3d4b474510fbe76b117238c4be76c2cc5ddf26027c6ce60a4643cf7",
+      "sha256": "c43fbd781c3494ddea52c2e4e15309551d4d9692a0da29cb70b61f76258c8fbd",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2324,7 +2324,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "24be3eb64bb198e680a7569ce7c4a0439e8821e02254b6ac16a6c63cc7d67c84",
+      "sha256": "aaac7c606dcc30919b010a751c320bb2d1a3bb4b93dfbaabec08fe4e92f299b1",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -3261,5 +3261,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "a57b9096c2231c6df30b5115b0b315d465ab1ce31648ddc471a411feef0748de"
+  "canonicalPayloadSha256": "fb1e7416e5492acb9cd0a7fd28e90b84a488f09ca72c94b77afbd225a3915dc2"
 }

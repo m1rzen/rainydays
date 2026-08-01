@@ -16,7 +16,9 @@ import {
 } from "../scripts/sec03-governance.mjs";
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const processTemporaryRoot = path.resolve(os.tmpdir());
+const processTemporaryRootRequest = path.resolve(os.tmpdir());
+assert(!(await lstat(processTemporaryRootRequest)).isSymbolicLink(), "report root must not be a symbolic link");
+const processTemporaryRoot = await realpath(processTemporaryRootRequest);
 export const layerNames = Object.freeze(["unit", "contract", "integration", "electron", "packaged"]);
 const expectedBaselineHash = "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df";
 const expectedPersonaChains = Object.freeze({
@@ -83,13 +85,14 @@ async function resolveReportTarget(filePath, { pinnedAllowedRoot = null, createP
   if (isContained(projectAbsolute, absolute)) {
     assert(isContained(projectReports, absolute), "reports inside the project must remain inside test-results");
   }
-  const allowedRoots = pinnedAllowedRoot === null ? [projectReports, processTemporaryRoot] : [pinnedAllowedRoot];
+  const allowedRoots = pinnedAllowedRoot === null ? [projectReports, processTemporaryRoot, processTemporaryRootRequest] : [pinnedAllowedRoot];
   const allowed = allowedRoots.find((root) => isContained(root, absolute));
   assert(allowed, "report path must be inside test-results or the OS temporary directory");
 
   if (createParents) await mkdir(allowed, { recursive: true });
   assert(!(await lstat(allowed)).isSymbolicLink(), "report root must not be a symbolic link");
   const allowedReal = await realpath(allowed);
+  if (allowed === processTemporaryRootRequest) assert.equal(allowedReal, processTemporaryRoot, "report root identity changed before publication");
   if (pinnedAllowedRoot !== null) assert.equal(allowedReal, pinnedAllowedRoot, "report root identity changed before publication");
   const requestedParent = path.dirname(absolute);
   let walk = allowed;
