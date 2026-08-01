@@ -263,12 +263,15 @@ test("TAP summary and process failure precedence are deterministic", () => {
     cancelled: 0,
     todo: 1,
     failedTestIds: [sha256Bytes("tap-test:4:duplicate name"), sha256Bytes("tap-test:5:duplicate name")],
+    nestedFailedTestIds: [sha256Bytes("tap-nested-test:98:nested failure")],
   });
   assert.doesNotMatch(JSON.stringify(summary), /duplicate name|expected failure|forged output|nested failure|hidden/u);
   validateTap(summary);
   assert.throws(() => validateTap({ ...summary, failedTestIds: ["governed failure", summary.failedTestIds[1]] }), /SHA-256/);
+  assert.throws(() => validateTap({ ...summary, nestedFailedTestIds: ["nested failure"] }), /SHA-256/);
   assert.throws(() => validateTap({ ...summary, failedTestIds: [] }), /count differs/);
   assert.throws(() => validateTap({ ...summary, failedTestIds: [summary.failedTestIds[0], summary.failedTestIds[0]] }), /duplicate/);
+  assert.throws(() => validateTap({ ...summary, nestedFailedTestIds: Array(65).fill(0).map((_, index) => sha256Bytes(`nested:${index}`)) }), /bounded diagnostic limit/);
   assert.equal(classifyProcessResult({ code: 0, signal: null }), "passed");
   assert.equal(classifyProcessResult({ code: 1, signal: null }), "failed");
   assert.equal(classifyProcessResult({ code: 1, signal: "SIGTERM" }), "crashed");
@@ -372,6 +375,15 @@ test("process timeout records successful child-tree reclamation", async () => {
     runProcess(process.execPath, ["-e", "Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0)"], { timeoutMs: 100 }),
     (error) => error?.code === "PROCESS_TIMEOUT" && error?.termination?.exitCode === 0 && error?.termination?.childExited === true
   );
+});
+
+test("process capture waits for inherited output pipes to close", async () => {
+  const child = await runProcess(process.execPath, [
+    "-e",
+    "require('node:child_process').spawn(process.execPath,['-e',\"setTimeout(()=>process.stdout.write('late-output'),100)\"],{stdio:['ignore',1,2],windowsHide:true})",
+  ]);
+  assert.equal(child.code, 0);
+  assert.equal(child.stdout, "late-output");
 });
 
 test("readiness failure leaves a tracked child available for cleanup", async () => {

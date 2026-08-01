@@ -70,7 +70,7 @@
         },
         {
           "exactCasePath": "tests/integration/sec01-agent.test.mjs",
-          "sha256": "0022c5547cfddfb953f54ccaa723be96c5fb28aa11946b690aa61b342f920a7d",
+          "sha256": "ab072babd77f333c2cdd139099dd3e13ec92e8cef45566303d7af87dcd19b508",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -338,7 +338,7 @@
         },
         {
           "exactCasePath": "tests/integration/sec01-agent.test.mjs",
-          "sha256": "0022c5547cfddfb953f54ccaa723be96c5fb28aa11946b690aa61b342f920a7d",
+          "sha256": "ab072babd77f333c2cdd139099dd3e13ec92e8cef45566303d7af87dcd19b508",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -1030,7 +1030,7 @@
         },
         {
           "exactCasePath": "tests/integration/sec01-agent.test.mjs",
-          "sha256": "0022c5547cfddfb953f54ccaa723be96c5fb28aa11946b690aa61b342f920a7d",
+          "sha256": "ab072babd77f333c2cdd139099dd3e13ec92e8cef45566303d7af87dcd19b508",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -1168,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "eb3cb05396d3e59c732fdcbb6c5455f627021b0f5922e8aa363c95931491ec12",
+          "sha256": "e46d65df385a93e0532ef6ff5fe5339fd0ba98ddeca223b3b95bd3bbb033eb2d",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -6991,7 +6991,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "aaac7c606dcc30919b010a751c320bb2d1a3bb4b93dfbaabec08fe4e92f299b1"
+      "sha256": "7728a2ae53526c3a469b2e0d45f6db7e4feef5a57e959398faa7a4114ff0d88c"
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
@@ -6999,7 +6999,7 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "78c542d7aaaedb920473bb3b5fa0538aa0d3cd632a26ea6a000905378131d416"
+      "sha256": "13d14365a23de19fb0ab1db39a59f465ec7144e872cbec7f43089f8cd045d72c"
     },
     {
       "exactCasePath": "scripts/run-coverage.mjs",
@@ -7007,7 +7007,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "04d2d8d5c17405443cb8e3ea317a3b6885bf81d1391867cbc46f6485f3113db8"
+      "sha256": "25b1d13c12b2b94b9873ca8e2ad79b42baaa692c54eba32c6eeb9d095abce5e9"
     },
     {
       "exactCasePath": "scripts/test-gate-selftest.mjs",
@@ -7115,5 +7115,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "4478227dbc07d94eec8d350cf80c94d55a2c10b5ac755813bc0a1290be895790"
+  "canonicalPayloadSha256": "195f68464b8220a573d20b762db2a391354c97b23805e4dd267e675f28050f63"
 }

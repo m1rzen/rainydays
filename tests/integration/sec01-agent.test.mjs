@@ -24,6 +24,7 @@ function toolCall(id, name, args) {
 class FakeLlm {
   responses = [];
   blocker = null;
+  streamEntered = null;
 
   queue(...responses) {
     this.responses.push(...responses);
@@ -34,6 +35,8 @@ class FakeLlm {
   }
 
   async *chatStream() {
+    this.streamEntered?.();
+    this.streamEntered = null;
     if (this.blocker) await this.blocker;
     const message = this.responses.shift();
     assert(message, "fake LLM response queue is empty");
@@ -590,11 +593,15 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     assertSec01Probe("SEC01-A26", "per-tool-executor-call-count", [calls.count, mixed.filter((event) => event.type === "tool_result" && event.toolName === "script").length], [2, 1]);
 
     let release;
+    let confirmFirstStreamEntered;
     llm.blocker = new Promise((resolve) => { release = resolve; });
+    const firstStreamEntered = new Promise((resolve) => { confirmFirstStreamEntered = resolve; });
+    llm.streamEntered = confirmFirstStreamEntered;
     llm.queue(assistant("first run done"), assistant("unexpected second run"));
     const firstIterator = agent.run("hold first run");
     const firstNext = firstIterator.next();
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    await firstStreamEntered;
+    assert.equal(agent.isRunning(), true);
     const messagesBeforeRejectedRun = memory.getMessageCount();
     const secondEvents = await collect(agent, "parallel second run");
     assert(secondEvents.some((event) => event.type === "error" && event.content.includes("CAPABILITY_RUN_BUSY")));

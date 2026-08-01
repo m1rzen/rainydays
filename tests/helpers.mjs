@@ -546,7 +546,7 @@ export async function runProcess(command, args, { cwd = projectRoot, env = proce
       reject(error);
     }, timeoutMs);
     child.once("error", (error) => { if (!timedOut) reject(error); });
-    child.once("exit", (code, signal) => { if (!timedOut) resolve({ code, signal }); });
+    child.once("close", (code, signal) => { if (!timedOut) resolve({ code, signal }); });
   }).finally(() => clearTimeout(timer));
   return { ...result, stdout, stderr };
 }
@@ -563,6 +563,11 @@ export function parseTapSummary(output) {
     if (!match || match[3]) return [];
     return [createHash("sha256").update(`tap-test:${match[1]}:${match[2]}`).digest("hex")];
   });
+  const nestedFailedTestIds = [...new Set(lines.flatMap((line) => {
+    const match = /^\s{4,}not ok ([1-9]\d*) - (.*?)(?: # (TODO|SKIP)(?: .*)?)?$/u.exec(line);
+    if (!match || match[3]) return [];
+    return [createHash("sha256").update(`tap-nested-test:${match[1]}:${match[2]}`).digest("hex")];
+  }))].slice(0, 64);
   return {
     tests: number("tests"),
     passed: number("pass"),
@@ -571,6 +576,7 @@ export function parseTapSummary(output) {
     cancelled: number("cancelled"),
     todo: number("todo"),
     failedTestIds,
+    nestedFailedTestIds,
   };
 }
 
