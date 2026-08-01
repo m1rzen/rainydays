@@ -103,14 +103,15 @@ test("SEC-02 Electron bootstrap binds an outer ASAR lifetime lease to strict int
   await fs.writeFile(path.join(source, "electron", "preload.cjs"), "ARCHIVE-PRELOAD");
   await asar.createPackage(source, archivePath);
   await fs.mkdir(`${archivePath}.unpacked`);
+  const canonicalArchivePath = nodeFs.realpathSync.native(archivePath);
   const archiveFs = {
     statSync(candidate) {
-      const relative = path.relative(archivePath, candidate);
+      const relative = path.relative(canonicalArchivePath, candidate);
       const metadata = asar.statFile(archivePath, relative, false);
       return { size: BigInt(metadata.size), isFile: () => "size" in metadata };
     },
     readFileSync(candidate) {
-      return asar.extractFile(archivePath, path.relative(archivePath, candidate), false);
+      return asar.extractFile(archivePath, path.relative(canonicalArchivePath, candidate), false);
     },
   };
   const store = new ElectronBootstrapPathStore({

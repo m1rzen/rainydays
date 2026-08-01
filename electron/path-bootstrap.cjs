@@ -117,7 +117,7 @@ function assertNoRedirectComponents(absolute, role, io = fs) {
 function canonicalDirectory(candidate, role, io = fs) {
   const absolute = validateAbsoluteSyntax(candidate, role);
   assertNoRedirectComponents(absolute, role, io);
-  const canonical = io.realpathSync(absolute);
+  const canonical = io.realpathSync.native(absolute);
   const info = io.statSync(canonical, { bigint: true });
   if (!info.isDirectory()) deny("PATH_TYPE_DENIED", role);
   return Object.freeze({ canonical, identity: exactIdentity(info), io });
@@ -126,7 +126,7 @@ function canonicalDirectory(candidate, role, io = fs) {
 function verifyDirectory(record, role) {
   const io = record.io;
   assertNoRedirectComponents(record.canonical, role, io);
-  const canonical = io.realpathSync(record.canonical);
+  const canonical = io.realpathSync.native(record.canonical);
   const info = io.statSync(canonical, { bigint: true });
   if (canonical !== record.canonical || !sameIdentity(record.identity, exactIdentity(info))) {
     deny("PATH_IDENTITY_CHANGED", role);
@@ -140,7 +140,7 @@ function openFileAt(rootRecord, relative, role, barrier) {
   const lexical = path.join(rootRecord.canonical, safeRelative);
   if (!pathContained(rootRecord.canonical, lexical)) deny("PATH_ROOT_DENIED", role);
   assertNoRedirectComponents(lexical, role, io);
-  const canonical = io.realpathSync(lexical);
+  const canonical = io.realpathSync.native(lexical);
   if (!pathContained(rootRecord.canonical, canonical)) deny("PATH_ROOT_DENIED", role);
   const descriptor = io.openSync(canonical, "r");
   try {
@@ -214,7 +214,7 @@ class ElectronFileLease {
     verifyDirectory(this.#rootRecord, this.#role);
     const lexical = path.join(this.#rootRecord.canonical, this.#relative);
     assertNoRedirectComponents(lexical, this.#role, this.#io);
-    const canonical = this.#io.realpathSync(lexical);
+    const canonical = this.#io.realpathSync.native(lexical);
     const pathInfo = this.#io.statSync(canonical, { bigint: true });
     const handleInfo = this.#io.fstatSync(this.#descriptor, { bigint: true });
     if (canonical !== this.#canonical
@@ -317,8 +317,11 @@ class ElectronBootstrapPathStore {
       this.#archiveLease = openFileAt(parent, path.basename(appAbsolute), "app-asar", barrier);
       this.#archivePath = this.#archiveLease.canonicalPath;
       this.#runtimeAppRoot = canonicalDirectory(`${this.#archivePath}.unpacked`, "app-runtime-projection", nativeFs);
-      const expectedElectronRoot = path.join(this.#archivePath, "electron");
-      if (!samePath(path.resolve(electronRoot), expectedElectronRoot)) deny("PATH_ROOT_DENIED", "electron-root");
+      const electronAbsolute = validateAbsoluteSyntax(electronRoot, "electron-root");
+      const electronArchivePath = nativeFs.realpathSync.native(path.dirname(electronAbsolute));
+      if (!samePath(electronArchivePath, this.#archivePath) || !samePath(path.basename(electronAbsolute), "electron")) {
+        deny("PATH_ROOT_DENIED", "electron-root");
+      }
       this.#appRoot = null;
       this.#electronRoot = null;
     } else deny("PATH_TYPE_DENIED", "app-root");

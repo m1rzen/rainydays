@@ -81,6 +81,7 @@ test("SEC-02 sink detector closes nested destructuring, computed aliases, native
     writeFile(output, bytes);
     fn(other);
     fs.realpath.native(input, callback);
+    fs.realpathSync.native(input);
     req(userSpecifier);
     await import("file:///C:/attacker/payload.mjs");
   `;
@@ -92,6 +93,7 @@ test("SEC-02 sink detector closes nested destructuring, computed aliases, native
     ["node-fs", "writeFile", ["argument:0"]],
     ["unresolved-governed-call", "computed-alias", ["callee-member"]],
     ["node-fs", "realpath.native", ["argument:0"]],
+    ["node-fs", "realpathSync", ["argument:0"]],
     ["module-loader", "createRequire-call", ["argument:0"]],
     ["module-loader", "import", ["argument:0"]],
   ]);

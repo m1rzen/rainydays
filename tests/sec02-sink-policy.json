@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "task": "SEC-02",
-  "detectorPolicySha256": "0d0bf8d8501ef4a9adee3d1437e65dadfa5789770706d7ff7fa1f0e5f2488070",
+  "detectorPolicySha256": "56821eb657093c79b26f088c61458a0d6a20e5e3353d04556970b1f3ba11fe6a",
   "bindings": [
     {
       "siteId": "sink-737e8e7fed0c6358826cae25",
@@ -516,9 +516,9 @@
       }
     },
     {
-      "siteId": "sink-e9f60377a7ba14a0be4c146b",
+      "siteId": "sink-acb52f33723a544718710104",
       "sourcePath": "electron/path-bootstrap.cjs",
-      "normalizedNodeSha256": "77d2858be57c9de801cc5c3c0cabb49d4f44ea3b4605fd0f06a442944b72691a",
+      "normalizedNodeSha256": "b6f616842de59e807cf880dd1f3d38c4eff31e9e97e9a06db5ffc73c7321b3d6",
       "container": "canonicalDirectory",
       "family": "node-fs",
       "api": "realpathSync",
@@ -572,9 +572,9 @@
       }
     },
     {
-      "siteId": "sink-f001c9a65840a29515278a5a",
+      "siteId": "sink-c722ca6366bcc66042092c83",
       "sourcePath": "electron/path-bootstrap.cjs",
-      "normalizedNodeSha256": "4a0566962a7d0e6e5bd7afb0ab89c83d28b1c79a49a3b14607c7589583754caa",
+      "normalizedNodeSha256": "883e450e5a7494b216fdde62184164a7e4465bd34ab30c63654a9d5fb9e2f9f2",
       "container": "verifyDirectory",
       "family": "node-fs",
       "api": "realpathSync",
@@ -628,9 +628,9 @@
       }
     },
     {
-      "siteId": "sink-93aba5276eac452aecde5cea",
+      "siteId": "sink-38071ff8d84c2245db47faa8",
       "sourcePath": "electron/path-bootstrap.cjs",
-      "normalizedNodeSha256": "c8b3bd05a3b689186f69d01805c856cf26bcf130cdbc33b0ada69931eda055fb",
+      "normalizedNodeSha256": "e41dc7af3851246fed13b3fb1d162c7833093e280d2e81de9e8d3c5f50e1534b",
       "container": "openFileAt",
       "family": "node-fs",
       "api": "realpathSync",
@@ -712,9 +712,9 @@
       }
     },
     {
-      "siteId": "sink-7098c28108f372a1e7753e82",
+      "siteId": "sink-fb3a8aa97bd46d8fa4064b3d",
       "sourcePath": "electron/path-bootstrap.cjs",
-      "normalizedNodeSha256": "059560d755524e25d5d2d9db8a5463e25561b9aa820b924609e53a5e253734c0",
+      "normalizedNodeSha256": "6b7cdd64dfd6e8d3cc5fa5d4ad3838595933677b67b635ab691dc0c86182a12b",
       "container": "ElectronFileLease.verify",
       "family": "node-fs",
       "api": "realpathSync",
@@ -866,6 +866,34 @@
       "binding": {
         "kind": "bootstrap-adapter",
         "anchor": "electron/path-bootstrap.cjs#ElectronBootstrapPathStore.constructor:node-fs.lstatSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#ElectronBootstrapPathStore.constructor:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-80508fcd9797e3a69260a4d6",
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "normalizedNodeSha256": "b7122bf4be37d9b5736259da6c30b581ccc1c78bdf708dbb3550692e12682e8f",
+      "container": "ElectronBootstrapPathStore.constructor",
+      "family": "node-fs",
+      "api": "realpathSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#ElectronBootstrapPathStore.constructor:node-fs.realpathSync",
         "evidenceIds": [
           "electron-source",
           "packaged-asar"
@@ -3263,5 +3291,5 @@
       }
     }
   ],
-  "canonicalPayloadSha256": "799c96f133fb9e8785530b9ccd763d8b2bd011c791a8d5fd26d3ba3f429c586e"
+  "canonicalPayloadSha256": "179b7b8e25974108738aea42f11b14540784b6dbdc60e954bc6dd2fe9a7851b5"
 }

@@ -1,16 +1,16 @@
 {
   "schemaVersion": 2,
   "task": "SEC-02",
-  "detectorPolicySha256": "0d0bf8d8501ef4a9adee3d1437e65dadfa5789770706d7ff7fa1f0e5f2488070",
-  "reviewPolicySha256": "799c96f133fb9e8785530b9ccd763d8b2bd011c791a8d5fd26d3ba3f429c586e",
+  "detectorPolicySha256": "56821eb657093c79b26f088c61458a0d6a20e5e3353d04556970b1f3ba11fe6a",
+  "reviewPolicySha256": "179b7b8e25974108738aea42f11b14540784b6dbdc60e954bc6dd2fe9a7851b5",
   "dialectCheckerSha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
   "dialectPolicySha256": "75ea44ca15bc7092eca51957cb93f89580aa1a395cb1428c1f3e12baf7b17209",
   "dialectImportSetSha256": "23efdb5dc6dd02d52c87ff54a03b1368f9e06afd4f37ef8595b0fc546acaef5b",
-  "runtimeSinkSetSha256": "ed86484b197178ab200c8c7c90877d8a3b6166991ca75d22121970a40486f65c",
+  "runtimeSinkSetSha256": "67eef11d9e674055b28e7a818adcd7816f9d429147cd8182007c54d90e79a1bb",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
     "executableFileCount": 71,
-    "executableManifestSha256": "8e44b5be71f999edda789776ac07dcd06096a695995d28d5b1d453406c95bb1e",
+    "executableManifestSha256": "d78ceadb914a9366805742191ab1d725b70d311ed2bf4cda1f9bc75764710206",
     "dialectImportCount": 33,
     "dialectExceptionCount": 2
   },
@@ -24,8 +24,8 @@
     },
     {
       "sourcePath": "electron/path-bootstrap.cjs",
-      "bytes": 15041,
-      "sha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "bytes": 15240,
+      "sha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "role": "electron-runtime",
       "packageExpectation": "included-in-asar"
     },
@@ -1106,7 +1106,7 @@
       "id": "sink-e4584198fe4a905359bb89df",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 3,
       "column": 12,
       "nodeKind": "CallExpression",
@@ -1139,7 +1139,7 @@
       "id": "sink-78e90219dd3cc477d1e25e2e",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 4,
       "column": 14,
       "nodeKind": "CallExpression",
@@ -1172,7 +1172,7 @@
       "id": "sink-ad4e7e012727667a8187ecbb",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 5,
       "column": 24,
       "nodeKind": "CallExpression",
@@ -1205,7 +1205,7 @@
       "id": "sink-b426b927f82e700fe016fdd4",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 112,
       "column": 18,
       "nodeKind": "CallExpression",
@@ -1235,10 +1235,10 @@
       }
     },
     {
-      "id": "sink-e9f60377a7ba14a0be4c146b",
+      "id": "sink-acb52f33723a544718710104",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 120,
       "column": 21,
       "nodeKind": "CallExpression",
@@ -1248,7 +1248,7 @@
       "pathOperands": [
         "argument:0"
       ],
-      "normalizedNodeSha256": "77d2858be57c9de801cc5c3c0cabb49d4f44ea3b4605fd0f06a442944b72691a",
+      "normalizedNodeSha256": "b6f616842de59e807cf880dd1f3d38c4eff31e9e97e9a06db5ffc73c7321b3d6",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -1271,7 +1271,7 @@
       "id": "sink-12d963fa74be6de3ac6d4e97",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 121,
       "column": 16,
       "nodeKind": "CallExpression",
@@ -1301,10 +1301,10 @@
       }
     },
     {
-      "id": "sink-f001c9a65840a29515278a5a",
+      "id": "sink-c722ca6366bcc66042092c83",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 129,
       "column": 21,
       "nodeKind": "CallExpression",
@@ -1314,7 +1314,7 @@
       "pathOperands": [
         "argument:0"
       ],
-      "normalizedNodeSha256": "4a0566962a7d0e6e5bd7afb0ab89c83d28b1c79a49a3b14607c7589583754caa",
+      "normalizedNodeSha256": "883e450e5a7494b216fdde62184164a7e4465bd34ab30c63654a9d5fb9e2f9f2",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -1337,7 +1337,7 @@
       "id": "sink-68448c469361fd3bc492137a",
       "occurrence": 2,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 130,
       "column": 16,
       "nodeKind": "CallExpression",
@@ -1367,10 +1367,10 @@
       }
     },
     {
-      "id": "sink-93aba5276eac452aecde5cea",
+      "id": "sink-38071ff8d84c2245db47faa8",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 143,
       "column": 21,
       "nodeKind": "CallExpression",
@@ -1380,7 +1380,7 @@
       "pathOperands": [
         "argument:0"
       ],
-      "normalizedNodeSha256": "c8b3bd05a3b689186f69d01805c856cf26bcf130cdbc33b0ada69931eda055fb",
+      "normalizedNodeSha256": "e41dc7af3851246fed13b3fb1d162c7833093e280d2e81de9e8d3c5f50e1534b",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -1403,7 +1403,7 @@
       "id": "sink-f2402500e1f800cd7f0d1960",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 145,
       "column": 22,
       "nodeKind": "CallExpression",
@@ -1436,7 +1436,7 @@
       "id": "sink-8a791145736d1061edc234c5",
       "occurrence": 3,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 148,
       "column": 22,
       "nodeKind": "CallExpression",
@@ -1466,10 +1466,10 @@
       }
     },
     {
-      "id": "sink-7098c28108f372a1e7753e82",
+      "id": "sink-fb3a8aa97bd46d8fa4064b3d",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 217,
       "column": 23,
       "nodeKind": "CallExpression",
@@ -1479,7 +1479,7 @@
       "pathOperands": [
         "argument:0"
       ],
-      "normalizedNodeSha256": "059560d755524e25d5d2d9db8a5463e25561b9aa820b924609e53a5e253734c0",
+      "normalizedNodeSha256": "6b7cdd64dfd6e8d3cc5fa5d4ad3838595933677b67b635ab691dc0c86182a12b",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -1502,7 +1502,7 @@
       "id": "sink-76e72f7981cd2f3de54588c9",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 218,
       "column": 22,
       "nodeKind": "CallExpression",
@@ -1535,7 +1535,7 @@
       "id": "sink-7e8ae1024dd0191cdef54f0c",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 264,
       "column": 18,
       "nodeKind": "CallExpression",
@@ -1568,7 +1568,7 @@
       "id": "sink-4065d58b44ff78c1eecd70a1",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 266,
       "column": 19,
       "nodeKind": "CallExpression",
@@ -1601,7 +1601,7 @@
       "id": "sink-93c16d1c8d9160068852acfd",
       "occurrence": 2,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 275,
       "column": 18,
       "nodeKind": "CallExpression",
@@ -1634,7 +1634,7 @@
       "id": "sink-2253ed101cacd5832e37c5a9",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "line": 311,
       "column": 21,
       "nodeKind": "CallExpression",
@@ -1650,6 +1650,39 @@
       "binding": {
         "kind": "bootstrap-adapter",
         "anchor": "electron/path-bootstrap.cjs#ElectronBootstrapPathStore.constructor:node-fs.lstatSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-canonical-path",
+            "anchor": "electron/path-bootstrap.cjs#ElectronBootstrapPathStore.constructor:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-80508fcd9797e3a69260a4d6",
+      "occurrence": 1,
+      "sourcePath": "electron/path-bootstrap.cjs",
+      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
+      "line": 321,
+      "column": 35,
+      "nodeKind": "CallExpression",
+      "container": "ElectronBootstrapPathStore.constructor",
+      "family": "node-fs",
+      "api": "realpathSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "b7122bf4be37d9b5736259da6c30b581ccc1c78bdf708dbb3550692e12682e8f",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/path-bootstrap.cjs#ElectronBootstrapPathStore.constructor:node-fs.realpathSync",
         "evidenceIds": [
           "electron-source",
           "packaged-asar"
@@ -4433,5 +4466,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "e06240753db3a70bc8244143fe6671e9754893f6f1b6dc86a258fdb1cf8518d5"
+  "canonicalPayloadSha256": "496f827a37ae51cb69d5ef75501b431cc374941f99f9164560163aebe79fbbba"
 }

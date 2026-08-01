@@ -1184,7 +1184,7 @@ test("SEC-02 watcher publishes only reauthorized add and remove events", async t
   );
   t.after(() => lease.close());
 
-  const target = path.join(root, "watched.txt");
+  const target = path.join(await fs.realpath(root), "watched.txt");
   await fs.writeFile(target, "value");
   const added = await waitFor(
     () => events.find(event => event.path.toLowerCase() === target.toLowerCase() && event.type !== "file_removed"),
@@ -1964,7 +1964,7 @@ test("SEC-02 coverage recovery closes public PathPolicy adapter and lifecycle br
   await assert.rejects(() => policy.withInitialCwd(authority, request("", "read-directory"), () => undefined), TypeError);
   await assert.rejects(() => policy.withInitialCwd(authority, request("", "initial-cwd"), null), TypeError);
   await assert.rejects(() => policy.withInitialCwd(authority, request("", "initial-cwd"), () => { throw new Error("cwd callback failure"); }), /cwd callback failure/);
-  assert.equal(await policy.withInitialCwd(authority, request("", "initial-cwd"), canonical => canonical), path.normalize(root));
+  assert.equal(await policy.withInitialCwd(authority, request("", "initial-cwd"), canonical => canonical), await fs.realpath(root));
 
   await assert.rejects(() => policy.watchDirectory(authority, request("", "read-directory"), () => undefined), TypeError);
   await assert.rejects(() => policy.watchDirectory(authority, request("", "watch-directory"), null), TypeError);

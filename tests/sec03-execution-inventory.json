@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "69fb97f2d5800a4426dde95a027057b141e1585bd33e9ca39d3b9ef961da3ecf",
+  "sourceSetSha256": "76da204c4ac2021811b294a46e15a8cdb157fd0c525c0c3828298e5b87ab41f0",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -15,8 +15,8 @@
     },
     {
       "sourcePath": "electron/path-bootstrap.cjs",
-      "bytes": 15041,
-      "sha256": "700ac0504e0393a7a94291988ee6d8bc99707b5d8453865d0313e1f2b21a1c0c",
+      "bytes": 15240,
+      "sha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
       "executionClass": "electron-runtime"
     },
     {
@@ -255,8 +255,8 @@
     },
     {
       "sourcePath": "scripts/run-test-layer.mjs",
-      "bytes": 17479,
-      "sha256": "552bbe0e5248a4316d29c79d5490b9a47e4a5770dcd60321d57633d79a1462f1",
+      "bytes": 17495,
+      "sha256": "78c542d7aaaedb920473bb3b5fa0538aa0d3cd632a26ea6a000905378131d416",
       "executionClass": "build-test"
     },
     {
@@ -291,8 +291,8 @@
     },
     {
       "sourcePath": "scripts/sec02-sink-scanner.mjs",
-      "bytes": 54988,
-      "sha256": "0d0bf8d8501ef4a9adee3d1437e65dadfa5789770706d7ff7fa1f0e5f2488070",
+      "bytes": 55221,
+      "sha256": "56821eb657093c79b26f088c61458a0d6a20e5e3353d04556970b1f3ba11fe6a",
       "executionClass": "build-test"
     },
     {
@@ -795,8 +795,8 @@
     },
     {
       "sourcePath": "tests/contract/sec02-sink-inventory.test.mjs",
-      "bytes": 23824,
-      "sha256": "7bae616e4a7eeab2fafbf2764262693eda163dcbc5118f186739794827ad9b84",
+      "bytes": 23908,
+      "sha256": "f2c67cad923810df944e4801fc5a406b532236dd7d7938760112dbba67dfc660",
       "executionClass": "build-test"
     },
     {
@@ -1029,8 +1029,8 @@
     },
     {
       "sourcePath": "tests/unit/electron-path-bootstrap.test.mjs",
-      "bytes": 7406,
-      "sha256": "8cca4df4f91f73d6cbda4efa9e933b8f744afb4ac72180dfa50ae2975ccfc69c",
+      "bytes": 7496,
+      "sha256": "92b599a20b8f02190d22190ad9e8aa3844200a5155cd6b7cadc1592878a5cc23",
       "executionClass": "build-test"
     },
     {
@@ -1059,8 +1059,8 @@
     },
     {
       "sourcePath": "tests/unit/path-policy.test.mjs",
-      "bytes": 113135,
-      "sha256": "ed223fafb951bc138ebe96cfee188a3181e9ff8790219e498b4e1744b0604966",
+      "bytes": 113157,
+      "sha256": "dfa1f9d731660ed1907d57729d4d4dc3c1cd1ac58b68971978636fff3d00f392",
       "executionClass": "build-test"
     },
     {
@@ -2662,7 +2662,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-631dcad41b86280b5ec77646",
+      "id": "exec-05cdc829c6f95f9d500480ef",
       "occurrence": 1,
       "sourcePath": "scripts/run-test-layer.mjs",
       "line": 220,
@@ -5555,5 +5555,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "6705ca6fc54d469c44dbdfe8e5017d08560f4d507c477be0c4328a5f27dcebdf"
+  "canonicalPayloadSha256": "f52dd14b5bace6580d9edfc21e1d8f1cf6f7d481bac89d3f1270c64a6477fd26"
 }

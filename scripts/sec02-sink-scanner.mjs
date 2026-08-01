@@ -48,7 +48,8 @@ function isGovernedOrigin(origin) {
 
 function isGovernedCallableOrigin(origin) {
   if (!origin || origin.instanceOf) return false;
-  if (fsModules.has(origin.moduleName)) return fsPathMethods.has(origin.member) || (origin.member === "native" && origin.receiver === "realpath");
+  if (fsModules.has(origin.moduleName)) return fsPathMethods.has(origin.member)
+    || (origin.member === "native" && ["realpath", "realpathSync"].includes(origin.receiver));
   if (childProcessModules.has(origin.moduleName)) return processMethods.has(origin.member);
   if (workerModules.has(origin.moduleName)) return origin.member === "Worker";
   if (origin.moduleName === "electron") return electronPathMethods.has(origin.member) || electronDialogMethods.has(origin.member) || ["BrowserWindow", "Tray"].includes(origin.member);
@@ -693,6 +694,8 @@ export function scanSec02Source(relative, bytes, externalBindings = new Map()) {
           add(node, "node-fs", resolved.member, multiPathFsOperands[resolved.member] ?? ["argument:0"]);
         } else if (resolved && fsModules.has(resolved.moduleName) && resolved.member === "native" && resolved.receiver === "realpath") {
           add(node, "node-fs", "realpath.native", ["argument:0"]);
+        } else if (resolved && fsModules.has(resolved.moduleName) && resolved.member === "native" && resolved.receiver === "realpathSync") {
+          add(node, "node-fs", "realpathSync", ["argument:0"]);
         } else if (resolved && childProcessModules.has(resolved.moduleName) && processMethods.has(resolved.member)) {
           let hasArgv = resolved.member === "fork" || resolved.member.startsWith("execFile") || resolved.member.startsWith("spawn");
           let optionsIndex = hasArgv ? 2 : 1;

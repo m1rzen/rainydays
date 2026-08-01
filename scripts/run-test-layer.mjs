@@ -211,7 +211,7 @@ async function main() {
   }
 
   const files = manifest.layers[args.layer];
-  const receiptDirectory = sec02Resolved ? await makeTempDir("mini-lux-sec02-receipts-") : null;
+  const receiptDirectory = sec02Resolved ? await realpath(await makeTempDir("mini-lux-sec02-receipts-")) : null;
   const matrixBinding = sec02Resolved
     ? sec02Manifest.governedArtifacts.find(entry => entry.exactCasePath === "tests/sec02-attack-matrix.json")
     : null;
