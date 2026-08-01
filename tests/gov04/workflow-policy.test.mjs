@@ -142,6 +142,12 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   assert.match(nativeBuild, /versionProbe\.status !== 0/);
   assert.match(nativeBuild, /electronHeaders/);
 
+  const orchestrator = await readFile(path.join(projectRoot, "scripts", "gov04", "orchestrator.mjs"), "utf8");
+  assert.match(orchestrator, /const canonicalRunBase = await realpath\(runBase\)/);
+  assert.match(orchestrator, /resolveRetryEvidence\(\{ runBase: canonicalRunBase, retryOf \}\)/);
+  assert.match(orchestrator, /const runRoot = path\.join\(canonicalRunBase, runId\)/);
+  assert.doesNotMatch(orchestrator, /const runRoot = path\.join\(runBase, runId\)/);
+
   const gov04Steps = await readFile(path.join(projectRoot, "scripts", "gov04", "steps.mjs"), "utf8");
   assert.equal(gov04Steps.match(/loadTaskManifest\("GOV-03", workspace\)/g)?.length, 2);
   assert.doesNotMatch(gov04Steps, /tests["'],\s*["']manifests["'],\s*["']gov-03\.json/);

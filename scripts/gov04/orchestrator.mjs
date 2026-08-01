@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
-import { constants as fsConstants, access, copyFile, lstat, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { constants as fsConstants, access, copyFile, lstat, mkdir, readFile, readdir, realpath, rename, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { computeCandidateIdentity, copyCandidateSnapshot, publicCandidateIdentity, sha256 } from "./identity.mjs";
@@ -110,13 +110,14 @@ async function formalEvidence(workspace) {
 export async function runGov04({ projectRoot, profile = "merge", retryOf = null, exportReportPath = null, exportEvidenceDirectory = null, adapters = {}, runBase = path.join(os.tmpdir(), "mini-lux-gov04") }) {
   assert(["merge", "trusted-release"].includes(profile), "profile must be merge or trusted-release");
   await mkdir(runBase, { recursive: true });
-  const retry = await resolveRetryEvidence({ runBase, retryOf });
+  const canonicalRunBase = await realpath(runBase);
+  const retry = await resolveRetryEvidence({ runBase: canonicalRunBase, retryOf });
   const runId = randomUUID();
   const challenge = randomBytes(32).toString("hex");
   const runStartedAt = new Date();
   const runStarted = Date.now();
   const sourceDateEpoch = String(Math.floor(runStartedAt.getTime() / 1000));
-  const runRoot = path.join(runBase, runId);
+  const runRoot = path.join(canonicalRunBase, runId);
   await mkdir(runRoot, { recursive: false });
   const sourceSnapshot = path.join(runRoot, "source-snapshot");
   const sourceWorkspace = path.join(runRoot, "source-test-workspace");
