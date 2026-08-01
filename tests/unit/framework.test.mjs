@@ -398,7 +398,7 @@ test("process capture waits for inherited output pipes to close", async () => {
   assert.equal(child.stdout, "late-output");
 });
 
-test("Windows file handle observation binds holders to the exact process tree", async () => {
+test("Windows file handle observation binds holders to the exact process tree", async (t) => {
   assert.equal(process.platform, "win32", "file handle observation contract requires Windows");
   const root = await makeTempDir("rainydays-file-handle-observer-");
   let holder;
@@ -423,18 +423,30 @@ test("Windows file handle observation binds holders to the exact process tree", 
     });
     await Promise.all([waitForReady(holder, "file holder"), waitForReady(unrelatedRoot, "unrelated process root")]);
     assert.notEqual(holder.pid, unrelatedRoot.pid);
-    const matched = await observeWindowsFileHandleInProcessTree(target, holder.pid);
-    assert.equal(matched.matchingCount, 1);
-    assert.equal(matched.matched, true);
-    const unrelated = await observeWindowsFileHandleInProcessTree(target, unrelatedRoot.pid);
-    assert.equal(unrelated.matchingCount, 0);
-    assert.equal(unrelated.matched, false);
-    const termination = await terminateProcessTreeAsync(holder);
-    assert.equal(termination.exitCode, 0);
-    assert.equal(termination.childExited, true);
-    const closed = await observeWindowsFileHandleInProcessTree(target, holder.pid);
-    assert.equal(closed.matchingCount, 0);
-    assert.equal(closed.matched, false);
+
+    await t.test("matched holder is attributed to the managed holder root", async () => {
+      const matched = await observeWindowsFileHandleInProcessTree(target, holder.pid);
+      assert.equal(matched.matchingCount, 1);
+      assert.equal(matched.matched, true);
+    });
+
+    await t.test("holder is excluded from the unrelated sibling root", async () => {
+      const unrelated = await observeWindowsFileHandleInProcessTree(target, unrelatedRoot.pid);
+      assert.equal(unrelated.matchingCount, 0);
+      assert.equal(unrelated.matched, false);
+    });
+
+    await t.test("managed holder tree terminates cleanly", async () => {
+      const termination = await terminateProcessTreeAsync(holder);
+      assert.equal(termination.exitCode, 0);
+      assert.equal(termination.childExited, true);
+    });
+
+    await t.test("closed holder is absent from its former process root", async () => {
+      const closed = await observeWindowsFileHandleInProcessTree(target, holder.pid);
+      assert.equal(closed.matchingCount, 0);
+      assert.equal(closed.matched, false);
+    });
   } finally {
     if (holder?.exitCode === null) await terminateProcessTreeAsync(holder);
     if (unrelatedRoot?.exitCode === null) await terminateProcessTreeAsync(unrelatedRoot);

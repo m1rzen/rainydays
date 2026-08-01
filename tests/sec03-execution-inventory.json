@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "9b03419999e8688e49a54e97047466c6126e506d74025d3d9c59a065cf4ab79f",
+  "sourceSetSha256": "f8863d8a6c5bffad83a33ddf2075ad144011bff14522372fcd08641216394cf6",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -1053,8 +1053,8 @@
     },
     {
       "sourcePath": "tests/unit/framework.test.mjs",
-      "bytes": 35208,
-      "sha256": "304a51d7af0acd76264250ece53fe1168aef9eceb77cdd5deb0bba54cde0235d",
+      "bytes": 35604,
+      "sha256": "b756bbf2d07794e19e67c9e2d79ebe3fba667acb774dd4cbec0919c49c7f1f79",
       "executionClass": "build-test"
     },
     {
@@ -5535,7 +5535,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-dd6227e1d81c8e20d90bd120",
+      "id": "exec-5f11e745b958f6354886bbb1",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
       "line": 412,
@@ -5555,7 +5555,7 @@
       "id": "exec-4b7f1f53bc07e63b8b5cbfc3",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 447,
+      "line": 459,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5572,7 +5572,7 @@
       "id": "exec-387dfc51837d56e5b8a74941",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 504,
+      "line": 516,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5589,7 +5589,7 @@
       "id": "exec-f329446239415582c8492047",
       "occurrence": 2,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 521,
+      "line": 533,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5606,7 +5606,7 @@
       "id": "exec-72508e1a9a55a21b5002012a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 547,
+      "line": 559,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5663,5 +5663,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "92551a56f2e211fdf7aad1b718e6e8a912a401a7df00421c370b246093d7c6f9"
+  "canonicalPayloadSha256": "b96639fc10dd72f38c71bfd50360f82fc089850e27159ea93cfcb1d7f489d3e8"
 }
