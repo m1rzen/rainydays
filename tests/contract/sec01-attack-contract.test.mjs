@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
 import { readFile, realpath, stat } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { makeTempDir, projectRoot, removeFixture, runProcess } from "../helpers.mjs";
+import { resolveSec01ReceiptDestination } from "../sec01-probe.mjs";
 
 const matrixPath = path.join(projectRoot, "tests", "sec01-attack-matrix.json");
 const manifestPath = path.join(projectRoot, "tests", "manifests", "sec-01.json");
@@ -109,6 +111,35 @@ test("SEC-01 runtime receipt validator rejects missing, duplicate, stale and fal
   assert.throws(() => validateRuntimeReceipts([valid, valid], new Map([...expected, ["other", expected.get(observationId)]]), runId), /duplicate runtime receipt/);
   assert.throws(() => validateRuntimeReceipts([{ ...valid, runId: "b".repeat(64) }], expected, runId), /belongs to another run/);
   assert.throws(() => validateRuntimeReceipts([{ ...valid, actual: 1, actualDigest: digestValue(1) }], expected, runId), /differs from governed expected value/);
+});
+
+test("SEC-01 receipt authority recognizes Windows temporary-root aliases by directory identity", { skip: process.platform !== "win32" }, async () => {
+  const temporaryRoot = await realpath(os.tmpdir());
+  let aliasRoot = `\\\\?\\${temporaryRoot}`;
+  if (!temporaryRoot.includes(" ")) {
+    const aliasProbe = await runProcess(process.env.ComSpec || "cmd.exe", [
+      "/d", "/c", "for %I in (%SEC01_ALIAS_ROOT%) do @echo %~sI",
+    ], { env: { ...process.env, SEC01_ALIAS_ROOT: temporaryRoot } });
+    assert.equal(aliasProbe.code, 0);
+    const aliasOutput = aliasProbe.stdout.trim().split(/\r?\n/u).at(-1)?.trim() ?? "";
+    const shortRoot = aliasOutput.startsWith('"') && aliasOutput.endsWith('"') ? aliasOutput.slice(1, -1) : aliasOutput;
+    if (shortRoot && path.resolve(shortRoot).toLowerCase() !== path.resolve(temporaryRoot).toLowerCase()) aliasRoot = shortRoot;
+  }
+
+  const fixture = await makeTempDir("mini-lux-sec01-alias-");
+  const destination = path.join(fixture, "receipts.jsonl");
+  const previousTemp = process.env.TEMP;
+  const previousTmp = process.env.TMP;
+  process.env.TEMP = aliasRoot;
+  process.env.TMP = aliasRoot;
+  try {
+    assert.equal(resolveSec01ReceiptDestination(destination), path.join(await realpath(fixture), "receipts.jsonl"));
+    assert.throws(() => resolveSec01ReceiptDestination(path.join(projectRoot, "forbidden-sec01-receipt.jsonl")), /outside allowed test roots/);
+  } finally {
+    if (previousTemp === undefined) delete process.env.TEMP; else process.env.TEMP = previousTemp;
+    if (previousTmp === undefined) delete process.env.TMP; else process.env.TMP = previousTmp;
+    await removeFixture(fixture);
+  }
 });
 
 test("SEC-01 frozen 31-scenario contract produces complete runtime receipts", async () => {

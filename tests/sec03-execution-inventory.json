@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "b90ca1264ccfe4aac897436e9718343d0cf63e202c4678edde4d013b9ae653a3",
-  "sourceSetSha256": "4867ba1dcf5746802fe219e52f62a7391a5ce472ff6dd9bfb2de89fc5db3dba3",
+  "sourceSetSha256": "4c682b8758ddf28bf3b8d6f57eb8f7c7d293456c8a4778531675cbb6fa321f27",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -777,8 +777,8 @@
     },
     {
       "sourcePath": "tests/contract/sec01-attack-contract.test.mjs",
-      "bytes": 11637,
-      "sha256": "9441a8e8593c7e5c0ee4b4a9138186ebf9479482518de41a675cc5767b41c559",
+      "bytes": 13396,
+      "sha256": "bb7ed2a71be2b33579fdd05cb27b7a1667dfb91e57a66565bee5b61696c5c2e0",
       "executionClass": "build-test"
     },
     {
@@ -999,8 +999,8 @@
     },
     {
       "sourcePath": "tests/sec01-probe.mjs",
-      "bytes": 4095,
-      "sha256": "15da67d17c9402dba1666553d9cd9e399da0f7dc03e1ff2c142a9aa714c14afa",
+      "bytes": 5050,
+      "sha256": "6a78811718c5eac211f721d378ce97e23a8c9d8e638f0512b400935269dad6a6",
       "executionClass": "build-test"
     },
     {
@@ -3635,10 +3635,27 @@
       "classification": "build-test"
     },
     {
+      "id": "exec-19d2ace7dc7becf1aa2616b2",
+      "occurrence": 1,
+      "sourcePath": "tests/contract/sec01-attack-contract.test.mjs",
+      "line": 122,
+      "column": 20,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
       "id": "exec-95f5fa5004d754c3f0b24c5e",
       "occurrence": 1,
       "sourcePath": "tests/contract/sec01-attack-contract.test.mjs",
-      "line": 176,
+      "line": 207,
       "column": 27,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5606,5 +5623,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "7d75cf23234f19e537745ebce7c0810ce033d5e962f40541bfe814c22bba0167"
+  "canonicalPayloadSha256": "f5c9a3876ef2c9b1576b8c9f22d180ce0758c0333e3ba3257e61884d59c9834a"
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { appendFileSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, lstatSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -46,19 +46,47 @@ function assertMatrixExpectation(actual, expectation, label) {
   assert.fail(`${label} expectation kind is unsupported`);
 }
 
+function directoryIdentity(directory, label) {
+  const info = lstatSync(directory, { bigint: true });
+  assert(info.isDirectory() && !info.isSymbolicLink(), `${label} must be a regular directory`);
+  return { dev: info.dev, ino: info.ino };
+}
+
+function sameIdentity(left, right) {
+  return left.dev === right.dev && left.ino === right.ino;
+}
+
+export function resolveSec01ReceiptDestination(requested) {
+  assert(path.isAbsolute(requested), "SEC-01 receipt path must be absolute");
+  const absolute = path.resolve(requested);
+  const parent = path.dirname(absolute);
+  const allowedRootIdentities = [path.resolve(os.tmpdir()), path.resolve(process.cwd(), "test-results")]
+    .filter((root) => existsSync(root))
+    .map((root) => directoryIdentity(root, "SEC-01 receipt root"));
+
+  let cursor = parent;
+  let authorized = false;
+  while (true) {
+    const identity = directoryIdentity(cursor, "SEC-01 receipt ancestor");
+    if (allowedRootIdentities.some((root) => sameIdentity(root, identity))) {
+      authorized = true;
+      break;
+    }
+    const next = path.dirname(cursor);
+    if (next === cursor) break;
+    cursor = next;
+  }
+  assert(authorized, "SEC-01 receipt path is outside allowed test roots");
+  if (existsSync(absolute)) assert(!lstatSync(absolute).isSymbolicLink(), "SEC-01 receipt path must not be a symbolic link");
+  return absolute;
+}
+
 function receiptDestination() {
   const requested = process.env.SEC01_PROBE_RECEIPT_PATH;
   if (!requested) return null;
-  assert(path.isAbsolute(requested), "SEC-01 receipt path must be absolute");
   const runId = process.env.SEC01_PROBE_RUN_ID;
   assert.match(runId ?? "", runIdPattern, "SEC-01 receipt run id is invalid");
-  const absolute = path.resolve(requested);
-  const allowedRoots = [path.resolve(os.tmpdir()), path.resolve(process.cwd(), "test-results")];
-  assert(allowedRoots.some((root) => {
-    const relative = path.relative(root, absolute);
-    return relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
-  }), "SEC-01 receipt path is outside allowed test roots");
-  return { absolute, runId };
+  return { absolute: resolveSec01ReceiptDestination(requested), runId };
 }
 
 /**
