@@ -424,23 +424,44 @@ test("Windows file handle observation binds holders to the exact process tree", 
     await Promise.all([waitForReady(holder, "file holder"), waitForReady(unrelatedRoot, "unrelated process root")]);
     assert.notEqual(holder.pid, unrelatedRoot.pid);
 
+    let matchedFailed = false;
     await t.test("matched holder is attributed to the managed holder root", async () => {
-      const matched = await observeWindowsFileHandleInProcessTree(target, holder.pid);
-      assert.equal(matched.matchingCount, 1);
-      assert.equal(matched.matched, true);
+      try {
+        const matched = await observeWindowsFileHandleInProcessTree(target, holder.pid);
+        assert.equal(matched.matchingCount, 1);
+        assert.equal(matched.matched, true);
+      } catch (error) {
+        matchedFailed = true;
+        throw error;
+      }
     });
+    if (matchedFailed) return;
 
+    let unrelatedFailed = false;
     await t.test("holder is excluded from the unrelated sibling root", async () => {
-      const unrelated = await observeWindowsFileHandleInProcessTree(target, unrelatedRoot.pid);
-      assert.equal(unrelated.matchingCount, 0);
-      assert.equal(unrelated.matched, false);
+      try {
+        const unrelated = await observeWindowsFileHandleInProcessTree(target, unrelatedRoot.pid);
+        assert.equal(unrelated.matchingCount, 0);
+        assert.equal(unrelated.matched, false);
+      } catch (error) {
+        unrelatedFailed = true;
+        throw error;
+      }
     });
+    if (unrelatedFailed) return;
 
+    let terminationFailed = false;
     await t.test("managed holder tree terminates cleanly", async () => {
-      const termination = await terminateProcessTreeAsync(holder);
-      assert.equal(termination.exitCode, 0);
-      assert.equal(termination.childExited, true);
+      try {
+        const termination = await terminateProcessTreeAsync(holder);
+        assert.equal(termination.exitCode, 0);
+        assert.equal(termination.childExited, true);
+      } catch (error) {
+        terminationFailed = true;
+        throw error;
+      }
     });
+    if (terminationFailed) return;
 
     await t.test("closed holder is absent from its former process root", async () => {
       const closed = await observeWindowsFileHandleInProcessTree(target, holder.pid);

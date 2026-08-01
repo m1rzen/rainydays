@@ -1168,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "b756bbf2d07794e19e67c9e2d79ebe3fba667acb774dd4cbec0919c49c7f1f79",
+          "sha256": "57b3f38ae2a96303629df41ebd6496249aa18a0ec486f78b52653e9ef49520cd",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -7115,5 +7115,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "d6d59996acedde8faae98bd2c29e8d0655c4c1d32eaa91ef90813a13140d57b5"
+  "canonicalPayloadSha256": "88cadc2d374e93bd5d99cd21767c0aa4fad71d9d441ea26601b5a5cf008896b9"
 }
