@@ -449,6 +449,13 @@
       "supersedes": false
     },
     {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
       "exactCasePath": "tests/unit/native-process-consent.test.mjs",
       "kind": "test",
       "layer": "unit",

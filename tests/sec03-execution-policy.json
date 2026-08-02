@@ -663,7 +663,21 @@
       "api": "GetProcAddress",
       "container": "ResolveTestFileHolderQuery",
       "occurrenceId": "exec-133b0689e5afcbccad3666fc"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "family": "native-addon",
+      "api": "GetProcAddress",
+      "container": "ResolveTestProcessQuery",
+      "occurrenceId": "exec-9122300251b1977d15f6d502"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "family": "native-addon",
+      "api": "GetProcAddress",
+      "container": "ResolveTestSystemProcessQuery",
+      "occurrenceId": "exec-5532a13bd07fd49129701891"
     }
   ],
-  "canonicalPayloadSha256": "10b0ad2dc45107dc698ddcf30e6803fdcab1ecadcf3a542c1c0c7781abf1094b"
+  "canonicalPayloadSha256": "f0cf58b7a8a8ec4d9014b9079880bfd3df45fdd35f6044a85db16ab86847241d"
 }

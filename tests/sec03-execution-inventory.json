@@ -4,8 +4,8 @@
   "architectureSha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1",
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
-  "policySha256": "d266d0e4a41a7df7def96534684c1d6dbfc5b8f22597162815e21c4253b85cda",
-  "sourceSetSha256": "9f5095b69029f3166353765e20ab05cccc530a5f47e0437c4207b16502f1afc0",
+  "policySha256": "54acc8c23c85ffdf898ef906de5e2481b373e2d252cfc42145e567a063713425",
+  "sourceSetSha256": "c95f2974d4b1a4cd8a68705a30ed7bab2d586a95441e0331596095933c9237c3",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -57,8 +57,8 @@
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "bytes": 141543,
-      "sha256": "025c08243a32689c6a81b0583ca788b43783610982eff9c647f5553e3f79ffb4",
+      "bytes": 187620,
+      "sha256": "c2335c222d9a21e16e67745867a620416be8c83b932364ec37d9dfd6f98a1c08",
       "executionClass": "native-host"
     },
     {
@@ -819,8 +819,8 @@
     },
     {
       "sourcePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "bytes": 15351,
-      "sha256": "3981326597a9b8a50a054d0e4d87f4526d06ba7d577d2c75523aa337d4a5f429",
+      "bytes": 18849,
+      "sha256": "6992d41c3381242b7b1e44f174097f3e9d7587e392d3a103579bc98c86ee7d57",
       "executionClass": "build-test"
     },
     {
@@ -885,8 +885,8 @@
     },
     {
       "sourcePath": "tests/helpers.mjs",
-      "bytes": 38456,
-      "sha256": "f821086f7580464e187e506e37316d9f1f2d0b647eaf74f5dd69965eef0b92c1",
+      "bytes": 44053,
+      "sha256": "d21bdf69287743aea1e9084ad38fde543b5a776abc01cc4f63552333d11481b7",
       "executionClass": "build-test"
     },
     {
@@ -987,14 +987,14 @@
     },
     {
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "bytes": 27837,
-      "sha256": "6d3372a2f111ca7158aa9255845591dab7fccf1b9880ca2810fb491215f8261b",
+      "bytes": 27614,
+      "sha256": "869f3b0f329442607df2feb85c43f0559facf016ae6831c0e675059a15ffef93",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/packaged/smoke-helpers.mjs",
-      "bytes": 5229,
-      "sha256": "f20b4f56a821ea7762a20e3e02c5b066375f889196961c134a332a2eb420ce56",
+      "bytes": 1053,
+      "sha256": "3b50f07eb7a91fd6efbc408e16fac87a39ba2dc4d7cd4e39ee364c834f073ce0",
       "executionClass": "build-test"
     },
     {
@@ -1047,8 +1047,8 @@
     },
     {
       "sourcePath": "tests/unit/framework.test.mjs",
-      "bytes": 44344,
-      "sha256": "3278f426e7187c24102d7de78a0fd8a34221e4298d719b74b63c959a96267f38",
+      "bytes": 43689,
+      "sha256": "9771fac54c1b030e53b9245396ea0979f92da7e489ee4864a45aca54811fe5dc",
       "executionClass": "build-test"
     },
     {
@@ -1732,7 +1732,7 @@
       "id": "exec-64790978bfb03de86b5ddb6d",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 306,
+      "line": 307,
       "column": 20,
       "nodeKind": "NativeCallExpression",
       "container": "LoadValidatedTestProjection",
@@ -1750,7 +1750,7 @@
       "id": "exec-630302637c7988c485579ae7",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 308,
+      "line": 309,
       "column": 35,
       "nodeKind": "NativeCallExpression",
       "container": "LoadValidatedTestProjection",
@@ -1768,7 +1768,7 @@
       "id": "exec-133b0689e5afcbccad3666fc",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 654,
+      "line": 819,
       "column": 31,
       "nodeKind": "NativeCallExpression",
       "container": "ResolveTestFileHolderQuery",
@@ -1783,10 +1783,46 @@
       "classification": "native-host-adapter"
     },
     {
+      "id": "exec-9122300251b1977d15f6d502",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "line": 1257,
+      "column": 31,
+      "nodeKind": "NativeCallExpression",
+      "container": "ResolveTestProcessQuery",
+      "family": "native-addon",
+      "api": "GetProcAddress",
+      "operands": [
+        "module-handle",
+        "symbol"
+      ],
+      "normalizedNodeSha256": "5d5233840dc1fe0854be124d7e86a8cc11e2887354f1cc1bc217b42d694d5946",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
+      "id": "exec-5532a13bd07fd49129701891",
+      "occurrence": 1,
+      "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "line": 1266,
+      "column": 31,
+      "nodeKind": "NativeCallExpression",
+      "container": "ResolveTestSystemProcessQuery",
+      "family": "native-addon",
+      "api": "GetProcAddress",
+      "operands": [
+        "module-handle",
+        "symbol"
+      ],
+      "normalizedNodeSha256": "4b9aabe07b998444862ec29b16e0484ed219ca820b79fd032be6539754332939",
+      "executionClass": "native-host",
+      "classification": "native-host-adapter"
+    },
+    {
       "id": "exec-0515df0a9b409e806a87b2d4",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 1170,
+      "line": 1999,
       "column": 29,
       "nodeKind": "NativeCallExpression",
       "container": "RecoverJournals",
@@ -1804,7 +1840,7 @@
       "id": "exec-c245de1277b96804a0069628",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 1249,
+      "line": 2078,
       "column": 24,
       "nodeKind": "NativeCallExpression",
       "container": "LaunchHost",
@@ -3723,10 +3759,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-f8b2e19e7bb759e54d6b6bc3",
+      "id": "exec-c936e4d27ff7b79150fe5f1b",
       "occurrence": 1,
       "sourcePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "line": 236,
+      "line": 294,
       "column": 17,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -3881,10 +3917,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-2e290feeb188a9ec8631f968",
+      "id": "exec-aae7cfaa1b3a0be6a3a68b33",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 574,
+      "line": 578,
       "column": 34,
       "nodeKind": "CallExpression",
       "container": "validateAndLoadWindowsHandleObserverProjection",
@@ -3899,10 +3935,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-0540b6ad1baabc1b96a9a2d9",
+      "id": "exec-28f7feb40e62f24b7534a428",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 578,
+      "line": 582,
       "column": 18,
       "nodeKind": "CallExpression",
       "container": "validateAndLoadWindowsHandleObserverProjection",
@@ -3920,7 +3956,7 @@
       "id": "exec-ce5fbce477083f7b7ebcaab4",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 707,
+      "line": 797,
       "column": 10,
       "nodeKind": "CallExpression",
       "container": "boundedFetch",
@@ -3938,7 +3974,7 @@
       "id": "exec-fbfde060896b05d25c1d123f",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 732,
+      "line": 822,
       "column": 19,
       "nodeKind": "NewExpression",
       "container": "CdpClient.constructor",
@@ -5503,7 +5539,7 @@
       "id": "exec-5ed86e440d5e948c6dacdc9e",
       "occurrence": 1,
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "line": 63,
+      "line": 68,
       "column": 15,
       "nodeKind": "PropertyAccessExpression",
       "container": "launchInstalled",
@@ -5517,64 +5553,13 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-57bf1114595ce4d0ab6e08cf",
+      "id": "exec-d9a91082abb68b10ed732d4f",
       "occurrence": 1,
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "line": 226,
-      "column": 81,
-      "nodeKind": "PropertyAccessExpression",
-      "container": "processReferenceCount",
-      "family": "process-environment",
-      "api": "process.env",
-      "operands": [
-        "forwarded-value"
-      ],
-      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
-      "executionClass": "build-test",
-      "classification": "build-test"
-    },
-    {
-      "id": "exec-99366fe034579ade4118a44b",
-      "occurrence": 1,
-      "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "line": 344,
+      "line": 339,
       "column": 27,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
-      "family": "process-environment",
-      "api": "process.env",
-      "operands": [
-        "forwarded-value"
-      ],
-      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
-      "executionClass": "build-test",
-      "classification": "build-test"
-    },
-    {
-      "id": "exec-a50140669ca656ff73b97e0a",
-      "occurrence": 1,
-      "sourcePath": "tests/packaged/smoke-helpers.mjs",
-      "line": 32,
-      "column": 78,
-      "nodeKind": "PropertyAccessExpression",
-      "container": "observeWindowsRegistrySnapshot",
-      "family": "process-environment",
-      "api": "process.env",
-      "operands": [
-        "forwarded-value"
-      ],
-      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
-      "executionClass": "build-test",
-      "classification": "build-test"
-    },
-    {
-      "id": "exec-886ecd612b4d25a768ba0b14",
-      "occurrence": 1,
-      "sourcePath": "tests/packaged/smoke-helpers.mjs",
-      "line": 44,
-      "column": 81,
-      "nodeKind": "PropertyAccessExpression",
-      "container": "observeWindowsPowerShellOutput",
       "family": "process-environment",
       "api": "process.env",
       "operands": [
@@ -5639,7 +5624,7 @@
       "id": "exec-693086a31ebb12fadaeb0f4a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 447,
+      "line": 443,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5656,7 +5641,7 @@
       "id": "exec-24100569dee2dd14234e340c",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 546,
+      "line": 542,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5673,7 +5658,7 @@
       "id": "exec-4b7f1f53bc07e63b8b5cbfc3",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 609,
+      "line": 605,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5690,7 +5675,7 @@
       "id": "exec-387dfc51837d56e5b8a74941",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 666,
+      "line": 662,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5707,7 +5692,7 @@
       "id": "exec-f329446239415582c8492047",
       "occurrence": 2,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 683,
+      "line": 679,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5724,7 +5709,7 @@
       "id": "exec-72508e1a9a55a21b5002012a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 709,
+      "line": 705,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5781,5 +5766,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "b25199a84deac6da0402995ef560ee650b4a62dc660c8a6da5cada289731b183"
+  "canonicalPayloadSha256": "205414a57154d0151c35f289e42ab8f0bb3390c9218203fdafe1aa05d235c175"
 }

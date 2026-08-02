@@ -140,6 +140,7 @@
       "icon": "public/icon.png"
     },
     "nsis": {
+      "guid": "0897e7b3-5f0f-5c38-ba13-645f30c0bb5a",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "RainyDays",

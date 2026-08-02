@@ -557,7 +557,11 @@ export async function runProcess(command, args, { cwd = projectRoot, env = proce
 const nativeTestRequire = createRequire(import.meta.url);
 const productionAddonKeys = Object.freeze(["openEvidenceVerifier", "openExclusiveHostLease", "protocolVersion"].sort());
 const nativeTestAddonKeys = Object.freeze([
+  "observeWindowsProcessReferencesForTest",
   "observeWindowsFileHandleInProcessTreeForTest",
+  "observeWindowsKnownFolderPathsForTest",
+  "observeWindowsRegistryKeyForTest",
+  "observeWindowsRegistrySnapshotForTest",
   "openEvidenceVerifier",
   "openExclusiveHostLease",
   "protocolVersion",
@@ -585,7 +589,15 @@ async function validateAndLoadWindowsHandleObserverProjection() {
     assert(ownKeys.every((key) => typeof key === "string"), "native test addon has non-string exports");
     assert.deepEqual([...ownKeys].sort(), nativeTestAddonKeys, "native test addon exports differ");
     assert.equal(nativeTest.protocolVersion, 1, "native test addon protocol differs");
-    for (const operation of ["openEvidenceVerifier", "openExclusiveHostLease", "observeWindowsFileHandleInProcessTreeForTest"]) {
+    for (const operation of [
+      "observeWindowsProcessReferencesForTest",
+      "observeWindowsFileHandleInProcessTreeForTest",
+      "observeWindowsKnownFolderPathsForTest",
+      "observeWindowsRegistryKeyForTest",
+      "observeWindowsRegistrySnapshotForTest",
+      "openEvidenceVerifier",
+      "openExclusiveHostLease",
+    ]) {
       assert.equal(typeof nativeTest[operation], "function", `native test addon ${operation} export is invalid`);
     }
     return Object.freeze({ production, nativeTest });
@@ -619,6 +631,84 @@ export async function observeWindowsFileHandleInProcessTree(filePath, rootProces
   assert(observation.matchingCount <= observation.holderCount, "matching holder count exceeds total holders");
   assert.equal(observation.matched, observation.matchingCount > 0, "matched state differs from holder count");
   assert.equal(Object.isFrozen(observation), true, "file handle observation must be frozen");
+  return observation;
+}
+
+function validateWindowsRegistryObservation(observation) {
+  assertExactKeys(observation, ["rootPresent", "items"], "registry observation");
+  assert.equal(typeof observation.rootPresent, "boolean", "registry root state is invalid");
+  assert(Array.isArray(observation.items) && observation.items.length <= 4096, "registry items are invalid");
+  const itemKeys = ["DisplayName", "DisplayVersion", "InstallLocation", "PSChildName", "QuietUninstallString", "UninstallString"];
+  let previousName = null;
+  for (const item of observation.items) {
+    assertExactKeys(item, itemKeys, "registry item");
+    assert.equal(typeof item.PSChildName, "string", "registry child name is invalid");
+    assert(item.PSChildName.length > 0 && item.PSChildName.length <= 255, "registry child name is invalid");
+    for (const field of itemKeys.filter((field) => field !== "PSChildName")) {
+      assert(item[field] === null || typeof item[field] === "string", `registry ${field} is invalid`);
+    }
+    if (previousName !== null) assert(previousName <= item.PSChildName, "registry items are not sorted");
+    previousName = item.PSChildName;
+    assert.equal(Object.isFrozen(item), true, "registry item must be frozen");
+  }
+  assert.equal(Object.isFrozen(observation.items), true, "registry items must be frozen");
+  assert.equal(Object.isFrozen(observation), true, "registry observation must be frozen");
+  return observation;
+}
+
+async function windowsRegistryObserverInput(relativeSubkey) {
+  assert.equal(process.platform, "win32", "registry observation requires Windows");
+  assert.equal(process.arch, "x64", "registry observation requires Windows x64");
+  assert.equal(typeof relativeSubkey, "string", "registry subkey must be a string");
+  assert(relativeSubkey.length > 0 && relativeSubkey.length <= 32_766 && !relativeSubkey.includes("\0"), "registry subkey is invalid");
+  return loadWindowsHandleObserverProjectionForTest();
+}
+
+export async function observeWindowsRegistrySnapshot(relativeSubkey) {
+  const { nativeTest } = await windowsRegistryObserverInput(relativeSubkey);
+  return validateWindowsRegistryObservation(nativeTest.observeWindowsRegistrySnapshotForTest(relativeSubkey));
+}
+
+export async function observeWindowsRegistryKey(relativeSubkey) {
+  const { nativeTest } = await windowsRegistryObserverInput(relativeSubkey);
+  const observation = validateWindowsRegistryObservation(nativeTest.observeWindowsRegistryKeyForTest(relativeSubkey));
+  assert(observation.items.length <= 1, "registry key observation has multiple items");
+  assert.equal(observation.rootPresent, observation.items.length === 1, "registry key presence differs from item count");
+  return observation;
+}
+
+export async function observeWindowsKnownFolderPaths() {
+  assert.equal(process.platform, "win32", "known-folder observation requires Windows");
+  assert.equal(process.arch, "x64", "known-folder observation requires Windows x64");
+  const { nativeTest } = await loadWindowsHandleObserverProjectionForTest();
+  const observation = nativeTest.observeWindowsKnownFolderPathsForTest();
+  assertExactKeys(observation, ["desktop", "programs"], "known-folder observation");
+  for (const field of ["desktop", "programs"]) {
+    assert.equal(typeof observation[field], "string", `known-folder ${field} is invalid`);
+    assert(observation[field].length > 0 && observation[field].length <= 32_766 && path.isAbsolute(observation[field]), `known-folder ${field} is invalid`);
+  }
+  assert.equal(Object.isFrozen(observation), true, "known-folder observation must be frozen");
+  return observation;
+}
+
+export async function observeWindowsProcessReferences(paths) {
+  assert.equal(process.platform, "win32", "process observation requires Windows");
+  assert.equal(process.arch, "x64", "process observation requires Windows x64");
+  assert(Array.isArray(paths) && paths.length > 0 && paths.length <= 16, "process observation paths are invalid");
+  for (const value of paths) assert.equal(path.isAbsolute(value) && value.length <= 32_766 && !value.includes("\0"), true, "process observation path is invalid");
+  const { nativeTest } = await loadWindowsHandleObserverProjectionForTest();
+  const observation = nativeTest.observeWindowsProcessReferencesForTest(paths);
+  assertExactKeys(observation, ["matchingCount", "unknownProcessIdentityIds"], "process observation");
+  assert(Number.isInteger(observation.matchingCount) && observation.matchingCount >= 0 && observation.matchingCount <= 65_536, "process observation count is invalid");
+  assert(Array.isArray(observation.unknownProcessIdentityIds) && observation.unknownProcessIdentityIds.length <= 65_536, "unknown process identities are invalid");
+  let previous = null;
+  for (const identity of observation.unknownProcessIdentityIds) {
+    assert.match(identity, /^[a-f0-9]{64}$/u, "unknown process identity is invalid");
+    if (previous !== null) assert(previous < identity, "unknown process identities are not unique and sorted");
+    previous = identity;
+  }
+  assert.equal(Object.isFrozen(observation.unknownProcessIdentityIds), true, "unknown process identities must be frozen");
+  assert.equal(Object.isFrozen(observation), true, "process observation must be frozen");
   return observation;
 }
 

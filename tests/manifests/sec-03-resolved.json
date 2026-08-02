@@ -41,7 +41,7 @@
   "sourceManifest": {
     "taskId": "SEC-03",
     "exactCasePath": "tests/manifests/sec-03.json",
-    "sha256": "365cabfadf6299314749d677752ccb5cddf01c45eb6cd1169f7181912abaf2b3"
+    "sha256": "d938656432c35509ad62ac5c7bf1ffe8c9201e230b8f52465e2fca7d89d135a6"
   },
   "deltaEntries": [
     {
@@ -381,7 +381,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "025c08243a32689c6a81b0583ca788b43783610982eff9c647f5553e3f79ffb4",
+      "sha256": "c2335c222d9a21e16e67745867a620416be8c83b932364ec37d9dfd6f98a1c08",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -435,7 +435,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "636202b77fb4d9ee21afa47ddbf96a9b6f2e247486711cea3a8fc3806ce13d20",
+      "sha256": "e25fd0827bcc0d80af1b231162fd876ff259cf1adf91a92adef2ab06114e4310",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "ce89637d976f8ce261c0928cf6f4369a8c733d91a2b5d8745982a1b29ed32515",
+      "sha256": "8e58018bf9215a6e892f16ee1b2caa4e12cecdbe35b9c00dc47cb5597fdd7597",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -612,7 +612,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "f821086f7580464e187e506e37316d9f1f2d0b647eaf74f5dd69965eef0b92c1",
+      "sha256": "d21bdf69287743aea1e9084ad38fde543b5a776abc01cc4f63552333d11481b7",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -638,7 +638,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "5801eed24c30a45c370412a62520c71e5d3df67b459ca68d87225e691c49f6dd",
+      "sha256": "57d71b8d07287fe8a5ff379395ca77c0f7542e77593775c3ec69a22983a2e4b1",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -713,6 +713,50 @@
       "supersedes": null
     },
     {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "9771fac54c1b030e53b9245396ea0979f92da7e489ee4864a45aca54811fe5dc",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "artifact Build ID encoding is collision-free for the allowed alphabet",
+        "manifest paths reject traversal, absolute and Windows separators",
+        "GOV-03 task manifest consumes the validated SEC-02 resolved cumulative view",
+        "current SEC-02 execution identity is disjoint from the SEC-03 frozen predecessor",
+        "SEC-02 unified runner independently joins raw receipts and rejects receipt-set mutations",
+        "coverage scope is explicit and changed runtime files are governed",
+        "additional coverage tests require exact resolved task ownership and manifest identity",
+        "TAP summary and process failure precedence are deterministic",
+        "packaged crash and observation failures are fail-closed",
+        "process timeout records successful child-tree reclamation",
+        "process capture waits for inherited output pipes to close",
+        "packaged native registry snapshot distinguishes absent and present roots",
+        "Windows file handle observation binds holders to the exact process tree",
+        "matched holder is attributed to the managed holder root",
+        "holder is excluded from the unrelated sibling root",
+        "canonical UNC spelling completes a bounded observation",
+        "managed holder tree terminates cleanly",
+        "closed holder is absent while an unrelated managed root remains live",
+        "Windows file handle observation fails closed when an intermediate ancestor exits",
+        "readiness failure leaves a tracked child available for cleanup",
+        "atomic JSON reports publish complete parseable content",
+        "prepared report authority survives ambient temporary-root drift",
+        "canonical report paths remain authorized when TEMP uses an 8.3 alias",
+        "ambient temporary-root junctions remain fail-closed",
+        "current runs remove stale reports before execution",
+        "malformed successful reports fail strict schema validation",
+        "self-test reports cannot shrink the fixed fault matrix",
+        "report destinations cannot target formal artifacts",
+        "allowed-root internal junctions cannot redirect reports",
+        "formal artifact snapshot represents present and absent package outputs",
+        "Windows case aliases cannot disable per-file floors",
+        "coverage thresholds use exact integer arithmetic",
+        "coverage evaluation fails missing and unexpected paths",
+        "fixture cleanup is idempotent"
+      ],
+      "supersedes": null
+    },
+    {
       "exactCasePath": "tests/unit/native-process-consent.test.mjs",
       "sha256": "0a43a5f45ff6da80a0db9d857f68335f4bb5b701a9bbdcd34c05446d6b9e5d73",
       "kind": "test",
@@ -777,7 +821,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "sha256": "3981326597a9b8a50a054d0e4d87f4526d06ba7d577d2c75523aa337d4a5f429",
+      "sha256": "6992d41c3381242b7b1e44f174097f3e9d7587e392d3a103579bc98c86ee7d57",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -895,7 +939,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "6d3372a2f111ca7158aa9255845591dab7fccf1b9880ca2810fb491215f8261b",
+      "sha256": "869f3b0f329442607df2feb85c43f0559facf016ae6831c0e675059a15ffef93",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -1017,7 +1061,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "6d3372a2f111ca7158aa9255845591dab7fccf1b9880ca2810fb491215f8261b",
+      "sha256": "869f3b0f329442607df2feb85c43f0559facf016ae6831c0e675059a15ffef93",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -2096,7 +2140,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "025c08243a32689c6a81b0583ca788b43783610982eff9c647f5553e3f79ffb4",
+      "sha256": "c2335c222d9a21e16e67745867a620416be8c83b932364ec37d9dfd6f98a1c08",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2150,7 +2194,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "636202b77fb4d9ee21afa47ddbf96a9b6f2e247486711cea3a8fc3806ce13d20",
+      "sha256": "e25fd0827bcc0d80af1b231162fd876ff259cf1adf91a92adef2ab06114e4310",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2159,7 +2203,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "ce89637d976f8ce261c0928cf6f4369a8c733d91a2b5d8745982a1b29ed32515",
+      "sha256": "8e58018bf9215a6e892f16ee1b2caa4e12cecdbe35b9c00dc47cb5597fdd7597",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2327,7 +2371,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "f821086f7580464e187e506e37316d9f1f2d0b647eaf74f5dd69965eef0b92c1",
+      "sha256": "d21bdf69287743aea1e9084ad38fde543b5a776abc01cc4f63552333d11481b7",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2353,7 +2397,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "5801eed24c30a45c370412a62520c71e5d3df67b459ca68d87225e691c49f6dd",
+      "sha256": "57d71b8d07287fe8a5ff379395ca77c0f7542e77593775c3ec69a22983a2e4b1",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2428,6 +2472,50 @@
       "supersedes": null
     },
     {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "9771fac54c1b030e53b9245396ea0979f92da7e489ee4864a45aca54811fe5dc",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "testCaseIds": [
+        "artifact Build ID encoding is collision-free for the allowed alphabet",
+        "manifest paths reject traversal, absolute and Windows separators",
+        "GOV-03 task manifest consumes the validated SEC-02 resolved cumulative view",
+        "current SEC-02 execution identity is disjoint from the SEC-03 frozen predecessor",
+        "SEC-02 unified runner independently joins raw receipts and rejects receipt-set mutations",
+        "coverage scope is explicit and changed runtime files are governed",
+        "additional coverage tests require exact resolved task ownership and manifest identity",
+        "TAP summary and process failure precedence are deterministic",
+        "packaged crash and observation failures are fail-closed",
+        "process timeout records successful child-tree reclamation",
+        "process capture waits for inherited output pipes to close",
+        "packaged native registry snapshot distinguishes absent and present roots",
+        "Windows file handle observation binds holders to the exact process tree",
+        "matched holder is attributed to the managed holder root",
+        "holder is excluded from the unrelated sibling root",
+        "canonical UNC spelling completes a bounded observation",
+        "managed holder tree terminates cleanly",
+        "closed holder is absent while an unrelated managed root remains live",
+        "Windows file handle observation fails closed when an intermediate ancestor exits",
+        "readiness failure leaves a tracked child available for cleanup",
+        "atomic JSON reports publish complete parseable content",
+        "prepared report authority survives ambient temporary-root drift",
+        "canonical report paths remain authorized when TEMP uses an 8.3 alias",
+        "ambient temporary-root junctions remain fail-closed",
+        "current runs remove stale reports before execution",
+        "malformed successful reports fail strict schema validation",
+        "self-test reports cannot shrink the fixed fault matrix",
+        "report destinations cannot target formal artifacts",
+        "allowed-root internal junctions cannot redirect reports",
+        "formal artifact snapshot represents present and absent package outputs",
+        "Windows case aliases cannot disable per-file floors",
+        "coverage thresholds use exact integer arithmetic",
+        "coverage evaluation fails missing and unexpected paths",
+        "fixture cleanup is idempotent"
+      ],
+      "supersedes": null
+    },
+    {
       "exactCasePath": "tests/unit/native-process-consent.test.mjs",
       "sha256": "0a43a5f45ff6da80a0db9d857f68335f4bb5b701a9bbdcd34c05446d6b9e5d73",
       "kind": "test",
@@ -2492,7 +2580,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "sha256": "3981326597a9b8a50a054d0e4d87f4526d06ba7d577d2c75523aa337d4a5f429",
+      "sha256": "6992d41c3381242b7b1e44f174097f3e9d7587e392d3a103579bc98c86ee7d57",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -3267,5 +3355,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "4fa6eb5cf463d550b7cf9f3f7adacce61b51296b97e637e8f22fa67094671918"
+  "canonicalPayloadSha256": "7f2869619766e61a8464e41ec31f05d2343ba39045c91e7f23507aa11c5e05ef"
 }

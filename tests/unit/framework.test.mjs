@@ -6,7 +6,7 @@ import { evaluateCoverageSummary, meetsPercent } from "../../scripts/coverage-li
 import { selfTestScenarioContract, validateLayerReport, validatePackagedDetails, validateSelfTestReport, validateTap } from "../../scripts/report-schema.mjs";
 import { aggregateSec02UnifiedEvidence, validateSec02UnifiedEvidence } from "../../scripts/sec02-receipt-set.mjs";
 import { canonicalJson, currentResolvedManifestPath, resolvedManifestPath, sha256Bytes } from "../../scripts/sec02-governance.mjs";
-import { classifyInstallerResult, launchTracked, requireObservedProcessResult, windowsRegistrySnapshotCommand } from "../packaged/smoke-helpers.mjs";
+import { classifyInstallerResult, launchTracked } from "../packaged/smoke-helpers.mjs";
 import {
   artifactSafeBuildId,
   atomicWriteJson,
@@ -16,6 +16,7 @@ import {
   loadTaskManifest,
   makeTempDir,
   observeWindowsFileHandleInProcessTree,
+  observeWindowsRegistrySnapshot,
   parseTapSummary,
   prepareReportPath,
   prepareReportTarget,
@@ -306,8 +307,6 @@ test("TAP summary and process failure precedence are deterministic", () => {
 test("packaged crash and observation failures are fail-closed", () => {
   assert.equal(classifyInstallerResult({ code: 0xC0000005, signal: null }), "windows-crash");
   assert.equal(classifyInstallerResult({ code: null, signal: "SIGTERM" }), "signal-crash");
-  assert.throws(() => requireObservedProcessResult({ code: 5, signal: null }, [0, 1], "registry observation"), /failed with 5/);
-  assert.throws(() => requireObservedProcessResult({ code: null, signal: "SIGTERM" }, [0], "registry observation"), /crashed/);
   assert.throws(() => validatePackagedDetails(null, { passed: true }), /must be present/);
   const packageBinding = {
     schemaVersion: 3, buildId: "0.1.0+local.synthetic", sourceDigest: "1".repeat(64),
@@ -412,24 +411,21 @@ test("process capture waits for inherited output pipes to close", async () => {
   assert.equal(child.stdout, "late-output");
 });
 
-test("packaged registry snapshot command distinguishes absent and present-empty roots", () => {
+test("packaged native registry snapshot distinguishes absent and present roots", async () => {
   assert.equal(process.platform, "win32", "packaged registry observation requires Windows");
-  const root = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
-  const outputPath = path.join("C:\\", "RainyDays-GOV03", "registry-snapshot.json");
-  const command = windowsRegistrySnapshotCommand(root, outputPath);
-  const subkey = root.slice("HKCU:\\".length);
-  const encodedSubkey = Buffer.from(subkey, "utf16le").toString("base64");
-  const encodedOutput = Buffer.from(outputPath, "utf16le").toString("base64");
-  assert(command.includes(`$subkey=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('${encodedSubkey}'))`));
-  assert(command.includes(`$output=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('${encodedOutput}'))`));
-  assert(command.includes("$base.OpenSubKey($subkey,$false)"));
-  assert(command.includes("rootPresent=$false;items=@()"));
-  assert(command.includes("$items=@($opened.GetSubKeyNames()"));
-  assert(command.includes("rootPresent=$true;items=$items"));
-  assert(command.includes("[Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames"));
-  assert(command.includes("[IO.File]::WriteAllText"));
-  assert(!command.includes(subkey));
-  assert(!command.includes(outputPath));
+  const missing = await observeWindowsRegistrySnapshot(`Software\\RainyDays-GOV03-Missing-${Date.now()}-${process.pid}`);
+  assert.deepEqual(missing, { rootPresent: false, items: [] });
+  assert.equal(Object.isFrozen(missing), true);
+  assert.equal(Object.isFrozen(missing.items), true);
+
+  const present = await observeWindowsRegistrySnapshot("Software");
+  assert.equal(present.rootPresent, true);
+  assert.equal(Object.isFrozen(present), true);
+  assert.equal(Object.isFrozen(present.items), true);
+
+  for (const invalid of ["", "HKCU\\Software", "HKEY_CURRENT_USER\\Software", "\\Software", "Software\\..\\Other", "Software\0Other"]) {
+    await assert.rejects(() => observeWindowsRegistrySnapshot(invalid), (error) => invalid.length === 0 || !String(error?.message).includes(invalid));
+  }
 });
 
 test("Windows file handle observation binds holders to the exact process tree", async (t) => {

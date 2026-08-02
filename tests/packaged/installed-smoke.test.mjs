@@ -11,7 +11,10 @@ import {
   connectCdp,
   freeDistinctPorts,
   makeTempDir,
+  observeWindowsProcessReferences,
   observeWindowsFileHandleInProcessTree,
+  observeWindowsKnownFolderPaths,
+  observeWindowsRegistryKey,
   pathExists,
   projectRoot,
   removeFixture,
@@ -19,9 +22,11 @@ import {
   terminateProcessTreeAsync,
   waitFor,
 } from "../helpers.mjs";
-import { classifyInstallerResult, launchTracked, observeWindowsPowerShellOutput, observeWindowsRegistrySnapshot } from "./smoke-helpers.mjs";
+import { classifyInstallerResult, launchTracked } from "./smoke-helpers.mjs";
 import { createSec02Recorder } from "../sec02-receipts.mjs";
 
+const rainyDaysInstallerGuid = "0897e7b3-5f0f-5c38-ba13-645f30c0bb5a";
+const rainyDaysUninstallSubkey = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${rainyDaysInstallerGuid}`;
 const pathPolicyAssertionIds = Object.freeze([
   "root-internal-success",
   "traversal-denied",
@@ -195,41 +200,31 @@ function hashText(value) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-async function knownShortcutPaths(outputPath) {
-  const output = await observeWindowsPowerShellOutput("[ordered]@{ programs=[Environment]::GetFolderPath('Programs'); desktop=[Environment]::GetFolderPath('DesktopDirectory') } | ConvertTo-Json -Compress", outputPath);
-  const folders = JSON.parse(output);
-  assert.equal(typeof folders.programs, "string");
-  assert.equal(typeof folders.desktop, "string");
+async function knownShortcutPaths() {
+  const folders = await observeWindowsKnownFolderPaths();
   return [
     { key: "programs", filePath: path.join(folders.programs, "RainyDays.lnk") },
     { key: "desktop", filePath: path.join(folders.desktop, "RainyDays.lnk") },
   ];
 }
 
-async function systemIntegrationSnapshot(registryOutputPath, powershellOutputPath, missingRegistryRoot) {
-  const missingRegistry = JSON.parse(await observeWindowsRegistrySnapshot(missingRegistryRoot, registryOutputPath));
+async function systemIntegrationSnapshot(missingRegistryRoot) {
+  const missingRegistry = await observeWindowsRegistryKey(missingRegistryRoot);
   assert.deepEqual(missingRegistry, { rootPresent: false, items: [] }, "missing registry root was not observed as an empty set");
-  const registryJson = await observeWindowsRegistrySnapshot("HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall", registryOutputPath);
-  const registry = JSON.parse(registryJson);
-  assert.deepEqual(Object.keys(registry), ["rootPresent", "items"], "registry observation shape is invalid");
-  assert.equal(typeof registry.rootPresent, "boolean");
-  assert(Array.isArray(registry.items), "registry observation items must be a canonical array");
+  const registry = await observeWindowsRegistryKey(rainyDaysUninstallSubkey);
   const shortcuts = {};
-  for (const shortcut of await knownShortcutPaths(powershellOutputPath)) {
+  for (const shortcut of await knownShortcutPaths()) {
     shortcuts[shortcut.key] = await pathExists(shortcut.filePath) ? await fileSha256(shortcut.filePath) : null;
   }
   return { registryHash: hashText(JSON.stringify(registry)), shortcuts };
 }
 
-async function processReferenceCount(paths, outputPath) {
-  const command = `$needles=@($env:MINI_LUX_PROCESS_NEEDLES|ConvertFrom-Json);$count=0;Get-CimInstance Win32_Process -ErrorAction Stop|ForEach-Object{$text=[string]$_.ExecutablePath+[Environment]::NewLine+[string]$_.CommandLine;foreach($needle in $needles){if($needle-and $text.IndexOf($needle,[StringComparison]::OrdinalIgnoreCase)-ge 0){$count++;break}}};$count`;
-  const output = await observeWindowsPowerShellOutput(command, outputPath, { ...process.env, MINI_LUX_PROCESS_NEEDLES: JSON.stringify(paths) });
-  assert.match(output, /^\d+$/);
-  return Number(output);
-}
-
-async function waitForProcessConvergence(paths, label, outputPath) {
-  await waitFor(async () => await processReferenceCount(paths, outputPath) === 0, { timeoutMs: 30_000, intervalMs: 250, label });
+async function waitForProcessConvergence(paths, unknownBaseline, label) {
+  await waitFor(async () => {
+    const observation = await observeWindowsProcessReferences(paths);
+    return observation.matchingCount === 0
+      && observation.unknownProcessIdentityIds.every((identity) => unknownBaseline.has(identity));
+  }, { timeoutMs: 30_000, intervalMs: 250, label });
 }
 
 async function proveExecutableReleased(executable) {
@@ -259,9 +254,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   const executionTemp = path.join(fixture, "process-temp");
   const installDir = path.join(fixture, "installed");
   const userData = path.join(fixture, "user-data");
-  const registrySnapshotPath = path.join(fixture, "registry-snapshot.json");
-  const powershellOutputPath = path.join(fixture, "powershell-output.txt");
-  const missingRegistryRoot = `HKCU:\\Software\\RainyDays-GOV03-Missing-${hashText(fixture).slice(0, 32)}`;
+  const missingRegistryRoot = `Software\\RainyDays-GOV03-Missing-${hashText(fixture).slice(0, 32)}`;
   await mkdir(executionDir, { recursive: true });
   await mkdir(executionTemp, { recursive: true });
   const details = {
@@ -341,14 +334,21 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   let officialUninstallCompleted = false;
   let systemBefore = null;
   let executedInstaller = null;
+  const processReferencePaths = [executionDir, executionTemp, installDir];
+  let processUnknownBaseline = null;
   const processEnv = { ...process.env, TEMP: executionTemp, TMP: executionTemp };
   try {
-    systemBefore = await systemIntegrationSnapshot(registrySnapshotPath, powershellOutputPath, missingRegistryRoot);
+    const processBaseline = await observeWindowsProcessReferences(processReferencePaths);
+    assert.equal(processBaseline.matchingCount, 0, "pre-install process path baseline is not empty");
+    processUnknownBaseline = new Set(processBaseline.unknownProcessIdentityIds);
+    systemBefore = await systemIntegrationSnapshot(missingRegistryRoot);
     details.cleanup.registryObserved = true;
     details.cleanup.shortcutObserved = true;
     const check = await runProcess(process.execPath, ["scripts/generate-build-info.mjs", "--check"], { timeoutMs: 60_000 });
     assert.equal(check.code, 0, check.stderr);
     const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
+    const sourcePackage = JSON.parse(await readFile(path.join(projectRoot, "package.json"), "utf8"));
+    assert.equal(sourcePackage.build?.nsis?.guid, rainyDaysInstallerGuid, "installer registry identity differs");
     const manifestPath = path.resolve(process.env.RAINYDAYS_PACKAGE_ARTIFACT_MANIFEST || path.join(projectRoot, "test-results", "package-artifact.json"));
     const { installer, manifest } = await verifyInstallerPreflight({
       manifestPath,
@@ -382,13 +382,17 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     details.installerExitCode = install.code;
     details.installerSignal = install.signal;
     details.installerClassification = classifyInstallerResult(install, installTimedOut);
-    await waitForProcessConvergence([executionDir, executionTemp, installDir], "installer descendant convergence", powershellOutputPath);
+    await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "installer descendant convergence");
     await proveExecutableReleased(executedInstaller);
     details.installerConverged = true;
     details.cleanup.executionCopyReleased = true;
     assert.equal(install.code, 0, `installer execution failed: ${details.installerClassification}`);
     const executable = path.join(installDir, "RainyDays.exe");
     await waitFor(() => pathExists(executable), { timeoutMs: 30_000, label: "installed executable" });
+    const installedRegistry = await observeWindowsRegistryKey(rainyDaysUninstallSubkey);
+    assert.equal(installedRegistry.rootPresent, true, "installed uninstall registry key is absent");
+    assert.equal(installedRegistry.items.length, 1, "installed uninstall registry record is invalid");
+    assert(installedRegistry.items[0].DisplayName?.includes("RainyDays"), "installed uninstall display name is invalid");
     details.packageBinding = await validateElectronAsar(projectRoot, path.join(installDir, "resources"));
     if (recorder.enabled) await recorder.observe("SEC02-P36-packaged-asar-bound", {
       packageInspected: details.packageBinding.packageInspected,
@@ -443,7 +447,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     details.uninstallerSignal = uninstall.signal;
     assert.equal(uninstall.code, 0, uninstall.stderr);
     officialUninstallCompleted = true;
-    await waitForProcessConvergence([executionDir, executionTemp, installDir], "uninstaller descendant convergence", powershellOutputPath);
+    await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "uninstaller descendant convergence");
     details.uninstallerConverged = true;
     await waitFor(async () => (await countFiles(installDir)) === 0, { timeoutMs: 30_000, label: "uninstall file cleanup" });
     details.phase = "complete";
@@ -468,7 +472,8 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
       officialUninstallCompleted = uninstall.code === 0 && uninstall.signal === null;
     }
     try {
-      await waitForProcessConvergence([executionDir, executionTemp, installDir], "final packaged process convergence", powershellOutputPath);
+      assert(processUnknownBaseline, "process observation baseline is unavailable");
+      await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "final packaged process convergence");
       details.cleanup.processesStopped = true;
       if (executedInstaller && await pathExists(executedInstaller)) {
         await proveExecutableReleased(executedInstaller);
@@ -482,7 +487,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     let systemAfter = null;
     try {
       systemAfter = await waitFor(async () => {
-        const candidate = await systemIntegrationSnapshot(registrySnapshotPath, powershellOutputPath, missingRegistryRoot);
+        const candidate = await systemIntegrationSnapshot(missingRegistryRoot);
         return systemBefore && candidate.registryHash === systemBefore.registryHash
           && JSON.stringify(candidate.shortcuts) === JSON.stringify(systemBefore.shortcuts) ? candidate : null;
       }, { timeoutMs: 30_000, intervalMs: 250, label: "uninstall registry and shortcut cleanup" });

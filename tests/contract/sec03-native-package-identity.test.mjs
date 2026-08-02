@@ -199,14 +199,72 @@ test("SEC-03 native addons expose exact production and test-only top-level APIs"
   assert.deepEqual(Reflect.ownKeys(production).sort(), ["openEvidenceVerifier", "openExclusiveHostLease", "protocolVersion"]);
   assert.deepEqual(Reflect.ownKeys(nativeTest).sort(), [
     "observeWindowsFileHandleInProcessTreeForTest",
+    "observeWindowsKnownFolderPathsForTest",
+    "observeWindowsProcessReferencesForTest",
+    "observeWindowsRegistryKeyForTest",
+    "observeWindowsRegistrySnapshotForTest",
     "openEvidenceVerifier",
     "openExclusiveHostLease",
     "protocolVersion",
   ]);
-  assert.equal(production.observeWindowsFileHandleInProcessTreeForTest, undefined);
+  for (const operation of [
+    "observeWindowsProcessReferencesForTest",
+    "observeWindowsFileHandleInProcessTreeForTest",
+    "observeWindowsKnownFolderPathsForTest",
+    "observeWindowsRegistryKeyForTest",
+    "observeWindowsRegistrySnapshotForTest",
+  ]) {
+    assert.equal(production[operation], undefined);
+    assert.equal(typeof nativeTest[operation], "function");
+  }
   assert.equal(typeof production.openExclusiveHostLease.loadValidatedTestProjection, "function");
-  assert.equal(typeof nativeTest.observeWindowsFileHandleInProcessTreeForTest, "function");
   assert.equal(nativeTest.protocolVersion, 1);
+
+  const observeKnownFolders = nativeTest.observeWindowsKnownFolderPathsForTest;
+  const observeRegistryKey = nativeTest.observeWindowsRegistryKeyForTest;
+  const observeRegistrySnapshot = nativeTest.observeWindowsRegistrySnapshotForTest;
+  const knownFolders = observeKnownFolders();
+  assert.deepEqual(Reflect.ownKeys(knownFolders).sort(), ["desktop", "programs"]);
+  assert(path.isAbsolute(knownFolders.programs));
+  assert(path.isAbsolute(knownFolders.desktop));
+  assert.equal(Object.isFrozen(knownFolders), true);
+  assert.throws(() => observeKnownFolders("unexpected"), (error) => error?.code === "EXEC_NATIVE_TEST_OBSERVER_INPUT");
+
+  const missingRegistry = observeRegistrySnapshot(`Software\\RainyDays-Native-Missing-${Date.now()}-${process.pid}`);
+  assert.deepEqual(missingRegistry, { rootPresent: false, items: [] });
+  assert.equal(Object.isFrozen(missingRegistry), true);
+  assert.equal(Object.isFrozen(missingRegistry.items), true);
+  const missingRegistryKey = observeRegistryKey(`Software\\RainyDays-Native-Key-Missing-${Date.now()}-${process.pid}`);
+  assert.deepEqual(missingRegistryKey, { rootPresent: false, items: [] });
+  assert.equal(Object.isFrozen(missingRegistryKey), true);
+  assert.equal(Object.isFrozen(missingRegistryKey.items), true);
+  const presentRegistry = observeRegistrySnapshot("Software");
+  assert.equal(presentRegistry.rootPresent, true);
+  assert.equal(Object.isFrozen(presentRegistry), true);
+  assert.equal(Object.isFrozen(presentRegistry.items), true);
+  assert(presentRegistry.items.every((item) => Object.isFrozen(item)));
+  for (const subkey of ["", "HKCU\\Software", "HKEY_CURRENT_USER\\Software", "\\Software", "Software\\..\\Other", "Software\0Other"]) {
+    for (const observeRegistry of [observeRegistryKey, observeRegistrySnapshot]) {
+      assert.throws(
+        () => observeRegistry(subkey),
+        (error) => error?.code === "EXEC_NATIVE_TEST_OBSERVER_INPUT" && (subkey.length === 0 || !String(error.message).includes(subkey)),
+      );
+    }
+  }
+
+  const observeProcesses = nativeTest.observeWindowsProcessReferencesForTest;
+  const processObservation = observeProcesses([process.execPath]);
+  assert.deepEqual(Reflect.ownKeys(processObservation).sort(), ["matchingCount", "unknownProcessIdentityIds"]);
+  assert(Number.isInteger(processObservation.matchingCount) && processObservation.matchingCount >= 1 && processObservation.matchingCount <= 65_536);
+  assert(Array.isArray(processObservation.unknownProcessIdentityIds));
+  assert(processObservation.unknownProcessIdentityIds.every((identity) => /^[a-f0-9]{64}$/u.test(identity)));
+  assert.equal(new Set(processObservation.unknownProcessIdentityIds).size, processObservation.unknownProcessIdentityIds.length);
+  assert.equal(Object.isFrozen(processObservation.unknownProcessIdentityIds), true);
+  assert.equal(Object.isFrozen(processObservation), true);
+  for (const needles of [[], Array(17).fill(projectRoot), ["relative"], ["C:\\path\\..\\other"], ["C:\\path\0other"], Array(1)]) {
+    assert.throws(() => observeProcesses(needles), (error) => error?.code === "EXEC_NATIVE_TEST_OBSERVER_INPUT");
+  }
+
   const observe = nativeTest.observeWindowsFileHandleInProcessTreeForTest;
   const canonicalPath = path.join(projectRoot, "package.json");
   const casingAlias = canonicalPath.toLowerCase();

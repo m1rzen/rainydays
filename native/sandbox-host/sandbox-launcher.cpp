@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstddef>
 #include <iterator>
+#include <shlobj.h>
 #endif
 
 #include <array>
@@ -602,6 +603,170 @@ class TestObserverHandle {
   HANDLE value_;
 };
 
+constexpr size_t kTestRegistryMaxSubkeyChars = 32766;
+constexpr DWORD kTestRegistryMaxItems = 4096;
+constexpr DWORD kTestRegistryMaxChildNameChars = 255;
+constexpr DWORD kTestRegistryMaxValueBytes = 1024u * 1024u;
+
+class TestObserverRegistryKey {
+ public:
+  explicit TestObserverRegistryKey(HKEY value) : value_(value) {}
+  ~TestObserverRegistryKey() { if (value_) RegCloseKey(value_); }
+  TestObserverRegistryKey(const TestObserverRegistryKey&) = delete;
+  TestObserverRegistryKey& operator=(const TestObserverRegistryKey&) = delete;
+  HKEY get() const { return value_; }
+ private:
+  HKEY value_;
+};
+
+struct TestRegistryKeyState {
+  DWORD subkey_count = 0;
+  DWORD max_subkey_name = 0;
+  FILETIME last_write{};
+};
+
+struct TestRegistryValue {
+  bool present = false;
+  std::wstring text;
+};
+
+struct TestRegistryItem {
+  std::wstring child_name;
+  std::array<TestRegistryValue, 5> values;
+};
+
+bool StrictTestRegistrySubkey(const std::wstring& subkey) {
+  if (subkey.empty() || subkey.size() > kTestRegistryMaxSubkeyChars || subkey.front() == L'\\' || subkey.back() == L'\\'
+      || subkey.find(L'/') != std::wstring::npos || subkey.find(L':') != std::wstring::npos) return false;
+  static constexpr std::array<const wchar_t*, 11> hive_prefixes = {
+    L"HKCR", L"HKCU", L"HKLM", L"HKU", L"HKCC", L"HKEY_CLASSES_ROOT", L"HKEY_CURRENT_USER",
+    L"HKEY_LOCAL_MACHINE", L"HKEY_USERS", L"HKEY_CURRENT_CONFIG", L"Computer",
+  };
+  size_t start = 0;
+  bool first = true;
+  while (start < subkey.size()) {
+    const size_t end = subkey.find(L'\\', start);
+    const size_t count = (end == std::wstring::npos ? subkey.size() : end) - start;
+    if (!count) return false;
+    const std::wstring component = subkey.substr(start, count);
+    if (component == L"." || component == L"..") return false;
+    if (first && std::any_of(hive_prefixes.begin(), hive_prefixes.end(), [&](const wchar_t* prefix) { return _wcsicmp(component.c_str(), prefix) == 0; })) return false;
+    if (end == std::wstring::npos) break;
+    first = false;
+    start = end + 1;
+  }
+  return true;
+}
+
+bool ReadTestRegistrySubkey(napi_env env, napi_value value, std::wstring* subkey) {
+  napi_valuetype type = napi_undefined;
+  if (napi_typeof(env, value, &type) != napi_ok || type != napi_string) return false;
+  size_t length = 0;
+  if (napi_get_value_string_utf16(env, value, nullptr, 0, &length) != napi_ok || !length || length > kTestRegistryMaxSubkeyChars) return false;
+  std::vector<char16_t> text(length + 1);
+  size_t received = 0;
+  if (napi_get_value_string_utf16(env, value, text.data(), text.size(), &received) != napi_ok || received != length) return false;
+  subkey->clear(); subkey->reserve(length);
+  for (size_t index = 0; index < length; ++index) {
+    if (!text[index]) return false;
+    subkey->push_back(static_cast<wchar_t>(text[index]));
+  }
+  return StrictTestRegistrySubkey(*subkey);
+}
+
+bool SameTestRegistryWriteTime(const FILETIME& left, const FILETIME& right) {
+  return left.dwLowDateTime == right.dwLowDateTime && left.dwHighDateTime == right.dwHighDateTime;
+}
+
+bool QueryTestRegistryRootState(HKEY key, TestRegistryKeyState* state) {
+  TestRegistryKeyState observed;
+  if (RegQueryInfoKeyW(key, nullptr, nullptr, nullptr, &observed.subkey_count, &observed.max_subkey_name, nullptr, nullptr, nullptr, nullptr, nullptr, &observed.last_write) != ERROR_SUCCESS
+      || observed.subkey_count > kTestRegistryMaxItems || observed.max_subkey_name > kTestRegistryMaxChildNameChars
+      || (observed.subkey_count != 0 && observed.max_subkey_name == 0)) return false;
+  *state = observed;
+  return true;
+}
+
+bool QueryTestRegistryWriteTime(HKEY key, FILETIME* last_write) {
+  return RegQueryInfoKeyW(key, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, last_write) == ERROR_SUCCESS;
+}
+
+bool ReadTestRegistryValue(HKEY key, const wchar_t* name, TestRegistryValue* value) {
+  constexpr DWORD flags = RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ | RRF_NOEXPAND;
+  DWORD type = 0;
+  DWORD bytes = 0;
+  const LSTATUS query = RegGetValueW(key, nullptr, name, flags, &type, nullptr, &bytes);
+  if (query == ERROR_FILE_NOT_FOUND || query == ERROR_PATH_NOT_FOUND) {
+    value->present = false;
+    value->text.clear();
+    return true;
+  }
+  if (query != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ)
+      || bytes > kTestRegistryMaxValueBytes - sizeof(wchar_t) || bytes % sizeof(wchar_t) != 0) return false;
+  std::vector<wchar_t> buffer(bytes / sizeof(wchar_t) + 1);
+  DWORD read_type = 0;
+  DWORD read_bytes = bytes + sizeof(wchar_t);
+  if (RegGetValueW(key, nullptr, name, flags, &read_type, buffer.data(), &read_bytes) != ERROR_SUCCESS || read_type != type
+      || read_bytes < sizeof(wchar_t) || read_bytes > bytes + sizeof(wchar_t) || read_bytes % sizeof(wchar_t) != 0
+      || buffer[read_bytes / sizeof(wchar_t) - 1] != L'\0') return false;
+  value->present = true;
+  value->text.assign(buffer.data(), read_bytes / sizeof(wchar_t) - 1);
+  return true;
+}
+
+bool TestRegistryDisplayNameMatches(const TestRegistryValue& display_name) {
+  static constexpr wchar_t needle[] = L"RainyDays";
+  constexpr size_t needle_length = (sizeof(needle) / sizeof(needle[0])) - 1;
+  if (!display_name.present || display_name.text.size() < needle_length) return false;
+  for (size_t index = 0; index <= display_name.text.size() - needle_length; ++index) {
+    if (CompareStringOrdinal(display_name.text.data() + index, static_cast<int>(needle_length), needle, static_cast<int>(needle_length), TRUE) == CSTR_EQUAL) return true;
+  }
+  return false;
+}
+
+bool EnumerateTestRegistryItems(HKEY root, const TestRegistryKeyState& initial, std::vector<TestRegistryItem>* items) {
+  std::vector<std::wstring> child_names;
+  child_names.reserve(initial.subkey_count);
+  std::vector<wchar_t> name_buffer(static_cast<size_t>(initial.max_subkey_name) + 1);
+  for (DWORD index = 0; index < initial.subkey_count; ++index) {
+    DWORD name_length = static_cast<DWORD>(name_buffer.size());
+    FILETIME child_write{};
+    if (RegEnumKeyExW(root, index, name_buffer.data(), &name_length, nullptr, nullptr, nullptr, &child_write) != ERROR_SUCCESS
+        || !name_length || name_length > initial.max_subkey_name) return false;
+    child_names.emplace_back(name_buffer.data(), name_length);
+  }
+  DWORD extra_length = static_cast<DWORD>(name_buffer.size());
+  if (RegEnumKeyExW(root, initial.subkey_count, name_buffer.data(), &extra_length, nullptr, nullptr, nullptr, nullptr) != ERROR_NO_MORE_ITEMS) return false;
+  TestRegistryKeyState after_enumeration;
+  if (!QueryTestRegistryRootState(root, &after_enumeration) || after_enumeration.subkey_count != initial.subkey_count
+      || after_enumeration.max_subkey_name != initial.max_subkey_name || !SameTestRegistryWriteTime(after_enumeration.last_write, initial.last_write)) return false;
+  std::sort(child_names.begin(), child_names.end());
+  items->clear();
+  for (const auto& child_name : child_names) {
+    HKEY raw_child = nullptr;
+    if (RegOpenKeyExW(root, child_name.c_str(), 0, KEY_READ, &raw_child) != ERROR_SUCCESS) return false;
+    TestObserverRegistryKey child(raw_child);
+    FILETIME before_values{}, after_values{};
+    TestRegistryItem item; item.child_name = child_name;
+    static constexpr std::array<const wchar_t*, 5> value_names = {
+      L"DisplayName", L"DisplayVersion", L"InstallLocation", L"UninstallString", L"QuietUninstallString",
+    };
+    if (!QueryTestRegistryWriteTime(child.get(), &before_values)
+        || !ReadTestRegistryValue(child.get(), value_names[0], &item.values[0])) return false;
+    const bool matched = TestRegistryDisplayNameMatches(item.values[0]);
+    if (matched) {
+      for (size_t index = 1; index < value_names.size(); ++index) {
+        if (!ReadTestRegistryValue(child.get(), value_names[index], &item.values[index])) return false;
+      }
+    }
+    if (!QueryTestRegistryWriteTime(child.get(), &after_values) || !SameTestRegistryWriteTime(before_values, after_values)) return false;
+    if (matched) items->push_back(std::move(item));
+  }
+  TestRegistryKeyState final_state;
+  return QueryTestRegistryRootState(root, &final_state) && final_state.subkey_count == initial.subkey_count
+    && final_state.max_subkey_name == initial.max_subkey_name && SameTestRegistryWriteTime(final_state.last_write, initial.last_write);
+}
+
 struct TestFileProcessIds {
   ULONG count;
   ULONG_PTR process_ids[1];
@@ -788,6 +953,670 @@ napi_value ObserveWindowsFileHandleInProcessTreeForTest(napi_env env, napi_callb
   };
   if (napi_define_properties(env, result, sizeof(properties) / sizeof(properties[0]), properties) != napi_ok || napi_object_freeze(env, result) != napi_ok) {
     Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot freeze native test observer result"); return nullptr;
+  }
+  return result;
+}
+
+bool CreateTestRegistryText(napi_env env, const std::wstring& text, napi_value* result) {
+  static_assert(sizeof(wchar_t) == sizeof(char16_t));
+  return napi_create_string_utf16(env, reinterpret_cast<const char16_t*>(text.data()), text.size(), result) == napi_ok;
+}
+
+bool CreateTestRegistryValue(napi_env env, const TestRegistryValue& value, napi_value* result) {
+  return value.present ? CreateTestRegistryText(env, value.text, result) : napi_get_null(env, result) == napi_ok;
+}
+
+bool CreateFrozenTestRegistryItem(napi_env env, const TestRegistryItem& item, napi_value* result) {
+  std::array<napi_value, 6> values{};
+  if (!CreateTestRegistryText(env, item.child_name, &values[0])) return false;
+  for (size_t index = 0; index < item.values.size(); ++index) {
+    if (!CreateTestRegistryValue(env, item.values[index], &values[index + 1])) return false;
+  }
+  if (napi_create_object(env, result) != napi_ok) return false;
+  napi_property_descriptor properties[] = {
+    {"PSChildName", nullptr, nullptr, nullptr, nullptr, values[0], napi_enumerable, nullptr},
+    {"DisplayName", nullptr, nullptr, nullptr, nullptr, values[1], napi_enumerable, nullptr},
+    {"DisplayVersion", nullptr, nullptr, nullptr, nullptr, values[2], napi_enumerable, nullptr},
+    {"InstallLocation", nullptr, nullptr, nullptr, nullptr, values[3], napi_enumerable, nullptr},
+    {"UninstallString", nullptr, nullptr, nullptr, nullptr, values[4], napi_enumerable, nullptr},
+    {"QuietUninstallString", nullptr, nullptr, nullptr, nullptr, values[5], napi_enumerable, nullptr},
+  };
+  return napi_define_properties(env, *result, sizeof(properties) / sizeof(properties[0]), properties) == napi_ok
+    && napi_object_freeze(env, *result) == napi_ok;
+}
+
+bool CreateFrozenTestRegistrySnapshot(napi_env env, bool root_present, const std::vector<TestRegistryItem>& items, napi_value* result) {
+  napi_value present, array;
+  if (napi_get_boolean(env, root_present, &present) != napi_ok || napi_create_array_with_length(env, items.size(), &array) != napi_ok) return false;
+  for (size_t index = 0; index < items.size(); ++index) {
+    napi_value item;
+    if (!CreateFrozenTestRegistryItem(env, items[index], &item) || napi_set_element(env, array, static_cast<uint32_t>(index), item) != napi_ok) return false;
+  }
+  if (napi_object_freeze(env, array) != napi_ok || napi_create_object(env, result) != napi_ok) return false;
+  napi_property_descriptor properties[] = {
+    {"rootPresent", nullptr, nullptr, nullptr, nullptr, present, napi_enumerable, nullptr},
+    {"items", nullptr, nullptr, nullptr, nullptr, array, napi_enumerable, nullptr},
+  };
+  return napi_define_properties(env, *result, sizeof(properties) / sizeof(properties[0]), properties) == napi_ok
+    && napi_object_freeze(env, *result) == napi_ok;
+}
+
+napi_value ObserveWindowsRegistrySnapshotForTest(napi_env env, napi_callback_info info) {
+  size_t argc = 2; napi_value argv[2];
+  if (!Ok(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), "Cannot read native test observer arguments")) return nullptr;
+  std::wstring subkey;
+  if (argc != 1 || !ReadTestRegistrySubkey(env, argv[0], &subkey)) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_INPUT", "Native test observer arguments are invalid"); return nullptr;
+  }
+  HKEY raw_root = nullptr;
+  const LSTATUS open = RegOpenKeyExW(HKEY_CURRENT_USER, subkey.c_str(), 0, KEY_READ, &raw_root);
+  if (open == ERROR_FILE_NOT_FOUND || open == ERROR_PATH_NOT_FOUND) {
+    napi_value missing;
+    if (!CreateFrozenTestRegistrySnapshot(env, false, {}, &missing)) {
+      Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot create native test observer result"); return nullptr;
+    }
+    return missing;
+  }
+  if (open != ERROR_SUCCESS) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_QUERY", "Native test observer query failed"); return nullptr;
+  }
+  TestObserverRegistryKey root(raw_root);
+  TestRegistryKeyState initial;
+  std::vector<TestRegistryItem> items;
+  if (!QueryTestRegistryRootState(root.get(), &initial) || !EnumerateTestRegistryItems(root.get(), initial, &items)) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_QUERY", "Native test observer query failed"); return nullptr;
+  }
+  napi_value result;
+  if (!CreateFrozenTestRegistrySnapshot(env, true, items, &result)) {
+    Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot create native test observer result"); return nullptr;
+  }
+  return result;
+}
+
+napi_value ObserveWindowsRegistryKeyForTest(napi_env env, napi_callback_info info) {
+  size_t argc = 2; napi_value argv[2];
+  if (!Ok(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), "Cannot read native test observer arguments")) return nullptr;
+  std::wstring subkey;
+  if (argc != 1 || !ReadTestRegistrySubkey(env, argv[0], &subkey)) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_INPUT", "Native test observer arguments are invalid"); return nullptr;
+  }
+  HKEY raw_key = nullptr;
+  const LSTATUS open = RegOpenKeyExW(HKEY_CURRENT_USER, subkey.c_str(), 0, KEY_QUERY_VALUE, &raw_key);
+  if (open == ERROR_FILE_NOT_FOUND || open == ERROR_PATH_NOT_FOUND) {
+    napi_value missing;
+    if (!CreateFrozenTestRegistrySnapshot(env, false, {}, &missing)) {
+      Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot create native test observer result"); return nullptr;
+    }
+    return missing;
+  }
+  if (open != ERROR_SUCCESS) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_QUERY", "Native test observer query failed"); return nullptr;
+  }
+  TestObserverRegistryKey key(raw_key);
+  TestRegistryItem item;
+  const size_t separator = subkey.find_last_of(L'\\');
+  item.child_name = separator == std::wstring::npos ? subkey : subkey.substr(separator + 1);
+  static constexpr std::array<const wchar_t*, 5> value_names = {
+    L"DisplayName", L"DisplayVersion", L"InstallLocation", L"UninstallString", L"QuietUninstallString",
+  };
+  FILETIME before_values{}, after_values{};
+  if (!QueryTestRegistryWriteTime(key.get(), &before_values)) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_QUERY", "Native test observer query failed"); return nullptr;
+  }
+  for (size_t index = 0; index < value_names.size(); ++index) {
+    if (!ReadTestRegistryValue(key.get(), value_names[index], &item.values[index])) {
+      Throw(env, "EXEC_NATIVE_TEST_OBSERVER_QUERY", "Native test observer query failed"); return nullptr;
+    }
+  }
+  if (!TestRegistryDisplayNameMatches(item.values[0]) || !QueryTestRegistryWriteTime(key.get(), &after_values)
+      || !SameTestRegistryWriteTime(before_values, after_values)) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_QUERY", "Native test observer query failed"); return nullptr;
+  }
+  napi_value result;
+  if (!CreateFrozenTestRegistrySnapshot(env, true, {item}, &result)) {
+    Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot create native test observer result"); return nullptr;
+  }
+  return result;
+}
+
+constexpr size_t kTestKnownFolderMaxChars = 32766;
+constexpr size_t kTestProcessNeedleMaxChars = 32766;
+constexpr size_t kTestProcessNeedleMaxCount = 16;
+constexpr size_t kTestProcessNeedleMaxBytes = 128u * 1024u;
+constexpr size_t kTestProcessImageMaxChars = 32767;
+constexpr ULONG kTestProcessCommandLineMaxBytes = 128u * 1024u;
+constexpr ULONG kTestProcessSnapshotInitialBytes = 64u * 1024u;
+constexpr ULONG kTestProcessSnapshotMaxBytes = 16u * 1024u * 1024u;
+constexpr ULONGLONG kTestProcessQueryDeadlineMilliseconds = 5000;
+
+enum class TestObserverInputResult { valid, invalid, abi_error };
+
+class TestObserverKnownFolderPath {
+ public:
+  TestObserverKnownFolderPath() = default;
+  ~TestObserverKnownFolderPath() { CoTaskMemFree(value_); }
+  TestObserverKnownFolderPath(const TestObserverKnownFolderPath&) = delete;
+  TestObserverKnownFolderPath& operator=(const TestObserverKnownFolderPath&) = delete;
+  PWSTR* put() { return &value_; }
+  const wchar_t* get() const { return value_; }
+ private:
+  PWSTR value_ = nullptr;
+};
+
+bool StrictTestProcessNeedlePath(const std::wstring& path) {
+  if (path.size() < 3 || path.size() > kTestProcessNeedleMaxChars || path.find(L'/') != std::wstring::npos) return false;
+  const bool drive = ((path[0] >= L'A' && path[0] <= L'Z') || (path[0] >= L'a' && path[0] <= L'z')) && path[1] == L':' && path[2] == L'\\';
+  const bool unc = path.size() >= 5 && path[0] == L'\\' && path[1] == L'\\' && path[2] != L'?' && path[2] != L'.' && path[2] != L'\\';
+  if (!drive && !unc) return false;
+  size_t start = drive ? 3 : 2;
+  size_t components = 0;
+  while (start < path.size()) {
+    const size_t end = path.find(L'\\', start);
+    const size_t count = (end == std::wstring::npos ? path.size() : end) - start;
+    if (!count) return false;
+    const std::wstring component = path.substr(start, count);
+    if (component == L"." || component == L".." || component.back() == L'.' || component.back() == L' '
+        || component.find_first_of(L"\"<>|?*:") != std::wstring::npos
+        || std::any_of(component.begin(), component.end(), [](wchar_t value) { return value < 0x20; })) return false;
+    ++components;
+    if (end == std::wstring::npos) break;
+    start = end + 1;
+    if (start == path.size()) break;
+  }
+  return drive || components >= 2;
+}
+
+TestObserverInputResult ReadTestProcessNeedle(napi_env env, napi_value value, size_t* total_bytes, std::wstring* result) {
+  napi_valuetype type = napi_undefined;
+  if (napi_typeof(env, value, &type) != napi_ok) return TestObserverInputResult::abi_error;
+  if (type != napi_string) return TestObserverInputResult::invalid;
+  size_t length = 0;
+  if (napi_get_value_string_utf16(env, value, nullptr, 0, &length) != napi_ok) return TestObserverInputResult::abi_error;
+  if (!length || length > kTestProcessNeedleMaxChars || length > (kTestProcessNeedleMaxBytes - *total_bytes) / sizeof(char16_t)) return TestObserverInputResult::invalid;
+  std::vector<char16_t> text(length + 1);
+  size_t received = 0;
+  if (napi_get_value_string_utf16(env, value, text.data(), text.size(), &received) != napi_ok || received != length) return TestObserverInputResult::abi_error;
+  result->clear(); result->reserve(length);
+  for (size_t index = 0; index < length; ++index) {
+    if (!text[index]) return TestObserverInputResult::invalid;
+    result->push_back(static_cast<wchar_t>(text[index]));
+  }
+  if (!StrictTestProcessNeedlePath(*result)) return TestObserverInputResult::invalid;
+  *total_bytes += length * sizeof(char16_t);
+  return TestObserverInputResult::valid;
+}
+
+bool CreateFrozenTestKnownFolders(napi_env env, const std::wstring& programs, const std::wstring& desktop, napi_value* result) {
+  static_assert(sizeof(wchar_t) == sizeof(char16_t));
+  napi_value programs_value, desktop_value;
+  if (napi_create_string_utf16(env, reinterpret_cast<const char16_t*>(programs.data()), programs.size(), &programs_value) != napi_ok
+      || napi_create_string_utf16(env, reinterpret_cast<const char16_t*>(desktop.data()), desktop.size(), &desktop_value) != napi_ok
+      || napi_create_object(env, result) != napi_ok) return false;
+  napi_property_descriptor properties[] = {
+    {"programs", nullptr, nullptr, nullptr, nullptr, programs_value, napi_enumerable, nullptr},
+    {"desktop", nullptr, nullptr, nullptr, nullptr, desktop_value, napi_enumerable, nullptr},
+  };
+  return napi_define_properties(env, *result, sizeof(properties) / sizeof(properties[0]), properties) == napi_ok
+    && napi_object_freeze(env, *result) == napi_ok;
+}
+
+napi_value ObserveWindowsKnownFolderPathsForTest(napi_env env, napi_callback_info info) {
+  size_t argc = 1;
+  napi_value argv[1];
+  if (!Ok(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), "Cannot read native test observer arguments")) return nullptr;
+  if (argc != 0) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_INPUT", "Native test observer arguments are invalid"); return nullptr; }
+  TestObserverKnownFolderPath programs;
+  TestObserverKnownFolderPath desktop;
+  if (FAILED(SHGetKnownFolderPath(FOLDERID_Programs, KF_FLAG_DEFAULT, nullptr, programs.put()))
+      || FAILED(SHGetKnownFolderPath(FOLDERID_Desktop, KF_FLAG_DEFAULT, nullptr, desktop.put()))) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_QUERY", "Native test observer query failed"); return nullptr;
+  }
+  const size_t programs_length = programs.get() ? wcsnlen_s(programs.get(), kTestKnownFolderMaxChars + 1) : 0;
+  const size_t desktop_length = desktop.get() ? wcsnlen_s(desktop.get(), kTestKnownFolderMaxChars + 1) : 0;
+  if (!programs_length || programs_length > kTestKnownFolderMaxChars || !desktop_length || desktop_length > kTestKnownFolderMaxChars) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_QUERY", "Native test observer query failed"); return nullptr;
+  }
+  napi_value result;
+  if (!CreateFrozenTestKnownFolders(env, std::wstring(programs.get(), programs_length), std::wstring(desktop.get(), desktop_length), &result)) {
+    Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot create native test observer result"); return nullptr;
+  }
+  return result;
+}
+
+using NtQueryInformationProcessForTest = LONG(NTAPI*)(HANDLE, ULONG, void*, ULONG, ULONG*);
+using NtQuerySystemInformationForTest = LONG(NTAPI*)(ULONG, void*, ULONG, ULONG*);
+
+struct TestProcessUnicodeString {
+  USHORT length;
+  USHORT maximum_length;
+  wchar_t* buffer;
+};
+
+struct TestSystemUnicodeStringX64 {
+  std::uint16_t length;
+  std::uint16_t maximum_length;
+  std::uint32_t padding;
+  std::uint64_t buffer;
+};
+
+struct TestSystemProcessInformationX64 {
+  std::uint32_t next_entry_offset;
+  std::uint32_t number_of_threads;
+  std::int64_t working_set_private_size;
+  std::uint32_t hard_fault_count;
+  std::uint32_t number_of_threads_high_watermark;
+  std::uint64_t cycle_time;
+  std::int64_t create_time;
+  std::int64_t user_time;
+  std::int64_t kernel_time;
+  TestSystemUnicodeStringX64 image_name;
+  std::int32_t base_priority;
+  std::uint32_t padding;
+  std::uint64_t process_id;
+  std::uint64_t parent_process_id;
+  std::uint32_t handle_count;
+  std::uint32_t session_id;
+};
+
+static_assert(sizeof(void*) == 8);
+static_assert(sizeof(TestProcessUnicodeString) == 16);
+static_assert(sizeof(TestSystemProcessInformationX64) == 104);
+static_assert(offsetof(TestSystemProcessInformationX64, create_time) == 32);
+static_assert(offsetof(TestSystemProcessInformationX64, process_id) == 80);
+static_assert(offsetof(TestSystemProcessInformationX64, parent_process_id) == 88);
+static_assert(offsetof(TestSystemProcessInformationX64, session_id) == 100);
+
+struct TestProcessIdentity {
+  DWORD session_id;
+  DWORD pid;
+  std::uint64_t creation;
+};
+
+bool SameTestProcessIdentity(const TestProcessIdentity& left, const TestProcessIdentity& right) {
+  return left.session_id == right.session_id && left.pid == right.pid && left.creation == right.creation;
+}
+
+class TestObservedProcess {
+ public:
+  TestObservedProcess(const TestProcessIdentity& process_identity, HANDLE process_handle, bool references)
+      : identity(process_identity), handle(process_handle), matched(references) {}
+  ~TestObservedProcess() { if (handle) CloseHandle(handle); }
+  TestObservedProcess(const TestObservedProcess&) = delete;
+  TestObservedProcess& operator=(const TestObservedProcess&) = delete;
+  TestObservedProcess(TestObservedProcess&& other) noexcept
+      : identity(other.identity), handle(other.handle), matched(other.matched), reconciled(other.reconciled) { other.handle = nullptr; }
+  TestObservedProcess& operator=(TestObservedProcess&&) = delete;
+  TestProcessIdentity identity;
+  HANDLE handle;
+  bool matched;
+  bool reconciled = false;
+};
+
+NtQueryInformationProcessForTest ResolveTestProcessQuery() {
+  HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+  FARPROC raw_query = ntdll ? GetProcAddress(ntdll, "NtQueryInformationProcess") : nullptr;
+  NtQueryInformationProcessForTest query = nullptr;
+  static_assert(sizeof(query) == sizeof(raw_query));
+  memcpy(&query, &raw_query, sizeof(query));
+  return query;
+}
+
+NtQuerySystemInformationForTest ResolveTestSystemProcessQuery() {
+  HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+  FARPROC raw_query = ntdll ? GetProcAddress(ntdll, "NtQuerySystemInformation") : nullptr;
+  NtQuerySystemInformationForTest query = nullptr;
+  static_assert(sizeof(query) == sizeof(raw_query));
+  memcpy(&query, &raw_query, sizeof(query));
+  return query;
+}
+
+bool TestProcessBeforeDeadline(ULONGLONG deadline) {
+  return GetTickCount64() < deadline;
+}
+
+bool ParseTestSystemProcessSnapshot(const void* buffer, ULONG bytes, DWORD observer_session, ULONGLONG deadline,
+    std::map<DWORD, TestProcessIdentity>* processes) {
+  if (!buffer || bytes < sizeof(TestSystemProcessInformationX64)
+      || (reinterpret_cast<uintptr_t>(buffer) % alignof(TestSystemProcessInformationX64)) != 0) return false;
+  const auto* raw = static_cast<const unsigned char*>(buffer);
+  const uintptr_t base = reinterpret_cast<uintptr_t>(buffer);
+  std::set<DWORD> seen;
+  processes->clear();
+  size_t offset = 0;
+  for (;;) {
+    if (!TestProcessBeforeDeadline(deadline) || (offset % alignof(TestSystemProcessInformationX64)) != 0
+        || offset > bytes || sizeof(TestSystemProcessInformationX64) > bytes - offset) return false;
+    TestSystemProcessInformationX64 entry{};
+    memcpy(&entry, raw + offset, sizeof(entry));
+    const size_t entry_bytes = entry.next_entry_offset ? entry.next_entry_offset : static_cast<size_t>(bytes) - offset;
+    if (entry_bytes < sizeof(entry) || (entry.next_entry_offset && ((entry.next_entry_offset % alignof(TestSystemProcessInformationX64)) != 0
+        || entry.next_entry_offset > bytes - offset))) return false;
+    if ((entry.image_name.length % sizeof(wchar_t)) != 0 || (entry.image_name.maximum_length % sizeof(wchar_t)) != 0
+        || entry.image_name.length > entry.image_name.maximum_length) return false;
+    if (!entry.image_name.buffer) {
+      if (entry.image_name.length || entry.image_name.maximum_length) return false;
+    } else {
+      if ((entry.image_name.buffer % alignof(wchar_t)) != 0 || entry.image_name.buffer < base) return false;
+      const std::uint64_t image_offset64 = entry.image_name.buffer - base;
+      if (image_offset64 > bytes || image_offset64 < offset + sizeof(entry)) return false;
+      const size_t image_offset = static_cast<size_t>(image_offset64);
+      if (image_offset > offset + entry_bytes || entry.image_name.maximum_length > offset + entry_bytes - image_offset) return false;
+    }
+    if (entry.process_id > UINT32_MAX || entry.parent_process_id > UINT32_MAX) return false;
+    const DWORD pid = static_cast<DWORD>(entry.process_id);
+    if (!seen.insert(pid).second || seen.size() > kTestObserverMaxProcesses) return false;
+    if (pid != 0 && entry.create_time <= 0) return false;
+    if (pid != 0 && entry.session_id == observer_session) {
+      TestProcessIdentity identity{entry.session_id, pid, static_cast<std::uint64_t>(entry.create_time)};
+      if (!processes->emplace(pid, identity).second) return false;
+    }
+    if (!entry.next_entry_offset) return true;
+    offset += entry.next_entry_offset;
+  }
+}
+
+bool SnapshotTestProcesses(NtQuerySystemInformationForTest query, DWORD observer_session, ULONGLONG deadline,
+    std::map<DWORD, TestProcessIdentity>* processes) {
+  if (!query) return false;
+  ULONG buffer_bytes = kTestProcessSnapshotInitialBytes;
+  for (size_t attempt = 0; attempt < 10; ++attempt) {
+    if (!TestProcessBeforeDeadline(deadline) || buffer_bytes > kTestProcessSnapshotMaxBytes) return false;
+    std::vector<std::uint64_t> storage((static_cast<size_t>(buffer_bytes) + sizeof(std::uint64_t) - 1) / sizeof(std::uint64_t));
+    const ULONG capacity = static_cast<ULONG>(storage.size() * sizeof(std::uint64_t));
+    ULONG returned = 0;
+    const ULONG status = static_cast<ULONG>(query(5, storage.data(), capacity, &returned));
+    if (!TestProcessBeforeDeadline(deadline)) return false;
+    if (status == 0) {
+      return returned >= sizeof(TestSystemProcessInformationX64) && returned <= capacity
+        && ParseTestSystemProcessSnapshot(storage.data(), returned, observer_session, deadline, processes);
+    }
+    if (status != 0xC0000004UL && status != 0xC0000023UL && status != 0x80000005UL) return false;
+    if (returned > kTestProcessSnapshotMaxBytes || capacity == kTestProcessSnapshotMaxBytes) return false;
+    ULONG next = capacity <= kTestProcessSnapshotMaxBytes / 2 ? capacity * 2 : kTestProcessSnapshotMaxBytes;
+    if (returned > next) next = returned;
+    if (next > kTestProcessSnapshotMaxBytes || next <= capacity) return false;
+    buffer_bytes = static_cast<ULONG>((next + sizeof(std::uint64_t) - 1) & ~(sizeof(std::uint64_t) - 1));
+  }
+  return false;
+}
+
+bool TestProcessExitState(HANDLE process, bool* exited) {
+  const DWORD wait = WaitForSingleObject(process, 0);
+  if (wait == WAIT_OBJECT_0) { *exited = true; return true; }
+  if (wait == WAIT_TIMEOUT) { *exited = false; return true; }
+  return false;
+}
+
+bool TestProcessHandleCreationTime(HANDLE process, uint64_t* creation) {
+  FILETIME created{}, exited{}, kernel{}, user{};
+  if (!GetProcessTimes(process, &created, &exited, &kernel, &user)) return false;
+  *creation = (static_cast<uint64_t>(created.dwHighDateTime) << 32) | created.dwLowDateTime;
+  return true;
+}
+
+enum class TestProcessReadResult { observed, unavailable, malformed };
+enum class TestProcessInspectResult { observed, unknown, gone, failed };
+
+TestProcessReadResult ReadTestProcessImagePath(HANDLE process, std::wstring* path) {
+  std::array<wchar_t, kTestProcessImageMaxChars> buffer{};
+  DWORD length = static_cast<DWORD>(buffer.size());
+  if (!QueryFullProcessImageNameW(process, 0, buffer.data(), &length)) return TestProcessReadResult::unavailable;
+  if (!length || length >= buffer.size()
+      || std::find(buffer.begin(), buffer.begin() + length, L'\0') != buffer.begin() + length) return TestProcessReadResult::malformed;
+  path->assign(buffer.data(), length);
+  return TestProcessReadResult::observed;
+}
+
+TestProcessReadResult ReadTestProcessCommandLine(NtQueryInformationProcessForTest query, HANDLE process,
+    ULONGLONG deadline, std::wstring* command_line) {
+  if (!query) return TestProcessReadResult::unavailable;
+  ULONG required = 0;
+  if (!TestProcessBeforeDeadline(deadline)) return TestProcessReadResult::malformed;
+  const ULONG first_status = static_cast<ULONG>(query(process, 60, nullptr, 0, &required));
+  if (!TestProcessBeforeDeadline(deadline)) return TestProcessReadResult::malformed;
+  if (first_status != 0xC0000004UL && first_status != 0xC0000023UL && first_status != 0x80000005UL) {
+    return TestProcessReadResult::unavailable;
+  }
+  if (required < sizeof(TestProcessUnicodeString) || required > kTestProcessCommandLineMaxBytes) return TestProcessReadResult::malformed;
+  std::vector<unsigned char> storage(required);
+  ULONG returned = 0;
+  if (!TestProcessBeforeDeadline(deadline)) return TestProcessReadResult::malformed;
+  const ULONG status = static_cast<ULONG>(query(process, 60, storage.data(), required, &returned));
+  if (!TestProcessBeforeDeadline(deadline)) return TestProcessReadResult::malformed;
+  if (status != 0) return TestProcessReadResult::unavailable;
+  if (returned < sizeof(TestProcessUnicodeString) || returned > storage.size()) return TestProcessReadResult::malformed;
+  const auto* value = reinterpret_cast<const TestProcessUnicodeString*>(storage.data());
+  if ((value->length % sizeof(wchar_t)) != 0 || (value->maximum_length % sizeof(wchar_t)) != 0
+      || value->length > value->maximum_length) return TestProcessReadResult::malformed;
+  if (!value->buffer) {
+    if (value->length || value->maximum_length) return TestProcessReadResult::malformed;
+    command_line->clear();
+    return TestProcessReadResult::observed;
+  }
+  const uintptr_t base = reinterpret_cast<uintptr_t>(storage.data());
+  const uintptr_t text = reinterpret_cast<uintptr_t>(value->buffer);
+  if (text < base + sizeof(TestProcessUnicodeString) || (text % alignof(wchar_t)) != 0) return TestProcessReadResult::malformed;
+  const size_t offset = static_cast<size_t>(text - base);
+  if (offset > returned || value->maximum_length > returned - offset) return TestProcessReadResult::malformed;
+  const size_t length = value->length / sizeof(wchar_t);
+  if (std::find(value->buffer, value->buffer + length, L'\0') != value->buffer + length) return TestProcessReadResult::malformed;
+  command_line->assign(value->buffer, length);
+  return TestProcessReadResult::observed;
+}
+
+bool TestProcessTextReferencesNeedle(const std::wstring& text, const std::vector<std::wstring>& needles,
+    ULONGLONG deadline, bool* matched) {
+  *matched = false;
+  for (const auto& needle : needles) {
+    if (needle.size() > text.size()) continue;
+    const size_t last = text.size() - needle.size();
+    for (size_t index = 0; index <= last; ++index) {
+      if (!TestProcessBeforeDeadline(deadline)) return false;
+      const int comparison = CompareStringOrdinal(text.data() + index, static_cast<int>(needle.size()),
+          needle.data(), static_cast<int>(needle.size()), TRUE);
+      if (!comparison) return false;
+      if (comparison == CSTR_EQUAL) { *matched = true; return true; }
+    }
+  }
+  return true;
+}
+
+TestProcessInspectResult TestProcessUnavailableOrGone(HANDLE process, ULONGLONG deadline) {
+  if (!TestProcessBeforeDeadline(deadline)) return TestProcessInspectResult::failed;
+  bool exited = false;
+  if (TestProcessExitState(process, &exited) && exited) return TestProcessInspectResult::gone;
+  return TestProcessBeforeDeadline(deadline) ? TestProcessInspectResult::unknown : TestProcessInspectResult::failed;
+}
+
+TestProcessInspectResult InspectTestProcess(const TestProcessIdentity& identity, NtQueryInformationProcessForTest query,
+    const std::vector<std::wstring>& needles, ULONGLONG deadline, std::vector<TestObservedProcess>* observations) {
+  if (!TestProcessBeforeDeadline(deadline)) return TestProcessInspectResult::failed;
+  HANDLE raw_process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, identity.pid);
+  if (!TestProcessBeforeDeadline(deadline)) { if (raw_process) CloseHandle(raw_process); return TestProcessInspectResult::failed; }
+  if (!raw_process) return TestProcessInspectResult::unknown;
+  TestObservedProcess process(identity, raw_process, false);
+  bool exited = false;
+  if (!TestProcessExitState(process.handle, &exited)) return TestProcessInspectResult::unknown;
+  if (exited) return TestProcessInspectResult::gone;
+  uint64_t creation = 0;
+  if (!TestProcessHandleCreationTime(process.handle, &creation)) return TestProcessUnavailableOrGone(process.handle, deadline);
+  if (!creation) return TestProcessInspectResult::failed;
+  if (creation != identity.creation) return TestProcessUnavailableOrGone(process.handle, deadline);
+  std::wstring image_path;
+  std::wstring command_line;
+  const TestProcessReadResult image = ReadTestProcessImagePath(process.handle, &image_path);
+  const TestProcessReadResult command = ReadTestProcessCommandLine(query, process.handle, deadline, &command_line);
+  if (!TestProcessBeforeDeadline(deadline) || image == TestProcessReadResult::malformed || command == TestProcessReadResult::malformed) {
+    return TestProcessInspectResult::failed;
+  }
+  if (image != TestProcessReadResult::observed || command != TestProcessReadResult::observed) {
+    return TestProcessUnavailableOrGone(process.handle, deadline);
+  }
+  bool image_matched = false;
+  bool command_matched = false;
+  if (!TestProcessTextReferencesNeedle(image_path, needles, deadline, &image_matched)
+      || !TestProcessTextReferencesNeedle(command_line, needles, deadline, &command_matched)) return TestProcessInspectResult::failed;
+  uint64_t confirmed_creation = 0;
+  if (!TestProcessHandleCreationTime(process.handle, &confirmed_creation)) return TestProcessUnavailableOrGone(process.handle, deadline);
+  if (confirmed_creation != identity.creation) return TestProcessInspectResult::failed;
+  if (!TestProcessExitState(process.handle, &exited)) return TestProcessInspectResult::unknown;
+  if (exited) return TestProcessInspectResult::gone;
+  if (!TestProcessBeforeDeadline(deadline)) return TestProcessInspectResult::failed;
+  process.matched = image_matched || command_matched;
+  observations->push_back(std::move(process));
+  return TestProcessInspectResult::observed;
+}
+
+void AppendTestProcessU64(std::vector<unsigned char>* material, std::uint64_t value) {
+  for (unsigned shift = 0; shift < 64; shift += 8) material->push_back(static_cast<unsigned char>(value >> shift));
+}
+
+bool TestProcessIdentityId(const TestProcessIdentity& identity, std::string* output) {
+  static constexpr char domain[] = "mini-lux/sec03/windows-process-identity/v1";
+  std::vector<unsigned char> material(domain, domain + sizeof(domain) - 1);
+  material.push_back(0);
+  mini_lux::sec03::AppendU32(&material, identity.session_id);
+  mini_lux::sec03::AppendU32(&material, identity.pid);
+  AppendTestProcessU64(&material, identity.creation);
+  return mini_lux::sec03::Sha256(material.data(), material.size(), output)
+    && mini_lux::sec03::CanonicalHex(*output, 32, 32);
+}
+
+bool AddUnknownTestProcessIdentity(const TestProcessIdentity& identity, std::set<std::string>* identities) {
+  std::string digest;
+  if (!TestProcessIdentityId(identity, &digest)) return false;
+  identities->insert(std::move(digest));
+  return true;
+}
+
+bool ReconcileObservedTestProcess(TestObservedProcess* process, const TestProcessIdentity* second_identity,
+    ULONGLONG deadline, bool* live) {
+  *live = false;
+  if (!TestProcessBeforeDeadline(deadline)) return false;
+  bool exited = false;
+  if (!TestProcessExitState(process->handle, &exited)) return false;
+  if (exited) { process->reconciled = true; return true; }
+  if (!second_identity || !SameTestProcessIdentity(process->identity, *second_identity)) return false;
+  uint64_t creation = 0;
+  if (!TestProcessHandleCreationTime(process->handle, &creation) || creation != process->identity.creation
+      || !TestProcessBeforeDeadline(deadline) || !TestProcessExitState(process->handle, &exited)) return false;
+  process->reconciled = true;
+  *live = !exited;
+  return true;
+}
+
+bool QueryTestProcessesReferencingPaths(const std::vector<std::wstring>& needles, uint32_t* matching_count,
+    std::set<std::string>* unknown_identity_ids) {
+  const ULONGLONG deadline = GetTickCount64() + kTestProcessQueryDeadlineMilliseconds;
+  DWORD observer_session = 0;
+  if (!TestProcessBeforeDeadline(deadline) || !ProcessIdToSessionId(GetCurrentProcessId(), &observer_session)) return false;
+  const NtQuerySystemInformationForTest system_query = ResolveTestSystemProcessQuery();
+  const NtQueryInformationProcessForTest process_query = ResolveTestProcessQuery();
+  if (!system_query) return false;
+  std::map<DWORD, TestProcessIdentity> before;
+  if (!SnapshotTestProcesses(system_query, observer_session, deadline, &before)) return false;
+  const DWORD observer_pid = GetCurrentProcessId();
+  if (!before.count(observer_pid)) return false;
+  std::vector<TestObservedProcess> observations;
+  observations.reserve(before.size());
+  std::map<DWORD, size_t> observed_indices;
+  std::map<DWORD, TestProcessIdentity> unknown_before;
+  for (const auto& [pid, identity] : before) {
+    if (!TestProcessBeforeDeadline(deadline)) return false;
+    const TestProcessInspectResult inspected = InspectTestProcess(identity, process_query, needles, deadline, &observations);
+    if (inspected == TestProcessInspectResult::failed) return false;
+    if (inspected == TestProcessInspectResult::observed) {
+      if (!observed_indices.emplace(pid, observations.size() - 1).second) return false;
+    } else if (inspected == TestProcessInspectResult::unknown) {
+      if (!unknown_before.emplace(pid, identity).second) return false;
+    }
+  }
+  std::map<DWORD, TestProcessIdentity> after;
+  if (!SnapshotTestProcesses(system_query, observer_session, deadline, &after)) return false;
+  const auto observer_after = after.find(observer_pid);
+  if (observer_after == after.end() || !SameTestProcessIdentity(before.at(observer_pid), observer_after->second)) return false;
+  unknown_identity_ids->clear();
+  uint32_t matches = 0;
+  for (const auto& [pid, identity] : after) {
+    if (!TestProcessBeforeDeadline(deadline)) return false;
+    const auto original = before.find(pid);
+    const bool same_as_before = original != before.end() && SameTestProcessIdentity(original->second, identity);
+    const auto observed = observed_indices.find(pid);
+    if (observed != observed_indices.end()) {
+      TestObservedProcess& process = observations.at(observed->second);
+      bool live = false;
+      if (!ReconcileObservedTestProcess(&process, same_as_before ? &identity : nullptr, deadline, &live)) return false;
+      if (same_as_before) {
+        if (live && process.matched) ++matches;
+      } else if (!AddUnknownTestProcessIdentity(identity, unknown_identity_ids)) {
+        return false;
+      }
+    } else if (!same_as_before || unknown_before.count(pid)) {
+      if (!AddUnknownTestProcessIdentity(identity, unknown_identity_ids)) return false;
+    }
+  }
+  for (auto& process : observations) {
+    if (process.reconciled) continue;
+    bool live = false;
+    if (!ReconcileObservedTestProcess(&process, nullptr, deadline, &live) || live) return false;
+  }
+  if (matches > kTestObserverMaxProcesses || unknown_identity_ids->size() > kTestObserverMaxProcesses
+      || !TestProcessBeforeDeadline(deadline)) return false;
+  *matching_count = matches;
+  return true;
+}
+
+bool CreateFrozenTestProcessObservation(napi_env env, uint32_t matching_count,
+    const std::set<std::string>& unknown_identity_ids, napi_value* result) {
+  napi_value count, identities;
+  if (napi_create_uint32(env, matching_count, &count) != napi_ok
+      || napi_create_array_with_length(env, unknown_identity_ids.size(), &identities) != napi_ok) return false;
+  uint32_t index = 0;
+  for (const auto& identity : unknown_identity_ids) {
+    napi_value value;
+    if (napi_create_string_utf8(env, identity.c_str(), identity.size(), &value) != napi_ok
+        || napi_set_element(env, identities, index++, value) != napi_ok) return false;
+  }
+  if (napi_object_freeze(env, identities) != napi_ok || napi_create_object(env, result) != napi_ok) return false;
+  napi_property_descriptor properties[] = {
+    {"matchingCount", nullptr, nullptr, nullptr, nullptr, count, napi_enumerable, nullptr},
+    {"unknownProcessIdentityIds", nullptr, nullptr, nullptr, nullptr, identities, napi_enumerable, nullptr},
+  };
+  return napi_define_properties(env, *result, sizeof(properties) / sizeof(properties[0]), properties) == napi_ok
+    && napi_object_freeze(env, *result) == napi_ok;
+}
+
+napi_value ObserveWindowsProcessReferencesForTest(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value argv[2];
+  if (!Ok(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr), "Cannot read native test observer arguments")) return nullptr;
+  bool is_array = false;
+  if (argc != 1) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_INPUT", "Native test observer arguments are invalid"); return nullptr; }
+  if (napi_is_array(env, argv[0], &is_array) != napi_ok) { Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot inspect native test observer arguments"); return nullptr; }
+  if (!is_array) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_INPUT", "Native test observer arguments are invalid"); return nullptr; }
+  uint32_t length = 0;
+  if (napi_get_array_length(env, argv[0], &length) != napi_ok) { Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot inspect native test observer arguments"); return nullptr; }
+  if (!length || length > kTestProcessNeedleMaxCount) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_INPUT", "Native test observer arguments are invalid"); return nullptr; }
+  std::vector<std::wstring> needles;
+  needles.reserve(length);
+  size_t total_bytes = 0;
+  for (uint32_t index = 0; index < length; ++index) {
+    napi_value value;
+    if (napi_get_element(env, argv[0], index, &value) != napi_ok) { Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot inspect native test observer arguments"); return nullptr; }
+    std::wstring needle;
+    const TestObserverInputResult read = ReadTestProcessNeedle(env, value, &total_bytes, &needle);
+    if (read == TestObserverInputResult::abi_error) { Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot inspect native test observer arguments"); return nullptr; }
+    if (read != TestObserverInputResult::valid) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_INPUT", "Native test observer arguments are invalid"); return nullptr; }
+    needles.push_back(std::move(needle));
+  }
+  uint32_t matching_count = 0;
+  std::set<std::string> unknown_identity_ids;
+  if (!QueryTestProcessesReferencingPaths(needles, &matching_count, &unknown_identity_ids)) {
+    Throw(env, "EXEC_NATIVE_TEST_OBSERVER_QUERY", "Native test observer query failed"); return nullptr;
+  }
+  napi_value result;
+  if (!CreateFrozenTestProcessObservation(env, matching_count, unknown_identity_ids, &result)) {
+    Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot create native test observer result"); return nullptr;
   }
   return result;
 }
@@ -1404,7 +2233,11 @@ napi_value Init(napi_env env, napi_value exports) {
   napi_create_function(env, "openEvidenceVerifier", NAPI_AUTO_LENGTH, OpenEvidenceVerifier, nullptr, &fn); napi_set_named_property(env, exports, "openEvidenceVerifier", fn);
   napi_create_uint32(env, kProtocolVersion, &version); napi_set_named_property(env, exports, "protocolVersion", version);
 #ifdef MINI_LUX_SEC03_NATIVE_TEST
+  napi_create_function(env, "observeWindowsProcessReferencesForTest", NAPI_AUTO_LENGTH, ObserveWindowsProcessReferencesForTest, nullptr, &fn); napi_set_named_property(env, exports, "observeWindowsProcessReferencesForTest", fn);
   napi_create_function(env, "observeWindowsFileHandleInProcessTreeForTest", NAPI_AUTO_LENGTH, ObserveWindowsFileHandleInProcessTreeForTest, nullptr, &fn); napi_set_named_property(env, exports, "observeWindowsFileHandleInProcessTreeForTest", fn);
+  napi_create_function(env, "observeWindowsKnownFolderPathsForTest", NAPI_AUTO_LENGTH, ObserveWindowsKnownFolderPathsForTest, nullptr, &fn); napi_set_named_property(env, exports, "observeWindowsKnownFolderPathsForTest", fn);
+  napi_create_function(env, "observeWindowsRegistryKeyForTest", NAPI_AUTO_LENGTH, ObserveWindowsRegistryKeyForTest, nullptr, &fn); napi_set_named_property(env, exports, "observeWindowsRegistryKeyForTest", fn);
+  napi_create_function(env, "observeWindowsRegistrySnapshotForTest", NAPI_AUTO_LENGTH, ObserveWindowsRegistrySnapshotForTest, nullptr, &fn); napi_set_named_property(env, exports, "observeWindowsRegistrySnapshotForTest", fn);
 #endif
   return exports;
 }
