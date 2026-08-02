@@ -422,7 +422,7 @@ test("packaged registry baseline treats an absent uninstall container as an empt
     assert.deepEqual(JSON.parse(output), { rootPresent: false, items: [] });
     const powershellOutput = path.join(fixture, "powershell-output.txt");
     assert.equal(await observeWindowsPowerShellOutput("'READY'", powershellOutput), "READY");
-    await assert.rejects(observeWindowsPowerShellOutput("throw 'EXPECTED_FAILURE'", powershellOutput), /failed with 1/);
+    await assert.rejects(observeWindowsPowerShellOutput("exit 7", powershellOutput), /failed with 7/);
   } finally {
     await removeFixture(fixture);
   }
