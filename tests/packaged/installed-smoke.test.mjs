@@ -258,7 +258,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   await mkdir(executionDir, { recursive: true });
   await mkdir(executionTemp, { recursive: true });
   const details = {
-    phase: "preflight",
+    phase: "preflight-process-baseline",
     artifactExecution: {
       sourceBytes: null,
       sourceSha256: null,
@@ -337,19 +337,35 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   const processReferencePaths = [executionDir, executionTemp, installDir];
   let processUnknownBaseline = null;
   const processEnv = { ...process.env, TEMP: executionTemp, TMP: executionTemp };
+  const checkpoint = async (phase) => {
+    details.phase = phase;
+    await publishDetails(detailPath, details);
+  };
+  const cleanupCheckpointErrors = [];
+  const cleanupCheckpoint = async (phase) => {
+    try { await checkpoint(phase); }
+    catch (error) { cleanupCheckpointErrors.push(error); }
+  };
+  let bodyError = null;
+  let bodyFailurePhase = null;
+  let lifecycleFailures = [];
   try {
+    await checkpoint("preflight-process-baseline");
     const processBaseline = await observeWindowsProcessReferences(processReferencePaths);
     assert.equal(processBaseline.matchingCount, 0, "pre-install process path baseline is not empty");
     processUnknownBaseline = new Set(processBaseline.unknownProcessIdentityIds);
+    await checkpoint("preflight-system-snapshot");
     systemBefore = await systemIntegrationSnapshot(missingRegistryRoot);
     details.cleanup.registryObserved = true;
     details.cleanup.shortcutObserved = true;
+    await checkpoint("preflight-build-identity");
     const check = await runProcess(process.execPath, ["scripts/generate-build-info.mjs", "--check"], { timeoutMs: 60_000 });
     assert.equal(check.code, 0, check.stderr);
     const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
     const sourcePackage = JSON.parse(await readFile(path.join(projectRoot, "package.json"), "utf8"));
     assert.equal(sourcePackage.build?.nsis?.guid, rainyDaysInstallerGuid, "installer registry identity differs");
     const manifestPath = path.resolve(process.env.RAINYDAYS_PACKAGE_ARTIFACT_MANIFEST || path.join(projectRoot, "test-results", "package-artifact.json"));
+    await checkpoint("preflight-artifact");
     const { installer, manifest } = await verifyInstallerPreflight({
       manifestPath,
       installerOverride: process.env.RAINYDAYS_INSTALLER_OVERRIDE,
@@ -371,7 +387,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
       && details.artifactExecution.executedSha256 === manifest.artifact.sha256;
     assert(details.artifactExecution.identityMatched, "executed installer copy differs from the preflight artifact");
 
-    details.phase = "install";
+    await checkpoint("install-execution");
     let install = { code: null, signal: null, stderr: "" };
     let installTimedOut = false;
     try { install = await runProcess(executedInstaller, ["/S", `/D=${installDir}`], { env: processEnv, timeoutMs: 5 * 60_000 }); }
@@ -382,11 +398,13 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     details.installerExitCode = install.code;
     details.installerSignal = install.signal;
     details.installerClassification = classifyInstallerResult(install, installTimedOut);
+    await checkpoint("install-convergence");
     await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "installer descendant convergence");
     await proveExecutableReleased(executedInstaller);
     details.installerConverged = true;
     details.cleanup.executionCopyReleased = true;
     assert.equal(install.code, 0, `installer execution failed: ${details.installerClassification}`);
+    await checkpoint("install-validation");
     const executable = path.join(installDir, "RainyDays.exe");
     await waitFor(() => pathExists(executable), { timeoutMs: 30_000, label: "installed executable" });
     const installedRegistry = await observeWindowsRegistryKey(rainyDaysUninstallSubkey);
@@ -400,11 +418,12 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
       producerSummaryTrusted: details.packageBinding.producerSummaryTrusted,
     });
 
-    details.phase = "first-launch";
+    await checkpoint("first-launch-readiness");
     firstPorts = await freeDistinctPorts(2);
     first = launchInstalled(executable, userData, firstPorts[0], firstPorts[1]);
     await first.ready;
     client = await connectCdp(firstPorts[1]);
+    await checkpoint("first-launch-probe");
     await probeIdentity(client, buildInfo, firstPorts[0]);
     const created = await client.evaluate(`fetch('/api/sessions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:'GOV-03 packaged persistence'})}).then(r=>r.json())`);
     sessionId = created.session.id;
@@ -423,22 +442,25 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     assert.notEqual(terminalIsolation.secondId, sessionId);
     assert(first.logs().stdout.includes(buildInfo.buildId));
     client.close(); client = null;
+    await checkpoint("first-launch-stop");
     await stopInstalled(first, firstPorts[0], firstPorts[1]); first = null;
 
-    details.phase = "restart";
+    await checkpoint("restart-readiness");
     secondPorts = await freeDistinctPorts(2);
     second = launchInstalled(executable, userData, secondPorts[0], secondPorts[1]);
     await second.ready;
     client = await connectCdp(secondPorts[1]);
+    await checkpoint("restart-probe");
     await probeIdentity(client, buildInfo, secondPorts[0]);
     details.pathPolicy.launches[1] = await assertPackagedPathPolicy(client, userData, 2, second.child.pid);
     const sessions = await client.evaluate("fetch('/api/sessions').then(r=>r.json())");
     assert(sessions.sessions.some((entry) => entry.id === sessionId));
     assert.equal(sessions.current, sessionId);
     client.close(); client = null;
+    await checkpoint("restart-stop");
     await stopInstalled(second, secondPorts[0], secondPorts[1]); second = null;
 
-    details.phase = "uninstall";
+    await checkpoint("uninstall-execution");
     const uninstaller = path.join(installDir, "Uninstall RainyDays.exe");
     assert(await pathExists(uninstaller), "uninstaller missing");
     details.cleanup.attemptedOfficialUninstall = true;
@@ -447,11 +469,15 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     details.uninstallerSignal = uninstall.signal;
     assert.equal(uninstall.code, 0, uninstall.stderr);
     officialUninstallCompleted = true;
+    await checkpoint("uninstall-convergence");
     await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "uninstaller descendant convergence");
     details.uninstallerConverged = true;
     await waitFor(async () => (await countFiles(installDir)) === 0, { timeoutMs: 30_000, label: "uninstall file cleanup" });
-    details.phase = "complete";
+  } catch (error) {
+    bodyError = error;
+    bodyFailurePhase = details.phase;
   } finally {
+    await cleanupCheckpoint("cleanup-processes");
     client?.close();
     for (const [instance, ports] of [[first, firstPorts], [second, secondPorts]]) {
       if (instance) {
@@ -463,6 +489,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
         if (!closed.every(Boolean)) details.cleanup.processesStopped = false;
       }
     }
+    await cleanupCheckpoint("cleanup-uninstall");
     const uninstaller = path.join(installDir, "Uninstall RainyDays.exe");
     if (!officialUninstallCompleted && await pathExists(uninstaller)) {
       details.cleanup.attemptedOfficialUninstall = true;
@@ -471,6 +498,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
       details.uninstallerSignal = uninstall.signal;
       officialUninstallCompleted = uninstall.code === 0 && uninstall.signal === null;
     }
+    await cleanupCheckpoint("cleanup-convergence");
     try {
       assert(processUnknownBaseline, "process observation baseline is unavailable");
       await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "final packaged process convergence");
@@ -480,10 +508,12 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
         details.cleanup.executionCopyReleased = true;
       }
     } catch { details.cleanup.processesStopped = false; }
+    await cleanupCheckpoint("cleanup-install-directory");
     try {
       await waitFor(async () => (await countFiles(installDir)) === 0, { timeoutMs: 30_000, intervalMs: 250, label: "final install directory cleanup" });
       details.cleanup.installDirectoryEmpty = true;
     } catch { details.cleanup.installDirectoryEmpty = false; }
+    await cleanupCheckpoint("cleanup-system-integration");
     let systemAfter = null;
     try {
       systemAfter = await waitFor(async () => {
@@ -503,14 +533,22 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
       && details.cleanup.installDirectoryEmpty && details.cleanup.registryObserved && details.cleanup.registryMatchesBaseline
       && details.cleanup.shortcutObserved && details.cleanup.shortcutMatchesBaseline
       && details.cleanup.processesStopped && details.cleanup.executionCopyReleased;
+    await cleanupCheckpoint("cleanup-fixture");
     try {
       await removeFixture(fixture);
       details.cleanup.fixtureRemoved = !await pathExists(fixture);
     } catch { details.cleanup.fixtureRemoved = false; }
     details.cleanup.passed = restored && details.cleanup.fixtureRemoved;
-    await publishDetails(detailPath, details);
-    await recorder.close();
-    assert(details.cleanup.passed, "packaged cleanup did not restore the pre-install system state");
+    await cleanupCheckpoint("receipt-close");
+    let recorderError = null;
+    try { await recorder.close(); }
+    catch (error) { recorderError = error; }
+    const cleanupError = details.cleanup.passed ? null : new Error("packaged cleanup did not restore the pre-install system state");
+    if (bodyError) await cleanupCheckpoint(bodyFailurePhase);
+    else if (!recorderError && !cleanupError && cleanupCheckpointErrors.length === 0) await cleanupCheckpoint("complete");
+    lifecycleFailures = [bodyError, recorderError, cleanupError, ...cleanupCheckpointErrors].filter(error => error !== null);
   }
+  if (lifecycleFailures.length === 1) throw lifecycleFailures[0];
+  if (lifecycleFailures.length > 1) throw new AggregateError(lifecycleFailures, "packaged lifecycle and cleanup failed");
   assert.equal(await pathExists(fixture), false);
 });

@@ -281,7 +281,31 @@ function validatePackagedPathPolicy(value, { passed = false } = {}) {
 export function validatePackagedDetails(value, { passed = false, sinkIdentity = null } = {}) {
   assert(value && typeof value === "object" && !Array.isArray(value), "packaged details must be present");
   exactKeys(value, ["phase", "artifactExecution", "installerExitCode", "installerSignal", "installerClassification", "installerConverged", "packageBinding", "pathPolicy", "uninstallerSignal", "uninstallerConverged", "cleanup"], "details");
-  assert(["preflight", "install", "first-launch", "restart", "uninstall", "complete"].includes(value.phase));
+  assert([
+    "preflight-process-baseline",
+    "preflight-system-snapshot",
+    "preflight-build-identity",
+    "preflight-artifact",
+    "install-execution",
+    "install-convergence",
+    "install-validation",
+    "first-launch-readiness",
+    "first-launch-probe",
+    "first-launch-stop",
+    "restart-readiness",
+    "restart-probe",
+    "restart-stop",
+    "uninstall-execution",
+    "uninstall-convergence",
+    "cleanup-processes",
+    "cleanup-uninstall",
+    "cleanup-convergence",
+    "cleanup-install-directory",
+    "cleanup-system-integration",
+    "cleanup-fixture",
+    "receipt-close",
+    "complete",
+  ].includes(value.phase), "details.phase is invalid");
   exactKeys(value.artifactExecution, ["sourceBytes", "sourceSha256", "executedBytes", "executedSha256", "identityMatched"], "details.artifactExecution");
   for (const key of ["sourceBytes", "executedBytes"]) assert(value.artifactExecution[key] === null || (Number.isSafeInteger(value.artifactExecution[key]) && value.artifactExecution[key] > 0), `details.artifactExecution.${key} is invalid`);
   for (const key of ["sourceSha256", "executedSha256"]) assert(value.artifactExecution[key] === null || sha256Pattern.test(value.artifactExecution[key]), `details.artifactExecution.${key} is invalid`);

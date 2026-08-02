@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "54acc8c23c85ffdf898ef906de5e2481b373e2d252cfc42145e567a063713425",
-  "sourceSetSha256": "c95f2974d4b1a4cd8a68705a30ed7bab2d586a95441e0331596095933c9237c3",
+  "sourceSetSha256": "342335f68cc08e24a50c9a2b49ab87754a1516b41f2252dbf2b1b0b2c34214bc",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -237,8 +237,8 @@
     },
     {
       "sourcePath": "scripts/report-schema.mjs",
-      "bytes": 53316,
-      "sha256": "fc7cfef7fd2f9912197df5db62886fcc4c3bc2a6767b60f66c99226e05f03d06",
+      "bytes": 53883,
+      "sha256": "0ce58238063b590012def2f9f1b42aff29a37a65754371aedf68535ebd81d95c",
       "executionClass": "build-test"
     },
     {
@@ -987,8 +987,8 @@
     },
     {
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "bytes": 27614,
-      "sha256": "869f3b0f329442607df2feb85c43f0559facf016ae6831c0e675059a15ffef93",
+      "bytes": 29545,
+      "sha256": "984c6a66afb482527d538f2b3ff2914c9fb8a3174336f79023b17c77e0d9a709",
       "executionClass": "build-test"
     },
     {
@@ -1047,8 +1047,8 @@
     },
     {
       "sourcePath": "tests/unit/framework.test.mjs",
-      "bytes": 43689,
-      "sha256": "9771fac54c1b030e53b9245396ea0979f92da7e489ee4864a45aca54811fe5dc",
+      "bytes": 43924,
+      "sha256": "dd061e6e53289a7f326262a6f8dee8d8be42e789cad8fe950b719a50281f9095",
       "executionClass": "build-test"
     },
     {
@@ -5553,7 +5553,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-d9a91082abb68b10ed732d4f",
+      "id": "exec-48ad68fda86323b9030ed374",
       "occurrence": 1,
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
       "line": 339,
@@ -5624,7 +5624,7 @@
       "id": "exec-693086a31ebb12fadaeb0f4a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 443,
+      "line": 445,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5641,7 +5641,7 @@
       "id": "exec-24100569dee2dd14234e340c",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 542,
+      "line": 544,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5658,7 +5658,7 @@
       "id": "exec-4b7f1f53bc07e63b8b5cbfc3",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 605,
+      "line": 607,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5675,7 +5675,7 @@
       "id": "exec-387dfc51837d56e5b8a74941",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 662,
+      "line": 664,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5692,7 +5692,7 @@
       "id": "exec-f329446239415582c8492047",
       "occurrence": 2,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 679,
+      "line": 681,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5709,7 +5709,7 @@
       "id": "exec-72508e1a9a55a21b5002012a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 705,
+      "line": 707,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5766,5 +5766,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "205414a57154d0151c35f289e42ab8f0bb3390c9218203fdafe1aa05d235c175"
+  "canonicalPayloadSha256": "fefd5f32300fcfe4f101047a58670c4369be80e52dc7f79611ebb2a6b4a81db6"
 }
