@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "d266d0e4a41a7df7def96534684c1d6dbfc5b8f22597162815e21c4253b85cda",
-  "sourceSetSha256": "1445d99cdedae332daa9d070fea75c697e80c69b96896bebcec6848a2f5e4afc",
+  "sourceSetSha256": "8d489e290c3f52d5f96aa50065a76ab43776caf87377cb53d533f60ecca30dc2",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -987,14 +987,14 @@
     },
     {
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "bytes": 27377,
-      "sha256": "6449f5c5b21d74f90ba380a765367b4d96382fb772ad87e050e8f6d6ae9ab662",
+      "bytes": 27419,
+      "sha256": "ff00508b558f64a99bc9a6163de6ead6fc54111d84f3907bd076fa7ba54d09c4",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/packaged/smoke-helpers.mjs",
-      "bytes": 4173,
-      "sha256": "2ebd0e99962f4b0a19723e07a9ae6e2641dda14cc60f8c334e64b3f0e9ccda55",
+      "bytes": 5229,
+      "sha256": "f20b4f56a821ea7762a20e3e02c5b066375f889196961c134a332a2eb420ce56",
       "executionClass": "build-test"
     },
     {
@@ -1047,8 +1047,8 @@
     },
     {
       "sourcePath": "tests/unit/framework.test.mjs",
-      "bytes": 43647,
-      "sha256": "fbc2f6f17092567a3815fcaa8cf36a3193e45f92181d21edcc35b81963ca67f6",
+      "bytes": 43968,
+      "sha256": "cf1f45b579b1c1d3e5515b816c34e14572a8883815096c671a3b4931822a403f",
       "executionClass": "build-test"
     },
     {
@@ -5517,28 +5517,11 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-85ad10fc7aa2cb150f19fb24",
+      "id": "exec-57bf1114595ce4d0ab6e08cf",
       "occurrence": 1,
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "line": 198,
-      "column": 42,
-      "nodeKind": "PropertyAccessExpression",
-      "container": "powershell",
-      "family": "process-environment",
-      "api": "process.env",
-      "operands": [
-        "forwarded-value"
-      ],
-      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
-      "executionClass": "build-test",
-      "classification": "build-test"
-    },
-    {
-      "id": "exec-3561bf583d67a1cdc9f88a68",
-      "occurrence": 1,
-      "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "line": 230,
-      "column": 49,
+      "line": 224,
+      "column": 81,
       "nodeKind": "PropertyAccessExpression",
       "container": "processReferenceCount",
       "family": "process-environment",
@@ -5551,10 +5534,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-f330e6f87dc92663976fc39e",
+      "id": "exec-c90c1fe8655065399407cc75",
       "occurrence": 1,
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "line": 346,
+      "line": 341,
       "column": 27,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5575,6 +5558,23 @@
       "column": 78,
       "nodeKind": "PropertyAccessExpression",
       "container": "observeWindowsRegistrySnapshot",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
+      "id": "exec-886ecd612b4d25a768ba0b14",
+      "occurrence": 1,
+      "sourcePath": "tests/packaged/smoke-helpers.mjs",
+      "line": 44,
+      "column": 81,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "observeWindowsPowerShellOutput",
       "family": "process-environment",
       "api": "process.env",
       "operands": [
@@ -5639,7 +5639,7 @@
       "id": "exec-693086a31ebb12fadaeb0f4a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 440,
+      "line": 443,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5656,7 +5656,7 @@
       "id": "exec-24100569dee2dd14234e340c",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 539,
+      "line": 542,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5673,7 +5673,7 @@
       "id": "exec-4b7f1f53bc07e63b8b5cbfc3",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 602,
+      "line": 605,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5690,7 +5690,7 @@
       "id": "exec-387dfc51837d56e5b8a74941",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 659,
+      "line": 662,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5707,7 +5707,7 @@
       "id": "exec-f329446239415582c8492047",
       "occurrence": 2,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 676,
+      "line": 679,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5724,7 +5724,7 @@
       "id": "exec-72508e1a9a55a21b5002012a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 702,
+      "line": 705,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5781,5 +5781,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "3eaa2e12892cefce8692718b419826a2a7ccd32b392ec824cde6169fde7299b0"
+  "canonicalPayloadSha256": "d1195c596d6c312bb289502edff0a0bb85f793fe7865dab439c00de0d2cf208c"
 }

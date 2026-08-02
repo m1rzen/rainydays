@@ -568,7 +568,7 @@
       "executionContract": "installed-parent-scan",
       "testFile": "tests/packaged/installed-smoke.test.mjs",
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
-      "testFileSha256": "6449f5c5b21d74f90ba380a765367b4d96382fb772ad87e050e8f6d6ae9ab662"
+      "testFileSha256": "ff00508b558f64a99bc9a6163de6ead6fc54111d84f3907bd076fa7ba54d09c4"
     },
     {
       "id": "process-cwd",
@@ -4466,5 +4466,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "5d9ef0177a53215d650649850e28581ccd6ecaf6cb94d9a89e8d697d68ec0bc0"
+  "canonicalPayloadSha256": "4b11bdfcb83f89d92e60df7003fefc7f703073daf5e0cc0595b4bcf1bc424883"
 }

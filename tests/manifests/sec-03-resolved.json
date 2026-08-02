@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "0fe8b0fcd32777b61895cfc0937ccab64c9c1b2a7c1bf4f11484228f3615a603",
+      "sha256": "a5b8bd19acbfa45c6c2689ac140c5eea0c1e39e7a54c426a4fb17452f3c93c0c",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -895,7 +895,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "6449f5c5b21d74f90ba380a765367b4d96382fb772ad87e050e8f6d6ae9ab662",
+      "sha256": "ff00508b558f64a99bc9a6163de6ead6fc54111d84f3907bd076fa7ba54d09c4",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -1017,7 +1017,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "6449f5c5b21d74f90ba380a765367b4d96382fb772ad87e050e8f6d6ae9ab662",
+      "sha256": "ff00508b558f64a99bc9a6163de6ead6fc54111d84f3907bd076fa7ba54d09c4",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -2159,7 +2159,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "0fe8b0fcd32777b61895cfc0937ccab64c9c1b2a7c1bf4f11484228f3615a603",
+      "sha256": "a5b8bd19acbfa45c6c2689ac140c5eea0c1e39e7a54c426a4fb17452f3c93c0c",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -3267,5 +3267,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "db70c6a03852d9f5285a8c5263b1dc4271494eedf50d831bcadf2451157a1dad"
+  "canonicalPayloadSha256": "bf25a8d559dbff918f787d1c445a511c2b3f87fefe3c176ebdeca81856aebb58"
 }

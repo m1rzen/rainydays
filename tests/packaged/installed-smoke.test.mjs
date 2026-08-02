@@ -19,7 +19,7 @@ import {
   terminateProcessTreeAsync,
   waitFor,
 } from "../helpers.mjs";
-import { classifyInstallerResult, launchTracked, observeWindowsRegistrySnapshot, requireObservedProcessResult } from "./smoke-helpers.mjs";
+import { classifyInstallerResult, launchTracked, observeWindowsPowerShellOutput, observeWindowsRegistrySnapshot } from "./smoke-helpers.mjs";
 import { createSec02Recorder } from "../sec02-receipts.mjs";
 
 const pathPolicyAssertionIds = Object.freeze([
@@ -195,14 +195,8 @@ function hashText(value) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-async function powershell(command, env = process.env) {
-  const result = await runProcess("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", command], { env, timeoutMs: 30_000 });
-  requireObservedProcessResult(result, [0], "PowerShell observation");
-  return result.stdout.trim();
-}
-
-async function knownShortcutPaths() {
-  const output = await powershell("[ordered]@{ programs=[Environment]::GetFolderPath('Programs'); desktop=[Environment]::GetFolderPath('DesktopDirectory') } | ConvertTo-Json -Compress");
+async function knownShortcutPaths(outputPath) {
+  const output = await observeWindowsPowerShellOutput("[ordered]@{ programs=[Environment]::GetFolderPath('Programs'); desktop=[Environment]::GetFolderPath('DesktopDirectory') } | ConvertTo-Json -Compress", outputPath);
   const folders = JSON.parse(output);
   assert.equal(typeof folders.programs, "string");
   assert.equal(typeof folders.desktop, "string");
@@ -212,28 +206,28 @@ async function knownShortcutPaths() {
   ];
 }
 
-async function systemIntegrationSnapshot(registryOutputPath) {
+async function systemIntegrationSnapshot(registryOutputPath, powershellOutputPath) {
   const registryJson = await observeWindowsRegistrySnapshot("HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall", registryOutputPath);
   const registry = JSON.parse(registryJson);
   assert.deepEqual(Object.keys(registry), ["rootPresent", "items"], "registry observation shape is invalid");
   assert.equal(typeof registry.rootPresent, "boolean");
   assert(Array.isArray(registry.items), "registry observation items must be a canonical array");
   const shortcuts = {};
-  for (const shortcut of await knownShortcutPaths()) {
+  for (const shortcut of await knownShortcutPaths(powershellOutputPath)) {
     shortcuts[shortcut.key] = await pathExists(shortcut.filePath) ? await fileSha256(shortcut.filePath) : null;
   }
   return { registryHash: hashText(JSON.stringify(registry)), shortcuts };
 }
 
-async function processReferenceCount(paths) {
+async function processReferenceCount(paths, outputPath) {
   const command = `$needles=@($env:MINI_LUX_PROCESS_NEEDLES|ConvertFrom-Json);$count=0;Get-CimInstance Win32_Process -ErrorAction Stop|ForEach-Object{$text=[string]$_.ExecutablePath+[Environment]::NewLine+[string]$_.CommandLine;foreach($needle in $needles){if($needle-and $text.IndexOf($needle,[StringComparison]::OrdinalIgnoreCase)-ge 0){$count++;break}}};$count`;
-  const output = await powershell(command, { ...process.env, MINI_LUX_PROCESS_NEEDLES: JSON.stringify(paths) });
+  const output = await observeWindowsPowerShellOutput(command, outputPath, { ...process.env, MINI_LUX_PROCESS_NEEDLES: JSON.stringify(paths) });
   assert.match(output, /^\d+$/);
   return Number(output);
 }
 
-async function waitForProcessConvergence(paths, label) {
-  await waitFor(async () => await processReferenceCount(paths) === 0, { timeoutMs: 30_000, intervalMs: 250, label });
+async function waitForProcessConvergence(paths, label, outputPath) {
+  await waitFor(async () => await processReferenceCount(paths, outputPath) === 0, { timeoutMs: 30_000, intervalMs: 250, label });
 }
 
 async function proveExecutableReleased(executable) {
@@ -264,6 +258,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   const installDir = path.join(fixture, "installed");
   const userData = path.join(fixture, "user-data");
   const registrySnapshotPath = path.join(fixture, "registry-snapshot.json");
+  const powershellOutputPath = path.join(fixture, "powershell-output.txt");
   await mkdir(executionDir, { recursive: true });
   await mkdir(executionTemp, { recursive: true });
   const details = {
@@ -345,7 +340,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   let executedInstaller = null;
   const processEnv = { ...process.env, TEMP: executionTemp, TMP: executionTemp };
   try {
-    systemBefore = await systemIntegrationSnapshot(registrySnapshotPath);
+    systemBefore = await systemIntegrationSnapshot(registrySnapshotPath, powershellOutputPath);
     details.cleanup.registryObserved = true;
     details.cleanup.shortcutObserved = true;
     const check = await runProcess(process.execPath, ["scripts/generate-build-info.mjs", "--check"], { timeoutMs: 60_000 });
@@ -384,7 +379,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     details.installerExitCode = install.code;
     details.installerSignal = install.signal;
     details.installerClassification = classifyInstallerResult(install, installTimedOut);
-    await waitForProcessConvergence([executionDir, executionTemp, installDir], "installer descendant convergence");
+    await waitForProcessConvergence([executionDir, executionTemp, installDir], "installer descendant convergence", powershellOutputPath);
     await proveExecutableReleased(executedInstaller);
     details.installerConverged = true;
     details.cleanup.executionCopyReleased = true;
@@ -445,7 +440,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     details.uninstallerSignal = uninstall.signal;
     assert.equal(uninstall.code, 0, uninstall.stderr);
     officialUninstallCompleted = true;
-    await waitForProcessConvergence([executionDir, executionTemp, installDir], "uninstaller descendant convergence");
+    await waitForProcessConvergence([executionDir, executionTemp, installDir], "uninstaller descendant convergence", powershellOutputPath);
     details.uninstallerConverged = true;
     await waitFor(async () => (await countFiles(installDir)) === 0, { timeoutMs: 30_000, label: "uninstall file cleanup" });
     details.phase = "complete";
@@ -470,7 +465,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
       officialUninstallCompleted = uninstall.code === 0 && uninstall.signal === null;
     }
     try {
-      await waitForProcessConvergence([executionDir, executionTemp, installDir], "final packaged process convergence");
+      await waitForProcessConvergence([executionDir, executionTemp, installDir], "final packaged process convergence", powershellOutputPath);
       details.cleanup.processesStopped = true;
       if (executedInstaller && await pathExists(executedInstaller)) {
         await proveExecutableReleased(executedInstaller);
@@ -484,7 +479,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     let systemAfter = null;
     try {
       systemAfter = await waitFor(async () => {
-        const candidate = await systemIntegrationSnapshot(registrySnapshotPath);
+        const candidate = await systemIntegrationSnapshot(registrySnapshotPath, powershellOutputPath);
         return systemBefore && candidate.registryHash === systemBefore.registryHash
           && JSON.stringify(candidate.shortcuts) === JSON.stringify(systemBefore.shortcuts) ? candidate : null;
       }, { timeoutMs: 30_000, intervalMs: 250, label: "uninstall registry and shortcut cleanup" });

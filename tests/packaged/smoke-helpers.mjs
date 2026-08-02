@@ -41,6 +41,23 @@ export async function observeWindowsRegistrySnapshot(root, outputPath, env = pro
   return (await readFile(outputPath, "utf8")).trim();
 }
 
+export async function observeWindowsPowerShellOutput(command, outputPath, env = process.env) {
+  assert.equal(typeof command, "string");
+  assert(command.length > 0 && command.length <= 32_767 && !command.includes("\0"));
+  assert.equal(typeof outputPath, "string");
+  assert(path.isAbsolute(outputPath) && outputPath.length <= 32_767 && !outputPath.includes("\0"));
+  await rm(outputPath, { force: true });
+  const encodedOutput = Buffer.from(outputPath, "utf16le").toString("base64");
+  const wrapped = `$ErrorActionPreference='Stop';$output=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('${encodedOutput}'));$value=@(&{${command}});$text=($value|Out-String).Trim();[IO.File]::WriteAllText($output,$text,[Text.UTF8Encoding]::new($false))`;
+  const result = await runProcess("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", wrapped], {
+    env,
+    timeoutMs: 30_000,
+    stdio: "ignore",
+  });
+  requireObservedProcessResult(result, [0], "PowerShell observation");
+  return (await readFile(outputPath, "utf8")).trim();
+}
+
 export function launchTracked(command, args, { env, timeoutMs, label, readyProbe }) {
   const child = spawnManaged(command, args, { env });
   let stdout = "";
