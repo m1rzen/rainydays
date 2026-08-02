@@ -6,7 +6,7 @@ import { evaluateCoverageSummary, meetsPercent } from "../../scripts/coverage-li
 import { selfTestScenarioContract, validateLayerReport, validatePackagedDetails, validateSelfTestReport, validateTap } from "../../scripts/report-schema.mjs";
 import { aggregateSec02UnifiedEvidence, validateSec02UnifiedEvidence } from "../../scripts/sec02-receipt-set.mjs";
 import { canonicalJson, currentResolvedManifestPath, resolvedManifestPath, sha256Bytes } from "../../scripts/sec02-governance.mjs";
-import { classifyInstallerResult, launchTracked, observeWindowsRegistrySnapshot, requireObservedProcessResult } from "../packaged/smoke-helpers.mjs";
+import { classifyInstallerResult, launchTracked, requireObservedProcessResult, windowsRegistrySnapshotCommand } from "../packaged/smoke-helpers.mjs";
 import {
   artifactSafeBuildId,
   atomicWriteJson,
@@ -412,17 +412,24 @@ test("process capture waits for inherited output pipes to close", async () => {
   assert.equal(child.stdout, "late-output");
 });
 
-test("packaged registry baseline treats an absent uninstall container as an empty set", async () => {
+test("packaged registry snapshot command distinguishes absent and present-empty roots", () => {
   assert.equal(process.platform, "win32", "packaged registry observation requires Windows");
-  const fixture = await makeTempDir("rainydays-registry-observation-");
-  try {
-    const missingRoot = `HKCU:\\Software\\RainyDays-GOV03-Missing-${process.pid}`;
-    const output = await observeWindowsRegistrySnapshot(missingRoot, path.join(fixture, "snapshot.json"));
-    assert.equal(output, '{"rootPresent":false,"items":[]}');
-    assert.deepEqual(JSON.parse(output), { rootPresent: false, items: [] });
-  } finally {
-    await removeFixture(fixture);
-  }
+  const root = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+  const outputPath = path.join("C:\\", "RainyDays-GOV03", "registry-snapshot.json");
+  const command = windowsRegistrySnapshotCommand(root, outputPath);
+  const subkey = root.slice("HKCU:\\".length);
+  const encodedSubkey = Buffer.from(subkey, "utf16le").toString("base64");
+  const encodedOutput = Buffer.from(outputPath, "utf16le").toString("base64");
+  assert(command.includes(`$subkey=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('${encodedSubkey}'))`));
+  assert(command.includes(`$output=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('${encodedOutput}'))`));
+  assert(command.includes("$base.OpenSubKey($subkey,$false)"));
+  assert(command.includes("rootPresent=$false;items=@()"));
+  assert(command.includes("$items=@($opened.GetSubKeyNames()"));
+  assert(command.includes("rootPresent=$true;items=$items"));
+  assert(command.includes("[Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames"));
+  assert(command.includes("[IO.File]::WriteAllText"));
+  assert(!command.includes(subkey));
+  assert(!command.includes(outputPath));
 });
 
 test("Windows file handle observation binds holders to the exact process tree", async (t) => {

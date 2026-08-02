@@ -206,7 +206,9 @@ async function knownShortcutPaths(outputPath) {
   ];
 }
 
-async function systemIntegrationSnapshot(registryOutputPath, powershellOutputPath) {
+async function systemIntegrationSnapshot(registryOutputPath, powershellOutputPath, missingRegistryRoot) {
+  const missingRegistry = JSON.parse(await observeWindowsRegistrySnapshot(missingRegistryRoot, registryOutputPath));
+  assert.deepEqual(missingRegistry, { rootPresent: false, items: [] }, "missing registry root was not observed as an empty set");
   const registryJson = await observeWindowsRegistrySnapshot("HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall", registryOutputPath);
   const registry = JSON.parse(registryJson);
   assert.deepEqual(Object.keys(registry), ["rootPresent", "items"], "registry observation shape is invalid");
@@ -259,6 +261,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   const userData = path.join(fixture, "user-data");
   const registrySnapshotPath = path.join(fixture, "registry-snapshot.json");
   const powershellOutputPath = path.join(fixture, "powershell-output.txt");
+  const missingRegistryRoot = `HKCU:\\Software\\RainyDays-GOV03-Missing-${hashText(fixture).slice(0, 32)}`;
   await mkdir(executionDir, { recursive: true });
   await mkdir(executionTemp, { recursive: true });
   const details = {
@@ -340,7 +343,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   let executedInstaller = null;
   const processEnv = { ...process.env, TEMP: executionTemp, TMP: executionTemp };
   try {
-    systemBefore = await systemIntegrationSnapshot(registrySnapshotPath, powershellOutputPath);
+    systemBefore = await systemIntegrationSnapshot(registrySnapshotPath, powershellOutputPath, missingRegistryRoot);
     details.cleanup.registryObserved = true;
     details.cleanup.shortcutObserved = true;
     const check = await runProcess(process.execPath, ["scripts/generate-build-info.mjs", "--check"], { timeoutMs: 60_000 });
@@ -479,7 +482,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     let systemAfter = null;
     try {
       systemAfter = await waitFor(async () => {
-        const candidate = await systemIntegrationSnapshot(registrySnapshotPath, powershellOutputPath);
+        const candidate = await systemIntegrationSnapshot(registrySnapshotPath, powershellOutputPath, missingRegistryRoot);
         return systemBefore && candidate.registryHash === systemBefore.registryHash
           && JSON.stringify(candidate.shortcuts) === JSON.stringify(systemBefore.shortcuts) ? candidate : null;
       }, { timeoutMs: 30_000, intervalMs: 250, label: "uninstall registry and shortcut cleanup" });
