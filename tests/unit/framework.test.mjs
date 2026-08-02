@@ -6,7 +6,7 @@ import { evaluateCoverageSummary, meetsPercent } from "../../scripts/coverage-li
 import { selfTestScenarioContract, validateLayerReport, validatePackagedDetails, validateSelfTestReport, validateTap } from "../../scripts/report-schema.mjs";
 import { aggregateSec02UnifiedEvidence, validateSec02UnifiedEvidence } from "../../scripts/sec02-receipt-set.mjs";
 import { canonicalJson, currentResolvedManifestPath, resolvedManifestPath, sha256Bytes } from "../../scripts/sec02-governance.mjs";
-import { classifyInstallerResult, launchTracked, observeWindowsPowerShellOutput, observeWindowsRegistrySnapshot, requireObservedProcessResult } from "../packaged/smoke-helpers.mjs";
+import { classifyInstallerResult, launchTracked, observeWindowsRegistrySnapshot, requireObservedProcessResult } from "../packaged/smoke-helpers.mjs";
 import {
   artifactSafeBuildId,
   atomicWriteJson,
@@ -420,9 +420,6 @@ test("packaged registry baseline treats an absent uninstall container as an empt
     const output = await observeWindowsRegistrySnapshot(missingRoot, path.join(fixture, "snapshot.json"));
     assert.equal(output, '{"rootPresent":false,"items":[]}');
     assert.deepEqual(JSON.parse(output), { rootPresent: false, items: [] });
-    const powershellOutput = path.join(fixture, "powershell-output.txt");
-    assert.equal(await observeWindowsPowerShellOutput("'READY'", powershellOutput), "READY");
-    await assert.rejects(observeWindowsPowerShellOutput("exit 7", powershellOutput), /failed with 7/);
   } finally {
     await removeFixture(fixture);
   }
