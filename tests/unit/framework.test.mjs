@@ -6,7 +6,7 @@ import { evaluateCoverageSummary, meetsPercent } from "../../scripts/coverage-li
 import { selfTestScenarioContract, validateLayerReport, validatePackagedDetails, validateSelfTestReport, validateTap } from "../../scripts/report-schema.mjs";
 import { aggregateSec02UnifiedEvidence, validateSec02UnifiedEvidence } from "../../scripts/sec02-receipt-set.mjs";
 import { canonicalJson, currentResolvedManifestPath, resolvedManifestPath, sha256Bytes } from "../../scripts/sec02-governance.mjs";
-import { classifyInstallerResult, launchTracked, requireObservedProcessResult, windowsRegistrySnapshotCommand } from "../packaged/smoke-helpers.mjs";
+import { classifyInstallerResult, launchTracked, observeWindowsRegistrySnapshot, requireObservedProcessResult } from "../packaged/smoke-helpers.mjs";
 import {
   artifactSafeBuildId,
   atomicWriteJson,
@@ -414,11 +414,15 @@ test("process capture waits for inherited output pipes to close", async () => {
 
 test("packaged registry baseline treats an absent uninstall container as an empty set", async () => {
   assert.equal(process.platform, "win32", "packaged registry observation requires Windows");
-  const missingRoot = `HKCU:\\Software\\RainyDays-GOV03-Missing-${process.pid}`;
-  const result = await runProcess("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", windowsRegistrySnapshotCommand(missingRoot)], { timeoutMs: 30_000 });
-  requireObservedProcessResult(result, [0], "missing registry baseline observation");
-  assert.equal(result.stdout.trim(), '{"rootPresent":false,"items":[]}');
-  assert.deepEqual(JSON.parse(result.stdout.trim()), { rootPresent: false, items: [] });
+  const fixture = await makeTempDir("rainydays-registry-observation-");
+  try {
+    const missingRoot = `HKCU:\\Software\\RainyDays-GOV03-Missing-${process.pid}`;
+    const output = await observeWindowsRegistrySnapshot(missingRoot, path.join(fixture, "snapshot.json"));
+    assert.equal(output, '{"rootPresent":false,"items":[]}');
+    assert.deepEqual(JSON.parse(output), { rootPresent: false, items: [] });
+  } finally {
+    await removeFixture(fixture);
+  }
 });
 
 test("Windows file handle observation binds holders to the exact process tree", async (t) => {

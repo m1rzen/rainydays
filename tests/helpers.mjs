@@ -525,8 +525,8 @@ export function spawnManaged(command, args, options = {}) {
   });
 }
 
-export async function runProcess(command, args, { cwd = projectRoot, env = process.env, timeoutMs = 120_000, echo = false, windowsVerbatimArguments = false } = {}) {
-  const child = spawnManaged(command, args, { cwd, env, windowsVerbatimArguments });
+export async function runProcess(command, args, { cwd = projectRoot, env = process.env, timeoutMs = 120_000, echo = false, windowsVerbatimArguments = false, stdio = ["ignore", "pipe", "pipe"] } = {}) {
+  const child = spawnManaged(command, args, { cwd, env, windowsVerbatimArguments, stdio });
   let stdout = "";
   let stderr = "";
   child.stdout?.setEncoding("utf8");

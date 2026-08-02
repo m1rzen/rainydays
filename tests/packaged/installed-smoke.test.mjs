@@ -19,7 +19,7 @@ import {
   terminateProcessTreeAsync,
   waitFor,
 } from "../helpers.mjs";
-import { classifyInstallerResult, launchTracked, requireObservedProcessResult, windowsRegistrySnapshotCommand } from "./smoke-helpers.mjs";
+import { classifyInstallerResult, launchTracked, observeWindowsRegistrySnapshot, requireObservedProcessResult } from "./smoke-helpers.mjs";
 import { createSec02Recorder } from "../sec02-receipts.mjs";
 
 const pathPolicyAssertionIds = Object.freeze([
@@ -212,8 +212,8 @@ async function knownShortcutPaths() {
   ];
 }
 
-async function systemIntegrationSnapshot() {
-  const registryJson = await powershell(windowsRegistrySnapshotCommand("HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall"));
+async function systemIntegrationSnapshot(registryOutputPath) {
+  const registryJson = await observeWindowsRegistrySnapshot("HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall", registryOutputPath);
   const registry = JSON.parse(registryJson);
   assert.deepEqual(Object.keys(registry), ["rootPresent", "items"], "registry observation shape is invalid");
   assert.equal(typeof registry.rootPresent, "boolean");
@@ -263,6 +263,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   const executionTemp = path.join(fixture, "process-temp");
   const installDir = path.join(fixture, "installed");
   const userData = path.join(fixture, "user-data");
+  const registrySnapshotPath = path.join(fixture, "registry-snapshot.json");
   await mkdir(executionDir, { recursive: true });
   await mkdir(executionTemp, { recursive: true });
   const details = {
@@ -344,7 +345,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   let executedInstaller = null;
   const processEnv = { ...process.env, TEMP: executionTemp, TMP: executionTemp };
   try {
-    systemBefore = await systemIntegrationSnapshot();
+    systemBefore = await systemIntegrationSnapshot(registrySnapshotPath);
     details.cleanup.registryObserved = true;
     details.cleanup.shortcutObserved = true;
     const check = await runProcess(process.execPath, ["scripts/generate-build-info.mjs", "--check"], { timeoutMs: 60_000 });
@@ -483,7 +484,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     let systemAfter = null;
     try {
       systemAfter = await waitFor(async () => {
-        const candidate = await systemIntegrationSnapshot();
+        const candidate = await systemIntegrationSnapshot(registrySnapshotPath);
         return systemBefore && candidate.registryHash === systemBefore.registryHash
           && JSON.stringify(candidate.shortcuts) === JSON.stringify(systemBefore.shortcuts) ? candidate : null;
       }, { timeoutMs: 30_000, intervalMs: 250, label: "uninstall registry and shortcut cleanup" });
