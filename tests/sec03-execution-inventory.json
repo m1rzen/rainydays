@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "d266d0e4a41a7df7def96534684c1d6dbfc5b8f22597162815e21c4253b85cda",
-  "sourceSetSha256": "8dee5e8fd5558b02e232499d2084509e71149f271591e2fb99d954dc533b8160",
+  "sourceSetSha256": "363f6cef442e7a47ad324aeedebd678125774dab8cf917a80c7e4685e38bb3b7",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -93,8 +93,8 @@
     },
     {
       "sourcePath": "scripts/build-sec03-native.mjs",
-      "bytes": 16596,
-      "sha256": "1154c784dd3f27b4ef102c30a4eaf8277b95def0a2e5f5187f98e365d753c86f",
+      "bytes": 16622,
+      "sha256": "e3ba2f1858131de4eb92c9760ff954fea030286dfdc94bab12cc2f0b5d407323",
       "executionClass": "build-test"
     },
     {
@@ -819,8 +819,8 @@
     },
     {
       "sourcePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "bytes": 15006,
-      "sha256": "c387bb9600b86f3bc45f9ec0be4aa6f97fb90299fd74f1eb3cc97063998d38d0",
+      "bytes": 15351,
+      "sha256": "3981326597a9b8a50a054d0e4d87f4526d06ba7d577d2c75523aa337d4a5f429",
       "executionClass": "build-test"
     },
     {
@@ -2609,7 +2609,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-d14c75475e638568a18af3d4",
+      "id": "exec-8594fb88f4eb2b674ddb5187",
       "occurrence": 1,
       "sourcePath": "scripts/build-sec03-native.mjs",
       "line": 121,
@@ -2626,7 +2626,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-b6984137f3ba1eedb927949d",
+      "id": "exec-563a423ccf7c456efafec5c9",
       "occurrence": 1,
       "sourcePath": "scripts/build-sec03-native.mjs",
       "line": 154,
@@ -5764,5 +5764,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "7f9b83c56fe2b4e95b7d3920fc5efa86a3033ec5ed5dd28cc066627b3332910c"
+  "canonicalPayloadSha256": "043979b366c96d1def4ac6cb0a08f39791347068bcb18cd08b96cf368cdfbead"
 }

@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "f8251573590a516a1dcbd2ccb2417e410993c2ba92161eab4cc76ed60a7b5b9d",
+      "sha256": "46190232bd8c2247c4ca90c69cc0126e5da95bfc56dd5f21fa1c4c1ccde3269b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -471,7 +471,7 @@
     },
     {
       "exactCasePath": "scripts/build-sec03-native.mjs",
-      "sha256": "1154c784dd3f27b4ef102c30a4eaf8277b95def0a2e5f5187f98e365d753c86f",
+      "sha256": "e3ba2f1858131de4eb92c9760ff954fea030286dfdc94bab12cc2f0b5d407323",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -777,7 +777,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "sha256": "c387bb9600b86f3bc45f9ec0be4aa6f97fb90299fd74f1eb3cc97063998d38d0",
+      "sha256": "3981326597a9b8a50a054d0e4d87f4526d06ba7d577d2c75523aa337d4a5f429",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -2159,7 +2159,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "f8251573590a516a1dcbd2ccb2417e410993c2ba92161eab4cc76ed60a7b5b9d",
+      "sha256": "46190232bd8c2247c4ca90c69cc0126e5da95bfc56dd5f21fa1c4c1ccde3269b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2186,7 +2186,7 @@
     },
     {
       "exactCasePath": "scripts/build-sec03-native.mjs",
-      "sha256": "1154c784dd3f27b4ef102c30a4eaf8277b95def0a2e5f5187f98e365d753c86f",
+      "sha256": "e3ba2f1858131de4eb92c9760ff954fea030286dfdc94bab12cc2f0b5d407323",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2492,7 +2492,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "sha256": "c387bb9600b86f3bc45f9ec0be4aa6f97fb90299fd74f1eb3cc97063998d38d0",
+      "sha256": "3981326597a9b8a50a054d0e4d87f4526d06ba7d577d2c75523aa337d4a5f429",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -3267,5 +3267,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "f6b44fd9bdcfff5c856af9fa4612042ba507b62081543c07d92f4390b1329da1"
+  "canonicalPayloadSha256": "49725ede731d90869ecb8dc384c86a6a4611a250615b0efa178cdd039f402e33"
 }

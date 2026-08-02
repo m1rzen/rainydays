@@ -269,6 +269,14 @@ test("SEC-03 build metadata and electron package bind the exact current native a
   assert.deepEqual(buildInfo.versions.executionIsolation.artifacts, nativeManifest.outputs);
   assert.deepEqual(buildInfo.versions.executionIsolation.testProjection, nativeManifest.testProjection);
   assert.equal(nativeManifest.testProjection.manifest.path, sec03NativeTestManifestRelative);
+  for (const args of Object.values(nativeManifest.canonicalArguments)) {
+    const link = args.indexOf("/link");
+    assert(link > 0);
+    assert.equal(args.filter((argument) => argument === "/Brepro").length, 2);
+    assert(args.indexOf("/Brepro") < link);
+    assert(args.lastIndexOf("/Brepro") > link);
+    assert(!args.includes("/GL"));
+  }
   assert(packageJson.build.files.includes("dist/native/sec03-native-manifest.json"));
   assert(packageJson.build.files.includes("electron-stage-integrity.json"));
   assert.deepEqual(

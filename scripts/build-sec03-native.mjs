@@ -125,10 +125,10 @@ const buildEnv = {
   PATH: `${toolBin};${path.join(sdkRoot, "bin", versions.sdk, "x64")};${process.env.SystemRoot}\\System32`,
 };
 
-const common = Object.freeze(["/nologo", "/std:c++20", "/EHsc", "/O2", "/GL", "/GS", "/guard:cf", "/Gy", "/MD", "/W4", "/WX", "/DUNICODE", "/D_UNICODE", "/DNOMINMAX"]);
+const common = Object.freeze(["/nologo", "/std:c++20", "/EHsc", "/O2", "/GS", "/guard:cf", "/Gy", "/MD", "/Brepro", "/W4", "/WX", "/DUNICODE", "/D_UNICODE", "/DNOMINMAX"]);
 const canonicalArguments = Object.freeze({
-  launcherCompile: [...common, `/DNAPI_VERSION=${versions.napi}`, "/LD", "native/sandbox-host/sandbox-launcher.cpp", "/link", "advapi32.lib", "bcrypt.lib", "crypt32.lib", "userenv.lib", "shell32.lib", "ole32.lib", "delayimp.lib", "/DELAYLOAD:node.exe", nodeLib, "/OPT:REF", "/OPT:ICF", "/DYNAMICBASE", "/NXCOMPAT", "/HIGHENTROPYVA", "/MACHINE:X64"],
-  hostCompile: [...common, "native/sandbox-host/sandbox-host.cpp", "/link", "advapi32.lib", "bcrypt.lib", "crypt32.lib", "userenv.lib", "shell32.lib", "ole32.lib", "/OPT:REF", "/OPT:ICF", "/DYNAMICBASE", "/NXCOMPAT", "/HIGHENTROPYVA", "/MACHINE:X64", "/SUBSYSTEM:CONSOLE"],
+  launcherCompile: [...common, `/DNAPI_VERSION=${versions.napi}`, "/LD", "native/sandbox-host/sandbox-launcher.cpp", "/link", "advapi32.lib", "bcrypt.lib", "crypt32.lib", "userenv.lib", "shell32.lib", "ole32.lib", "delayimp.lib", "/DELAYLOAD:node.exe", nodeLib, "/OPT:REF", "/OPT:ICF", "/DYNAMICBASE", "/NXCOMPAT", "/HIGHENTROPYVA", "/MACHINE:X64", "/Brepro"],
+  hostCompile: [...common, "native/sandbox-host/sandbox-host.cpp", "/link", "advapi32.lib", "bcrypt.lib", "crypt32.lib", "userenv.lib", "shell32.lib", "ole32.lib", "/OPT:REF", "/OPT:ICF", "/DYNAMICBASE", "/NXCOMPAT", "/HIGHENTROPYVA", "/MACHINE:X64", "/SUBSYSTEM:CONSOLE", "/Brepro"],
 });
 function testArguments(args) {
   const link = args.indexOf("/link");
