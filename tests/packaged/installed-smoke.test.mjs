@@ -19,7 +19,7 @@ import {
   terminateProcessTreeAsync,
   waitFor,
 } from "../helpers.mjs";
-import { classifyInstallerResult, launchTracked, requireObservedProcessResult } from "./smoke-helpers.mjs";
+import { classifyInstallerResult, launchTracked, requireObservedProcessResult, windowsRegistrySnapshotCommand } from "./smoke-helpers.mjs";
 import { createSec02Recorder } from "../sec02-receipts.mjs";
 
 const pathPolicyAssertionIds = Object.freeze([
@@ -213,9 +213,11 @@ async function knownShortcutPaths() {
 }
 
 async function systemIntegrationSnapshot() {
-  const registryJson = await powershell("$items=@(Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' -ErrorAction Stop|Where-Object{$_.DisplayName -like '*RainyDays*'}|Select-Object PSChildName,DisplayName,DisplayVersion,InstallLocation,UninstallString,QuietUninstallString|Sort-Object PSChildName);ConvertTo-Json -InputObject $items -Compress");
+  const registryJson = await powershell(windowsRegistrySnapshotCommand("HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall"));
   const registry = JSON.parse(registryJson);
-  assert(Array.isArray(registry), "registry observation must return a canonical array");
+  assert.deepEqual(Object.keys(registry), ["rootPresent", "items"], "registry observation shape is invalid");
+  assert.equal(typeof registry.rootPresent, "boolean");
+  assert(Array.isArray(registry.items), "registry observation items must be a canonical array");
   const shortcuts = {};
   for (const shortcut of await knownShortcutPaths()) {
     shortcuts[shortcut.key] = await pathExists(shortcut.filePath) ? await fileSha256(shortcut.filePath) : null;

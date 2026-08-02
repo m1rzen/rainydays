@@ -16,6 +16,14 @@ export function requireObservedProcessResult(result, allowedCodes, label) {
   return result;
 }
 
+export function windowsRegistrySnapshotCommand(root) {
+  assert.equal(typeof root, "string");
+  const prefix = "HKCU:\\";
+  assert(root.startsWith(prefix) && root.length <= 512 && !root.includes("\0"));
+  const encodedSubkey = Buffer.from(root.slice(prefix.length), "utf16le").toString("base64");
+  return `$subkey=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('${encodedSubkey}'));$base=[Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::CurrentUser,[Microsoft.Win32.RegistryView]::Default);try{$opened=$base.OpenSubKey($subkey,$false);if($null-eq$opened){$observation=[ordered]@{rootPresent=$false;items=@()}}else{try{$items=@($opened.GetSubKeyNames()|ForEach-Object{$name=$_;$child=$opened.OpenSubKey($name,$false);if($null-eq$child){throw 'Registry snapshot changed during observation'};try{[pscustomobject][ordered]@{PSChildName=$name;DisplayName=$child.GetValue('DisplayName',$null,[Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames);DisplayVersion=$child.GetValue('DisplayVersion',$null,[Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames);InstallLocation=$child.GetValue('InstallLocation',$null,[Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames);UninstallString=$child.GetValue('UninstallString',$null,[Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames);QuietUninstallString=$child.GetValue('QuietUninstallString',$null,[Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)}}finally{$child.Dispose()}}|Where-Object{$_.DisplayName-like'*RainyDays*'}|Sort-Object PSChildName);$observation=[ordered]@{rootPresent=$true;items=$items}}finally{$opened.Dispose()}};$observation|ConvertTo-Json -Compress -Depth 3}finally{$base.Dispose()}`;
+}
+
 export function launchTracked(command, args, { env, timeoutMs, label, readyProbe }) {
   const child = spawnManaged(command, args, { env });
   let stdout = "";

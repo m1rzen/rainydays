@@ -94,7 +94,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "1739ad9f197bf02b00928cbbce6a89ab96cabbcd6977ef52d939870b2b694118",
+          "sha256": "7d3a3ac9bb4021c7a3d3df04f3697b1a28f4b8b886c6d24a859856ac0d381bbf",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         }
@@ -362,7 +362,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "1739ad9f197bf02b00928cbbce6a89ab96cabbcd6977ef52d939870b2b694118",
+          "sha256": "7d3a3ac9bb4021c7a3d3df04f3697b1a28f4b8b886c6d24a859856ac0d381bbf",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -1054,7 +1054,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "1739ad9f197bf02b00928cbbce6a89ab96cabbcd6977ef52d939870b2b694118",
+          "sha256": "7d3a3ac9bb4021c7a3d3df04f3697b1a28f4b8b886c6d24a859856ac0d381bbf",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -1168,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "c9080cf1bfd4ea72e450a16c98580cca87847aa95dd4778a9c4388ea5d37a4b1",
+          "sha256": "8efe9788fdbe9443ac4e8097e1db546c582689966b88453218aa2042538b1432",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -6723,7 +6723,7 @@
         "layer": "packaged",
         "test": {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "1739ad9f197bf02b00928cbbce6a89ab96cabbcd6977ef52d939870b2b694118"
+          "sha256": "7d3a3ac9bb4021c7a3d3df04f3697b1a28f4b8b886c6d24a859856ac0d381bbf"
         },
         "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
         "producer": "node-test"
@@ -7051,7 +7051,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "a85939dfaea3f462c085e10df6d9af9b069fd267a6af41cabf47e354b86008ca"
+      "sha256": "f68c1dea0154c0a4d7111978835d0fc686db3693affaa6b6cb02566cb266b3c6"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7115,5 +7115,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "ae4e6f25528eeee7549a9001c05ba766ff7103b316d49c16deb1aae63ebfcf6f"
+  "canonicalPayloadSha256": "688928f1f04ea90a5753f6f27066d9c44845098fea9da55669dc652ad54dbd96"
 }
