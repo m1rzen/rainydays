@@ -94,7 +94,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "984c6a66afb482527d538f2b3ff2914c9fb8a3174336f79023b17c77e0d9a709",
+          "sha256": "5a1074679f31bb42687075bec95ba48c5aa5cff036c26adadf43342535d0b668",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         }
@@ -362,7 +362,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "984c6a66afb482527d538f2b3ff2914c9fb8a3174336f79023b17c77e0d9a709",
+          "sha256": "5a1074679f31bb42687075bec95ba48c5aa5cff036c26adadf43342535d0b668",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -1054,7 +1054,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "984c6a66afb482527d538f2b3ff2914c9fb8a3174336f79023b17c77e0d9a709",
+          "sha256": "5a1074679f31bb42687075bec95ba48c5aa5cff036c26adadf43342535d0b668",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -1168,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "dd061e6e53289a7f326262a6f8dee8d8be42e789cad8fe950b719a50281f9095",
+          "sha256": "45623f6c3cd563a13e76c440f487521917a5fb746c461ae8d7900c5219094d8e",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -6723,7 +6723,7 @@
         "layer": "packaged",
         "test": {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "984c6a66afb482527d538f2b3ff2914c9fb8a3174336f79023b17c77e0d9a709"
+          "sha256": "5a1074679f31bb42687075bec95ba48c5aa5cff036c26adadf43342535d0b668"
         },
         "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
         "producer": "node-test"
@@ -7007,7 +7007,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "0ce58238063b590012def2f9f1b42aff29a37a65754371aedf68535ebd81d95c"
+      "sha256": "fff74cb3e123dd30c1deea837d9257add345df1bd7992ccec3c7302a79ea837b"
     },
     {
       "exactCasePath": "scripts/test-gate-selftest.mjs",
@@ -7051,7 +7051,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "2f8a7f535022ca578b6be5f71d6170f71a885e67d71a9a16c44f1317df2122d1"
+      "sha256": "edcc6d6b8d4c8905be85333f9333ae83ed43eca9e7609b6aa078df33aca1ca71"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7115,5 +7115,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "53e91cd6e85dbb2541f0da53236e5a3383656e5d5ad20a4969e9e63c1cb51e6a"
+  "canonicalPayloadSha256": "ae64c515ea893d79390e4dd4a6738afe0b808530e1d8ff9b2554d576376ff371"
 }

@@ -1232,9 +1232,38 @@ struct TestProcessIdentity {
   std::uint64_t creation;
 };
 
-bool SameTestProcessIdentity(const TestProcessIdentity& left, const TestProcessIdentity& right) {
+constexpr bool SameTestProcessIdentity(const TestProcessIdentity& left, const TestProcessIdentity& right) {
   return left.session_id == right.session_id && left.pid == right.pid && left.creation == right.creation;
 }
+
+constexpr bool ConfirmedTestProcessIdentity(const TestProcessIdentity& expected, const TestProcessIdentity* observed) {
+  return observed && SameTestProcessIdentity(expected, *observed);
+}
+
+enum class TestProcessSnapshotTransition { already_inspected, inspect_again };
+
+constexpr TestProcessSnapshotTransition ClassifyTestProcessSnapshotTransition(
+    const TestProcessIdentity* inspected, const TestProcessIdentity& current) {
+  return ConfirmedTestProcessIdentity(current, inspected)
+    ? TestProcessSnapshotTransition::already_inspected
+    : TestProcessSnapshotTransition::inspect_again;
+}
+
+constexpr TestProcessIdentity kTestProcessIdentityProof{1, 2, 3};
+constexpr TestProcessIdentity kTestProcessIdentitySame{1, 2, 3};
+constexpr TestProcessIdentity kTestProcessIdentityOtherSession{4, 2, 3};
+constexpr TestProcessIdentity kTestProcessIdentityOtherPid{1, 5, 3};
+constexpr TestProcessIdentity kTestProcessIdentityReusedPid{1, 2, 4};
+static_assert(ClassifyTestProcessSnapshotTransition(&kTestProcessIdentitySame, kTestProcessIdentityProof)
+  == TestProcessSnapshotTransition::already_inspected);
+static_assert(ClassifyTestProcessSnapshotTransition(&kTestProcessIdentityOtherSession, kTestProcessIdentityProof)
+  == TestProcessSnapshotTransition::inspect_again);
+static_assert(ClassifyTestProcessSnapshotTransition(&kTestProcessIdentityOtherPid, kTestProcessIdentityProof)
+  == TestProcessSnapshotTransition::inspect_again);
+static_assert(ClassifyTestProcessSnapshotTransition(&kTestProcessIdentityReusedPid, kTestProcessIdentityProof)
+  == TestProcessSnapshotTransition::inspect_again);
+static_assert(ClassifyTestProcessSnapshotTransition(nullptr, kTestProcessIdentityProof)
+  == TestProcessSnapshotTransition::inspect_again);
 
 class TestObservedProcess {
  public:
@@ -1356,6 +1385,15 @@ bool TestProcessHandleCreationTime(HANDLE process, uint64_t* creation) {
 
 enum class TestProcessReadResult { observed, unavailable, malformed };
 enum class TestProcessInspectResult { observed, unknown, gone, failed };
+
+constexpr bool TestProcessInspectionAccountsForActive(TestProcessInspectResult inspected) {
+  return inspected == TestProcessInspectResult::observed || inspected == TestProcessInspectResult::unknown;
+}
+
+static_assert(TestProcessInspectionAccountsForActive(TestProcessInspectResult::observed));
+static_assert(TestProcessInspectionAccountsForActive(TestProcessInspectResult::unknown));
+static_assert(!TestProcessInspectionAccountsForActive(TestProcessInspectResult::gone));
+static_assert(!TestProcessInspectionAccountsForActive(TestProcessInspectResult::failed));
 
 TestProcessReadResult ReadTestProcessImagePath(HANDLE process, std::wstring* path) {
   std::array<wchar_t, kTestProcessImageMaxChars> buffer{};
@@ -1513,57 +1551,73 @@ bool QueryTestProcessesReferencingPaths(const std::vector<std::wstring>& needles
   const NtQuerySystemInformationForTest system_query = ResolveTestSystemProcessQuery();
   const NtQueryInformationProcessForTest process_query = ResolveTestProcessQuery();
   if (!system_query) return false;
-  std::map<DWORD, TestProcessIdentity> before;
-  if (!SnapshotTestProcesses(system_query, observer_session, deadline, &before)) return false;
+  std::map<DWORD, TestProcessIdentity> current;
+  if (!SnapshotTestProcesses(system_query, observer_session, deadline, &current)) return false;
   const DWORD observer_pid = GetCurrentProcessId();
-  if (!before.count(observer_pid)) return false;
-  std::vector<TestObservedProcess> observations;
-  observations.reserve(before.size());
-  std::map<DWORD, size_t> observed_indices;
-  std::map<DWORD, TestProcessIdentity> unknown_before;
-  for (const auto& [pid, identity] : before) {
+  const auto observer_initial = current.find(observer_pid);
+  if (observer_initial == current.end()) return false;
+  const TestProcessIdentity observer_identity = observer_initial->second;
+  for (;;) {
     if (!TestProcessBeforeDeadline(deadline)) return false;
-    const TestProcessInspectResult inspected = InspectTestProcess(identity, process_query, needles, deadline, &observations);
-    if (inspected == TestProcessInspectResult::failed) return false;
-    if (inspected == TestProcessInspectResult::observed) {
-      if (!observed_indices.emplace(pid, observations.size() - 1).second) return false;
-    } else if (inspected == TestProcessInspectResult::unknown) {
-      if (!unknown_before.emplace(pid, identity).second) return false;
+    std::vector<TestObservedProcess> observations;
+    observations.reserve(current.size());
+    std::map<DWORD, TestProcessInspectResult> inspection_results;
+    std::map<DWORD, size_t> observed_indices;
+    std::map<DWORD, TestProcessIdentity> unknown_current;
+    for (const auto& [pid, identity] : current) {
+      const TestProcessInspectResult inspected = InspectTestProcess(identity, process_query, needles, deadline, &observations);
+      if (!inspection_results.emplace(pid, inspected).second || inspected == TestProcessInspectResult::failed) return false;
+      if (inspected == TestProcessInspectResult::observed) {
+        if (!observed_indices.emplace(pid, observations.size() - 1).second) return false;
+      } else if (inspected == TestProcessInspectResult::unknown) {
+        if (!unknown_current.emplace(pid, identity).second) return false;
+      }
     }
-  }
-  std::map<DWORD, TestProcessIdentity> after;
-  if (!SnapshotTestProcesses(system_query, observer_session, deadline, &after)) return false;
-  const auto observer_after = after.find(observer_pid);
-  if (observer_after == after.end() || !SameTestProcessIdentity(before.at(observer_pid), observer_after->second)) return false;
-  unknown_identity_ids->clear();
-  uint32_t matches = 0;
-  for (const auto& [pid, identity] : after) {
-    if (!TestProcessBeforeDeadline(deadline)) return false;
-    const auto original = before.find(pid);
-    const bool same_as_before = original != before.end() && SameTestProcessIdentity(original->second, identity);
-    const auto observed = observed_indices.find(pid);
-    if (observed != observed_indices.end()) {
-      TestObservedProcess& process = observations.at(observed->second);
+    std::map<DWORD, TestProcessIdentity> next;
+    if (!SnapshotTestProcesses(system_query, observer_session, deadline, &next)) return false;
+    const auto observer_next = next.find(observer_pid);
+    if (observer_next == next.end() || !SameTestProcessIdentity(observer_identity, observer_next->second)) return false;
+    std::map<DWORD, bool> observed_live;
+    for (auto& process : observations) {
+      const auto next_identity = next.find(process.identity.pid);
+      const TestProcessIdentity* reconciled_identity = next_identity != next.end()
+          && SameTestProcessIdentity(process.identity, next_identity->second) ? &next_identity->second : nullptr;
       bool live = false;
-      if (!ReconcileObservedTestProcess(&process, same_as_before ? &identity : nullptr, deadline, &live)) return false;
-      if (same_as_before) {
-        if (live && process.matched) ++matches;
+      if (!ReconcileObservedTestProcess(&process, reconciled_identity, deadline, &live)) return false;
+      if (!observed_live.emplace(process.identity.pid, live).second) return false;
+    }
+    bool inspect_again = false;
+    for (const auto& [pid, identity] : next) {
+      const auto inspected = current.find(pid);
+      const TestProcessIdentity* inspected_identity = inspected == current.end() ? nullptr : &inspected->second;
+      if (ClassifyTestProcessSnapshotTransition(inspected_identity, identity)
+          == TestProcessSnapshotTransition::inspect_again) {
+        inspect_again = true;
+        break;
+      }
+      if (!TestProcessInspectionAccountsForActive(inspection_results.at(pid))
+          || (!observed_indices.count(pid) && !unknown_current.count(pid))) return false;
+    }
+    if (inspect_again) {
+      current = std::move(next);
+      continue;
+    }
+    unknown_identity_ids->clear();
+    uint32_t matches = 0;
+    for (const auto& [pid, identity] : next) {
+      const auto observed = observed_indices.find(pid);
+      if (observed != observed_indices.end()) {
+        const TestObservedProcess& process = observations.at(observed->second);
+        if (observed_live.at(pid) && process.matched) ++matches;
       } else if (!AddUnknownTestProcessIdentity(identity, unknown_identity_ids)) {
         return false;
       }
-    } else if (!same_as_before || unknown_before.count(pid)) {
-      if (!AddUnknownTestProcessIdentity(identity, unknown_identity_ids)) return false;
     }
+    if (matches > kTestObserverMaxProcesses || unknown_identity_ids->size() > kTestObserverMaxProcesses
+        || !TestProcessBeforeDeadline(deadline)) return false;
+    *matching_count = matches;
+    return true;
   }
-  for (auto& process : observations) {
-    if (process.reconciled) continue;
-    bool live = false;
-    if (!ReconcileObservedTestProcess(&process, nullptr, deadline, &live) || live) return false;
-  }
-  if (matches > kTestObserverMaxProcesses || unknown_identity_ids->size() > kTestObserverMaxProcesses
-      || !TestProcessBeforeDeadline(deadline)) return false;
-  *matching_count = matches;
-  return true;
 }
 
 bool CreateFrozenTestProcessObservation(napi_env env, uint32_t matching_count,

@@ -219,12 +219,25 @@ async function systemIntegrationSnapshot(missingRegistryRoot) {
   return { registryHash: hashText(JSON.stringify(registry)), shortcuts };
 }
 
-async function waitForProcessConvergence(paths, unknownBaseline, label) {
-  await waitFor(async () => {
-    const observation = await observeWindowsProcessReferences(paths);
-    return observation.matchingCount === 0
-      && observation.unknownProcessIdentityIds.every((identity) => unknownBaseline.has(identity));
-  }, { timeoutMs: 30_000, intervalMs: 250, label });
+async function waitForProcessConvergence(paths, unknownBaseline, label, observeBlockedReason) {
+  let lastBlockedReason = "observer-error";
+  try {
+    await waitFor(async () => {
+      try {
+        const observation = await observeWindowsProcessReferences(paths);
+        const matching = observation.matchingCount !== 0;
+        const unknown = observation.unknownProcessIdentityIds.some((identity) => !unknownBaseline.has(identity));
+        lastBlockedReason = matching && unknown ? "mixed" : matching ? "matching" : unknown ? "unknown" : "observer-error";
+        return !matching && !unknown;
+      } catch {
+        lastBlockedReason = "observer-error";
+        return false;
+      }
+    }, { timeoutMs: 30_000, intervalMs: 250, label });
+  } catch (error) {
+    observeBlockedReason(lastBlockedReason);
+    throw error;
+  }
 }
 
 async function proveExecutableReleased(executable) {
@@ -348,6 +361,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   };
   let bodyError = null;
   let bodyFailurePhase = null;
+  let cleanupConvergenceFailurePhase = null;
   let lifecycleFailures = [];
   try {
     await checkpoint("preflight-process-baseline");
@@ -399,7 +413,9 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     details.installerSignal = install.signal;
     details.installerClassification = classifyInstallerResult(install, installTimedOut);
     await checkpoint("install-convergence");
-    await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "installer descendant convergence");
+    await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "installer descendant convergence", (reason) => {
+      details.phase = `install-convergence-${reason}`;
+    });
     await proveExecutableReleased(executedInstaller);
     details.installerConverged = true;
     details.cleanup.executionCopyReleased = true;
@@ -470,7 +486,9 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     assert.equal(uninstall.code, 0, uninstall.stderr);
     officialUninstallCompleted = true;
     await checkpoint("uninstall-convergence");
-    await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "uninstaller descendant convergence");
+    await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "uninstaller descendant convergence", (reason) => {
+      details.phase = `uninstall-convergence-${reason}`;
+    });
     details.uninstallerConverged = true;
     await waitFor(async () => (await countFiles(installDir)) === 0, { timeoutMs: 30_000, label: "uninstall file cleanup" });
   } catch (error) {
@@ -501,7 +519,10 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     await cleanupCheckpoint("cleanup-convergence");
     try {
       assert(processUnknownBaseline, "process observation baseline is unavailable");
-      await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "final packaged process convergence");
+      await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "final packaged process convergence", (reason) => {
+        cleanupConvergenceFailurePhase = `cleanup-convergence-${reason}`;
+        details.phase = cleanupConvergenceFailurePhase;
+      });
       details.cleanup.processesStopped = true;
       if (executedInstaller && await pathExists(executedInstaller)) {
         await proveExecutableReleased(executedInstaller);
@@ -545,6 +566,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     catch (error) { recorderError = error; }
     const cleanupError = details.cleanup.passed ? null : new Error("packaged cleanup did not restore the pre-install system state");
     if (bodyError) await cleanupCheckpoint(bodyFailurePhase);
+    else if (cleanupConvergenceFailurePhase) await cleanupCheckpoint(cleanupConvergenceFailurePhase);
     else if (!recorderError && !cleanupError && cleanupCheckpointErrors.length === 0) await cleanupCheckpoint("complete");
     lifecycleFailures = [bodyError, recorderError, cleanupError, ...cleanupCheckpointErrors].filter(error => error !== null);
   }

@@ -5,7 +5,7 @@
   "scannerSha256": "a1b52f18d8385540598c6458dd7c9f3d7b4a86e55fa30985719cd0013bcabad2",
   "crosscheckSha256": "8338d5ed00c94ffecad60106fb30e2aa7eefe3143fdddcbba430df05ff0db83b",
   "policySha256": "54acc8c23c85ffdf898ef906de5e2481b373e2d252cfc42145e567a063713425",
-  "sourceSetSha256": "342335f68cc08e24a50c9a2b49ab87754a1516b41f2252dbf2b1b0b2c34214bc",
+  "sourceSetSha256": "46765dc198a3226dbee485ac930297588d2088a9e071cb569440b769ee7ccc58",
   "files": [
     {
       "sourcePath": "electron/main.cjs",
@@ -57,8 +57,8 @@
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "bytes": 187620,
-      "sha256": "c2335c222d9a21e16e67745867a620416be8c83b932364ec37d9dfd6f98a1c08",
+      "bytes": 190775,
+      "sha256": "55bf3b2dc7cd8a9bd51c8b8e01562bb5c095e982aa102bfc65a507a21d3ca979",
       "executionClass": "native-host"
     },
     {
@@ -219,8 +219,8 @@
     },
     {
       "sourcePath": "scripts/gov04/steps.mjs",
-      "bytes": 30863,
-      "sha256": "0d0b40f6111af759826a750dbcb95023540e73a4482ce60dacb3d21d8519b085",
+      "bytes": 31776,
+      "sha256": "8570f8233f51cc7565473b15c9cc49679e8bca859c82ff43362518cb8fd24678",
       "executionClass": "build-test"
     },
     {
@@ -237,8 +237,8 @@
     },
     {
       "sourcePath": "scripts/report-schema.mjs",
-      "bytes": 53883,
-      "sha256": "0ce58238063b590012def2f9f1b42aff29a37a65754371aedf68535ebd81d95c",
+      "bytes": 54329,
+      "sha256": "fff74cb3e123dd30c1deea837d9257add345df1bd7992ccec3c7302a79ea837b",
       "executionClass": "build-test"
     },
     {
@@ -879,8 +879,8 @@
     },
     {
       "sourcePath": "tests/gov04/workflow-policy.test.mjs",
-      "bytes": 14812,
-      "sha256": "a257ffafac808f81fa753b3dbe4459388f8df6dc17f3eeb7e7d802174bbeec14",
+      "bytes": 15040,
+      "sha256": "0b921f981e0077894cdfbe3d5d175e7dee877d645855209a708f2746ed402868",
       "executionClass": "build-test"
     },
     {
@@ -987,8 +987,8 @@
     },
     {
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "bytes": 29545,
-      "sha256": "984c6a66afb482527d538f2b3ff2914c9fb8a3174336f79023b17c77e0d9a709",
+      "bytes": 30463,
+      "sha256": "5a1074679f31bb42687075bec95ba48c5aa5cff036c26adadf43342535d0b668",
       "executionClass": "build-test"
     },
     {
@@ -1047,8 +1047,8 @@
     },
     {
       "sourcePath": "tests/unit/framework.test.mjs",
-      "bytes": 43924,
-      "sha256": "dd061e6e53289a7f326262a6f8dee8d8be42e789cad8fe950b719a50281f9095",
+      "bytes": 44340,
+      "sha256": "45623f6c3cd563a13e76c440f487521917a5fb746c461ae8d7900c5219094d8e",
       "executionClass": "build-test"
     },
     {
@@ -1786,7 +1786,7 @@
       "id": "exec-9122300251b1977d15f6d502",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 1257,
+      "line": 1286,
       "column": 31,
       "nodeKind": "NativeCallExpression",
       "container": "ResolveTestProcessQuery",
@@ -1804,7 +1804,7 @@
       "id": "exec-5532a13bd07fd49129701891",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 1266,
+      "line": 1295,
       "column": 31,
       "nodeKind": "NativeCallExpression",
       "container": "ResolveTestSystemProcessQuery",
@@ -1822,7 +1822,7 @@
       "id": "exec-0515df0a9b409e806a87b2d4",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 1999,
+      "line": 2053,
       "column": 29,
       "nodeKind": "NativeCallExpression",
       "container": "RecoverJournals",
@@ -1840,7 +1840,7 @@
       "id": "exec-c245de1277b96804a0069628",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 2078,
+      "line": 2132,
       "column": 24,
       "nodeKind": "NativeCallExpression",
       "container": "LaunchHost",
@@ -5553,10 +5553,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-48ad68fda86323b9030ed374",
+      "id": "exec-f0ba9f389caa6049ea4a7483",
       "occurrence": 1,
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "line": 339,
+      "line": 352,
       "column": 27,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5624,7 +5624,7 @@
       "id": "exec-693086a31ebb12fadaeb0f4a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 445,
+      "line": 451,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5641,7 +5641,7 @@
       "id": "exec-24100569dee2dd14234e340c",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 544,
+      "line": 550,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5658,7 +5658,7 @@
       "id": "exec-4b7f1f53bc07e63b8b5cbfc3",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 607,
+      "line": 613,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5675,7 +5675,7 @@
       "id": "exec-387dfc51837d56e5b8a74941",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 664,
+      "line": 670,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5692,7 +5692,7 @@
       "id": "exec-f329446239415582c8492047",
       "occurrence": 2,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 681,
+      "line": 687,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5709,7 +5709,7 @@
       "id": "exec-72508e1a9a55a21b5002012a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 707,
+      "line": 713,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -5766,5 +5766,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "fefd5f32300fcfe4f101047a58670c4369be80e52dc7f79611ebb2a6b4a81db6"
+  "canonicalPayloadSha256": "1aadf33d10b1473b944e3207942ae9c79b6fd7ca8c3bef7d824ffb0202c7e699"
 }

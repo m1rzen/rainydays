@@ -381,7 +381,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "c2335c222d9a21e16e67745867a620416be8c83b932364ec37d9dfd6f98a1c08",
+      "sha256": "55bf3b2dc7cd8a9bd51c8b8e01562bb5c095e982aa102bfc65a507a21d3ca979",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "81a68abcdacf947461fa12ee231d23146e6656409c731887744dd0636160b360",
+      "sha256": "23d3e95844932357764069a617bdc39552ead5418a13004c5675b9f062362642",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -560,7 +560,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "0ce58238063b590012def2f9f1b42aff29a37a65754371aedf68535ebd81d95c",
+      "sha256": "fff74cb3e123dd30c1deea837d9257add345df1bd7992ccec3c7302a79ea837b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -714,7 +714,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "dd061e6e53289a7f326262a6f8dee8d8be42e789cad8fe950b719a50281f9095",
+      "sha256": "45623f6c3cd563a13e76c440f487521917a5fb746c461ae8d7900c5219094d8e",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -939,7 +939,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "984c6a66afb482527d538f2b3ff2914c9fb8a3174336f79023b17c77e0d9a709",
+      "sha256": "5a1074679f31bb42687075bec95ba48c5aa5cff036c26adadf43342535d0b668",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -1061,7 +1061,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "984c6a66afb482527d538f2b3ff2914c9fb8a3174336f79023b17c77e0d9a709",
+      "sha256": "5a1074679f31bb42687075bec95ba48c5aa5cff036c26adadf43342535d0b668",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -2140,7 +2140,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "c2335c222d9a21e16e67745867a620416be8c83b932364ec37d9dfd6f98a1c08",
+      "sha256": "55bf3b2dc7cd8a9bd51c8b8e01562bb5c095e982aa102bfc65a507a21d3ca979",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2203,7 +2203,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "81a68abcdacf947461fa12ee231d23146e6656409c731887744dd0636160b360",
+      "sha256": "23d3e95844932357764069a617bdc39552ead5418a13004c5675b9f062362642",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2319,7 +2319,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "0ce58238063b590012def2f9f1b42aff29a37a65754371aedf68535ebd81d95c",
+      "sha256": "fff74cb3e123dd30c1deea837d9257add345df1bd7992ccec3c7302a79ea837b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2473,7 +2473,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "dd061e6e53289a7f326262a6f8dee8d8be42e789cad8fe950b719a50281f9095",
+      "sha256": "45623f6c3cd563a13e76c440f487521917a5fb746c461ae8d7900c5219094d8e",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -3355,5 +3355,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "14f60eeaad3e17f27feb1fe0237e774bfc08e609b83a071c7a98614b1b1ddc59"
+  "canonicalPayloadSha256": "3000665e68af9242f69a51a2c64cc51bab51a274ed99157d0cb6c1682b370125"
 }

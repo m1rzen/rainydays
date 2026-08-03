@@ -368,7 +368,13 @@ test("packaged crash and observation failures are fail-closed", () => {
   };
   assert.doesNotThrow(() => validatePackagedDetails(packagedDetails, { passed: true, sinkIdentity }));
   assert.doesNotThrow(() => validatePackagedDetails({ ...packagedDetails, phase: "first-launch-readiness" }));
+  for (const phase of ["install", "uninstall", "cleanup"]) {
+    for (const reason of ["matching", "unknown", "mixed", "observer-error"]) {
+      assert.doesNotThrow(() => validatePackagedDetails({ ...packagedDetails, phase: `${phase}-convergence-${reason}` }));
+    }
+  }
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, phase: "first-launch" }), /details\.phase is invalid/);
+  assert.throws(() => validatePackagedDetails({ ...packagedDetails, phase: "uninstall-convergence-unbounded" }), /details\.phase is invalid/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, runtimeSinkSetSha256: "f".repeat(64) } }, { passed: true, sinkIdentity }), /runtime sink set differs/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, dialectPolicySha256: "f".repeat(64) } }, { passed: true, sinkIdentity }), /restricted dialect policy differs/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, missing: ["dist/bypass.js"] } }, { passed: true }), /asarPayloadBound is inconsistent/);

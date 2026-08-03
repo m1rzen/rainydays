@@ -3,6 +3,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { constants as fsConstants, access, copyFile, lstat, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { validateLayerReport, validateSelfTestReport, validateUnifiedReport } from "../report-schema.mjs";
+import { validateSec02SinkInventory } from "../sec02-sink-inventory.mjs";
 import { expectedInstallerName, fileSha256, verifyInstallerPreflight } from "../package-artifact-lib.mjs";
 import { hashTree, loadTaskManifest, sha256File } from "../../tests/helpers.mjs";
 import { resolveNpmCli, runBoundedProcess, safeChildEnvironment } from "./process.mjs";
@@ -443,15 +444,32 @@ export async function runPackagedSmoke({ workspace, evidenceDirectory, artifactP
   const reportPath = path.join(evidenceDirectory, "gov03-packaged.json");
   try { await assertFrozenArtifactInput({ artifactPath, artifactManifestPath, artifactSha256 }); }
   catch { return { passed: false, failureClass: "PACKAGED_SMOKE_INPUT_INVALID", exitCode: 1, signal: null, timedOut: false, timeoutTermination: null, childReportSha256: null, evidence: { status: "non-frozen-or-mutated-input" } }; }
+  const sec02RunId = randomUUID();
+  let validationContext;
+  try {
+    const loadedTask = await loadTaskManifest("GOV-03", workspace);
+    const sec02Matrix = JSON.parse(await readFile(path.join(workspace, "tests", "sec02-attack-matrix.json"), "utf8"));
+    const sec02SinkIdentity = await validateSec02SinkInventory(workspace);
+    const buildInfo = JSON.parse(await readFile(path.join(workspace, "build-info.json"), "utf8"));
+    validationContext = { loadedTask, sec02Matrix, sec02SinkIdentity, buildInfo };
+  } catch { return { passed: false, failureClass: "PACKAGED_SMOKE_INPUT_INVALID", exitCode: 1, signal: null, timedOut: false, timeoutTermination: null, childReportSha256: null, evidence: { status: "invalid-governance-input" } }; }
   let result;
   try {
-    result = await runBoundedProcess(process.execPath, ["scripts/run-test-layer.mjs", "--task", "GOV-03", "--layer", "packaged", "--report", reportPath], { cwd: workspace, env: safeChildEnvironment({ RAINYDAYS_INSTALLER_OVERRIDE: artifactPath, RAINYDAYS_PACKAGE_ARTIFACT_MANIFEST: artifactManifestPath, RAINYDAYS_BUILD_ID: buildId, SOURCE_DATE_EPOCH: sourceDateEpoch }), timeoutMs: 900_000 });
+    result = await runBoundedProcess(process.execPath, ["scripts/run-test-layer.mjs", "--task", "GOV-03", "--layer", "packaged", "--report", reportPath, "--run-id", sec02RunId], { cwd: workspace, env: safeChildEnvironment({ RAINYDAYS_INSTALLER_OVERRIDE: artifactPath, RAINYDAYS_PACKAGE_ARTIFACT_MANIFEST: artifactManifestPath, RAINYDAYS_BUILD_ID: buildId, SOURCE_DATE_EPOCH: sourceDateEpoch }), timeoutMs: 900_000 });
   } catch (error) { return processFailure(error, "PACKAGED_SMOKE_FAILED"); }
   try {
     const child = await readJsonReport(reportPath);
-    const { manifest } = await loadTaskManifest("GOV-03", workspace);
-    const buildInfo = JSON.parse(await readFile(path.join(workspace, "build-info.json"), "utf8"));
-    validateLayerReport(child.report, { taskId: "GOV-03", layer: "packaged", build: { appVersion: buildInfo.appVersion, buildId: buildInfo.buildId, sourceDigest: buildInfo.sourceDigest }, expectedFiles: manifest.layers.packaged });
+    const { loadedTask, sec02Matrix, sec02SinkIdentity, buildInfo } = validationContext;
+    validateLayerReport(child.report, {
+      taskId: "GOV-03",
+      layer: "packaged",
+      build: { appVersion: buildInfo.appVersion, buildId: buildInfo.buildId, sourceDigest: buildInfo.sourceDigest },
+      expectedFiles: loadedTask.manifest.layers.packaged,
+      sec02Manifest: loadedTask.resolvedManifest,
+      sec02Matrix,
+      sec02RunId,
+      sec02SinkIdentity,
+    });
     const executedHash = child.report.details?.artifactExecution?.executedSha256;
     const passed = result.code === 0 && child.report.state === "passed" && executedHash === artifactSha256;
     return { passed, failureClass: passed ? null : "PACKAGED_SMOKE_FAILED", exitCode: result.code, signal: result.signal, timedOut: false, timeoutTermination: null, childReportSha256: child.sha256, evidence: { artifactSha256, executedSha256: executedHash ?? null, childState: child.report.state, reportSha256: child.sha256, stdoutSha256: result.stdoutSha256, stderrSha256: result.stderrSha256 } };

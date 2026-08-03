@@ -151,10 +151,12 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   const gov04Steps = await readFile(path.join(projectRoot, "scripts", "gov04", "steps.mjs"), "utf8");
   assert.equal(gov04Steps.match(/loadTaskManifest\("GOV-03", workspace\)/g)?.length, 2);
   assert.doesNotMatch(gov04Steps, /tests["'],\s*["']manifests["'],\s*["']gov-03\.json/);
-  assert.match(gov04Steps, /const sec02RunId = randomUUID\(\)/);
+  assert.equal(gov04Steps.match(/const sec02RunId = randomUUID\(\)/g)?.length, 2);
   assert.match(gov04Steps, /const diagnosticChallenge = randomBytes\(32\)\.toString\("hex"\)/);
   assert.match(gov04Steps, /RAINYDAYS_SEC02_RUN_ID: sec02RunId,[\s\S]*RAINYDAYS_GOV04_DIAGNOSTIC_CHALLENGE: diagnosticChallenge/);
   assert.match(gov04Steps, /sec02Manifest: loadedTask\.resolvedManifest,[\s\S]*sec02Matrix,[\s\S]*sec02RunId/);
+  assert.match(gov04Steps, /validateSec02SinkInventory\(workspace\)[\s\S]*"--run-id", sec02RunId/);
+  assert.match(gov04Steps, /expectedFiles: loadedTask\.manifest\.layers\.packaged,[\s\S]*sec02SinkIdentity/);
   const unifiedRunner = await readFile(path.join(projectRoot, "scripts", "run-tests.mjs"), "utf8");
   assert.match(unifiedRunner, /process\.env\.RAINYDAYS_SEC02_RUN_ID/);
   assert.match(unifiedRunner, /GOV-04 SEC-02 run ID is invalid/);
