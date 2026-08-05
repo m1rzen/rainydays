@@ -373,6 +373,7 @@ async function main() {
       artifactExecution: { sourceBytes: 4, sourceSha256: "0".repeat(64), executedBytes: 4, executedSha256: "0".repeat(64), identityMatched: true },
       installerExitCode: 0, installerSignal: null, installerClassification: "passed", installerConverged: true,
       uninstallerSignal: null, uninstallerConverged: true,
+      processConvergenceFailure: null,
       cleanup: {
         attemptedOfficialUninstall: true, officialUninstallExitCode: 0, installDirectoryEmpty: true,
         registryObserved: true, registryMatchesBaseline: true, shortcutObserved: true, shortcutMatchesBaseline: true,

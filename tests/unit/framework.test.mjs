@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, readFile, realpath, symlink, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, realpath, readdir, symlink, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { evaluateCoverageSummary, meetsPercent } from "../../scripts/coverage-lib.mjs";
@@ -23,6 +23,7 @@ import {
   projectRoot,
   removeFixture,
   runProcess,
+  runVerifiedWindowsExecutableCopy,
   spawnManaged,
   terminateProcessTreeAsync,
   waitFor,
@@ -350,6 +351,7 @@ test("packaged crash and observation failures are fail-closed", () => {
     packageBinding,
     pathPolicy,
     uninstallerSignal: null, uninstallerConverged: true,
+    processConvergenceFailure: null,
     cleanup: {
       attemptedOfficialUninstall: true, officialUninstallExitCode: 0, installDirectoryEmpty: true,
       registryObserved: true, registryMatchesBaseline: true, shortcutObserved: true, shortcutMatchesBaseline: true,
@@ -368,13 +370,52 @@ test("packaged crash and observation failures are fail-closed", () => {
   };
   assert.doesNotThrow(() => validatePackagedDetails(packagedDetails, { passed: true, sinkIdentity }));
   assert.doesNotThrow(() => validatePackagedDetails({ ...packagedDetails, phase: "first-launch-readiness" }));
+  const processMatch = {
+    identityId: "a".repeat(64), processId: 42, inheritedFromProcessId: 7, imageName: "RainyDays.exe",
+    imageMatched: false, commandLineMatched: true,
+  };
+  const convergenceFailure = (phase, reason) => ({
+    phase: `${phase}-convergence-${reason}`,
+    reason,
+    matchingCount: reason === "observer-error" ? null : ["matching", "mixed"].includes(reason) ? 1 : 0,
+    matchingProcesses: ["matching", "mixed"].includes(reason) ? [processMatch] : [],
+    unexpectedUnknownProcessIdentityIds: ["unknown", "mixed"].includes(reason) ? ["b".repeat(64)] : [],
+  });
   for (const phase of ["install", "uninstall", "cleanup"]) {
     for (const reason of ["matching", "unknown", "mixed", "observer-error"]) {
-      assert.doesNotThrow(() => validatePackagedDetails({ ...packagedDetails, phase: `${phase}-convergence-${reason}` }));
+      assert.doesNotThrow(() => validatePackagedDetails({
+        ...packagedDetails,
+        phase: `${phase}-convergence-${reason}`,
+        processConvergenceFailure: convergenceFailure(phase, reason),
+      }));
     }
   }
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, phase: "first-launch" }), /details\.phase is invalid/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, phase: "uninstall-convergence-unbounded" }), /details\.phase is invalid/);
+  assert.throws(() => validatePackagedDetails({ ...packagedDetails, phase: "uninstall-convergence-matching" }), /phase and evidence presence differ/);
+  assert.throws(() => validatePackagedDetails({
+    ...packagedDetails,
+    phase: "uninstall-convergence-matching",
+    processConvergenceFailure: convergenceFailure("uninstall", "unknown"),
+  }), /phase differs/);
+  assert.throws(() => validatePackagedDetails({
+    ...packagedDetails,
+    phase: "restart-probe",
+    processConvergenceFailure: convergenceFailure("cleanup", "matching"),
+  }), /phase and evidence presence differ/);
+  assert.throws(() => validatePackagedDetails({
+    ...packagedDetails,
+    phase: "cleanup-convergence-observer-error",
+    processConvergenceFailure: { ...convergenceFailure("cleanup", "observer-error"), matchingCount: 0 },
+  }), /must not claim a successful process count/);
+  assert.throws(() => validatePackagedDetails({
+    ...packagedDetails,
+    phase: "uninstall-convergence-matching",
+    processConvergenceFailure: {
+      ...convergenceFailure("uninstall", "matching"),
+      matchingProcesses: [{ ...processMatch, imageName: "C:\\private\\RainyDays.exe" }],
+    },
+  }), /imageName is invalid/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, runtimeSinkSetSha256: "f".repeat(64) } }, { passed: true, sinkIdentity }), /runtime sink set differs/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, dialectPolicySha256: "f".repeat(64) } }, { passed: true, sinkIdentity }), /restricted dialect policy differs/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, missing: ["dist/bypass.js"] } }, { passed: true }), /asarPayloadBound is inconsistent/);
@@ -401,6 +442,27 @@ test("packaged crash and observation failures are fail-closed", () => {
       }, pathPolicy.launches[1]],
     },
   }), /keys differ/);
+});
+
+test("packaged uninstall uses a leased external worker copy with bounded timeout cleanup and retry", async () => {
+  const source = await readFile(path.join(projectRoot, "tests", "packaged", "installed-smoke.test.mjs"), "utf8");
+  assert.match(source, /runVerifiedWindowsExecutableCopy\(uninstaller, executionTemp, \["\/S", `_\?=\$\{installDir\}`\]/u);
+  assert.doesNotMatch(source, /runProcess\(uninstaller, \["\/S"\]/u);
+  const root = await makeTempDir("rainydays-verified-executable-");
+  try {
+    const first = await runVerifiedWindowsExecutableCopy(process.execPath, root, ["-e", "process.stdout.write('leased')"], { timeoutMs: 5_000 });
+    assert.equal(first.code, 0);
+    assert.equal(first.stdout, "leased");
+    await assert.rejects(
+      runVerifiedWindowsExecutableCopy(process.execPath, root, ["-e", "setInterval(()=>{},1000)"], { timeoutMs: 100 }),
+      (error) => error?.code === "PROCESS_TIMEOUT" && error?.termination?.childExited === true,
+    );
+    const retry = await runVerifiedWindowsExecutableCopy(process.execPath, root, ["-e", "process.exit(0)"], { timeoutMs: 5_000 });
+    assert.equal(retry.code, 0);
+    assert.deepEqual(await readdir(root), []);
+  } finally {
+    await removeFixture(root);
+  }
 });
 
 test("process timeout records successful child-tree reclamation", async () => {

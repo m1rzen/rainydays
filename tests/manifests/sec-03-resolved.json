@@ -381,7 +381,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "55bf3b2dc7cd8a9bd51c8b8e01562bb5c095e982aa102bfc65a507a21d3ca979",
+      "sha256": "f3255356cf3a708abeb73837003ff50815d2f362c2deadbf9c248c27a9fa5624",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -444,7 +444,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "23d3e95844932357764069a617bdc39552ead5418a13004c5675b9f062362642",
+      "sha256": "39cb51d1e3e499dd77ffc1fdbecf7092a0a8c442b551428c07371b667038b43d",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -560,7 +560,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "fff74cb3e123dd30c1deea837d9257add345df1bd7992ccec3c7302a79ea837b",
+      "sha256": "60ba02ff806efff30722d8abb258eb7381a342a0073f0fb51e8e213283abf29e",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -573,7 +573,7 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "abbd26a2893dae316cc1f3e869ed28d3934b8903d2988fbad96686c38c77bbc5",
+      "sha256": "94bd8dcdc12d468e3d54e0d71e5472489fe515b95cd6bf618da7bde3371c70e5",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -586,7 +586,7 @@
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
-      "sha256": "74e8a25a1e063bdb201e655f17cba83f1c2bf1ea7e065651f9cff8201c41e54a",
+      "sha256": "00b6a3eb039d923dd35cdd16f43a5022f3bd49131b082ac4c2576b7788ffbf00",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -612,7 +612,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "d21bdf69287743aea1e9084ad38fde543b5a776abc01cc4f63552333d11481b7",
+      "sha256": "d340807ef3550926d2f52e2228376dd849fd2a5d2db3a52a730abf2c8d2ff53f",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -714,7 +714,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "45623f6c3cd563a13e76c440f487521917a5fb746c461ae8d7900c5219094d8e",
+      "sha256": "814fcc17810f1a3801813e73994dfc766c0638422af8e77edddf19c4dba1fdbf",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -728,6 +728,7 @@
         "additional coverage tests require exact resolved task ownership and manifest identity",
         "TAP summary and process failure precedence are deterministic",
         "packaged crash and observation failures are fail-closed",
+        "packaged uninstall uses a leased external worker copy with bounded timeout cleanup and retry",
         "process timeout records successful child-tree reclamation",
         "process capture waits for inherited output pipes to close",
         "packaged native registry snapshot distinguishes absent and present roots",
@@ -821,7 +822,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "sha256": "6992d41c3381242b7b1e44f174097f3e9d7587e392d3a103579bc98c86ee7d57",
+      "sha256": "f4b97457c14224211ee54af788365d6f4e5ff474e806102014120712573abe97",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -939,7 +940,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "5a1074679f31bb42687075bec95ba48c5aa5cff036c26adadf43342535d0b668",
+      "sha256": "266217bf7ee09d9fbf1e888a71dc25b3a3c1f9b5e0956f673e0f8f4f0de2cfaf",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -1061,7 +1062,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "5a1074679f31bb42687075bec95ba48c5aa5cff036c26adadf43342535d0b668",
+      "sha256": "266217bf7ee09d9fbf1e888a71dc25b3a3c1f9b5e0956f673e0f8f4f0de2cfaf",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -2140,7 +2141,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "55bf3b2dc7cd8a9bd51c8b8e01562bb5c095e982aa102bfc65a507a21d3ca979",
+      "sha256": "f3255356cf3a708abeb73837003ff50815d2f362c2deadbf9c248c27a9fa5624",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2203,7 +2204,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "23d3e95844932357764069a617bdc39552ead5418a13004c5675b9f062362642",
+      "sha256": "39cb51d1e3e499dd77ffc1fdbecf7092a0a8c442b551428c07371b667038b43d",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2319,7 +2320,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "fff74cb3e123dd30c1deea837d9257add345df1bd7992ccec3c7302a79ea837b",
+      "sha256": "60ba02ff806efff30722d8abb258eb7381a342a0073f0fb51e8e213283abf29e",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2332,7 +2333,7 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "abbd26a2893dae316cc1f3e869ed28d3934b8903d2988fbad96686c38c77bbc5",
+      "sha256": "94bd8dcdc12d468e3d54e0d71e5472489fe515b95cd6bf618da7bde3371c70e5",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2345,7 +2346,7 @@
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
-      "sha256": "74e8a25a1e063bdb201e655f17cba83f1c2bf1ea7e065651f9cff8201c41e54a",
+      "sha256": "00b6a3eb039d923dd35cdd16f43a5022f3bd49131b082ac4c2576b7788ffbf00",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2371,7 +2372,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "d21bdf69287743aea1e9084ad38fde543b5a776abc01cc4f63552333d11481b7",
+      "sha256": "d340807ef3550926d2f52e2228376dd849fd2a5d2db3a52a730abf2c8d2ff53f",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2473,7 +2474,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "45623f6c3cd563a13e76c440f487521917a5fb746c461ae8d7900c5219094d8e",
+      "sha256": "814fcc17810f1a3801813e73994dfc766c0638422af8e77edddf19c4dba1fdbf",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2487,6 +2488,7 @@
         "additional coverage tests require exact resolved task ownership and manifest identity",
         "TAP summary and process failure precedence are deterministic",
         "packaged crash and observation failures are fail-closed",
+        "packaged uninstall uses a leased external worker copy with bounded timeout cleanup and retry",
         "process timeout records successful child-tree reclamation",
         "process capture waits for inherited output pipes to close",
         "packaged native registry snapshot distinguishes absent and present roots",
@@ -2580,7 +2582,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec03-native-package-identity.test.mjs",
-      "sha256": "6992d41c3381242b7b1e44f174097f3e9d7587e392d3a103579bc98c86ee7d57",
+      "sha256": "f4b97457c14224211ee54af788365d6f4e5ff474e806102014120712573abe97",
       "kind": "test",
       "layer": "contract",
       "owner": "SEC-03",
@@ -3355,5 +3357,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "3000665e68af9242f69a51a2c64cc51bab51a274ed99157d0cb6c1682b370125"
+  "canonicalPayloadSha256": "ed859c4bd9f618a2ead5beb14dbbbef32a11a114da3d43567656f3e59b0b23c3"
 }

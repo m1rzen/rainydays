@@ -24,7 +24,7 @@ import { collectSec02LayerEvidence } from "./sec02-receipt-set.mjs";
 import { validateSec02SinkInventory } from "./sec02-sink-inventory.mjs";
 
 function parseArgs(argv) {
-  const result = { task: "GOV-03", layer: null, report: null, timeoutMs: 300_000, runId: null };
+  const result = { task: "GOV-03", layer: null, report: null, timeoutMs: null, runId: null };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     if (argument === "--task") result.task = argv[++index] ?? "";
@@ -35,6 +35,7 @@ function parseArgs(argv) {
     else throw new Error(`Unknown argument: ${argument}`);
   }
   assert(layerNames.includes(result.layer), `--layer must be one of: ${layerNames.join(", ")}`);
+  result.timeoutMs ??= result.layer === "packaged" ? 780_000 : 300_000;
   assert(Number.isInteger(result.timeoutMs) && result.timeoutMs > 0 && result.timeoutMs <= 900_000, "--timeout-ms is invalid");
   if (result.runId !== null) assert.match(result.runId, /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, "--run-id is invalid");
   result.report ??= path.join(projectRoot, "test-results", "layers", `${result.task.toLowerCase()}-${result.layer}.json`);

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
-import { access, lstat, mkdir, mkdtemp, readFile, readlink, realpath, readdir, rename, rm, stat, unlink, writeFile } from "node:fs/promises";
+import { constants as fsConstants } from "node:fs";
+import { access, copyFile, lstat, mkdir, mkdtemp, readFile, readlink, realpath, readdir, rename, rm, stat, unlink, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import net from "node:net";
 import os from "node:os";
@@ -525,7 +526,8 @@ export function spawnManaged(command, args, options = {}) {
   });
 }
 
-export async function runProcess(command, args, { cwd = projectRoot, env = process.env, timeoutMs = 120_000, echo = false, windowsVerbatimArguments = false, stdio = ["ignore", "pipe", "pipe"] } = {}) {
+export async function runProcess(command, args, { cwd = projectRoot, env = process.env, timeoutMs = 120_000, echo = false, windowsVerbatimArguments = false, stdio = ["ignore", "pipe", "pipe"], onSpawn = null } = {}) {
+  assert(onSpawn === null || typeof onSpawn === "function", "onSpawn must be a function or null");
   const child = spawnManaged(command, args, { cwd, env, windowsVerbatimArguments, stdio });
   let stdout = "";
   let stderr = "";
@@ -535,7 +537,7 @@ export async function runProcess(command, args, { cwd = projectRoot, env = proce
   child.stderr?.on("data", (chunk) => { stderr += chunk; if (echo) process.stderr.write(chunk); });
   let timer;
   let timedOut = false;
-  const result = await new Promise((resolve, reject) => {
+  const completion = new Promise((resolve, reject) => {
     timer = setTimeout(async () => {
       timedOut = true;
       let termination;
@@ -550,13 +552,36 @@ export async function runProcess(command, args, { cwd = projectRoot, env = proce
     }, timeoutMs);
     child.once("error", (error) => { if (!timedOut) reject(error); });
     child.once("close", (code, signal) => { if (!timedOut) resolve({ code, signal }); });
-  }).finally(() => clearTimeout(timer));
-  return { ...result, stdout, stderr };
+  });
+  completion.catch(() => {});
+  try {
+    if (onSpawn !== null) {
+      assert(Number.isInteger(child.pid) && child.pid > 0, "spawned process identity is unavailable");
+      try { await onSpawn(child); }
+      catch (error) {
+        let termination;
+        try { termination = await terminateProcessTreeAsync(child); }
+        catch { termination = { attempted: true, exitCode: 1, childExited: false }; }
+        if (termination.exitCode !== 0 || !termination.childExited) {
+          const cleanupError = new Error(`Spawn validation cleanup failed: ${command}`);
+          cleanupError.code = "PROCESS_SPAWN_VALIDATION_CLEANUP_FAILED";
+          cleanupError.termination = termination;
+          throw new AggregateError([error, cleanupError], "spawn validation and cleanup failed");
+        }
+        throw error;
+      }
+    }
+    const result = await completion;
+    return { ...result, stdout, stderr };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 const nativeTestRequire = createRequire(import.meta.url);
 const productionAddonKeys = Object.freeze(["openEvidenceVerifier", "openExclusiveHostLease", "protocolVersion"].sort());
 const nativeTestAddonKeys = Object.freeze([
+  "openWindowsExecutableIdentityLeaseForTest",
   "observeWindowsProcessReferencesForTest",
   "observeWindowsFileHandleInProcessTreeForTest",
   "observeWindowsKnownFolderPathsForTest",
@@ -590,6 +615,7 @@ async function validateAndLoadWindowsHandleObserverProjection() {
     assert.deepEqual([...ownKeys].sort(), nativeTestAddonKeys, "native test addon exports differ");
     assert.equal(nativeTest.protocolVersion, 1, "native test addon protocol differs");
     for (const operation of [
+      "openWindowsExecutableIdentityLeaseForTest",
       "observeWindowsProcessReferencesForTest",
       "observeWindowsFileHandleInProcessTreeForTest",
       "observeWindowsKnownFolderPathsForTest",
@@ -616,6 +642,86 @@ export function loadWindowsHandleObserverProjectionForTest() {
     });
   }
   return windowsHandleObserverProjectionPromise;
+}
+
+export async function openWindowsExecutableIdentityLeaseForTest(filePath, expectedBytes, expectedSha256) {
+  assert.equal(process.platform, "win32", "executable identity lease requires Windows");
+  assert.equal(process.arch, "x64", "executable identity lease requires Windows x64");
+  assert.equal(path.isAbsolute(filePath) && path.resolve(filePath) === filePath, true, "executable lease path is invalid");
+  assert(Number.isSafeInteger(expectedBytes) && expectedBytes > 0 && expectedBytes <= 1024 ** 3, "executable lease byte count is invalid");
+  assert.match(expectedSha256, /^[a-f0-9]{64}$/u, "executable lease SHA-256 is invalid");
+  const { nativeTest } = await loadWindowsHandleObserverProjectionForTest();
+  const nativeLease = nativeTest.openWindowsExecutableIdentityLeaseForTest(filePath, expectedBytes, expectedSha256);
+  assertExactKeys(nativeLease, ["assertProcessIdentity", "close"], "executable identity lease");
+  assert.equal(typeof nativeLease.assertProcessIdentity, "function", "executable identity assertion is unavailable");
+  assert.equal(typeof nativeLease.close, "function", "executable identity lease close is unavailable");
+  let closed = false;
+  return Object.freeze({
+    assertProcessIdentity(processId) {
+      assert.equal(closed, false, "executable identity lease is closed");
+      assert(Number.isInteger(processId) && processId > 0 && processId <= 0xFFFFFFFF, "executable process identity is invalid");
+      assert.equal(nativeLease.assertProcessIdentity(processId), true, "launched executable differs from its identity lease");
+    },
+    close() {
+      if (closed) return;
+      nativeLease.close();
+      closed = true;
+    },
+  });
+}
+
+export async function runVerifiedWindowsExecutableCopy(source, executionDirectory, args, {
+  cwd = executionDirectory,
+  env = process.env,
+  timeoutMs = 120_000,
+  windowsVerbatimArguments = false,
+} = {}) {
+  assert.equal(process.platform, "win32", "verified executable copy requires Windows");
+  assert(Array.isArray(args) && args.every((argument) => typeof argument === "string" && !argument.includes("\0")), "verified executable arguments are invalid");
+  for (const [value, field] of [[source, "source"], [executionDirectory, "execution directory"], [cwd, "cwd"]]) {
+    assert.equal(path.isAbsolute(value) && path.resolve(value) === value, true, `verified executable ${field} is invalid`);
+  }
+  const sourceInfo = await lstat(source);
+  const executionInfo = await lstat(executionDirectory);
+  assert(sourceInfo.isFile() && !sourceInfo.isSymbolicLink(), "verified executable source is not a regular file");
+  assert(executionInfo.isDirectory() && !executionInfo.isSymbolicLink(), "verified executable directory is not a real directory");
+  assert.equal(await realpath(source), source, "verified executable source is not canonical");
+  assert.equal(await realpath(executionDirectory), executionDirectory, "verified executable directory is not canonical");
+  const expectedSha256 = await sha256File(source);
+  const executionCopy = path.join(executionDirectory, `verified-executable-${randomBytes(16).toString("hex")}.exe`);
+  let sourceLease = null;
+  let executionLease = null;
+  let result;
+  let primaryError = null;
+  const cleanupErrors = [];
+  try {
+    sourceLease = await openWindowsExecutableIdentityLeaseForTest(source, sourceInfo.size, expectedSha256);
+    await copyFile(source, executionCopy, fsConstants.COPYFILE_EXCL);
+    executionLease = await openWindowsExecutableIdentityLeaseForTest(executionCopy, sourceInfo.size, expectedSha256);
+    sourceLease.close();
+    sourceLease = null;
+    result = await runProcess(executionCopy, args, {
+      cwd,
+      env,
+      timeoutMs,
+      windowsVerbatimArguments,
+      onSpawn(child) { executionLease.assertProcessIdentity(child.pid); },
+    });
+  } catch (error) {
+    primaryError = error;
+  } finally {
+    for (const lease of [executionLease, sourceLease]) {
+      try { lease?.close(); }
+      catch (error) { cleanupErrors.push(error); }
+    }
+    try { await rm(executionCopy, { force: true }); }
+    catch (error) { cleanupErrors.push(error); }
+  }
+  if (primaryError && cleanupErrors.length) throw new AggregateError([primaryError, ...cleanupErrors], "verified executable run and cleanup failed");
+  if (primaryError) throw primaryError;
+  if (cleanupErrors.length === 1) throw cleanupErrors[0];
+  if (cleanupErrors.length > 1) throw new AggregateError(cleanupErrors, "verified executable cleanup failed");
+  return result;
 }
 
 export async function observeWindowsFileHandleInProcessTree(filePath, rootProcessId) {
@@ -698,15 +804,38 @@ export async function observeWindowsProcessReferences(paths) {
   for (const value of paths) assert.equal(path.isAbsolute(value) && value.length <= 32_766 && !value.includes("\0"), true, "process observation path is invalid");
   const { nativeTest } = await loadWindowsHandleObserverProjectionForTest();
   const observation = nativeTest.observeWindowsProcessReferencesForTest(paths);
-  assertExactKeys(observation, ["matchingCount", "unknownProcessIdentityIds"], "process observation");
+  assertExactKeys(observation, ["matchingCount", "matchingProcesses", "unknownProcessIdentityIds"], "process observation");
   assert(Number.isInteger(observation.matchingCount) && observation.matchingCount >= 0 && observation.matchingCount <= 65_536, "process observation count is invalid");
+  assert(Array.isArray(observation.matchingProcesses) && observation.matchingProcesses.length === observation.matchingCount, "matching process records differ from the count");
+  const matchingIdentityIds = new Set();
+  let previousProcessId = null;
+  let diagnosticBytes = 0;
+  for (const match of observation.matchingProcesses) {
+    assertExactKeys(match, ["commandLineMatched", "identityId", "imageMatched", "imageName", "inheritedFromProcessId", "processId"], "matching process record");
+    assert.match(match.identityId, /^[a-f0-9]{64}$/u, "matching process identity is invalid");
+    assert.equal(matchingIdentityIds.has(match.identityId), false, "matching process identities are not unique");
+    matchingIdentityIds.add(match.identityId);
+    for (const field of ["processId", "inheritedFromProcessId"]) assert(Number.isInteger(match[field]) && match[field] >= 0 && match[field] <= 0xFFFFFFFF, `matching process ${field} is invalid`);
+    assert(match.processId > 0 && (previousProcessId === null || previousProcessId < match.processId), "matching process records are not ordered by PID");
+    previousProcessId = match.processId;
+    assert(typeof match.imageName === "string" && match.imageName.length > 0 && match.imageName.length <= 32_767 && !/[\\/\0]/u.test(match.imageName), "matching process image name is invalid");
+    assert.equal(typeof match.imageMatched, "boolean", "matching process image match state is invalid");
+    assert.equal(typeof match.commandLineMatched, "boolean", "matching process command-line match state is invalid");
+    assert(match.imageMatched || match.commandLineMatched, "matching process record has no matched source");
+    diagnosticBytes += 128 + Buffer.byteLength(match.imageName, "utf16le");
+    assert(diagnosticBytes <= 1024 ** 2, "matching process diagnostics exceed the aggregate byte bound");
+    assert.equal(Object.isFrozen(match), true, "matching process record must be frozen");
+  }
   assert(Array.isArray(observation.unknownProcessIdentityIds) && observation.unknownProcessIdentityIds.length <= 65_536, "unknown process identities are invalid");
   let previous = null;
   for (const identity of observation.unknownProcessIdentityIds) {
     assert.match(identity, /^[a-f0-9]{64}$/u, "unknown process identity is invalid");
     if (previous !== null) assert(previous < identity, "unknown process identities are not unique and sorted");
     previous = identity;
+    diagnosticBytes += 96;
+    assert(diagnosticBytes <= 1024 ** 2, "process diagnostics exceed the aggregate byte bound");
   }
+  assert.equal(Object.isFrozen(observation.matchingProcesses), true, "matching processes must be frozen");
   assert.equal(Object.isFrozen(observation.unknownProcessIdentityIds), true, "unknown process identities must be frozen");
   assert.equal(Object.isFrozen(observation), true, "process observation must be frozen");
   return observation;

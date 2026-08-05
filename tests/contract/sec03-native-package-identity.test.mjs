@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { cp, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import {
@@ -198,6 +198,7 @@ test("SEC-03 native addons expose exact production and test-only top-level APIs"
   const { production, nativeTest } = await loadWindowsHandleObserverProjectionForTest();
   assert.deepEqual(Reflect.ownKeys(production).sort(), ["openEvidenceVerifier", "openExclusiveHostLease", "protocolVersion"]);
   assert.deepEqual(Reflect.ownKeys(nativeTest).sort(), [
+    "openWindowsExecutableIdentityLeaseForTest",
     "observeWindowsFileHandleInProcessTreeForTest",
     "observeWindowsKnownFolderPathsForTest",
     "observeWindowsProcessReferencesForTest",
@@ -206,8 +207,9 @@ test("SEC-03 native addons expose exact production and test-only top-level APIs"
     "openEvidenceVerifier",
     "openExclusiveHostLease",
     "protocolVersion",
-  ]);
+  ].sort());
   for (const operation of [
+    "openWindowsExecutableIdentityLeaseForTest",
     "observeWindowsProcessReferencesForTest",
     "observeWindowsFileHandleInProcessTreeForTest",
     "observeWindowsKnownFolderPathsForTest",
@@ -219,6 +221,31 @@ test("SEC-03 native addons expose exact production and test-only top-level APIs"
   }
   assert.equal(typeof production.openExclusiveHostLease.loadValidatedTestProjection, "function");
   assert.equal(nativeTest.protocolVersion, 1);
+
+  const executableLeaseRoot = await makeTempDir("rainydays-executable-identity-lease-");
+  const leasedExecutable = path.join(executableLeaseRoot, "leased-node.exe");
+  let executableLease = null;
+  try {
+    await copyFile(process.execPath, leasedExecutable);
+    const executableBytes = (await stat(leasedExecutable)).size;
+    const executableSha256 = createHash("sha256").update(await readFile(leasedExecutable)).digest("hex");
+    executableLease = nativeTest.openWindowsExecutableIdentityLeaseForTest(leasedExecutable, executableBytes, executableSha256);
+    assert.deepEqual(Reflect.ownKeys(executableLease).sort(), ["assertProcessIdentity", "close"]);
+    await assert.rejects(() => writeFile(leasedExecutable, "replacement"), (error) => ["EBUSY", "EACCES", "EPERM"].includes(error?.code));
+    await assert.rejects(() => rm(leasedExecutable), (error) => ["EBUSY", "EACCES", "EPERM"].includes(error?.code));
+    assert.throws(() => executableLease.assertProcessIdentity(process.pid), (error) => error?.code === "EXEC_NATIVE_TEST_EXECUTABLE_IDENTITY");
+    const executed = await runProcess(leasedExecutable, ["-e", "setTimeout(()=>{},250)"], {
+      timeoutMs: 5_000,
+      onSpawn(child) { assert.equal(executableLease.assertProcessIdentity(child.pid), true); },
+    });
+    assert.equal(executed.code, 0);
+    executableLease.close();
+    executableLease = null;
+    await rm(leasedExecutable);
+  } finally {
+    executableLease?.close();
+    await removeFixture(executableLeaseRoot);
+  }
 
   const observeKnownFolders = nativeTest.observeWindowsKnownFolderPathsForTest;
   const observeRegistryKey = nativeTest.observeWindowsRegistryKeyForTest;
@@ -254,8 +281,21 @@ test("SEC-03 native addons expose exact production and test-only top-level APIs"
 
   const observeProcesses = nativeTest.observeWindowsProcessReferencesForTest;
   const processObservation = observeProcesses([process.execPath]);
-  assert.deepEqual(Reflect.ownKeys(processObservation).sort(), ["matchingCount", "unknownProcessIdentityIds"]);
+  assert.deepEqual(Reflect.ownKeys(processObservation).sort(), ["matchingCount", "matchingProcesses", "unknownProcessIdentityIds"]);
   assert(Number.isInteger(processObservation.matchingCount) && processObservation.matchingCount >= 1 && processObservation.matchingCount <= 65_536);
+  assert.equal(processObservation.matchingProcesses.length, processObservation.matchingCount);
+  assert(processObservation.matchingProcesses.some((match) => match.processId === process.pid
+    && match.imageName.toLowerCase() === path.basename(process.execPath).toLowerCase() && match.imageMatched));
+  for (const match of processObservation.matchingProcesses) {
+    assert.deepEqual(Reflect.ownKeys(match).sort(), ["commandLineMatched", "identityId", "imageMatched", "imageName", "inheritedFromProcessId", "processId"]);
+    assert.match(match.identityId, /^[a-f0-9]{64}$/u);
+    assert(Number.isInteger(match.processId) && match.processId > 0 && match.processId <= 0xFFFFFFFF);
+    assert(Number.isInteger(match.inheritedFromProcessId) && match.inheritedFromProcessId >= 0 && match.inheritedFromProcessId <= 0xFFFFFFFF);
+    assert.equal(/[\\/\0]/u.test(match.imageName), false);
+    assert(match.imageMatched || match.commandLineMatched);
+    assert.equal(Object.isFrozen(match), true);
+  }
+  assert.equal(Object.isFrozen(processObservation.matchingProcesses), true);
   assert(Array.isArray(processObservation.unknownProcessIdentityIds));
   assert(processObservation.unknownProcessIdentityIds.every((identity) => /^[a-f0-9]{64}$/u.test(identity)));
   assert.equal(new Set(processObservation.unknownProcessIdentityIds).size, processObservation.unknownProcessIdentityIds.length);

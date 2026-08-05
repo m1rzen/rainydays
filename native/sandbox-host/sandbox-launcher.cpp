@@ -112,6 +112,16 @@ struct Lease {
   bool closed = false;
 };
 
+#ifdef MINI_LUX_SEC03_NATIVE_TEST
+struct TestExecutableLease {
+  HANDLE file = INVALID_HANDLE_VALUE;
+  std::wstring path;
+  std::string sha256;
+  BY_HANDLE_FILE_INFORMATION identity{};
+  bool closed = false;
+};
+#endif
+
 struct EvidenceVerifier {
   mini_lux::sec03::AttestationKey key;
   std::string candidate;
@@ -335,20 +345,30 @@ bool FixedEvidenceIdentity(const std::string& candidate, const std::string& laun
   if (host != INVALID_HANDLE_VALUE) CloseHandle(host); if (addon != INVALID_HANDLE_VALUE) CloseHandle(addon); return valid;
 }
 
-bool SameIdentity(const Lease& lease, DWORD pid) {
-  HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+bool SameExecutableIdentity(const BY_HANDLE_FILE_INFORMATION& expected_identity, const std::string& expected_sha256, DWORD pid) {
+  HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, pid);
   if (!process) return false;
   std::vector<wchar_t> path(32768); DWORD count = static_cast<DWORD>(path.size());
   bool same = false;
-  if (QueryFullProcessImageNameW(process, 0, path.data(), &count)) {
-    HANDLE image = CreateFileW(std::wstring(path.data(), count).c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (WaitForSingleObject(process, 0) == WAIT_TIMEOUT && QueryFullProcessImageNameW(process, 0, path.data(), &count)) {
+    HANDLE image = CreateFileW(std::wstring(path.data(), count).c_str(), GENERIC_READ | FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
     if (image != INVALID_HANDLE_VALUE) {
       BY_HANDLE_FILE_INFORMATION identity{}; std::string digest;
-      same = GetFileInformationByHandle(image, &identity) && identity.dwVolumeSerialNumber == lease.identity.dwVolumeSerialNumber && identity.nFileIndexHigh == lease.identity.nFileIndexHigh && identity.nFileIndexLow == lease.identity.nFileIndexLow && Sha256Handle(image, &digest) && digest == lease.sha256;
+      same = GetFileInformationByHandle(image, &identity)
+        && !(identity.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT))
+        && identity.dwVolumeSerialNumber == expected_identity.dwVolumeSerialNumber
+        && identity.nFileIndexHigh == expected_identity.nFileIndexHigh
+        && identity.nFileIndexLow == expected_identity.nFileIndexLow
+        && Sha256Handle(image, &digest) && digest == expected_sha256;
       CloseHandle(image);
     }
   }
   CloseHandle(process); return same;
+}
+
+bool SameIdentity(const Lease& lease, DWORD pid) {
+  return SameExecutableIdentity(lease.identity, lease.sha256, pid);
 }
 
 std::string ExtractExecutionId(const std::string& json) {
@@ -814,6 +834,130 @@ bool ReadTestObserverPath(napi_env env, napi_value value, std::wstring* path) {
   return StrictTestObserverPath(*path);
 }
 
+void FinalizeTestExecutableLease(napi_env, void* data, void*) {
+  auto* lease = static_cast<TestExecutableLease*>(data);
+  if (!lease) return;
+  if (lease->file != INVALID_HANDLE_VALUE) CloseHandle(lease->file);
+  delete lease;
+}
+
+TestExecutableLease* GetTestExecutableLease(napi_env env, napi_callback_info info, size_t* argc,
+    napi_value* argv, napi_value* self) {
+  if (napi_get_cb_info(env, info, argc, argv, self, nullptr) != napi_ok) return nullptr;
+  TestExecutableLease* lease = nullptr;
+  if (napi_unwrap(env, *self, reinterpret_cast<void**>(&lease)) != napi_ok || !lease || lease->closed
+      || lease->file == INVALID_HANDLE_VALUE) return nullptr;
+  return lease;
+}
+
+napi_value AssertTestExecutableProcessIdentity(napi_env env, napi_callback_info info) {
+  size_t argc = 1;
+  napi_value argv[1], self;
+  TestExecutableLease* lease = GetTestExecutableLease(env, info, &argc, argv, &self);
+  uint32_t pid = 0;
+  if (!lease || argc != 1 || napi_get_value_uint32(env, argv[0], &pid) != napi_ok || !pid
+      || !SameExecutableIdentity(lease->identity, lease->sha256, pid)) {
+    Throw(env, "EXEC_NATIVE_TEST_EXECUTABLE_IDENTITY", "Launched test executable differs from its exclusive identity lease");
+    return nullptr;
+  }
+  napi_value result;
+  napi_get_boolean(env, true, &result);
+  return result;
+}
+
+napi_value CloseTestExecutableLease(napi_env env, napi_callback_info info) {
+  size_t argc = 0;
+  napi_value self;
+  if (napi_get_cb_info(env, info, &argc, nullptr, &self, nullptr) != napi_ok || argc != 0) return nullptr;
+  TestExecutableLease* lease = nullptr;
+  if (napi_unwrap(env, self, reinterpret_cast<void**>(&lease)) != napi_ok || !lease) {
+    Throw(env, "EXEC_NATIVE_TEST_EXECUTABLE_IDENTITY", "Test executable identity lease is unavailable");
+    return nullptr;
+  }
+  if (!lease->closed) {
+    if (lease->file != INVALID_HANDLE_VALUE) CloseHandle(lease->file);
+    lease->file = INVALID_HANDLE_VALUE;
+    lease->closed = true;
+  }
+  napi_value result;
+  napi_get_undefined(env, &result);
+  return result;
+}
+
+napi_value OpenTestExecutableIdentityLease(napi_env env, napi_callback_info info) {
+  size_t argc = 3;
+  napi_value argv[3];
+  std::wstring path;
+  int64_t expected_bytes = 0;
+  size_t hash_length = 0;
+  if (napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr) != napi_ok || argc != 3
+      || !ReadTestObserverPath(env, argv[0], &path)
+      || napi_get_value_int64(env, argv[1], &expected_bytes) != napi_ok || expected_bytes <= 0
+      || expected_bytes > 1024LL * 1024LL * 1024LL
+      || napi_get_value_string_utf8(env, argv[2], nullptr, 0, &hash_length) != napi_ok || hash_length != 64) {
+    Throw(env, "EXEC_NATIVE_TEST_EXECUTABLE_IDENTITY", "Test executable identity arguments are invalid");
+    return nullptr;
+  }
+  std::vector<char> hash_text(hash_length + 1);
+  if (napi_get_value_string_utf8(env, argv[2], hash_text.data(), hash_text.size(), &hash_length) != napi_ok) {
+    Throw(env, "EXEC_NATIVE_TEST_EXECUTABLE_IDENTITY", "Test executable identity arguments are invalid");
+    return nullptr;
+  }
+  const std::string expected_sha256(hash_text.data(), hash_length);
+  if (!mini_lux::sec03::CanonicalHex(expected_sha256, 32, 32)) {
+    Throw(env, "EXEC_NATIVE_TEST_EXECUTABLE_IDENTITY", "Test executable identity arguments are invalid");
+    return nullptr;
+  }
+  auto lease = std::make_unique<TestExecutableLease>();
+  lease->path = path;
+  lease->file = CreateFileW(path.c_str(), GENERIC_READ | FILE_READ_ATTRIBUTES, FILE_SHARE_READ, nullptr,
+      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+  LARGE_INTEGER bytes{};
+  std::array<wchar_t, 32768> final_path{};
+  const DWORD final_count = lease->file == INVALID_HANDLE_VALUE ? 0
+    : GetFinalPathNameByHandleW(lease->file, final_path.data(), static_cast<DWORD>(final_path.size()),
+        FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+  std::wstring opened = final_count && final_count < final_path.size()
+    ? std::wstring(final_path.data(), final_count) : std::wstring{};
+  if (opened.rfind(L"\\\\?\\UNC\\", 0) == 0) opened = L"\\\\" + opened.substr(8);
+  else if (opened.rfind(L"\\\\?\\", 0) == 0) opened = opened.substr(4);
+  std::array<wchar_t, MAX_PATH> volume_path{};
+  std::array<wchar_t, 32> filesystem{};
+  DWORD volume_serial = 0;
+  std::string observed_sha256;
+  const bool valid = lease->file != INVALID_HANDLE_VALUE
+    && GetFileInformationByHandle(lease->file, &lease->identity)
+    && !(lease->identity.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT))
+    && GetFileSizeEx(lease->file, &bytes) && bytes.QuadPart == expected_bytes
+    && opened == path
+    && GetVolumePathNameW(opened.c_str(), volume_path.data(), static_cast<DWORD>(volume_path.size()))
+    && GetDriveTypeW(volume_path.data()) == DRIVE_FIXED
+    && GetVolumeInformationW(volume_path.data(), nullptr, 0, &volume_serial, nullptr, nullptr,
+        filesystem.data(), static_cast<DWORD>(filesystem.size()))
+    && volume_serial == lease->identity.dwVolumeSerialNumber && _wcsicmp(filesystem.data(), L"NTFS") == 0
+    && Sha256Handle(lease->file, &observed_sha256) && observed_sha256 == expected_sha256;
+  if (!valid) {
+    if (lease->file != INVALID_HANDLE_VALUE) CloseHandle(lease->file);
+    Throw(env, "EXEC_NATIVE_TEST_EXECUTABLE_IDENTITY", "Test executable does not match its exclusive identity lease");
+    return nullptr;
+  }
+  lease->sha256 = expected_sha256;
+  napi_value result, fn;
+  if (napi_create_object(env, &result) != napi_ok
+      || napi_create_function(env, "assertProcessIdentity", NAPI_AUTO_LENGTH,
+          AssertTestExecutableProcessIdentity, nullptr, &fn) != napi_ok
+      || napi_set_named_property(env, result, "assertProcessIdentity", fn) != napi_ok
+      || napi_create_function(env, "close", NAPI_AUTO_LENGTH, CloseTestExecutableLease, nullptr, &fn) != napi_ok
+      || napi_set_named_property(env, result, "close", fn) != napi_ok
+      || napi_wrap(env, result, lease.get(), FinalizeTestExecutableLease, nullptr, nullptr) != napi_ok) {
+    CloseHandle(lease->file);
+    Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot create test executable identity lease");
+    return nullptr;
+  }
+  lease.release();
+  return result;
+}
+
 NtQueryInformationFileForTest ResolveTestFileHolderQuery() {
   HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
   FARPROC raw_query = ntdll ? GetProcAddress(ntdll, "NtQueryInformationFile") : nullptr;
@@ -1087,6 +1231,7 @@ constexpr size_t kTestProcessImageMaxChars = 32767;
 constexpr ULONG kTestProcessCommandLineMaxBytes = 128u * 1024u;
 constexpr ULONG kTestProcessSnapshotInitialBytes = 64u * 1024u;
 constexpr ULONG kTestProcessSnapshotMaxBytes = 16u * 1024u * 1024u;
+constexpr size_t kTestProcessDiagnosticMaxBytes = 1024u * 1024u;
 constexpr ULONGLONG kTestProcessQueryDeadlineMilliseconds = 5000;
 
 enum class TestObserverInputResult { valid, invalid, abi_error };
@@ -1230,6 +1375,7 @@ struct TestProcessIdentity {
   DWORD session_id;
   DWORD pid;
   std::uint64_t creation;
+  DWORD parent_pid;
 };
 
 constexpr bool SameTestProcessIdentity(const TestProcessIdentity& left, const TestProcessIdentity& right) {
@@ -1249,11 +1395,11 @@ constexpr TestProcessSnapshotTransition ClassifyTestProcessSnapshotTransition(
     : TestProcessSnapshotTransition::inspect_again;
 }
 
-constexpr TestProcessIdentity kTestProcessIdentityProof{1, 2, 3};
-constexpr TestProcessIdentity kTestProcessIdentitySame{1, 2, 3};
-constexpr TestProcessIdentity kTestProcessIdentityOtherSession{4, 2, 3};
-constexpr TestProcessIdentity kTestProcessIdentityOtherPid{1, 5, 3};
-constexpr TestProcessIdentity kTestProcessIdentityReusedPid{1, 2, 4};
+constexpr TestProcessIdentity kTestProcessIdentityProof{1, 2, 3, 0};
+constexpr TestProcessIdentity kTestProcessIdentitySame{1, 2, 3, 0};
+constexpr TestProcessIdentity kTestProcessIdentityOtherSession{4, 2, 3, 0};
+constexpr TestProcessIdentity kTestProcessIdentityOtherPid{1, 5, 3, 0};
+constexpr TestProcessIdentity kTestProcessIdentityReusedPid{1, 2, 4, 0};
 static_assert(ClassifyTestProcessSnapshotTransition(&kTestProcessIdentitySame, kTestProcessIdentityProof)
   == TestProcessSnapshotTransition::already_inspected);
 static_assert(ClassifyTestProcessSnapshotTransition(&kTestProcessIdentityOtherSession, kTestProcessIdentityProof)
@@ -1267,18 +1413,31 @@ static_assert(ClassifyTestProcessSnapshotTransition(nullptr, kTestProcessIdentit
 
 class TestObservedProcess {
  public:
-  TestObservedProcess(const TestProcessIdentity& process_identity, HANDLE process_handle, bool references)
-      : identity(process_identity), handle(process_handle), matched(references) {}
+  TestObservedProcess(const TestProcessIdentity& process_identity, HANDLE process_handle)
+      : identity(process_identity), handle(process_handle) {}
   ~TestObservedProcess() { if (handle) CloseHandle(handle); }
   TestObservedProcess(const TestObservedProcess&) = delete;
   TestObservedProcess& operator=(const TestObservedProcess&) = delete;
   TestObservedProcess(TestObservedProcess&& other) noexcept
-      : identity(other.identity), handle(other.handle), matched(other.matched), reconciled(other.reconciled) { other.handle = nullptr; }
+      : identity(other.identity), handle(other.handle), image_name(std::move(other.image_name)),
+        image_matched(other.image_matched), command_line_matched(other.command_line_matched),
+        reconciled(other.reconciled) { other.handle = nullptr; }
   TestObservedProcess& operator=(TestObservedProcess&&) = delete;
   TestProcessIdentity identity;
   HANDLE handle;
-  bool matched;
+  std::wstring image_name;
+  bool image_matched = false;
+  bool command_line_matched = false;
   bool reconciled = false;
+};
+
+struct TestProcessMatch {
+  std::string identity_id;
+  DWORD pid;
+  DWORD parent_pid;
+  std::wstring image_name;
+  bool image_matched;
+  bool command_line_matched;
 };
 
 NtQueryInformationProcessForTest ResolveTestProcessQuery() {
@@ -1336,7 +1495,7 @@ bool ParseTestSystemProcessSnapshot(const void* buffer, ULONG bytes, DWORD obser
     if (!seen.insert(pid).second || seen.size() > kTestObserverMaxProcesses) return false;
     if (pid != 0 && entry.create_time <= 0) return false;
     if (pid != 0 && entry.session_id == observer_session) {
-      TestProcessIdentity identity{entry.session_id, pid, static_cast<std::uint64_t>(entry.create_time)};
+      TestProcessIdentity identity{entry.session_id, pid, static_cast<std::uint64_t>(entry.create_time), static_cast<DWORD>(entry.parent_process_id)};
       if (!processes->emplace(pid, identity).second) return false;
     }
     if (!entry.next_entry_offset) return true;
@@ -1472,7 +1631,7 @@ TestProcessInspectResult InspectTestProcess(const TestProcessIdentity& identity,
   HANDLE raw_process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, identity.pid);
   if (!TestProcessBeforeDeadline(deadline)) { if (raw_process) CloseHandle(raw_process); return TestProcessInspectResult::failed; }
   if (!raw_process) return TestProcessInspectResult::unknown;
-  TestObservedProcess process(identity, raw_process, false);
+  TestObservedProcess process(identity, raw_process);
   bool exited = false;
   if (!TestProcessExitState(process.handle, &exited)) return TestProcessInspectResult::unknown;
   if (exited) return TestProcessInspectResult::gone;
@@ -1500,7 +1659,13 @@ TestProcessInspectResult InspectTestProcess(const TestProcessIdentity& identity,
   if (!TestProcessExitState(process.handle, &exited)) return TestProcessInspectResult::unknown;
   if (exited) return TestProcessInspectResult::gone;
   if (!TestProcessBeforeDeadline(deadline)) return TestProcessInspectResult::failed;
-  process.matched = image_matched || command_matched;
+  if (image_matched || command_matched) {
+    const size_t separator = image_path.find_last_of(L"\\/");
+    process.image_name = separator == std::wstring::npos ? image_path : image_path.substr(separator + 1);
+    if (process.image_name.empty()) return TestProcessInspectResult::failed;
+  }
+  process.image_matched = image_matched;
+  process.command_line_matched = command_matched;
   observations->push_back(std::move(process));
   return TestProcessInspectResult::observed;
 }
@@ -1520,10 +1685,34 @@ bool TestProcessIdentityId(const TestProcessIdentity& identity, std::string* out
     && mini_lux::sec03::CanonicalHex(*output, 32, 32);
 }
 
-bool AddUnknownTestProcessIdentity(const TestProcessIdentity& identity, std::set<std::string>* identities) {
+bool AddUnknownTestProcessIdentity(const TestProcessIdentity& identity, size_t* diagnostic_bytes,
+    std::set<std::string>* identities) {
   std::string digest;
   if (!TestProcessIdentityId(identity, &digest)) return false;
-  identities->insert(std::move(digest));
+  const auto inserted = identities->insert(std::move(digest));
+  if (inserted.second) {
+    constexpr size_t record_bytes = 96;
+    if (*diagnostic_bytes > kTestProcessDiagnosticMaxBytes - record_bytes) return false;
+    *diagnostic_bytes += record_bytes;
+  }
+  return true;
+}
+
+bool AddTestProcessMatch(const TestObservedProcess& process, size_t* diagnostic_bytes,
+    std::vector<TestProcessMatch>* matches) {
+  constexpr size_t fixed_bytes = 128;
+  if (process.image_name.empty() || process.image_name.size() > (kTestProcessDiagnosticMaxBytes - fixed_bytes) / sizeof(wchar_t)) return false;
+  const size_t record_bytes = fixed_bytes + process.image_name.size() * sizeof(wchar_t);
+  if (*diagnostic_bytes > kTestProcessDiagnosticMaxBytes - record_bytes) return false;
+  TestProcessMatch match{};
+  if (!TestProcessIdentityId(process.identity, &match.identity_id)) return false;
+  match.pid = process.identity.pid;
+  match.parent_pid = process.identity.parent_pid;
+  match.image_name = process.image_name;
+  match.image_matched = process.image_matched;
+  match.command_line_matched = process.command_line_matched;
+  matches->push_back(std::move(match));
+  *diagnostic_bytes += record_bytes;
   return true;
 }
 
@@ -1543,8 +1732,8 @@ bool ReconcileObservedTestProcess(TestObservedProcess* process, const TestProces
   return true;
 }
 
-bool QueryTestProcessesReferencingPaths(const std::vector<std::wstring>& needles, uint32_t* matching_count,
-    std::set<std::string>* unknown_identity_ids) {
+bool QueryTestProcessesReferencingPaths(const std::vector<std::wstring>& needles,
+    std::vector<TestProcessMatch>* matching_processes, std::set<std::string>* unknown_identity_ids) {
   const ULONGLONG deadline = GetTickCount64() + kTestProcessQueryDeadlineMilliseconds;
   DWORD observer_session = 0;
   if (!TestProcessBeforeDeadline(deadline) || !ProcessIdToSessionId(GetCurrentProcessId(), &observer_session)) return false;
@@ -1602,38 +1791,69 @@ bool QueryTestProcessesReferencingPaths(const std::vector<std::wstring>& needles
       current = std::move(next);
       continue;
     }
+    matching_processes->clear();
     unknown_identity_ids->clear();
-    uint32_t matches = 0;
+    size_t diagnostic_bytes = 0;
     for (const auto& [pid, identity] : next) {
       const auto observed = observed_indices.find(pid);
       if (observed != observed_indices.end()) {
         const TestObservedProcess& process = observations.at(observed->second);
-        if (observed_live.at(pid) && process.matched) ++matches;
-      } else if (!AddUnknownTestProcessIdentity(identity, unknown_identity_ids)) {
+        if (observed_live.at(pid) && (process.image_matched || process.command_line_matched)
+            && !AddTestProcessMatch(process, &diagnostic_bytes, matching_processes)) return false;
+      } else if (!AddUnknownTestProcessIdentity(identity, &diagnostic_bytes, unknown_identity_ids)) {
         return false;
       }
     }
-    if (matches > kTestObserverMaxProcesses || unknown_identity_ids->size() > kTestObserverMaxProcesses
-        || !TestProcessBeforeDeadline(deadline)) return false;
-    *matching_count = matches;
+    if (matching_processes->size() > kTestObserverMaxProcesses
+        || unknown_identity_ids->size() > kTestObserverMaxProcesses || !TestProcessBeforeDeadline(deadline)) return false;
     return true;
   }
 }
 
-bool CreateFrozenTestProcessObservation(napi_env env, uint32_t matching_count,
+bool CreateFrozenTestProcessMatch(napi_env env, const TestProcessMatch& match, napi_value* result) {
+  static_assert(sizeof(wchar_t) == sizeof(char16_t));
+  napi_value identity, pid, parent_pid, image_name, image_matched, command_line_matched;
+  if (napi_create_string_utf8(env, match.identity_id.c_str(), match.identity_id.size(), &identity) != napi_ok
+      || napi_create_uint32(env, match.pid, &pid) != napi_ok
+      || napi_create_uint32(env, match.parent_pid, &parent_pid) != napi_ok
+      || napi_create_string_utf16(env, reinterpret_cast<const char16_t*>(match.image_name.data()), match.image_name.size(), &image_name) != napi_ok
+      || napi_get_boolean(env, match.image_matched, &image_matched) != napi_ok
+      || napi_get_boolean(env, match.command_line_matched, &command_line_matched) != napi_ok
+      || napi_create_object(env, result) != napi_ok) return false;
+  napi_property_descriptor properties[] = {
+    {"identityId", nullptr, nullptr, nullptr, nullptr, identity, napi_enumerable, nullptr},
+    {"processId", nullptr, nullptr, nullptr, nullptr, pid, napi_enumerable, nullptr},
+    {"inheritedFromProcessId", nullptr, nullptr, nullptr, nullptr, parent_pid, napi_enumerable, nullptr},
+    {"imageName", nullptr, nullptr, nullptr, nullptr, image_name, napi_enumerable, nullptr},
+    {"imageMatched", nullptr, nullptr, nullptr, nullptr, image_matched, napi_enumerable, nullptr},
+    {"commandLineMatched", nullptr, nullptr, nullptr, nullptr, command_line_matched, napi_enumerable, nullptr},
+  };
+  return napi_define_properties(env, *result, sizeof(properties) / sizeof(properties[0]), properties) == napi_ok
+    && napi_object_freeze(env, *result) == napi_ok;
+}
+
+bool CreateFrozenTestProcessObservation(napi_env env, const std::vector<TestProcessMatch>& matching_processes,
     const std::set<std::string>& unknown_identity_ids, napi_value* result) {
-  napi_value count, identities;
-  if (napi_create_uint32(env, matching_count, &count) != napi_ok
+  napi_value count, matches, identities;
+  if (napi_create_uint32(env, static_cast<uint32_t>(matching_processes.size()), &count) != napi_ok
+      || napi_create_array_with_length(env, matching_processes.size(), &matches) != napi_ok
       || napi_create_array_with_length(env, unknown_identity_ids.size(), &identities) != napi_ok) return false;
+  for (size_t index = 0; index < matching_processes.size(); ++index) {
+    napi_value value;
+    if (!CreateFrozenTestProcessMatch(env, matching_processes[index], &value)
+        || napi_set_element(env, matches, static_cast<uint32_t>(index), value) != napi_ok) return false;
+  }
   uint32_t index = 0;
   for (const auto& identity : unknown_identity_ids) {
     napi_value value;
     if (napi_create_string_utf8(env, identity.c_str(), identity.size(), &value) != napi_ok
         || napi_set_element(env, identities, index++, value) != napi_ok) return false;
   }
-  if (napi_object_freeze(env, identities) != napi_ok || napi_create_object(env, result) != napi_ok) return false;
+  if (napi_object_freeze(env, matches) != napi_ok || napi_object_freeze(env, identities) != napi_ok
+      || napi_create_object(env, result) != napi_ok) return false;
   napi_property_descriptor properties[] = {
     {"matchingCount", nullptr, nullptr, nullptr, nullptr, count, napi_enumerable, nullptr},
+    {"matchingProcesses", nullptr, nullptr, nullptr, nullptr, matches, napi_enumerable, nullptr},
     {"unknownProcessIdentityIds", nullptr, nullptr, nullptr, nullptr, identities, napi_enumerable, nullptr},
   };
   return napi_define_properties(env, *result, sizeof(properties) / sizeof(properties[0]), properties) == napi_ok
@@ -1663,13 +1883,13 @@ napi_value ObserveWindowsProcessReferencesForTest(napi_env env, napi_callback_in
     if (read != TestObserverInputResult::valid) { Throw(env, "EXEC_NATIVE_TEST_OBSERVER_INPUT", "Native test observer arguments are invalid"); return nullptr; }
     needles.push_back(std::move(needle));
   }
-  uint32_t matching_count = 0;
+  std::vector<TestProcessMatch> matching_processes;
   std::set<std::string> unknown_identity_ids;
-  if (!QueryTestProcessesReferencingPaths(needles, &matching_count, &unknown_identity_ids)) {
+  if (!QueryTestProcessesReferencingPaths(needles, &matching_processes, &unknown_identity_ids)) {
     Throw(env, "EXEC_NATIVE_TEST_OBSERVER_QUERY", "Native test observer query failed"); return nullptr;
   }
   napi_value result;
-  if (!CreateFrozenTestProcessObservation(env, matching_count, unknown_identity_ids, &result)) {
+  if (!CreateFrozenTestProcessObservation(env, matching_processes, unknown_identity_ids, &result)) {
     Throw(env, "EXEC_NATIVE_ABI_ERROR", "Cannot create native test observer result"); return nullptr;
   }
   return result;
@@ -2287,6 +2507,7 @@ napi_value Init(napi_env env, napi_value exports) {
   napi_create_function(env, "openEvidenceVerifier", NAPI_AUTO_LENGTH, OpenEvidenceVerifier, nullptr, &fn); napi_set_named_property(env, exports, "openEvidenceVerifier", fn);
   napi_create_uint32(env, kProtocolVersion, &version); napi_set_named_property(env, exports, "protocolVersion", version);
 #ifdef MINI_LUX_SEC03_NATIVE_TEST
+  napi_create_function(env, "openWindowsExecutableIdentityLeaseForTest", NAPI_AUTO_LENGTH, OpenTestExecutableIdentityLease, nullptr, &fn); napi_set_named_property(env, exports, "openWindowsExecutableIdentityLeaseForTest", fn);
   napi_create_function(env, "observeWindowsProcessReferencesForTest", NAPI_AUTO_LENGTH, ObserveWindowsProcessReferencesForTest, nullptr, &fn); napi_set_named_property(env, exports, "observeWindowsProcessReferencesForTest", fn);
   napi_create_function(env, "observeWindowsFileHandleInProcessTreeForTest", NAPI_AUTO_LENGTH, ObserveWindowsFileHandleInProcessTreeForTest, nullptr, &fn); napi_set_named_property(env, exports, "observeWindowsFileHandleInProcessTreeForTest", fn);
   napi_create_function(env, "observeWindowsKnownFolderPathsForTest", NAPI_AUTO_LENGTH, ObserveWindowsKnownFolderPathsForTest, nullptr, &fn); napi_set_named_property(env, exports, "observeWindowsKnownFolderPathsForTest", fn);

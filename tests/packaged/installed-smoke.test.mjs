@@ -19,6 +19,7 @@ import {
   projectRoot,
   removeFixture,
   runProcess,
+  runVerifiedWindowsExecutableCopy,
   terminateProcessTreeAsync,
   waitFor,
 } from "../helpers.mjs";
@@ -27,6 +28,9 @@ import { createSec02Recorder } from "../sec02-receipts.mjs";
 
 const rainyDaysInstallerGuid = "0897e7b3-5f0f-5c38-ba13-645f30c0bb5a";
 const rainyDaysUninstallSubkey = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${rainyDaysInstallerGuid}`;
+const installerTimeoutMs = 180_000;
+const uninstallerTimeoutMs = 120_000;
+const packagedLifecycleTimeoutMs = 720_000;
 const pathPolicyAssertionIds = Object.freeze([
   "root-internal-success",
   "traversal-denied",
@@ -219,23 +223,35 @@ async function systemIntegrationSnapshot(missingRegistryRoot) {
   return { registryHash: hashText(JSON.stringify(registry)), shortcuts };
 }
 
-async function waitForProcessConvergence(paths, unknownBaseline, label, observeBlockedReason) {
+async function waitForProcessConvergence(paths, unknownBaseline, phase, label, observeBlockedFailure) {
   let lastBlockedReason = "observer-error";
+  let lastObservation = null;
+  let unexpectedUnknownProcessIdentityIds = [];
   try {
     await waitFor(async () => {
       try {
         const observation = await observeWindowsProcessReferences(paths);
         const matching = observation.matchingCount !== 0;
-        const unknown = observation.unknownProcessIdentityIds.some((identity) => !unknownBaseline.has(identity));
+        unexpectedUnknownProcessIdentityIds = observation.unknownProcessIdentityIds.filter((identity) => !unknownBaseline.has(identity));
+        const unknown = unexpectedUnknownProcessIdentityIds.length !== 0;
         lastBlockedReason = matching && unknown ? "mixed" : matching ? "matching" : unknown ? "unknown" : "observer-error";
+        lastObservation = observation;
         return !matching && !unknown;
       } catch {
         lastBlockedReason = "observer-error";
+        lastObservation = null;
+        unexpectedUnknownProcessIdentityIds = [];
         return false;
       }
     }, { timeoutMs: 30_000, intervalMs: 250, label });
   } catch (error) {
-    observeBlockedReason(lastBlockedReason);
+    observeBlockedFailure({
+      phase: `${phase}-${lastBlockedReason}`,
+      reason: lastBlockedReason,
+      matchingCount: lastObservation?.matchingCount ?? null,
+      matchingProcesses: lastObservation ? lastObservation.matchingProcesses.map((match) => ({ ...match })) : [],
+      unexpectedUnknownProcessIdentityIds,
+    });
     throw error;
   }
 }
@@ -254,11 +270,19 @@ async function proveExecutableReleased(executable) {
   }, { timeoutMs: 30_000, intervalMs: 250, label: "installer executable path release" });
 }
 
+async function runOfficialUninstaller(uninstaller, executionTemp, installDir, processEnv) {
+  return runVerifiedWindowsExecutableCopy(uninstaller, executionTemp, ["/S", `_?=${installDir}`], {
+    cwd: executionTemp,
+    env: processEnv,
+    timeoutMs: uninstallerTimeoutMs,
+  });
+}
+
 async function publishDetails(filePath, details) {
   if (filePath) await atomicWriteJson(filePath, details);
 }
 
-test("current Windows installer repeats identity, persistence and cleanup smoke", { timeout: 300_000 }, async () => {
+test("current Windows installer repeats identity, persistence and cleanup smoke", { timeout: packagedLifecycleTimeoutMs }, async () => {
   assert.equal(process.platform, "win32", "UNSUPPORTED_PLATFORM: packaged E2E requires Windows");
   const recorder = await createSec02Recorder(import.meta.url, "current Windows installer repeats identity, persistence and cleanup smoke");
   const detailPath = process.env.RAINYDAYS_LAYER_DETAIL_REPORT ? path.resolve(process.env.RAINYDAYS_LAYER_DETAIL_REPORT) : null;
@@ -324,6 +348,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     pathPolicy: pathPolicyDetails(),
     uninstallerSignal: null,
     uninstallerConverged: false,
+    processConvergenceFailure: null,
     cleanup: {
       attemptedOfficialUninstall: false,
       officialUninstallExitCode: null,
@@ -404,7 +429,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     await checkpoint("install-execution");
     let install = { code: null, signal: null, stderr: "" };
     let installTimedOut = false;
-    try { install = await runProcess(executedInstaller, ["/S", `/D=${installDir}`], { env: processEnv, timeoutMs: 5 * 60_000 }); }
+    try { install = await runProcess(executedInstaller, ["/S", `/D=${installDir}`], { env: processEnv, timeoutMs: installerTimeoutMs }); }
     catch (error) {
       installTimedOut = /Process timeout:/.test(error instanceof Error ? error.message : String(error));
       if (!installTimedOut) throw error;
@@ -413,8 +438,9 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     details.installerSignal = install.signal;
     details.installerClassification = classifyInstallerResult(install, installTimedOut);
     await checkpoint("install-convergence");
-    await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "installer descendant convergence", (reason) => {
-      details.phase = `install-convergence-${reason}`;
+    await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "install-convergence", "installer descendant convergence", (failure) => {
+      details.processConvergenceFailure = failure;
+      details.phase = failure.phase;
     });
     await proveExecutableReleased(executedInstaller);
     details.installerConverged = true;
@@ -480,14 +506,15 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     const uninstaller = path.join(installDir, "Uninstall RainyDays.exe");
     assert(await pathExists(uninstaller), "uninstaller missing");
     details.cleanup.attemptedOfficialUninstall = true;
-    const uninstall = await runProcess(uninstaller, ["/S"], { env: processEnv, timeoutMs: 3 * 60_000 });
+    const uninstall = await runOfficialUninstaller(uninstaller, executionTemp, installDir, processEnv);
     details.cleanup.officialUninstallExitCode = uninstall.code;
     details.uninstallerSignal = uninstall.signal;
     assert.equal(uninstall.code, 0, uninstall.stderr);
     officialUninstallCompleted = true;
     await checkpoint("uninstall-convergence");
-    await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "uninstaller descendant convergence", (reason) => {
-      details.phase = `uninstall-convergence-${reason}`;
+    await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "uninstall-convergence", "uninstaller descendant convergence", (failure) => {
+      details.processConvergenceFailure = failure;
+      details.phase = failure.phase;
     });
     details.uninstallerConverged = true;
     await waitFor(async () => (await countFiles(installDir)) === 0, { timeoutMs: 30_000, label: "uninstall file cleanup" });
@@ -511,7 +538,8 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     const uninstaller = path.join(installDir, "Uninstall RainyDays.exe");
     if (!officialUninstallCompleted && await pathExists(uninstaller)) {
       details.cleanup.attemptedOfficialUninstall = true;
-      const uninstall = await runProcess(uninstaller, ["/S"], { env: processEnv, timeoutMs: 180_000 }).catch(() => ({ code: null, signal: "OBSERVATION_FAILURE" }));
+      const uninstall = await runOfficialUninstaller(uninstaller, executionTemp, installDir, processEnv)
+        .catch(() => ({ code: null, signal: "OBSERVATION_FAILURE" }));
       details.cleanup.officialUninstallExitCode = uninstall.code;
       details.uninstallerSignal = uninstall.signal;
       officialUninstallCompleted = uninstall.code === 0 && uninstall.signal === null;
@@ -519,9 +547,10 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     await cleanupCheckpoint("cleanup-convergence");
     try {
       assert(processUnknownBaseline, "process observation baseline is unavailable");
-      await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "final packaged process convergence", (reason) => {
-        cleanupConvergenceFailurePhase = `cleanup-convergence-${reason}`;
-        details.phase = cleanupConvergenceFailurePhase;
+      await waitForProcessConvergence(processReferencePaths, processUnknownBaseline, "cleanup-convergence", "final packaged process convergence", (failure) => {
+        details.processConvergenceFailure = failure;
+        cleanupConvergenceFailurePhase = failure.phase;
+        details.phase = failure.phase;
       });
       details.cleanup.processesStopped = true;
       if (executedInstaller && await pathExists(executedInstaller)) {
@@ -565,8 +594,8 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     try { await recorder.close(); }
     catch (error) { recorderError = error; }
     const cleanupError = details.cleanup.passed ? null : new Error("packaged cleanup did not restore the pre-install system state");
-    if (bodyError) await cleanupCheckpoint(bodyFailurePhase);
-    else if (cleanupConvergenceFailurePhase) await cleanupCheckpoint(cleanupConvergenceFailurePhase);
+    if (cleanupConvergenceFailurePhase) await cleanupCheckpoint(cleanupConvergenceFailurePhase);
+    else if (bodyError) await cleanupCheckpoint(bodyFailurePhase);
     else if (!recorderError && !cleanupError && cleanupCheckpointErrors.length === 0) await cleanupCheckpoint("complete");
     lifecycleFailures = [bodyError, recorderError, cleanupError, ...cleanupCheckpointErrors].filter(error => error !== null);
   }

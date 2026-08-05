@@ -278,9 +278,53 @@ function validatePackagedPathPolicy(value, { passed = false } = {}) {
   if (passed) assert(value.launches.every(launch => launch.passed), "passed package must execute every fixed PathPolicy assertion on both launches");
 }
 
+function validateProcessConvergenceFailure(value) {
+  if (value === null) return;
+  assert(value && typeof value === "object" && !Array.isArray(value), "details.processConvergenceFailure must be an object or null");
+  exactKeys(value, ["phase", "reason", "matchingCount", "matchingProcesses", "unexpectedUnknownProcessIdentityIds"], "details.processConvergenceFailure");
+  assert(["matching", "unknown", "mixed", "observer-error"].includes(value.reason), "details.processConvergenceFailure.reason is invalid");
+  assert(["install", "uninstall", "cleanup"].some((stage) => value.phase === `${stage}-convergence-${value.reason}`), "details.processConvergenceFailure.phase is invalid");
+  assert(value.matchingCount === null || (Number.isInteger(value.matchingCount) && value.matchingCount >= 0 && value.matchingCount <= 65_536), "details.processConvergenceFailure.matchingCount is invalid");
+  assert.equal(value.matchingCount === null, value.reason === "observer-error", "observer error must not claim a successful process count");
+  assert(Array.isArray(value.matchingProcesses) && value.matchingProcesses.length <= 65_536, "details.processConvergenceFailure.matchingProcesses is invalid");
+  if (value.matchingCount !== null) assert.equal(value.matchingProcesses.length, value.matchingCount, "details.processConvergenceFailure matching records differ from count");
+  else assert.equal(value.matchingProcesses.length, 0, "observer failure cannot claim matching processes");
+  const identities = new Set();
+  let previousProcessId = null;
+  let diagnosticBytes = 0;
+  for (const [index, match] of value.matchingProcesses.entries()) {
+    const field = `details.processConvergenceFailure.matchingProcesses[${index}]`;
+    exactKeys(match, ["commandLineMatched", "identityId", "imageMatched", "imageName", "inheritedFromProcessId", "processId"], field);
+    assert.match(match.identityId, sha256Pattern, `${field}.identityId is invalid`);
+    assert.equal(identities.has(match.identityId), false, `${field}.identityId is duplicated`);
+    identities.add(match.identityId);
+    for (const key of ["processId", "inheritedFromProcessId"]) assert(Number.isInteger(match[key]) && match[key] >= 0 && match[key] <= 0xFFFFFFFF, `${field}.${key} is invalid`);
+    assert(match.processId > 0 && (previousProcessId === null || previousProcessId < match.processId), `${field}.processId is not strictly ordered`);
+    previousProcessId = match.processId;
+    assert(typeof match.imageName === "string" && match.imageName.length > 0 && match.imageName.length <= 32_767 && !/[\\/\0]/u.test(match.imageName), `${field}.imageName is invalid`);
+    assert.equal(typeof match.imageMatched, "boolean", `${field}.imageMatched is invalid`);
+    assert.equal(typeof match.commandLineMatched, "boolean", `${field}.commandLineMatched is invalid`);
+    assert(match.imageMatched || match.commandLineMatched, `${field} does not identify a matching source`);
+    diagnosticBytes += 128 + Buffer.byteLength(match.imageName, "utf16le");
+    assert(diagnosticBytes <= 1024 ** 2, "details.processConvergenceFailure diagnostics exceed the aggregate byte bound");
+  }
+  assert(Array.isArray(value.unexpectedUnknownProcessIdentityIds) && value.unexpectedUnknownProcessIdentityIds.length <= 65_536, "details.processConvergenceFailure.unexpectedUnknownProcessIdentityIds is invalid");
+  let previousIdentity = null;
+  for (const identity of value.unexpectedUnknownProcessIdentityIds) {
+    assert.match(identity, sha256Pattern, "unexpected unknown process identity is invalid");
+    if (previousIdentity !== null) assert(previousIdentity < identity, "unexpected unknown process identities are not unique and sorted");
+    previousIdentity = identity;
+    diagnosticBytes += 96;
+    assert(diagnosticBytes <= 1024 ** 2, "details.processConvergenceFailure diagnostics exceed the aggregate byte bound");
+  }
+  const matching = value.matchingProcesses.length !== 0;
+  const unknown = value.unexpectedUnknownProcessIdentityIds.length !== 0;
+  assert.equal(value.reason, matching && unknown ? "mixed" : matching ? "matching" : unknown ? "unknown" : "observer-error", "details.processConvergenceFailure.reason differs from evidence");
+}
+
 export function validatePackagedDetails(value, { passed = false, sinkIdentity = null } = {}) {
   assert(value && typeof value === "object" && !Array.isArray(value), "packaged details must be present");
-  exactKeys(value, ["phase", "artifactExecution", "installerExitCode", "installerSignal", "installerClassification", "installerConverged", "packageBinding", "pathPolicy", "uninstallerSignal", "uninstallerConverged", "cleanup"], "details");
+  exactKeys(value, ["phase", "artifactExecution", "installerExitCode", "installerSignal", "installerClassification", "installerConverged", "packageBinding", "pathPolicy", "uninstallerSignal", "uninstallerConverged", "processConvergenceFailure", "cleanup"], "details");
   assert([
     "preflight-process-baseline",
     "preflight-system-snapshot",
@@ -335,6 +379,13 @@ export function validatePackagedDetails(value, { passed = false, sinkIdentity = 
   validatePackagedPathPolicy(value.pathPolicy, { passed });
   assert(value.uninstallerSignal === null || typeof value.uninstallerSignal === "string");
   assert.equal(typeof value.uninstallerConverged, "boolean");
+  validateProcessConvergenceFailure(value.processConvergenceFailure);
+  const convergenceReason = /-(matching|unknown|mixed|observer-error)$/u.exec(value.phase)?.[1] ?? null;
+  assert.equal(value.processConvergenceFailure === null, convergenceReason === null, "process convergence phase and evidence presence differ");
+  if (value.processConvergenceFailure !== null) {
+    assert.equal(value.processConvergenceFailure.phase, value.phase, "process convergence evidence phase differs from the final phase");
+    assert.equal(value.processConvergenceFailure.reason, convergenceReason, "convergence failure phase differs from process evidence");
+  }
   exactKeys(value.cleanup, ["attemptedOfficialUninstall", "officialUninstallExitCode", "installDirectoryEmpty", "registryObserved", "registryMatchesBaseline", "shortcutObserved", "shortcutMatchesBaseline", "processesStopped", "executionCopyReleased", "fixtureRemoved", "passed"], "details.cleanup");
   assert.equal(typeof value.cleanup.attemptedOfficialUninstall, "boolean");
   optionalInteger(value.cleanup.officialUninstallExitCode, "details.cleanup.officialUninstallExitCode");
@@ -358,6 +409,7 @@ export function validatePackagedDetails(value, { passed = false, sinkIdentity = 
     assert.equal(value.installerConverged, true);
     assert.equal(value.uninstallerSignal, null);
     assert.equal(value.uninstallerConverged, true);
+    assert.equal(value.processConvergenceFailure, null);
     assert.equal(value.cleanup.attemptedOfficialUninstall, true);
     assert.equal(value.cleanup.officialUninstallExitCode, 0);
     assert.equal(value.cleanup.passed, true);
