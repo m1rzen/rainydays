@@ -7107,13 +7107,13 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "57d71b8d07287fe8a5ff379395ca77c0f7542e77593775c3ec69a22983a2e4b1"
+      "sha256": "bbd685a27b15c35d333e9e993bc26155441b2c9140e75db1c9ead75143f95e94"
     },
     {
       "exactCasePath": "package-lock.json",
-      "sha256": "4007873970d134244a24e1be2fd4ae3913d3686fd0df3d64cae8aad251d34adb"
+      "sha256": "e00e97bba5899f73a41db31c2ca86c6cb637ee39697a26ca0e647b83e7fbfcca"
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "c4831dbfe3179da2e286b6dda420a84e94461f4c39a2fd30f9b09201d5704ee0"
+  "canonicalPayloadSha256": "14ecb3bf3852521a81eb8b8b27b608e6b04aa9d5f75ff540f037065b9ac4918e"
 }
