@@ -143,7 +143,11 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "public/icon.png"
+      "icon": "public/icon.png",
+      "signtoolOptions": {
+        "signingHashAlgorithms": ["sha256"],
+        "rfc3161TimeStampServer": "http://timestamp.digicert.com"
+      }
     },
     "nsis": {
       "guid": "0897e7b3-5f0f-5c38-ba13-645f30c0bb5a",
@@ -154,6 +158,7 @@
     },
     "asarUnpack": [
       "build-info.json",
+      "electron-stage-integrity.json",
       "package.json",
       "public/**/*",
       "models/**/*",

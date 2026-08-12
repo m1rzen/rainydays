@@ -3,7 +3,7 @@
 // 开发态启动 tsx；正式包直接加载 dist，不依赖系统 Node/npm
 // ===========================================
 
-const { app, BrowserWindow, Tray, Menu, nativeImage, shell, dialog, ipcMain } = require("electron");
+const { app, BrowserWindow, Tray, Menu, nativeImage, shell, dialog, ipcMain, safeStorage } = require("electron");
 const path = require("node:path");
 const net = require("node:net");
 const { spawn } = require("node:child_process");
@@ -26,11 +26,9 @@ let mainFrameGeneration = 0;
 let quitCleanupPromise = null;
 let finalQuit = false;
 let port = Number(process.env.PORT || 3111);
-const apiToken = process.env.RAINYDAYS_API_TOKEN || randomBytes(32).toString("hex");
-const terminalConsentChannels = Object.freeze([
-  "rainydays:terminal-start",
-  "rainydays:terminal-input",
-]);
+const apiToken = randomBytes(32).toString("hex");
+const terminalConsentOperations = Object.freeze(["start", "input", "clear", "kill", "close"]);
+const terminalConsentChannels = Object.freeze(terminalConsentOperations.map(operation => `rainydays:terminal-${operation}`));
 
 let legacyUserDataMigrationError = null;
 if (app.isPackaged && !process.argv.some(argument => argument === "--user-data-dir" || argument.startsWith("--user-data-dir="))) {
@@ -104,7 +102,7 @@ function loadBuildInfo() {
 const inheritedEnvironmentKeys = Object.freeze([
   "SystemRoot", "WINDIR", "ComSpec", "PATHEXT", "PATH", "TEMP", "TMP",
   "APPDATA", "LOCALAPPDATA", "PROCESSOR_ARCHITECTURE",
-  "DEEPSEEK_API_KEY", "LLM_API_KEY", "DEEPSEEK_BASE_URL", "LLM_BASE_URL", "LLM_MODEL", "DEFAULT_PERSONA",
+  "DEEPSEEK_BASE_URL", "LLM_BASE_URL", "LLM_MODEL", "DEFAULT_PERSONA", "RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER",
 ]);
 
 function inheritedEnvironment() {
@@ -149,6 +147,20 @@ async function startPackagedServer() {
     if (path.resolve(lease.canonicalPath).toLowerCase() !== literalServerPath.toLowerCase()) {
       throw new Error("Packaged server module differs from the verified literal import target");
     }
+    const credentialModule = await import("../dist/credential-store.js");
+    if (typeof credentialModule.configureCredentialProtector !== "function") {
+      throw new Error("Credential protector registration is unavailable");
+    }
+    credentialModule.configureCredentialProtector({
+      protect: plaintext => {
+        if (!safeStorage.isEncryptionAvailable()) throw new Error("OS credential protection is unavailable");
+        return safeStorage.encryptString(plaintext);
+      },
+      unprotect: ciphertext => {
+        if (!safeStorage.isEncryptionAvailable()) throw new Error("OS credential protection is unavailable");
+        return safeStorage.decryptString(ciphertext);
+      },
+    });
     serverModule = await import("../dist/index.js");
     lease.verify();
     if (typeof serverModule.registerNativeProcessConsentHandler !== "function") {
@@ -188,8 +200,24 @@ async function startServerProcess(commandLease, argumentLeases, extraEnvironment
       cwd: canonicalCwd,
       env: { ...runtimeEnvironment(), ...extraEnvironment },
       shell: false,
-      stdio: ["pipe", "pipe", "pipe", "pipe", "pipe"],
+      stdio: ["pipe", "pipe", "pipe", "pipe", "pipe", "ipc"],
       windowsHide: true,
+    });
+    serverProcess.on("message", message => {
+      if (!message || typeof message !== "object" || message.type !== "rainydays-credential-request"
+        || typeof message.requestId !== "string" || !/^[a-f0-9]{32}$/.test(message.requestId)
+        || (message.operation !== "protect" && message.operation !== "unprotect") || typeof message.value !== "string") return;
+      let response;
+      try {
+        if (!safeStorage.isEncryptionAvailable()) throw new Error("OS credential protection is unavailable");
+        const value = message.operation === "protect"
+          ? safeStorage.encryptString(message.value).toString("base64")
+          : safeStorage.decryptString(Buffer.from(message.value, "base64"));
+        response = { type: "rainydays-credential-result", requestId: message.requestId, ok: true, value };
+      } catch {
+        response = { type: "rainydays-credential-result", requestId: message.requestId, ok: false };
+      }
+      serverProcess?.send(response);
     });
     const requestPipe = serverProcess.stdio[3];
     const responsePipe = serverProcess.stdio[4];
@@ -371,10 +399,10 @@ async function handleManualTerminalConsent(event, operation, request) {
 }
 
 function registerManualTerminalConsentHandlers() {
-  ipcMain.handle("rainydays:terminal-start", (event, request) =>
-    handleManualTerminalConsent(event, "terminal-start", request));
-  ipcMain.handle("rainydays:terminal-input", (event, request) =>
-    handleManualTerminalConsent(event, "terminal-input", request));
+  for (const operation of terminalConsentOperations) {
+    ipcMain.handle(`rainydays:terminal-${operation}`, (event, request) =>
+      handleManualTerminalConsent(event, `terminal-${operation}`, request));
+  }
 }
 
 function removeManualTerminalConsentHandlers() {

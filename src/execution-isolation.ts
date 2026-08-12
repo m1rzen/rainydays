@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { assertResourceOwner, assertResourceOwnerForCleanup, registerOwnedResource, type ResourceOwner } from "./resource-owner.js";
-import { NativeBridgeError, type NativeExecutionBridge, type NativeExecutionHandle, type NativeExecutionProof, type NativeServiceDenialRequest, type NativeServiceDenialState } from "./execution-native.js";
+import { NativeBridgeError, type NativeBrokerObservationRequest, type NativeExecutionBridge, type NativeExecutionHandle, type NativeExecutionProof, type NativeServiceDenialRequest, type NativeServiceDenialState } from "./execution-native.js";
 
 export type ExecutionEntryPoint = "E1" | "E2" | "E3" | "E4";
 export type ExecutionProfile = "one-shot-shell" | "agent-shell" | "script" | "manual-terminal";
@@ -282,8 +282,8 @@ function validateRoots(roots: readonly ExecutionRootLeaseSnapshot[]): readonly E
 
 function validateNetwork(entry: ExecutionEntryPoint, network: ExecutionNetworkPolicy): ExecutionNetworkPolicy {
   if (!network || (network.mode !== "deny" && network.mode !== "brokered")) deny("EXEC_REQUEST_INVALID", "Execution network policy is invalid");
-  if ((entry === "E2" || entry === "E4") && network.mode !== "deny") deny("EXEC_NETWORK_PROFILE_UNSUPPORTED", "Persistent profiles do not support direct or brokered network access");
-  if (entry === "E3" && network.mode !== "deny" && !HEX_64.test(network.operationsDigest)) deny("EXEC_REQUEST_INVALID", "Broker operations digest is invalid");
+  if (entry === "E4" && network.mode !== "deny") deny("EXEC_NETWORK_PROFILE_UNSUPPORTED", "Manual Terminal does not support brokered network access");
+  if (network.mode === "brokered" && !HEX_64.test(network.operationsDigest)) deny("EXEC_REQUEST_INVALID", "Broker operations digest is invalid");
   return Object.freeze(network.mode === "deny" ? { mode: "deny" } : { mode: "brokered", operationsDigest: network.operationsDigest });
 }
 
@@ -315,6 +315,42 @@ export class ExecutionIsolationService {
     if (!bridge || typeof bridge.launch !== "function" || typeof bridge.shutdown !== "function") throw new TypeError("Native execution bridge is invalid");
     this.#bridge = bridge;
     this.#now = options.now ?? Date.now;
+  }
+
+  async observeTerminalBoundaryDenial(request: NativeServiceDenialRequest): Promise<NativeExecutionProof> {
+    if (this.#shutdown) deny("EXEC_SERVICE_SHUTDOWN", "Execution service is shut down");
+    const validPair = request?.entryPoint === "E4" && request.profile === "manual-terminal"
+      && ((request.operation === "launch" && request.decisionState === "terminal-direct-start")
+        || (request.operation === "input" && request.decisionState === "terminal-direct-input")
+        || (request.operation === "kill" && request.decisionState === "terminal-owner-kill")
+        || (request.operation === "close" && request.decisionState === "terminal-owner-close"));
+    if (!validPair || ![request.executionId, request.contextId, request.sessionId, request.runId].every(validId)
+      || !Number.isSafeInteger(request.authorityEpoch) || request.authorityEpoch < 1
+      || !HEX_64.test(request.personaDigest) || !HEX_64.test(request.policyDigest)
+      || !HEX_64.test(request.payloadDigest) || !HEX_64.test(request.requestDigest)
+      || typeof this.#bridge.observeServiceDenial !== "function") {
+      deny("EXEC_REQUEST_INVALID", "Terminal boundary denial evidence request is invalid");
+    }
+    return await this.#bridge.observeServiceDenial(request);
+  }
+
+  async observeBrokerOperation(request: NativeBrokerObservationRequest): Promise<NativeExecutionProof> {
+    if (this.#shutdown) deny("EXEC_SERVICE_SHUTDOWN", "Execution service is shut down");
+    const profile = request?.entryPoint === "E1" ? "one-shot-shell" : request?.entryPoint === "E2" ? "agent-shell" : request?.entryPoint === "E3" ? "script" : null;
+    const observation = request?.observation;
+    const brokerCodes = new Set(["OBS_BROKER_ALLOWED", "EXEC_BROKER_SCHEME_DENIED", "EXEC_BROKER_HOST_DENIED", "EXEC_BROKER_PORT_DENIED", "EXEC_BROKER_PRIVATE_ADDRESS_DENIED", "EXEC_BROKER_DNS_REBIND_DENIED", "EXEC_BROKER_REDIRECT_DENIED", "EXEC_BROKER_REQUEST_LIMIT", "EXEC_BROKER_RESPONSE_LIMIT", "EXEC_BROKER_TIMEOUT"]);
+    const counts = observation ? [observation.attemptCount, observation.dnsResolutionCount, observation.redirectCount, observation.requestBytes, observation.responseBytes] : [];
+    if (!profile || request.profile !== profile || ![request.executionId, request.contextId, request.sessionId, request.runId].every(validId)
+      || !Number.isSafeInteger(request.authorityEpoch) || request.authorityEpoch < 1
+      || !HEX_64.test(request.personaDigest) || !HEX_64.test(request.policyDigest)
+      || !observation || !brokerCodes.has(observation.code)
+      || ![observation.authorityDigest, observation.operationsDigest, observation.operationIdDigest, observation.operationDigest, observation.destinationSetDigest, observation.responseHeadersDigest, observation.responseBodySha256].every(value => HEX_64.test(value))
+      || counts.some(value => !Number.isSafeInteger(value) || value < 0)
+      || (observation.statusCode !== null && (!Number.isSafeInteger(observation.statusCode) || observation.statusCode < 100 || observation.statusCode > 599))
+      || typeof this.#bridge.observeBrokerOperation !== "function") {
+      deny("EXEC_REQUEST_INVALID", "Broker observation evidence request is invalid");
+    }
+    return await this.#bridge.observeBrokerOperation(request);
   }
 
   issueExecutionGrant(input: ExecutionGrantRequest): ExecutionGrant {

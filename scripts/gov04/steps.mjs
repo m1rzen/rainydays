@@ -363,7 +363,7 @@ export async function assertFrozenArtifactInput({ artifactPath, artifactManifest
   return { filename: path.basename(artifactPath), bytes: info.size, sha256: artifactSha256 };
 }
 
-export async function runPackage({ workspace, evidenceDirectory, artifactsDirectory, runId, challenge, candidateId, candidateSourceDigest, candidateSourceManifestSha256, buildId, sourceDateEpoch, sourceBuildEvidence, previousReceiptSha256 }) {
+export async function runPackage({ workspace, evidenceDirectory, artifactsDirectory, runId, challenge, candidateId, candidateSourceDigest, candidateSourceManifestSha256, buildId, sourceDateEpoch, sourceBuildEvidence, previousReceiptSha256, signingEnvironment = {} }) {
   try { await assertEmptyFormalOutputs(workspace); }
   catch { return { passed: false, failureClass: "PACKAGE_OUTPUT_PREEXISTS", exitCode: 1, signal: null, timedOut: false, timeoutTermination: null, childReportSha256: null, evidence: { status: "preexisting-output" } }; }
   let packageAttempt;
@@ -379,6 +379,7 @@ export async function runPackage({ workspace, evidenceDirectory, artifactsDirect
     RAINYDAYS_GOV04_RUN_ID: runId,
     RAINYDAYS_GOV04_CHALLENGE: challenge,
     RAINYDAYS_GOV04_CANDIDATE_ID: candidateId,
+    ...signingEnvironment,
   });
   let result;
   try { result = await npmInvocation(workspace, ["run", "dist"], { env, timeoutMs: 900_000 }); }

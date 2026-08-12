@@ -8,6 +8,11 @@ const fixture = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec02-config-"
 process.env.RAINYDAYS_USER_DATA_DIR = fixture;
 process.env.RAINYDAYS_DATA_DIR = path.join(fixture, "data");
 process.env.RAINYDAYS_CONFIG_PATH = path.join(fixture, "config.json");
+const credentialStore = await import("../../dist/credential-store.js");
+credentialStore.configureCredentialProtector({
+  protect: plaintext => Buffer.from([...Buffer.from(plaintext, "utf8")].map(byte => byte ^ 0xa5)),
+  unprotect: ciphertext => Buffer.from([...ciphertext].map(byte => byte ^ 0xa5)).toString("utf8"),
+});
 const config = await import("../../dist/config.js");
 
 test.after(async () => {
@@ -34,7 +39,7 @@ test("SEC-02 config initializes and persists only through its managed authority"
 test("SEC-02 provider mutations publish memory only after atomic persistence", async () => {
   await assert.rejects(() => config.upsertProfile("bad/name", { model: "m", baseURL: "https://example.test" }), /Profile 名称/);
   await assert.rejects(() => config.upsertProfile("missing-model", { baseURL: "https://example.test" }), /缺少 model/);
-  await assert.rejects(() => config.upsertProfile("bad-url", { model: "m", baseURL: "file:///tmp/model" }), /只允许 http 或 https/);
+  await assert.rejects(() => config.upsertProfile("bad-url", { model: "m", baseURL: "file:///tmp/model" }), /默认只允许 HTTPS/);
 
   await config.upsertProfile("secondary", {
     model: "model-two",
@@ -80,6 +85,13 @@ test("SEC-02 config coverage recovery exercises normalization and profile edge c
 
   await assert.rejects(() => config.upsertProfile("missing-base", { model: "m" }), /缺少 baseURL/);
   await assert.rejects(() => config.upsertProfile("invalid-url", { model: "m", baseURL: "not a url" }), /有效的 URL/);
+  await assert.rejects(() => config.upsertProfile("public-http", { model: "m", baseURL: "http://provider.example" }), /默认只允许 HTTPS/);
+  await assert.rejects(() => config.upsertProfile("loopback-http", { model: "m", baseURL: "http://127.0.0.1:8080" }), /显式开发模式/);
+  await assert.rejects(() => config.upsertProfile("url-credential", { model: "m", baseURL: "https://user:secret@provider.example" }), /不允许凭据/);
+  await assert.rejects(() => config.upsertProfile("url-fragment", { model: "m", baseURL: "https://provider.example/#secret" }), /fragment/);
+  process.env.RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER = "1";
+  await config.upsertProfile("loopback-dev", { model: "m", baseURL: "http://localhost:8080" });
+  delete process.env.RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER;
   await config.upsertProfile("short-key", { model: "m", baseURL: "https://example.test", apiKey: "short", providerType: "" });
   const short = config.listProfiles().find(profile => profile.name === "short-key");
   assert.equal(short.apiKeyHint, "••••••••");

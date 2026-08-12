@@ -6,10 +6,10 @@ import { fileURLToPath } from "node:url";
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const resolvedManifestPath = "tests/manifests/sec-03-resolved.json";
-export const architectureSha256 = "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1";
+export const architectureSha256 = "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe";
 export const predecessorFileSha256 = "a788157aeb96cf6a4ca4ac6878eb902207df4aeffad2b537a782930a98961b5a";
 export const predecessorPayloadSha256 = "e1826c3c47342813095569432326640b2fc88854163c54ced8aba7244adc7108";
-export const attackMatrixSha256 = "5b2bc86c818aab0135d1db11de0ac5dc138ae253c41944aef1829053963eff21";
+export const attackMatrixSha256 = "a5989920de885a51dcf07c83988ee80c33134d58abb58390391af8560da50eac";
 export const layerNames = Object.freeze(["unit", "contract", "integration", "electron", "packaged"]);
 const sourcePath = "tests/manifests/sec-03.json";
 const predecessorPath = "tests/manifests/sec-02-resolved.json";

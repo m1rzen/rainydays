@@ -25,6 +25,7 @@ import {
 } from "../helpers.mjs";
 import { classifyInstallerResult, launchTracked } from "./smoke-helpers.mjs";
 import { createSec02Recorder } from "../sec02-receipts.mjs";
+import { emitSec03ProjectionReceipts } from "../sec03-projection-receipts.mjs";
 
 const rainyDaysInstallerGuid = "0897e7b3-5f0f-5c38-ba13-645f30c0bb5a";
 const rainyDaysUninstallSubkey = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${rainyDaysInstallerGuid}`;
@@ -501,6 +502,13 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     client.close(); client = null;
     await checkpoint("restart-stop");
     await stopInstalled(second, secondPorts[0], secondPorts[1]); second = null;
+
+    await checkpoint("sec03-projection-receipts");
+    const projection = await emitSec03ProjectionReceipts({
+      layer: "packaged",
+      addonPath: path.join(installDir, "resources", "app.asar.unpacked", "dist", "native", "sandbox-launcher.node"),
+    });
+    assert.equal(projection.enabled ? projection.count : 0, projection.enabled ? 48 : 0);
 
     await checkpoint("uninstall-execution");
     const uninstaller = path.join(installDir, "Uninstall RainyDays.exe");

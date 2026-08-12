@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "task": "SEC-03",
-  "architectureSha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1",
+  "architectureSha256": "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe",
   "candidateBinding": "runtime",
   "layers": [
     "real-host",
@@ -12,6 +12,7 @@
     "E1",
     "E2",
     "E3",
+    "E3A",
     "E4"
   ],
   "realHostReceiptCount": 386,
@@ -1842,7 +1843,7 @@
       "layer": "real-host",
       "familyId": "A06",
       "variantId": "A06-01",
-      "profileId": "E3",
+      "profileId": "E3A",
       "stimulus": {
         "descriptor": "direct-child",
         "sourceVariant": null
@@ -1894,7 +1895,7 @@
       "layer": "real-host",
       "familyId": "A06",
       "variantId": "A06-02",
-      "profileId": "E3",
+      "profileId": "E3A",
       "stimulus": {
         "descriptor": "grandchild",
         "sourceVariant": null
@@ -1946,7 +1947,7 @@
       "layer": "real-host",
       "familyId": "A06",
       "variantId": "A06-03",
-      "profileId": "E3",
+      "profileId": "E3A",
       "stimulus": {
         "descriptor": "detached-child",
         "sourceVariant": null
@@ -1998,7 +1999,7 @@
       "layer": "real-host",
       "familyId": "A06",
       "variantId": "A06-04",
-      "profileId": "E3",
+      "profileId": "E3A",
       "stimulus": {
         "descriptor": "background-descendant",
         "sourceVariant": null
@@ -2050,7 +2051,7 @@
       "layer": "real-host",
       "familyId": "A07",
       "variantId": "A07-01",
-      "profileId": "E3",
+      "profileId": "E3A",
       "stimulus": {
         "descriptor": "explicit-breakaway",
         "sourceVariant": null
@@ -2102,7 +2103,7 @@
       "layer": "real-host",
       "familyId": "A07",
       "variantId": "A07-02",
-      "profileId": "E3",
+      "profileId": "E3A",
       "stimulus": {
         "descriptor": "silent-breakaway",
         "sourceVariant": null
@@ -2154,7 +2155,7 @@
       "layer": "real-host",
       "familyId": "A07",
       "variantId": "A07-03",
-      "profileId": "E3",
+      "profileId": "E3A",
       "stimulus": {
         "descriptor": "nested-job",
         "sourceVariant": null
@@ -2414,7 +2415,7 @@
       "layer": "real-host",
       "familyId": "A08",
       "variantId": "A08-02",
-      "profileId": "E3",
+      "profileId": "E3A",
       "stimulus": {
         "descriptor": "active-process",
         "sourceVariant": null
@@ -2518,7 +2519,7 @@
       "layer": "real-host",
       "familyId": "A08",
       "variantId": "A08-04",
-      "profileId": "E3",
+      "profileId": "E3A",
       "stimulus": {
         "descriptor": "job-memory",
         "sourceVariant": null
@@ -6285,5 +6286,5 @@
       "nativeProducerRequired": true
     }
   ],
-  "canonicalPayloadSha256": "96a3bfc2807aa60b9862a44e7fb0b83237176877d0d25b17bf93d787916baec8"
+  "canonicalPayloadSha256": "a1f592e8b7adf381c6825ffaec4a01c324e7efa23686b1c2c4d713e36f3bbd40"
 }

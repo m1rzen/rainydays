@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import ts from "typescript";
 
-export const SEC03_ARCHITECTURE_SHA256 = "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1";
+export const SEC03_ARCHITECTURE_SHA256 = "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe";
 export const sourceExtensions = new Set([".ts", ".tsx", ".js", ".cjs", ".mjs", ".cpp", ".cc", ".h", ".hpp", ".html"]);
 const scriptExtensions = new Set([".ts", ".tsx", ".js", ".cjs", ".mjs"]);
 const nativeExtensions = new Set([".cpp", ".cc", ".h", ".hpp"]);
@@ -56,7 +56,7 @@ function containerName(node, sourceFile) {
   }
   return "<top-level>";
 }
-export function sec03ExecutionClass(sourcePath) { if (sourcePath.startsWith("tests/") || sourcePath.startsWith("scripts/")) return "build-test"; if (sourcePath.startsWith("electron/")) return "electron-runtime"; if (sourcePath.startsWith("native/sandbox-host/")) return "native-host"; return "product-runtime"; }
+export function sec03ExecutionClass(sourcePath) { if (sourcePath.startsWith("tests/") || sourcePath.startsWith("scripts/") || sourcePath === "native/sandbox-host/sec03-a07-adversary.cpp") return "build-test"; if (sourcePath.startsWith("electron/")) return "electron-runtime"; if (sourcePath.startsWith("native/sandbox-host/")) return "native-host"; return "product-runtime"; }
 function bindingNames(name) { if (ts.isIdentifier(name)) return [name.text]; if (ts.isObjectBindingPattern(name) || ts.isArrayBindingPattern(name)) return name.elements.flatMap(element => ts.isBindingElement(element) ? bindingNames(element.name) : []); return []; }
 function localSpecifier(sourcePath, specifier, sourceSet) {
   if (!specifier?.startsWith(".")) return null;

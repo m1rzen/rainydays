@@ -7,7 +7,7 @@
   "properties": {
     "schemaVersion": {"const": 1},
     "task": {"const": "SEC-03"},
-    "architectureSha256": {"const": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1"},
+    "architectureSha256": {"const": "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe"},
     "scannerSha256": {"$ref": "#/$defs/sha256"},
     "crosscheckSha256": {"$ref": "#/$defs/sha256"},
     "policySha256": {"$ref": "#/$defs/sha256"},

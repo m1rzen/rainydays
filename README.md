@@ -128,40 +128,22 @@ cd rainydays
 npm ci
 ```
 
-> 当前仓库为 Private，克隆前需要登录具有访问权限的 GitHub 账号。
+> 当前仓库为 Public；克隆不需要GitHub登录。
 
 ### 2. 配置模型
 
-开发态默认从项目根目录的 `config.json` 读取配置：
+启动桌面应用后，在 **Settings → Providers** 中添加OpenAI-compatible Provider、模型、API Key和Base URL。API Key由Electron `safeStorage`保护并保存到独立凭据vault；`config.json`只保存opaque credential reference，不保存明文密钥。
 
-```powershell
-Copy-Item config.example.json config.json
-```
-
-然后填写 OpenAI-compatible Provider 的模型、API Key 与 Base URL：
-
-```json
-{
-  "defaultProfile": "deepseek",
-  "profiles": {
-    "deepseek": {
-      "model": "your-model-name",
-      "apiKey": "your-api-key",
-      "baseURL": "https://your-provider.example/v1"
-    }
-  }
-}
-```
-
-`config.json`、`.env`、数据库和其他本地运行数据均已被 Git 忽略，请勿将真实密钥提交到仓库。
-
-也可以在首次启动时通过环境变量提供配置：
+开发态首次启动也可以从环境变量迁移配置；迁移成功后请从启动环境中移除API Key：
 
 ```powershell
 $env:LLM_API_KEY = "your-api-key"
 $env:LLM_BASE_URL = "https://your-provider.example/v1"
 $env:LLM_MODEL = "your-model-name"
+npm run electron:dev
 ```
+
+`config.json`、`.env`、凭据vault、数据库和其他本地运行数据均已被Git忽略。请勿将真实密钥提交到仓库、日志或Issue。
 
 ### 3. 启动桌面应用
 

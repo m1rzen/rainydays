@@ -5,6 +5,7 @@
 
 import { createHash } from "node:crypto";
 import path from "path";
+import { deleteCredentials, readCredential, storeCredential } from "./credential-store.js";
 import { getManagedPathStore } from "./managed-path-store.js";
 import { pathPolicy } from "./path-runtime.js";
 import type { PathAuditIdentity } from "./path-policy.js";
@@ -13,6 +14,7 @@ import { CONFIG_PATH, DEFAULT_WORKSPACE_DIR, USER_DATA_DIR } from "./runtime-pat
 export interface ProviderProfile {
   model: string;
   apiKey: string;
+  credentialRef?: string;
   baseURL: string;
   providerType?: string;
 }
@@ -54,12 +56,14 @@ function defaultSettings(): AppSettings {
 }
 
 function normalizeProfile(value: Partial<ProviderProfile> | undefined): ProviderProfile {
-  return {
+  const profile: ProviderProfile = {
     model: typeof value?.model === "string" ? value.model : "deepseek-chat",
     apiKey: typeof value?.apiKey === "string" ? value.apiKey : "",
     baseURL: typeof value?.baseURL === "string" ? value.baseURL : "https://api.deepseek.com",
     providerType: typeof value?.providerType === "string" ? value.providerType : "openai-compatible",
   };
+  if (typeof value?.credentialRef === "string") profile.credentialRef = value.credentialRef;
+  return profile;
 }
 
 function normalizeConfig(value: Partial<Config>): Config {
@@ -106,7 +110,8 @@ export async function initializeConfig(): Promise<Config> {
   if (config) return config;
   const store = await getManagedPathStore();
   const bytes = await store.readConfig();
-  if (bytes === null) config = normalizeConfig({});
+  let candidate: Config;
+  if (bytes === null) candidate = normalizeConfig({});
   else {
     let parsed: Partial<Config>;
     try {
@@ -114,10 +119,33 @@ export async function initializeConfig(): Promise<Config> {
     } catch {
       throw new Error("config.json 不是合法 JSON");
     }
-    config = normalizeConfig(parsed);
+    const persistedProfiles = parsed.profiles && typeof parsed.profiles === "object" ? parsed.profiles : {};
+    for (const profile of Object.values(persistedProfiles)) {
+      if (profile?.apiKey && profile.credentialRef) throw new Error("Provider credential state is ambiguous");
+    }
+    candidate = normalizeConfig(parsed);
   }
-  currentProfileName = config.defaultProfile;
-  return config;
+  for (const profile of Object.values(candidate.profiles)) validateBaseURL(profile.baseURL);
+  const createdReferences: string[] = [];
+  let migrated = false;
+  try {
+    for (const profile of Object.values(candidate.profiles)) {
+      if (profile.apiKey) {
+        profile.credentialRef = await storeCredential(profile.apiKey);
+        createdReferences.push(profile.credentialRef);
+        migrated = true;
+      } else if (profile.credentialRef) {
+        profile.apiKey = await readCredential(profile.credentialRef);
+      }
+    }
+    if (migrated) await persistConfig(candidate);
+  } catch (error) {
+    await deleteCredentials(createdReferences).catch(() => undefined);
+    throw error;
+  }
+  config = candidate;
+  currentProfileName = candidate.defaultProfile;
+  return candidate;
 }
 
 export function loadConfig(): Config {
@@ -147,6 +175,20 @@ function cloneConfig(source: Config): Config {
     profiles: Object.fromEntries(Object.entries(source.profiles).map(([name, profile]) => [name, { ...profile }])),
     settings: { ...source.settings },
   };
+}
+
+async function persistConfig(value: Config): Promise<void> {
+  const persisted = {
+    defaultProfile: value.defaultProfile,
+    profiles: Object.fromEntries(Object.entries(value.profiles).map(([name, profile]) => [name, {
+      model: profile.model,
+      credentialRef: profile.credentialRef,
+      baseURL: profile.baseURL,
+      providerType: profile.providerType,
+    }])),
+    settings: value.settings,
+  };
+  await (await getManagedPathStore()).writeConfig(Buffer.from(JSON.stringify(persisted, null, 2), "utf8"));
 }
 
 export function getConfigSnapshot(): Config {
@@ -221,9 +263,11 @@ function validateBaseURL(baseURL: string): void {
   } catch {
     throw new Error("baseURL 必须是有效的 URL");
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error("baseURL 只允许 http 或 https 协议");
-  }
+  if (url.username || url.password || url.hash) throw new Error("baseURL 不允许凭据或 fragment");
+  if (url.protocol === "https:") return;
+  const loopback = url.hostname === "127.0.0.1" || url.hostname === "localhost" || url.hostname === "[::1]";
+  if (url.protocol === "http:" && loopback && process.env.RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER === "1") return;
+  throw new Error("baseURL 默认只允许 HTTPS；loopback HTTP 需要显式开发模式");
 }
 
 export async function upsertProfile(
@@ -246,6 +290,7 @@ export async function upsertProfile(
     apiKey: typeof input.apiKey === "string" && input.apiKey.length > 0
       ? input.apiKey.trim()
       : existing?.apiKey || "",
+    credentialRef: existing?.credentialRef,
     providerType: input.providerType?.trim() || existing?.providerType || "openai-compatible",
   };
 
@@ -308,9 +353,31 @@ export async function commitConfigSnapshot(candidate: Config): Promise<void> {
 /** 通过PathPolicy同目录临时文件和原子rename持久化，成功后才发布内存状态。 */
 export async function saveConfig(cfg: Config): Promise<void> {
   const normalized = normalizeConfig(cfg);
-  const store = await getManagedPathStore();
-  await store.writeConfig(Buffer.from(JSON.stringify(normalized, null, 2), "utf8"));
+  const previous = config;
+  const createdReferences: string[] = [];
+  const retiredReferences: string[] = [];
+  try {
+    for (const [name, profile] of Object.entries(normalized.profiles)) {
+      const oldProfile = previous?.profiles[name];
+      if (profile.apiKey && (!profile.credentialRef || profile.apiKey !== oldProfile?.apiKey)) {
+        const oldReference = profile.credentialRef;
+        profile.credentialRef = await storeCredential(profile.apiKey);
+        createdReferences.push(profile.credentialRef);
+        if (oldReference) retiredReferences.push(oldReference);
+      }
+    }
+    if (previous) {
+      for (const [name, profile] of Object.entries(previous.profiles)) {
+        if (!normalized.profiles[name] && profile.credentialRef) retiredReferences.push(profile.credentialRef);
+      }
+    }
+    await persistConfig(normalized);
+  } catch (error) {
+    await deleteCredentials(createdReferences).catch(() => undefined);
+    throw error;
+  }
   config = normalized;
+  await deleteCredentials(retiredReferences).catch(() => undefined);
 
   if (!currentProfileName || !normalized.profiles[currentProfileName]) {
     currentProfileName = normalized.defaultProfile;

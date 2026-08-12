@@ -5,6 +5,7 @@
 // ===========================================
 
 import { spawn, type ChildProcess } from "child_process";
+import { randomBytes } from "node:crypto";
 import { pathToFileURL } from "url";
 import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 import { terminateProcessTree } from "./process-tree.js";
@@ -14,6 +15,7 @@ const RESTART_DELAY = 3000; // 3 秒
 let restartCount = 0;
 let lastRestartTime = 0;
 let serverProcess: any = null;
+let serverApiToken: string | null = null;
 let isShuttingDown = false;
 
 function handleStartFailure(error: unknown): void {
@@ -63,6 +65,10 @@ async function startServer() {
       const childEnvironment = { ...process.env };
       delete childEnvironment.NODE_OPTIONS;
       delete childEnvironment.NODE_PATH;
+      delete childEnvironment.DEEPSEEK_API_KEY;
+      delete childEnvironment.LLM_API_KEY;
+      serverApiToken = randomBytes(32).toString("hex");
+      childEnvironment.RAINYDAYS_API_TOKEN = serverApiToken;
       const wrapper = `const runtime = await import(${JSON.stringify(pathToFileURL(serverScript.canonicalPath).href)}); await runtime.ready; process.send?.({ type: "rainydays-runtime-loaded" });`;
       const child = spawn(nodeExecutable.canonicalPath, [
         "--import", pathToFileURL(tsxLoader.canonicalPath).href,
@@ -116,7 +122,10 @@ const healthCheckInterval = setInterval(async () => {
   if (!serverProcess || isShuttingDown) return;
 
   try {
-    const response = await fetch("http://localhost:3111/api/status", {
+    if (!serverApiToken) throw new Error("Daemon API credential is unavailable");
+    const port = process.env.PORT || "3111";
+    const response = await fetch(`http://127.0.0.1:${port}/api/status`, {
+      headers: { "X-RainyDays-Token": serverApiToken },
       signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) {

@@ -1134,6 +1134,7 @@ test("SEC-03 runtime gateways reject mismatched public requests before native au
   const gateway = createScopedExecutionGateway({ context, inspected, owner: resourceOwner });
   await assert.rejects(() => gateway.executeCommand({ command: "echo changed", rootLease: {} }), error => code(error, "EXEC_GRANT_ARGUMENT_MISMATCH"));
   await assert.rejects(() => gateway.executeScript({ code: "changed", rootLease: {} }), error => code(error, "EXEC_GRANT_ARGUMENT_MISMATCH"));
+  await assert.rejects(() => gateway.executeHttps({ entryPoint: "E1", operations: [], invocation: {} }), error => code(error, "EXEC_BINDING_MISMATCH"));
   await assert.rejects(() => gateway.startShell({ terminalId: "term_12345678", shell: "cmd", rootLease: {} }), error => code(error, "EXEC_BINDING_MISMATCH"));
   await assert.rejects(() => gateway.writeShell({ lease: { leaseId: "forged" }, terminalId: "term_12345678", data: "dir", appendNewline: true }), error => code(error, "EXEC_BINDING_MISMATCH"));
 
@@ -1417,18 +1418,20 @@ test("SEC-03 execution request validation rejects every public boundary variant"
     ["shell Node env", { environment: { NODE_DISABLE_COLORS: "1" } }],
     ["network missing", { network: null }],
     ["network mode", { network: { mode: "direct" } }],
-    ["persistent broker", { entryPoint: "E2", profile: "agent-shell", limits: limits("E2"), network: { mode: "brokered", operationsDigest: HASH } }, "EXEC_NETWORK_PROFILE_UNSUPPORTED"],
+    ["manual broker", { entryPoint: "E4", profile: "manual-terminal", limits: limits("E4"), network: { mode: "brokered", operationsDigest: HASH } }, "EXEC_NETWORK_PROFILE_UNSUPPORTED"],
     ["script broker digest", { entryPoint: "E3", profile: "script", limits: limits("E3"), environment: { NODE_DISABLE_COLORS: "1" }, network: { mode: "brokered", operationsDigest: "bad" } }],
   ]) expectCode(label, make(overrides.entryPoint ?? "E1", overrides), expected);
 
-  const brokered = make("E3", { network: { mode: "brokered", operationsDigest: HASH } });
-  assert.ok(new ExecutionIsolationService(fakeBridge().bridge, { now: () => now }).issueExecutionGrant(brokered));
+  for (const entryPoint of ["E1", "E2", "E3"]) {
+    const brokered = make(entryPoint, { network: { mode: "brokered", operationsDigest: HASH } });
+    assert.ok(new ExecutionIsolationService(fakeBridge().bridge, { now: () => now }).issueExecutionGrant(brokered));
+  }
   const stopped = new ExecutionIsolationService(fakeBridge().bridge, { now: () => now });
   await stopped.shutdown();
   assert.throws(() => stopped.issueExecutionGrant(make()), error => code(error, "EXEC_SERVICE_SHUTDOWN"));
 });
 
-test("SEC-03 manual consent preparation rejects malformed JSON, bindings, display and evidence", () => {
+test("SEC-03 manual consent preparation rejects malformed JSON, bindings, display and evidence", async () => {
   assert.throws(() => new ManualExecutionConsentLedger({ observeDenial: true }), TypeError);
   const invalidPrepare = (label, overrides, expected = "CONSENT_REQUEST_INVALID") => {
     const ledger = new ManualExecutionConsentLedger();
@@ -1479,6 +1482,25 @@ test("SEC-03 manual consent preparation rejects malformed JSON, bindings, displa
   const saturated = new ManualExecutionConsentLedger();
   for (let index = 0; index < 128; index += 1) prepare(saturated);
   assert.throws(() => prepare(saturated), error => consentCode(error, "CONSENT_REQUEST_INVALID"));
+  for (const operation of ["terminal-clear", "terminal-kill", "terminal-close"]) {
+    const ledger = new ManualExecutionConsentLedger();
+    const challenge = prepare(ledger, {
+      operation,
+      request: { id: "term-a" },
+      display: { operationLabel: operation, targetLabel: "term-a", rootAlias: "terminal", preview: "term-a" },
+    });
+    let executions = 0;
+    const decision = { challengeId: challenge.challengeId, decision: "approve", presence: presence(), operation, argumentsDigest: challenge.argumentsDigest };
+    await ledger.decide(decision, (storedOperation, exactRequest) => {
+      executions += 1;
+      assert.equal(storedOperation, operation);
+      assert.deepEqual(exactRequest, { id: "term-a" });
+    });
+    assert.equal(executions, 1);
+    await assert.rejects(() => ledger.decide(decision, () => { executions += 1; }), error => consentCode(error, "EXEC_CONSENT_REPLAYED"));
+    assert.equal(executions, 1);
+  }
+
   const stopped = new ManualExecutionConsentLedger();
   stopped.shutdown();
   assert.throws(() => prepare(stopped), error => consentCode(error, "CONSENT_LEDGER_SHUTDOWN"));

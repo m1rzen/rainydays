@@ -335,6 +335,7 @@ export interface CapabilityBrokerOptions {
   readonly resolveSessionPersona: (sessionId: string) => string | null;
   readonly pathPolicy: PathPolicy;
   readonly now?: () => number;
+  readonly newRunId?: () => string;
 }
 
 function networkIsSubset(child: NetworkPolicy, parent: NetworkPolicy): boolean {
@@ -350,6 +351,7 @@ export class CapabilityBroker {
   private readonly resolveSessionPersona: (sessionId: string) => string | null;
   private readonly pathPolicy: PathPolicy;
   private readonly now: () => number;
+  private readonly newRunId: () => string;
   private readonly staticBindings = new Map<string, BindingRecord>();
   private readonly directPolicies = new Map<string, ToolPolicy>();
   private readonly authorityRecords = new WeakMap<RuntimeAuthority, AuthorityRecord>();
@@ -364,6 +366,7 @@ export class CapabilityBroker {
     this.resolveSessionPersona = options.resolveSessionPersona;
     this.pathPolicy = options.pathPolicy;
     this.now = options.now ?? Date.now;
+    this.newRunId = options.newRunId ?? randomUUID;
   }
 
   registerStaticTool(registration: CapabilityToolRegistration): void {
@@ -918,12 +921,14 @@ export class CapabilityBroker {
     if (!Number.isInteger(ttlMs) || ttlMs <= 0 || ttlMs > 60_000) throw new TypeError("direct operation lifetime is invalid");
     const snapshot = this.prepareArguments(input.args);
     const risks = new Set(policy.riskClasses);
+    const runId = this.newRunId();
+    if (typeof runId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/u.test(runId)) throw new TypeError("direct operation run identity is invalid");
     return this.createContext({
       authority,
       parent: null,
       principal: "local-user-api",
       sessionId: input.sessionId,
-      runId: randomUUID(),
+      runId,
       bindings: new Map(),
       roots: new Set(authority.persona.allowedRoots),
       risks,

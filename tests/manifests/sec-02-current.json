@@ -76,7 +76,7 @@
         },
         {
           "exactCasePath": "tests/integration/sec01-terminal-owner.test.mjs",
-          "sha256": "c0055c7df41036c0c4f9475976450cf23119a3a46c1fd831b29cc40f5b2a3273",
+          "sha256": "a3b916965714dd06610872300c34cc2bb7232d9d1d0326bce606928484aec971",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -88,13 +88,13 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "7fd6140c7bf88fbbb844d8a95770da3d015098df484a7634b31fff7c9589a64a",
+          "sha256": "3cabdc4dcc5fa2de631242411a0cc22a1466aa1e813b1f109ffcafb2e1d6c95b",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "266217bf7ee09d9fbf1e888a71dc25b3a3c1f9b5e0956f673e0f8f4f0de2cfaf",
+          "sha256": "d5d5127708466fd6695a59106af29bdbd4102cebd11c8ec21404c6d60d95ab4c",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         }
@@ -344,7 +344,7 @@
         },
         {
           "exactCasePath": "tests/integration/sec01-terminal-owner.test.mjs",
-          "sha256": "c0055c7df41036c0c4f9475976450cf23119a3a46c1fd831b29cc40f5b2a3273",
+          "sha256": "a3b916965714dd06610872300c34cc2bb7232d9d1d0326bce606928484aec971",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -356,13 +356,13 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "7fd6140c7bf88fbbb844d8a95770da3d015098df484a7634b31fff7c9589a64a",
+          "sha256": "3cabdc4dcc5fa2de631242411a0cc22a1466aa1e813b1f109ffcafb2e1d6c95b",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "266217bf7ee09d9fbf1e888a71dc25b3a3c1f9b5e0956f673e0f8f4f0de2cfaf",
+          "sha256": "d5d5127708466fd6695a59106af29bdbd4102cebd11c8ec21404c6d60d95ab4c",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -374,7 +374,7 @@
         },
         {
           "exactCasePath": "tests/contract/config-managed-store.test.mjs",
-          "sha256": "2e9f859b0558d3ba8685aee66b4985331c80764e2d948dec58de83b66dcba5d6",
+          "sha256": "d455ca1c62f70e30fbbb0f28b28ecb0d98bc89a7815ebdcafc7104a7fba119ac",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -386,7 +386,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "f2c67cad923810df944e4801fc5a406b532236dd7d7938760112dbba67dfc660",
+          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -440,7 +440,7 @@
         },
         {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb",
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1036,7 +1036,7 @@
         },
         {
           "exactCasePath": "tests/integration/sec01-terminal-owner.test.mjs",
-          "sha256": "c0055c7df41036c0c4f9475976450cf23119a3a46c1fd831b29cc40f5b2a3273",
+          "sha256": "a3b916965714dd06610872300c34cc2bb7232d9d1d0326bce606928484aec971",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -1048,13 +1048,13 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "7fd6140c7bf88fbbb844d8a95770da3d015098df484a7634b31fff7c9589a64a",
+          "sha256": "3cabdc4dcc5fa2de631242411a0cc22a1466aa1e813b1f109ffcafb2e1d6c95b",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "266217bf7ee09d9fbf1e888a71dc25b3a3c1f9b5e0956f673e0f8f4f0de2cfaf",
+          "sha256": "d5d5127708466fd6695a59106af29bdbd4102cebd11c8ec21404c6d60d95ab4c",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -1066,7 +1066,7 @@
         },
         {
           "exactCasePath": "tests/contract/config-managed-store.test.mjs",
-          "sha256": "2e9f859b0558d3ba8685aee66b4985331c80764e2d948dec58de83b66dcba5d6",
+          "sha256": "d455ca1c62f70e30fbbb0f28b28ecb0d98bc89a7815ebdcafc7104a7fba119ac",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -1078,7 +1078,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "f2c67cad923810df944e4801fc5a406b532236dd7d7938760112dbba67dfc660",
+          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -1132,7 +1132,7 @@
         },
         {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb",
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1691,7 +1691,7 @@
   "coverageScope": {
     "source": {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "01c01bff78abacb337eddfcf9926a810df011be9330609058f4ebfce52d2d69d"
+      "sha256": "723a4f711bf690cff722281a6451266f57ed63aac610299be0b1576f82ed18c8"
     },
     "overallFiles": [
       "dist/version.js",
@@ -1717,6 +1717,7 @@
       "dist/terminal-facade.js",
       "parity/scripts/baseline-lib.mjs",
       "dist/execution-isolation.js",
+      "dist/execution-network-broker.js",
       "dist/execution-native.js",
       "dist/execution-runtime.js",
       "dist/manual-execution-consent.js",
@@ -1748,6 +1749,7 @@
       "dist/terminal.js",
       "dist/terminal-facade.js",
       "dist/execution-isolation.js",
+      "dist/execution-network-broker.js",
       "dist/execution-native.js",
       "dist/execution-runtime.js",
       "dist/manual-execution-consent.js",
@@ -1784,6 +1786,7 @@
       "dist/terminal-facade.js": 80,
       "parity/scripts/baseline-lib.mjs": 95,
       "dist/execution-isolation.js": 80,
+      "dist/execution-network-broker.js": 80,
       "dist/execution-native.js": 80,
       "dist/execution-runtime.js": 80,
       "dist/manual-execution-consent.js": 80,
@@ -6291,7 +6294,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6303,7 +6306,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6315,7 +6318,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6327,7 +6330,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6339,7 +6342,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6351,7 +6354,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6363,7 +6366,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6375,7 +6378,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6387,7 +6390,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6399,7 +6402,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6411,7 +6414,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6423,7 +6426,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6507,7 +6510,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 config parent junction fails closed before runtime publication",
         "producer": "node-test"
@@ -6519,7 +6522,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 real persistence failure retires old authority and stops fail-closed",
         "producer": "node-test"
@@ -6531,7 +6534,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "9170170c8d3fe0419ab872661544ac9a476ccde20322b8ef443fcc593a20d3eb"
+          "sha256": "b50a961691af55b87694941bad5cc43f228b176157591814bef6fbc542b609af"
         },
         "testCaseId": "SEC-02 real publication failure restores disk and runtime using a fresh old-config authority",
         "producer": "node-test"
@@ -6651,7 +6654,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "f2c67cad923810df944e4801fc5a406b532236dd7d7938760112dbba67dfc660"
+          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6663,7 +6666,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "f2c67cad923810df944e4801fc5a406b532236dd7d7938760112dbba67dfc660"
+          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6687,7 +6690,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "f2c67cad923810df944e4801fc5a406b532236dd7d7938760112dbba67dfc660"
+          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6699,7 +6702,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "f2c67cad923810df944e4801fc5a406b532236dd7d7938760112dbba67dfc660"
+          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6711,7 +6714,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "f2c67cad923810df944e4801fc5a406b532236dd7d7938760112dbba67dfc660"
+          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6723,7 +6726,7 @@
         "layer": "packaged",
         "test": {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "266217bf7ee09d9fbf1e888a71dc25b3a3c1f9b5e0956f673e0f8f4f0de2cfaf"
+          "sha256": "d5d5127708466fd6695a59106af29bdbd4102cebd11c8ec21404c6d60d95ab4c"
         },
         "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
         "producer": "node-test"
@@ -6925,9 +6928,9 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/sec01-terminal-owner.test.mjs",
-          "sha256": "c0055c7df41036c0c4f9475976450cf23119a3a46c1fd831b29cc40f5b2a3273"
+          "sha256": "a3b916965714dd06610872300c34cc2bb7232d9d1d0326bce606928484aec971"
         },
-        "testCaseId": "SEC-01/SEC-03 A13 local Terminal API is capability-gated and Session-owned",
+        "testCaseId": "SEC-01 local Terminal API is capability-gated and Session-owned",
         "producer": "node-test"
       },
       {
@@ -6987,27 +6990,27 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "01c01bff78abacb337eddfcf9926a810df011be9330609058f4ebfce52d2d69d"
+      "sha256": "723a4f711bf690cff722281a6451266f57ed63aac610299be0b1576f82ed18c8"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "d340807ef3550926d2f52e2228376dd849fd2a5d2db3a52a730abf2c8d2ff53f"
+      "sha256": "db7bfeededdae603ba650c415115e0317a29392479321f8648dd829a52220d93"
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
-      "sha256": "00b6a3eb039d923dd35cdd16f43a5022f3bd49131b082ac4c2576b7788ffbf00"
+      "sha256": "a033ecde99fb788e99897878e2b9fc32a5bec0057352841a584b8aeae0418527"
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "94bd8dcdc12d468e3d54e0d71e5472489fe515b95cd6bf618da7bde3371c70e5"
+      "sha256": "c77536f1bef698911c23e1d19d292ca5a0f3c3d7de6a9167ebed3163bff062c8"
     },
     {
       "exactCasePath": "scripts/run-coverage.mjs",
-      "sha256": "7dd6b92a66eb38a3027409f40e3003055f09898e933eea8f7ed9dc0ea8afecb1"
+      "sha256": "8fc3cbf89841f5e5f38a4ad305009208368e9604d9c04c74872e3fd55df0d251"
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "60ba02ff806efff30722d8abb258eb7381a342a0073f0fb51e8e213283abf29e"
+      "sha256": "00675dce008dd8c899ffabdd0b5d170537f323c148d4d857437271a68778b449"
     },
     {
       "exactCasePath": "scripts/test-gate-selftest.mjs",
@@ -7019,7 +7022,7 @@
     },
     {
       "exactCasePath": "scripts/build-inputs.mjs",
-      "sha256": "04290016fe750f26962212f473be6b3fe8db41bc9ee413c8db50ea7e71ce7a13"
+      "sha256": "541de573bef18075ba6ff96c6fca100252602b52843c18073d3ab870e1e479b8"
     },
     {
       "exactCasePath": "scripts/build-electron.mjs",
@@ -7027,7 +7030,7 @@
     },
     {
       "exactCasePath": "scripts/electron-asar-integrity.mjs",
-      "sha256": "ae0c1a96964a25c9986347f03b93f03c9348e4a067cac91d1355e90c7fc932bd"
+      "sha256": "3c1f99f19a586b72340555254da01074ce1f066add0f98615cac606633bd698d"
     },
     {
       "exactCasePath": "scripts/electron-stage-integrity.mjs",
@@ -7035,7 +7038,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "54b7988cb21eff0ded9f8de36826da718b74577320ea0c0727693681fe569a29"
+      "sha256": "2b851985a98db7940f0d5e6591cdc6288659dc48a85a79d316b88273b3e3c02b"
     },
     {
       "exactCasePath": "scripts/sec02-sink-scanner.mjs",
@@ -7051,11 +7054,11 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "35a845cc0d8e8fae0ea5dc3724da5cf821c2cdb2841fb3da530aa37261a391c3"
+      "sha256": "e11e0ae701e0623d4e8ee7f7824173c4089b07b3229657e451648bdbd8bc6905"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "2c4978e198ff500b3c00d507c86f21d3444be76e3ca63a19c31da7e4ea15cca9"
+      "sha256": "5e04fa6225431f913b07a16c4a7e8be3e477817d449f6954fde94c8660a6c37d"
     },
     {
       "exactCasePath": "tests/sec02-sink-crosscheck-policy.json",
@@ -7067,7 +7070,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-      "sha256": "f2c67cad923810df944e4801fc5a406b532236dd7d7938760112dbba67dfc660"
+      "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
     },
     {
       "exactCasePath": "scripts/gov04/identity.mjs",
@@ -7091,11 +7094,11 @@
     },
     {
       "exactCasePath": "tests/sec02-evidence-map.json",
-      "sha256": "eccc68c365a8b3db84c7643854706fef46738b9ed652231b390a0644ed91cda2"
+      "sha256": "1544bdc43221c560b4d98c0dd48e122b9d79215fcce79898bc148bca5c6aacb5"
     },
     {
       "exactCasePath": "tests/sec02-receipts.mjs",
-      "sha256": "a2f8215c282f3dfcd68a8b125a2db07c4eb62d3a3d95682a60f47fd5f0263f5f"
+      "sha256": "941267e81c64e452808771422de0b9d5737b6efe8540dfbc2e0813cd3659dd11"
     },
     {
       "exactCasePath": "tests/sec02-path-policy-details.schema.json",
@@ -7107,7 +7110,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "bbd685a27b15c35d333e9e993bc26155441b2c9140e75db1c9ead75143f95e94"
+      "sha256": "8d5200e364d5e4903006d0b19a59533e80e6ec55fd1e8ce42386fe2bb986bbb7"
     },
     {
       "exactCasePath": "package-lock.json",
@@ -7115,5 +7118,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "14ecb3bf3852521a81eb8b8b27b608e6b04aa9d5f75ff540f037065b9ac4918e"
+  "canonicalPayloadSha256": "422c4e375f509b141545a58d5058f72fa47dce5aec148adac00046632b043d3d"
 }

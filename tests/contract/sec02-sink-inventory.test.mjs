@@ -426,7 +426,7 @@ test("SEC-02 current restricted runtime domain and reviewed exceptions are exact
   ]);
   const analyzer = createHash("sha256").update(analyzerBytes).digest("hex");
   const result = await scanSec02RestrictedRuntime(projectRoot, policy, analyzer);
-  assert.equal(result.fileCount, 71);
+  assert.equal(result.fileCount, 72);
   assert.equal(result.importCount, 33);
   assert.equal(result.exceptionCount, 2);
   assert.equal(result.complete, true);

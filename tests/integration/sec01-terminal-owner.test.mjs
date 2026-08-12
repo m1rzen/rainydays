@@ -14,7 +14,7 @@ import {
 } from "../helpers.mjs";
 import { createSec02Recorder } from "../sec02-receipts.mjs";
 
-const terminalApiRecorder = await createSec02Recorder(import.meta.url, "SEC-01/SEC-03 A13 local Terminal API is capability-gated and Session-owned");
+const terminalApiRecorder = await createSec02Recorder(import.meta.url, "SEC-01 local Terminal API is capability-gated and Session-owned");
 test.after(async () => terminalApiRecorder.close());
 
 async function api(base, token, route, options = {}) {
@@ -32,7 +32,7 @@ async function api(base, token, route, options = {}) {
   return { status: response.status, body };
 }
 
-test("SEC-01/SEC-03 A13 local Terminal API is capability-gated and Session-owned", async () => {
+test("SEC-01 local Terminal API is capability-gated and Session-owned", async () => {
   const fixture = await makeTempDir("mini-lux-sec01-terminal-");
   const port = await freePort();
   const token = "sec01-terminal-owner-test";

@@ -792,24 +792,27 @@
 
     async function clearActiveTerminal() {
       if (!activeTerminalId) return;
-      const res = await fetch(`/api/terminals/${encodeURIComponent(activeTerminalId)}/clear`, { method:"POST" });
-      if (res.ok) document.getElementById("terminal-output").textContent = "";
+      if (typeof window.electronAPI?.terminalClear !== "function") throw new Error("manual terminal unavailable");
+      await window.electronAPI.terminalClear({ id:activeTerminalId });
+      document.getElementById("terminal-output").textContent = "";
     }
 
     async function killActiveTerminal() {
       if (!activeTerminalId) return;
-      const res = await fetch(`/api/terminals/${encodeURIComponent(activeTerminalId)}/kill`, { method:"POST" });
-      const data = await res.json();
-      if (!res.ok) { appendTerminalOutput(`\n[终止失败] ${data.error}\n`); return; }
-      updateTerminalInfo(data.terminal);
+      if (typeof window.electronAPI?.terminalKill !== "function") throw new Error("manual terminal unavailable");
+      try {
+        const data = await window.electronAPI.terminalKill({ id:activeTerminalId });
+        updateTerminalInfo(data.terminal);
+      } catch (err) { appendTerminalOutput(`\n[终止失败] ${err.message}\n`); }
     }
 
     async function closeActiveTerminal() {
       if (!activeTerminalId) return;
       const closingId = activeTerminalId;
+      if (typeof window.electronAPI?.terminalClose !== "function") throw new Error("manual terminal unavailable");
       if (terminalEvents) { terminalEvents.close(); terminalEvents = null; }
-      const res = await fetch(`/api/terminals/${encodeURIComponent(closingId)}`, { method:"DELETE" });
-      if (!res.ok) return;
+      try { await window.electronAPI.terminalClose({ id:closingId }); }
+      catch { return; }
       terminalSessions = terminalSessions.filter(t => t.id !== closingId);
       activeTerminalId = null;
       renderTerminalTabs();

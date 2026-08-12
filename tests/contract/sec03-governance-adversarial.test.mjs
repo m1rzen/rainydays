@@ -32,6 +32,15 @@ test("SEC-03 product-to-build-test reachability is a hard fail", () => {
   const sources = new Map([["src/product.ts", `import { helper } from "../scripts/helper.mjs"; export const run = helper;`], ["scripts/helper.mjs", `import { spawn } from "node:child_process"; export const helper = () => spawn("x");`]]); const result = assertBlocked(sources, policyFor(new Map()), "product build-test import"); assert(result.violations.some(item => /build-test/u.test(item.detail)));
 });
 
+test("SEC-03 production native include reachability rejects build-test sources", () => {
+  const sources = new Map([
+    ["native/sandbox-host/product.cpp", `#include "sec03-a07-adversary.cpp"\nint product(){return 0;}`],
+    ["native/sandbox-host/sec03-a07-adversary.cpp", `int testOnly(){return 0;}`],
+  ]);
+  const result = assertBlocked(sources, policyFor(new Map()), "production native build-test include");
+  assert(result.violations.some(item => /production native source reaches build-test code/u.test(item.detail)));
+});
+
 test("SEC-03 finite dialect rejects call/apply/bind, bound invocation, re-export, storage escape, and dynamic loaders", () => {
   const fixtures = [
     ["call", `import { spawn } from "node:child_process"; spawn.call(null,"x");`],

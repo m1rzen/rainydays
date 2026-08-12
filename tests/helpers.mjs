@@ -587,6 +587,7 @@ const nativeTestAddonKeys = Object.freeze([
   "observeWindowsKnownFolderPathsForTest",
   "observeWindowsRegistryKeyForTest",
   "observeWindowsRegistrySnapshotForTest",
+  "openAclSharingLeaseForTest",
   "openEvidenceVerifier",
   "openExclusiveHostLease",
   "protocolVersion",
@@ -621,6 +622,7 @@ async function validateAndLoadWindowsHandleObserverProjection() {
       "observeWindowsKnownFolderPathsForTest",
       "observeWindowsRegistryKeyForTest",
       "observeWindowsRegistrySnapshotForTest",
+      "openAclSharingLeaseForTest",
       "openEvidenceVerifier",
       "openExclusiveHostLease",
     ]) {

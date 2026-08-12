@@ -9,6 +9,7 @@ const binaryPaths = Object.freeze([
 ]);
 const manifestPath = "dist/native/sec03-native-manifest.json";
 const stageManifestPath = "electron-stage-integrity.json";
+const packagePath = "package.json";
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
@@ -53,14 +54,25 @@ module.exports = async function afterPack(context) {
   }
 
   const stageManifestBytes = await regularBytes(path.join(stageDir, stageManifestPath), "Staged Electron identity");
+  const stagePackageBytes = await regularBytes(path.join(stageDir, packagePath), "Staged package identity");
   const stagedNativeManifestBytes = await regularBytes(path.join(stageDir, ...manifestPath.split("/")), "Staged SEC-03 native manifest");
   const archivedStageManifest = asar.extractFile(archive, stageManifestPath, false);
   const archivedNativeManifest = asar.extractFile(archive, archivePath(manifestPath), false);
-  if (!stageManifestBytes.equals(archivedStageManifest)) throw new Error("Packaged Electron stage identity differs byte-for-byte");
+  const archivedPackage = asar.extractFile(archive, packagePath, false);
+  const unpackedStageManifest = await regularBytes(path.join(resources, "app.asar.unpacked", stageManifestPath), "Unpacked Electron identity");
+  const unpackedPackage = await regularBytes(path.join(resources, "app.asar.unpacked", packagePath), "Unpacked package identity");
+  if (!stageManifestBytes.equals(archivedStageManifest) || !stageManifestBytes.equals(unpackedStageManifest)) throw new Error("Packaged Electron stage identity differs byte-for-byte");
+  if (!archivedPackage.equals(unpackedPackage)) throw new Error("Packaged package identity differs byte-for-byte");
   if (!stagedNativeManifestBytes.equals(archivedNativeManifest)) throw new Error("Packaged SEC-03 native manifest differs byte-for-byte");
 
   const stageIdentity = JSON.parse(stageManifestBytes.toString("utf8"));
+  const stagedPackage = JSON.parse(stagePackageBytes.toString("utf8"));
   const nativeManifest = JSON.parse(stagedNativeManifestBytes.toString("utf8"));
+  const packagedPackage = JSON.parse(unpackedPackage.toString("utf8"));
+  if (packagedPackage.name !== "rainydays" || packagedPackage.version !== stagedPackage.version
+    || packagedPackage.main !== "electron/main.cjs" || "build" in packagedPackage || "scripts" in packagedPackage || "devDependencies" in packagedPackage) {
+    throw new Error("Packaged package identity is not stripped");
+  }
   if (!stageIdentity.native || stageIdentity.native.manifest?.sha256 !== sha256(stagedNativeManifestBytes)
     || stageIdentity.native.sourceDigest !== nativeManifest.sourceDigest
     || stageIdentity.native.toolchainDigest !== nativeManifest.toolchainDigest
@@ -83,6 +95,9 @@ module.exports = async function afterPack(context) {
 
   const manifestMetadata = asar.statFile(archive, archivePath(manifestPath), false);
   const stageMetadata = asar.statFile(archive, stageManifestPath, false);
-  if (manifestMetadata.unpacked === true || stageMetadata.unpacked === true) throw new Error("SEC-03 identity manifests must remain only inside ASAR");
+  const packageMetadata = asar.statFile(archive, packagePath, false);
+  if (manifestMetadata.unpacked === true || stageMetadata.unpacked !== true || packageMetadata.unpacked !== true) {
+    throw new Error("SEC-03 packaged identity projection layout differs");
+  }
   console.log(`  • verified SEC-03 native package identity  manifest=${sha256(stagedNativeManifestBytes)}`);
 };

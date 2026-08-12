@@ -22,7 +22,8 @@ async function fixture() {
   await mkdir(path.join(root, "scripts"), { recursive: true });
   await mkdir(path.join(root, "dist"), { recursive: true });
   await cp(path.join(projectRoot, "native", "sandbox-host"), path.join(root, "native", "sandbox-host"), { recursive: true });
-  await cp(path.join(projectRoot, "scripts", "build-sec03-native.mjs"), path.join(root, "scripts", "build-sec03-native.mjs"));
+  await copyFile(path.join(projectRoot, "scripts", "build-inputs.mjs"), path.join(root, "scripts", "build-inputs.mjs"));
+  await copyFile(path.join(projectRoot, "scripts", "build-sec03-native.mjs"), path.join(root, "scripts", "build-sec03-native.mjs"));
   await cp(path.join(projectRoot, "dist", "native"), path.join(root, "dist", "native"), { recursive: true });
   await cp(path.join(projectRoot, ".sec03-native-test"), path.join(root, ".sec03-native-test"), { recursive: true });
   await cp(path.join(projectRoot, "build-info.json"), path.join(root, "build-info.json"));
@@ -84,7 +85,7 @@ test("SEC-03 source digest authored set includes native sources, build logic, ru
     "parity/SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md",
     "parity/reports/sec-03-architect-freeze.json",
   ]) assert(inputs.has(relative), `sourceDigest omits ${relative}`);
-  assert.equal(sec03ArchitectureSha256, "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1");
+  assert.equal(sec03ArchitectureSha256, "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe");
 });
 
 test("SEC-03 native projection binds the exact manifest, outputs, toolchain, freshness and AMD64 machine", async () => {
@@ -109,6 +110,14 @@ test("SEC-03 native projection binds the exact manifest, outputs, toolchain, fre
     await writeFile(host, Buffer.concat([originalHost, Buffer.from([0])]));
     await assert.rejects(() => validateSec03NativeProjection(root), /byte identity differs/u);
     await writeFile(host, originalHost);
+
+    const manifestPath = path.join(root, ...sec03NativeManifestRelative.split("/"));
+    const originalManifest = await readFile(manifestPath);
+    const changedManifest = JSON.parse(originalManifest.toString("utf8"));
+    changedManifest.outputs[0].importedDllAllowlistDigest = "0".repeat(64);
+    await writeFile(manifestPath, `${JSON.stringify(changedManifest, null, 2)}\n`);
+    await assert.rejects(() => validateSec03NativeProjection(root), /import allowlist digest differs/u);
+    await writeFile(manifestPath, originalManifest);
 
     await rewriteMachine(root, sec03NativeBinaryRelatives[0], 0x014c);
     await assert.rejects(() => validateSec03NativeProjection(root), /not AMD64 PE/u);
@@ -190,6 +199,19 @@ test("SEC-03 native test projection permits only the one test define and product
   } finally {
     await removeFixture(argumentsRoot);
   }
+
+  const adversaryRoot = await fixture();
+  try {
+    await mutateTestManifest(adversaryRoot, (manifest) => {
+      manifest.canonicalArguments.adversaryCompile.splice(2, 0, "/DUNREVIEWED_ADVERSARY_DEFINE");
+    }, { commit: true });
+    await assert.rejects(
+      () => fixtureBuildInfo(adversaryRoot).then((buildInfo) => validateSec03NativeTestProjection(adversaryRoot, { buildInfo })),
+      /differs from the fixed no-CRT helper arguments/u,
+    );
+  } finally {
+    await removeFixture(adversaryRoot);
+  }
 });
 
 test("SEC-03 native addons expose exact production and test-only top-level APIs", async () => {
@@ -198,6 +220,7 @@ test("SEC-03 native addons expose exact production and test-only top-level APIs"
   const { production, nativeTest } = await loadWindowsHandleObserverProjectionForTest();
   assert.deepEqual(Reflect.ownKeys(production).sort(), ["openEvidenceVerifier", "openExclusiveHostLease", "protocolVersion"]);
   assert.deepEqual(Reflect.ownKeys(nativeTest).sort(), [
+    "openAclSharingLeaseForTest",
     "openWindowsExecutableIdentityLeaseForTest",
     "observeWindowsFileHandleInProcessTreeForTest",
     "observeWindowsKnownFolderPathsForTest",
@@ -209,6 +232,7 @@ test("SEC-03 native addons expose exact production and test-only top-level APIs"
     "protocolVersion",
   ].sort());
   for (const operation of [
+    "openAclSharingLeaseForTest",
     "openWindowsExecutableIdentityLeaseForTest",
     "observeWindowsProcessReferencesForTest",
     "observeWindowsFileHandleInProcessTreeForTest",
