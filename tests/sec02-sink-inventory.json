@@ -10,7 +10,7 @@
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
     "executableFileCount": 73,
-    "executableManifestSha256": "1dec92e7dd38d8dd089eb1d0775b998054367daa8b2cc64498db1b254fcac2dd",
+    "executableManifestSha256": "3e6bfaa5f2a13c56f159b62cbf0889232ae7442fbbba2bddf54b49e2fa1f6cb3",
     "dialectImportCount": 34,
     "dialectExceptionCount": 2
   },
@@ -136,8 +136,8 @@
     },
     {
       "sourcePath": "src/execution-network-broker.ts",
-      "bytes": 36770,
-      "sha256": "87e904ce0fda28f90db6d9aa95b959eae541c8c1a5f37816c377912e1932d3d4",
+      "bytes": 36769,
+      "sha256": "f069ce1765b0c346003c7543fdacf52f03b9f5389b89b1953c76e18f5dda33a1",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -4513,5 +4513,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "abb81bb8ba865de6626258af4b015d8af3f34ebc3d54557daa1f6d9ac3b21508"
+  "canonicalPayloadSha256": "183292c52870b7e64f6d99a7124a82a393f85690536a6e416323da6ef664a3b7"
 }

@@ -200,7 +200,7 @@ export async function runGov04({ projectRoot, profile = "merge", retryOf = null,
     (adapters.runSourceTestBuild ?? runSourceTestBuild)({ workspace: sourceWorkspace, buildId: canonicalBuildId, sourceDateEpoch, candidateSourceDigest: candidate.sourceDigest })
   );
   if (sourceBuild?.passed) sourceBuildEvidence = sourceBuild.buildEvidence;
-  await record("gov03-quick", ["node", "scripts/run-tests.mjs", "--profile", "quick", "--report", "<run-report>"], () =>
+  await record("gov03-quick", ["node", "scripts/run-tests.mjs", "--task", "GOV-03", "--profile", "quick", "--report", "<run-report>"], () =>
     (adapters.runGov03Quick ?? runGov03Quick)({ workspace: sourceWorkspace, evidenceDirectory, candidateSourceDigest: candidate.sourceDigest, candidateId: candidate.releaseCandidateId, buildId: canonicalBuildId })
   );
   await record("gov03-self-test", ["node", "scripts/test-gate-selftest.mjs", "--task", "GOV-03", "--report", "<run-report>"], () =>

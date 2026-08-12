@@ -116,7 +116,7 @@
     },
     {
       "exactCasePath": "src/execution-network-broker.ts",
-      "sha256": "87e904ce0fda28f90db6d9aa95b959eae541c8c1a5f37816c377912e1932d3d4",
+      "sha256": "f069ce1765b0c346003c7543fdacf52f03b9f5389b89b1953c76e18f5dda33a1",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -466,7 +466,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "e11e0ae701e0623d4e8ee7f7824173c4089b07b3229657e451648bdbd8bc6905",
+      "sha256": "c2988daa6223e58dc324eea4c7d18530a17d608bda35019ce4c7774baf709f55",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2182,7 +2182,7 @@
     },
     {
       "exactCasePath": "src/execution-network-broker.ts",
-      "sha256": "87e904ce0fda28f90db6d9aa95b959eae541c8c1a5f37816c377912e1932d3d4",
+      "sha256": "f069ce1765b0c346003c7543fdacf52f03b9f5389b89b1953c76e18f5dda33a1",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2402,7 +2402,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "e11e0ae701e0623d4e8ee7f7824173c4089b07b3229657e451648bdbd8bc6905",
+      "sha256": "c2988daa6223e58dc324eea4c7d18530a17d608bda35019ce4c7774baf709f55",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -3747,5 +3747,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "15836bf9d176dcc4b752d3464ccbd961a7f22389facfbdab5ae5ba97ebae3515"
+  "canonicalPayloadSha256": "3c3ef09f42b03b8d7983f3cc08d06397587e644ba4e2b8faa39d4ed9d9b5a445"
 }

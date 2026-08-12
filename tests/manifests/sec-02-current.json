@@ -7054,7 +7054,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "e11e0ae701e0623d4e8ee7f7824173c4089b07b3229657e451648bdbd8bc6905"
+      "sha256": "c2988daa6223e58dc324eea4c7d18530a17d608bda35019ce4c7774baf709f55"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7078,7 +7078,7 @@
     },
     {
       "exactCasePath": "scripts/gov04/report-schema.mjs",
-      "sha256": "ff34a25b8dcdc27415fab748d6c5cabeaa80eef3965b96f86e4c57b5aedbb630"
+      "sha256": "296c4dd3edc5143a7eb151f73d41543bf5983f1fca4c3d323c989ac6828d46dc"
     },
     {
       "exactCasePath": "scripts/sec02-governance.mjs",
@@ -7118,5 +7118,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "422c4e375f509b141545a58d5058f72fa47dce5aec148adac00046632b043d3d"
+  "canonicalPayloadSha256": "cdff3482cfd67e103ce9c3bc5000d2f732ce70dce6852e7cc1917c6ba8857517"
 }

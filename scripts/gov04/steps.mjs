@@ -254,7 +254,7 @@ export async function runGov03Quick({ workspace, evidenceDirectory, candidateSou
   const diagnosticChallenge = randomBytes(32).toString("hex");
   let result;
   try {
-    result = await runBoundedProcess(process.execPath, ["scripts/run-tests.mjs", "--profile", "quick", "--report", reportPath], {
+    result = await runBoundedProcess(process.execPath, ["scripts/run-tests.mjs", "--task", "GOV-03", "--profile", "quick", "--report", reportPath], {
       cwd: workspace,
       env: safeChildEnvironment({
         RAINYDAYS_SEC02_RUN_ID: sec02RunId,
