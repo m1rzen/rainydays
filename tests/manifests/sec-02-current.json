@@ -52,7 +52,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "ebdf562eab6fe84fbcb21a0d1a7e0f202549d47d253731100267cc924a7d076b",
+          "sha256": "9aaff729cf8431eca09ea44fcec36a8bbf2eb735e2ecd69d909898b6f94d394e",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -320,7 +320,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "ebdf562eab6fe84fbcb21a0d1a7e0f202549d47d253731100267cc924a7d076b",
+          "sha256": "9aaff729cf8431eca09ea44fcec36a8bbf2eb735e2ecd69d909898b6f94d394e",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -386,7 +386,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f",
+          "sha256": "6422ba75ce6ee8ff1068d8a6a634bb6919a9317f5b8b4b77769ca308591315ab",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -1012,7 +1012,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "ebdf562eab6fe84fbcb21a0d1a7e0f202549d47d253731100267cc924a7d076b",
+          "sha256": "9aaff729cf8431eca09ea44fcec36a8bbf2eb735e2ecd69d909898b6f94d394e",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -1078,7 +1078,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f",
+          "sha256": "6422ba75ce6ee8ff1068d8a6a634bb6919a9317f5b8b4b77769ca308591315ab",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -6654,7 +6654,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
+          "sha256": "6422ba75ce6ee8ff1068d8a6a634bb6919a9317f5b8b4b77769ca308591315ab"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6666,7 +6666,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
+          "sha256": "6422ba75ce6ee8ff1068d8a6a634bb6919a9317f5b8b4b77769ca308591315ab"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6690,7 +6690,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
+          "sha256": "6422ba75ce6ee8ff1068d8a6a634bb6919a9317f5b8b4b77769ca308591315ab"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6702,7 +6702,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
+          "sha256": "6422ba75ce6ee8ff1068d8a6a634bb6919a9317f5b8b4b77769ca308591315ab"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6714,7 +6714,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
+          "sha256": "6422ba75ce6ee8ff1068d8a6a634bb6919a9317f5b8b4b77769ca308591315ab"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -7070,7 +7070,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-      "sha256": "3c4588993088b5bf66076766eb39f22978894d611b9e0607ecb5124d50975d9f"
+      "sha256": "6422ba75ce6ee8ff1068d8a6a634bb6919a9317f5b8b4b77769ca308591315ab"
     },
     {
       "exactCasePath": "scripts/gov04/identity.mjs",
@@ -7118,5 +7118,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "cdff3482cfd67e103ce9c3bc5000d2f732ce70dce6852e7cc1917c6ba8857517"
+  "canonicalPayloadSha256": "bad260623bcce958a809ac71b7d79279fa7727106bc10120d291fd90b20903f2"
 }
