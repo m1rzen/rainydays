@@ -1168,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "814fcc17810f1a3801813e73994dfc766c0638422af8e77edddf19c4dba1fdbf",
+          "sha256": "69e5badf3037f2af676b79f1815e7e81f26f9f6d493a6c2e4783a79822f37116",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -1691,7 +1691,7 @@
   "coverageScope": {
     "source": {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "723a4f711bf690cff722281a6451266f57ed63aac610299be0b1576f82ed18c8"
+      "sha256": "e71e14285194179fce2bc9260bc868a2c23aaf7b84bca43fd46806cf53842730"
     },
     "overallFiles": [
       "dist/version.js",
@@ -6990,7 +6990,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "723a4f711bf690cff722281a6451266f57ed63aac610299be0b1576f82ed18c8"
+      "sha256": "e71e14285194179fce2bc9260bc868a2c23aaf7b84bca43fd46806cf53842730"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
@@ -7118,5 +7118,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "bad260623bcce958a809ac71b7d79279fa7727106bc10120d291fd90b20903f2"
+  "canonicalPayloadSha256": "765bc64353dc5d2f8b83834e478a85d9bd3ec173ac1bbe55bc30980ff7766ebb"
 }

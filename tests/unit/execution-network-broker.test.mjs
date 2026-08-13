@@ -246,6 +246,24 @@ test("SEC-03 finite broker observations cross the validated native observer boun
   await service.shutdown();
 });
 
+test("SEC-03 finite broker constructor rejects noncanonical operation definitions", () => {
+  const authority = context();
+  for (const candidate of [
+    definition({ version: 2 }),
+    definition({ operationId: "bad id" }),
+    definition({ method: "TRACE" }),
+    definition({ bodySha256: "bad" }),
+    definition({ url: "http://broker.test/ok" }),
+    definition({ url: "https://LOCALHOST/ok" }),
+    definition({ url: "https://broker.test/a%2fb" }),
+    definition({ method: "GET", bodyBytes: 1, bodySha256: BODY_SHA256 }),
+  ]) assert.throws(() => createFiniteHttpsBroker(authority, [candidate]), TypeError);
+  assert.throws(() => createFiniteHttpsBroker(authority, []), TypeError);
+  assert.throws(() => createFiniteHttpsBroker(authority, [definition(), definition()]), /unique sorted/u);
+  assert.throws(() => createFiniteHttpsBroker(authority, [definition()], { resolve: true }), TypeError);
+  assert.throws(() => createFiniteHttpsBroker(authority, [definition()], { transport: true }), TypeError);
+});
+
 test("SEC-03 finite broker rejects credentials, forbidden headers and authority substitution", async () => {
   assert.throws(() => createFiniteHttpsBroker(context(), [definition({ url: "https://user:password@broker.test/ok" })]), /credentials/u);
   assert.throws(() => createFiniteHttpsBroker(context(), [definition({ headers: [{ name: "authorization", value: "secret" }] })]), /forbidden/u);
@@ -253,4 +271,7 @@ test("SEC-03 finite broker rejects credentials, forbidden headers and authority 
   const fixture = broker(operation);
   const substituted = context({ runId: "other-run" });
   await expectCode(fixture.broker.execute(substituted, invocation(operation)), "EXEC_BROKER_HOST_DENIED");
+  await expectCode(fixture.broker.execute(fixture.authority, invocation(operation, { method: "POST" })), "EXEC_BROKER_HOST_DENIED");
+  await expectCode(fixture.broker.execute(fixture.authority, invocation(operation, { headers: [{ name: "Authorization", value: "secret" }] })), "EXEC_BROKER_HOST_DENIED");
+  await expectCode(fixture.broker.execute(fixture.authority, null), "EXEC_BROKER_HOST_DENIED");
 });

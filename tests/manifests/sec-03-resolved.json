@@ -736,7 +736,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "723a4f711bf690cff722281a6451266f57ed63aac610299be0b1576f82ed18c8",
+      "sha256": "e71e14285194179fce2bc9260bc868a2c23aaf7b84bca43fd46806cf53842730",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -793,7 +793,7 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "85d49198757af1fd2ae2ed7b593ad3caa31d6c220ceae12034e5071877d452ce",
+      "sha256": "48e69f8ab994665659b79f62c3a34641eb2291500790398460b4fcb0855b0e98",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -821,6 +821,8 @@
         "SEC-03 runtime gateway binding matrix rejects each mismatched authority before root or native use",
         "SEC-03 manual runtime binding and observation matrices reject every untrusted variant",
         "SEC-03 manual runtime denial observation uses the fixed production identity",
+        "SEC-03 direct terminal denial observation uses the fixed production identity without hardware fixtures",
+        "SEC-03 terminal owner denial observation is authenticated without removable or VHD fixtures",
         "SEC-03 production identity parser rejects every native/build drift without mutating checkout",
         "SEC-03 manual runtime evidence and opaque leases reject invalid public use",
         "SEC-03 execution request validation rejects every public boundary variant",
@@ -830,7 +832,7 @@
     },
     {
       "exactCasePath": "tests/unit/execution-network-broker.test.mjs",
-      "sha256": "3afc4a8bde0c2b32af59b40dfc9203d4e465cec6d5e2774454e7e6a1c3d0b5a8",
+      "sha256": "9dfc954d3853ec674ada6b227cea1048380ae1120a8da17fa5b4b394fd294859",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -845,6 +847,7 @@
         "SEC-03 A05-09 applies the response bound while consuming chunks",
         "SEC-03 A05-10 applies one deadline to DNS, connect and response progress",
         "SEC-03 finite broker observations cross the validated native observer boundary",
+        "SEC-03 finite broker constructor rejects noncanonical operation definitions",
         "SEC-03 finite broker rejects credentials, forbidden headers and authority substitution"
       ],
       "supersedes": null
@@ -864,7 +867,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "814fcc17810f1a3801813e73994dfc766c0638422af8e77edddf19c4dba1fdbf",
+      "sha256": "69e5badf3037f2af676b79f1815e7e81f26f9f6d493a6c2e4783a79822f37116",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2672,7 +2675,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "723a4f711bf690cff722281a6451266f57ed63aac610299be0b1576f82ed18c8",
+      "sha256": "e71e14285194179fce2bc9260bc868a2c23aaf7b84bca43fd46806cf53842730",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2729,7 +2732,7 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "85d49198757af1fd2ae2ed7b593ad3caa31d6c220ceae12034e5071877d452ce",
+      "sha256": "48e69f8ab994665659b79f62c3a34641eb2291500790398460b4fcb0855b0e98",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2757,6 +2760,8 @@
         "SEC-03 runtime gateway binding matrix rejects each mismatched authority before root or native use",
         "SEC-03 manual runtime binding and observation matrices reject every untrusted variant",
         "SEC-03 manual runtime denial observation uses the fixed production identity",
+        "SEC-03 direct terminal denial observation uses the fixed production identity without hardware fixtures",
+        "SEC-03 terminal owner denial observation is authenticated without removable or VHD fixtures",
         "SEC-03 production identity parser rejects every native/build drift without mutating checkout",
         "SEC-03 manual runtime evidence and opaque leases reject invalid public use",
         "SEC-03 execution request validation rejects every public boundary variant",
@@ -2766,7 +2771,7 @@
     },
     {
       "exactCasePath": "tests/unit/execution-network-broker.test.mjs",
-      "sha256": "3afc4a8bde0c2b32af59b40dfc9203d4e465cec6d5e2774454e7e6a1c3d0b5a8",
+      "sha256": "9dfc954d3853ec674ada6b227cea1048380ae1120a8da17fa5b4b394fd294859",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2781,6 +2786,7 @@
         "SEC-03 A05-09 applies the response bound while consuming chunks",
         "SEC-03 A05-10 applies one deadline to DNS, connect and response progress",
         "SEC-03 finite broker observations cross the validated native observer boundary",
+        "SEC-03 finite broker constructor rejects noncanonical operation definitions",
         "SEC-03 finite broker rejects credentials, forbidden headers and authority substitution"
       ],
       "supersedes": null
@@ -2800,7 +2806,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "814fcc17810f1a3801813e73994dfc766c0638422af8e77edddf19c4dba1fdbf",
+      "sha256": "69e5badf3037f2af676b79f1815e7e81f26f9f6d493a6c2e4783a79822f37116",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -3747,5 +3753,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "3c3ef09f42b03b8d7983f3cc08d06397587e644ba4e2b8faa39d4ed9d9b5a445"
+  "canonicalPayloadSha256": "8c3a0220371a46e0799ab9ea1f1cd9d3b3d21a4a4a2320b90a3bb0bc47991b6a"
 }

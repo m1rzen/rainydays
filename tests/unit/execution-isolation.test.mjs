@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import {
   ExecutionDeniedError,
   ExecutionIsolationService,
@@ -20,12 +22,15 @@ import {
   createScopedExecutionGateway,
   manualConsentEvidenceBinding,
   observeManualConsentDenial,
+  observeTerminalDirectDenial,
+  observeTerminalOwnerDenial,
   parseNativeArtifactIdentity,
   readIsolatedTerminal,
   retireIsolatedTerminal,
   shutdownExecutionRuntime,
   terminateIsolatedTerminal,
 } from "../../dist/execution-runtime.js";
+import { PathPolicy } from "../../dist/path-policy.js";
 import { issueResourceOwner, retireResourceOwner } from "../../dist/resource-owner.js";
 
 const HASH = createHash("sha256").update("fixture").digest("hex");
@@ -1252,6 +1257,77 @@ test("SEC-03 manual runtime denial observation uses the fixed production identit
   assert.match(proof.mac, /^[a-f0-9]{64}$/u);
   assert.match(proof.keyId, /^[a-f0-9]{64}$/u);
   assert.match(proof.channelMarker, /^[a-f0-9]{64}$/u);
+});
+
+test("SEC-03 direct terminal denial observation uses the fixed production identity without hardware fixtures", { skip: process.platform !== "win32" || process.arch !== "x64" }, async () => {
+  const context = {
+    executionDomainId: "context-a",
+    sessionId: "session-a",
+    runId: "run-a",
+    principal: "local-user-api",
+    authorityEpoch: 1,
+    persona: { digest: HASH },
+  };
+  try {
+    for (const event of ["start", "input"]) {
+      const proof = await observeTerminalDirectDenial(context, event);
+      assert.equal(Buffer.isBuffer(proof.proof), true);
+      assert.match(proof.mac, /^[a-f0-9]{64}$/u);
+      assert.match(proof.keyId, /^[a-f0-9]{64}$/u);
+      assert.match(proof.channelMarker, /^[a-f0-9]{64}$/u);
+    }
+    for (const [candidate, event] of [
+      [null, "start"],
+      [{ ...context, principal: "agent" }, "start"],
+      [{ ...context, executionDomainId: "" }, "start"],
+      [{ ...context, sessionId: "" }, "start"],
+      [{ ...context, runId: "" }, "start"],
+      [{ ...context, authorityEpoch: 0 }, "start"],
+      [{ ...context, persona: { digest: "bad" } }, "start"],
+      [context, "close"],
+    ]) await assert.rejects(() => observeTerminalDirectDenial(candidate, event), error => code(error, "EXEC_REQUEST_INVALID"));
+  } finally {
+    await shutdownExecutionRuntime();
+  }
+});
+
+test("SEC-03 terminal owner denial observation is authenticated without removable or VHD fixtures", { skip: process.platform !== "win32" || process.arch !== "x64", timeout: 30_000 }, async () => {
+  const base = await mkdtemp(path.join(os.tmpdir(), "mini-lux-sec03-owner-"));
+  const root = path.join(base, "workspace");
+  await mkdir(root);
+  const policy = new PathPolicy({ auditKey: Buffer.alloc(32, 91) });
+  const authority = await policy.createAuthority([{ rootId: "workspace", role: "workspace", configuredPath: root, permissions: ["initial-cwd"] }]);
+  const victim = owner("victim-session", authority.epoch, "local-user-api");
+  const context = {
+    executionDomainId: "victim-context",
+    sessionId: "victim-session",
+    runId: "victim-run",
+    principal: "local-user-api",
+    authorityEpoch: authority.epoch,
+    persona: { digest: HASH },
+    allowedRoots: ["workspace"],
+  };
+  let lease;
+  try {
+    lease = await policy.withExecutionRoot(authority, { input: "", operation: "initial-cwd", defaultRootId: "workspace" }, "read-write", (_cwd, rootLease) =>
+      createManualExecutionGateway({ context, owner: victim, operation: "terminal-start", exactRequest: { shell: "cmd" } })
+        .startShell({ terminalId: "term_12345678", shell: "cmd", rootLease }));
+    for (const operation of ["kill", "close"]) {
+      const attacker = owner(`attacker-${operation}`, authority.epoch, "local-user-api");
+      const proof = await observeTerminalOwnerDenial(lease, attacker, operation, "term_12345678");
+      assert.equal(Buffer.isBuffer(proof.proof), true);
+      assert.match(proof.mac, /^[a-f0-9]{64}$/u);
+      await retireResourceOwner(attacker);
+    }
+    await terminateIsolatedTerminal(lease, victim, "test-complete");
+    await assert.rejects(() => observeTerminalOwnerDenial(lease, owner("late-attacker", authority.epoch, "local-user-api"), "kill", "term_12345678"), error => code(error, "EXEC_REQUEST_INVALID"));
+  } finally {
+    if (lease) await terminateIsolatedTerminal(lease, victim, "test-cleanup").catch(() => undefined);
+    await shutdownExecutionRuntime();
+    await retireResourceOwner(victim).catch(() => undefined);
+    policy.revoke(authority);
+    await rm(base, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+  }
 });
 
 test("SEC-03 production identity parser rejects every native/build drift without mutating checkout", { skip: process.platform !== "win32" || process.arch !== "x64" }, async () => {

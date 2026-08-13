@@ -8,6 +8,10 @@
       },
       {
         "sourceTask": "SEC-03",
+        "exactCasePath": "tests/unit/execution-network-broker.test.mjs"
+      },
+      {
+        "sourceTask": "SEC-03",
         "exactCasePath": "tests/unit/execution-root-lease.test.mjs"
       },
       {
