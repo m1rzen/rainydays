@@ -7114,9 +7114,9 @@
     },
     {
       "exactCasePath": "package-lock.json",
-      "sha256": "e00e97bba5899f73a41db31c2ca86c6cb637ee39697a26ca0e647b83e7fbfcca"
+      "sha256": "1085e7e1f793e1eab7d6b2fbcece8b6fd1658064e5ade069a8aff466c1f7eca5"
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "765bc64353dc5d2f8b83834e478a85d9bd3ec173ac1bbe55bc30980ff7766ebb"
+  "canonicalPayloadSha256": "9bb4d35caf0b8ada20e949d02894589123e9a41203d5666c9e4261b19d5030af"
 }
