@@ -35,6 +35,14 @@ function failedOperation(failureClass, evidence = { status: "failed" }, exitCode
   return { passed: false, failureClass, exitCode, signal: null, timedOut: false, timeoutTermination: null, childReportSha256: null, evidence };
 }
 
+function trustedSigningEnvironment(profile) {
+  if (profile !== "trusted-release") return {};
+  const link = process.env.WIN_CSC_LINK;
+  const password = process.env.WIN_CSC_KEY_PASSWORD;
+  if ((link && !password) || (!link && password)) throw new Error("Trusted signing inputs are incomplete");
+  return link && password ? { WIN_CSC_LINK: link, WIN_CSC_KEY_PASSWORD: password } : {};
+}
+
 async function removeAndObserve(paths) {
   let passed = true;
   for (const target of paths) {
@@ -192,7 +200,7 @@ export async function runGov04({ projectRoot, profile = "merge", retryOf = null,
     (adapters.runSourceTestBuild ?? runSourceTestBuild)({ workspace: sourceWorkspace, buildId: canonicalBuildId, sourceDateEpoch, candidateSourceDigest: candidate.sourceDigest })
   );
   if (sourceBuild?.passed) sourceBuildEvidence = sourceBuild.buildEvidence;
-  await record("gov03-quick", ["node", "scripts/run-tests.mjs", "--profile", "quick", "--report", "<run-report>"], () =>
+  await record("gov03-quick", ["node", "scripts/run-tests.mjs", "--task", "GOV-03", "--profile", "quick", "--report", "<run-report>"], () =>
     (adapters.runGov03Quick ?? runGov03Quick)({ workspace: sourceWorkspace, evidenceDirectory, candidateSourceDigest: candidate.sourceDigest, candidateId: candidate.releaseCandidateId, buildId: canonicalBuildId })
   );
   await record("gov03-self-test", ["node", "scripts/test-gate-selftest.mjs", "--task", "GOV-03", "--report", "<run-report>"], () =>
@@ -220,7 +228,7 @@ export async function runGov04({ projectRoot, profile = "merge", retryOf = null,
   );
   const packageOperation = await record("package", ["npm", "run", "dist"], () => {
     if (!sourceBuildEvidence) return failedOperation("SOURCE_BUILD_EVIDENCE_UNAVAILABLE");
-    return (adapters.runPackage ?? runPackage)({ workspace: packageWorkspace, evidenceDirectory, artifactsDirectory, runId, challenge, candidateId: candidate.releaseCandidateId, candidateSourceDigest: candidate.sourceDigest, candidateSourceManifestSha256: candidate.sourceManifestSha256, buildId: canonicalBuildId, sourceDateEpoch, sourceBuildEvidence, previousReceiptSha256: receipts.at(-1)?.receiptSha256 ?? null });
+    return (adapters.runPackage ?? runPackage)({ workspace: packageWorkspace, evidenceDirectory, artifactsDirectory, runId, challenge, candidateId: candidate.releaseCandidateId, candidateSourceDigest: candidate.sourceDigest, candidateSourceManifestSha256: candidate.sourceManifestSha256, buildId: canonicalBuildId, sourceDateEpoch, sourceBuildEvidence, previousReceiptSha256: receipts.at(-1)?.receiptSha256 ?? null, signingEnvironment: trustedSigningEnvironment(profile) });
   });
   if (packageOperation?.passed) {
     artifactPath = packageOperation.artifactPath;

@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { parsePeImportAllowlist } from "./build-inputs.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const checkOnly = process.argv.slice(2).includes("--check");
@@ -17,6 +18,8 @@ const sourceRelative = Object.freeze([
   "native/sandbox-host/attestation.h",
   "native/sandbox-host/sandbox-host.cpp",
   "native/sandbox-host/sandbox-launcher.cpp",
+  "native/sandbox-host/sec03-a07-adversary.cpp",
+  "scripts/build-inputs.mjs",
   "scripts/build-sec03-native.mjs",
 ]);
 const outputRelative = Object.freeze([
@@ -27,6 +30,7 @@ const manifestRelative = "dist/native/sec03-native-manifest.json";
 const testOutputRelative = Object.freeze([
   ".sec03-native-test/sandbox-host.exe",
   ".sec03-native-test/sandbox-launcher.node",
+  ".sec03-native-test/sec03-a07-adversary.exe",
 ]);
 const testManifestRelative = ".sec03-native-test/sec03-native-test-manifest.json";
 
@@ -137,6 +141,7 @@ function testArguments(args) {
 const canonicalTestArguments = Object.freeze({
   launcherCompile: testArguments(canonicalArguments.launcherCompile),
   hostCompile: testArguments(canonicalArguments.hostCompile),
+  adversaryCompile: ["/nologo", "/std:c++20", "/O1", "/GS-", "/guard:cf", "/Gy", "/Zl", "/GR-", "/EHs-c-", "/W4", "/WX", "/DUNICODE", "/D_UNICODE", "/DNOMINMAX", "native/sandbox-host/sec03-a07-adversary.cpp", "/link", "/NODEFAULTLIB", "kernel32.lib", "advapi32.lib", "/ENTRY:Sec03Entry", "/OPT:REF", "/OPT:ICF", "/DYNAMICBASE", "/NXCOMPAT", "/HIGHENTROPYVA", "/MACHINE:X64", "/SUBSYSTEM:CONSOLE", "/Brepro"],
 });
 
 const sourceFiles = await Promise.all(sourceRelative.map(fileRecord));
@@ -181,7 +186,8 @@ async function outputRecords(relativePaths) {
     const bytes = await readFile(path.join(projectRoot, ...relative.split("/")));
     const machine = parsePeMachine(bytes);
     if (machine !== versions.machine) throw new Error(`${relative} is not AMD64 PE (machine=0x${machine.toString(16)})`);
-    outputs.push({ ...record, machine: "AMD64" });
+    const importedDllAllowlistDigest = parsePeImportAllowlist(bytes, relative).sha256;
+    outputs.push({ ...record, machine: "AMD64", importedDllAllowlistDigest });
   }
   return outputs;
 }
@@ -245,7 +251,7 @@ async function productionCommitsCurrentTestManifest() {
 const distNative = path.join(projectRoot, "dist", "native");
 const testNative = path.join(projectRoot, ".sec03-native-test");
 const productionExpectedNames = ["sandbox-host.exe", "sandbox-launcher.node", "sec03-native-manifest.json"].sort();
-const testExpectedNames = ["sandbox-host.exe", "sandbox-launcher.node", "sec03-native-test-manifest.json"].sort();
+const testExpectedNames = ["sandbox-host.exe", "sandbox-launcher.node", "sec03-a07-adversary.exe", "sec03-native-test-manifest.json"].sort();
 if (checkOnly) {
   const [names, testNames] = await Promise.all([readdir(distNative), readdir(testNative)]);
   names.sort();
@@ -296,12 +302,16 @@ try {
   if (!testReusable) {
     const launcherOut = path.join(temp, "sandbox-launcher-test.node");
     const hostOut = path.join(temp, "sandbox-host-test.exe");
+    const adversaryOut = path.join(temp, "sec03-a07-adversary.exe");
     compile(canonicalTestArguments.launcherCompile, launcherOut, path.join(temp, "sandbox-launcher-test.obj"));
     compile(canonicalTestArguments.hostCompile, hostOut, path.join(temp, "sandbox-host-test.obj"));
+    compile(canonicalTestArguments.adversaryCompile, adversaryOut, path.join(temp, "sec03-a07-adversary.obj"));
     await rm(path.join(testNative, "sandbox-launcher.node"), { force: true });
     await rm(path.join(testNative, "sandbox-host.exe"), { force: true });
+    await rm(path.join(testNative, "sec03-a07-adversary.exe"), { force: true });
     await rename(launcherOut, path.join(testNative, "sandbox-launcher.node"));
     await rename(hostOut, path.join(testNative, "sandbox-host.exe"));
+    await rename(adversaryOut, path.join(testNative, "sec03-a07-adversary.exe"));
     await writeFile(path.join(projectRoot, ...testManifestRelative.split("/")), await expectedTestManifestBytes());
   }
   if (!productionReusable || !testReusable) {

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "task": "SEC-03",
-  "revision": 2,
+  "revision": 3,
   "status": "frozen",
   "baseline": "Lux Desktop 0.1.898",
   "platform": {
@@ -14,17 +14,19 @@
   },
   "architecture": {
     "path": "parity/SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md",
-    "reviewedCandidateSha256": "1128f805796d55635e4429f9cbad730d5c37886400caba30e59a712ef5df0c80",
-    "frozenSha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1"
+    "reviewedCandidateSha256": "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe",
+    "frozenSha256": "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe"
   },
   "review": {
-    "reviewer": "independent-sentinel",
+    "reviewer": "independent-reviewer",
     "verdict": "PASS",
     "closedBlockers": [
       "B1-native-launch-order-and-handle-inheritance",
       "B2-unique-appcontainer-sid-and-acl-recovery",
       "B3-exact-machine-readable-receipt-closure",
-      "B4-native-main-process-consent"
+      "B4-native-main-process-consent",
+      "R3-nine-impossible-E3-stimuli-replaced-by-E3A",
+      "R3-J5-retained-root-file-id-ledger-and-bounded-recovery"
     ],
     "implementationAuthorized": true
   },
@@ -33,7 +35,7 @@
     "electron": 48,
     "packaged": 48,
     "total": 482,
-    "profiles": ["E1", "E2", "E3", "E4"],
+    "profiles": ["E1", "E2", "E3", "E3A", "E4"],
     "attackFamilies": 19,
     "projectionFamilies": 12
   },
@@ -43,6 +45,8 @@
     "unsupportedRootsFailBeforeSideEffects": true,
     "nativeConsentForManualStartAndInput": true,
     "jobAssignedBeforeResume": true,
-    "uniqueAppContainerSidPerExecutionOrSession": true
+    "uniqueAppContainerSidPerExecutionOrSession": true,
+    "e3aReceiptOnly": true,
+    "e3aProductReachable": false
   }
 }

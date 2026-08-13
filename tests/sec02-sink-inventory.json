@@ -2,23 +2,23 @@
   "schemaVersion": 2,
   "task": "SEC-02",
   "detectorPolicySha256": "56821eb657093c79b26f088c61458a0d6a20e5e3353d04556970b1f3ba11fe6a",
-  "reviewPolicySha256": "179b7b8e25974108738aea42f11b14540784b6dbdc60e954bc6dd2fe9a7851b5",
+  "reviewPolicySha256": "4d3c6ef12f23b960f75d564a223a429cbf08e9799eea375413bd046dbb934c14",
   "dialectCheckerSha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
   "dialectPolicySha256": "75ea44ca15bc7092eca51957cb93f89580aa1a395cb1428c1f3e12baf7b17209",
-  "dialectImportSetSha256": "23efdb5dc6dd02d52c87ff54a03b1368f9e06afd4f37ef8595b0fc546acaef5b",
-  "runtimeSinkSetSha256": "c4d5c227fe4a25a07361393868564b5174a2bf185888882f8b8de4b9765813ef",
+  "dialectImportSetSha256": "0d47305b71f58a66d66b912684529fd4ee166eb01039e0b8f33db056b58012f8",
+  "runtimeSinkSetSha256": "6ccd2419b0a2eda815f6f16b8a4a2b403f51a9c485bc6a385a3df8f068a2ade2",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
-    "executableFileCount": 71,
-    "executableManifestSha256": "99fa0696c36b9249c68f7f3dcf4da5814187a16007a611829056528a77ce794c",
-    "dialectImportCount": 33,
+    "executableFileCount": 73,
+    "executableManifestSha256": "3e6bfaa5f2a13c56f159b62cbf0889232ae7442fbbba2bddf54b49e2fa1f6cb3",
+    "dialectImportCount": 34,
     "dialectExceptionCount": 2
   },
   "files": [
     {
       "sourcePath": "electron/main.cjs",
-      "bytes": 23252,
-      "sha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "bytes": 24989,
+      "sha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
       "role": "electron-runtime",
       "packageExpectation": "included-in-asar"
     },
@@ -31,8 +31,8 @@
     },
     {
       "sourcePath": "electron/preload.cjs",
-      "bytes": 503,
-      "sha256": "76c928cc1c01fd7efce37202352830bad73a739666715769d9860f178bea41e3",
+      "bytes": 756,
+      "sha256": "2efd58ac8776042c8eca5e6b8903f352416952a77ad4aebac34d92369e57aac4",
       "role": "electron-runtime",
       "packageExpectation": "included-in-asar"
     },
@@ -66,15 +66,22 @@
     },
     {
       "sourcePath": "src/capability-broker.ts",
-      "bytes": 58344,
-      "sha256": "919d448cd6705b5270328a7b435e84257b8c740a5f7aa60c0573139794e97ae0",
+      "bytes": 58651,
+      "sha256": "29e5837c00fd75163de55291a9cc883e06f5e796bf896e17e3124d6901db2d6e",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/config.ts",
-      "bytes": 10903,
-      "sha256": "aec182a130c719dd741d3c0397ee47ef4315128c53d3a1372c47645c513e5668",
+      "bytes": 14004,
+      "sha256": "062049bb76661fe28ffd08ff05cb23a04aea2922aeeec8a3c492879af538055d",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/credential-store.ts",
+      "bytes": 6359,
+      "sha256": "0b05d36a5f4acb57d6d3615a6ed653ac1849e09bcc3b9bf3c9b7e8e95edad3b9",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -87,8 +94,8 @@
     },
     {
       "sourcePath": "src/daemon.ts",
-      "bytes": 6056,
-      "sha256": "7a9789076610e8d5960527851ff51d8c2aa604b9cd29c2aa39f64cabff74c7aa",
+      "bytes": 6535,
+      "sha256": "515929afff7a8ac2877e220dba323c355928107aecb5f6aaf15feaf85bf66726",
       "role": "source-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -115,22 +122,29 @@
     },
     {
       "sourcePath": "src/execution-isolation.ts",
-      "bytes": 40571,
-      "sha256": "2e58c6e123eb9640921a91ed843a43a2ff8a1e1c385149e4ff0d4ff8a17e4fe5",
+      "bytes": 43834,
+      "sha256": "d957a321baed17d05362021026f1ae87e252dc19cc765c12dd629c4602f856fd",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/execution-native.ts",
-      "bytes": 20630,
-      "sha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
+      "bytes": 22993,
+      "sha256": "0fce8e5b2e923ea6b93785f552f3866ab18d6e47e4fa8d587823553f745fee6b",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/execution-network-broker.ts",
+      "bytes": 36769,
+      "sha256": "f069ce1765b0c346003c7543fdacf52f03b9f5389b89b1953c76e18f5dda33a1",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/execution-runtime.ts",
-      "bytes": 28893,
-      "sha256": "b283c0f9a0272ac15ec84380aa234968b1949875d316516b4178272c9bcb6292",
+      "bytes": 36678,
+      "sha256": "efde3799b1d402648d9032f37963ceeab3d38ed5b3906e8856da73f7f0b8c91f",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -143,8 +157,8 @@
     },
     {
       "sourcePath": "src/index.ts",
-      "bytes": 66719,
-      "sha256": "74fe2ea742c778a50f3f31ee3044e2828eff6035381279ae834593dcec431d1f",
+      "bytes": 67565,
+      "sha256": "376c485942be21ff3410cc9332bbff45a6edbe2b09fdea4b8a99781e1c0a4115",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -164,22 +178,22 @@
     },
     {
       "sourcePath": "src/logger.ts",
-      "bytes": 1240,
-      "sha256": "c4051b3a012a0c276c7cbde0596a4e4e4bef9d5f123c92e17e3d9919204ace94",
+      "bytes": 2124,
+      "sha256": "d7a4fd8cb39aa8eb358da3f34b742ddd2f4425bed7aa5a449361d2b8f158d3ce",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/managed-path-store.ts",
-      "bytes": 9157,
-      "sha256": "de4986391dd9731ae3f230636d905317eea58dd8588e29438c191a3056a889c5",
+      "bytes": 10105,
+      "sha256": "cbf3bc90daeefd5e20e699c02652ae211f88819f1458a36bd9fa43c52156167e",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/manual-execution-consent.ts",
-      "bytes": 18816,
-      "sha256": "d4fa6ea338b49b204e05d50b813c2a29d3fb334a5c5fea713fb2dab1b51d8c57",
+      "bytes": 18910,
+      "sha256": "b1e108580eeefcc4c14451f9965e7fbcb1d79c2348152fd44e024b8df992fa4a",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -311,8 +325,8 @@
     },
     {
       "sourcePath": "src/terminal.ts",
-      "bytes": 14923,
-      "sha256": "442d9506ca2d2b1f1040f35bdbf5e6e3b6973ad810692c7cc79f1eb00a7b3c20",
+      "bytes": 16192,
+      "sha256": "14557456a3f783ec93b6739eabf931862361354c757dd882b0c80331d2ebd046",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -500,8 +514,8 @@
     },
     {
       "sourcePath": "src/version.ts",
-      "bytes": 11246,
-      "sha256": "0b74a08c85fb10f6e75e386ed9bf68b2dcaebf972705daf9166de132ad530d34",
+      "bytes": 11376,
+      "sha256": "b05ec711246a0f1b23f68ade5f5d882aa81cfb6c017f6d8e0679fd4a2a1498a2",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -544,7 +558,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/electron/desktop-smoke.test.mjs",
       "testCaseId": "real Electron main, preload and renderer preserve identity and session across restart",
-      "testFileSha256": "7fd6140c7bf88fbbb844d8a95770da3d015098df484a7634b31fff7c9589a64a"
+      "testFileSha256": "3cabdc4dcc5fa2de631242411a0cc22a1466aa1e813b1f109ffcafb2e1d6c95b"
     },
     {
       "id": "file-viewer",
@@ -568,7 +582,7 @@
       "executionContract": "installed-parent-scan",
       "testFile": "tests/packaged/installed-smoke.test.mjs",
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
-      "testFileSha256": "266217bf7ee09d9fbf1e888a71dc25b3a3c1f9b5e0956f673e0f8f4f0de2cfaf"
+      "testFileSha256": "d5d5127708466fd6695a59106af29bdbd4102cebd11c8ec21404c6d60d95ab4c"
     },
     {
       "id": "process-cwd",
@@ -608,9 +622,9 @@
       "id": "sink-737e8e7fed0c6358826cae25",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
       "line": 6,
-      "column": 81,
+      "column": 94,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
       "family": "module-loader",
@@ -641,7 +655,7 @@
       "id": "sink-1c1107880edae8240e50bb2b",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
       "line": 7,
       "column": 14,
       "nodeKind": "CallExpression",
@@ -674,7 +688,7 @@
       "id": "sink-96545976fb3945998517b6bd",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
       "line": 8,
       "column": 13,
       "nodeKind": "CallExpression",
@@ -707,7 +721,7 @@
       "id": "sink-92f3102e54ced2cd49a7b044",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
       "line": 9,
       "column": 19,
       "nodeKind": "CallExpression",
@@ -740,7 +754,7 @@
       "id": "sink-f657afa31b8a30b29f14f007",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
       "line": 10,
       "column": 25,
       "nodeKind": "CallExpression",
@@ -773,7 +787,7 @@
       "id": "sink-df1a645fb7d0bcb73bf5a6d0",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
       "line": 11,
       "column": 40,
       "nodeKind": "CallExpression",
@@ -806,7 +820,7 @@
       "id": "sink-774a674e93013028ec22aa14",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
       "line": 12,
       "column": 35,
       "nodeKind": "CallExpression",
@@ -839,7 +853,7 @@
       "id": "sink-47a0c025b69dfcbb8f9eec0b",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
       "line": 13,
       "column": 20,
       "nodeKind": "CallExpression",
@@ -869,11 +883,44 @@
       }
     },
     {
+      "id": "sink-98b57a2e4a6cdc53fad419d6",
+      "occurrence": 1,
+      "sourcePath": "electron/main.cjs",
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
+      "line": 150,
+      "column": 36,
+      "nodeKind": "CallExpression",
+      "container": "startPackagedServer",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "becf68cc17b7b6506dad50a5814d87290da5db3f6238fd773fc00a3b2f83eb1a",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#startPackagedServer:credential-store.import",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#startPackagedServer:credential-store.argument:0"
+          }
+        ]
+      }
+    },
+    {
       "id": "sink-168eb1caa3924a31a4166843",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 152,
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
+      "line": 164,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "startPackagedServer",
@@ -905,8 +952,8 @@
       "id": "sink-e0ad60c2a06fed8386fa7e12",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 183,
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
+      "line": 195,
       "column": 63,
       "nodeKind": "CallExpression",
       "container": "startServerProcess",
@@ -935,11 +982,11 @@
       }
     },
     {
-      "id": "sink-ddc6d98368d8f613fa7cde04",
+      "id": "sink-c83e73b470e1688c7a07d1a7",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 187,
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
+      "line": 199,
       "column": 21,
       "nodeKind": "CallExpression",
       "container": "startServerProcess",
@@ -951,7 +998,7 @@
         "argument:2.cwd",
         "argument:2.shell"
       ],
-      "normalizedNodeSha256": "aec1a2cd48d8740203cc435a4a0bf3b907fab7bf603c38b9a612d337344611e1",
+      "normalizedNodeSha256": "41b55db2374f75d35fa94a868f8c7b796eeaa542061d2ed549c89204e44364c1",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -989,8 +1036,8 @@
       "id": "sink-efbedcd0f0d39c6f4af76d06",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 432,
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
+      "line": 460,
       "column": 18,
       "nodeKind": "NewExpression",
       "container": "createWindow",
@@ -1028,8 +1075,8 @@
       "id": "sink-0afcdaf217cac5705bbd68be",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 510,
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
+      "line": 538,
       "column": 10,
       "nodeKind": "NewExpression",
       "container": "createTray",
@@ -1061,8 +1108,8 @@
       "id": "sink-d4de993c4220516df880bcc1",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 538,
+      "fileSha256": "20e69a560b772ca457981b6ac7a6dcba9c680646f214b0d0ed2fee6aeae2c0fe",
+      "line": 566,
       "column": 24,
       "nodeKind": "CallExpression",
       "container": "stopDevelopmentServer",
@@ -1700,7 +1747,7 @@
       "id": "sink-bb241b0a5b5fc11232f6a343",
       "occurrence": 1,
       "sourcePath": "electron/preload.cjs",
-      "fileSha256": "76c928cc1c01fd7efce37202352830bad73a739666715769d9860f178bea41e3",
+      "fileSha256": "2efd58ac8776042c8eca5e6b8903f352416952a77ad4aebac34d92369e57aac4",
       "line": 2,
       "column": 40,
       "nodeKind": "CallExpression",
@@ -2477,8 +2524,8 @@
       "id": "sink-c6a5b83358de64fded85db21",
       "occurrence": 1,
       "sourcePath": "src/daemon.ts",
-      "fileSha256": "7a9789076610e8d5960527851ff51d8c2aa604b9cd29c2aa39f64cabff74c7aa",
-      "line": 67,
+      "fileSha256": "515929afff7a8ac2877e220dba323c355928107aecb5f6aaf15feaf85bf66726",
+      "line": 73,
       "column": 21,
       "nodeKind": "CallExpression",
       "container": "startServer",
@@ -2594,8 +2641,8 @@
       "id": "sink-243bfa6743a911daca9e8d11",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 154,
+      "fileSha256": "0fce8e5b2e923ea6b93785f552f3866ab18d6e47e4fa8d587823553f745fee6b",
+      "line": 172,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -2627,8 +2674,8 @@
       "id": "sink-357a7720adaf890c6b65dfa9",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 192,
+      "fileSha256": "0fce8e5b2e923ea6b93785f552f3866ab18d6e47e4fa8d587823553f745fee6b",
+      "line": 210,
       "column": 29,
       "nodeKind": "CallExpression",
       "container": "sha256",
@@ -2660,8 +2707,8 @@
       "id": "sink-61f50282e9c0d14346708830",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 197,
+      "fileSha256": "0fce8e5b2e923ea6b93785f552f3866ab18d6e47e4fa8d587823553f745fee6b",
+      "line": 215,
       "column": 61,
       "nodeKind": "CallExpression",
       "container": "assertFixedRegularFile",
@@ -2693,8 +2740,8 @@
       "id": "sink-1e542ebe0677eb880bcde1ab",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 197,
+      "fileSha256": "0fce8e5b2e923ea6b93785f552f3866ab18d6e47e4fa8d587823553f745fee6b",
+      "line": 215,
       "column": 74,
       "nodeKind": "CallExpression",
       "container": "assertFixedRegularFile",
@@ -2726,8 +2773,8 @@
       "id": "sink-4dfe0c29eb6267848c5f3ce7",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 294,
+      "fileSha256": "0fce8e5b2e923ea6b93785f552f3866ab18d6e47e4fa8d587823553f745fee6b",
+      "line": 312,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "loadAddon",
@@ -2759,8 +2806,8 @@
       "id": "sink-16b0f6cdadde539943bd7b64",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 295,
+      "fileSha256": "0fce8e5b2e923ea6b93785f552f3866ab18d6e47e4fa8d587823553f745fee6b",
+      "line": 313,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "loadAddon",
@@ -2792,8 +2839,8 @@
       "id": "sink-ea3e0efb1533dbf7c58965fc",
       "occurrence": 1,
       "sourcePath": "src/execution-runtime.ts",
-      "fileSha256": "b283c0f9a0272ac15ec84380aa234968b1949875d316516b4178272c9bcb6292",
-      "line": 183,
+      "fileSha256": "efde3799b1d402648d9032f37963ceeab3d38ed5b3906e8856da73f7f0b8c91f",
+      "line": 200,
       "column": 7,
       "nodeKind": "CallExpression",
       "container": "loadNativeIdentity",
@@ -2825,8 +2872,8 @@
       "id": "sink-e147ac29ce8d7a5661ea611b",
       "occurrence": 1,
       "sourcePath": "src/execution-runtime.ts",
-      "fileSha256": "b283c0f9a0272ac15ec84380aa234968b1949875d316516b4178272c9bcb6292",
-      "line": 184,
+      "fileSha256": "efde3799b1d402648d9032f37963ceeab3d38ed5b3906e8856da73f7f0b8c91f",
+      "line": 201,
       "column": 7,
       "nodeKind": "CallExpression",
       "container": "loadNativeIdentity",
@@ -4466,5 +4513,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "9aed1bc3183ec518e19eb5f83b95e0efc45578402cd6d64f45bf247ebf098461"
+  "canonicalPayloadSha256": "183292c52870b7e64f6d99a7124a82a393f85690536a6e416323da6ef664a3b7"
 }

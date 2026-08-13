@@ -25,7 +25,7 @@ const personaChains = Object.freeze({
   "SEC-03": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
 });
 
-const sec03ArchitectureSha256 = "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1";
+const sec03ArchitectureSha256 = "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe";
 const sec03ReceiptLayerByTestLayer = Object.freeze({ integration: "real-host", electron: "electron", packaged: "packaged" });
 const sec03ExpectedCountByTestLayer = Object.freeze({ unit: 0, contract: 0, integration: 386, electron: 48, packaged: 48 });
 const sec03EvidenceKeys = Object.freeze(["schemaVersion", "status", "context", "expectedCount", "rawCount", "validCount", "receipts", "missingKeys", "duplicateKeys", "extraKeys", "invalidKeys", "crossRunCount", "skippedCount", "todoCount", "mockCount", "testOnlyCount", "receiptSetSha256"]);
@@ -97,7 +97,8 @@ function validateNoSensitiveData(value, field = "report") {
       const fixedBooleanEvidence = fixedBooleanEvidenceKeys.has(key) && typeof entry === "boolean";
       const fixedIntegerEvidence = fixedIntegerEvidenceKeys.has(key) && Number.isSafeInteger(entry) && entry >= 0;
       assert(key === "tokens" || fixedBooleanEvidence || fixedIntegerEvidence || !forbiddenKeyPattern.test(key), `${field}.${key} is a forbidden evidence field`);
-      validateNoSensitiveData(entry, `${field}.${key}`);
+      const validatedSec03Receipts = key === "receipts" && field.endsWith(".sec03Evidence") && Array.isArray(entry);
+      if (!validatedSec03Receipts) validateNoSensitiveData(entry, `${field}.${key}`);
     }
     return;
   }

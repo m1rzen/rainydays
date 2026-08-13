@@ -18,6 +18,8 @@ jobs:
     environment: mini-lux-trusted-release
     env:
       RAINYDAYS_TRUSTED_ENVIRONMENT: mini-lux-trusted-release
+      WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+      WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
     steps:
       - name: Full immutable checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -58,6 +60,13 @@ jobs:
           $executable = & .\scripts\gov04\install-gitleaks.ps1 -DestinationDirectory $destination
           if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($executable)) { throw 'Gitleaks bootstrap failed' }
           "RAINYDAYS_GITLEAKS_EXE=$executable" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Resolve pinned SignTool
+        shell: pwsh
+        run: |
+          $signtool = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe'
+          if (-not (Test-Path -LiteralPath $signtool -PathType Leaf)) { throw 'Pinned SignTool is unavailable' }
+          "SIGNTOOL_PATH=$signtool" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: GOV-04 fixed fault-gate self-test
         shell: pwsh

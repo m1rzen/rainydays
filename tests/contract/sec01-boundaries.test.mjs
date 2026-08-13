@@ -73,12 +73,14 @@ async function verifyTerminalFacadeBoundary() {
   const index = await source("src/index.ts");
   const operationCounts = new Map([
     ["file:reveal", 1], ["terminal:list", 1], ["terminal:start", 2], ["terminal:output", 1],
-    ["terminal:input", 1], ["terminal:clear", 1], ["terminal:kill", 1], ["terminal:close", 1],
+    ["terminal:input", 0], ["terminal:clear", 0], ["terminal:kill", 0], ["terminal:close", 0],
     ["terminal:subscribe", 1],
   ]);
   for (const [operation, expectedCount] of operationCounts) {
     assert.equal(index.split(`runDirectOperation("${operation}"`).length - 1, expectedCount, `${operation} direct-operation phase count differs`);
   }
+  assert.match(index, /const directOperation = `terminal:\$\{storedOperation\.slice\("terminal-"\.length\)\}`;/);
+  assert.match(index, /runDirectOperation\(directOperation, exactRequest,/);
 
   for (const match of index.matchAll(/terminalFacade\.(list|start|output|input|get|clear|kill|close|subscribe)\(/g)) {
     const routeStart = index.lastIndexOf("app.", match.index);

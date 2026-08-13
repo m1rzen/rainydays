@@ -256,9 +256,9 @@
       }
     },
     {
-      "siteId": "sink-ddc6d98368d8f613fa7cde04",
+      "siteId": "sink-c83e73b470e1688c7a07d1a7",
       "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "aec1a2cd48d8740203cc435a4a0bf3b907fab7bf603c38b9a612d337344611e1",
+      "normalizedNodeSha256": "41b55db2374f75d35fa94a868f8c7b796eeaa542061d2ed549c89204e44364c1",
       "container": "startServerProcess",
       "family": "child-process",
       "api": "spawn",
@@ -3289,7 +3289,35 @@
           }
         ]
       }
+    },
+    {
+      "siteId": "sink-98b57a2e4a6cdc53fad419d6",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "becf68cc17b7b6506dad50a5814d87290da5db3f6238fd773fc00a3b2f83eb1a",
+      "container": "startPackagedServer",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#startPackagedServer:credential-store.import",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#startPackagedServer:credential-store.argument:0"
+          }
+        ]
+      }
     }
   ],
-  "canonicalPayloadSha256": "179b7b8e25974108738aea42f11b14540784b6dbdc60e954bc6dd2fe9a7851b5"
+  "canonicalPayloadSha256": "4d3c6ef12f23b960f75d564a223a429cbf08e9799eea375413bd046dbb934c14"
 }

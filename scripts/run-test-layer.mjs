@@ -35,7 +35,7 @@ function parseArgs(argv) {
     else throw new Error(`Unknown argument: ${argument}`);
   }
   assert(layerNames.includes(result.layer), `--layer must be one of: ${layerNames.join(", ")}`);
-  result.timeoutMs ??= result.layer === "packaged" ? 780_000 : 300_000;
+  result.timeoutMs ??= result.layer === "packaged" ? 780_000 : result.layer === "integration" ? 480_000 : 300_000;
   assert(Number.isInteger(result.timeoutMs) && result.timeoutMs > 0 && result.timeoutMs <= 900_000, "--timeout-ms is invalid");
   if (result.runId !== null) assert.match(result.runId, /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, "--run-id is invalid");
   result.report ??= path.join(projectRoot, "test-results", "layers", `${result.task.toLowerCase()}-${result.layer}.json`);
@@ -65,32 +65,16 @@ async function loadFrozenSec02Predecessor(sec03ResolvedManifest) {
   return manifest;
 }
 
-async function loadFrozenSec02SinkIdentity(sec02Manifest) {
+async function loadSec03SinkIdentity(sec03Manifest, sec02Manifest) {
   const exactCasePath = "tests/sec02-sink-inventory.json";
-  const binding = sec02Manifest.governedArtifacts.find((entry) => entry.exactCasePath === exactCasePath);
-  assert(binding, "SEC-02 frozen sink inventory binding is missing");
+  const frozen = sec02Manifest.governedArtifacts.find((entry) => entry.exactCasePath === exactCasePath);
+  assert(frozen, "SEC-02 frozen sink inventory binding is missing");
+  const current = sec03Manifest.deltaEntries.find((entry) => entry.exactCasePath === exactCasePath);
+  assert(current?.owner === "SEC-03", "SEC-03 current sink inventory binding is missing");
+  assert.deepEqual(current.supersedes, { owner: "SEC-02", sha256: frozen.sha256, hashScope: "file" }, "SEC-03 sink inventory predecessor binding differs");
   const bytes = await readFile(path.join(projectRoot, ...exactCasePath.split("/")));
-  assert.equal(sha256(bytes), binding.sha256, "SEC-02 frozen sink inventory file identity differs");
-  const inventory = JSON.parse(bytes);
-  const runtimeClasses = new Set(["product-runtime", "source-runtime", "electron-runtime"]);
-  return Object.freeze({
-    inventoryComplete: true,
-    runtimeCanaryComplete: true,
-    packagedBound: true,
-    executableFileCount: inventory.files.length,
-    sinkCount: inventory.sinks.length,
-    runtimeSinkCount: inventory.sinks.filter((site) => runtimeClasses.has(site.executionClass)).length,
-    canonicalPayloadSha256: inventory.canonicalPayloadSha256,
-    detectorPolicySha256: inventory.detectorPolicySha256,
-    reviewPolicySha256: inventory.reviewPolicySha256,
-    dialectCheckerSha256: inventory.dialectCheckerSha256,
-    dialectPolicySha256: inventory.dialectPolicySha256,
-    dialectImportSetSha256: inventory.dialectImportSetSha256,
-    dialectImportCount: inventory.sourceClosure.dialectImportCount,
-    dialectExceptionCount: inventory.sourceClosure.dialectExceptionCount,
-    executableManifestSha256: inventory.sourceClosure.executableManifestSha256,
-    runtimeSinkSetSha256: inventory.runtimeSinkSetSha256,
-  });
+  assert.equal(sha256(bytes), current.sha256, "SEC-03 current sink inventory file identity differs");
+  return await validateSec02SinkInventory(projectRoot);
 }
 
 async function loadSec03Inputs(layer) {
@@ -146,7 +130,7 @@ async function main() {
     : null;
   const sec02RunId = sec02Resolved ? (args.runId ?? randomUUID()) : null;
   const sec02SinkIdentity = sec03Resolved
-    ? await loadFrozenSec02SinkIdentity(sec02Manifest)
+    ? await loadSec03SinkIdentity(loadedTask.resolvedManifest, sec02Manifest)
     : sec02Resolved ? await validateSec02SinkInventory(projectRoot) : null;
   const { scope } = await loadCoverageScope();
   await validateCoverageGovernance(manifest, scope);

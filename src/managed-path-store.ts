@@ -127,6 +127,7 @@ export class ManagedPathStore {
   #oraclePromise: Promise<ManagedRoot> | null = null;
   readonly #oracleFileName = path.basename(ORACLE_PATH);
   readonly #configFileName = path.basename(CONFIG_PATH);
+  readonly #credentialVaultFileName = "credentials.vault.json";
 
   async listNames(role: ManagedStoreRole, extension: ".md" | ".json"): Promise<string[]> {
     const root = await this.#root(role);
@@ -186,6 +187,32 @@ export class ManagedPathStore {
     const root = await this.#root("config");
     await pathPolicy.atomicCreateOrReplaceFile(root.authority, {
       input: this.#configFileName,
+      operation: "create-file",
+      defaultRootId: root.rootId,
+      requiredExtension: ".json",
+    }, bytes, WRITE_BYTES);
+  }
+
+  async readCredentialVault(): Promise<Buffer | null> {
+    const root = await this.#root("config");
+    try {
+      const result = await pathPolicy.readFile(root.authority, {
+        input: this.#credentialVaultFileName,
+        operation: "read-file",
+        defaultRootId: root.rootId,
+        requiredExtension: ".json",
+      }, READ_BYTES);
+      return Buffer.from(result.bytes);
+    } catch (error) {
+      if (error instanceof PathDeniedError && error.code === "PATH_NOT_FOUND") return null;
+      throw error;
+    }
+  }
+
+  async writeCredentialVault(bytes: Uint8Array): Promise<void> {
+    const root = await this.#root("config");
+    await pathPolicy.atomicCreateOrReplaceFile(root.authority, {
+      input: this.#credentialVaultFileName,
       operation: "create-file",
       defaultRootId: root.rootId,
       requiredExtension: ".json",

@@ -8,6 +8,10 @@
       },
       {
         "sourceTask": "SEC-03",
+        "exactCasePath": "tests/unit/execution-network-broker.test.mjs"
+      },
+      {
+        "sourceTask": "SEC-03",
         "exactCasePath": "tests/unit/execution-root-lease.test.mjs"
       },
       {
@@ -48,6 +52,7 @@
     "dist/terminal-facade.js",
     "parity/scripts/baseline-lib.mjs",
     "dist/execution-isolation.js",
+    "dist/execution-network-broker.js",
     "dist/execution-native.js",
     "dist/execution-runtime.js",
     "dist/manual-execution-consent.js",
@@ -79,6 +84,7 @@
     "dist/terminal.js",
     "dist/terminal-facade.js",
     "dist/execution-isolation.js",
+    "dist/execution-network-broker.js",
     "dist/execution-native.js",
     "dist/execution-runtime.js",
     "dist/manual-execution-consent.js",
@@ -115,6 +121,7 @@
     "dist/terminal-facade.js": 80,
     "parity/scripts/baseline-lib.mjs": 95,
     "dist/execution-isolation.js": 80,
+    "dist/execution-network-broker.js": 80,
     "dist/execution-native.js": 80,
     "dist/execution-runtime.js": 80,
     "dist/manual-execution-consent.js": 80,

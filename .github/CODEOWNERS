@@ -1,3 +1,14 @@
-# GOV-04 cannot bind CODEOWNERS until a real GitHub repository and owner identity exist.
-# A Sentinel/Reviewer must replace this comment with valid owners and capture
-# server-side CODEOWNERS/ruleset evidence before remote enforcement is accepted.
+# Repository governance owner. Server-side rules require this owner for protected inputs.
+* @m1rzen
+/.github/ @m1rzen
+/build/ @m1rzen
+/parity/policies/ @m1rzen
+/parity/GOV-04-CI-ARCHITECTURE.md @m1rzen
+/parity/GOV-04-ARCHITECT-AMENDMENT-01.md @m1rzen
+/scripts/gov04/ @m1rzen
+/scripts/run-gov04.mjs @m1rzen
+/tests/ @m1rzen
+/.gitleaks.toml @m1rzen
+/eslint.config.mjs @m1rzen
+/package.json @m1rzen
+/package-lock.json @m1rzen

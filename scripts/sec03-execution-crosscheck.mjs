@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import ts from "typescript";
-import { canonicalJson, scanSec03SourceSet } from "./sec03-execution-scanner.mjs";
+import { canonicalJson, scanSec03SourceSet, sec03ExecutionClass } from "./sec03-execution-scanner.mjs";
 
 export const executionPolicyPath = "tests/sec03-execution-policy.json";
 const classifications = new Set(["governed-adapter", "fixed-purpose-production", "build-test", "native-host-adapter", "unclassified"]);
@@ -20,10 +20,11 @@ function validateEntry(entry, label) { exactKeys(entry, exactEntryKeys, label); 
 
 export function validateSec03ExecutionPolicy(policy) {
   exactKeys(policy, ["schemaVersion", "task", "architectureSha256", "domain", "sourceRoots", "extensions", "governedEntryPaths", "governedAdapters", "fixedPurposeProduction", "fixedDynamicLoads", "nativeHostAdapters", "canonicalPayloadSha256"], "SEC-03 policy");
-  assert.equal(policy.schemaVersion, 1); assert.equal(policy.task, "SEC-03"); assert.equal(policy.architectureSha256, "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1"); assert.equal(policy.domain, "mini-lux/sec03/restricted-execution-dialect/v1");
+  assert.equal(policy.schemaVersion, 1); assert.equal(policy.task, "SEC-03"); assert.equal(policy.architectureSha256, "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe"); assert.equal(policy.domain, "mini-lux/sec03/restricted-execution-dialect/v1");
   assert.deepEqual(policy.sourceRoots, ["src/", "electron/", "scripts/", "tests/", "native/", "public/**/*.html"]); assert.deepEqual(policy.extensions, [".ts", ".tsx", ".js", ".cjs", ".mjs", ".cpp", ".cc", ".h", ".hpp", ".html"]);
   assert.equal(policy.fixedDynamicLoads.length, 0, "computed/dynamic loaders cannot be allowlisted in SEC-03 finite dialect");
   for (const [name, entries] of [["governed adapter", policy.governedAdapters], ["fixed-purpose allowlist item", policy.fixedPurposeProduction], ["native-host adapter", policy.nativeHostAdapters]]) for (const entry of entries) validateEntry(entry, name);
+  for (const entry of policy.nativeHostAdapters) assert.notEqual(sec03ExecutionClass(entry.sourcePath), "build-test", `build-test source cannot be approved as a native-host adapter: ${entry.sourcePath}`);
   const all = [...policy.governedAdapters, ...policy.fixedPurposeProduction, ...policy.nativeHostAdapters]; assert.equal(new Set(all.map(item => item.occurrenceId)).size, all.length, "SEC-03 occurrence allowlist contains duplicates");
   assert.equal(policy.canonicalPayloadSha256, sha256Sync(canonicalJson(canonicalPayload(policy))), "SEC-03 policy digest differs"); return policy;
 }
@@ -48,6 +49,29 @@ function buildTestReachability(sourceSet) {
   }
   return violations;
 }
+const nativeExtensions = new Set([".cpp", ".cc", ".h", ".hpp"]);
+function nativeBuildTestReachability(sourceSet) {
+  const native = new Map([...sourceSet].filter(([name]) => nativeExtensions.has(path.extname(name))));
+  const graph = new Map([...native].map(([sourcePath, source]) => {
+    const dependencies = new Set();
+    for (const match of source.matchAll(/^\s*#\s*include\s*"([^"]+)"/gmu)) {
+      const target = path.posix.normalize(path.posix.join(path.posix.dirname(sourcePath), match[1]));
+      if (native.has(target)) dependencies.add(target);
+    }
+    return [sourcePath, dependencies];
+  }));
+  const violations = [];
+  for (const sourcePath of native.keys()) {
+    if (sec03ExecutionClass(sourcePath) === "build-test") continue;
+    const seen = new Set(); const stack = [...(graph.get(sourcePath) ?? [])];
+    while (stack.length) {
+      const target = stack.pop(); if (seen.has(target)) continue; seen.add(target);
+      if (sec03ExecutionClass(target) === "build-test") { violations.push({ code: "UNSUPPORTED_RUNTIME_DIALECT", sourcePath, line: 1, detail: `production native source reaches build-test code: ${target}` }); break; }
+      for (const next of graph.get(target) ?? []) stack.push(next);
+    }
+  }
+  return violations;
+}
 function governedBindings(sourcePath, sourceFile, sourceSet) {
   const governed = new Set(); const namespaces = new Set(); const callableMembers = new Set(["exec", "execFile", "execFileSync", "execSync", "fork", "spawn", "spawnSync", "Worker", "connect", "createConnection", "createServer", "request", "get", "fetch", "WebSocket", "send", "bind", "utilityProcess"]); const bindPattern = (name, namespace = false) => { if (ts.isIdentifier(name)) (namespace ? namespaces : governed).add(name.text); else if (ts.isObjectBindingPattern(name)) for (const element of name.elements) if (ts.isBindingElement(element)) { const member = element.propertyName && (ts.isIdentifier(element.propertyName) || ts.isStringLiteralLike(element.propertyName)) ? element.propertyName.text : ts.isIdentifier(element.name) ? element.name.text : null; if (member && callableMembers.has(member)) bindPattern(element.name); } };
   for (const statement of sourceFile.statements) {
@@ -59,7 +83,7 @@ function governedBindings(sourcePath, sourceFile, sourceSet) {
   return { governed, namespaces, reference };
 }
 function staticViolations(sourceSet) {
-  const violations = [...buildTestReachability(sourceSet)];
+  const violations = [...buildTestReachability(sourceSet), ...nativeBuildTestReachability(sourceSet)];
   for (const [sourcePath, source] of sourceSet) {
     if (!scriptExtensions.includes(path.extname(sourcePath)) || sourcePath.startsWith("tests/") || sourcePath.startsWith("scripts/")) continue;
     const sf = ts.createSourceFile(sourcePath, source, ts.ScriptTarget.Latest, true, parserKind(sourcePath)); const { governed, reference } = governedBindings(sourcePath, sf, sourceSet); const report = (code, node, detail) => violations.push({ code, sourcePath, line: position(sf, node), detail });

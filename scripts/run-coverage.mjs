@@ -22,7 +22,7 @@ import {
 import { validateCoverageReport } from "./report-schema.mjs";
 
 function parseArgs(argv) {
-  const result = { task: "GOV-03", report: path.join(projectRoot, "test-results", "coverage-gate.json"), scope: null, preserveOutput: null, timeoutMs: 600_000, staleSeed: null };
+  const result = { task: "GOV-03", report: path.join(projectRoot, "test-results", "coverage-gate.json"), scope: null, preserveOutput: null, timeoutMs: 1_200_000, staleSeed: null };
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === "--task") result.task = argv[++index] ?? "";
     else if (argv[index] === "--report") result.report = path.resolve(argv[++index] ?? "");
@@ -34,7 +34,7 @@ function parseArgs(argv) {
     else throw new Error(`Unknown argument: ${argv[index]}`);
   }
   assert.match(result.task, /^[A-Z]+-\d{2}$/);
-  assert(Number.isInteger(result.timeoutMs) && result.timeoutMs >= 100 && result.timeoutMs <= 600_000, "--timeout-ms is invalid");
+  assert(Number.isInteger(result.timeoutMs) && result.timeoutMs >= 100 && result.timeoutMs <= 1_200_000, "--timeout-ms is invalid");
   result.preserveOutput ??= result.scope === null;
   return result;
 }

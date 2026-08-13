@@ -1,10 +1,10 @@
 # SEC-03 Shell / Script / Terminal Execution Isolation Architecture
 
-> Status: **FROZEN — REVISION 2; independent Sentinel PASS on candidate SHA-256 `1128f805796d55635e4429f9cbad730d5c37886400caba30e59a712ef5df0c80`**  
+> Status: **FROZEN — REVISION 3; authorized amendment replaces nine impossible E3 receipt stimuli with the receipt-only E3A adversarial profile**
 > Canonical task: `LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md` § SEC-03  
 > Baseline: Lux Desktop `0.1.898`  
 > Platform closed by this revision: Windows 10 22H2 / Windows 11 x64 packaged desktop, local NTFS execution roots only  
-> Revision: 2
+> Revision: 3
 
 ## 1. Security claim
 
@@ -17,7 +17,7 @@ SEC-03 closes exactly four executable entry points:
 
 For these entry points, untrusted command or script bytes SHALL never execute directly under the Mini-Lux server's normal user token. Every child starts through the governed Windows sandbox host and is constrained before its first user-code instruction. This is a completion claim, not a description of the Revision 1 source state.
 
-Revision 2 deliberately closes a finite platform profile: regular AppContainer on supported Windows x64 and local fixed NTFS roots. An authorized UNC/device/network root, non-NTFS root, WSL path, removable volume, unknown reparse surface, unsupported shell/runtime or unavailable native primitive fails before ACL mutation or process creation. Network-root execution, LPAC and non-Windows runners are compatibility work, not hidden fallbacks and not SEC-03 completion evidence.
+Revision 3 deliberately closes a finite platform profile: regular AppContainer on supported Windows x64 and local fixed NTFS roots. An authorized UNC/device/network root, non-NTFS root, WSL path, removable volume, unknown reparse surface, unsupported shell/runtime or unavailable native primitive fails before ACL mutation or process creation. Network-root execution, LPAC and non-Windows runners are compatibility work, not hidden fallbacks and not SEC-03 completion evidence.
 
 The claim covers:
 
@@ -88,11 +88,21 @@ The four governed command/script-bearing entry surfaces and their current Revisi
 | `E3` | Agent `script` | dispatcher → `src/tools/script.ts::runNodeModule` | `spawn` |
 | `E4` | manual Terminal start/input | HTTP/UI → `runDirectOperation` → `terminalFacade` | the same `TerminalManager.spawn` and stdin write |
 
-Revision 2 splits `E2` and `E4` into separate trusted adapters over one `ExecutionIsolationService`; they may not share an authorization shortcut. Every launch and mutating input reaches only `launch(grant)` or `write(sessionLease, inputGrant)`. Session list/output/subscription are read-only. Kill/close are attenuation-only lifecycle calls.
+Revision 3 splits `E2` and `E4` into separate trusted adapters over one `ExecutionIsolationService`; they may not share an authorization shortcut. Every launch and mutating input reaches only `launch(grant)` or `write(sessionLease, inputGrant)`. Session list/output/subscription are read-only. Kill/close are attenuation-only lifecycle calls.
 
 The following production process/worker sinks are explicitly outside this four-surface claim and SHALL remain in an exact reviewed allowlist: Electron server bootstrap/termination (`electron/main.cjs`); daemon server bootstrap plus `src/process-tree.ts` fixed `taskkill /PID <owned-daemon-pid> /T /F` termination; fixed `git ls-files -z --` in `read_repo`; File Viewer reveal launcher; and the fixed document parser worker. Build/test scripts are a separate non-runtime class. The exported `terminateProcessTree` helper is allowlisted only while its sole production importer/caller is `src/daemon.ts` and its PID comes from that module's own leased server child; any E1–E4, generic-tool or new caller fails governance. These sinks accept no arbitrary command/script bytes under an E1–E4 call graph. Adding a sink, changing an executable/argv class, or making an allowlisted sink reachable from E1–E4 requires an architecture amendment.
 
 A repository scanner and independent call-graph crosscheck SHALL classify every authored `child_process`, worker, native process, PTY and dynamic-loader sink as exactly one of: governed E1–E4 seam, reviewed fixed-purpose production allowlist, or build/test-only. Unknown, callable-exported, aliased, re-exported or indirect sinks fail closed. `src/process-tree.ts` taskkill is not valid termination evidence for E1–E4 and must become unreachable from them while retaining only the exact daemon contract above.
+
+### 3.2 Receipt-only E3A adversarial profile
+
+`E3A` is not a fifth product entry point and is never reachable from Agent, renderer, HTTP, IPC, `ExecutionIsolationService`, or any production tool dispatch. It exists only to replace nine Revision 2 matrix records whose requested Win32 stimuli contradicted E3's fixed Node executable, no-addon/no-worker/no-child permission set, active-process limit `1`, and equal process/Job memory limits.
+
+E3A uses the exact candidate `sandbox-host.exe` in a compiled fixed adversary submode under the same regular AppContainer token construction and retained Job ownership. The outer host accepts only these tuples: `A06-01..04/E3A`, `A07-01..03/E3A`, `A08-02/E3A`, and `A08-04/E3A`. Each tuple selects one compile-time mode and fixed arguments; no caller-selected executable, path, command, script, environment key, limit type, result code, proof field, or observation value is accepted. The adversary submode requires inherited private handles and a one-use authenticated launch secret, and fails when invoked directly.
+
+For A06 and A07, the fixed mode creates only exact self-image descendants needed for the lineage/breakaway stimulus. For A08-02 it attempts one child against an active-process limit of `1`. For A08-04 it uses a fixed multi-process allocation plan with process memory above the attenuated aggregate Job-memory limit so the Job-memory limit is independently identified. Test limits may be attenuated but the proof binds the exact limit type, values and Job policy digest. Every adversary image and descendant must prove the expected AppContainer SID and Job membership; all executions end with active-process zero and full cleanup.
+
+E3A does not alter E3. E3 remains the exact pinned Node Script profile with no addon, Worker, child process, inspector or WASI, and with the frozen E3 production limits. E3A receipts cannot substitute for any E3 production receipt or Electron/packaged projection, and E3A is excluded from the 48-receipt projection profile set.
 
 ## 4. Native sandbox host
 
@@ -107,7 +117,7 @@ native/sandbox-host/
   protocol.h
 ```
 
-A deterministic build script invokes the pinned x64 MSVC toolchain and Windows SDK in CI/build environments. It emits one Node-API launcher addon and one host executable. Both are staged outside ASAR at fixed resource paths and included in the installer. The launcher is loaded and identity-checked during trusted server bootstrap before any E1–E4 request is accepted; it exposes only the fixed host-launch ABI, not arbitrary process creation.
+A deterministic build script invokes the pinned x64 MSVC toolchain and Windows SDK in CI/build environments. It emits one Node-API launcher addon and one host executable. Both are staged outside ASAR at fixed resource paths and included in the installer. The launcher is loaded and identity-checked during trusted server bootstrap before any E1–E4 request is accepted; it exposes only the fixed host-launch ABI, not arbitrary process creation. Revision 3 keeps this exact two-artifact set: E3A reuses the fixed host image under an authenticated compiled adversary submode and introduces no helper executable or third production artifact.
 
 Required identity binding:
 
@@ -142,7 +152,7 @@ Any failure before step 11 terminates the suspended process if created, closes t
 
 ### 4.3 AppContainer policy
 
-Revision 2 uses only an unpackaged **regular AppContainer**. LPAC is out of scope and cannot be advertised, selected or used as a fallback. Each sandbox session gets a new random profile name and unique AppContainer SID; a SID is never reused across executions, sessions, retries or recovery.
+Revision 3 uses only an unpackaged **regular AppContainer**. LPAC is out of scope and cannot be advertised, selected or used as a fallback. Each sandbox session gets a new random profile name and unique AppContainer SID; a SID is never reused across executions, sessions, retries or recovery.
 
 Properties:
 
@@ -164,16 +174,17 @@ Granting an AppContainer access to an arbitrary selected workspace changes a Win
 For each execution and root:
 
 1. PathPolicy creates an internal execution-root lease containing root ID, access mask, authority epoch and stable local-NTFS identity; it exposes neither a caller path nor mutable descriptor.
-2. The host reopens the root with `FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT`, `FILE_SHARE_READ | FILE_SHARE_WRITE` but **without `FILE_SHARE_DELETE`** (never `MAXIMUM_ALLOWED`), and verifies fixed local drive, NTFS, no root reparse tag, volume serial and file ID. It retains this root handle through final ACL cleanup so new rename/delete/replacement opens are denied.
-3. Before mutation it writes a create-new journal generation containing candidate/build ID, grant/profile/session IDs, unique SID, root identity, requested mask, original descriptor digest, exact ACE bytes and state `prepared`; it calls `FlushFileBuffers` and publishes the generation with `MoveFileExW(MOVEFILE_WRITE_THROUGH)`. Later states use new monotonically numbered generations; recovery trusts no partial/temp file.
-4. It reads DACL generation D0 by handle, builds D1 by preserving every D0 ACE byte/order and inserting one canonical explicit allow ACE for the unique SID, then pauses at the deterministic test barrier and re-reads D0'. If D0' differs from D0 it aborts before write. Otherwise it applies D1 by handle with `SetSecurityInfo`, reads D2, and proves exactly one matching ACE plus the D0 unrelated sequence. Cleanup uses the same read → deterministic barrier → re-read → remove-exact-ACE → verify sequence against the then-current DACL.
-5. It marks `applied` and flushes before resume. Failure to propagate because of sharing/protected descendants is an availability failure for that requested positive fixture; it never broadens the ACE or disables protection.
-6. Cleanup occurs only after Job active-process zero and I/O drain. Using the still-held root handle, it verifies identity, removes only the exact unique-SID ACE from the current observed DACL with the D0/D0' conflict check above, verifies absence, marks `removed`, deletes the profile, then deletes the journal.
-7. If root identity changed or exact safe removal cannot be proven, the journal remains durable, the profile is deleted/disabled, execution is blocked, and startup recovery must resolve it before any new execution. Because every SID is unique and the Job is dead first, an orphan ACE cannot authorize a later execution.
+2. The launcher opens each root and nested CWD with `FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT`, `MAXIMUM_ALLOWED`, `FILE_SHARE_READ | FILE_SHARE_WRITE` and **without `FILE_SHARE_DELETE`**, then verifies fixed local drive, NTFS, no root reparse tag, volume serial and file ID. The host retains these private handles through final ACL cleanup so new root/CWD rename, delete or replacement opens are denied. `MAXIMUM_ALLOWED` is intentional and limited to the trusted native host: Microsoft documents that `SetSecurityInfo` does not propagate ACEs to existing children when its supplied handle was opened with that access mask; the handles are never inherited by the AppContainer child.
+3. Before any mutation it performs a bounded full-tree preflight through `OPEN_REPARSE_POINT` handles. Every object must remain on the root volume and expose a readable, writable, unprotected DACL with no ACE for the execution SID. For each unique descendant file ID it obtains and retains a no-share-delete handle: files request `DELETE | READ_CONTROL | WRITE_DAC | FILE_READ_ATTRIBUTES`, while directories request private `MAXIMUM_ALLOWED` so their later `SetSecurityInfo` call cannot propagate to existing children; both use `FILE_SHARE_READ | FILE_SHARE_WRITE` and omit `FILE_SHARE_DELETE`. The fixed bound is 4096 unique descendant identities. Hard-link aliases collapse to one multi-link identity; reparse objects are inspected but never traversed; multi-link files and reparses are locked but ineligible and never passed to a DACL write. An uninspectable/protected object, identity change, duplicate classification conflict or bound overflow rejects the execution before a journal or ACL write.
+4. It writes a create-new `MLSEC03J5` root transaction generation containing candidate/build ID, grant/profile/session IDs, unique SID, root identity, requested mask, original root descriptor digest, exact root ACE bytes and a canonical file-ID ledger. Each ledger item binds file ID, object kind, eligibility and pre-mutation ACL digest. The ledger is sorted independently of the live parent-before-child retained-handle order. State `prepared` is flushed and published with `MoveFileExW(MOVEFILE_WRITE_THROUGH)` before any DACL write; later states use new monotonically numbered generations and recovery trusts no partial/temp file.
+5. It reads root DACL generation D0 by handle, builds D1 by preserving every D0 ACE byte/order and inserting one canonical explicit inheritable allow ACE for the unique SID, then pauses at the deterministic test barrier and re-reads D0'. If D0' differs from D0 it aborts before write. Otherwise it applies D1 through the root's `MAXIMUM_ALLOWED` handle, reads D2, and proves exactly one matching ACE plus the D0 unrelated sequence. The documented no-existing-child-propagation property closes objects inserted after preflight as well as identities already retained; the host immediately proves every retained descendant still has its exact preflight DACL digest and zero execution-SID ACEs. A test-only prepared barrier inserts an outside hard link after preflight and directly observes that neither alias receives the execution SID after root read-back.
+6. In retained parent-before-child order, each eligible existing descendant performs read → file-ID/DACL digest barrier → inheritance-only `SetSecurityInfo` → read-back. Directory calls use their private `MAXIMUM_ALLOWED` retained handles, so each call updates only that directory object and cannot propagate to an unledgered existing child. The host proves exactly one inherited ACE with the exact SID/mask/flags and byte-for-byte preservation/order of every unrelated ACE. Ineligible hard-link/reparse identities remain at zero matching ACEs. A second retained-handle verification covers every ledger identity, and only then may state `applied` be published. New objects created later inherit from the verified parent ACE; the untrusted AppContainer has no authority outside the granted roots. Every counted `aclMutations` event is one successful `SetSecurityInfo` call followed by verification of the corresponding single object DACL; existing-child implicit propagation is prohibited by the retained locks.
+7. Cleanup occurs only after Job active-process zero and I/O drain. Using the still-held root handle, it first removes and verifies absence of the exact root ACE with the same conflict barrier, stopping new inheritance. It then removes the matching inherited ACE from every eligible retained file ID in parent-before-child order, proves all retained eligible and ineligible identities contain zero execution-SID ACEs, and performs a complete no-reparse namespace pass to remove/verify any runtime-created inherited objects. Only complete root, ledger and current-namespace absence permits state `removed`, profile deletion and journal deletion.
+8. If root identity changed, any ledger object cannot be reconciled, the current namespace cannot be completely inspected, or exact safe removal cannot be proven, the journal remains durable, the profile is deleted/disabled, execution is blocked, and startup recovery must resolve it before any new execution. Because every SID is unique and the Job is dead first, an unresolved ACE cannot authorize a later execution.
 
-Startup recovery runs before the service accepts E1–E4. It validates strict journal schema, generation continuity, recorded digests and candidate identity, ignores only unpublished temp files, ensures no live owned host/job, deletes the recorded profile first, then removes only the exact SID ACE from the same root identity. Corrupt, ambiguous, conflicting or unverifiable records are hard recovery failures; no full-descriptor rollback may overwrite unrelated ACL changes.
+Startup recovery runs before the service accepts E1–E4. It validates strict canonical J3/J4/J5 schema, generation continuity, immutable ledger/digests and candidate identity, removes only a lone unpublished generation-1 temp, ensures no live owned host/job, and deletes the recorded profile first. It reopens and verifies the exact root, removes the exact root ACE first, then uses `OpenFileById` with the verified root as the volume hint to reopen every J5 ledger identity even if an existing descendant was renamed elsewhere on the same volume. Before any ledger mutation, recovery retains `MAXIMUM_ALLOWED` handles for the complete ledger with `FILE_SHARE_DELETE` omitted, so the identity set cannot be renamed or deleted during reconciliation and directory DACL writes cannot implicitly propagate to ledger children. Every ledger identity must still exist; before a DACL write, removing at most its one canonical execution-SID ACE in memory must reproduce the recorded preflight ACL digest exactly. Because a renamed child can temporarily re-inherit from a recorded parent whose file ID sorts later, recovery uses bounded multi-pass reconciliation: after each pass every identity must be either clean at its exact digest or contain only one removable canonical execution-SID ACE whose removal reproduces that digest; the clean count must strictly increase, and at most `ledger-size + 1` passes are allowed. Any no-progress pass, missing/inaccessible/reused identity, unexpected same-SID ACE or unrelated ACL drift retains the journal. Recovery finally traverses the complete current root namespace without following reparses to clean runtime-created inherited objects. Successful deletion removes temp files first and published generations newest-to-oldest, checking every result, so interruption leaves a recoverable contiguous prefix. Protected directories are still traversed; a parent with no matching SID is never accepted as proof that its subtree is clean. Missing root identity, corrupt/ambiguous ledger, path replacement race or incomplete traversal is a hard recovery failure that retains the journal. No full-descriptor rollback may overwrite unrelated ACL changes; J3 path-based directory recovery remains compatibility-only for older candidate journals and cannot be emitted by the current host.
 
-Windows exposes no DACL compare-and-swap primitive. Revision 2 therefore guarantees preservation of the DACL observed at the final D0' check and deterministic detection at the frozen barriers; it does not claim to preserve a change made by an independent principal holding `WRITE_DAC` in the final unobservable interval before `SetSecurityInfo`. Such an ACL writer is outside the untrusted AppContainer threat model. The sandbox SID never receives `WRITE_DAC`/`WRITE_OWNER`, so E1–E4 code cannot create that race. Tests must report this non-claim rather than simulate a CAS guarantee.
+Windows exposes no DACL compare-and-swap primitive. Revision 3 therefore guarantees preservation of the DACL observed at the final D0' check and deterministic detection at the frozen barriers; it does not claim to preserve a change made by an independent principal holding `WRITE_DAC` in the final unobservable interval before `SetSecurityInfo`. Such an ACL writer, or an independent ordinary-user principal concurrently changing hard-link topology or namespace outside the granted roots, is outside the untrusted AppContainer threat model. The sandbox SID never receives `WRITE_DAC`/`WRITE_OWNER` and cannot create/traverse a link outside an authorized root, so E1–E4 code cannot create those races. Live retained handles still deny rename/delete of every preflight identity; recovery tolerates post-crash link-count drift and reconciles the recorded file ID rather than trusting its old eligibility classification. Tests must report this non-claim rather than simulate a CAS guarantee.
 
 Read grants map to traverse/list/read/execute as required; write grants add create/write/delete-child/rename rights. They never add `WRITE_DAC`, `WRITE_OWNER`, SACL, ownership or broad full-control. No tool, renderer or script can supply a SID, profile name, DACL, access mask or raw root path.
 
@@ -245,12 +256,12 @@ Attenuation is intersection-only. Child Agent/Playbook execution cannot add root
 - start and input require one-use native-consent grants; signal/kill/close are owner-bound attenuation operations;
 - list, output and subscribe are read-only and session-scoped; clear changes only the trusted output buffer;
 - each consent binds operation, terminal ID where applicable, exact argument digest, BrowserWindow/webContents identity, session, authority epoch and expiry;
-- E4 is deny-only network in Revision 2; it receives neither direct capability nor broker client/bridge;
+- E4 is deny-only network in Revision 3; it receives neither direct capability nor broker client/bridge;
 - renderer/browser HTTP cannot start or write; denial has zero process/ACL/stdin side effects.
 
 ## 7. Trusted manual-Terminal consent
 
-Renderer `isTrusted`, transient user activation, focus, a normal API bearer token and a renderer-held nonce do not prove consent to exact command bytes. Revision 2 therefore uses a main-process-owned native confirmation flow; no approval secret or grant is returned to renderer JavaScript.
+Renderer `isTrusted`, transient user activation, focus, a normal API bearer token and a renderer-held nonce do not prove consent to exact command bytes. Revision 3 therefore uses a main-process-owned native confirmation flow; no approval secret or grant is returned to renderer JavaScript.
 
 1. A narrow preload method accepts only `terminalStart(request)` or `terminalInput(request)` from the top frame. It canonicalizes transport shape but asserts no authority.
 2. Electron main verifies the sending `webContents`, top frame, current visible/focused BrowserWindow and current session binding, then sends a bounded `prepare-consent` record over the main-owned consent channel. Packaged same-process mode uses an object-identity callback registered during bootstrap; child-server modes use one inherited anonymous pipe. Browser/HTTP clients can access neither transport.
@@ -300,7 +311,7 @@ The child still receives no network capability. A finite Mini-Lux network broker
 - request/response byte and time limits;
 - absence of ambient credentials and forbidden headers.
 
-The bridge uses authenticated private handles/pipes. It is not a general socket forwarder and cannot request an arbitrary destination. E1/E2 receive a fixed `mini-lux-net` broker client only when the launch grant freezes exact finite operations; E3 receives the equivalent finite bridge API. E4 has no brokered mode in Revision 2, and any E4 launch requesting it fails `EXEC_NETWORK_PROFILE_UNSUPPORTED` before profile/ACL/process side effects.
+The bridge uses authenticated private handles/pipes. It is not a general socket forwarder and cannot request an arbitrary destination. E1/E2 receive a fixed `mini-lux-net` broker client only when the launch grant freezes exact finite operations; E3 receives the equivalent finite bridge API. E4 has no brokered mode in Revision 3, and any E4 launch requesting it fails `EXEC_NETWORK_PROFILE_UNSUPPORTED` before profile/ACL/process side effects.
 
 Transparent arbitrary network compatibility is not claimed. Implementing unrestricted sockets or origin-transparent proxying would require a separately governed WFP/service design and is outside this revision.
 
@@ -393,13 +404,14 @@ SEC-03 may become `verified` only when all are true for one source/build/package
 10. direct HTTP manual start/input, renderer synthetic activity, native-dialog deny/dismiss, replay, altered bytes and cross-window/session grants produce zero process/ACL/stdin side effects; emergency kill/close only attenuate;
 11. ACL crash-recovery removes only the exact unique-SID ACE, preserves the unrelated ACE sequence observed at the final conflict check, detects deterministic D0/D0' mutation, and blocks on ambiguity without claiming unavailable DACL CAS semantics;
 12. Script cannot load addon/worker/child/inspector/WASI or bypass direct filesystem/network restrictions;
-13. unit, contract, real-host integration, real Electron and installed-package layers pass with no skip/todo/unsupported on the frozen Windows x64 profile;
-14. launcher and sandbox-host source/toolchain/flags/PE bytes/stage/unpacked/installer/report identities match one candidate; local unsigned status is disclosed and never reported as trusted signature;
-15. the exact receipt set in §15 is complete, unique and identity-bound, and independent Debugger plus Sentinel/Reviewer verdicts contain no blocking finding.
+13. E3A accepts only its nine fixed tuples, uses the exact host image and authenticated private launch state, is unreachable from every product surface, and cannot select arbitrary process or proof material;
+14. unit, contract, real-host integration, real Electron and installed-package layers pass with no skip/todo/unsupported on the frozen Windows x64 profile;
+15. launcher and sandbox-host source/toolchain/flags/PE bytes/stage/unpacked/installer/report identities match one candidate; local unsigned status is disclosed and never reported as trusted signature;
+16. the exact receipt set in §15 is complete, unique and identity-bound, and independent Debugger plus Sentinel/Reviewer verdicts contain no blocking finding.
 
 ## 15. Frozen attack matrix and receipt count
 
-Profiles are `E1` one-shot Agent shell, `E2` persistent Agent shell, `E3` Script and `E4` manual Terminal. Every variant below has a fixed ID, stimulus and stable expected result. “All” means four observations. No slash-separated item permits implementation-time choice.
+Production profiles are `E1` one-shot Agent shell, `E2` persistent Agent shell, `E3` Script and `E4` manual Terminal. `E3A` is the receipt-only fixed native adversarial profile defined in §3.2. Every variant below has a fixed ID, stimulus and stable expected result. “All” means the four production profiles E1–E4; E3A appears only in the nine explicitly listed replacement records. No slash-separated item permits implementation-time choice.
 
 | Family | Variants | Profiles | Receipts |
 |---|---:|---|---:|
@@ -408,9 +420,9 @@ Profiles are `E1` one-shot Agent shell, `E2` persistent Agent shell, `E3` Script
 | A03 root identity/lease race | 3 | All | 12 |
 | A04 direct network deny | 5 | All | 20 |
 | A05 finite broker allowlist | 10 | E1–E3 | 30 |
-| A06 process lineage | 4 | All | 16 |
-| A07 breakaway/handle inheritance | 6 | All | 24 |
-| A08 resource limit | 7, with idle only E2/E4 | mixed | 26 |
+| A06 process lineage | 4 | E1/E2/E4/E3A | 16 |
+| A07 breakaway/handle inheritance | 6 | A07-01..03 E1/E2/E4/E3A; A07-04..06 All | 24 |
+| A08 resource limit | 7 | A08-02/04 E1/E2/E4/E3A; A08-01/03/05/06 All; idle E2/E4 | 26 |
 | A09 termination trigger | 8 | All | 32 |
 | A10 host protocol | 9 | Host-level | 9 |
 | A11 Agent grant/input binding | 8 | E1–E3 | 24 |
@@ -431,9 +443,9 @@ Profiles are `E1` one-shot Agent shell, `E2` persistent Agent shell, `E3` Script
 - `A03-01`, expected `EXEC_ROOT_IDENTITY_CHANGED`: barrier replacement before the retained root handle. `A03-02` and `A03-03`, expected `OBS_ROOT_REPLACEMENT_BLOCKED`: replacement attempt after ACL apply and after suspended process creation respectively, followed by matching final identity and safe continuation.
 - `A04-01..05`, expected `OBS_NETWORK_DENIED`: DNS query, external TCP connect, UDP send, loopback connect and listen/bind respectively.
 - `A05-01`, expected `OBS_BROKER_ALLOWED`: exact frozen HTTPS operation. `A05-02..10` expect, in order, `EXEC_BROKER_SCHEME_DENIED`, `EXEC_BROKER_HOST_DENIED`, `EXEC_BROKER_PORT_DENIED`, `EXEC_BROKER_PRIVATE_ADDRESS_DENIED`, `EXEC_BROKER_DNS_REBIND_DENIED`, `EXEC_BROKER_REDIRECT_DENIED`, `EXEC_BROKER_REQUEST_LIMIT`, `EXEC_BROKER_RESPONSE_LIMIT`, `EXEC_BROKER_TIMEOUT`.
-- `A06-01..04`, expected `OBS_JOB_EMPTY`: direct child, grandchild, detached child, and background descendant after direct parent exits.
-- `A07-01..06`: explicit breakaway and silent-breakaway requests expect `EXEC_BREAKAWAY_DENIED`; nested-job incompatibility expects `EXEC_JOB_INCOMPATIBLE`; attempted Job-handle duplication, control-handle duplication and inheritance of one unlisted sentinel handle each expect `OBS_HANDLE_DENIED`.
-- `A08-01..06`, all profiles, expect `EXEC_LIMIT_CPU`, `EXEC_LIMIT_ACTIVE_PROCESS`, `EXEC_LIMIT_PROCESS_MEMORY`, `EXEC_LIMIT_JOB_MEMORY`, `EXEC_LIMIT_OUTPUT`, `EXEC_LIMIT_WALL` respectively. `A08-07` runs only E2/E4 and expects `EXEC_LIMIT_IDLE`. Tests attenuate durations/sizes but preserve the same limit type and policy digest fields.
+- `A06-01..04`, expected `OBS_JOB_EMPTY`: direct child, grandchild, detached child, and background descendant after direct parent exits. Each runs under E1/E2/E4/E3A; the impossible Revision 2 E3 records are replaced by E3A records with the same family/variant and distinct profile identity.
+- `A07-01..03`: explicit breakaway and silent-breakaway requests expect `EXEC_BREAKAWAY_DENIED`, and nested-job incompatibility expects `EXEC_JOB_INCOMPATIBLE`; each runs under E1/E2/E4/E3A. `A07-04..06` run under all four production profiles and attempt Job-handle duplication, control-handle duplication and inheritance of one unlisted sentinel handle, each expecting `OBS_HANDLE_DENIED`.
+- `A08-01`, `A08-03`, `A08-05`, and `A08-06` run under all four production profiles and expect `EXEC_LIMIT_CPU`, `EXEC_LIMIT_PROCESS_MEMORY`, `EXEC_LIMIT_OUTPUT`, and `EXEC_LIMIT_WALL`. `A08-02` and `A08-04` run under E1/E2/E4/E3A and expect `EXEC_LIMIT_ACTIVE_PROCESS` and `EXEC_LIMIT_JOB_MEMORY`; the impossible Revision 2 E3 records are replaced by fixed E3A adversarial stimuli. `A08-07` runs only E2/E4 and expects `EXEC_LIMIT_IDLE`. Tests attenuate durations/sizes but preserve the same limit type and policy digest fields.
 - `A09-01..08` expect `EXEC_COMPLETED_JOB_EMPTY`, `EXEC_CANCELLED`, `EXEC_OWNER_RETIRED`, `EXEC_SESSION_RETIRED`, `EXEC_SERVICE_SHUTDOWN`, `EXEC_SERVICE_LOST`, `EXEC_HOST_LOST`, `EXEC_CHANNEL_LOST` for normal drain, explicit cancel, ResourceOwner retirement, session switch, graceful service shutdown, forced service crash, forced host crash and independent control-channel loss respectively.
 - `A10-01..09` expect `EXEC_PROTOCOL_INVALID` with fixed subcodes `length`, `oversize`, `unknown-key`, `duplicate-key`, `utf8`, `replay`, `second-launch`, `secret`, `state` respectively.
 - `A11-01..08` expect `EXEC_GRANT_REQUIRED`, `EXEC_GRANT_FORGED`, `EXEC_GRANT_ARGUMENT_MISMATCH`, `EXEC_GRANT_EXPIRED`, `EXEC_GRANT_REPLAYED`, `EXEC_GRANT_CROSS_RUN`, `EXEC_GRANT_CROSS_SESSION`, `EXEC_GRANT_CONCURRENT_REUSE`. E2 applies the same IDs to `InputGrant` after its launch grant.
@@ -454,13 +466,14 @@ Every receipt key is `(candidateId, layer, familyId, variantId, profileId)`. It 
 
 ## 16. Frozen decisions, trade-offs and evidence boundary
 
-1. **Regular AppContainer, not LPAC.** Regular AppContainer is the only Revision 2 execution token. LPAC is stricter but its compatibility/support surface is not proved; adding it later is a new numbered profile amendment, never silent fallback.
+1. **Regular AppContainer, not LPAC.** Regular AppContainer is the only Revision 3 execution token. LPAC is stricter but its compatibility/support surface is not proved; adding it later is a new numbered profile amendment, never silent fallback.
 2. **Local fixed NTFS only.** Arbitrary UNC, mapped remote, removable, non-NTFS and uncertain reparse roots fail closed. This reduces workspace execution compatibility but avoids claiming unproved SMB credentials/network-capability/remote ACL semantics. File tools may still use separately authorized SEC-02 roots; E1–E4 may not execute there.
 3. **Unique SID + handle-based ACL transaction.** This adds ACL/journal complexity but prevents cross-execution reuse and avoids restoring stale whole descriptors. The retained no-share-delete root handle plus final identity recheck closes governed replacement; D0/D0' barriers detect deterministic DACL conflict. Windows provides no DACL CAS, so a separate `WRITE_DAC` principal in the final syscall interval is an explicit non-claim. OS automatic inheritance is used only on eligible NTFS descendants; protected/unavailable descendants may deny a positive launch but never trigger broader grants.
 4. **Finite network broker for E1–E3; E4 deny-only.** No direct socket compatibility is claimed. E1/E2 receive the fixed client and E3 the finite API; E4 has no broker bridge. A future transparent or manual-Terminal network runner requires separate WFP/service architecture and review.
-5. **Fixed limits, attenuation only.** §10 values are maxima. Compatibility requests that exceed them are denied rather than silently relaxed.
-6. **Native consent for start/input; emergency attenuation for kill/close.** This trades interaction cost for exact-command consent while preserving an unblocked safety stop.
-7. **Hash identity without false signing claim.** Source/toolchain/PE/package identity is mandatory. Unsigned local candidates remain explicitly unsigned; trusted-release signing remains GOV-04 policy.
+5. **E3A is an evidence profile, not a compatibility path.** It resolves nine contradictory Revision 2 stimuli without weakening E3. It reuses only the fixed host image, accepts only compile-time matrix tuples, is absent from product dispatch and projections, and cannot execute caller bytes.
+6. **Fixed limits, attenuation only.** §10 values are maxima for production E1–E4. E3A uses only the fixed per-stimulus evidence limits in §3.2; compatibility requests cannot select them or exceed production limits.
+7. **Native consent for start/input; emergency attenuation for kill/close.** This trades interaction cost for exact-command consent while preserving an unblocked safety stop.
+8. **Hash identity without false signing claim.** Source/toolchain/PE/package identity is mandatory. Unsigned local candidates remain explicitly unsigned; trusted-release signing remains GOV-04 policy.
 
 Official Windows evidence supports only the primitives used in the contract:
 
@@ -469,4 +482,4 @@ Official Windows evidence supports only the primitives used in the contract:
 - Job Objects document descendant association by default, breakaway exceptions, nested jobs and kill-on-last-handle-close: <https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects>.
 - `SetSecurityInfo` and automatic ACE propagation document handle-based DACL update and propagation to eligible existing NTFS children: <https://learn.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-setsecurityinfo> and <https://learn.microsoft.com/en-us/windows/win32/secauthz/automatic-propagation-of-inheritable-aces>.
 
-These sources do **not** prove that ConPTY is isolation, that Job Objects control files/network, that every legacy executable is AppContainer-compatible, that UNC/SMB execution is safe without further design, or that implementation is correct. Those remain measured completion predicates. Revision 2 makes no claim against administrator/SYSTEM/kernel attackers or Windows sandbox vulnerabilities.
+These sources do **not** prove that ConPTY is isolation, that Job Objects control files/network, that every legacy executable is AppContainer-compatible, that UNC/SMB execution is safe without further design, or that implementation is correct. Those remain measured completion predicates. Revision 3 makes no claim against administrator/SYSTEM/kernel attackers or Windows sandbox vulnerabilities.

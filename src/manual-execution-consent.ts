@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { NativeExecutionProof, NativeServiceDenialRequest, NativeServiceDenialState } from "./execution-native.js";
 
-export type ManualConsentOperation = "terminal-start" | "terminal-input";
+export type ManualConsentOperation = "terminal-start" | "terminal-input" | "terminal-clear" | "terminal-kill" | "terminal-close";
 export type ManualConsentDecision = "approve" | "deny" | "dismiss";
 
 export interface ManualConsentBinding {
@@ -225,7 +225,7 @@ export class ManualExecutionConsentLedger {
     if (this.#shutdown) denied("CONSENT_LEDGER_SHUTDOWN", "Consent ledger is shut down");
     this.#pruneExpired();
     if (this.#active.size >= MAX_PENDING) denied("CONSENT_REQUEST_INVALID", "Too many pending consent requests");
-    if (!input || (input.operation !== "terminal-start" && input.operation !== "terminal-input")) denied("CONSENT_REQUEST_INVALID", "Consent operation is invalid");
+    if (!input || !["terminal-start", "terminal-input", "terminal-clear", "terminal-kill", "terminal-close"].includes(input.operation)) denied("CONSENT_REQUEST_INVALID", "Consent operation is invalid");
     const binding = requirePresence(input.presence);
     const exactRequest = cloneJson(input.request) as Readonly<Record<string, unknown>>;
     const encoded = Buffer.from(canonical(exactRequest), "utf8");

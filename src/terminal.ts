@@ -4,8 +4,9 @@
 
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import type { IsolatedTerminalLease, ScopedExecutionGateway } from "./execution-runtime.js";
+import type { NativeExecutionProof } from "./execution-native.js";
 import type { ExecutionRootLease } from "./path-policy.js";
-import { readIsolatedTerminal, retireIsolatedTerminal, terminateIsolatedTerminal } from "./execution-runtime.js";
+import { observeTerminalOwnerDenial, readIsolatedTerminal, retireIsolatedTerminal, terminateIsolatedTerminal } from "./execution-runtime.js";
 import {
   assertResourceOwner,
   registerOwnedResource,
@@ -64,10 +65,12 @@ type TerminalOwnerDenialCode = "PATH_AUTHORITY_FORGED" | "EXEC_OWNER_MISMATCH";
 
 class TerminalOwnerMismatchError extends Error {
   readonly code = "EXEC_OWNER_MISMATCH";
+  readonly nativeObservation: NativeExecutionProof | null;
 
-  constructor() {
+  constructor(nativeObservation: NativeExecutionProof | null = null) {
     super("Terminal owner mismatch");
     this.name = "TerminalOwnerMismatchError";
+    this.nativeObservation = nativeObservation;
   }
 }
 
@@ -88,6 +91,7 @@ export interface TerminalIsolationBackend {
   readonly read: (lease: IsolatedTerminalLease, owner: ResourceOwner) => Readonly<{ stdout: string; stderr: string; outputTruncated: boolean; running: boolean }>;
   readonly terminate: (lease: IsolatedTerminalLease, owner: ResourceOwner, reason: string) => Promise<void>;
   readonly retire?: (lease: IsolatedTerminalLease, owner: ResourceOwner, reason: string) => Promise<void>;
+  readonly observeOwnerDenial?: (lease: IsolatedTerminalLease, requester: ResourceOwner, operation: "kill" | "close", terminalId: string) => Promise<NativeExecutionProof>;
 }
 
 class TerminalManager {
@@ -198,11 +202,11 @@ class TerminalManager {
   }
 
   async kill(owner: TerminalOwner, id: string): Promise<void> {
-    await this.#killOwnedSession(this.#requireSession(owner, id, "kill"));
+    await this.#killOwnedSession(await this.#requireMutationSession(owner, id, "kill"));
   }
 
   async close(owner: TerminalOwner, id: string): Promise<void> {
-    await this.#closeOwnedSession(this.#requireSession(owner, id, "close"));
+    await this.#closeOwnedSession(await this.#requireMutationSession(owner, id, "close"));
   }
 
   subscribe(owner: TerminalOwner, id: string, callback: (event: TerminalEvent) => void): () => void {
@@ -231,6 +235,22 @@ class TerminalManager {
       auditTerminalOwnerDenial(operation, id);
     }
     if (!session || !this.#isOwner(session, owner)) throw new Error(`终端不存在: ${id}`);
+    return session;
+  }
+
+  async #requireMutationSession(owner: TerminalOwner, id: string, operation: "kill" | "close"): Promise<TerminalSession> {
+    this.#assertOwner(owner);
+    const session = this.#sessions.get(id);
+    if (session && !this.#isOwner(session, owner)) {
+      auditTerminalOwnerDenial(operation, id, "EXEC_OWNER_MISMATCH");
+      let nativeObservation: NativeExecutionProof | null = null;
+      if (this.#isolation.observeOwnerDenial) {
+        try { nativeObservation = await this.#isolation.observeOwnerDenial(session.isolationLease, owner, operation, id); }
+        catch { nativeObservation = null; }
+      }
+      throw new TerminalOwnerMismatchError(nativeObservation);
+    }
+    if (!session) throw new Error(`终端不存在: ${id}`);
     return session;
   }
 
@@ -334,6 +354,7 @@ const productionIsolation: TerminalIsolationBackend = Object.freeze({
   read: readIsolatedTerminal,
   terminate: terminateIsolatedTerminal,
   retire: retireIsolatedTerminal,
+  observeOwnerDenial: observeTerminalOwnerDenial,
 });
 
 export const terminalFacade = facadeFor(new TerminalManager(productionIsolation));

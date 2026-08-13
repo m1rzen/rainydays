@@ -209,6 +209,7 @@ test("coverage scope is explicit and changed runtime files are governed", async 
   assert.equal(scope.schemaVersion, 3);
   assert.deepEqual(scope.additionalTestsByTask["GOV-03"], [
     { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-isolation.test.mjs" },
+    { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-network-broker.test.mjs" },
     { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-root-lease.test.mjs" },
     { sourceTask: "SEC-03", exactCasePath: "tests/unit/native-process-consent.test.mjs" },
     { sourceTask: "SEC-03", exactCasePath: "tests/integration/sec03-child-consent-transport.test.mjs" },

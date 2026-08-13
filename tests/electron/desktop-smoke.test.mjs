@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
+import { emitSec03ProjectionReceipts } from "../sec03-projection-receipts.mjs";
 import {
   boundedFetch,
   connectCdp,
@@ -31,6 +32,7 @@ async function startElectron(userData, httpPort, cdpPort, signal) {
       PORT: String(httpPort),
       RAINYDAYS_E2E_USE_DIST: "1",
       RAINYDAYS_E2E_NODE_EXECUTABLE: process.execPath,
+      RAINYDAYS_API_TOKEN: "sec04-forged-environment-token",
       ELECTRON_ENABLE_LOGGING: "1",
     },
   });
@@ -95,6 +97,9 @@ async function probeIdentity(client, buildInfo, httpPort) {
   assert.deepEqual(value.version, buildInfo);
   assert.deepEqual(value.status.version, buildInfo);
   assert.equal((await boundedFetch(`http://127.0.0.1:${httpPort}/api/version`)).status, 401);
+  assert.equal((await boundedFetch(`http://127.0.0.1:${httpPort}/api/version`, {
+    headers: { "X-RainyDays-Token": "sec04-forged-environment-token" },
+  })).status, 401, "ambient environment fixed the Electron control-plane token");
   return value;
 }
 
@@ -158,13 +163,18 @@ async function assertCanonicalPathPolicy(client, userData, launchIndex, applicat
 
   const terminalsBefore = await rendererRequest(client, "/api/terminals");
   assert.equal(terminalsBefore.status, 200);
-  const terminalDenied = await rendererRequest(client, "/api/terminals", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: prefix, shell: "cmd", cwd: outside }),
-  });
-  assert.equal(terminalDenied.status, 403, "direct HTTP Terminal mutation bypassed native consent");
-  assert.equal(terminalDenied.body.code, "EXEC_DIRECT_MUTATION_DENIED");
+  const deniedTerminalMutations = [
+    ["/api/terminals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: prefix, shell: "cmd", cwd: outside }) }],
+    ["/api/terminals/forged/input", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input: "dir" }) }],
+    ["/api/terminals/forged/clear", { method: "POST" }],
+    ["/api/terminals/forged/kill", { method: "POST" }],
+    ["/api/terminals/forged", { method: "DELETE" }],
+  ];
+  for (const [route, options] of deniedTerminalMutations) {
+    const denied = await rendererRequest(client, route, options);
+    assert.equal(denied.status, 403, `${route} bypassed native consent`);
+    assert.equal(denied.body.code, "EXEC_DIRECT_MUTATION_DENIED");
+  }
   const terminalsAfter = await rendererRequest(client, "/api/terminals");
   assert.equal(terminalsAfter.status, 200);
   assert.equal(terminalsAfter.body.terminals.length, terminalsBefore.body.terminals.length, "external CWD denial created a Terminal process record");
@@ -228,4 +238,12 @@ test("real Electron main, preload and renderer preserve identity and session acr
     await removeFixture(fixture);
   }
   assert.equal(await pathExists(fixture), false);
+});
+
+test("SEC-03 Electron stage emits all 48 authenticated projection receipts", { timeout: 120_000 }, async () => {
+  const result = await emitSec03ProjectionReceipts({
+    layer: "electron",
+    addonPath: path.join(projectRoot, ".electron-app", "dist", "native", "sandbox-launcher.node"),
+  });
+  assert.equal(result.enabled ? result.count : 0, result.enabled ? 48 : 0);
 });

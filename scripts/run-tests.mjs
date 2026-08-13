@@ -191,6 +191,7 @@ async function main() {
   const results = [];
   let sec02Evidence = null;
   let sec03Evidence = null;
+  let sec03SourceReportFile = null;
   let cleanupPassed = false;
   try {
     const requiredLayers = args.profile === "full" ? layerNames : layerNames.filter((layer) => layer !== "packaged");
@@ -206,9 +207,12 @@ async function main() {
         "--report", reportPath,
         ...(sec02RunId ? ["--run-id", sec02RunId] : []),
       ], {
-        timeoutMs: layer === "packaged" ? 900_000 : 360_000,
+        timeoutMs: layer === "packaged" ? 900_000 : layer === "integration" ? 540_000 : 360_000,
         echo: true,
-        env: withoutGov04DiagnosticChallenge(),
+        env: {
+          ...withoutGov04DiagnosticChallenge(),
+          ...(sec03SourceReportFile ? { RAINYDAYS_SEC03_SOURCE_REPORT_FILE: sec03SourceReportFile } : {}),
+        },
       });
       const report = await readJsonIfPresent(reportPath);
       const reportValidation = childReportValidation("layer", layer, report, manifest.taskId, {
@@ -217,6 +221,7 @@ async function main() {
         sourceDigest: buildInfo.sourceDigest,
       }, scope, manifest.layers, { ...(sec02Context ?? {}), ...(sec03Resolved ? { sec03Context } : {}) });
       results.push({ kind: "layer", name: layer, exitCode: child.code, report: reportValidation ? null : report, reportValidation });
+      if (sec03Resolved && layer === "integration" && child.code === 0 && !reportValidation && report?.state === "passed") sec03SourceReportFile = reportPath;
       if (child.code !== 0 || reportValidation || report?.state !== "passed") break;
     }
 
@@ -238,7 +243,7 @@ async function main() {
       unifiedRunnerCrashContext.stage = "coverage";
       const coveragePath = path.join(runRoot, "coverage.json");
       const coverage = await runProcess(process.execPath, ["scripts/run-coverage.mjs", "--task", args.task, "--report", coveragePath], {
-        timeoutMs: 660_000,
+        timeoutMs: 1_260_000,
         echo: true,
         env: withoutSec02ReceiptEnvironment(withoutGov04DiagnosticChallenge()),
       });

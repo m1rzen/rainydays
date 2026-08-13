@@ -15,11 +15,11 @@
   ],
   "architecture": {
     "exactCasePath": "parity/SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md",
-    "sha256": "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1"
+    "sha256": "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe"
   },
   "attackMatrix": {
     "exactCasePath": "tests/sec03-attack-matrix.json",
-    "sha256": "5b2bc86c818aab0135d1db11de0ac5dc138ae253c41944aef1829053963eff21"
+    "sha256": "a5989920de885a51dcf07c83988ee80c33134d58abb58390391af8560da50eac"
   },
   "predecessor": {
     "taskId": "SEC-02",
@@ -65,6 +65,13 @@
     },
     {
       "exactCasePath": "src/execution-isolation.ts",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "src/execution-network-broker.ts",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -162,6 +169,13 @@
       "supersedes": false
     },
     {
+      "exactCasePath": "dist/execution-network-broker.js",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
       "exactCasePath": "dist/execution-native.js",
       "kind": "runtime",
       "layer": null,
@@ -225,6 +239,13 @@
       "supersedes": true
     },
     {
+      "exactCasePath": "native/sandbox-host/attestation.h",
+      "kind": "runtime",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
       "exactCasePath": "native/sandbox-host/journal.h",
       "kind": "runtime",
       "layer": null,
@@ -253,6 +274,13 @@
       "supersedes": false
     },
     {
+      "exactCasePath": "native/sandbox-host/sec03-a07-adversary.cpp",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
       "exactCasePath": "parity/SEC-03-EXECUTION-ISOLATION-ARCHITECTURE.md",
       "kind": "governance",
       "layer": null,
@@ -272,6 +300,20 @@
       "layer": null,
       "owner": "SEC-03",
       "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/sec02-receipts.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "tests/sec02-sink-inventory.json",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
     },
     {
       "exactCasePath": "tests/sec03-attack-matrix.json",
@@ -316,7 +358,28 @@
       "supersedes": false
     },
     {
+      "exactCasePath": "scripts/after-pack.cjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
       "exactCasePath": "scripts/build-sec03-native.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "scripts/electron-asar-integrity.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": true
+    },
+    {
+      "exactCasePath": "scripts/generate-build-info.mjs",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -352,6 +415,20 @@
     },
     {
       "exactCasePath": "scripts/sec03-governance.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "scripts/sec03-native-verifier.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "scripts/sec03-storage-fixtures.ps1",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -435,7 +512,28 @@
       "supersedes": true
     },
     {
+      "exactCasePath": "tests/fixtures/sec03-real-host-plan.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/sec03-projection-receipts.mjs",
+      "kind": "governance",
+      "layer": null,
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-03",
+      "supersedes": false
+    },
+    {
+      "exactCasePath": "tests/unit/execution-network-broker.test.mjs",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -535,6 +633,12 @@
   ],
   "coverageExemptions": [
     {
+      "exactCasePath": "src/execution-network-broker.ts",
+      "reason": "TypeScript source is measured through the exact compiled coverage projection dist/execution-network-broker.js.",
+      "evidenceLayer": "unit",
+      "evidenceOwners": []
+    },
+    {
       "exactCasePath": "electron/main.cjs",
       "reason": "Electron main-process consent and native bridge wiring execute in the real Electron projection layer.",
       "evidenceLayer": "electron",
@@ -545,6 +649,38 @@
       "reason": "The preload mutation surface executes only in the real Electron renderer lifecycle.",
       "evidenceLayer": "electron",
       "evidenceOwners": []
+    },
+    {
+      "exactCasePath": "native/sandbox-host/attestation.h",
+      "reason": "Native attestation behavior is outside JavaScript coverage and is owned by authenticated real-host receipt families.",
+      "evidenceLayer": "integration",
+      "evidenceOwners": [
+        {
+          "receiptLayer": "real-host",
+          "testFile": "tests/integration/sec03-native-host.test.mjs",
+          "familyIds": [
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12",
+            "A13",
+            "A14",
+            "A15",
+            "A16",
+            "A17",
+            "A18",
+            "A19"
+          ]
+        }
+      ]
     },
     {
       "exactCasePath": "native/sandbox-host/journal.h",

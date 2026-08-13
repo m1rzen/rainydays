@@ -88,7 +88,7 @@ import {
   type ManualConsentDecision,
   type ManualConsentOperation,
 } from "./manual-execution-consent.js";
-import { createManualExecutionGateway, manualConsentEvidenceBinding, observeManualConsentDenial, shutdownExecutionRuntime } from "./execution-runtime.js";
+import { createManualExecutionGateway, manualConsentEvidenceBinding, observeManualConsentDenial, observeTerminalDirectDenial, shutdownExecutionRuntime } from "./execution-runtime.js";
 import {
   invalidateNativeProcessConsent,
   registerNativeProcessConsentHandler,
@@ -101,6 +101,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || "3111", 10);
 const HOST = "127.0.0.1";
 const API_TOKEN = process.env.RAINYDAYS_API_TOKEN || randomBytes(32).toString("hex");
+const LOCAL_ORIGIN = `http://${HOST}:${PORT}`;
 
 function artifactSafeBuildId(value: string): string {
   return value.replace(/[^A-Za-z0-9._-]/g, (character) => `~${character.codePointAt(0)!.toString(16).toUpperCase().padStart(2, "0")}`);
@@ -204,6 +205,16 @@ async function runDirectOperation<T>(
   }
 }
 
+async function observeDirectTerminalHttpDenial(event: "start" | "input"): Promise<void> {
+  const authority = currentAuthority;
+  const sessionId = currentSessionId;
+  if (!authority || !sessionId) return;
+  const operation = "terminal:list";
+  const context = capabilityBroker.issueLocalApiContext({ authority, principal: localApiPrincipal, sessionId, operation, args: { deniedRoute: event } });
+  try { await observeTerminalDirectDenial(context, event); }
+  finally { if (capabilityBroker.isContextActive(context)) capabilityBroker.finishContext(context); }
+}
+
 function directPathAudit(context: CapabilityContext): PathAuditIdentity {
   return Object.freeze({ sessionId: context.sessionId, runId: context.runId, principal: context.principal });
 }
@@ -231,7 +242,9 @@ function exactManualTerminalRequest(
   const value = requireManualRequest(request);
   const allowed = operation === "terminal-start"
     ? new Set(["name", "shell", "cwd"])
-    : new Set(["id", "input", "appendNewline"]);
+    : operation === "terminal-input"
+      ? new Set(["id", "input", "appendNewline"])
+      : new Set(["id"]);
   if (Object.keys(value).some(key => !allowed.has(key))) throw new TypeError("manual terminal request contains unsupported fields");
 
   if (operation === "terminal-start") {
@@ -246,6 +259,7 @@ function exactManualTerminalRequest(
   }
 
   if (typeof value.id !== "string" || !value.id) throw new TypeError("id must be a non-empty string");
+  if (operation !== "terminal-input") return Object.freeze({ id: value.id });
   if (typeof value.input !== "string") throw new TypeError("input must be a string");
   if (value.appendNewline !== undefined && typeof value.appendNewline !== "boolean") throw new TypeError("appendNewline must be a boolean");
   return Object.freeze({ id: value.id, input: value.input, appendNewline: value.appendNewline !== false });
@@ -265,7 +279,7 @@ async function currentManualConsentBinding(
   const authority = currentAuthority;
   const sessionId = currentSessionId;
   if (!authority || !sessionId) throw new Error("原生确认需要已选择的会话");
-  const directOperation = operation === "terminal-start" ? "terminal:start" : "terminal:input";
+  const directOperation = `terminal:${operation.slice("terminal-".length)}`;
   const context = capabilityBroker.issueLocalApiContext({
     authority,
     principal: localApiPrincipal,
@@ -311,6 +325,12 @@ export async function prepareManualTerminalConsent(
     : null;
   const binding = await currentManualConsentBinding(operation, exactRequest);
   const { evidence, ...consentBinding } = binding;
+  const controlLabels: Readonly<Record<string, string>> = Object.freeze({
+    "terminal-input": "向持久终端发送输入",
+    "terminal-clear": "清空持久终端输出",
+    "terminal-kill": "终止持久终端进程",
+    "terminal-close": "关闭持久终端",
+  });
   const display = operation === "terminal-start"
     ? {
         operationLabel: "启动持久终端",
@@ -319,10 +339,10 @@ export async function prepareManualTerminalConsent(
         preview: `${String(exactRequest.shell)}${exactRequest.name ? ` · ${String(exactRequest.name)}` : ""}`.slice(0, 512),
       }
     : {
-        operationLabel: "向持久终端发送输入",
+        operationLabel: controlLabels[operation],
         targetLabel: String(exactRequest.id).slice(0, 512),
         rootAlias: "terminal",
-        preview: (String(exactRequest.input) || "(empty input)").slice(0, 512),
+        preview: operation === "terminal-input" ? (String(exactRequest.input) || "(empty input)").slice(0, 512) : String(exactRequest.id).slice(0, 512),
       };
   return manualExecutionConsent.prepare({
     operation,
@@ -377,13 +397,26 @@ export async function decideManualTerminalConsent(
       result = { terminal: info };
       return;
     }
-    const terminal = await runDirectOperation("terminal:input", exactRequest, async (authorized, owner, _authority, context) => {
+    const directOperation = `terminal:${storedOperation.slice("terminal-".length)}`;
+    const terminal = await runDirectOperation(directOperation, exactRequest, async (authorized, owner, _authority, context) => {
       const id = String(authorized.id);
-      const execution = createManualExecutionGateway({ context, owner, operation: storedOperation, exactRequest });
-      const leaseInfo = terminalFacade.get(owner, id);
-      if (!leaseInfo) throw new Error(`终端不存在: ${id}`);
-      await terminalFacade.input(owner, id, String(authorized.input), authorized.appendNewline !== false, execution);
-      return terminalFacade.get(owner, id);
+      if (storedOperation === "terminal-input") {
+        const execution = createManualExecutionGateway({ context, owner, operation: storedOperation, exactRequest });
+        const leaseInfo = terminalFacade.get(owner, id);
+        if (!leaseInfo) throw new Error(`终端不存在: ${id}`);
+        await terminalFacade.input(owner, id, String(authorized.input), authorized.appendNewline !== false, execution);
+        return terminalFacade.get(owner, id);
+      }
+      if (storedOperation === "terminal-clear") {
+        terminalFacade.clear(owner, id);
+        return terminalFacade.get(owner, id);
+      }
+      if (storedOperation === "terminal-kill") {
+        await terminalFacade.kill(owner, id);
+        return terminalFacade.get(owner, id);
+      }
+      await terminalFacade.close(owner, id);
+      return null;
     });
     result = { success: true, terminal };
   });
@@ -702,14 +735,21 @@ app.use((_req, res, next) => {
   }
   next();
 });
+app.use((req, res, next) => {
+  if (req.headers.host !== `${HOST}:${PORT}`) {
+    res.status(403).json({ error: "不允许的本地控制面主机" });
+    return;
+  }
+  const origin = req.header("Origin");
+  if (origin !== undefined && origin !== LOCAL_ORIGIN) {
+    res.status(403).json({ error: "不允许的跨域来源" });
+    return;
+  }
+  next();
+});
 app.use(cors({
   origin(origin, callback) {
-    // Electron/同源请求通常没有 Origin；浏览器仅允许本机回环来源。
-    if (!origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) {
-      callback(null, true);
-      return;
-    }
-    callback(new Error("不允许的跨域来源"));
+    callback(origin === undefined || origin === LOCAL_ORIGIN ? null : new Error("不允许的跨域来源"), origin === undefined || origin === LOCAL_ORIGIN);
   },
 }));
 app.use((err: Error, _req: Request, res: Response, next: NextFunction) => {
@@ -965,7 +1005,8 @@ app.get("/api/terminals", async (_req, res) => {
   }
 });
 
-app.post("/api/terminals", (_req, res) => {
+app.post("/api/terminals", async (_req, res) => {
+  await observeDirectTerminalHttpDenial("start").catch(() => undefined);
   res.status(403).json({
     code: "EXEC_DIRECT_MUTATION_DENIED",
     error: "Direct HTTP terminal start is permanently denied",
@@ -992,51 +1033,23 @@ app.get("/api/terminals/:id/output", async (req, res) => {
   }
 });
 
-app.post("/api/terminals/:id/input", (_req, res) => {
+app.post("/api/terminals/:id/input", async (_req, res) => {
+  await observeDirectTerminalHttpDenial("input").catch(() => undefined);
   res.status(403).json({
     code: "EXEC_DIRECT_MUTATION_DENIED",
     error: "Direct HTTP terminal input is permanently denied",
   });
 });
 
-app.post("/api/terminals/:id/clear", async (req, res) => {
-  try {
-    await runDirectOperation("terminal:clear", { id: req.params.id }, (authorized, owner) => terminalFacade.clear(owner, String(authorized.id)));
-    res.json({ success: true });
-  } catch (err) {
-    res.status(404).json({ error: err instanceof Error ? err.message : String(err) });
-  }
-});
-
-app.post("/api/terminals/:id/kill", async (req, res) => {
-  try {
-    const terminal = await runDirectOperation("terminal:kill", { id: req.params.id }, async (authorized, owner) => {
-      const id = String(authorized.id);
-      await terminalFacade.kill(owner, id);
-      return terminalFacade.get(owner, id);
+for (const route of ["clear", "kill", "close"] as const) {
+  const path = route === "close" ? "/api/terminals/:id" : `/api/terminals/:id/${route}`;
+  app[route === "close" ? "delete" : "post"](path, (_req, res) => {
+    res.status(403).json({
+      code: "EXEC_DIRECT_MUTATION_DENIED",
+      error: `Direct HTTP terminal ${route} is permanently denied`,
     });
-    res.json({ success: true, terminal });
-  } catch (err) {
-    if (err instanceof Error && "code" in err && err.code === "EXEC_OWNER_MISMATCH") {
-      res.status(403).json({ code: err.code, error: err.message });
-      return;
-    }
-    res.status(404).json({ error: err instanceof Error ? err.message : String(err) });
-  }
-});
-
-app.delete("/api/terminals/:id", async (req, res) => {
-  try {
-    await runDirectOperation("terminal:close", { id: req.params.id }, (authorized, owner) => terminalFacade.close(owner, String(authorized.id)));
-    res.json({ success: true });
-  } catch (err) {
-    if (err instanceof Error && "code" in err && err.code === "EXEC_OWNER_MISMATCH") {
-      res.status(403).json({ code: err.code, error: err.message });
-      return;
-    }
-    res.status(404).json({ error: err instanceof Error ? err.message : String(err) });
-  }
-});
+  });
+}
 
 app.get("/api/terminals/:id/events", async (req, res) => {
   try {

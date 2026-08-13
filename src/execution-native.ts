@@ -11,6 +11,7 @@ import type {
   ExecutionProfile,
   ExecutionRootLeaseSnapshot,
 } from "./execution-isolation.js";
+import type { FiniteHttpsBrokerObservation } from "./execution-network-broker.js";
 
 export interface NativeRootAuthority {
   readonly rootId: string;
@@ -63,7 +64,9 @@ export type NativeServiceDenialState =
   | "missing" | "forged" | "argument-mismatch" | "expired" | "replayed" | "cross-run" | "cross-session" | "concurrent-reuse"
   | "consent-denied" | "consent-dismissed" | "consent-expired" | "consent-argument-mismatch" | "consent-replayed"
   | "consent-synthetic" | "consent-cross-window" | "consent-cross-session" | "consent-concurrent-reuse"
-  | "network-profile-unsupported";
+  | "network-profile-unsupported"
+  | "terminal-direct-start" | "terminal-direct-input"
+  | "terminal-owner-kill" | "terminal-owner-close";
 
 export interface NativeServiceDenialRequest {
   readonly executionId: string;
@@ -77,8 +80,21 @@ export interface NativeServiceDenialRequest {
   readonly policyDigest: string;
   readonly payloadDigest: string;
   readonly requestDigest: string;
-  readonly operation: "launch" | "input" | "consent";
+  readonly operation: "launch" | "input" | "consent" | "kill" | "close";
   readonly decisionState: NativeServiceDenialState;
+}
+
+export interface NativeBrokerObservationRequest {
+  readonly executionId: string;
+  readonly entryPoint: "E1" | "E2" | "E3";
+  readonly profile: "one-shot-shell" | "agent-shell" | "script";
+  readonly contextId: string;
+  readonly sessionId: string;
+  readonly runId: string;
+  readonly authorityEpoch: number;
+  readonly personaDigest: string;
+  readonly policyDigest: string;
+  readonly observation: FiniteHttpsBrokerObservation;
 }
 
 export interface NativeExecutionCompletion {
@@ -98,6 +114,7 @@ export interface NativeExecutionBridge {
   readonly initialize?: () => Promise<void>;
   readonly launch: (request: NativeLaunchRequest, onFrame: (frame: NativeOutputFrame) => void) => Promise<NativeExecutionHandle>;
   readonly observeServiceDenial?: (request: NativeServiceDenialRequest) => Promise<NativeExecutionProof>;
+  readonly observeBrokerOperation?: (request: NativeBrokerObservationRequest) => Promise<NativeExecutionProof>;
   readonly shutdown: () => Promise<void>;
 }
 
@@ -139,6 +156,7 @@ interface AddonHandle {
 interface AddonLease {
   readonly launchHost: unknown;
   readonly observeServiceDenial: unknown;
+  readonly observeBrokerOperation: unknown;
   readonly close: unknown;
 }
 interface LauncherAddon {
@@ -200,7 +218,7 @@ async function assertFixedRegularFile(file: string, expectedBytes: number, expec
   }
 }
 
-function encodeFrame(type: "launch" | "input" | "terminate" | "service-denial", body: Record<string, unknown>): Buffer {
+function encodeFrame(type: "launch" | "input" | "terminate" | "service-denial" | "broker-observation", body: Record<string, unknown>): Buffer {
   const payload = Buffer.from(JSON.stringify({ v: PROTOCOL_VERSION, type, ...body }), "utf8");
   if (payload.length < 1 || payload.length > MAX_CONTROL_FRAME_BYTES) throw failure("EXEC_NATIVE_PROTOCOL", "Native control frame exceeds its bound");
   const frame = Buffer.allocUnsafe(payload.length + 4);
@@ -337,6 +355,33 @@ export function createProductionNativeExecutionBridge(identity: NativeArtifactId
           requestDigest: request.requestDigest,
           operation: request.operation,
           decisionState: request.decisionState,
+        })));
+      } finally {
+        await (lease.close as () => Promise<void>).call(lease);
+      }
+    },
+    async observeBrokerOperation(request: NativeBrokerObservationRequest): Promise<NativeExecutionProof> {
+      if (stopped) throw failure("EXEC_NATIVE_SHUTDOWN", "Native execution bridge is shut down");
+      const addon = await loadAddon();
+      const openLease = addon.openExclusiveHostLease as (expectedSha256: string, expectedBytes: number, launcherSha256: string) => AddonLease;
+      const lease = openLease(identity.hostSha256, identity.hostBytes, identity.launcherSha256);
+      if (!lease || typeof lease.observeBrokerOperation !== "function" || typeof lease.close !== "function") throw failure("EXEC_NATIVE_PROTOCOL", "Broker observer ABI mismatch");
+      try {
+        const observe = lease.observeBrokerOperation as (frame: Buffer) => NativeExecutionProof;
+        return decodeNativeProof(await observe.call(lease, encodeFrame("broker-observation", {
+          candidateId: identity.candidateId,
+          buildIdSha256: identity.buildIdSha256,
+          sourceSha256: identity.sourceSha256,
+          executionId: request.executionId,
+          contextId: request.contextId,
+          sessionId: request.sessionId,
+          runId: request.runId,
+          authorityEpoch: request.authorityEpoch,
+          entryPoint: request.entryPoint,
+          profile: request.profile,
+          personaDigest: request.personaDigest,
+          policyDigest: request.policyDigest,
+          observation: request.observation,
         })));
       } finally {
         await (lease.close as () => Promise<void>).call(lease);
