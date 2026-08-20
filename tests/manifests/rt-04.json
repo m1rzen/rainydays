@@ -1,0 +1,609 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-04",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "sentinel",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "public/renderer.js",
+    "src/agent.ts",
+    "src/document-parser.ts",
+    "src/execution-isolation.ts",
+    "src/execution-network-broker.ts",
+    "src/execution-runtime.ts",
+    "src/index.ts",
+    "src/llm.ts",
+    "src/memory.ts",
+    "src/native-process-consent.ts",
+    "src/oracle.ts",
+    "src/playbook.ts",
+    "src/run-cancellation.ts",
+    "src/session-runtime.ts",
+    "src/subagent.ts",
+    "src/supervisor.ts",
+    "src/tools/advanced-tools.ts",
+    "src/tools/ask-user-tool.ts",
+    "src/tools/curate-tool.ts",
+    "src/tools/download-tool.ts",
+    "src/tools/filesystem.ts",
+    "src/tools/image-helper.ts",
+    "src/tools/index.ts",
+    "src/tools/knowledge-tools.ts",
+    "src/tools/oracle-tool.ts",
+    "src/tools/phase1-tools.ts",
+    "src/tools/read-repo.ts",
+    "src/tools/script.ts",
+    "src/tools/search-tool.ts",
+    "src/tools/shell.ts",
+    "src/tools/subagent-tools.ts",
+    "src/tools/web.ts",
+    "src/tools/writer.ts",
+    "src/types.ts",
+    "dist/agent.js",
+    "dist/document-parser.js",
+    "dist/execution-isolation.js",
+    "dist/execution-network-broker.js",
+    "dist/execution-runtime.js",
+    "dist/index.js",
+    "dist/llm.js",
+    "dist/memory.js",
+    "dist/native-process-consent.js",
+    "dist/oracle.js",
+    "dist/playbook.js",
+    "dist/run-cancellation.js",
+    "dist/session-runtime.js",
+    "dist/subagent.js",
+    "dist/supervisor.js",
+    "dist/tools/advanced-tools.js",
+    "dist/tools/ask-user-tool.js",
+    "dist/tools/curate-tool.js",
+    "dist/tools/download-tool.js",
+    "dist/tools/filesystem.js",
+    "dist/tools/image-helper.js",
+    "dist/tools/index.js",
+    "dist/tools/knowledge-tools.js",
+    "dist/tools/oracle-tool.js",
+    "dist/tools/phase1-tools.js",
+    "dist/tools/read-repo.js",
+    "dist/tools/script.js",
+    "dist/tools/search-tool.js",
+    "dist/tools/shell.js",
+    "dist/tools/subagent-tools.js",
+    "dist/tools/web.js",
+    "dist/tools/writer.js",
+    "dist/types.js"
+  ],
+  "coverageExemptions": {
+    "public/renderer.js": {
+      "reason": "Renderer stop controls and exact Session/run cancellation are exercised in the real Electron CDP layer.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        {
+          "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+          "layer": "electron"
+        }
+      ]
+    },
+    "src/agent.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/document-parser.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-parser-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/execution-isolation.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/execution-network-broker.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/execution-network-broker.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/execution-runtime.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/index.ts": {
+      "reason": "The HTTP cancellation composition root is exercised through real loopback integration and Electron requests.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/llm.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/memory.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/native-process-consent.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/oracle.ts": {
+      "reason": "The signal propagation wrapper is exercised through governed Agent and tool integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/playbook.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/playbook-owner.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/run-cancellation.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/run-cancellation.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/session-runtime.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/session-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/subagent.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/supervisor.ts": {
+      "reason": "The signal propagation wrapper is exercised through governed Agent integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/advanced-tools.ts": {
+      "reason": "The signal propagation wrapper is exercised through governed tool integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/ask-user-tool.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/run-interaction-channel.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tools/curate-tool.ts": {
+      "reason": "The signal propagation wrapper is exercised through governed tool integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/download-tool.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/filesystem.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/image-helper.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/index.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/knowledge-tools.ts": {
+      "reason": "The signal propagation wrapper is exercised through governed tool integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/oracle-tool.ts": {
+      "reason": "The signal propagation wrapper is exercised through governed tool integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/phase1-tools.ts": {
+      "reason": "The signal propagation wrapper is exercised through governed Agent integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/read-repo.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/script.ts": {
+      "reason": "The signal propagation wrapper is exercised through governed native execution evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tools/search-tool.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/shell.ts": {
+      "reason": "The signal propagation wrapper is exercised through governed native execution evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tools/subagent-tools.ts": {
+      "reason": "The signal propagation wrapper is exercised through governed child-runtime integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-child-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/web.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/writer.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly by the RT-04 coverage registry.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/types.ts": {
+      "reason": "This source module contributes compile-time interfaces rather than executable cancellation behavior.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/run-cancellation.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "dist/index.js": {
+      "reason": "The HTTP cancellation composition root is exercised through real loopback integration and shutdown requests.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/oracle.js": {
+      "reason": "This thin signal propagation wrapper is exercised through governed Agent integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/supervisor.js": {
+      "reason": "This thin signal propagation wrapper is exercised through governed Agent integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/advanced-tools.js": {
+      "reason": "This thin signal propagation wrapper is exercised through governed tool integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/curate-tool.js": {
+      "reason": "This thin signal propagation wrapper is exercised through governed tool integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/knowledge-tools.js": {
+      "reason": "This thin signal propagation wrapper is exercised through governed tool integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/oracle-tool.js": {
+      "reason": "This thin signal propagation wrapper is exercised through governed tool integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/phase1-tools.js": {
+      "reason": "This thin signal propagation wrapper is exercised through governed Agent integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/script.js": {
+      "reason": "This thin signal propagation wrapper is exercised through governed native execution evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "dist/tools/shell.js": {
+      "reason": "This thin signal propagation wrapper is exercised through governed native execution evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "dist/tools/subagent-tools.js": {
+      "reason": "This thin signal propagation wrapper is exercised through governed child-runtime integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-child-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/types.js": {
+      "reason": "This emitted module contains only compile-time interface residue and no cancellation behavior.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/run-cancellation.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/unit/run-cancellation.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/session-runtime.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/run-interaction-channel.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/execution-network-broker.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/playbook-owner.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/contract/rt04-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/rt04-child-cancellation.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/rt04-parser-cancellation.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "layer": "electron"
+    },
+    {
+      "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
+      "layer": "packaged"
+    }
+  ]
+}
