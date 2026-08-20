@@ -85,6 +85,9 @@
     "test:sec03:quick": "node scripts/run-tests.mjs --task SEC-03 --profile quick",
     "governance:rt09:generate": "node scripts/generate-rt09-resolved-manifest.mjs",
     "governance:rt09:check": "node scripts/generate-rt09-resolved-manifest.mjs --check",
+    "governance:evt01:generate": "node scripts/generate-evt01-resolved-manifest.mjs",
+    "governance:evt01:check": "node scripts/generate-evt01-resolved-manifest.mjs --check",
+    "test:evt01": "node scripts/run-tests.mjs --task EVT-01 --profile full",
     "test:rt09": "node scripts/run-tests.mjs --task RT-09 --profile full"
   },
   "dependencies": {

@@ -119,6 +119,18 @@
         "exactCasePath": "tests/integration/sec01-agent.test.mjs"
       },
       {
+        "sourceTask": "EVT-01",
+        "exactCasePath": "tests/contract/evt01-governance.test.mjs"
+      },
+      {
+        "sourceTask": "EVT-01",
+        "exactCasePath": "tests/unit/event-bus.test.mjs"
+      },
+      {
+        "sourceTask": "EVT-01",
+        "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs"
+      },
+      {
         "sourceTask": "SEC-03",
         "exactCasePath": "tests/integration/sec03-child-consent-transport.test.mjs"
       },

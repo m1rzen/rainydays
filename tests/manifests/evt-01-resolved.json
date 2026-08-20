@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "taskId": "EVT-01",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/evt-01.json",
+    "sha256": "4335e1fd5be24ec939f306136807f6046fd24eb7ee110f78554363ecc73ed128"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/cron.js",
+      "sha256": "81b16a67877e07df8904ebe998ad6a3c39ef181ecc7badbcc4941d8b3aab6fac",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "dist/db.js",
+      "sha256": "f61ee46a34384f5869c775313eaaf5a0d26852933610b440d5cee97ec463235a",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "dist/event-bus.js",
+      "sha256": "eb0e1709311c739c641425b81e080a196fc30ffb0b51e364ddf5ae39098e114e",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "56be2a8b458dce96fef626f7f1fd14497147f3b83baaa8a919485865557286b8",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "dist/link.js",
+      "sha256": "e42dad01dd113dca67b9cf9fcb255e244c86a46840b54396a5c93f42c6fa02a3",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "dist/wire.js",
+      "sha256": "78879e47fcf405508b000df246474f4803f2a674cfe558206eb850294cd9676c",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "src/cron.ts",
+      "sha256": "0d1ce315c15f514e90e1ab6b16aa00cb41425012e39aa088d14276436d61b88c",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "e2a787cad6c1179da8cd85272f6a3c2441bb9b6c000d257d9720cdf5918dcc94",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "src/event-bus.ts",
+      "sha256": "97d442ee82c9d38585df9c84110b5c5fdb6181339a10106e23558a03efed1604",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "ecd30f28cd627aa6271288151d29d8f91b12caa1566a3e71bdcd2aa08366f2ec",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "src/link.ts",
+      "sha256": "93fbb6765fb287c2ceb5565e56855eae8c6556780d45b60a4542a2d247ccad3c",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "src/wire.ts",
+      "sha256": "a319c8152021a75288c7307908ecc559c8b743fc2d9dbfaa3d5b1c9fc232d41c",
+      "owner": "EVT-01"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/evt01-governance.test.mjs",
+      "sha256": "9e6f7b2c094a66614da3d46107ecb0eb137a6a1c71076b1f82db0d3584a6368b",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "tests/unit/event-bus.test.mjs",
+      "sha256": "fc28e141f65f8c4f7ef23e6f2501bad0f18ec283fbf03d1674a2fa038b433ad9",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs",
+      "sha256": "4bd23b5e2366f2e3fdc4ff55a9e65eaa8c572017c023f94a8a7833d707516d51",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "EVT-01"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "cbc8b9c1327ec35222c187aabd85eaad22d9a2e9c8279aa0e6c136659e3b9465",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "EVT-01"
+    }
+  ],
+  "canonicalPayloadSha256": "1d82bcc711c51824530bf91abf737931a490fe602285a16cd1259f3da129a6d6"
+}

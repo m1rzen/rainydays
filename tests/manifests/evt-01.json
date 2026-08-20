@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "taskId": "EVT-01",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "efc56a36402a0a480d4362989c3d51f59c99631775a4057a5d567f66299cc4c9"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "dist/cron.js",
+    "dist/db.js",
+    "dist/event-bus.js",
+    "dist/index.js",
+    "dist/link.js",
+    "dist/wire.js",
+    "src/cron.ts",
+    "src/db.ts",
+    "src/event-bus.ts",
+    "src/index.ts",
+    "src/link.ts",
+    "src/wire.ts"
+  ],
+  "coverageExemptions": {
+    "dist/cron.js": {
+      "reason": "The compiled cron scheduler is preserved byte-identical by contract; its firing path is exercised through the EVT-01 integration evidence and remains in scope for EVT-02 semantics.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/index.js": {
+      "reason": "The compiled server entrypoint (bus attach, wake policy, unified SSE) is exercised through the Electron desktop smoke lifecycle rather than isolated coverage.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        {
+          "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+          "layer": "electron"
+        }
+      ]
+    },
+    "src/cron.ts": {
+      "reason": "The cron scheduler source is intentionally untouched by the EVT-01 contract; its byte identity is governed here so EVT-02 must re-sign before changing it.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/index.ts": {
+      "reason": "The server entrypoint wake wiring depends on the full runtime registry and audit journal; the Electron desktop smoke exercises the assembled lifecycle.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        {
+          "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+          "layer": "electron"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/contract/evt01-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/unit/event-bus.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "layer": "electron"
+    }
+  ]
+}
