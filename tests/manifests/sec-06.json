@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "taskId": "SEC-06",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "sentinel", "developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "electron/main.cjs",
+    "electron/path-bootstrap.cjs",
+    "src/agent.ts",
+    "src/bootstrap-database.ts",
+    "src/credential-store.ts",
+    "src/daemon.ts",
+    "src/db.ts",
+    "src/index.ts",
+    "src/playbook.ts",
+    "src/security-audit-journal.ts",
+    "src/security-audit.ts",
+    "src/subagent.ts",
+    "src/tools/index.ts",
+    "src/version.ts",
+    "dist/agent.js",
+    "dist/bootstrap-database.js",
+    "dist/credential-store.js",
+    "dist/daemon.js",
+    "dist/db.js",
+    "dist/index.js",
+    "dist/playbook.js",
+    "dist/security-audit-journal.js",
+    "dist/security-audit.js",
+    "dist/subagent.js",
+    "dist/tools/index.js",
+    "dist/version.js"
+  ],
+  "tests": [
+    { "exactCasePath": "tests/unit/security-audit.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/electron-path-bootstrap.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/contract/sec05-credential-store.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/contract/sec06-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/daemon-bootstrap-lifetime.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/sec01-agent.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/sec01-terminal-owner.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" },
+    { "exactCasePath": "tests/packaged/sec05-win-unpacked-credentials.test.mjs", "layer": "packaged" }
+  ]
+}
