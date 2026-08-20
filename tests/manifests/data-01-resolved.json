@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DATA-01",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/data-01.json",
+    "sha256": "cd6385d4cfcc1bb3024c7520e2a7dda918835043568803cd8541bc60dfa61cc3"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "src/backup-container.ts",
+      "sha256": "819f1407a89a23d3172ddfd07c58b972c788027314a14dd39ebaeadb944bf518",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "src/bootstrap-database.ts",
+      "sha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "src/bootstrap-path-store.ts",
+      "sha256": "79bb992d4ec5bab8b790337c920b28adebd59d82fe863f8c2f1a2c9327e805f4",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "src/config.ts",
+      "sha256": "3c97605d306e0034c0d2c774ab00cf20d627f5fc4689bd9962e33baf27bc877c",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "src/credential-store.ts",
+      "sha256": "5bf70a8051d7274fa8dcd7aaa73f8b10bd8c870848125bf9a7cd490db5f51afa",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "src/data-backup.ts",
+      "sha256": "a0219799b78dad99a75d56e7ae4a7b9dfd118033583b8717cc794dfeaef8553c",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "2477843d5c44693f1f7ea3bb08db180b6b8eb520d77f460da140232a5dbfc5bf",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "src/managed-restore.ts",
+      "sha256": "46ac473542e4c73d288bf2438bd9c176bbc9ca641b5b5220c833ec6499610404",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "src/oracle.ts",
+      "sha256": "7d484265a28bbccc6b2e88db0b18fcc6cc3863420efd08b1f3c46be7de6ddc82",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "src/persona.ts",
+      "sha256": "f825aac4fdbfb3d8f8e02cd8176c1f88ef006b1ca64defd7194d7d6520f6748c",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "src/playbook.ts",
+      "sha256": "a420fdd834db4c8279dc866223a35de37df1a585dde4a35afc4af3f2bc1b004d",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "dist/backup-container.js",
+      "sha256": "ea69c63552e89a41d2dd30577638d82581840c5e06e7c48fbfd8c2919fd5ceb0",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "dist/bootstrap-database.js",
+      "sha256": "32eb2871a24cb68209c31897a833e4913815f69882216e494e33a7e42d840a3c",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "dist/bootstrap-path-store.js",
+      "sha256": "56bd80771c661803d169dcf9f44c0091faa14095fd8f7e8590b56d1d1ae3ab64",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "dist/config.js",
+      "sha256": "9db0ef26fb4f14748f26a4ab3d51ab985e4f25659c7ad434e2a5780d96a4c633",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "dist/credential-store.js",
+      "sha256": "b31732aae0790ed77fecf4c2cb51ab993abcf3570968024e24663f11b7a2aabb",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "dist/data-backup.js",
+      "sha256": "df5bf8184ab6755e5aaa11883799722333a9b2def806d04d66ea9e3a065362cd",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "dist/db.js",
+      "sha256": "7a61061a0b21ea2d3813c811906ecb929c2f44f99e5f2f566a8a69603924fd3a",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "dist/managed-restore.js",
+      "sha256": "18737fe327a13894558e48c27624535536b60e3c8d8bcb80dfda7d551f492f2b",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "dist/oracle.js",
+      "sha256": "e6d86703ef0730a18d5a92993b3f8a90b0958c38fb7e1b2eb51188b1232f6a46",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "dist/persona.js",
+      "sha256": "32464bcab12398fa01a6531023b3869d363d3445b2358e94f92755ac69e4cf77",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "dist/playbook.js",
+      "sha256": "78a8491b360c73d58ae5d1a95e4b31b230dc92f980392fe243d4c234c3959a16",
+      "owner": "DATA-01"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/unit/backup-container.test.mjs",
+      "sha256": "019c59046b710566d68f6a49db8c70050e9f4d650cee6639b6ba136947efb265",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "tests/contract/data01-governance.test.mjs",
+      "sha256": "73972d0bc22a85adba0cf40cda20e0f9fa9389b5a42e80e7d27a3366cfc65888",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
+      "sha256": "b98988394b82bb3f4a5607f97823a418c96be527af79d4ccae4db6d96abc8993",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DATA-01"
+    },
+    {
+      "exactCasePath": "tests/integration/data01b-managed-restore.test.mjs",
+      "sha256": "18b525c46924060d1a5f6b9012dd6a8f477280cf41c2873673f9d75f716e0965",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DATA-01"
+    }
+  ],
+  "canonicalPayloadSha256": "303eb7acdefd303641e5ad65b022626a42583714f6b4b93344f0403c046b05a0"
+}

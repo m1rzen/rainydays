@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DATA-01",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["explorer", "architect", "developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "src/backup-container.ts",
+    "src/bootstrap-database.ts",
+    "src/bootstrap-path-store.ts",
+    "src/config.ts",
+    "src/credential-store.ts",
+    "src/data-backup.ts",
+    "src/db.ts",
+    "src/managed-restore.ts",
+    "src/oracle.ts",
+    "src/persona.ts",
+    "src/playbook.ts",
+    "dist/backup-container.js",
+    "dist/bootstrap-database.js",
+    "dist/bootstrap-path-store.js",
+    "dist/config.js",
+    "dist/credential-store.js",
+    "dist/data-backup.js",
+    "dist/db.js",
+    "dist/managed-restore.js",
+    "dist/oracle.js",
+    "dist/persona.js",
+    "dist/playbook.js"
+  ],
+  "tests": [
+    {
+      "exactCasePath": "tests/unit/backup-container.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/contract/data01-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/data01b-managed-restore.test.mjs",
+      "layer": "integration"
+    }
+  ]
+}
