@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-07",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/rt-07.json",
+    "sha256": "d262f0c8c264b0b8d0b18c0c618cca7b32178d70e5ff74762f33e353723f1cc6"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/agent.js",
+      "sha256": "ec110e0846b1719fa560058b38b4b721fbdc3287439dd86413e06153571bd1fb",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "dist/db.js",
+      "sha256": "7a61061a0b21ea2d3813c811906ecb929c2f44f99e5f2f566a8a69603924fd3a",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "dist/session.js",
+      "sha256": "b224963b2a5688bff72992c9d4bd1c3d47b409e75c6d90d788bae856835a3ccb",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "dist/task.js",
+      "sha256": "94069c9014a76f8edb02bd3ec16d04ebee8825dc6a6e8acafddc1cc79d76007b",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "dist/tool-policies.js",
+      "sha256": "38751881419d143968616bc98ddb62c68815368315c0005bacdeca9a7f36f382",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "dist/tools/index.js",
+      "sha256": "41e7939284924efa6c5eeeee7cb6439bf02e98748449bda3ce98efc99c30ddee",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "dist/tools/task-tools.js",
+      "sha256": "d80857bd67921b48b19ffc4fde4e022482685015ecd08452ece8a951edcb3036",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "dist/version.js",
+      "sha256": "f391c4688d8e80099adce63f03ca5402af13821db339cf89e49a798c0fa3212c",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "personas/architect.md",
+      "sha256": "6de68a28817b017727c71be73db7534aa20688b7ab283bbb31733246b538a3c8",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "personas/debugger.md",
+      "sha256": "9003aa11aed5c5484c69834cc9671dbacc9b0c29a2c3a6931a409325c7713fc9",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "personas/developer.md",
+      "sha256": "5e364bd4f5bb3d34909042a737b8d6b9221d9d9bc67a2e125983efc988bb77b2",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "personas/general.md",
+      "sha256": "6d42b521b9d127ec565aaae5cbc13d37c30557ff063f89dcd0bee7ab98f299e2",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "personas/planner.md",
+      "sha256": "7e6962fb96259067e73090f87a6b9bd436908d50bdbec355c0ab6533870f7e55",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "personas/rds-assistant.md",
+      "sha256": "f14f43a38fafe159dd1c937efb541c75dda9f765cf3738f7ea47b14e6230705b",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "public/renderer.js",
+      "sha256": "02c09eae57967475995c504a1f489f9a538fde2546351ee4699e7fc09157512e",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "skills/planning.md",
+      "sha256": "72e91ad7dfa6b0d6f5dc8eb70d54f0187e103ad3d75feba1d75c8c0ee4c54d6e",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "src/agent.ts",
+      "sha256": "ec9b192bb5b1d2a58f9222e51ac7a361d5e2f1aa585c5881c55b86e7497cc762",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "2477843d5c44693f1f7ea3bb08db180b6b8eb520d77f460da140232a5dbfc5bf",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "src/session.ts",
+      "sha256": "0cee98b0049134776d117027d7151816eef049ecb76df4806a776a7dfd0e6d60",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "src/task.ts",
+      "sha256": "51f18397c72f75914f0d3c280862fd404a6f0680adbec1941b1850da4820ef9d",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "61f976d38c2249372ae96eb7dff27f850f8cf466f8bb2600aa595021197bafc8",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "eecfbc45bbe00205f8a367e715604956be31ef9c8fca43e7e4fef0713e6b7485",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "src/tools/task-tools.ts",
+      "sha256": "0b1cc51dc0d3367183b907f9a490a64b5d244372e35589b07c8d692e04bfabf8",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "src/types.ts",
+      "sha256": "a77056740d055c9b546251719900011e4ad53e0632cd618029f582fccd61f0f8",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "src/version.ts",
+      "sha256": "72c1da45b80f500017850e9b8ed8d0b66f895c4b2216b926badf871bbd37921d",
+      "owner": "RT-07"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/rt07-governance.test.mjs",
+      "sha256": "d02079258ef2a815acb8509074ded0b0b88d6993801a792d7f336b7a354ecd16",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "tests/integration/rt07-task-dag.test.mjs",
+      "sha256": "a9569e6cbd1d8a76abf9eb3014bbc74164705bf6de69b1f9ba83421dd7b030d8",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+      "sha256": "2950747c306277f7dd9ed0c0ee541817c4d5b87f70dc90e888e5f3555bad68e0",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-07"
+    },
+    {
+      "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
+      "sha256": "b98988394b82bb3f4a5607f97823a418c96be527af79d4ccae4db6d96abc8993",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-07"
+    }
+  ],
+  "canonicalPayloadSha256": "68e69a939607ee32f152a18fd0785cdf8ea8d2589c29450764845aa9c2cb6916"
+}

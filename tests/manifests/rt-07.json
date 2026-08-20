@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-07",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "dist/agent.js",
+    "dist/db.js",
+    "dist/session.js",
+    "dist/task.js",
+    "dist/tool-policies.js",
+    "dist/tools/index.js",
+    "dist/tools/task-tools.js",
+    "dist/version.js",
+    "personas/architect.md",
+    "personas/debugger.md",
+    "personas/developer.md",
+    "personas/general.md",
+    "personas/planner.md",
+    "personas/rds-assistant.md",
+    "public/renderer.js",
+    "skills/planning.md",
+    "src/agent.ts",
+    "src/db.ts",
+    "src/session.ts",
+    "src/task.ts",
+    "src/tool-policies.ts",
+    "src/tools/index.ts",
+    "src/tools/task-tools.ts",
+    "src/types.ts",
+    "src/version.ts"
+  ],
+  "coverageExemptions": {
+    "personas/architect.md": {
+      "reason": "Persona capability configuration is bound to the exact RT-07 five-tool integration assertion.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "personas/debugger.md": {
+      "reason": "Persona capability configuration is bound to the exact RT-07 five-tool integration assertion.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "personas/developer.md": {
+      "reason": "Persona capability configuration is bound to the exact RT-07 five-tool integration assertion.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "personas/general.md": {
+      "reason": "Persona capability configuration is bound to the exact RT-07 five-tool integration assertion.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "personas/planner.md": {
+      "reason": "Persona capability configuration is bound to the exact RT-07 five-tool integration assertion.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "personas/rds-assistant.md": {
+      "reason": "Persona capability configuration is bound to the exact RT-07 five-tool integration assertion.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "public/renderer.js": {
+      "reason": "Renderer blocked, owner, and auto-hide projection is bound to exact RT-07 integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "skills/planning.md": {
+      "reason": "Planning guidance is declarative runtime configuration bound to the exact RT-07 tool-surface assertion.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "src/agent.ts": {
+      "reason": "The compiled Agent task driver is governed directly; authored guidance remains bound to restart and blocked-event evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "src/db.ts": {
+      "reason": "The compiled database migration is governed directly; authored Schema 3 SQL remains bound to legacy migration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "src/session.ts": {
+      "reason": "The compiled Session fork path is governed directly; authored source remains bound to exact DAG fork evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "src/task.ts": {
+      "reason": "The compiled Task DAG state machine is governed directly; authored source remains bound to atomic graph evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "src/tool-policies.ts": {
+      "reason": "The compiled task capability metadata is governed directly and bound to the five-tool Agent integration path.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "src/tools/index.ts": {
+      "reason": "The compiled static tool registry is governed directly and bound to exact five-tool integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "src/tools/task-tools.ts": {
+      "reason": "The compiled five-tool adapter surface is governed directly; authored source remains bound to Session-scoped tool evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "src/types.ts": {
+      "reason": "Task snapshot declarations erase at runtime and are bound to the exact public projection asserted by RT-07 integration.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    },
+    "src/version.ts": {
+      "reason": "The compiled database version contract is governed directly and bound to Schema 2 to Schema 3 migration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/rt07-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/sec01-agent.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs", "layer": "integration" }
+  ]
+}
