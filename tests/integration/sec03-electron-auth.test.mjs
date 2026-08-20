@@ -81,7 +81,7 @@ test("SEC-03 local API accepts only the private trusted header and publishes no 
   const port = await freePort();
   const token = "sec03-main-private-header-token";
   const origin = `http://127.0.0.1:${port}`;
-  const child = spawnManaged(process.execPath, ["dist/index.js"], {
+  const child = spawnManaged(process.execPath, ["tests/fixtures/server-with-test-protector.mjs"], {
     cwd: projectRoot,
     env: {
       ...process.env,

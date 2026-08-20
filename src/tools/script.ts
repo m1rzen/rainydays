@@ -4,6 +4,7 @@
 // ===========================================
 
 import type { ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
+import { isRunCancellation } from "../run-cancellation.js";
 
 function initialCwd(
   env: Readonly<Record<string, string>> | undefined,
@@ -50,11 +51,13 @@ export const scriptExec: ToolExecutor = async (args, env, invocation) => {
     );
     let output = result.stdout || "(代码执行完成，无输出)";
     if (result.stderr) output += `\n[stderr]\n${result.stderr}`;
-    if (result.exitCode !== 0 || result.reason !== "completed") output += `\n[execution ${result.reason}; exit ${result.exitCode ?? "none"}]`;
+    const failed = result.exitCode !== 0 || result.reason !== "completed";
+    if (failed) output += `\n[execution ${result.reason}; exit ${result.exitCode ?? "none"}]`;
     if (result.outputTruncated) output += "\n(输出超过保留上限，已截断)";
-    if (output.length > 4000) output = output.slice(0, 4000) + `\n\n...(输出已截断，共 ${output.length} 字符)`;
+    if (failed) throw new Error(output);
     return output;
   } catch (error) {
-    return `代码执行出错:\n${error instanceof Error ? error.message : String(error)}`;
+    if (isRunCancellation(error)) throw error;
+    throw new Error(`代码执行出错:\n${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
 };

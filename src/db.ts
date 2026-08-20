@@ -3,7 +3,10 @@
 // 存储：会话(sessions) + 消息(messages) + 记忆(memories)
 // ===========================================
 
-import { createInMemoryBootstrapDatabase, openBootstrapDatabase } from "./bootstrap-database.js";
+import fs from "node:fs";
+import { getBootstrapPathStore } from "./bootstrap-path-store.js";
+import { createInMemoryBootstrapDatabase, openBootstrapDatabase, validateDatabaseSnapshotFile, writeConsistentDatabaseSnapshot, type DatabaseSnapshotValidation } from "./bootstrap-database.js";
+import { verifySecurityAuditChain, verifySecurityAuditCheckpoint, type SecurityAuditCheckpoint, type SecurityAuditEvent } from "./security-audit.js";
 import { DATABASE_SCHEMA_VERSION } from "./version.js";
 
 /** 仅在受管bootstrap identity与只读兼容探测通过后建立可写连接。 */
@@ -14,7 +17,143 @@ const db = persistentConnection.database;
 // 数据库版本与迁移
 // ===========================================
 
-const CURRENT_SCHEMA_SQL = `
+const SCHEMA_V2_OBJECT_NAMES = Object.freeze(new Set([
+  "security_audit_state",
+  "security_audit_state_no_update",
+  "security_audit_state_no_delete",
+  "security_audit_head",
+  "security_audit_head_no_delete",
+  "security_audit_events",
+  "idx_security_audit_request",
+  "idx_security_audit_session",
+  "idx_security_audit_run",
+  "security_audit_events_no_update",
+  "security_audit_events_no_delete",
+]));
+
+const SCHEMA_V2_SQL = `
+    CREATE TABLE security_audit_state (
+      singleton       INTEGER PRIMARY KEY CHECK (singleton = 1),
+      schema_version  INTEGER NOT NULL CHECK (schema_version = 1),
+      algorithm       TEXT NOT NULL CHECK (algorithm = 'electron-safe-storage'),
+      scope           TEXT NOT NULL CHECK (scope = 'windows-dpapi-current-user-v1'),
+      wrapped_key     BLOB NOT NULL CHECK (length(wrapped_key) BETWEEN 1 AND 65536),
+      created_at      TEXT NOT NULL
+    );
+    CREATE TRIGGER security_audit_state_no_update
+      BEFORE UPDATE ON security_audit_state
+      BEGIN SELECT RAISE(ABORT, 'security audit state is immutable'); END;
+    CREATE TRIGGER security_audit_state_no_delete
+      BEFORE DELETE ON security_audit_state
+      BEGIN SELECT RAISE(ABORT, 'security audit state is immutable'); END;
+    CREATE TABLE security_audit_head (
+      singleton       INTEGER PRIMARY KEY CHECK (singleton = 1),
+      schema_version  INTEGER NOT NULL CHECK (schema_version = 1),
+      event_count     INTEGER NOT NULL CHECK (event_count >= 0),
+      head_hash       TEXT NOT NULL CHECK (length(head_hash) IN (64, 76)),
+      checkpoint_mac  TEXT NOT NULL CHECK (length(checkpoint_mac) = 76)
+    );
+    CREATE TRIGGER security_audit_head_no_delete
+      BEFORE DELETE ON security_audit_head
+      BEGIN SELECT RAISE(ABORT, 'security audit head cannot be deleted'); END;
+    CREATE TABLE security_audit_events (
+      sequence             INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id             TEXT NOT NULL UNIQUE,
+      recorded_at          TEXT NOT NULL,
+      phase                TEXT NOT NULL CHECK (phase IN ('request', 'authorization', 'execution', 'result')),
+      session_id           TEXT,
+      run_id               TEXT NOT NULL,
+      request_id           TEXT NOT NULL,
+      parent_request_id    TEXT,
+      tool_call_id         TEXT,
+      context_id           TEXT,
+      execution_id         TEXT,
+      principal            TEXT NOT NULL CHECK (principal IN ('agent', 'subagent', 'playbook', 'local-user-api', 'system')),
+      operation_kind       TEXT NOT NULL CHECK (operation_kind IN ('tool', 'api', 'terminal', 'native', 'system')),
+      operation_name       TEXT NOT NULL,
+      outcome              TEXT NOT NULL,
+      code                 TEXT,
+      request_commitment   TEXT NOT NULL,
+      safe_payload         TEXT NOT NULL,
+      previous_event_hash  TEXT NOT NULL,
+      event_hash           TEXT NOT NULL UNIQUE,
+      UNIQUE (request_id, phase)
+    );
+    CREATE INDEX idx_security_audit_request ON security_audit_events(request_id, sequence);
+    CREATE INDEX idx_security_audit_session ON security_audit_events(session_id, sequence);
+    CREATE INDEX idx_security_audit_run ON security_audit_events(run_id, sequence);
+    CREATE TRIGGER security_audit_events_no_update
+      BEFORE UPDATE ON security_audit_events
+      BEGIN SELECT RAISE(ABORT, 'security audit events are append-only'); END;
+    CREATE TRIGGER security_audit_events_no_delete
+      BEFORE DELETE ON security_audit_events
+      BEGIN SELECT RAISE(ABORT, 'security audit events are append-only'); END;
+  `;
+
+function applySchemaV3(database: typeof db): void {
+  database.exec(`
+    ALTER TABLE tasks RENAME TO tasks_v2_legacy;
+    CREATE TABLE tasks (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id    TEXT NOT NULL,
+      task_id       TEXT NOT NULL CHECK (
+        length(task_id) BETWEEN 1 AND 64
+        AND instr(task_id, char(0)) = 0
+        AND substr(task_id, 1, 1) GLOB '[a-z0-9]'
+        AND task_id NOT GLOB '*[^a-z0-9_-]*'
+      ),
+      subject       TEXT NOT NULL,
+      description   TEXT,
+      status        TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed')),
+      active_form   TEXT,
+      owner         TEXT,
+      metadata_json TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(metadata_json) AND json_type(metadata_json) = 'object' AND length(metadata_json) <= 65536),
+      sort_order    INTEGER NOT NULL DEFAULT 0 CHECK (sort_order >= 0),
+      created_at    TEXT NOT NULL,
+      updated_at    TEXT NOT NULL,
+      UNIQUE (session_id, task_id),
+      FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+    );
+    INSERT INTO tasks (
+      id, session_id, task_id, subject, description, status, active_form, owner,
+      metadata_json, sort_order, created_at, updated_at
+    )
+    SELECT
+      id,
+      session_id,
+      'legacy_' || id,
+      subject,
+      NULL,
+      CASE status WHEN 'in_progress' THEN 'in_progress' WHEN 'completed' THEN 'completed' WHEN 'failed' THEN 'completed' ELSE 'pending' END,
+      active_form,
+      NULL,
+      json_patch(
+        CASE WHEN status IN ('pending', 'in_progress', 'completed') THEN '{}' ELSE json_object('legacyStatus', status) END,
+        CASE WHEN parent_id IS NULL THEN '{}' ELSE json_object('legacyParentId', parent_id) END
+      ),
+      CASE WHEN sort_order >= 0 THEN sort_order ELSE 0 END,
+      created_at,
+      updated_at
+    FROM tasks_v2_legacy
+    ORDER BY id;
+    DROP TABLE tasks_v2_legacy;
+    CREATE INDEX idx_tasks_session ON tasks(session_id);
+    CREATE INDEX idx_tasks_session_status_order ON tasks(session_id, status, sort_order, id);
+    CREATE TABLE task_dependencies (
+      session_id TEXT NOT NULL,
+      task_id    TEXT NOT NULL,
+      blocker_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (session_id, task_id, blocker_id),
+      CHECK (task_id <> blocker_id),
+      FOREIGN KEY (session_id, task_id) REFERENCES tasks(session_id, task_id) ON DELETE CASCADE,
+      FOREIGN KEY (session_id, blocker_id) REFERENCES tasks(session_id, task_id) ON DELETE CASCADE
+    );
+    CREATE INDEX idx_task_dependencies_blocker ON task_dependencies(session_id, blocker_id, task_id);
+  `);
+}
+
+const SCHEMA_V1_SQL = `
     CREATE TABLE IF NOT EXISTS sessions (
       id           TEXT PRIMARY KEY,
       persona_name TEXT NOT NULL,
@@ -115,8 +254,8 @@ const CURRENT_SCHEMA_SQL = `
     CREATE INDEX IF NOT EXISTS idx_pins_session ON pins(session_id);
   `;
 
-function createCurrentSchema(): void {
-  db.exec(CURRENT_SCHEMA_SQL);
+function createSchemaV1(database: typeof db): void {
+  database.exec(SCHEMA_V1_SQL);
 }
 
 interface ColumnSignature {
@@ -225,16 +364,16 @@ const EXPECTED_FOREIGN_KEYS: Record<string, string[]> = {
   pins: ["session_id|sessions|id|CASCADE|NO ACTION"],
 };
 
-function tableInfo(table: string): Array<{ name: string; type: string; notnull: number; dflt_value: string | null; pk: number }> {
-  return db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string; type: string; notnull: number; dflt_value: string | null; pk: number }>;
+function tableInfo(database: typeof db, table: string): Array<{ name: string; type: string; notnull: number; dflt_value: string | null; pk: number }> {
+  return database.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string; type: string; notnull: number; dflt_value: string | null; pk: number }>;
 }
 
-function tableHasColumn(table: string, column: string): boolean {
-  return tableInfo(table).some((entry) => entry.name === column);
+function tableHasColumn(database: typeof db, table: string, column: string): boolean {
+  return tableInfo(database, table).some((entry) => entry.name === column);
 }
 
-function indexColumns(index: string): string[] {
-  return (db.prepare(`PRAGMA index_info(${index})`).all() as Array<{ name: string }>).map((entry) => entry.name);
+function indexColumns(database: typeof db, index: string): string[] {
+  return (database.prepare(`PRAGMA index_info(${index})`).all() as Array<{ name: string }>).map((entry) => entry.name);
 }
 
 function normalizeSchemaSql(sql: string): string {
@@ -246,26 +385,28 @@ function normalizeSchemaSql(sql: string): string {
     .toUpperCase();
 }
 
-function assertCurrentSchema(): void {
+function assertSchemaV1(database: typeof db = db, allowSchemaV2Objects = false): void {
   const reference = createInMemoryBootstrapDatabase();
   try {
     reference.pragma("foreign_keys = ON");
-    reference.exec(CURRENT_SCHEMA_SQL);
+    reference.exec(SCHEMA_V1_SQL);
     const objects = [
       ...Object.keys(EXPECTED_COLUMNS).map((name) => ({ type: "table", name })),
       ...Object.keys(EXPECTED_INDEXES).map((name) => ({ type: "index", name })),
     ];
     for (const object of objects) {
-      const actual = db.prepare("SELECT sql FROM sqlite_master WHERE type = ? AND name = ?").get(object.type, object.name) as { sql?: string } | undefined;
+      const actual = database.prepare("SELECT sql FROM sqlite_master WHERE type = ? AND name = ?").get(object.type, object.name) as { sql?: string } | undefined;
       const expected = reference.prepare("SELECT sql FROM sqlite_master WHERE type = ? AND name = ?").get(object.type, object.name) as { sql?: string } | undefined;
       if (!actual?.sql || !expected?.sql || normalizeSchemaSql(actual.sql) !== normalizeSchemaSql(expected.sql)) {
         throw new Error(`数据库 Schema 1 不兼容: ${object.type} ${object.name} SQL 定义错误`);
       }
     }
-    const objectSignature = (database: typeof db): string[] => (database.prepare(
+    const objectSignature = (target: typeof db, allowV2Objects: boolean): string[] => (target.prepare(
       "SELECT type, name, tbl_name FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
-    ).all() as Array<{ type: string; name: string; tbl_name: string }>).map((entry) => `${entry.type}|${entry.name}|${entry.tbl_name}`);
-    if (JSON.stringify(objectSignature(db)) !== JSON.stringify(objectSignature(reference))) {
+    ).all() as Array<{ type: string; name: string; tbl_name: string }>)
+      .filter(entry => !allowV2Objects || (!SCHEMA_V2_OBJECT_NAMES.has(entry.name) && entry.tbl_name !== "security_audit_events"))
+      .map((entry) => `${entry.type}|${entry.name}|${entry.tbl_name}`);
+    if (JSON.stringify(objectSignature(database, allowSchemaV2Objects)) !== JSON.stringify(objectSignature(reference, false))) {
       throw new Error("数据库 Schema 1 不兼容: 存在未知或缺失的 Schema 对象");
     }
   } finally {
@@ -273,7 +414,7 @@ function assertCurrentSchema(): void {
   }
 
   for (const [table, expected] of Object.entries(EXPECTED_COLUMNS)) {
-    const actual = tableInfo(table);
+    const actual = tableInfo(database, table);
     if (actual.length !== expected.length) throw new Error(`数据库 Schema 1 不兼容: ${table} 列数量错误`);
     for (let index = 0; index < expected.length; index++) {
       const found = actual[index];
@@ -286,27 +427,27 @@ function assertCurrentSchema(): void {
   }
 
   for (const [index, expected] of Object.entries(EXPECTED_INDEXES)) {
-    const listed = (db.prepare(`PRAGMA index_list(${expected.table})`).all() as Array<{ name: string; unique: number }>).find((entry) => entry.name === index);
+    const listed = (database.prepare(`PRAGMA index_list(${expected.table})`).all() as Array<{ name: string; unique: number }>).find((entry) => entry.name === index);
     if (!listed || listed.unique !== expected.unique
-      || JSON.stringify(indexColumns(index)) !== JSON.stringify(expected.columns)) {
+      || JSON.stringify(indexColumns(database, index)) !== JSON.stringify(expected.columns)) {
       throw new Error(`数据库 Schema 1 不兼容: 索引 ${index} 定义错误`);
     }
   }
 
   for (const table of ["messages", "memories", "tasks", "cron_jobs", "memos", "entities", "edges", "pins"]) {
-    const row = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?").get(table) as { sql?: string } | undefined;
+    const row = database.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?").get(table) as { sql?: string } | undefined;
     if (!row?.sql || !/\bINTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT\b/i.test(row.sql)) {
       throw new Error(`数据库 Schema 1 不兼容: ${table}.id 缺少 AUTOINCREMENT`);
     }
   }
 
-  const entityIndexes = db.prepare("PRAGMA index_list(entities)").all() as Array<{ name: string; unique: number }>;
+  const entityIndexes = database.prepare("PRAGMA index_list(entities)").all() as Array<{ name: string; unique: number }>;
   const hasUniqueEntityName = entityIndexes.some((entry) => entry.unique === 1
-    && JSON.stringify(indexColumns(entry.name)) === JSON.stringify(["name"]));
+    && JSON.stringify(indexColumns(database, entry.name)) === JSON.stringify(["name"]));
   if (!hasUniqueEntityName) throw new Error("数据库 Schema 1 不兼容: entities.name 缺少唯一约束");
 
   for (const table of Object.keys(EXPECTED_COLUMNS)) {
-    const actual = (db.prepare(`PRAGMA foreign_key_list(${table})`).all() as Array<{
+    const actual = (database.prepare(`PRAGMA foreign_key_list(${table})`).all() as Array<{
       table: string; from: string; to: string; on_delete: string; on_update: string;
     }>).map((entry) => `${entry.from}|${entry.table}|${entry.to}|${entry.on_delete.toUpperCase()}|${entry.on_update.toUpperCase()}`).sort();
     const expected = [...(EXPECTED_FOREIGN_KEYS[table] || [])].sort();
@@ -315,36 +456,163 @@ function assertCurrentSchema(): void {
     }
   }
 
-  const foreignKeyViolations = db.prepare("PRAGMA foreign_key_check").all();
+  const foreignKeyViolations = database.prepare("PRAGMA foreign_key_check").all();
   if (foreignKeyViolations.length > 0) throw new Error("数据库 Schema 1 不兼容: 存在外键完整性错误");
 }
 
-function migrateDatabase(): void {
-  const foundVersion = Number(db.pragma("user_version", { simple: true }));
-  if (!Number.isInteger(foundVersion) || foundVersion < 0) throw new Error(`数据库 Schema 版本无效: ${foundVersion}`);
-  if (foundVersion > DATABASE_SCHEMA_VERSION) {
-    throw new Error(`数据库 Schema 版本在只读探测后发生变化: 当前 ${foundVersion}，本应用最多支持 ${DATABASE_SCHEMA_VERSION}`);
+function assertSchemaV2(database: typeof db = db): void {
+  assertSchemaV1(database, true);
+  const reference = createInMemoryBootstrapDatabase();
+  try {
+    reference.pragma("foreign_keys = ON");
+    reference.exec(SCHEMA_V1_SQL);
+    reference.exec(SCHEMA_V2_SQL);
+    const objectRows = (target: typeof db): Array<{ type: string; name: string; tbl_name: string; sql: string | null }> => target.prepare(
+      "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
+    ).all() as Array<{ type: string; name: string; tbl_name: string; sql: string | null }>;
+    const actual = objectRows(database);
+    const expected = objectRows(reference);
+    const signatures = (rows: typeof actual): string[] => rows.map(entry => `${entry.type}|${entry.name}|${entry.tbl_name}`);
+    if (JSON.stringify(signatures(actual)) !== JSON.stringify(signatures(expected))) {
+      throw new Error("数据库 Schema 2 不兼容: 存在未知或缺失的 Schema 对象");
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const wanted = expected[index];
+      if (!SCHEMA_V2_OBJECT_NAMES.has(wanted.name)) continue;
+      const found = actual[index];
+      if (!found.sql || !wanted.sql || normalizeSchemaSql(found.sql) !== normalizeSchemaSql(wanted.sql)) {
+        throw new Error(`数据库 Schema 2 不兼容: ${wanted.type} ${wanted.name} SQL 定义错误`);
+      }
+    }
+  } finally {
+    reference.close();
   }
-
-  if (foundVersion < 1) {
-    db.transaction(() => {
-      createCurrentSchema();
-      if (!tableHasColumn("memories", "embedding")) db.exec("ALTER TABLE memories ADD COLUMN embedding BLOB");
-      assertCurrentSchema();
-      db.pragma("user_version = 1");
-    })();
-  }
-
-  const migratedVersion = Number(db.pragma("user_version", { simple: true }));
-  if (migratedVersion !== DATABASE_SCHEMA_VERSION) {
-    throw new Error(`数据库 Schema 迁移未达到目标版本: 当前 ${migratedVersion}，目标 ${DATABASE_SCHEMA_VERSION}`);
-  }
-  assertCurrentSchema();
+  const integrity = database.prepare("PRAGMA integrity_check").all() as Array<{ integrity_check?: string }>;
+  if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 2 不兼容: 完整性检查失败");
 }
 
-migrateDatabase();
-// 仅在版本兼容检查和迁移成功后启用持久 WAL 模式，确保未来版本拒绝为零修改。
-db.pragma("journal_mode = WAL");
+function assertSchemaV3(database: typeof db = db): void {
+  const reference = createInMemoryBootstrapDatabase();
+  try {
+    reference.pragma("foreign_keys = ON");
+    reference.exec(SCHEMA_V1_SQL);
+    reference.exec(SCHEMA_V2_SQL);
+    applySchemaV3(reference);
+    const objectRows = (target: typeof db): Array<{ type: string; name: string; tbl_name: string; sql: string | null }> => target.prepare(
+      "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
+    ).all() as Array<{ type: string; name: string; tbl_name: string; sql: string | null }>;
+    const actual = objectRows(database);
+    const expected = objectRows(reference);
+    const signatures = (rows: typeof actual): string[] => rows.map(entry => `${entry.type}|${entry.name}|${entry.tbl_name}`);
+    if (JSON.stringify(signatures(actual)) !== JSON.stringify(signatures(expected))) {
+      throw new Error("数据库 Schema 3 不兼容: 存在未知或缺失的 Schema 对象");
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const found = actual[index];
+      const wanted = expected[index];
+      if ((found.sql === null) !== (wanted.sql === null)
+        || (found.sql !== null && wanted.sql !== null && normalizeSchemaSql(found.sql) !== normalizeSchemaSql(wanted.sql))) {
+        throw new Error(`数据库 Schema 3 不兼容: ${wanted.type} ${wanted.name} SQL 定义错误`);
+      }
+    }
+  } finally {
+    reference.close();
+  }
+  const foreignKeyViolations = database.prepare("PRAGMA foreign_key_check").all();
+  if (foreignKeyViolations.length > 0) throw new Error("数据库 Schema 3 不兼容: 存在外键完整性错误");
+  const integrity = database.prepare("PRAGMA integrity_check").all() as Array<{ integrity_check?: string }>;
+  if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 3 不兼容: 完整性检查失败");
+}
+
+interface DatabaseMigration {
+  readonly from: number;
+  readonly to: number;
+  readonly apply: (database: typeof db) => void;
+}
+
+const DATABASE_MIGRATIONS: readonly DatabaseMigration[] = Object.freeze([
+  Object.freeze({
+    from: 0,
+    to: 1,
+    apply: (database: typeof db): void => {
+      createSchemaV1(database);
+      if (!tableHasColumn(database, "memories", "embedding")) database.exec("ALTER TABLE memories ADD COLUMN embedding BLOB");
+      assertSchemaV1(database);
+    },
+  }),
+  Object.freeze({
+    from: 1,
+    to: 2,
+    apply: (database: typeof db): void => {
+      assertSchemaV1(database);
+      database.exec(SCHEMA_V2_SQL);
+      assertSchemaV2(database);
+    },
+  }),
+  Object.freeze({
+    from: 2,
+    to: 3,
+    apply: (database: typeof db): void => {
+      assertSchemaV2(database);
+      applySchemaV3(database);
+      assertSchemaV3(database);
+    },
+  }),
+]);
+
+function assertMigrationRegistry(): void {
+  if (DATABASE_MIGRATIONS.length !== DATABASE_SCHEMA_VERSION) throw new Error("数据库迁移注册表不完整");
+  DATABASE_MIGRATIONS.forEach((migration, index) => {
+    if (!Object.isFrozen(migration) || migration.from !== index || migration.to !== index + 1) {
+      throw new Error("数据库迁移注册表不是连续不可变序列");
+    }
+  });
+  if (!Object.isFrozen(DATABASE_MIGRATIONS)) throw new Error("数据库迁移注册表必须不可变");
+}
+
+function readSchemaVersion(database: typeof db): number {
+  const version = Number(database.pragma("user_version", { simple: true }));
+  if (!Number.isInteger(version) || version < 0) throw new Error(`数据库 Schema 版本无效: ${version}`);
+  return version;
+}
+
+function migrateDatabase(): void {
+  assertMigrationRegistry();
+  let version = readSchemaVersion(db);
+  if (version > DATABASE_SCHEMA_VERSION) {
+    throw new Error(`数据库 Schema 版本在只读探测后发生变化: 当前 ${version}，本应用最多支持 ${DATABASE_SCHEMA_VERSION}`);
+  }
+
+  while (version < DATABASE_SCHEMA_VERSION) {
+    const migration = DATABASE_MIGRATIONS.find(candidate => candidate.from === version);
+    if (!migration || migration.to !== version + 1) throw new Error(`缺少数据库迁移: ${version} -> ${version + 1}`);
+    db.transaction(() => {
+      if (readSchemaVersion(db) !== migration.from) throw new Error("数据库版本在迁移前发生变化");
+      migration.apply(db);
+      db.pragma(`user_version = ${migration.to}`);
+      if (readSchemaVersion(db) !== migration.to) throw new Error("数据库迁移版本写入失败");
+    })();
+    version = migration.to;
+  }
+
+  if (version !== DATABASE_SCHEMA_VERSION) {
+    throw new Error(`数据库 Schema 迁移未达到目标版本: 当前 ${version}，目标 ${DATABASE_SCHEMA_VERSION}`);
+  }
+  assertSchemaV3(db);
+}
+
+try {
+  migrateDatabase();
+  // 仅在版本兼容检查和迁移成功后启用持久 WAL 模式，确保未来版本拒绝为零修改。
+  db.pragma("journal_mode = WAL");
+} catch (error) {
+  try {
+    await persistentConnection.close();
+  } catch (closeError) {
+    throw new AggregateError([error, closeError], "数据库初始化失败且bootstrap lease清理失败");
+  }
+  throw error;
+}
 
 export function getDatabaseSchemaVersion(): number {
   return Number(db.pragma("user_version", { simple: true }));
@@ -352,6 +620,217 @@ export function getDatabaseSchemaVersion(): number {
 
 export function withTransaction<T>(action: () => T): T {
   return db.transaction(action)();
+}
+
+export function validateDatabaseRestoreCandidate(
+  databasePath: string,
+  declaredSchemaVersion: number
+): DatabaseSnapshotValidation {
+  if (declaredSchemaVersion !== DATABASE_SCHEMA_VERSION) {
+    throw new Error(`Database restore Schema version is incompatible: ${declaredSchemaVersion}`);
+  }
+  const validation = validateDatabaseSnapshotFile(databasePath, DATABASE_SCHEMA_VERSION);
+  if (validation.schemaVersion !== declaredSchemaVersion) {
+    throw new Error("Database restore Schema version differs from the backup manifest");
+  }
+  const bytes = fs.readFileSync(databasePath);
+  const candidate = createInMemoryBootstrapDatabase(bytes);
+  try { assertSchemaV3(candidate); }
+  finally { candidate.close(); }
+  return validation;
+}
+
+export async function createConsistentDatabaseSnapshot(): Promise<Readonly<{ bytes: Buffer; validation: DatabaseSnapshotValidation }>> {
+  return getBootstrapPathStore().withDatabaseSnapshotFile(async snapshotPath => {
+    await writeConsistentDatabaseSnapshot(db, snapshotPath);
+    const validation = validateDatabaseRestoreCandidate(snapshotPath, DATABASE_SCHEMA_VERSION);
+    return Object.freeze({ bytes: fs.readFileSync(snapshotPath), validation });
+  });
+}
+
+export interface SecurityAuditStateRow {
+  readonly schemaVersion: 1;
+  readonly algorithm: "electron-safe-storage";
+  readonly scope: "windows-dpapi-current-user-v1";
+  readonly wrappedKey: Buffer;
+  readonly createdAt: string;
+}
+
+export function getSecurityAuditState(): SecurityAuditStateRow | null {
+  const row = db.prepare("SELECT schema_version, algorithm, scope, wrapped_key, created_at FROM security_audit_state WHERE singleton = 1").get() as {
+    schema_version: number; algorithm: string; scope: string; wrapped_key: Buffer; created_at: string;
+  } | undefined;
+  if (!row) return null;
+  return Object.freeze({
+    schemaVersion: row.schema_version as 1,
+    algorithm: row.algorithm as "electron-safe-storage",
+    scope: row.scope as "windows-dpapi-current-user-v1",
+    wrappedKey: Buffer.from(row.wrapped_key),
+    createdAt: row.created_at,
+  });
+}
+
+export function insertSecurityAuditState(state: SecurityAuditStateRow): void {
+  db.prepare("INSERT INTO security_audit_state(singleton,schema_version,algorithm,scope,wrapped_key,created_at) VALUES (1,?,?,?,?,?)")
+    .run(state.schemaVersion, state.algorithm, state.scope, state.wrappedKey, state.createdAt);
+}
+
+export function getSecurityAuditHead(): SecurityAuditCheckpoint | null {
+  const row = db.prepare("SELECT schema_version,event_count,head_hash,checkpoint_mac FROM security_audit_head WHERE singleton = 1").get() as {
+    schema_version: number; event_count: number; head_hash: string; checkpoint_mac: string;
+  } | undefined;
+  if (!row) return null;
+  return Object.freeze({
+    schemaVersion: row.schema_version as 1,
+    eventCount: row.event_count,
+    headHash: row.head_hash,
+    checkpointMac: row.checkpoint_mac,
+  });
+}
+
+export function insertSecurityAuditHead(head: SecurityAuditCheckpoint): void {
+  db.prepare("INSERT INTO security_audit_head(singleton,schema_version,event_count,head_hash,checkpoint_mac) VALUES (1,?,?,?,?)")
+    .run(head.schemaVersion, head.eventCount, head.headHash, head.checkpointMac);
+}
+
+export function updateSecurityAuditHead(expected: SecurityAuditCheckpoint, next: SecurityAuditCheckpoint): void {
+  const result = db.prepare("UPDATE security_audit_head SET schema_version=?,event_count=?,head_hash=?,checkpoint_mac=? WHERE singleton=1 AND schema_version=? AND event_count=? AND head_hash=? AND checkpoint_mac=?")
+    .run(next.schemaVersion, next.eventCount, next.headHash, next.checkpointMac,
+      expected.schemaVersion, expected.eventCount, expected.headHash, expected.checkpointMac);
+  if (result.changes !== 1) throw new Error("Security audit head changed concurrently");
+}
+
+interface SecurityAuditEventDatabaseRow {
+  sequence: number;
+  event_id: string;
+  recorded_at: string;
+  phase: string;
+  session_id: string | null;
+  run_id: string;
+  request_id: string;
+  parent_request_id: string | null;
+  tool_call_id: string | null;
+  context_id: string | null;
+  execution_id: string | null;
+  principal: string;
+  operation_kind: string;
+  operation_name: string;
+  outcome: string;
+  code: string | null;
+  request_commitment: string;
+  safe_payload: string;
+  previous_event_hash: string;
+  event_hash: string;
+}
+
+function mapSecurityAuditEvent(row: SecurityAuditEventDatabaseRow): SecurityAuditEvent {
+  let safePayload: unknown;
+  try { safePayload = JSON.parse(row.safe_payload); }
+  catch { throw new Error("Security audit payload is not valid JSON"); }
+  return Object.freeze({
+    schemaVersion: 1,
+    eventId: row.event_id,
+    sequence: row.sequence,
+    recordedAt: row.recorded_at,
+    phase: row.phase,
+    correlation: Object.freeze({
+      sessionId: row.session_id,
+      runId: row.run_id,
+      requestId: row.request_id,
+      parentRequestId: row.parent_request_id,
+      toolCallId: row.tool_call_id,
+      contextId: row.context_id,
+      executionId: row.execution_id,
+    }),
+    principal: row.principal,
+    operationKind: row.operation_kind,
+    operationName: row.operation_name,
+    outcome: row.outcome,
+    code: row.code,
+    requestCommitment: row.request_commitment,
+    safePayload,
+    previousEventHash: row.previous_event_hash,
+    eventHash: row.event_hash,
+  } as SecurityAuditEvent);
+}
+
+export async function validateDatabaseRestoreSecurityAudit(
+  databaseBytes: Buffer,
+  unwrapKey: (wrappedKey: Uint8Array) => Promise<Buffer>
+): Promise<void> {
+  if (!Buffer.isBuffer(databaseBytes) || databaseBytes.length === 0) throw new TypeError("Database restore audit snapshot is invalid");
+  if (typeof unwrapKey !== "function") throw new TypeError("Database restore audit key unwrapper is invalid");
+  const candidate = createInMemoryBootstrapDatabase(databaseBytes);
+  try {
+    const stateRows = candidate.prepare("SELECT schema_version,algorithm,scope,wrapped_key,created_at FROM security_audit_state ORDER BY singleton").all() as Array<{
+      schema_version: number; algorithm: string; scope: string; wrapped_key: Buffer; created_at: string;
+    }>;
+    const headRows = candidate.prepare("SELECT schema_version,event_count,head_hash,checkpoint_mac FROM security_audit_head ORDER BY singleton").all() as Array<{
+      schema_version: number; event_count: number; head_hash: string; checkpoint_mac: string;
+    }>;
+    const eventRows = candidate.prepare("SELECT sequence,event_id,recorded_at,phase,session_id,run_id,request_id,parent_request_id,tool_call_id,context_id,execution_id,principal,operation_kind,operation_name,outcome,code,request_commitment,safe_payload,previous_event_hash,event_hash FROM security_audit_events ORDER BY sequence ASC").all() as SecurityAuditEventDatabaseRow[];
+    if (stateRows.length === 0) {
+      if (headRows.length !== 0 || eventRows.length !== 0) throw new Error("Database restore audit state is incomplete");
+      return;
+    }
+    if (stateRows.length !== 1 || headRows.length !== 1) throw new Error("Database restore audit state is incomplete");
+    const state = stateRows[0];
+    if (state.schema_version !== 1 || state.algorithm !== "electron-safe-storage" || state.scope !== "windows-dpapi-current-user-v1"
+      || !Buffer.isBuffer(state.wrapped_key) || state.wrapped_key.length === 0 || state.wrapped_key.length > 64 * 1024
+      || Number.isNaN(new Date(state.created_at).getTime())) throw new Error("Database restore audit state is invalid");
+    const masterKey = await unwrapKey(Buffer.from(state.wrapped_key));
+    if (!Buffer.isBuffer(masterKey) || masterKey.length !== 32) {
+      masterKey?.fill(0);
+      throw new Error("Database restore audit key is unavailable");
+    }
+    try {
+      const events = eventRows.map(mapSecurityAuditEvent);
+      const summary = verifySecurityAuditChain(events, masterKey);
+      const head = headRows[0];
+      verifySecurityAuditCheckpoint(Object.freeze({
+        schemaVersion: head.schema_version as 1,
+        eventCount: head.event_count,
+        headHash: head.head_hash,
+        checkpointMac: head.checkpoint_mac,
+      }), summary, masterKey);
+    } finally {
+      masterKey.fill(0);
+    }
+  } finally {
+    candidate.close();
+  }
+}
+
+export function listSecurityAuditEvents(): readonly SecurityAuditEvent[] {
+  const rows = db.prepare("SELECT sequence,event_id,recorded_at,phase,session_id,run_id,request_id,parent_request_id,tool_call_id,context_id,execution_id,principal,operation_kind,operation_name,outcome,code,request_commitment,safe_payload,previous_event_hash,event_hash FROM security_audit_events ORDER BY sequence ASC")
+    .all() as SecurityAuditEventDatabaseRow[];
+  return Object.freeze(rows.map(mapSecurityAuditEvent));
+}
+
+export function insertSecurityAuditEvent(event: SecurityAuditEvent): void {
+  db.prepare("INSERT INTO security_audit_events(sequence,event_id,recorded_at,phase,session_id,run_id,request_id,parent_request_id,tool_call_id,context_id,execution_id,principal,operation_kind,operation_name,outcome,code,request_commitment,safe_payload,previous_event_hash,event_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+    .run(
+      event.sequence,
+      event.eventId,
+      event.recordedAt,
+      event.phase,
+      event.correlation.sessionId,
+      event.correlation.runId,
+      event.correlation.requestId,
+      event.correlation.parentRequestId,
+      event.correlation.toolCallId,
+      event.correlation.contextId,
+      event.correlation.executionId,
+      event.principal,
+      event.operationKind,
+      event.operationName,
+      event.outcome,
+      event.code,
+      event.requestCommitment,
+      JSON.stringify(event.safePayload),
+      event.previousEventHash,
+      event.eventHash
+    );
 }
 
 // ===========================================
@@ -576,69 +1055,96 @@ export function getLastUserMessageId(sessionId: string): number | null {
 }
 
 // ===========================================
-// Tasks CRUD（任务系统）
+// Tasks CRUD（Task DAG）
 // ===========================================
 
 export interface TaskRow {
   id: number;
   session_id: string;
-  parent_id: number | null;
+  task_id: string;
   subject: string;
-  status: string; // pending | in_progress | completed | failed
+  description: string | null;
+  status: "pending" | "in_progress" | "completed";
   active_form: string | null;
+  owner: string | null;
+  metadata_json: string;
   sort_order: number;
   created_at: string;
   updated_at: string;
 }
 
-/** 批量插入任务 */
-export function insertTasks(sessionId: string, subjects: string[]): number[] {
-  const now = new Date().toISOString();
-  const ids: number[] = [];
-  const stmt = db.prepare(
-    `INSERT INTO tasks (session_id, subject, status, sort_order, created_at, updated_at)
-     VALUES (?, ?, 'pending', ?, ?, ?)`
-  );
-  subjects.forEach((subject, i) => {
-    const result = stmt.run(sessionId, subject, i, now, now);
-    ids.push(Number(result.lastInsertRowid));
-  });
-  return ids;
+export interface TaskDependencyRow {
+  session_id: string;
+  task_id: string;
+  blocker_id: string;
+  created_at: string;
 }
 
-/** 获取会话的所有任务（按 sort_order 正序） */
+const TASK_SELECT_COLUMNS = "id, session_id, task_id, subject, description, status, active_form, owner, metadata_json, sort_order, created_at, updated_at";
+
 export function getTasksBySessionId(sessionId: string): TaskRow[] {
   return db.prepare(
-    `SELECT * FROM tasks WHERE session_id = ? ORDER BY sort_order ASC, id ASC`
+    `SELECT ${TASK_SELECT_COLUMNS} FROM tasks WHERE session_id = ? ORDER BY sort_order ASC, id ASC`
   ).all(sessionId) as TaskRow[];
 }
 
-/** 获取单个任务 */
-export function getTask(id: number): TaskRow | undefined {
-  return db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(id) as TaskRow | undefined;
+export function getTaskBySessionAndId(sessionId: string, taskId: string): TaskRow | undefined {
+  return db.prepare(
+    `SELECT ${TASK_SELECT_COLUMNS} FROM tasks WHERE session_id = ? AND task_id = ?`
+  ).get(sessionId, taskId) as TaskRow | undefined;
 }
 
-/** 更新任务状态 */
-export function updateTaskStatusInDb(id: number, status: string, activeForm?: string): void {
-  const now = new Date().toISOString();
-  if (activeForm !== undefined) {
-    db.prepare(`UPDATE tasks SET status = ?, active_form = ?, updated_at = ? WHERE id = ?`)
-      .run(status, activeForm, now, id);
-  } else {
-    db.prepare(`UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?`)
-      .run(status, now, id);
-  }
+export function getNextTaskSortOrder(sessionId: string): number {
+  const row = db.prepare("SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM tasks WHERE session_id = ?")
+    .get(sessionId) as { next_order: number };
+  return row.next_order;
 }
 
-/** 更新任务标题 */
-export function updateTaskSubject(id: number, subject: string): void {
-  db.prepare(`UPDATE tasks SET subject = ?, updated_at = ? WHERE id = ?`)
-    .run(subject, new Date().toISOString(), id);
+export function insertTaskRow(row: Omit<TaskRow, "id">): TaskRow {
+  db.prepare(
+    `INSERT INTO tasks (
+       session_id, task_id, subject, description, status, active_form, owner,
+       metadata_json, sort_order, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    row.session_id, row.task_id, row.subject, row.description, row.status, row.active_form,
+    row.owner, row.metadata_json, row.sort_order, row.created_at, row.updated_at,
+  );
+  const inserted = getTaskBySessionAndId(row.session_id, row.task_id);
+  if (!inserted) throw new Error("Task insert did not publish one row");
+  return inserted;
 }
 
-/** 删除任务 */
-export function deleteTask(id: number): void {
-  db.prepare(`DELETE FROM tasks WHERE id = ?`).run(id);
+export function updateTaskRow(row: Omit<TaskRow, "id" | "created_at" | "sort_order">): boolean {
+  const result = db.prepare(
+    `UPDATE tasks
+     SET subject = ?, description = ?, status = ?, active_form = ?, owner = ?, metadata_json = ?, updated_at = ?
+     WHERE session_id = ? AND task_id = ?`
+  ).run(
+    row.subject, row.description, row.status, row.active_form, row.owner, row.metadata_json,
+    row.updated_at, row.session_id, row.task_id,
+  );
+  return result.changes === 1;
+}
+
+export function deleteTaskBySessionAndId(sessionId: string, taskId: string): boolean {
+  return db.prepare("DELETE FROM tasks WHERE session_id = ? AND task_id = ?").run(sessionId, taskId).changes === 1;
+}
+
+export function deleteTasksBySessionId(sessionId: string): number {
+  return db.prepare("DELETE FROM tasks WHERE session_id = ?").run(sessionId).changes;
+}
+
+export function getTaskDependenciesBySessionId(sessionId: string): TaskDependencyRow[] {
+  return db.prepare(
+    "SELECT session_id, task_id, blocker_id, created_at FROM task_dependencies WHERE session_id = ? ORDER BY task_id, blocker_id"
+  ).all(sessionId) as TaskDependencyRow[];
+}
+
+export function insertTaskDependency(row: TaskDependencyRow): void {
+  db.prepare(
+    "INSERT INTO task_dependencies (session_id, task_id, blocker_id, created_at) VALUES (?, ?, ?, ?)"
+  ).run(row.session_id, row.task_id, row.blocker_id, row.created_at);
 }
 
 // ===========================================

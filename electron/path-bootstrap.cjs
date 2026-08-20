@@ -133,7 +133,7 @@ function verifyDirectory(record, role) {
   }
 }
 
-function openFileAt(rootRecord, relative, role, barrier) {
+function openFileAt(rootRecord, relative, role, barrier, flags = "r") {
   const io = rootRecord.io;
   verifyDirectory(rootRecord, role);
   const safeRelative = validateRelativeSyntax(relative, role);
@@ -142,7 +142,8 @@ function openFileAt(rootRecord, relative, role, barrier) {
   assertNoRedirectComponents(lexical, role, io);
   const canonical = io.realpathSync.native(lexical);
   if (!pathContained(rootRecord.canonical, canonical)) deny("PATH_ROOT_DENIED", role);
-  const descriptor = io.openSync(canonical, "r");
+  if (flags !== "r" && flags !== "r+") throw new TypeError("file lease flags are invalid");
+  const descriptor = io.openSync(canonical, flags);
   try {
     const handleInfo = io.fstatSync(descriptor, { bigint: true });
     const pathInfo = io.statSync(canonical, { bigint: true });
@@ -205,6 +206,13 @@ class ElectronFileLease {
       deny("PATH_IDENTITY_CHANGED", this.#role);
     }
     return bytes;
+  }
+
+  flush() {
+    this.#assertOpen();
+    this.verify("before-file-flush");
+    this.#io.fsyncSync(this.#descriptor);
+    this.verify("after-file-flush");
   }
 
   verify(point = "verify") {
@@ -338,6 +346,11 @@ class ElectronBootstrapPathStore {
     this.#assertOpen();
     if (this.#archiveLease) return new ElectronArchiveFileLease({ archiveLease: this.#archiveLease, archiveFs: this.#archiveFs, archivePath: this.#archivePath, relative: path.join("electron", relative), role });
     return openFileAt(this.#electronRoot, relative, role, this.#barrier);
+  }
+
+  openUserDataFile(relative, role = "user-data-file") {
+    this.#assertOpen();
+    return openFileAt(this.#userDataRoot, relative, role, this.#barrier, "r+");
   }
 
   openExternalBootstrapExecutable(candidate, role) {

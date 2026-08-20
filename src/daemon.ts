@@ -17,6 +17,69 @@ let lastRestartTime = 0;
 let serverProcess: any = null;
 let serverApiToken: string | null = null;
 let isShuttingDown = false;
+let parentCredentialServiceAvailable = typeof process.send === "function" && process.connected;
+const credentialRequests = new Map<string, ChildProcess>();
+
+function exactKeys(value: object, expected: readonly string[]): boolean {
+  return JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...expected].sort());
+}
+
+function handleServerCredentialRequest(child: ChildProcess, message: unknown): void {
+  if (!message || typeof message !== "object" || !exactKeys(message, ["type", "requestId", "operation", "value"])) return;
+  const request = message as { type: unknown; requestId: unknown; operation: unknown; value: unknown };
+  if (request.type !== "rainydays-credential-request"
+    || typeof request.requestId !== "string" || !/^[a-f0-9]{32}$/u.test(request.requestId)
+    || (request.operation !== "protect" && request.operation !== "unprotect")
+    || typeof request.value !== "string" || Buffer.byteLength(request.value, "utf8") > 1024 * 1024
+    || credentialRequests.has(request.requestId)) return;
+  const requestId = request.requestId;
+  if (!parentCredentialServiceAvailable || typeof process.send !== "function" || !process.connected) {
+    child.send?.({ type: "rainydays-credential-result", requestId, ok: false });
+    return;
+  }
+  credentialRequests.set(requestId, child);
+  process.send(request, error => {
+    if (!error || credentialRequests.get(requestId) !== child) return;
+    credentialRequests.delete(requestId);
+    if (child.connected) child.send?.({ type: "rainydays-credential-result", requestId, ok: false });
+  });
+}
+
+function handleParentCredentialResult(message: unknown): boolean {
+  if (!message || typeof message !== "object") return false;
+  const response = message as { type?: unknown; requestId?: unknown; ok?: unknown; value?: unknown };
+  if (response.type !== "rainydays-credential-result" || typeof response.requestId !== "string") return false;
+  const child = credentialRequests.get(response.requestId);
+  if (!child) return true;
+  credentialRequests.delete(response.requestId);
+  const success = response.ok === true && typeof response.value === "string"
+    && Buffer.byteLength(response.value, "utf8") <= 1024 * 1024
+    && exactKeys(response, ["type", "requestId", "ok", "value"]);
+  const failure = response.ok === false && exactKeys(response, ["type", "requestId", "ok"]);
+  if (!success && !failure) {
+    if (child.connected) child.send?.({ type: "rainydays-credential-result", requestId: response.requestId, ok: false });
+    return true;
+  }
+  if (child.connected) child.send?.(success ? response : { type: "rainydays-credential-result", requestId: response.requestId, ok: false });
+  return true;
+}
+
+function discardChildCredentialRequests(child: ChildProcess): void {
+  for (const [requestId, owner] of credentialRequests) if (owner === child) credentialRequests.delete(requestId);
+}
+
+async function rejectPendingCredentialRequests(): Promise<void> {
+  parentCredentialServiceAvailable = false;
+  const pending = [...credentialRequests];
+  credentialRequests.clear();
+  await Promise.all(pending.map(([requestId, child]) => new Promise<void>(resolve => {
+    if (!child.connected || typeof child.send !== "function") {
+      resolve();
+      return;
+    }
+    child.send({ type: "rainydays-credential-result", requestId, ok: false }, () => resolve());
+  })));
+}
 
 function handleStartFailure(error: unknown): void {
   console.error("[Daemon] 启动失败:", error instanceof Error ? error.message : String(error));
@@ -79,6 +142,8 @@ async function startServer() {
         shell: false,
         stdio: ["inherit", "inherit", "inherit", "ipc"],
       });
+      child.on("message", message => handleServerCredentialRequest(child, message));
+      child.once("exit", () => discardChildCredentialRequests(child));
       await waitForRuntimeLoaded(child);
       return child;
     });
@@ -169,9 +234,18 @@ function finishShutdown(signal: "SIGINT" | "SIGTERM"): void {
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) process.on(signal, () => finishShutdown(signal));
 process.on("message", message => {
+  if (handleParentCredentialResult(message)) return;
   if (message && typeof message === "object"
     && Object.keys(message).length === 1
     && (message as { type?: unknown }).type === "rainydays-daemon-shutdown") finishShutdown("SIGTERM");
+});
+process.on("disconnect", () => {
+  void rejectPendingCredentialRequests()
+    .then(() => shutdownDaemon("SIGTERM"))
+    .then(() => process.exit(1), error => {
+      console.error("[Daemon] 凭据服务断开后的关闭失败:", error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    });
 });
 
 // 启动

@@ -5,7 +5,7 @@
 
 import { createHash } from "node:crypto";
 import path from "path";
-import { deleteCredentials, readCredential, storeCredential } from "./credential-store.js";
+import { deleteCredentials, readCredential, storeCredential, validateCredentialReference } from "./credential-store.js";
 import { getManagedPathStore } from "./managed-path-store.js";
 import { pathPolicy } from "./path-runtime.js";
 import type { PathAuditIdentity } from "./path-policy.js";
@@ -103,6 +103,44 @@ function normalizeConfig(value: Partial<Config>): Config {
         : defaults.outputDir,
     },
   };
+}
+
+export function validatePersistedConfigBytes(bytes: Buffer): readonly string[] {
+  if (!Buffer.isBuffer(bytes) || bytes.length === 0 || bytes.length > 4 * 1024 * 1024) throw new Error("config.json 大小无效");
+  let parsed: unknown;
+  try { parsed = JSON.parse(bytes.toString("utf8")); }
+  catch { throw new Error("config.json 不是合法 JSON"); }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("config.json Schema 无效");
+  const root = parsed as Record<string, unknown>;
+  const allowedRoot = new Set(["defaultProfile", "profiles", "settings"]);
+  if (Object.keys(root).some(key => !allowedRoot.has(key)) || typeof root.defaultProfile !== "string"
+    || !root.profiles || typeof root.profiles !== "object" || Array.isArray(root.profiles)
+    || !root.settings || typeof root.settings !== "object" || Array.isArray(root.settings)) {
+    throw new Error("config.json Schema 无效");
+  }
+  const references: string[] = [];
+  for (const [name, value] of Object.entries(root.profiles as Record<string, unknown>)) {
+    validateProfileName(name);
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Provider profile Schema 无效");
+    const profile = value as Record<string, unknown>;
+    const allowed = new Set(["model", "credentialRef", "baseURL", "providerType"]);
+    if (Object.keys(profile).some(key => !allowed.has(key)) || typeof profile.model !== "string" || !profile.model
+      || typeof profile.baseURL !== "string"
+      || (profile.providerType !== undefined && typeof profile.providerType !== "string")
+      || profile.apiKey !== undefined) {
+      throw new Error("Provider profile Schema 无效");
+    }
+    validateBaseURL(profile.baseURL);
+    if (profile.credentialRef !== undefined) references.push(validateCredentialReference(profile.credentialRef));
+  }
+  if (!(root.defaultProfile in (root.profiles as Record<string, unknown>))) throw new Error("Default profile is missing");
+  const settings = root.settings as Record<string, unknown>;
+  const expectedSettings = ["defaultPersona", "workspaceRoot", "departmentDataRoot", "outputDir"];
+  if (Object.keys(settings).sort().join("\0") !== [...expectedSettings].sort().join("\0")
+    || expectedSettings.some(key => typeof settings[key] !== "string" || !(settings[key] as string))) {
+    throw new Error("App settings Schema 无效");
+  }
+  return Object.freeze(references.sort());
 }
 
 /** 启动期通过私有 managed authority 加载配置；除文件不存在外一律 fail-closed。 */

@@ -1854,6 +1854,100 @@ export class PathPolicy {
     });
   }
 
+  async removeDirectory(
+    authority: PathAuthority,
+    request: PathRequest
+  ): Promise<void> {
+    if (request.operation !== "create-directory") throw new TypeError("directory removal requires create-directory permission");
+    return this.#run(authority, request, async (record, state) => {
+      const selected = this.#selectTarget(record, request);
+      state.rootId = selected.root.rootId;
+      if (this.#samePath(selected.root.lexicalPath, selected.lexicalTarget)) deny("PATH_OPERATION_DENIED");
+      await this.#verifyRoot(record, selected.root, state);
+      const parent = this.#dirname(selected.lexicalTarget);
+      await this.#walkNoRedirect(selected.root, parent);
+      const canonicalParent = this.#normalizeAbsolute(await this.#realpathOrDeny(parent));
+      const parentRoot = this.#selectCanonicalRoot(record, canonicalParent, "create-directory");
+      if (parentRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      const parentIdentity = await this.#statIdentity(canonicalParent, "directory");
+      const targetInfo = await fs.lstat(selected.lexicalTarget, { bigint: true }).catch((error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT") deny("PATH_NOT_FOUND");
+        deny("PATH_OPERATION_DENIED");
+      });
+      if (targetInfo.isSymbolicLink()) deny("PATH_REDIRECT_DENIED");
+      const targetIdentity = identityFromStat(targetInfo);
+      if (targetIdentity.type !== "directory") deny("PATH_TYPE_MISMATCH");
+      const canonicalTarget = this.#normalizeAbsolute(await this.#realpathOrDeny(selected.lexicalTarget));
+      const targetRoot = this.#selectCanonicalRoot(record, canonicalTarget, "create-directory");
+      if (targetRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      await this.#barrier("afterCanonicalValidation", state.operationId);
+      this.#assertActive(record);
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, parent);
+      const parentNow = await this.#statIdentity(canonicalParent, "directory");
+      const targetNow = await this.#lstatIdentity(selected.lexicalTarget, "directory");
+      if (!sameIdentity(parentIdentity.identity, parentNow.identity) || !sameIdentity(targetIdentity, targetNow)) deny("PATH_IDENTITY_CHANGED");
+      await this.#barrier("beforeFinalCreate", state.operationId);
+      this.#assertActive(record);
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, parent);
+      const finalParent = await this.#statIdentity(canonicalParent, "directory");
+      const finalTarget = await this.#lstatIdentity(selected.lexicalTarget, "directory");
+      if (!sameIdentity(parentIdentity.identity, finalParent.identity) || !sameIdentity(targetIdentity, finalTarget)) deny("PATH_IDENTITY_CHANGED");
+      await fs.rmdir(selected.lexicalTarget).catch(() => deny("PATH_OPERATION_DENIED"));
+      await fs.lstat(selected.lexicalTarget).then(() => deny("PATH_OPERATION_DENIED"), (error: NodeJS.ErrnoException) => {
+        if (error.code !== "ENOENT") deny("PATH_OPERATION_DENIED");
+      });
+    });
+  }
+
+  async removeFile(
+    authority: PathAuthority,
+    request: PathRequest
+  ): Promise<void> {
+    if (request.operation !== "replace-file") throw new TypeError("file removal requires replace-file permission");
+    return this.#run(authority, request, async (record, state) => {
+      const selected = this.#selectTarget(record, request);
+      state.rootId = selected.root.rootId;
+      if (this.#samePath(selected.root.lexicalPath, selected.lexicalTarget)) deny("PATH_OPERATION_DENIED");
+      await this.#verifyRoot(record, selected.root, state);
+      const parent = this.#dirname(selected.lexicalTarget);
+      await this.#walkNoRedirect(selected.root, parent);
+      const canonicalParent = this.#normalizeAbsolute(await this.#realpathOrDeny(parent));
+      const parentRoot = this.#selectCanonicalRoot(record, canonicalParent, "replace-file");
+      if (parentRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      const parentIdentity = await this.#statIdentity(canonicalParent, "directory");
+      const targetInfo = await fs.lstat(selected.lexicalTarget, { bigint: true }).catch((error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT") deny("PATH_NOT_FOUND");
+        deny("PATH_OPERATION_DENIED");
+      });
+      if (targetInfo.isSymbolicLink()) deny("PATH_REDIRECT_DENIED");
+      const targetIdentity = identityFromStat(targetInfo);
+      if (targetIdentity.type !== "file" || targetInfo.nlink !== 1n) deny("PATH_IDENTITY_CHANGED");
+      const canonicalTarget = this.#normalizeAbsolute(await this.#realpathOrDeny(selected.lexicalTarget));
+      const targetRoot = this.#selectCanonicalRoot(record, canonicalTarget, "replace-file");
+      if (targetRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      await this.#barrier("afterCanonicalValidation", state.operationId);
+      this.#assertActive(record);
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, parent);
+      const parentNow = await this.#statIdentity(canonicalParent, "directory");
+      const targetNow = await this.#lstatIdentity(selected.lexicalTarget, "file");
+      if (!sameIdentity(parentIdentity.identity, parentNow.identity) || !sameIdentity(targetIdentity, targetNow)) deny("PATH_IDENTITY_CHANGED");
+      await this.#barrier("beforeFinalCreate", state.operationId);
+      this.#assertActive(record);
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, parent);
+      const finalParent = await this.#statIdentity(canonicalParent, "directory");
+      const finalTarget = await this.#lstatIdentity(selected.lexicalTarget, "file");
+      if (!sameIdentity(parentIdentity.identity, finalParent.identity) || !sameIdentity(targetIdentity, finalTarget)) deny("PATH_IDENTITY_CHANGED");
+      await fs.unlink(selected.lexicalTarget).catch(() => deny("PATH_OPERATION_DENIED"));
+      await fs.lstat(selected.lexicalTarget).then(() => deny("PATH_OPERATION_DENIED"), (error: NodeJS.ErrnoException) => {
+        if (error.code !== "ENOENT") deny("PATH_OPERATION_DENIED");
+      });
+    });
+  }
+
   async replaceFile<T>(
     authority: PathAuthority,
     request: PathRequest,

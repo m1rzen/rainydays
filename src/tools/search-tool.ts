@@ -4,6 +4,7 @@
 // ===========================================
 
 import type { ToolDefinition, ToolExecutor } from "../types.js";
+import { cancellationError, cancellationFailure, throwIfCancelled, timeoutSignal } from "../run-cancellation.js";
 
 export const webSearchDef: ToolDefinition = {
   type: "function",
@@ -28,21 +29,32 @@ export const webSearchDef: ToolDefinition = {
   },
 };
 
-export const webSearchExec: ToolExecutor = async (args) => {
+export const webSearchExec: ToolExecutor = async (args, _env, invocation) => {
+  if (!invocation) throw new Error("Network gateway is required");
   const query = encodeURIComponent(args.query as string);
   const maxResults = (args.max_results as number) || 5;
+  const cancellation = timeoutSignal(invocation.signal, 15_000, "web_search");
 
   try {
-    const response = await fetch(`https://html.duckduckgo.com/html/?q=${query}`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        Accept: "text/html",
-      },
-      signal: AbortSignal.timeout(15000),
-    });
+    throwIfCancelled(cancellation.signal);
+    let response: Response;
+    try {
+      response = await invocation.network.fetch(`https://html.duckduckgo.com/html/?q=${query}`, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          Accept: "text/html",
+        },
+        signal: cancellation.signal,
+      });
+    } catch (error) {
+      if (cancellation.signal.aborted && error instanceof Error && error.name === "AbortError") {
+        throw cancellationError(cancellation.signal, "web_search was cancelled");
+      }
+      throw error;
+    }
 
     if (!response.ok) {
-      return `搜索失败: HTTP ${response.status}`;
+      throw new Error(`HTTP ${response.status}`);
     }
 
     const html = await response.text();
@@ -88,7 +100,10 @@ export const webSearchExec: ToolExecutor = async (args) => {
 
     return `搜索 "${args.query}" 找到 ${results.length} 个结果:\n\n${lines.join("\n\n")}`;
   } catch (err) {
-    return `搜索失败: ${err instanceof Error ? err.message : String(err)}`;
+    if (cancellation.signal.aborted) throw cancellationFailure(cancellation.signal, err, "web_search was cancelled");
+    throw err instanceof Error ? err : new Error(String(err));
+  } finally {
+    cancellation.dispose();
   }
 };
 

@@ -87,11 +87,14 @@ async function loadSkill(skillName: string): Promise<string | null> {
   return null;
 }
 
-/** 从受管 markdown+frontmatter 载入 Persona，并绑定文件 stem 与声明名称。 */
-async function loadPersonaFile(role: ManagedStoreRole, fileName: string): Promise<PersonaDefinition> {
+export async function validatePersonaSource(
+  fileName: string,
+  bytes: Uint8Array,
+  resolveSkill: (name: string) => Promise<string | null>
+): Promise<PersonaDefinition> {
   const safeFileName = validateManagedIdentifier(fileName);
-  const store = await getManagedPathStore();
-  const raw = (await store.readNamed(role, safeFileName, ".md")).toString("utf8");
+  if (!(bytes instanceof Uint8Array) || typeof resolveSkill !== "function") throw new TypeError("Persona source is invalid");
+  const raw = Buffer.from(bytes).toString("utf8");
   const { data, content } = matter(raw);
 
   const declaredName = data.name === undefined ? safeFileName : validateManagedIdentifier(data.name);
@@ -102,7 +105,7 @@ async function loadPersonaFile(role: ManagedStoreRole, fileName: string): Promis
   // 加载 skill 文件内容
   const skillContents: string[] = [];
   for (const skillName of skillsList) {
-    const skillContent = await loadSkill(skillName);
+    const skillContent = await resolveSkill(skillName);
     if (skillContent) {
       skillContents.push(`## Skill: ${skillName}\n\n${skillContent}`);
     }
@@ -125,6 +128,13 @@ async function loadPersonaFile(role: ManagedStoreRole, fileName: string): Promis
     networkPolicy: freezeNetworkPolicy(data.network_policy, data.network_origins),
     systemPrompt,
   });
+}
+
+/** 从受管 markdown+frontmatter 载入 Persona，并绑定文件 stem 与声明名称。 */
+async function loadPersonaFile(role: ManagedStoreRole, fileName: string): Promise<PersonaDefinition> {
+  const safeFileName = validateManagedIdentifier(fileName);
+  const store = await getManagedPathStore();
+  return validatePersonaSource(safeFileName, await store.readNamed(role, safeFileName, ".md"), loadSkill);
 }
 
 /**

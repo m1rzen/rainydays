@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { assertResourceOwner, assertResourceOwnerForCleanup, registerOwnedResource, type ResourceOwner } from "./resource-owner.js";
 import { NativeBridgeError, type NativeBrokerObservationRequest, type NativeExecutionBridge, type NativeExecutionHandle, type NativeExecutionProof, type NativeServiceDenialRequest, type NativeServiceDenialState } from "./execution-native.js";
+import { cancellationError, isRunCancellation, NEVER_ABORT_SIGNAL, RunSettlementError, throwIfCancelled } from "./run-cancellation.js";
 
 export type ExecutionEntryPoint = "E1" | "E2" | "E3" | "E4";
 export type ExecutionProfile = "one-shot-shell" | "agent-shell" | "script" | "manual-terminal";
@@ -198,6 +199,19 @@ function nativeFailure(error: unknown, message: string): ExecutionDeniedError {
   return code === "EXEC_NATIVE_IDENTITY_INVALID"
     ? new ExecutionDeniedError("EXEC_NATIVE_IDENTITY_INVALID", "Native artifact identity is invalid")
     : new ExecutionDeniedError("EXEC_NATIVE_FAILED", message);
+}
+
+async function settleNativeHandle(handle: NativeExecutionHandle, reason: string): Promise<readonly unknown[]> {
+  const failures: unknown[] = [];
+  try { await handle.terminate(reason); }
+  catch (error) { failures.push(error); }
+  try { await handle.completed; }
+  catch (error) { failures.push(error); }
+  return failures;
+}
+
+function throwSettlementFailure(primary: unknown, failures: readonly unknown[], message: string): void {
+  if (failures.length > 0) throw new RunSettlementError(primary, failures, message);
 }
 function digest(bytes: Uint8Array): string { return createHash("sha256").update(bytes).digest("hex"); }
 function canonicalDigest(value: unknown): string {
@@ -398,19 +412,30 @@ export class ExecutionIsolationService {
   async launchOneShot(
     grant: ExecutionGrant | null | undefined,
     owner: ResourceOwner,
-    invocation: ExecutionGrantInvocation
+    invocation: ExecutionGrantInvocation,
+    signal: AbortSignal = NEVER_ABORT_SIGNAL
   ): Promise<ExecutionResult> {
     const output = newOutput();
     let record: GrantRecord | null = null;
     let handle: NativeExecutionHandle | null = null;
     let unregister: () => void = () => undefined;
+    let abortTermination: Promise<void> | null = null;
+    const currentAbortTermination = (): Promise<void> | null => abortTermination;
+    const onAbort = (): void => {
+      if (handle && !abortTermination) abortTermination = handle.terminate("run-cancelled");
+    };
     try {
+      throwIfCancelled(signal);
       record = this.#beginGrantConsumption(grant);
       this.#validateGrantInvocation(record, owner, invocation, new Set<ExecutionEntryPoint>(["E1", "E3"]));
       handle = await this.#launchNative(record, output);
       this.#activeHandles.add(handle);
       unregister = registerOwnedResource(owner, () => handle!.terminate("owner-retired"));
+      signal.addEventListener("abort", onAbort, { once: true });
+      if (signal.aborted) onAbort();
       const completion = await handle.completed;
+      if (abortTermination) await abortTermination;
+      throwIfCancelled(signal);
       if (output.aggregateBytes > record.limits.aggregateOutputBytes) deny("EXEC_OUTPUT_LIMIT", "Execution output limit exceeded");
       return Object.freeze({
         executionId: handle.executionId,
@@ -422,12 +447,28 @@ export class ExecutionIsolationService {
       });
     } catch (error) {
       if (handle) {
-        await handle.terminate("launch-failed").catch(() => undefined);
-        await handle.completed.catch(() => undefined);
+        const pendingTermination = currentAbortTermination();
+        const failures: unknown[] = [];
+        if (pendingTermination) {
+          try { await pendingTermination; }
+          catch (cleanupError) { failures.push(cleanupError); }
+          try { await handle.completed; }
+          catch (cleanupError) { if (!failures.includes(cleanupError)) failures.push(cleanupError); }
+        } else {
+          failures.push(...await settleNativeHandle(handle, signal.aborted ? "run-cancelled" : "launch-failed"));
+        }
+        const primary = signal.aborted && !isRunCancellation(error)
+          ? cancellationError(signal, "Native execution was cancelled")
+          : error;
+        if (primary !== error && !failures.includes(error)) failures.push(error);
+        throwSettlementFailure(primary, failures, "Native execution cancellation cleanup failed");
       }
+      if (isRunCancellation(error)) throw error;
+      if (signal.aborted) throw cancellationError(signal, "Native execution was cancelled");
       if (error instanceof ExecutionDeniedError) throw await this.#observeLaunchDenial(error, invocation, grant);
       throw nativeFailure(error, "Native execution failed closed");
     } finally {
+      signal.removeEventListener("abort", onAbort);
       if (record) record.state = "consumed";
       unregister();
       if (handle) this.#activeHandles.delete(handle);
@@ -437,8 +478,10 @@ export class ExecutionIsolationService {
   async launchPersistent(
     grant: ExecutionGrant | null | undefined,
     owner: ResourceOwner,
-    invocation: ExecutionGrantInvocation
+    invocation: ExecutionGrantInvocation,
+    signal: AbortSignal = NEVER_ABORT_SIGNAL
   ): Promise<SessionLease> {
+    throwIfCancelled(signal);
     const record = this.#beginGrantConsumption(grant);
     const output = newOutput();
     let handle: NativeExecutionHandle | null = null;
@@ -446,6 +489,12 @@ export class ExecutionIsolationService {
       this.#validateGrantInvocation(record, owner, invocation, new Set<ExecutionEntryPoint>(["E2", "E4"]));
       handle = await this.#launchNative(record, output);
       this.#activeHandles.add(handle);
+      if (signal.aborted) {
+        const cancelled = cancellationError(signal, "Persistent execution launch was cancelled");
+        const failures = await settleNativeHandle(handle, "run-cancelled");
+        throwSettlementFailure(cancelled, failures, "Persistent execution cancellation cleanup failed");
+        throw cancelled;
+      }
       const token = Object.freeze({ leaseId: randomUUID(), sessionId: record.request.sessionId });
       const session: SessionRecord = {
         token,
@@ -471,13 +520,22 @@ export class ExecutionIsolationService {
         () => this.#closeSession(session),
         () => this.#closeSession(session)
       );
+      if (signal.aborted) {
+        const cancelled = cancellationError(signal, "Persistent execution launch was cancelled");
+        try { await this.#terminateSession(session, "run-cancelled"); }
+        catch (cleanupError) { throw new RunSettlementError(cancelled, [cleanupError], "Persistent execution cancellation cleanup failed"); }
+        throw cancelled;
+      }
       return token;
     } catch (error) {
+      if (error instanceof RunSettlementError) throw error;
       if (handle) {
-        await handle.terminate("launch-failed").catch(() => undefined);
-        await handle.completed.catch(() => undefined);
+        const failures = await settleNativeHandle(handle, signal.aborted ? "run-cancelled" : "launch-failed");
         this.#activeHandles.delete(handle);
+        throwSettlementFailure(error, failures, "Persistent execution cancellation cleanup failed");
       }
+      if (isRunCancellation(error)) throw error;
+      if (signal.aborted) throw cancellationError(signal, "Persistent execution launch was cancelled");
       if (error instanceof ExecutionDeniedError) throw error;
       throw nativeFailure(error, "Native persistent execution failed closed");
     } finally {
@@ -526,10 +584,12 @@ export class ExecutionIsolationService {
     lease: SessionLease,
     grant: InputGrant | null | undefined,
     owner: ResourceOwner,
-    invocation: InputGrantInvocation
+    invocation: InputGrantInvocation,
+    signal: AbortSignal = NEVER_ABORT_SIGNAL
   ): Promise<void> {
     let record: InputRecord | null = null;
     try {
+      throwIfCancelled(signal);
       if (this.#shutdown) deny("EXEC_SERVICE_SHUTDOWN", "Execution service is shut down");
       record = this.#beginInputGrantConsumption(grant);
       if (record.expiresAtMs <= this.#now()) deny("EXEC_GRANT_EXPIRED", "Input grant expired");
@@ -551,11 +611,39 @@ export class ExecutionIsolationService {
         || record.authorityEpoch !== session.authority.authorityEpoch) {
         deny("EXEC_BINDING_MISMATCH", "Input grant binding mismatch");
       }
+      let acknowledged = false;
+      let abortTermination: Promise<void> | null = null;
+      const onAbort = (): void => {
+        if (!acknowledged && !abortTermination) abortTermination = this.#terminateSession(session, "run-cancelled");
+      };
+      signal.addEventListener("abort", onAbort, { once: true });
+      if (signal.aborted) onAbort();
       try {
         await session.native.write(Object.freeze({ bytes: Buffer.from(record.payload), digest: record.payloadDigest, appendNewline: record.appendNewline }));
+        acknowledged = true;
+        if (abortTermination) {
+          const cancelled = cancellationError(signal, "Terminal input was cancelled");
+          try { await abortTermination; }
+          catch (cleanupError) { throw new RunSettlementError(cancelled, [cleanupError], "Terminal input cancellation cleanup failed"); }
+          throw cancelled;
+        }
       } catch (error) {
-        await this.#terminateSession(session, "input-failed").catch(() => undefined);
+        if (error instanceof RunSettlementError) throw error;
+        if (abortTermination) {
+          const cancelled = cancellationError(signal, "Terminal input was cancelled");
+          const failures: unknown[] = [];
+          try { await abortTermination; }
+          catch (cleanupError) { failures.push(cleanupError); }
+          if (!isRunCancellation(error) && error !== signal.reason) failures.push(error);
+          if (failures.length > 0) throw new RunSettlementError(cancelled, failures, "Terminal input cancellation cleanup failed");
+          throw cancelled;
+        }
+        if (isRunCancellation(error)) throw error;
+        try { await this.#terminateSession(session, "input-failed"); }
+        catch (cleanupError) { throw new RunSettlementError(error, [cleanupError], "Native input failure cleanup failed"); }
         throw nativeFailure(error, "Native input failed closed");
+      } finally {
+        signal.removeEventListener("abort", onAbort);
       }
     } catch (error) {
       if (error instanceof ExecutionDeniedError) throw await this.#observeInputDenial(error, lease, owner, invocation);
@@ -589,14 +677,19 @@ export class ExecutionIsolationService {
     if (this.#shutdownPromise) return this.#shutdownPromise;
     this.#shutdown = true;
     this.#shutdownPromise = (async () => {
+      const failures: unknown[] = [];
       const sessions = [...this.#sessions];
-      await Promise.allSettled(sessions.map(session => this.#terminateSession(session, "service-shutdown")));
+      const sessionResults = await Promise.allSettled(sessions.map(session => this.#terminateSession(session, "service-shutdown")));
+      for (const result of sessionResults) if (result.status === "rejected") failures.push(result.reason);
       const handles = [...this.#activeHandles];
-      await Promise.allSettled(handles.map(async handle => {
-        await handle.terminate("service-shutdown");
-        await handle.completed;
+      const handleResults = await Promise.allSettled(handles.map(async handle => {
+        const cleanupFailures = await settleNativeHandle(handle, "service-shutdown");
+        if (cleanupFailures.length > 0) throw new RunSettlementError(null, cleanupFailures, "Native handle shutdown failed");
       }));
-      await this.#bridge.shutdown();
+      for (const result of handleResults) if (result.status === "rejected") failures.push(result.reason);
+      try { await this.#bridge.shutdown(); }
+      catch (error) { failures.push(error); }
+      if (failures.length > 0) throw new AggregateError(failures, "Execution isolation shutdown failed");
     })();
     return this.#shutdownPromise;
   }

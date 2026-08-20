@@ -129,11 +129,15 @@ async function probeIdentity(client, buildInfo, httpPort) {
   assert.equal((await boundedFetch(`http://127.0.0.1:${httpPort}/api/version`)).status, 401);
 }
 
-async function rendererRequest(client, route, options = undefined) {
-  return client.evaluate(`(async()=>{const response=await fetch(${JSON.stringify(route)},${JSON.stringify(options)});let body;try{body=await response.json()}catch{body=await response.text()}return {status:response.status,body}})()`);
+async function rendererRequest(client, route, options = undefined, sessionId = null) {
+  const requestOptions = {
+    ...options,
+    headers: { ...options?.headers, ...(sessionId ? { "X-RainyDays-Session": sessionId } : {}) },
+  };
+  return client.evaluate(`(async()=>{const response=await fetch(${JSON.stringify(route)},${JSON.stringify(requestOptions)});let body;try{body=await response.json()}catch{body=await response.text()}return {status:response.status,body}})()`);
 }
 
-async function assertPackagedPathPolicy(client, userData, launchIndex, applicationRootPid) {
+async function assertPackagedPathPolicy(client, userData, launchIndex, applicationRootPid, sessionId) {
   const workspace = path.join(userData, "workspace");
   const prefix = `sec02-packaged-launch-${launchIndex}`;
   const outside = path.join(userData, `${prefix}-outside`);
@@ -147,15 +151,15 @@ async function assertPackagedPathPolicy(client, userData, launchIndex, applicati
   await writeFile(path.join(outside, "secret.txt"), externalValue);
   await symlink(outside, junction, "junction");
 
-  const internal = await rendererRequest(client, `/api/files/preview?root=workspace&path=${encodeURIComponent(internalName)}`);
+  const internal = await rendererRequest(client, `/api/files/preview?root=workspace&path=${encodeURIComponent(internalName)}`, undefined, sessionId);
   assert.equal(internal.status, 200, `packaged launch ${launchIndex} rejected a root-internal file`);
   assert.equal(internal.body.text, internalValue);
 
-  const traversal = await rendererRequest(client, `/api/files/preview?root=workspace&path=${encodeURIComponent(`../${prefix}-outside/secret.txt`)}`);
+  const traversal = await rendererRequest(client, `/api/files/preview?root=workspace&path=${encodeURIComponent(`../${prefix}-outside/secret.txt`)}`, undefined, sessionId);
   assert.equal(traversal.status, 400, `packaged launch ${launchIndex} accepted traversal`);
   assert(!JSON.stringify(traversal.body).includes(externalValue), "traversal denial disclosed external bytes");
 
-  const redirected = await rendererRequest(client, `/api/files/preview?root=workspace&path=${encodeURIComponent(`${prefix}-junction/secret.txt`)}`);
+  const redirected = await rendererRequest(client, `/api/files/preview?root=workspace&path=${encodeURIComponent(`${prefix}-junction/secret.txt`)}`, undefined, sessionId);
   assert.equal(redirected.status, 400, `packaged launch ${launchIndex} followed a junction`);
   assert(!JSON.stringify(redirected.body).includes(externalValue), "junction denial disclosed external bytes");
 
@@ -166,7 +170,7 @@ async function assertPackagedPathPolicy(client, userData, launchIndex, applicati
   const mediaSize = 96 * 1024 * 1024;
   await writeFile(mediaPath, Buffer.alloc(mediaSize, 0x41));
   await writeFile(replacementPath, "ATTACKER-REPLACEMENT");
-  await client.evaluate(`(()=>{const state={error:null,ready:null,response:null};window.__rainydaysRangeProbe=state;fetch('/api/files/content?root=workspace&path=${encodeURIComponent(mediaName)}',{headers:{Range:'bytes=0-${mediaSize - 1}'}}).then(response=>{state.response=response;state.ready={status:response.status,contentRange:response.headers.get('content-range')}}).catch(error=>{state.error=String(error)});return true})()`);
+  await client.evaluate(`(()=>{const state={error:null,ready:null,response:null};window.__rainydaysRangeProbe=state;fetch('/api/files/content?root=workspace&path=${encodeURIComponent(mediaName)}',{headers:{'X-RainyDays-Session':${JSON.stringify(sessionId)},Range:'bytes=0-${mediaSize - 1}'}}).then(response=>{state.response=response;state.ready={status:response.status,contentRange:response.headers.get('content-range')}}).catch(error=>{state.error=String(error)});return true})()`);
   const rangeReady = await waitFor(async () => client.evaluate(`(()=>{const state=window.__rainydaysRangeProbe;return state?.error?{error:state.error}:state?.ready})()`), {
     timeoutMs: 20_000,
     label: "packaged File Viewer range lease headers",
@@ -186,16 +190,16 @@ async function assertPackagedPathPolicy(client, userData, launchIndex, applicati
     contentRange: `bytes 0-${mediaSize - 1}/${mediaSize}`,
   }, "packaged File Viewer range lease did not return only original-handle bytes after pathname replacement");
 
-  const terminalsBefore = await rendererRequest(client, "/api/terminals");
+  const terminalsBefore = await rendererRequest(client, "/api/terminals", undefined, sessionId);
   assert.equal(terminalsBefore.status, 200);
   const terminalDenied = await rendererRequest(client, "/api/terminals", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name: prefix, shell: "cmd", cwd: outside }),
-  });
+  }, sessionId);
   assert.equal(terminalDenied.status, 403, `packaged launch ${launchIndex} bypassed native consent`);
   assert.equal(terminalDenied.body.code, "EXEC_DIRECT_MUTATION_DENIED");
-  const terminalsAfter = await rendererRequest(client, "/api/terminals");
+  const terminalsAfter = await rendererRequest(client, "/api/terminals", undefined, sessionId);
   assert.equal(terminalsAfter.status, 200);
   assert.equal(terminalsAfter.body.terminals.length, terminalsBefore.body.terminals.length, "external CWD denial created a Terminal process record");
   return passedPathPolicyLaunch(launchIndex);
@@ -470,14 +474,14 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     await probeIdentity(client, buildInfo, firstPorts[0]);
     const created = await client.evaluate(`fetch('/api/sessions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:'GOV-03 packaged persistence'})}).then(r=>r.json())`);
     sessionId = created.session.id;
-    details.pathPolicy.launches[0] = await assertPackagedPathPolicy(client, userData, 1, first.child.pid);
+    details.pathPolicy.launches[0] = await assertPackagedPathPolicy(client, userData, 1, first.child.pid, sessionId);
     const terminalIsolation = await client.evaluate(`(async () => {
-      const before = await fetch('/api/terminals').then(r=>r.json());
-      const startedResponse = await fetch('/api/terminals', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'SEC-01 packaged owner',shell:'cmd'})});
+      const before = await fetch('/api/terminals', {headers:{'X-RainyDays-Session':${JSON.stringify(sessionId)}}}).then(r=>r.json());
+      const startedResponse = await fetch('/api/terminals', {method:'POST',headers:{'Content-Type':'application/json','X-RainyDays-Session':${JSON.stringify(sessionId)}},body:JSON.stringify({name:'SEC-01 packaged owner',shell:'cmd'})});
       const started = await startedResponse.json();
       const secondResponse = await fetch('/api/sessions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:'SEC-01 packaged other session'})});
       const second = await secondResponse.json();
-      const after = await fetch('/api/terminals').then(r=>r.json());
+      const after = await fetch('/api/terminals', {headers:{'X-RainyDays-Session':second.session.id}}).then(r=>r.json());
       const selected = await fetch('/api/sessions/${sessionId}/select', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
       return {started:startedResponse.status,code:started.code,second:secondResponse.status,secondId:second.session.id,beforeCount:before.terminals.length,afterCount:after.terminals.length,selected:selected.status};
     })()`);
@@ -495,7 +499,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     client = await connectCdp(secondPorts[1]);
     await checkpoint("restart-probe");
     await probeIdentity(client, buildInfo, secondPorts[0]);
-    details.pathPolicy.launches[1] = await assertPackagedPathPolicy(client, userData, 2, second.child.pid);
+    details.pathPolicy.launches[1] = await assertPackagedPathPolicy(client, userData, 2, second.child.pid, sessionId);
     const sessions = await client.evaluate("fetch('/api/sessions').then(r=>r.json())");
     assert(sessions.sessions.some((entry) => entry.id === sessionId));
     assert.equal(sessions.current, sessionId);

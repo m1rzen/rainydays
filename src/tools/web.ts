@@ -4,6 +4,7 @@
 // ===========================================
 
 import type { ToolDefinition, ToolExecutor } from "../types.js";
+import { cancellationError, cancellationFailure, throwIfCancelled, timeoutSignal } from "../run-cancellation.js";
 
 // ===========================================
 // fetch_url —— 抓取网页内容
@@ -32,21 +33,32 @@ export const fetchUrlDef: ToolDefinition = {
   },
 };
 
-export const fetchUrlExec: ToolExecutor = async (args) => {
+export const fetchUrlExec: ToolExecutor = async (args, _env, invocation) => {
+  if (!invocation) throw new Error("Network gateway is required");
   const url = args.url as string;
   const format = (args.format as string) || "text";
+  const cancellation = timeoutSignal(invocation.signal, 15_000, "fetch_url");
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "RainyDays/0.1 (AI Agent)",
-        Accept: "text/html,application/json,*/*",
-      },
-      signal: AbortSignal.timeout(15000),
-    });
+    throwIfCancelled(cancellation.signal);
+    let response: Response;
+    try {
+      response = await invocation.network.fetch(url, {
+        headers: {
+          "User-Agent": "RainyDays/0.1 (AI Agent)",
+          Accept: "text/html,application/json,*/*",
+        },
+        signal: cancellation.signal,
+      });
+    } catch (error) {
+      if (cancellation.signal.aborted && error instanceof Error && error.name === "AbortError") {
+        throw cancellationError(cancellation.signal, "fetch_url was cancelled");
+      }
+      throw error;
+    }
 
     if (!response.ok) {
-      return `请求失败: HTTP ${response.status} ${response.statusText}`;
+      throw new Error(`HTTP ${response.status} ${response.statusText}`);
     }
 
     const contentType = response.headers.get("content-type") || "";
@@ -55,21 +67,24 @@ export const fetchUrlExec: ToolExecutor = async (args) => {
     if (format === "json" || contentType.includes("application/json")) {
       const data = await response.json();
       const text = JSON.stringify(data, null, 2);
-      return text.length > 8000 ? text.slice(0, 8000) + "\n...(已截断)" : text;
+      return text;
     }
 
     // 原始格式
     if (format === "raw") {
       const text = await response.text();
-      return text.length > 8000 ? text.slice(0, 8000) + "\n...(已截断)" : text;
+      return text;
     }
 
     // 默认：text —— 去除 HTML 标签
     const html = await response.text();
     const text = htmlToText(html);
-    return text.length > 8000 ? text.slice(0, 8000) + "\n...(已截断)" : text;
+    return text;
   } catch (err) {
-    return `抓取失败: ${err instanceof Error ? err.message : String(err)}`;
+    if (cancellation.signal.aborted) throw cancellationFailure(cancellation.signal, err, "fetch_url was cancelled");
+    throw err instanceof Error ? err : new Error(String(err));
+  } finally {
+    cancellation.dispose();
   }
 };
 

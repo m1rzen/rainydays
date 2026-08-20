@@ -5,7 +5,9 @@
 
 import path from "path";
 import type { ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
-import { parseFileBuffer } from "./parsers.js";
+import { parseDocumentIsolated } from "../document-parser.js";
+import { throwIfCancelled } from "../run-cancellation.js";
+import { truncateCodePoints } from "../tool-pipeline.js";
 
 const MAX_DOCUMENT_BYTES = 32 * 1024 * 1024;
 const MAX_TEXT_BYTES = 8 * 1024 * 1024;
@@ -89,11 +91,12 @@ export const readFileDef: ToolDefinition = {
 
 export const readFileExec: ToolExecutor = async (args, _env, invocation) => {
   const gateway = requirePathGateway(invocation);
+  if (!invocation) throw new Error("Tool invocation services are required");
   const defaultRootId = requireRootId(gateway, "DATA_ROOT");
   const inputPath = args.path as string;
   const authorized = await gateway.readFile(inputPath, { defaultRootId, maxBytes: MAX_DOCUMENT_BYTES });
-  const result = await parseFileBuffer(inputPath, authorized.bytes);
-  if (!result.success) return `读取失败: ${result.error}\n文件: ${inputPath}`;
+  const result = await parseDocumentIsolated(inputPath, authorized.bytes, invocation.resourceOwner, invocation.signal);
+  if (!result.success) throw new Error(`读取失败: ${result.error}\n文件: ${inputPath}`);
 
   // 行号 + offset/limit
   const offset = (args.offset as number) || 1; // 从第几行开始（1-based）
@@ -184,6 +187,7 @@ export const searchFilesExec: ToolExecutor = async (args, _env, invocation) => {
   let timedOut = false;
 
   async function walk(directoryInput: string): Promise<void> {
+    if (invocation) throwIfCancelled(invocation.signal);
     if (timedOut || Date.now() - startTime > timeBudgetMs) {
       timedOut = true;
       return;
@@ -238,6 +242,7 @@ export const writeFileExec: ToolExecutor = async (args, _env, invocation) => {
   const defaultRootId = requireRootId(gateway, "OUTPUT_DIR");
   const inputPath = args.path as string;
   const content = Buffer.from(args.content as string, "utf8");
+  if (invocation) throwIfCancelled(invocation.signal);
   await gateway.writeFile(inputPath, content, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
   return `✅ 文件已生成: ${inputPath}`;
 };
@@ -291,6 +296,7 @@ export const editFileExec: ToolExecutor = async (args, _env, invocation) => {
   if (oldString.length === 0) return "old_string 不能为空。";
 
   const edited = await gateway.replaceFile<EditOutcome>(inputPath, (bytes) => {
+    if (invocation) throwIfCancelled(invocation.signal);
     const content = bytes.toString("utf8");
     if (!content.includes(oldString)) {
       return { bytes: null, value: { state: "missing" as const, count: 0 } };
@@ -375,14 +381,17 @@ export const grepExec: ToolExecutor = async (args, _env, invocation) => {
   let timedOut = false;
 
   async function grepAuthorizedFile(fileInput: string): Promise<void> {
+    if (invocation) throwIfCancelled(invocation.signal);
     const authorized = await gateway.searchFile(fileInput, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
     const lines = authorized.bytes.toString("utf8").split("\n");
     for (let index = 0; index < lines.length && results.length < 200; index += 1) {
+      if (invocation && index % 1024 === 0) throwIfCancelled(invocation.signal);
       if (regex.test(lines[index])) results.push({ file: fileInput, line: index + 1, content: lines[index] });
     }
   }
 
   async function walk(directoryInput: string): Promise<void> {
+    if (invocation) throwIfCancelled(invocation.signal);
     if (timedOut || Date.now() - startTime > timeBudgetMs) {
       timedOut = true;
       return;
@@ -406,6 +415,6 @@ export const grepExec: ToolExecutor = async (args, _env, invocation) => {
   if (results.length === 0) {
     return `未找到匹配 "${pattern}" 的内容` + (timedOut ? `（搜索已超时，耗时 ${elapsed}ms）` : "");
   }
-  const lines = results.slice(0, 50).map((result) => `📄 ${result.file}:${result.line}: ${result.content.trim().slice(0, 120)}`);
+  const lines = results.slice(0, 50).map((result) => `📄 ${result.file}:${result.line}: ${truncateCodePoints(result.content.trim(), 120)}`);
   return `找到 ${results.length} 处匹配:${timedOut ? `（搜索已超时，耗时 ${elapsed}ms）` : ""}\n\n${lines.join("\n")}${results.length > 50 ? `\n\n... 还有 ${results.length - 50} 个结果` : ""}`;
 };

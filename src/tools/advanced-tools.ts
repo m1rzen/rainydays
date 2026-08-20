@@ -28,7 +28,10 @@ export const oracleQueryDef: ToolDefinition = {
 };
 
 export function createOracleQueryExec(llm: LLMClient): ToolExecutor {
-  return async (args) => queryOracle(llm, args.question as string);
+  return async (args, _env, invocation) => {
+    if (!invocation) throw new Error("Tool invocation services are required");
+    return queryOracle(llm, args.question as string, invocation.signal, invocation.network.fetch);
+  };
 }
 
 export const oracleSaveDef: ToolDefinition = {
@@ -137,7 +140,8 @@ export const linkPostDef: ToolDefinition = {
 export const linkPostExec: ToolExecutor = async (args, env) => {
   const from = env?._SESSION_ID;
   const success = typeof from === "string" && postSessionLinkMessage(from, args.id as string, args.message as string);
-  return success ? `✅ 消息已发送到 ${args.id}` : `Session ${args.id} 不存在`;
+  if (!success) throw new Error(`Session ${args.id} 不存在`);
+  return `✅ 消息已发送到 ${args.id}`;
 };
 
 // ========== Wire ==========
@@ -151,7 +155,7 @@ export const pollSubscribeDef: ToolDefinition = {
 export const pollSubscribeExec: ToolExecutor = async (args, _env, invocation) => {
   if (!invocation) throw new Error("Watcher invocation services are required");
   const result = await subscribe(invocation.resourceOwner, invocation.path, args.path as string, args.source as string);
-  if (result.error) return `订阅失败: ${result.error}`;
+  if (result.error) throw new Error(`订阅失败: ${result.error}`);
   return `✅ 已订阅 ${args.path} 的文件变化 (ID: ${result.id})`;
 };
 

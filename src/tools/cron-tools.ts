@@ -4,6 +4,7 @@
 
 import type { ToolDefinition, ToolExecutor } from "../types.js";
 import { insertCronJob, listCronJobs, deactivateCronJob, type CronJobRow } from "../db.js";
+import { truncateCodePoints } from "../tool-pipeline.js";
 
 /** 解析延迟字符串为未来时间 ISO */
 function parseDelayToISO(delay: string): string {
@@ -38,10 +39,14 @@ export const cronScheduleDef: ToolDefinition = {
         },
         delay: {
           type: "string",
+          pattern: "^\\d+(s|m|h|d)$",
+          maxLength: 32,
           description: "首次触发的延迟时间。格式：数字+单位，如 '30s'(30秒)、'5m'(5分钟)、'1h'(1小时)、'1d'(1天)。",
         },
         repeat: {
           type: "string",
+          pattern: "^\\d+(s|m|h|d)$",
+          maxLength: 32,
           description: "重复间隔（可选）。格式同 delay，如 '1h' 表示每小时重复。不传则为一次性任务。",
         },
         tag: {
@@ -62,29 +67,25 @@ export function createCronScheduleExec(onSchedule: (job: CronJobRow) => void): T
     const tag = args.tag as string | undefined;
     const sessionId = env?._SESSION_ID;
 
-    try {
-      const fireAt = parseDelayToISO(delay);
-      const id = insertCronJob({
-        session_id: sessionId || null,
-        message,
-        fire_at: fireAt,
-        interval: repeat || null,
-        tag: tag || null,
-      });
+    const fireAt = parseDelayToISO(delay);
+    const id = insertCronJob({
+      session_id: sessionId || null,
+      message,
+      fire_at: fireAt,
+      interval: repeat || null,
+      tag: tag || null,
+    });
 
-      // 调度
-      const job = {
-        id, session_id: sessionId || null, message,
-        fire_at: fireAt, interval: repeat || null,
-        tag: tag || null, active: 1, last_fired: null,
-        created_at: new Date().toISOString(),
-      };
-      onSchedule(job as CronJobRow);
+    // 调度
+    const job = {
+      id, session_id: sessionId || null, message,
+      fire_at: fireAt, interval: repeat || null,
+      tag: tag || null, active: 1, last_fired: null,
+      created_at: new Date().toISOString(),
+    };
+    onSchedule(job as CronJobRow);
 
-      return `✅ 定时任务已创建 [ID: ${id}]\n消息: ${message}\n触发时间: ${new Date(fireAt).toLocaleString("zh-CN")}${repeat ? `\n重复间隔: ${repeat}` : " (一次性)"}`;
-    } catch (err) {
-      return `创建定时任务失败: ${err instanceof Error ? err.message : String(err)}`;
-    }
+    return `✅ 定时任务已创建 [ID: ${id}]\n消息: ${message}\n触发时间: ${new Date(fireAt).toLocaleString("zh-CN")}${repeat ? `\n重复间隔: ${repeat}` : " (一次性)"}`;
   };
 }
 
@@ -110,7 +111,7 @@ export const cronListExec: ToolExecutor = async () => {
   const lines = jobs.map((j) => {
     const fireTime = new Date(j.fire_at).toLocaleString("zh-CN");
     const type = j.interval ? `每 ${j.interval}` : "一次性";
-    return `[${j.id}] ${type} | 触发: ${fireTime} | ${j.message.slice(0, 50)}${j.tag ? ` | 标签: ${j.tag}` : ""}`;
+    return `[${j.id}] ${type} | 触发: ${fireTime} | ${truncateCodePoints(j.message, 50)}${j.tag ? ` | 标签: ${j.tag}` : ""}`;
   });
 
   return `活跃定时任务 (${jobs.length}):\n\n${lines.join("\n")}`;
@@ -125,9 +126,10 @@ export const cronCancelDef: ToolDefinition = {
     parameters: {
       type: "object",
       properties: {
-        id: { type: "number", description: "任务ID" },
-        tag: { type: "string", description: "任务标签（取消所有匹配此标签的任务）" },
+        id: { type: "integer", minimum: 1, description: "任务ID" },
+        tag: { type: "string", minLength: 1, description: "任务标签（取消所有匹配此标签的任务）" },
       },
+      anyOf: [{ required: ["id"] }, { required: ["tag"] }],
     },
   },
 };
@@ -153,6 +155,6 @@ export function createCronCancelExec(onCancel: (id: number) => void): ToolExecut
       return `✅ 已取消 ${matching.length} 个标签为 "${tag}" 的定时任务`;
     }
 
-    return "错误：需要提供 id 或 tag";
+    throw new Error("需要提供 id 或 tag");
   };
 }

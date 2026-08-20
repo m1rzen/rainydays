@@ -4,6 +4,7 @@
 
 import type { ToolDefinition, ToolExecutor } from "../types.js";
 import { db } from "../db.js";
+import { emitRunNotification } from "./ask-user-tool.js";
 
 // ========== memo_add / memo_list / memo_done ==========
 
@@ -79,14 +80,26 @@ export function setNotifyCallback(cb: (title: string, body: string) => void): vo
 export const mascotNotifyExec: ToolExecutor = async (args) => {
   const title = args.title as string;
   const body = args.body as string;
-  if (notifyCallback) notifyCallback(title, body);
-  // Electron 通知
+  const runDelivery = emitRunNotification(title, body);
+  if (runDelivery !== null) {
+    if (!runDelivery) throw new Error(`当前运行的通知通道不可用: ${title}`);
+    return `✅ 通知已发送: ${title}`;
+  }
+
+  // Legacy fallback until the HTTP chat route enters runWithInteractionChannel.
+  let delivered = false;
+  if (notifyCallback) {
+    notifyCallback(title, body);
+    delivered = true;
+  }
   try {
     const { Notification } = await import("electron");
     if (Notification.isSupported()) {
       new Notification({ title, body }).show();
+      delivered = true;
     }
-  } catch { /* 非 Electron 环境，前端通知 */ }
+  } catch { /* A registered frontend callback can still be authoritative outside Electron. */ }
+  if (!delivered) throw new Error(`通知通道不可用: ${title}`);
   return `✅ 通知已发送: ${title}`;
 };
 
@@ -102,13 +115,14 @@ export const museDef: ToolDefinition = {
 };
 
 export function createMuseExec(llm: import("../llm.js").LLMClient): ToolExecutor {
-  return async (args) => {
+  return async (args, _env, invocation) => {
+    if (!invocation) throw new Error("Tool invocation services are required");
     const topic = args.topic as string;
     const perspective = (args.perspective as string) || "整体审视";
     const response = await llm.chat([
       { role: "system", content: `你是 Muse——一个内在思考者。从"${perspective}"的视角审视以下主题。给出洞察、警告或确认。简洁有力，不超过 200 字。` },
       { role: "user", content: topic },
-    ]);
+    ], undefined, invocation.signal, invocation.network.fetch);
     return `🧠 Muse [${perspective}]:\n${response.content}`;
   };
 }

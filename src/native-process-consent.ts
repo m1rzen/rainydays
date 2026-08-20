@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { RuntimeAuthority } from "./capability-broker.js";
+import { cancellationError, isRunCancellation, NEVER_ABORT_SIGNAL, throwIfCancelled } from "./run-cancellation.js";
 
 export type NativeProcessConsentDecision = "approve" | "deny" | "dismiss";
 
@@ -97,7 +98,10 @@ export async function requestNativeProcessConsent(input: Readonly<{
   rootAliases: readonly string[];
   cwd: string;
   validateCurrent: () => boolean;
+  signal?: AbortSignal;
 }>): Promise<boolean> {
+  const signal = input.signal ?? NEVER_ABORT_SIGNAL;
+  throwIfCancelled(signal);
   const handler = privateHandler;
   if (!handler) return false;
   if (!input.authority) return false;
@@ -158,10 +162,22 @@ export async function requestNativeProcessConsent(input: Readonly<{
   });
 
   let decision: NativeProcessConsentDecision = "deny";
+  let rejectAbort!: (error: unknown) => void;
+  const aborted = new Promise<never>((_resolve, reject) => { rejectAbort = reject; });
+  const onAbort = (): void => {
+    record.consumed = true;
+    pending.delete(nonce);
+    rejectAbort(cancellationError(signal, "Native process consent was cancelled"));
+  };
+  signal.addEventListener("abort", onAbort, { once: true });
+  if (signal.aborted) onAbort();
   try {
-    decision = await handler(challenge);
-  } catch {
+    decision = await Promise.race([Promise.resolve().then(() => handler(challenge)), aborted]);
+  } catch (error) {
+    if (isRunCancellation(error) || signal.aborted) throw error;
     decision = "deny";
+  } finally {
+    signal.removeEventListener("abort", onAbort);
   }
 
   const current = pending.get(nonce);

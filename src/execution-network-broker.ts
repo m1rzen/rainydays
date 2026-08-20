@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
-import { once } from "node:events";
 import type { LookupAddress } from "node:dns";
-import { lookup as dnsLookup } from "node:dns/promises";
+import { Resolver } from "node:dns/promises";
 import https, { type RequestOptions } from "node:https";
 import { BlockList, isIP } from "node:net";
 import { domainToASCII } from "node:url";
 import type { CapabilityContext } from "./capability-broker.js";
+import { cancellationError, isRunCancellation, NEVER_ABORT_SIGNAL, RunSettlementError, throwIfCancelled, timeoutSignal } from "./run-cancellation.js";
 
 export type FiniteHttpsBrokerCode =
   | "OBS_BROKER_ALLOWED"
@@ -90,10 +90,10 @@ export class FiniteHttpsBrokerError extends Error {
 export interface FiniteHttpsBroker {
   readonly authorityDigest: string;
   readonly operationsDigest: string;
-  readonly execute: (context: CapabilityContext, invocation: FiniteHttpsInvocation) => Promise<FiniteHttpsBrokerResult>;
+  readonly execute: (context: CapabilityContext, invocation: FiniteHttpsInvocation, signal?: AbortSignal) => Promise<FiniteHttpsBrokerResult>;
 }
 
-export type FiniteHttpsDnsResolver = (hostname: string) => Promise<readonly LookupAddress[]>;
+export type FiniteHttpsDnsResolver = (hostname: string, signal: AbortSignal) => Promise<readonly LookupAddress[]>;
 
 export interface FiniteHttpsTransportResponse {
   readonly statusCode: number;
@@ -111,6 +111,7 @@ export interface FiniteHttpsTransportRequest {
   readonly pinnedAddress: string;
   readonly pinnedFamily: 4 | 6;
   readonly deadlineMs: number;
+  readonly signal: AbortSignal;
 }
 
 export type FiniteHttpsTransport = (request: FiniteHttpsTransportRequest) => Promise<FiniteHttpsTransportResponse>;
@@ -380,8 +381,26 @@ function sameAddressSet(left: readonly Readonly<{ address: string; family: 4 | 6
   return left.length === right.length && left.every((value, index) => value.family === right[index]!.family && value.address === right[index]!.address);
 }
 
-function defaultResolver(hostname: string): Promise<readonly LookupAddress[]> {
-  return dnsLookup(hostname, { all: true, verbatim: true });
+async function defaultResolver(hostname: string, signal: AbortSignal): Promise<readonly LookupAddress[]> {
+  throwIfCancelled(signal);
+  const resolver = new Resolver();
+  const onAbort = (): void => resolver.cancel();
+  signal.addEventListener("abort", onAbort, { once: true });
+  if (signal.aborted) onAbort();
+  try {
+    const [ipv4, ipv6] = await Promise.allSettled([
+      resolver.resolve4(hostname),
+      resolver.resolve6(hostname),
+    ]);
+    if (signal.aborted) throw cancellationError(signal, "Finite HTTPS DNS resolution was cancelled");
+    const addresses: LookupAddress[] = [];
+    if (ipv4.status === "fulfilled") addresses.push(...ipv4.value.map(address => ({ address, family: 4 as const })));
+    if (ipv6.status === "fulfilled") addresses.push(...ipv6.value.map(address => ({ address, family: 6 as const })));
+    if (addresses.length === 0) throw new BrokerFailure("EXEC_BROKER_HOST_DENIED");
+    return Object.freeze(addresses);
+  } finally {
+    signal.removeEventListener("abort", onAbort);
+  }
 }
 
 type DenialCode = Exclude<FiniteHttpsBrokerCode, "OBS_BROKER_ALLOWED">;
@@ -402,21 +421,53 @@ function failureCode(error: unknown): DenialCode {
   return "EXEC_BROKER_HOST_DENIED";
 }
 
-function ensureDeadline(deadline: number): void {
+function ensureDeadline(deadline: number, signal: AbortSignal): void {
+  throwIfCancelled(signal);
   if (Date.now() >= deadline) throw new BrokerFailure("EXEC_BROKER_TIMEOUT");
 }
 
-async function beforeDeadline<T>(operation: Promise<T>, deadline: number): Promise<T> {
+function isAbortLike(error: unknown): boolean {
+  return error instanceof Error && (error.name === "AbortError" || ("code" in error && error.code === "ABORT_ERR"));
+}
+
+async function cooperativeOnSignal<T>(
+  start: (signal: AbortSignal) => Promise<T>,
+  operationSignal: AbortSignal,
+  parentSignal: AbortSignal,
+  label: string,
+): Promise<T> {
+  try {
+    const result = await Promise.resolve().then(() => start(operationSignal));
+    if (operationSignal.aborted) {
+      if (parentSignal.aborted) throw cancellationError(parentSignal, `${label} was cancelled`);
+      throw new BrokerFailure("EXEC_BROKER_TIMEOUT");
+    }
+    return result;
+  } catch (error) {
+    if (!operationSignal.aborted) throw error;
+    const primary = parentSignal.aborted
+      ? cancellationError(parentSignal, `${label} was cancelled`)
+      : new BrokerFailure("EXEC_BROKER_TIMEOUT");
+    if (isRunCancellation(error) || isAbortLike(error)
+      || error === operationSignal.reason || error === parentSignal.reason) throw primary;
+    throw new RunSettlementError(primary, [error], `${label} cancellation settlement failed`);
+  }
+}
+
+async function cooperativeBeforeDeadline<T>(
+  start: (signal: AbortSignal) => Promise<T>,
+  deadline: number,
+  parentSignal: AbortSignal,
+  label: string,
+): Promise<T> {
   const remaining = deadline - Date.now();
   if (remaining <= 0) throw new BrokerFailure("EXEC_BROKER_TIMEOUT");
-  let timer: NodeJS.Timeout | undefined;
+  throwIfCancelled(parentSignal);
+  const cancellation = timeoutSignal(parentSignal, remaining, label);
   try {
-    return await Promise.race([
-      operation,
-      new Promise<never>((_resolve, reject) => { timer = setTimeout(() => reject(new BrokerFailure("EXEC_BROKER_TIMEOUT")), remaining); }),
-    ]);
+    return await cooperativeOnSignal(start, cancellation.signal, parentSignal, label);
   } finally {
-    if (timer) clearTimeout(timer);
+    cancellation.dispose();
   }
 }
 
@@ -429,17 +480,23 @@ async function resolvePinned(
   resolver: FiniteHttpsDnsResolver,
   deadline: number,
   observation: MutableObservation,
+  signal: AbortSignal,
 ): Promise<Readonly<{ address: string; family: 4 | 6 }>> {
   let first: readonly Readonly<{ address: string; family: 4 | 6 }>[];
   let second: readonly Readonly<{ address: string; family: 4 | 6 }>[];
   try {
     observation.dnsResolutionCount += 1;
-    const firstRaw = await beforeDeadline(Promise.resolve().then(() => resolver(hostname)), deadline);
+    const firstRaw = await cooperativeBeforeDeadline(
+      operationSignal => resolver(hostname, operationSignal), deadline, signal, "Finite HTTPS DNS resolution"
+    );
     first = canonicalAddressSet(firstRaw);
     observation.dnsResolutionCount += 1;
-    const secondRaw = await beforeDeadline(Promise.resolve().then(() => resolver(hostname)), deadline);
+    const secondRaw = await cooperativeBeforeDeadline(
+      operationSignal => resolver(hostname, operationSignal), deadline, signal, "Finite HTTPS DNS resolution"
+    );
     second = canonicalAddressSet(secondRaw);
   } catch (error) {
+    if (isRunCancellation(error) || error instanceof RunSettlementError || signal.aborted) throw error;
     throw new BrokerFailure(failureCode(error));
   }
   if (!sameAddressSet(first, second)) throw new BrokerFailure("EXEC_BROKER_DNS_REBIND_DENIED");
@@ -475,47 +532,85 @@ async function requestHop(
   limits: FiniteHttpsLimits,
   deadline: number,
   observation: MutableObservation,
+  signal: AbortSignal,
   transport?: FiniteHttpsTransport,
 ): Promise<HopResult> {
-  ensureDeadline(deadline);
+  ensureDeadline(deadline, signal);
   observation.attemptCount += 1;
   if (transport) {
     for (let offset = 0; offset < body.length; offset += BODY_CHUNK_BYTES) {
-      ensureDeadline(deadline);
+      ensureDeadline(deadline, signal);
       const chunk = body.subarray(offset, Math.min(offset + BODY_CHUNK_BYTES, body.length));
       if (observation.requestBytes + chunk.length > limits.maxRequestBytes) throw new BrokerFailure("EXEC_BROKER_REQUEST_LIMIT");
       observation.requestBytes += chunk.length;
     }
-    const response = await beforeDeadline(transport(Object.freeze({
-      hostname: destination.hostname,
-      port: destination.port,
-      path: destination.path,
-      method,
-      headers: requestHeaders(headers),
-      body: Buffer.from(body),
-      pinnedAddress: pinned.address,
-      pinnedFamily: pinned.family,
-      deadlineMs: deadline,
-    })), deadline);
-    if (!response || !Number.isSafeInteger(response.statusCode) || response.statusCode < 100 || response.statusCode > 599
-      || !response.headers || typeof response.headers !== "object" || !response.body || typeof response.body[Symbol.asyncIterator] !== "function") {
-      throw new BrokerFailure("EXEC_BROKER_HOST_DENIED");
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) throw new BrokerFailure("EXEC_BROKER_TIMEOUT");
+    const lifecycle = timeoutSignal(signal, remaining, "Finite HTTPS transport");
+    try {
+      const response = await cooperativeOnSignal(operationSignal => transport(Object.freeze({
+        hostname: destination.hostname,
+        port: destination.port,
+        path: destination.path,
+        method,
+        headers: requestHeaders(headers),
+        body: Buffer.from(body),
+        pinnedAddress: pinned.address,
+        pinnedFamily: pinned.family,
+        deadlineMs: deadline,
+        signal: operationSignal,
+      })), lifecycle.signal, signal, "Finite HTTPS transport");
+      if (!response || !Number.isSafeInteger(response.statusCode) || response.statusCode < 100 || response.statusCode > 599
+        || !response.headers || typeof response.headers !== "object" || !response.body || typeof response.body[Symbol.asyncIterator] !== "function") {
+        throw new BrokerFailure("EXEC_BROKER_HOST_DENIED");
+      }
+      observation.statusCode = response.statusCode;
+      observation.responseHeaderDigests.push(responseHeadersDigest(response.headers));
+      const bodyHash = createHash("sha256");
+      const iterator = response.body[Symbol.asyncIterator]();
+      let iteratorDone = false;
+      let closePromise: Promise<unknown> | null = null;
+      const closeIterator = (): Promise<unknown> => {
+        if (!closePromise) closePromise = typeof iterator.return === "function" ? Promise.resolve(iterator.return()) : Promise.resolve();
+        return closePromise;
+      };
+      let bodyFailure: unknown = null;
+      try {
+        for (;;) {
+          const next = await cooperativeOnSignal(async operationSignal => {
+            const onAbort = (): void => { void closeIterator().catch(() => undefined); };
+            operationSignal.addEventListener("abort", onAbort, { once: true });
+            if (operationSignal.aborted) onAbort();
+            try { return await iterator.next(); }
+            finally { operationSignal.removeEventListener("abort", onAbort); }
+          }, lifecycle.signal, signal, "Finite HTTPS response body");
+          if (next.done) {
+            iteratorDone = true;
+            break;
+          }
+          const chunk = Buffer.from(next.value);
+          if (observation.responseBytes + chunk.length > limits.maxResponseBytes) throw new BrokerFailure("EXEC_BROKER_RESPONSE_LIMIT");
+          observation.responseBytes += chunk.length;
+          bodyHash.update(chunk);
+        }
+      } catch (error) {
+        bodyFailure = error;
+        throw error;
+      } finally {
+        if (!iteratorDone) {
+          try { await closeIterator(); }
+          catch (cleanupError) {
+            if (bodyFailure) throw new RunSettlementError(bodyFailure, [cleanupError], "Finite HTTPS response body cleanup failed");
+            throw cleanupError;
+          }
+        }
+      }
+      observation.responseBodyDigests.push(bodyHash.digest("hex"));
+      const rawLocation = response.headers.location;
+      return Object.freeze({ statusCode: response.statusCode, location: typeof rawLocation === "string" ? rawLocation : null });
+    } finally {
+      lifecycle.dispose();
     }
-    observation.statusCode = response.statusCode;
-    observation.responseHeaderDigests.push(responseHeadersDigest(response.headers));
-    const bodyHash = createHash("sha256");
-    const iterator = response.body[Symbol.asyncIterator]();
-    for (;;) {
-      const next = await beforeDeadline(iterator.next(), deadline);
-      if (next.done) break;
-      const chunk = Buffer.from(next.value);
-      if (observation.responseBytes + chunk.length > limits.maxResponseBytes) throw new BrokerFailure("EXEC_BROKER_RESPONSE_LIMIT");
-      observation.responseBytes += chunk.length;
-      bodyHash.update(chunk);
-    }
-    observation.responseBodyDigests.push(bodyHash.digest("hex"));
-    const rawLocation = response.headers.location;
-    return Object.freeze({ statusCode: response.statusCode, location: typeof rawLocation === "string" ? rawLocation : null });
   }
   const options: RequestOptions = {
     protocol: "https:",
@@ -542,33 +637,115 @@ async function requestHop(
 
   return new Promise<HopResult>((resolve, reject) => {
     let settled = false;
+    let requestClosed = false;
+    let responseStarted = false;
+    let responseClosed = true;
+    let pendingFailure: unknown = null;
+    let pendingSuccess: HopResult | null = null;
     const finish = (error: unknown, value?: HopResult): void => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      signal.removeEventListener("abort", onAbort);
       if (error) reject(error);
       else resolve(value!);
+    };
+    const settleAfterClose = (): void => {
+      if (!requestClosed || !responseClosed) return;
+      if (pendingFailure !== null) finish(pendingFailure);
+      else if (pendingSuccess !== null) finish(null, pendingSuccess);
+    };
+    const failAfterClose = (error: unknown): void => {
+      if (pendingFailure === null) pendingFailure = error;
+      pendingSuccess = null;
+      settleAfterClose();
+    };
+    const succeedAfterClose = (value: HopResult): void => {
+      if (pendingFailure !== null) { settleAfterClose(); return; }
+      pendingSuccess = value;
+      settleAfterClose();
     };
     const remaining = deadline - Date.now();
     if (remaining <= 0) { reject(new BrokerFailure("EXEC_BROKER_TIMEOUT")); return; }
     const request = https.request(options);
-    const timer = setTimeout(() => request.destroy(new BrokerFailure("EXEC_BROKER_TIMEOUT")), remaining);
+    const timer = setTimeout(() => {
+      const error = new BrokerFailure("EXEC_BROKER_TIMEOUT");
+      failAfterClose(error);
+      request.destroy(error);
+    }, remaining);
+    const onAbort = (): void => {
+      const error = cancellationError(signal, "Finite HTTPS request was cancelled");
+      failAfterClose(error);
+      request.destroy(error);
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+    if (signal.aborted) onAbort();
+    const waitForDrain = (): Promise<void> => new Promise<void>((resolveDrain, rejectDrain) => {
+      const remainingForDrain = deadline - Date.now();
+      if (remainingForDrain <= 0) { rejectDrain(new BrokerFailure("EXEC_BROKER_TIMEOUT")); return; }
+      let done = false;
+      const settle = (error?: unknown): void => {
+        if (done) return;
+        done = true;
+        clearTimeout(drainTimer);
+        request.removeListener("drain", onDrain);
+        request.removeListener("error", onError);
+        request.removeListener("close", onClose);
+        signal.removeEventListener("abort", onDrainAbort);
+        if (error === undefined) resolveDrain();
+        else rejectDrain(error);
+      };
+      const onDrain = (): void => settle();
+      const onError = (error: unknown): void => settle(error);
+      const onClose = (): void => settle(new BrokerFailure("EXEC_BROKER_HOST_DENIED"));
+      const onDrainAbort = (): void => {
+        const error = cancellationError(signal, "Finite HTTPS request backpressure was cancelled");
+        request.destroy(error);
+        settle(error);
+      };
+      const drainTimer = setTimeout(() => {
+        const error = new BrokerFailure("EXEC_BROKER_TIMEOUT");
+        request.destroy(error);
+        settle(error);
+      }, remainingForDrain);
+      drainTimer.unref?.();
+      request.once("drain", onDrain);
+      request.once("error", onError);
+      request.once("close", onClose);
+      signal.addEventListener("abort", onDrainAbort, { once: true });
+      if (signal.aborted) onDrainAbort();
+    });
     const writePromise = (async () => {
       for (let offset = 0; offset < body.length; offset += BODY_CHUNK_BYTES) {
-        ensureDeadline(deadline);
+        ensureDeadline(deadline, signal);
         const chunk = body.subarray(offset, Math.min(offset + BODY_CHUNK_BYTES, body.length));
         if (observation.requestBytes + chunk.length > limits.maxRequestBytes) throw new BrokerFailure("EXEC_BROKER_REQUEST_LIMIT");
         observation.requestBytes += chunk.length;
-        if (!request.write(chunk)) await once(request, "drain");
+        if (!request.write(chunk)) await waitForDrain();
       }
       request.end();
     })();
-    void writePromise.catch(error => request.destroy(error instanceof Error ? error : new BrokerFailure(failureCode(error))));
+    void writePromise.catch(error => {
+      const failure = error instanceof Error ? error : new BrokerFailure(failureCode(error));
+      request.destroy(failure);
+      failAfterClose(failure);
+    });
+    request.once("close", () => {
+      requestClosed = true;
+      if (!responseStarted && pendingFailure === null) pendingFailure = new BrokerFailure("EXEC_BROKER_HOST_DENIED");
+      settleAfterClose();
+    });
     request.once("error", error => {
       const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
-      finish(code === "HPE_HEADER_OVERFLOW" ? new BrokerFailure("EXEC_BROKER_RESPONSE_LIMIT") : error);
+      failAfterClose(code === "HPE_HEADER_OVERFLOW" ? new BrokerFailure("EXEC_BROKER_RESPONSE_LIMIT") : error);
     });
     request.once("response", response => {
+      responseStarted = true;
+      responseClosed = false;
+      response.once("close", () => {
+        responseClosed = true;
+        settleAfterClose();
+      });
       void (async () => {
         const statusCode = response.statusCode;
         if (!Number.isInteger(statusCode) || statusCode! < 100 || statusCode! > 599) throw new BrokerFailure("EXEC_BROKER_HOST_DENIED");
@@ -576,7 +753,7 @@ async function requestHop(
         observation.responseHeaderDigests.push(responseHeadersDigest(response.headers));
         const bodyHash = createHash("sha256");
         for await (const value of response) {
-          ensureDeadline(deadline);
+          ensureDeadline(deadline, signal);
           const chunk = Buffer.isBuffer(value) ? value : Buffer.from(value as Uint8Array);
           if (observation.responseBytes + chunk.length > limits.maxResponseBytes) {
             response.destroy();
@@ -589,11 +766,20 @@ async function requestHop(
         observation.responseBodyDigests.push(bodyHash.digest("hex"));
         const rawLocation = response.headers.location;
         const location = typeof rawLocation === "string" ? rawLocation : null;
-        finish(null, Object.freeze({ statusCode: statusCode!, location }));
+        if (signal.aborted) {
+          request.destroy(cancellationError(signal, "Finite HTTPS request was cancelled"));
+          failAfterClose(cancellationError(signal, "Finite HTTPS request was cancelled"));
+          return;
+        }
+        if (pendingFailure !== null) {
+          failAfterClose(pendingFailure);
+          return;
+        }
+        succeedAfterClose(Object.freeze({ statusCode: statusCode!, location }));
       })().catch(error => {
         response.destroy();
         request.destroy();
-        finish(error);
+        failAfterClose(error);
       });
     });
   });
@@ -715,7 +901,7 @@ export function createFiniteHttpsBroker(
   const operationsDigest = digest("mini-lux/sec03/finite-https-operations/v1", operations.map(operationValue));
   const byId = new Map(operations.map(operation => [operation.operationId, operation]));
 
-  const execute = async (currentAuthority: CapabilityContext, invocation: FiniteHttpsInvocation): Promise<FiniteHttpsBrokerResult> => {
+  const execute = async (currentAuthority: CapabilityContext, invocation: FiniteHttpsInvocation, signal: AbortSignal = NEVER_ABORT_SIGNAL): Promise<FiniteHttpsBrokerResult> => {
     const operationId = invocation && typeof invocation === "object" && typeof invocation.operationId === "string" ? invocation.operationId : "invalid";
     const mutable: MutableObservation = {
       operationIdDigest: digest("mini-lux/sec03/finite-https-operation-id/v1", operationId),
@@ -745,9 +931,9 @@ export function createFiniteHttpsBroker(
       let body = validated.body;
       let redirectIndex = 0;
       for (;;) {
-        ensureDeadline(deadline);
-        const pinned = await resolvePinned(destination.hostname, resolver, deadline, mutable);
-        const response = await requestHop(destination, method, validated.operation.headers, body, pinned, validated.operation.limits, deadline, mutable, transport);
+        ensureDeadline(deadline, signal);
+        const pinned = await resolvePinned(destination.hostname, resolver, deadline, mutable, signal);
+        const response = await requestHop(destination, method, validated.operation.headers, body, pinned, validated.operation.limits, deadline, mutable, signal, transport);
         if (!REDIRECT_CODES.has(response.statusCode)) {
           if (redirectIndex !== validated.operation.redirectDestinations.length) throw new BrokerFailure("EXEC_BROKER_REDIRECT_DENIED");
           const result = freezeObservation("OBS_BROKER_ALLOWED", authorityDigest, operationsDigest, mutable);
@@ -767,6 +953,8 @@ export function createFiniteHttpsBroker(
         mutable.redirectCount = redirectIndex;
       }
     } catch (error) {
+      if (isRunCancellation(error) || error instanceof RunSettlementError) throw error;
+      if (signal.aborted) throw cancellationError(signal, "Finite HTTPS request was cancelled");
       if (error instanceof FiniteHttpsBrokerError) throw error;
       denied(failureCode(error), authorityDigest, operationsDigest, mutable);
     }

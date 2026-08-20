@@ -30,6 +30,7 @@ test("SEC-02 Electron bootstrap file leases are handle-backed and reject pathnam
   const metadata = path.join(dirs.app, "build-info.json");
   await fs.writeFile(metadata, "ORIGINAL-METADATA");
   await fs.writeFile(path.join(dirs.electron, "preload.cjs"), "PRELOAD");
+  await fs.writeFile(path.join(dirs.userData, "Local State"), "USER-DATA-STATE");
   const store = new ElectronBootstrapPathStore({
     appRoot: dirs.app,
     electronRoot: dirs.electron,
@@ -49,6 +50,23 @@ test("SEC-02 Electron bootstrap file leases are handle-backed and reject pathnam
   assert.equal(preload.readBytes(1024).toString("utf8"), "PRELOAD");
   preload.verify();
   preload.close();
+
+  const userState = store.openUserDataFile("Local State", "safe-storage-state-test");
+  assert.equal(userState.readBytes(1024).toString("utf8"), "USER-DATA-STATE");
+  userState.flush();
+  userState.verify();
+  userState.close();
+  expectCode(() => store.openUserDataFile("..\\outside", "user-data-traversal"), "PATH_INPUT_INVALID");
+  const failingStore = new ElectronBootstrapPathStore({
+    appRoot: dirs.app,
+    electronRoot: dirs.electron,
+    userDataRoot: dirs.userData,
+    nativeFs: new Proxy(nodeFs, { get(target, property) { return property === "fsyncSync" ? () => { throw new Error("flush failed"); } : Reflect.get(target, property); } }),
+  });
+  const failingState = failingStore.openUserDataFile("Local State", "safe-storage-flush-failure");
+  assert.throws(() => failingState.flush(), /flush failed/u);
+  failingState.close();
+  failingStore.close();
 
   const mutablePath = path.join(dirs.app, "mutable.txt");
   await fs.writeFile(mutablePath, "MUTABLE");

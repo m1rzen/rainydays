@@ -1,158 +1,156 @@
-// ===========================================
-// 任务工具 —— 让 agent 能拆解和管理复杂任务
-// create_tasks: 创建一批子任务
-// update_task: 更新任务状态
-// list_tasks: 列出当前会话的任务
-// ===========================================
-
 import type { ToolDefinition, ToolExecutor } from "../types.js";
 import {
-  createTasks,
-  startTask,
-  completeTask,
-  failTask,
-  renameTask,
+  clearTasks,
+  createTask,
+  getTask,
   getTasksBySession,
+  removeTask,
+  updateTask,
+  type TaskCreateInput,
+  type TaskUpdateInput,
 } from "../task.js";
 
-/**
- * 工具执行器需要访问当前 session_id，
- * 通过 env._SESSION_ID 传入（由 agent 在执行工具时注入）
- */
-function getSessionId(env?: Record<string, string>): string | null {
-  return env?._SESSION_ID || null;
+function getSessionId(env?: Readonly<Record<string, string>>): string {
+  const sessionId = env?._SESSION_ID;
+  if (!sessionId) throw new Error("无法确定当前会话");
+  return sessionId;
 }
 
-// ===========================================
-// create_tasks
-// ===========================================
-export const createTasksDef: ToolDefinition = {
+const taskIdSchema = {
+  type: "string",
+  pattern: "^[a-z0-9][a-z0-9_-]{0,63}$",
+  description: "Session 内唯一的短任务 ID。",
+};
+
+export const taskCreateDef: ToolDefinition = {
   type: "function",
   function: {
-    name: "create_tasks",
-    description:
-      "将复杂任务拆解为多个子任务。用于需要多步骤完成的工作，如'整理所有项目并生成报告'、'对比三个方案'等。创建后你会逐个执行这些任务。",
+    name: "task_create",
+    description: "创建一个 Task DAG 节点。blocked_by 中的任务必须已存在。",
     parameters: {
       type: "object",
       properties: {
-        tasks: {
-          type: "array",
-          items: { type: "string" },
-          description: "任务标题列表，按执行顺序排列。每个任务应该是清晰可执行的步骤。如 ['搜索医院相关项目','读取每个项目的关键文件','汇总信息生成Excel']",
-        },
+        id: taskIdSchema,
+        subject: { type: "string", minLength: 1, maxLength: 500, description: "简短任务标题。" },
+        description: { type: "string", minLength: 1, maxLength: 4000, description: "可选详细说明。" },
+        blocked_by: { type: "array", maxItems: 128, uniqueItems: true, items: taskIdSchema, description: "开始前必须完成的任务 ID。" },
+        owner: { type: "string", minLength: 1, maxLength: 128, description: "可选 owner。" },
+        metadata: { type: "object", additionalProperties: true, description: "可选 JSON metadata。" },
+        active_form: { type: "string", minLength: 1, maxLength: 500, description: "可选当前动作描述。" },
       },
-      required: ["tasks"],
+      required: ["id", "subject"],
     },
   },
 };
 
-export const createTasksExec: ToolExecutor = async (args, env) => {
-  const sessionId = getSessionId(env);
-  if (!sessionId) return "错误：无法确定当前会话";
-
-  const subjects = args.tasks as string[];
-  if (!Array.isArray(subjects) || subjects.length === 0) {
-    return "错误：tasks 必须是非空数组";
-  }
-
-  const tasks = createTasks(sessionId, subjects);
-
-  const lines = tasks.map((t, i) => `  ${i + 1}. [${t.status}] ${t.subject}`);
-  return `已创建 ${tasks.length} 个任务:\n${lines.join("\n")}\n\n现在请逐个执行这些任务。每完成一个用 update_task 标记状态。`;
-};
-
-// ===========================================
-// update_task
-// ===========================================
-export const updateTaskDef: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "update_task",
-    description:
-      "更新任务状态。开始执行时标记 in_progress，完成时标记 completed，失败时标记 failed。",
-    parameters: {
-      type: "object",
-      properties: {
-        id: { type: "number", description: "任务ID" },
-        status: {
-          type: "string",
-          enum: ["in_progress", "completed", "failed"],
-          description: "新状态",
-        },
-        active_form: {
-          type: "string",
-          description: "当前正在做什么的简短描述（仅 in_progress 时需要）",
-        },
-        subject: {
-          type: "string",
-          description: "更新任务标题（可选）",
-        },
-      },
-      required: ["id", "status"],
-    },
-  },
-};
-
-export const updateTaskExec: ToolExecutor = async (args, env) => {
-  const id = args.id as number;
-  const status = args.status as string;
-  const activeForm = args.active_form as string | undefined;
-  const subject = args.subject as string | undefined;
-
-  // 更新标题（如果提供）
-  if (subject) {
-    renameTask(id, subject);
-  }
-
-  let result;
-  switch (status) {
-    case "in_progress":
-      result = startTask(id, activeForm);
-      break;
-    case "completed":
-      result = completeTask(id);
-      break;
-    case "failed":
-      result = failTask(id, activeForm);
-      break;
-    default:
-      return `错误：未知状态 ${status}`;
-  }
-
-  if (!result) return `错误：任务 ${id} 不存在`;
-  return `任务 ${id} 已更新: [${result.status}] ${result.subject}${result.activeForm ? ` — ${result.activeForm}` : ""}`;
-};
-
-// ===========================================
-// list_tasks
-// ===========================================
-export const listTasksDef: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "list_tasks",
-    description: "列出当前会话的所有任务及其状态。用于查看任务进度。",
-    parameters: {
-      type: "object",
-      properties: {},
-    },
-  },
-};
-
-export const listTasksExec: ToolExecutor = async (_args, env) => {
-  const sessionId = getSessionId(env);
-  if (!sessionId) return "错误：无法确定当前会话";
-
-  const tasks = getTasksBySession(sessionId);
-  if (tasks.length === 0) return "当前会话没有任务。";
-
-  const statusIcon: Record<string, string> = {
-    pending: "⏳",
-    in_progress: "🔄",
-    completed: "✅",
-    failed: "❌",
+export const taskCreateExec: ToolExecutor = async (args, env) => {
+  const input: TaskCreateInput = {
+    id: args.id as string,
+    subject: args.subject as string,
+    ...(args.description === undefined ? {} : { description: args.description as string }),
+    ...(args.blocked_by === undefined ? {} : { blockedBy: args.blocked_by as string[] }),
+    ...(args.owner === undefined ? {} : { owner: args.owner as string }),
+    ...(args.metadata === undefined ? {} : { metadata: args.metadata as Record<string, unknown> }),
+    ...(args.active_form === undefined ? {} : { activeForm: args.active_form as string }),
   };
+  const task = createTask(getSessionId(env), input);
+  return `任务已创建: [${task.status}] ${task.id} — ${task.subject}${task.blocked ? ` [B:${task.blockedBy.join(",")}]` : ""}`;
+};
 
-  const lines = tasks.map((t) => `  ${statusIcon[t.status] || "?"} [${t.id}] ${t.subject}${t.activeForm ? ` — ${t.activeForm}` : ""}`);
-  const completed = tasks.filter((t) => t.status === "completed").length;
-  return `任务进度: ${completed}/${tasks.length}\n${lines.join("\n")}`;
+export const taskUpdateDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "task_update",
+    description: "更新一个任务；依赖边只可追加，循环会被事务性拒绝。status=deleted 会删除任务并清理依赖。",
+    parameters: {
+      type: "object",
+      properties: {
+        task_id: taskIdSchema,
+        status: { type: "string", enum: ["pending", "in_progress", "completed", "deleted"], description: "新状态。" },
+        subject: { type: "string", minLength: 1, maxLength: 500, description: "新标题。" },
+        description: { type: "string", minLength: 1, maxLength: 4000, description: "新说明。" },
+        active_form: { type: "string", minLength: 1, maxLength: 500, description: "当前动作描述。" },
+        owner: { type: "string", minLength: 1, maxLength: 128, description: "任务 owner。" },
+        metadata: { type: "object", additionalProperties: true, description: "浅合并 metadata；值为 null 的 key 被删除。" },
+        add_blocked_by: { type: "array", maxItems: 128, uniqueItems: true, items: taskIdSchema, description: "追加 blocker。" },
+        add_blocks: { type: "array", maxItems: 128, uniqueItems: true, items: taskIdSchema, description: "让当前任务阻塞这些任务。" },
+      },
+      required: ["task_id"],
+    },
+  },
+};
+
+export const taskUpdateExec: ToolExecutor = async (args, env) => {
+  const sessionId = getSessionId(env);
+  const id = args.task_id as string;
+  const input: TaskUpdateInput = {
+    ...(args.status === undefined ? {} : { status: args.status as TaskUpdateInput["status"] }),
+    ...(args.subject === undefined ? {} : { subject: args.subject as string }),
+    ...(args.description === undefined ? {} : { description: args.description as string }),
+    ...(args.active_form === undefined ? {} : { activeForm: args.active_form as string }),
+    ...(args.owner === undefined ? {} : { owner: args.owner as string }),
+    ...(args.metadata === undefined ? {} : { metadata: args.metadata as Record<string, unknown> }),
+    ...(args.add_blocked_by === undefined ? {} : { addBlockedBy: args.add_blocked_by as string[] }),
+    ...(args.add_blocks === undefined ? {} : { addBlocks: args.add_blocks as string[] }),
+  };
+  const task = updateTask(sessionId, id, input);
+  if (!task) return `任务已删除: ${id}`;
+  return `任务已更新: [${task.status}] ${task.id} — ${task.subject}${task.blocked ? ` [B:${task.blockedBy.join(",")}]` : ""}`;
+};
+
+export const taskListDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "task_list",
+    description: "列出当前 Session 的任务；显示 blocker 与 owner。",
+    parameters: {
+      type: "object",
+      properties: {
+        filter: { type: "string", enum: ["pending", "in_progress", "completed", "all"], description: "状态过滤，默认 all。" },
+      },
+    },
+  },
+};
+
+export const taskListExec: ToolExecutor = async (args, env) => {
+  const tasks = getTasksBySession(getSessionId(env), (args.filter as "pending" | "in_progress" | "completed" | "all" | undefined) ?? "all");
+  if (tasks.length === 0) return "当前会话没有匹配的任务。";
+  const icon = { pending: "⏳", in_progress: "🔄", completed: "✅" } as const;
+  return tasks.map(task => `${icon[task.status]} ${task.blocked ? "[B] " : ""}${task.owner ? `[O:${task.owner}] ` : ""}${task.id} — ${task.subject}`).join("\n");
+};
+
+export const taskGetDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "task_get",
+    description: "读取当前 Session 中一个任务的完整 DAG 详情。",
+    parameters: { type: "object", properties: { task_id: taskIdSchema }, required: ["task_id"] },
+  },
+};
+
+export const taskGetExec: ToolExecutor = async (args, env) => JSON.stringify(getTask(getSessionId(env), args.task_id as string), null, 2);
+
+export const taskDeleteDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "task_delete",
+    description: "删除当前 Session 的一个任务，或清空当前 Session 的全部任务；依赖引用会级联清理。",
+    parameters: {
+      type: "object",
+      properties: {
+        task_id: taskIdSchema,
+        all: { type: "boolean", description: "true 时清空当前 Session。" },
+      },
+    },
+  },
+};
+
+export const taskDeleteExec: ToolExecutor = async (args, env) => {
+  const sessionId = getSessionId(env);
+  const id = args.task_id as string | undefined;
+  const all = args.all === true;
+  if ((id ? 1 : 0) + (all ? 1 : 0) !== 1) throw new Error("task_delete 必须且只能指定 task_id 或 all=true");
+  if (all) return `已清空 ${clearTasks(sessionId)} 个任务`;
+  removeTask(sessionId, id!);
+  return `任务已删除: ${id}`;
 };

@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,12 +12,15 @@ import {
   type PathReadLease,
   validatePathSyntax,
 } from "./path-policy.js";
+import { performManagedRestore, type ManagedRestoreBarrier, type ManagedRestoreSourceFile } from "./managed-restore.js";
 import { pathPolicy } from "./path-runtime.js";
 import { APP_ROOT, DATA_DIR, MODELS_DIR, PUBLIC_DIR, USER_DATA_DIR } from "./runtime-paths.js";
+import type { BackupDataKeyWrapper } from "./credential-store.js";
 
 const APP_READ_LIMIT = 8 * 1024 * 1024;
 const PUBLIC_READ_LIMIT = 4 * 1024 * 1024;
 const RUNTIME_FILE_LIMIT = 256 * 1024 * 1024;
+const DATABASE_RESTORE_LIMIT = 256 * 1024 * 1024;
 const DIGEST_CHUNK_BYTES = 1024 * 1024;
 const MODEL_TREE_MAX_ENTRIES = 2_000;
 
@@ -73,6 +77,14 @@ export interface BootstrapDatabaseFileLease {
   readonly canonicalPath: string;
   readonly assertPathCurrent: () => Promise<void>;
   readonly close: () => Promise<void>;
+}
+
+export interface BootstrapDatabaseRestoreLease {
+  readonly size: number;
+  readonly isActive: () => boolean;
+  readonly readBytes: () => Promise<Buffer>;
+  readonly publish: () => Promise<void>;
+  readonly discard: () => Promise<void>;
 }
 
 export interface BootstrapRuntimeFileLease {
@@ -143,6 +155,8 @@ export class BootstrapPathStore {
   #temporaryAuthorityPromise: Promise<PathAuthority> | null = null;
   readonly #externalAuthorityPromises = new Map<string, Promise<PathAuthority>>();
   readonly #databaseLeases = new Set<object>();
+  readonly #databaseRestoreLeases = new Set<object>();
+  #databasePublishActive = false;
   readonly #runtimeFileLeases = new Set<object>();
   readonly #publicRelative = relativeDescendant(APP_ROOT, PUBLIC_DIR, "public");
   readonly #modelsRelative = relativeDescendant(APP_ROOT, MODELS_DIR, "models");
@@ -335,6 +349,7 @@ export class BootstrapPathStore {
   }
 
   async openDatabaseFileLease(): Promise<BootstrapDatabaseFileLease> {
+    if (this.#databasePublishActive) throw new PathDeniedError("PATH_AUTHORITY_STALE", "Database restore publication is active");
     const authority = await this.#dataAuthority();
     const request = { input: "mini-lux.db", operation: "read-file" as const, defaultRootId: "data" };
     try {
@@ -348,6 +363,10 @@ export class BootstrapPathStore {
       }, Buffer.alloc(0), 1);
     }
     const pathLease = await pathPolicy.openReadLease(authority, request, Number.MAX_SAFE_INTEGER);
+    if (this.#databasePublishActive) {
+      await pathLease.close();
+      throw new PathDeniedError("PATH_AUTHORITY_STALE", "Database restore publication is active");
+    }
     const token = Object.freeze({});
     this.#databaseLeases.add(token);
     let closed = false;
@@ -362,6 +381,192 @@ export class BootstrapPathStore {
       await pathLease.close();
     };
     return Object.freeze({ canonicalPath: pathLease.canonicalPath, assertPathCurrent, close });
+  }
+
+  async publishManagedRestore(
+    files: readonly ManagedRestoreSourceFile[],
+    wrapper: BackupDataKeyWrapper,
+    barrier?: ManagedRestoreBarrier
+  ): Promise<Readonly<{ transactionId: string; fileCount: number; cleanupPending: boolean }>> {
+    if (this.#databaseLeases.size > 0 || this.#databaseRestoreLeases.size > 0 || this.#databasePublishActive) {
+      throw new PathDeniedError("PATH_AUTHORITY_STALE", "Database must be closed before managed restore publication");
+    }
+    this.#databasePublishActive = true;
+    try {
+      const livePath = path.join(DATA_DIR, "mini-lux.db");
+      for (const suffix of ["-wal", "-shm", "-journal"] as const) {
+        const sidecar = await fs.lstat(`${livePath}${suffix}`, { bigint: true }).catch((error: NodeJS.ErrnoException) => {
+          if (error.code === "ENOENT") return null;
+          throw new PathDeniedError("PATH_OPERATION_DENIED", "Managed restore sidecar check failed");
+        });
+        if (sidecar) throw new PathDeniedError("PATH_IDENTITY_CHANGED", "Managed restore requires no live SQLite sidecars");
+      }
+      return await performManagedRestore(files, wrapper, barrier);
+    } finally {
+      this.#databasePublishActive = false;
+    }
+  }
+
+  async stageValidatedDatabaseRestore(
+    bytes: Uint8Array,
+    validate: (canonicalFile: string) => void | Promise<void>
+  ): Promise<BootstrapDatabaseRestoreLease> {
+    if (!(bytes instanceof Uint8Array) || bytes.byteLength === 0 || bytes.byteLength > DATABASE_RESTORE_LIMIT) {
+      throw new TypeError("Database restore bytes are invalid");
+    }
+    if (typeof validate !== "function") throw new TypeError("Database restore validator is invalid");
+    const authority = await this.#temporaryAuthority();
+    const name = `rainydays-db-restore-${randomUUID()}`;
+    const directoryLease = await pathPolicy.createDirectoryEnrollment(authority, {
+      input: name,
+      operation: "create-directory",
+      defaultRootId: "temporary",
+    });
+    const relativeFile = path.join(name, "mini-lux.restore.db");
+    let readLease: PathReadLease | null = null;
+    let createdIdentity: ObjectIdentity | null = null;
+    const cleanup = async (): Promise<void> => {
+      await readLease?.close();
+      const target = path.join(os.tmpdir(), relativeFile);
+      const info = await fs.lstat(target, { bigint: true }).catch(() => null);
+      if (info) {
+        const current = Object.freeze({
+          deviceId: String(info.dev),
+          objectId: String(info.ino),
+          type: info.isFile() ? "file" as const : "directory" as const,
+        });
+        if (!createdIdentity || info.isSymbolicLink() || !sameIdentity(createdIdentity, current)) {
+          throw new PathDeniedError("PATH_IDENTITY_CHANGED", "Database restore staging identity changed");
+        }
+        await fs.unlink(target);
+      }
+      await directoryLease.rollback();
+    };
+
+    try {
+      const created = await pathPolicy.createFile(authority, {
+        input: relativeFile,
+        operation: "create-file",
+        defaultRootId: "temporary",
+      }, bytes, DATABASE_RESTORE_LIMIT);
+      createdIdentity = created.identity;
+      readLease = await pathPolicy.openReadLease(authority, {
+        input: relativeFile,
+        operation: "read-file",
+        defaultRootId: "temporary",
+      }, DATABASE_RESTORE_LIMIT);
+      if (!sameIdentity(created.identity, readLease.identity) || readLease.snapshot.linkCount !== "1") {
+        throw new PathDeniedError("PATH_IDENTITY_CHANGED", "Database restore staging identity changed");
+      }
+      await validate(readLease.canonicalPath);
+      await readLease.assertPathCurrent(undefined, true);
+    } catch (error) {
+      await cleanup();
+      throw error;
+    }
+
+    const token = Object.freeze({});
+    this.#databaseRestoreLeases.add(token);
+    let active = true;
+    const discard = async (): Promise<void> => {
+      if (!active || !this.#databaseRestoreLeases.has(token)) {
+        throw new PathDeniedError("PATH_AUTHORITY_STALE", "Database restore lease is closed");
+      }
+      active = false;
+      this.#databaseRestoreLeases.delete(token);
+      await cleanup();
+    };
+    const readBytes = async (): Promise<Buffer> => {
+      if (!active || !this.#databaseRestoreLeases.has(token) || !readLease) {
+        throw new PathDeniedError("PATH_AUTHORITY_STALE", "Database restore lease is closed");
+      }
+      await readLease.assertPathCurrent(undefined, true);
+      return readLease.readRange(0, readLease.size - 1);
+    };
+    const publish = async (): Promise<void> => {
+      if (!active || !this.#databaseRestoreLeases.has(token) || !readLease) {
+        throw new PathDeniedError("PATH_AUTHORITY_STALE", "Database restore lease is closed");
+      }
+      if (this.#databaseLeases.size > 0 || this.#databasePublishActive) {
+        throw new PathDeniedError("PATH_AUTHORITY_STALE", "Database must be closed before restore publication");
+      }
+      this.#databasePublishActive = true;
+      try {
+        await readLease.assertPathCurrent(undefined, true);
+        const livePath = path.join(DATA_DIR, "mini-lux.db");
+        for (const suffix of ["-wal", "-shm", "-journal"] as const) {
+          const sidecar = await fs.lstat(`${livePath}${suffix}`, { bigint: true }).catch((error: NodeJS.ErrnoException) => {
+            if (error.code === "ENOENT") return null;
+            throw new PathDeniedError("PATH_OPERATION_DENIED", "Database restore sidecar check failed");
+          });
+          if (sidecar) throw new PathDeniedError("PATH_IDENTITY_CHANGED", "Database restore requires no live sidecars");
+        }
+        const dataAuthority = await this.#dataAuthority();
+        try {
+          const live = await pathPolicy.qualifyExisting(dataAuthority, {
+            input: "mini-lux.db",
+            operation: "read-file",
+            defaultRootId: "data",
+          }, "file");
+          if (live.snapshot.linkCount !== "1") {
+            throw new PathDeniedError("PATH_IDENTITY_CHANGED", "Database restore target has multiple links");
+          }
+        } catch (error) {
+          if (!(error instanceof PathDeniedError) || error.code !== "PATH_NOT_FOUND") throw error;
+        }
+        const staged = await readBytes();
+        try {
+          await pathPolicy.atomicCreateOrReplaceFile(dataAuthority, {
+            input: "mini-lux.db",
+            operation: "create-file",
+            defaultRootId: "data",
+          }, staged, DATABASE_RESTORE_LIMIT);
+          active = false;
+          this.#databaseRestoreLeases.delete(token);
+          await cleanup();
+        } finally {
+          staged.fill(0);
+        }
+      } finally {
+        this.#databasePublishActive = false;
+      }
+    };
+    return Object.freeze({ size: readLease.size, isActive: () => active, readBytes, publish, discard });
+  }
+
+  async withDatabaseSnapshotFile<T>(use: (canonicalFile: string) => T | Promise<T>): Promise<T> {
+    if (typeof use !== "function") throw new TypeError("Database snapshot callback is invalid");
+    return this.withTemporaryDirectory("rainydays-db-snapshot", async canonicalDirectory => {
+      const fileName = "mini-lux.snapshot.db";
+      const target = path.join(canonicalDirectory, fileName);
+      const authority = await this.#temporaryAuthority();
+      const relative = path.relative(os.tmpdir(), target);
+      const created = await pathPolicy.createFile(authority, {
+        input: relative,
+        operation: "create-file",
+        defaultRootId: "temporary",
+      }, Buffer.alloc(0), 1);
+      try {
+        const qualified = await pathPolicy.qualifyExisting(authority, {
+          input: relative,
+          operation: "read-file",
+          defaultRootId: "temporary",
+        }, "file");
+        if (!sameIdentity(created.identity, qualified.identity) || qualified.canonicalPath !== target) {
+          throw new PathDeniedError("PATH_IDENTITY_CHANGED", "Database snapshot destination identity changed");
+        }
+        return await use(qualified.canonicalPath);
+      } finally {
+        const info = await fs.lstat(target, { bigint: true }).catch(() => null);
+        if (info) {
+          const current = Object.freeze({ deviceId: String(info.dev), objectId: String(info.ino), type: info.isFile() ? "file" as const : "directory" as const });
+          if (info.isSymbolicLink() || !sameIdentity(created.identity, current)) {
+            throw new PathDeniedError("PATH_IDENTITY_CHANGED", "Database snapshot cleanup identity changed");
+          }
+          await fs.unlink(target);
+        }
+      }
+    });
   }
 
   async withTemporaryDirectory<T>(prefix: string, use: (canonicalDirectory: string) => T | Promise<T>): Promise<T> {
@@ -388,6 +593,7 @@ export class BootstrapPathStore {
 
   async close(): Promise<void> {
     if (this.#databaseLeases.size > 0) throw new Error("Database bootstrap lease is still active");
+    if (this.#databaseRestoreLeases.size > 0 || this.#databasePublishActive) throw new Error("Database restore lease is still active");
     if (this.#runtimeFileLeases.size > 0) throw new Error("Runtime bootstrap lease is still active");
     const authorities = await Promise.all([
       this.#appAuthorityPromise,

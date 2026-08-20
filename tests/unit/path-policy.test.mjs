@@ -1747,6 +1747,74 @@ test("SEC-02 atomic config write rejects target replacement before publication",
   assert.deepEqual((await fs.readdir(root)).filter(name => name.startsWith(".mini-lux-") && name.endsWith(".tmp")), []);
 });
 
+test("SEC-02 identity-bound removal deletes only the qualified file and empty directory", async t => {
+  const root = await tempFixture(t);
+  await fs.writeFile(path.join(root, "remove.txt"), "remove-me");
+  await fs.mkdir(path.join(root, "empty"));
+  await fs.mkdir(path.join(root, "nonempty"));
+  await fs.writeFile(path.join(root, "nonempty", "kept.txt"), "kept");
+  const policy = new PathPolicy({ auditKey: Buffer.alloc(32, 74) });
+  const authority = await policy.createAuthority([rootInput(root, ["read-file", "read-directory", "replace-file", "create-directory"])]);
+
+  await policy.removeFile(authority, { input: "remove.txt", operation: "replace-file", defaultRootId: "workspace" });
+  await assert.rejects(() => fs.access(path.join(root, "remove.txt")));
+  await expectCodeAsync(
+    () => policy.removeFile(authority, { input: "remove.txt", operation: "replace-file", defaultRootId: "workspace" }),
+    "PATH_NOT_FOUND"
+  );
+  await assert.rejects(
+    () => policy.removeFile(authority, { input: "nonempty", operation: "read-file", defaultRootId: "workspace" }),
+    TypeError
+  );
+
+  await policy.removeDirectory(authority, { input: "empty", operation: "create-directory", defaultRootId: "workspace" });
+  await assert.rejects(() => fs.access(path.join(root, "empty")));
+  await expectCodeAsync(
+    () => policy.removeDirectory(authority, { input: "nonempty", operation: "create-directory", defaultRootId: "workspace" }),
+    "PATH_OPERATION_DENIED"
+  );
+  assert.equal(await fs.readFile(path.join(root, "nonempty", "kept.txt"), "utf8"), "kept");
+  await assert.rejects(
+    () => policy.removeDirectory(authority, { input: "nonempty", operation: "read-directory", defaultRootId: "workspace" }),
+    TypeError
+  );
+});
+
+test("SEC-02 identity-bound file removal rejects a hardlink and target replacement", async t => {
+  const root = await tempFixture(t);
+  const target = path.join(root, "target.txt");
+  const alias = path.join(root, "alias.txt");
+  await fs.writeFile(target, "original");
+  await fs.link(target, alias);
+  const linkedPolicy = new PathPolicy({ auditKey: Buffer.alloc(32, 75) });
+  const linkedAuthority = await linkedPolicy.createAuthority([rootInput(root, ["replace-file"])]);
+  await expectCodeAsync(
+    () => linkedPolicy.removeFile(linkedAuthority, { input: "target.txt", operation: "replace-file", defaultRootId: "workspace" }),
+    "PATH_IDENTITY_CHANGED"
+  );
+  assert.equal(await fs.readFile(target, "utf8"), "original");
+  await fs.unlink(alias);
+
+  let swapped = false;
+  const moved = path.join(root, "moved.txt");
+  const racePolicy = new PathPolicy({
+    auditKey: Buffer.alloc(32, 76),
+    barrier: async point => {
+      if (point !== "beforeFinalCreate" || swapped) return;
+      swapped = true;
+      await fs.rename(target, moved);
+      await fs.writeFile(target, "replacement");
+    },
+  });
+  const raceAuthority = await racePolicy.createAuthority([rootInput(root, ["replace-file"])]);
+  await expectCodeAsync(
+    () => racePolicy.removeFile(raceAuthority, { input: "target.txt", operation: "replace-file", defaultRootId: "workspace" }),
+    "PATH_IDENTITY_CHANGED"
+  );
+  assert.equal(await fs.readFile(moved, "utf8"), "original");
+  assert.equal(await fs.readFile(target, "utf8"), "replacement");
+});
+
 test("SEC-02 directory enrollment lease rolls back exact created identities or commits once", async t => {
   const root = await tempFixture(t);
   const policy = new PathPolicy({ auditKey: Buffer.alloc(32, 26) });

@@ -5,6 +5,7 @@
 
 import type { ToolDefinition, ToolExecutor } from "../types.js";
 import type { LLMClient } from "../llm.js";
+import { isRunCancellation } from "../run-cancellation.js";
 import {
   upsertEntity,
   getEntity,
@@ -177,7 +178,8 @@ export const consolidateDef: ToolDefinition = {
 };
 
 export function createConsolidateExec(llm: LLMClient): ToolExecutor {
-  return async (args) => {
+  return async (args, _env, invocation) => {
+    if (!invocation) throw new Error("Tool invocation services are required");
     const limit = (args.limit as number) || 10;
     const memories = listMemories(limit);
 
@@ -211,7 +213,7 @@ ${memoryText}
       const response = await llm.chat([
         { role: "system", content: "你是信息提取器。从非结构化文本中提取实体和关系，返回 JSON。" },
         { role: "user", content: extractPrompt },
-      ]);
+      ], undefined, invocation.signal, invocation.network.fetch);
 
       // 解析 JSON
       let jsonStr = response.content.trim();
@@ -242,7 +244,8 @@ ${memoryText}
 
       return `✅ 巩固完成: 提取了 ${entityCount} 个实体, ${edgeCount} 条关系。用 inspect 或 graph 工具查看。`;
     } catch (err) {
-      return `巩固失败: ${err instanceof Error ? err.message : String(err)}`;
+      if (isRunCancellation(err) || invocation.signal.aborted) throw err;
+      throw err instanceof Error ? err : new Error(String(err));
     }
   };
 }

@@ -223,6 +223,67 @@ test("SEC-03 A11 ExecutionGrant variants are exact for E1 and E3 with zero denie
   });
 });
 
+test("RT-04 one-shot native cancellation waits for terminate and host completion before settling", async () => {
+  const now = 1_900_000_100_000;
+  const resourceOwner = owner();
+  const completion = deferred();
+  const terminateGate = deferred();
+  const fake = fakeBridge({ completion: completion.promise, terminateGate });
+  const service = new ExecutionIsolationService(fake.bridge, { now: () => now });
+  const approved = request(resourceOwner, now, "E1");
+  const controller = new AbortController();
+  const running = service.launchOneShot(
+    service.issueExecutionGrant(approved),
+    resourceOwner,
+    approved,
+    controller.signal,
+  );
+  await new Promise(resolve => setImmediate(resolve));
+  controller.abort(new Error("cancel fixture"));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(fake.state.terminations, ["run-cancelled"]);
+
+  let settled = false;
+  void running.catch(() => { settled = true; });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(settled, false);
+  terminateGate.resolve();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(settled, false);
+  completion.resolve({ exitCode: null, reason: "terminated" });
+  await assert.rejects(() => running, error => error?.code === "RUN_CANCELLED");
+  assert.equal(settled, true);
+  assert.deepEqual(fake.state.terminations, ["run-cancelled"]);
+});
+
+test("RT-04 native cancellation reports terminate and completion failures as failed settlement", async () => {
+  const now = 1_900_000_105_000;
+  const resourceOwner = owner();
+  const completion = deferred();
+  const fake = fakeBridge({ completion: completion.promise, terminateError: true });
+  const service = new ExecutionIsolationService(fake.bridge, { now: () => now });
+  const approved = request(resourceOwner, now, "E1");
+  const controller = new AbortController();
+  const running = service.launchOneShot(
+    service.issueExecutionGrant(approved),
+    resourceOwner,
+    approved,
+    controller.signal,
+  );
+  await new Promise(resolve => setImmediate(resolve));
+  controller.abort(new Error("native cancellation fixture"));
+  completion.reject(new Error("synthetic completion failure"));
+  await assert.rejects(() => running, error => {
+    assert.equal(error?.code, "RUN_SETTLEMENT_FAILED");
+    assert(error instanceof AggregateError);
+    assert(error.errors.some(candidate => /native cancellation fixture/u.test(String(candidate))));
+    assert(error.errors.some(candidate => /synthetic termination failure/u.test(String(candidate))));
+    assert(error.errors.some(candidate => /synthetic completion failure/u.test(String(candidate))));
+    return true;
+  });
+  assert.deepEqual(fake.state.terminations, ["run-cancelled"]);
+});
+
 test("SEC-03 A11 E2 InputGrant variants are exact and denied writes never reach native", async () => {
   let now = 1_900_000_200_000;
   const resourceOwner = owner();
@@ -281,6 +342,41 @@ test("SEC-03 A11 E2 InputGrant variants are exact and denied writes never reach 
   completion.resolve({ exitCode: null, reason: "terminated" });
   await shutdown;
   assert.equal(fake.state.shutdown, true);
+});
+
+test("RT-04 persistent input cancellation terminates the native session and settles only after write and completion close", async () => {
+  const now = 1_900_000_205_000;
+  const resourceOwner = owner();
+  const completion = deferred();
+  const writeGate = deferred();
+  const fake = fakeBridge({ completion: completion.promise, writeGate });
+  const service = new ExecutionIsolationService(fake.bridge, { now: () => now });
+  const launchRequest = request(resourceOwner, now, "E2");
+  const lease = await service.launchPersistent(service.issueExecutionGrant(launchRequest), resourceOwner, launchRequest);
+  const approved = inputRequest(lease, resourceOwner, now);
+  const controller = new AbortController();
+  const running = service.write(lease, service.issueInputGrant(approved), resourceOwner, approved, controller.signal);
+  while (fake.state.writes === 0) await new Promise(resolve => setImmediate(resolve));
+
+  controller.abort(new Error("terminal input cancelled"));
+  while (fake.state.terminations.length === 0) await new Promise(resolve => setImmediate(resolve));
+  let settled = false;
+  void running.catch(() => { settled = true; });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(settled, false, "input cancellation settled before native resources closed");
+
+  writeGate.reject(new Error("native write interrupted"));
+  completion.resolve({ exitCode: null, reason: "terminated" });
+  await assert.rejects(() => running, error => {
+    assert.equal(error?.code, "RUN_SETTLEMENT_FAILED");
+    assert(error instanceof AggregateError);
+    assert(error.errors.some(candidate => /terminal input cancelled/u.test(String(candidate))));
+    assert(error.errors.some(candidate => /native write interrupted/u.test(String(candidate))));
+    return true;
+  });
+  assert.deepEqual(fake.state.terminations, ["run-cancelled"]);
+  assert.equal(fake.state.writes, 1);
+  await retireResourceOwner(resourceOwner);
 });
 
 test("SEC-03 input grants fail closed for every malformed binding and lifecycle state", async () => {
@@ -877,7 +973,13 @@ test("SEC-03 execution service rejects residual owner, authority, shutdown and f
     const launched = service.launchOneShot(service.issueExecutionGrant(approved), resourceOwner, approved);
     await new Promise(resolve => setImmediate(resolve));
     completion.resolve({ exitCode: 0, reason: "completed" });
-    await assert.rejects(launched, error => code(error, "EXEC_OUTPUT_LIMIT"));
+    await assert.rejects(launched, error => {
+      assert.equal(error?.code, "RUN_SETTLEMENT_FAILED");
+      assert(error instanceof AggregateError);
+      assert(error.errors.some(candidate => code(candidate, "EXEC_OUTPUT_LIMIT")));
+      assert(error.errors.some(candidate => /synthetic termination failure/u.test(String(candidate))));
+      return true;
+    });
   }
 });
 

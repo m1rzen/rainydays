@@ -5,6 +5,7 @@
 // ===========================================
 
 import type { LLMClient } from "./llm.js";
+import { isRunCancellation } from "./run-cancellation.js";
 
 export type SupervisorDecision = "approve" | "deny" | "escalate";
 
@@ -57,7 +58,8 @@ export function setSupervisorRules(rules: string): void {
  */
 export async function approveToolCall(
   toolName: string,
-  toolArgs: Record<string, unknown>
+  toolArgs: Record<string, unknown>,
+  signal?: AbortSignal
 ): Promise<{ decision: SupervisorDecision; reason: string }> {
   // 不在危险列表中的工具直接放行
   if (!dangerousTools.has(toolName)) {
@@ -87,12 +89,13 @@ export async function approveToolCall(
     const response = await llmRef.chat([
       { role: "system", content: "你是安全审批器。只返回 JSON。" },
       { role: "user", content: prompt },
-    ]);
+    ], undefined, signal);
 
     const jsonStr = response.content.trim().replace(/^```json\s*/, "").replace(/```\s*$/, "");
     const result = JSON.parse(jsonStr);
     return { decision: result.decision as SupervisorDecision, reason: result.reason || "" };
-  } catch {
+  } catch (error) {
+    if (isRunCancellation(error) || signal?.aborted) throw error;
     // 解析失败，escalate 到用户
     return { decision: "escalate", reason: "Supervisor 判断失败" };
   }

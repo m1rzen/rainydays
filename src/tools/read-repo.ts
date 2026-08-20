@@ -6,6 +6,8 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 import { getBootstrapPathStore } from "../bootstrap-path-store.js";
 import type { ScopedPathGateway, ToolDefinition, ToolExecutor } from "../types.js";
+import { cancellationError, throwIfCancelled } from "../run-cancellation.js";
+import { truncateCodePoints } from "../tool-pipeline.js";
 
 const MAX_GIT_OUTPUT_BYTES = 8 * 1024 * 1024;
 const MAX_TRACKED_FILES = 10_000;
@@ -30,7 +32,8 @@ export const readRepoDef: ToolDefinition = {
   },
 };
 
-async function runGitLsFiles(cwd: string): Promise<Buffer> {
+async function runGitLsFiles(cwd: string, signal: AbortSignal): Promise<Buffer> {
+  throwIfCancelled(signal);
   const executable = await getBootstrapPathStore().openGitExecutable();
   try {
     await executable.assertCurrent("beforeProcessSpawn");
@@ -45,10 +48,12 @@ async function runGitLsFiles(cwd: string): Promise<Buffer> {
         timeout: 10_000,
         maxBuffer: MAX_GIT_OUTPUT_BYTES,
         encoding: "buffer",
+        signal,
       },
       (error, stdout) => {
         if (error) {
-          reject(new Error("read_repo requires a readable Git worktree"));
+          if (signal.aborted) reject(cancellationError(signal, "read_repo Git discovery was cancelled"));
+          else reject(new Error("read_repo requires a readable Git worktree"));
           return;
         }
         resolve(Buffer.from(stdout));
@@ -95,9 +100,10 @@ function globToRegex(glob: string): RegExp {
   return new RegExp(`${expression}$`, "iu");
 }
 
-async function authorizeTrackedEntries(gateway: ScopedPathGateway, canonicalRoot: string, files: readonly string[], rootId: string): Promise<void> {
+async function authorizeTrackedEntries(gateway: ScopedPathGateway, canonicalRoot: string, files: readonly string[], rootId: string, signal: AbortSignal): Promise<void> {
   const byParent = new Map<string, Set<string>>();
   for (const file of files) {
+    throwIfCancelled(signal);
     const parent = path.posix.dirname(file) === "." ? "" : path.posix.dirname(file);
     const leaf = path.posix.basename(file);
     const leaves = byParent.get(parent) ?? new Set<string>();
@@ -106,6 +112,7 @@ async function authorizeTrackedEntries(gateway: ScopedPathGateway, canonicalRoot
   }
 
   for (const [parent, requiredLeaves] of byParent) {
+    throwIfCancelled(signal);
     const absoluteParent = parent ? path.join(canonicalRoot, ...parent.split("/")) : canonicalRoot;
     const entries = await gateway.searchDirectory(absoluteParent, { defaultRootId: rootId, maxEntries: 10_000 });
     const regularFiles = new Set(entries.filter(entry => entry.type === "file").map(entry => entry.name));
@@ -122,6 +129,7 @@ function decodeText(bytes: Buffer): string | null {
 
 export const readRepoExec: ToolExecutor = async (args, _env, invocation) => {
   if (!invocation) throw new Error("Path gateway is required");
+  throwIfCancelled(invocation.signal);
   const gateway = invocation.path;
   const rootId = gateway.rootIdForEnv("DATA_ROOT") ?? gateway.rootIdForEnv("WORKSPACE_ROOT");
   if (!rootId) throw new Error("read_repo root is unavailable");
@@ -132,8 +140,9 @@ export const readRepoExec: ToolExecutor = async (args, _env, invocation) => {
   if (!Number.isSafeInteger(maxFiles) || maxFiles < 1 || maxFiles > 500) throw new TypeError("max_files must be an integer from 1 to 500");
 
   return gateway.withInitialCwd(inputPath, { defaultRootId: rootId }, async canonicalRoot => {
-    const files = parseGitEntries(await runGitLsFiles(canonicalRoot));
-    await authorizeTrackedEntries(gateway, canonicalRoot, files, rootId);
+    const files = parseGitEntries(await runGitLsFiles(canonicalRoot, invocation.signal));
+    await authorizeTrackedEntries(gateway, canonicalRoot, files, rootId, invocation.signal);
+    throwIfCancelled(invocation.signal);
 
     let selected = [...files];
     if (args.include !== undefined) {
@@ -166,6 +175,7 @@ export const readRepoExec: ToolExecutor = async (args, _env, invocation) => {
     const limit = level === "headers" ? 30 : 50;
     const results: string[] = [];
     for (const file of selected.slice(0, limit)) {
+      throwIfCancelled(invocation.signal);
       const absoluteFile = path.join(canonicalRoot, ...file.split("/"));
       const result = await gateway.searchFile(absoluteFile, { defaultRootId: rootId, maxBytes: MAX_FILE_BYTES });
       const content = decodeText(result.bytes);
@@ -173,7 +183,7 @@ export const readRepoExec: ToolExecutor = async (args, _env, invocation) => {
       if (level === "headers") {
         results.push(`--- ${file} ---\n${content.split("\n").slice(0, 30).join("\n")}`);
       } else {
-        results.push(`--- ${file} ---\n${content.length > 2000 ? `${content.slice(0, 2000)}\n...(截断)` : content}`);
+        results.push(`--- ${file} ---\n${truncateCodePoints(content, 2000, "\n...(截断)")}`);
       }
     }
     const label = level === "headers" ? "项目文件头" : "项目完整内容";

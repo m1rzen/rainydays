@@ -2,7 +2,7 @@
 // Oracle knowledge snapshot — governed project reader + managed store
 // ===========================================
 
-import type { LLMClient } from "./llm.js";
+import type { LLMClient, LLMFetchTransport } from "./llm.js";
 import { getManagedPathStore } from "./managed-path-store.js";
 import type { ScopedPathGateway } from "./types.js";
 
@@ -28,7 +28,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null;
 }
 
-function validateSnapshot(value: unknown): OracleSnapshot {
+export function validateOracleSnapshot(value: unknown): OracleSnapshot {
   if (!isPlainObject(value)) throw new Error("Oracle snapshot is invalid");
   const { createdAt, projectPath, summary, tree, headers } = value;
   if (typeof createdAt !== "string" || !Number.isFinite(Date.parse(createdAt))
@@ -107,7 +107,7 @@ export async function saveOracle(projectPath: string, gateway: ScopedPathGateway
   if (!rootId) throw new Error("Oracle project root is unavailable");
   const scan = await scanProject(gateway, projectPath, rootId);
   const label = projectPath || ".";
-  const snapshot = validateSnapshot({
+  const snapshot = validateOracleSnapshot({
     createdAt: new Date().toISOString(),
     projectPath: label,
     summary: `项目路径: ${label}\n目录结构:\n${scan.tree}`,
@@ -128,11 +128,11 @@ export async function loadOracle(): Promise<boolean> {
   let parsed: unknown;
   try { parsed = JSON.parse(bytes.toString("utf8")); }
   catch { throw new Error("Oracle snapshot is invalid"); }
-  currentOracle = validateSnapshot(parsed);
+  currentOracle = validateOracleSnapshot(parsed);
   return true;
 }
 
-export async function queryOracle(llm: LLMClient, question: string): Promise<string> {
+export async function queryOracle(llm: LLMClient, question: string, signal?: AbortSignal, transport?: LLMFetchTransport): Promise<string> {
   if (!currentOracle && !(await loadOracle())) {
     return "Oracle 知识库未初始化。请先用 /oracle save 创建快照。";
   }
@@ -145,7 +145,7 @@ export async function queryOracle(llm: LLMClient, question: string): Promise<str
   const response = await llm.chat([
     { role: "system", content: "你是项目知识库 Oracle。根据以下项目快照回答问题。只使用快照中的信息，不要猜测。" },
     { role: "user", content: `项目快照:\n${context}\n\n问题: ${question}` },
-  ]);
+  ], undefined, signal, transport);
   return response.content || "(Oracle 无回复)";
 }
 

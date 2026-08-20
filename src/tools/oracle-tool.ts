@@ -26,8 +26,8 @@ export const oracleQueryDef: ToolDefinition = {
 };
 
 export function createOracleQueryExec(llm: LLMClient): ToolExecutor {
-  return async (args) => {
+  return async (args, _env, invocation) => {
     const question = args.question as string;
-    return await queryOracle(llm, question);
+    return await queryOracle(llm, question, invocation?.signal);
   };
 }

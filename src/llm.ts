@@ -4,8 +4,9 @@
 // 包含：指数退避重试、超时、速率限制处理、错误恢复
 // ===========================================
 
-import OpenAI from "openai";
-import type { LLMConfig, Message, ToolDefinition } from "./types.js";
+import OpenAI, { APIUserAbortError } from "openai";
+import type { LLMConfig, Message, ScopedNetworkGateway, ToolDefinition } from "./types.js";
+import { abortableDelay, cancellationError, cancellationFailure, throwIfCancelled } from "./run-cancellation.js";
 
 /** 最大重试次数 */
 const MAX_RETRIES = 3;
@@ -22,6 +23,12 @@ const RATE_LIMIT_WAIT_MS = 5000;
 /**
  * 判断错误是否可重试
  */
+function llmCancellationFailure(signal: AbortSignal, error: unknown, fallback: string): Error {
+  return error instanceof APIUserAbortError
+    ? cancellationError(signal, fallback)
+    : cancellationFailure(signal, error, fallback);
+}
+
 function isRetryableError(err: unknown): { retry: boolean; rateLimit?: boolean; reason: string } {
   // OpenAI API 错误
   const e = err as { status?: number; code?: string; message?: string; type?: string };
@@ -50,25 +57,38 @@ function isRetryableError(err: unknown): { retry: boolean; rateLimit?: boolean; 
   return { retry: false, reason: e.message || String(err) };
 }
 
-/**
- * 睡眠
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+export type LLMFetchTransport = ScopedNetworkGateway["fetch"];
 
 export class LLMClient {
   private client: OpenAI;
   private model: string;
+  private config: Readonly<LLMConfig>;
 
   constructor(config: LLMConfig) {
-    this.client = new OpenAI({
-      apiKey: config.apiKey,
-      baseURL: config.baseURL,
+    this.config = Object.freeze({ ...config });
+    this.client = this.createClient();
+    this.model = config.model;
+  }
+
+  private createClient(transport?: LLMFetchTransport): OpenAI {
+    const scopedFetch: typeof fetch | undefined = transport
+      ? (input, init) => {
+          const url = typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.href
+              : null;
+          if (url === null) throw new Error("Scoped LLM transport rejected an unsupported Request input");
+          return transport(url, init);
+        }
+      : undefined;
+    return new OpenAI({
+      apiKey: this.config.apiKey,
+      baseURL: this.config.baseURL,
       timeout: REQUEST_TIMEOUT_MS,
       maxRetries: 0, // 我们自己管理重试
+      ...(scopedFetch ? { fetch: scopedFetch } : {}),
     });
-    this.model = config.model;
   }
 
   /**
@@ -77,8 +97,11 @@ export class LLMClient {
    */
   async chat(
     messages: Message[],
-    tools?: ToolDefinition[]
+    tools?: ToolDefinition[],
+    signal?: AbortSignal,
+    transport?: LLMFetchTransport,
   ): Promise<Message> {
+    const client = transport ? this.createClient(transport) : this.client;
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.model,
       messages: messages as OpenAI.Chat.ChatCompletionMessageParam[],
@@ -93,7 +116,8 @@ export class LLMClient {
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const response = await this.client.chat.completions.create(params);
+        if (signal) throwIfCancelled(signal);
+        const response = await client.chat.completions.create(params, signal ? { signal } : undefined);
         const choice = response.choices[0];
         const message = choice.message;
 
@@ -110,6 +134,7 @@ export class LLMClient {
           })),
         };
       } catch (err) {
+        if (signal?.aborted) throw llmCancellationFailure(signal, err, "LLM request was cancelled");
         lastError = err;
         const { retry, rateLimit, reason } = isRetryableError(err);
 
@@ -128,7 +153,8 @@ export class LLMClient {
           `${waitMs}ms 后重试...`
         );
 
-        await sleep(waitMs);
+        if (signal) await abortableDelay(waitMs, signal);
+        else await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
       }
     }
 
@@ -147,7 +173,8 @@ export class LLMClient {
    */
   async *chatStream(
     messages: Message[],
-    tools?: ToolDefinition[]
+    tools?: ToolDefinition[],
+    signal?: AbortSignal
   ): AsyncGenerator<StreamEvent> {
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.model,
@@ -165,12 +192,14 @@ export class LLMClient {
     // 重试只在流建立阶段（create 调用），流开始后不重试
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const stream = await this.client.chat.completions.create(params);
+        if (signal) throwIfCancelled(signal);
+        const stream = await this.client.chat.completions.create(params, signal ? { signal } : undefined);
 
         let fullContent = "";
         const toolCallMap = new Map<number, { id: string; name: string; arguments: string }>();
 
         for await (const chunk of stream) {
+          if (signal) throwIfCancelled(signal);
           const delta = chunk.choices[0]?.delta;
           if (!delta) continue;
 
@@ -215,6 +244,7 @@ export class LLMClient {
         return; // 成功，退出重试循环
 
       } catch (err) {
+        if (signal?.aborted) throw llmCancellationFailure(signal, err, "LLM stream was cancelled");
         lastError = err;
         const { retry, rateLimit, reason } = isRetryableError(err);
 
@@ -231,7 +261,8 @@ export class LLMClient {
           `${waitMs}ms 后重试...`
         );
 
-        await sleep(waitMs);
+        if (signal) await abortableDelay(waitMs, signal);
+        else await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
       }
     }
 

@@ -21,7 +21,7 @@ function validateEntry(entry, label) { exactKeys(entry, exactEntryKeys, label); 
 export function validateSec03ExecutionPolicy(policy) {
   exactKeys(policy, ["schemaVersion", "task", "architectureSha256", "domain", "sourceRoots", "extensions", "governedEntryPaths", "governedAdapters", "fixedPurposeProduction", "fixedDynamicLoads", "nativeHostAdapters", "canonicalPayloadSha256"], "SEC-03 policy");
   assert.equal(policy.schemaVersion, 1); assert.equal(policy.task, "SEC-03"); assert.equal(policy.architectureSha256, "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe"); assert.equal(policy.domain, "mini-lux/sec03/restricted-execution-dialect/v1");
-  assert.deepEqual(policy.sourceRoots, ["src/", "electron/", "scripts/", "tests/", "native/", "public/**/*.html"]); assert.deepEqual(policy.extensions, [".ts", ".tsx", ".js", ".cjs", ".mjs", ".cpp", ".cc", ".h", ".hpp", ".html"]);
+  assert.deepEqual(policy.sourceRoots, ["src/", "electron/", "scripts/", "tests/", "native/", "public/index.html", "public/renderer.js"]); assert.deepEqual(policy.extensions, [".ts", ".tsx", ".js", ".cjs", ".mjs", ".cpp", ".cc", ".h", ".hpp", ".html"]);
   assert.equal(policy.fixedDynamicLoads.length, 0, "computed/dynamic loaders cannot be allowlisted in SEC-03 finite dialect");
   for (const [name, entries] of [["governed adapter", policy.governedAdapters], ["fixed-purpose allowlist item", policy.fixedPurposeProduction], ["native-host adapter", policy.nativeHostAdapters]]) for (const entry of entries) validateEntry(entry, name);
   for (const entry of policy.nativeHostAdapters) assert.notEqual(sec03ExecutionClass(entry.sourcePath), "build-test", `build-test source cannot be approved as a native-host adapter: ${entry.sourcePath}`);

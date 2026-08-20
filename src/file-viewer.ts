@@ -4,14 +4,13 @@
 
 import { spawn } from "node:child_process";
 import path from "node:path";
-import { Worker } from "node:worker_threads";
 import iconv from "iconv-lite";
 import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 import type { RuntimeAuthority } from "./capability-broker.js";
 import { PathDeniedError, type PathAuditIdentity, type PathAuthority, type PathDirectoryEnrollmentLease, type PathQualifiedResult, type PathReadLease } from "./path-policy.js";
 import { pathPolicy } from "./path-runtime.js";
 import { assertResourceOwner, registerOwnedResource, type ResourceOwner } from "./resource-owner.js";
-import type { ParseResult } from "./tools/parsers.js";
+import { parseDocumentIsolated } from "./document-parser.js";
 
 export type FileRootId = "workspace" | "department" | "output";
 export type PreviewKind = "text" | "markdown" | "office" | "image" | "pdf" | "unsupported";
@@ -87,71 +86,6 @@ async function withTimeout<T>(promise: Promise<T>, label: string, timeoutMs = OP
   } finally {
     if (timer) clearTimeout(timer);
   }
-}
-
-async function parseDocumentIsolated(fileName: string, bytes: Buffer, owner: ResourceOwner): Promise<ParseResult> {
-  assertResourceOwner(owner);
-  const codeLease = await getBootstrapPathStore().openDocumentParserWorker();
-  try {
-    await codeLease.assertCurrent("beforeProcessSpawn");
-  } catch (error) {
-    await codeLease.close();
-    throw error;
-  }
-  return new Promise<ParseResult>((resolve, reject) => {
-    let worker: Worker;
-    try {
-      worker = new Worker(codeLease.canonicalPath, { workerData: { fileName, bytes } });
-    } catch (error) {
-      void codeLease.close();
-      reject(error);
-      return;
-    }
-    let terminated = false;
-    let codeLeaseClosed = false;
-    const closeCodeLease = async (): Promise<void> => {
-      if (codeLeaseClosed) return;
-      codeLeaseClosed = true;
-      await codeLease.close();
-    };
-    const terminate = async (): Promise<void> => {
-      if (terminated) return;
-      terminated = true;
-      try { await worker.terminate(); }
-      finally { await closeCodeLease(); }
-    };
-    let unregister: () => void = () => undefined;
-    try {
-      unregister = registerOwnedResource(owner, terminate);
-    } catch (error) {
-      void terminate();
-      reject(error);
-      return;
-    }
-    const timer = setTimeout(() => {
-      settle(() => reject(new Error(`解析 Office 文件超时（${OPERATION_TIMEOUT_MS / 1000}秒）`)));
-    }, OPERATION_TIMEOUT_MS);
-    timer.unref?.();
-    let settled = false;
-    const settle = (action: () => void) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      unregister();
-      void terminate();
-      action();
-    };
-    worker.once("online", () => {
-      void closeCodeLease().catch(error => settle(() => reject(error)));
-    });
-    worker.once("message", (message: { ok: boolean; result?: ParseResult; error?: string }) => {
-      settle(() => message.ok && message.result ? resolve(message.result) : reject(new Error(message.error || "Office 文件解析失败")));
-    });
-    worker.once("error", error => settle(() => reject(error)));
-    worker.once("exit", code => {
-      if (code !== 0) settle(() => reject(new Error(`Office 解析 Worker 异常退出（${code}）`)));
-    });
-  });
 }
 
 function detectText(buffer: Buffer): string {

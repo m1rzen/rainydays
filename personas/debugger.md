@@ -18,9 +18,11 @@ tools:
   - get_current_time
   - remember
   - recall
-  - create_tasks
-  - update_task
-  - list_tasks
+  - task_create
+  - task_update
+  - task_list
+  - task_get
+  - task_delete
   - ask_user
 skills:
   - coding

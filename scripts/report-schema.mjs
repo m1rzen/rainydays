@@ -19,10 +19,19 @@ const packagedPathPolicyAssertionIds = Object.freeze([
   "terminal-cwd-denied-before-spawn",
 ]);
 const personaChains = Object.freeze({
+  "DATA-01": Object.freeze(["explorer", "architect", "developer", "debugger", "reviewer"]),
   "GOV-03": Object.freeze(["planner", "architect", "developer", "debugger", "reviewer"]),
   "SEC-01": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
   "SEC-02": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
   "SEC-03": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
+  "SEC-06": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
+  "RT-01": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
+  "RT-04": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
+  "RT-05": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
+  "RT-06": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
+  "RT-07": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
+  "RT-08": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
+  "RT-09": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
 });
 
 const sec03ArchitectureSha256 = "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe";
@@ -147,11 +156,12 @@ export function validateTap(value) {
   }
   assert(value.nestedFailedTestIds.length <= 64, "tap.nestedFailedTestIds exceeds the bounded diagnostic limit");
   assert(value.failedStackSiteIds.length <= 64, "tap.failedStackSiteIds exceeds the bounded diagnostic limit");
-  if (value.failed !== null) {
+  if (value.failed !== null && value.cancelled !== null) {
     const identifiedFailures = value.failedTestIds.length + value.nestedFailedTestIds.length;
-    assert(identifiedFailures <= value.failed, "tap failure identifier count exceeds tap.failed");
+    const diagnosticFailures = value.failed + value.cancelled;
+    assert(identifiedFailures <= diagnosticFailures, "tap failure identifier count exceeds tap.failed plus tap.cancelled");
     if (value.nestedFailedTestIds.length < 64) {
-      assert.equal(identifiedFailures, value.failed, "tap failure identifier count differs from tap.failed");
+      assert.equal(identifiedFailures, diagnosticFailures, "tap failure identifier count differs from tap.failed plus tap.cancelled");
     }
   }
 }
@@ -191,11 +201,12 @@ function validatePackageBinding(value, { passed = false, sinkIdentity = null } =
   assert(Array.isArray(value.native.binaries) && (value.native.binaries.length === 0 || value.native.binaries.length === 2), "details.packageBinding.native.binaries is invalid");
   const nativePaths = ["dist/native/sandbox-host.exe", "dist/native/sandbox-launcher.node"];
   for (const [index, binary] of value.native.binaries.entries()) {
-    exactKeys(binary, ["path", "bytes", "sha256", "machine"], `details.packageBinding.native.binaries[${index}]`);
+    exactKeys(binary, ["path", "bytes", "sha256", "machine", "importedDllAllowlistDigest"], `details.packageBinding.native.binaries[${index}]`);
     assert.equal(binary.path, nativePaths[index], `details.packageBinding.native.binaries[${index}].path is invalid`);
     assert(Number.isSafeInteger(binary.bytes) && binary.bytes > 0, `details.packageBinding.native.binaries[${index}].bytes is invalid`);
     assert(sha256Pattern.test(binary.sha256), `details.packageBinding.native.binaries[${index}].sha256 is invalid`);
     assert.equal(binary.machine, "AMD64", `details.packageBinding.native.binaries[${index}].machine is invalid`);
+    assert(sha256Pattern.test(binary.importedDllAllowlistDigest), `details.packageBinding.native.binaries[${index}].importedDllAllowlistDigest is invalid`);
   }
   for (const key of ["authoredFileCount", "dependencyFileCount"]) assert(value[key] === null || (Number.isSafeInteger(value[key]) && value[key] >= 0), `details.packageBinding.${key} is invalid`);
   exactKeys(value.unpacked, ["fileCount", "executableFileCount"], "details.packageBinding.unpacked");

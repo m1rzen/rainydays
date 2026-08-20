@@ -60,7 +60,32 @@
     "test": "node scripts/run-tests.mjs --profile full",
     "governance:sec03:generate": "node scripts/generate-sec03-resolved-manifest.mjs",
     "governance:sec03:check": "node scripts/generate-sec03-resolved-manifest.mjs --check",
-    "test:sec03:quick": "node scripts/run-tests.mjs --task SEC-03 --profile quick"
+    "governance:data01:generate": "node scripts/generate-data01-resolved-manifest.mjs",
+    "governance:data01:check": "node scripts/generate-data01-resolved-manifest.mjs --check",
+    "governance:sec06:generate": "node scripts/generate-sec06-resolved-manifest.mjs",
+    "governance:sec06:check": "node scripts/generate-sec06-resolved-manifest.mjs --check",
+    "governance:rt01:generate": "node scripts/generate-rt01-resolved-manifest.mjs",
+    "governance:rt01:check": "node scripts/generate-rt01-resolved-manifest.mjs --check",
+    "test:rt01": "node scripts/run-tests.mjs --task RT-01 --profile full",
+    "governance:rt04:generate": "node scripts/generate-rt04-resolved-manifest.mjs",
+    "governance:rt04:check": "node scripts/generate-rt04-resolved-manifest.mjs --check",
+    "test:rt04": "node scripts/run-tests.mjs --task RT-04 --profile full",
+    "governance:rt05:generate": "node scripts/generate-rt05-resolved-manifest.mjs",
+    "governance:rt05:check": "node scripts/generate-rt05-resolved-manifest.mjs --check",
+    "test:rt05": "node scripts/run-tests.mjs --task RT-05 --profile full",
+    "governance:rt06:generate": "node scripts/generate-rt06-resolved-manifest.mjs",
+    "governance:rt06:check": "node scripts/generate-rt06-resolved-manifest.mjs --check",
+    "test:rt06": "node scripts/run-tests.mjs --task RT-06 --profile full",
+    "governance:rt07:generate": "node scripts/generate-rt07-resolved-manifest.mjs",
+    "governance:rt07:check": "node scripts/generate-rt07-resolved-manifest.mjs --check",
+    "test:rt07": "node scripts/run-tests.mjs --task RT-07 --profile full",
+    "governance:rt08:generate": "node scripts/generate-rt08-resolved-manifest.mjs",
+    "governance:rt08:check": "node scripts/generate-rt08-resolved-manifest.mjs --check",
+    "test:rt08": "node scripts/run-tests.mjs --task RT-08 --profile full",
+    "test:sec03:quick": "node scripts/run-tests.mjs --task SEC-03 --profile quick",
+    "governance:rt09:generate": "node scripts/generate-rt09-resolved-manifest.mjs",
+    "governance:rt09:check": "node scripts/generate-rt09-resolved-manifest.mjs --check",
+    "test:rt09": "node scripts/run-tests.mjs --task RT-09 --profile full"
   },
   "dependencies": {
     "@xenova/transformers": "^2.17.2",
@@ -145,7 +170,9 @@
       "target": "nsis",
       "icon": "public/icon.png",
       "signtoolOptions": {
-        "signingHashAlgorithms": ["sha256"],
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
         "rfc3161TimeStampServer": "http://timestamp.digicert.com"
       }
     },

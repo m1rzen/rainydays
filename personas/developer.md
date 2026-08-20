@@ -19,14 +19,22 @@ tools:
   - script
   - get_current_time
   - subagent
+  - subagent_wait
+  - subagent_output
+  - subagent_peek
+  - subagent_post
+  - subagent_stop
+  - subagent_list
   - curate
   - ask_user
   - remember
   - recall
   - list_memories
-  - create_tasks
-  - update_task
-  - list_tasks
+  - task_create
+  - task_update
+  - task_list
+  - task_get
+  - task_delete
 skills:
   - coding
 env:

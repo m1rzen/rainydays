@@ -6,6 +6,7 @@ import type { CapabilityContext, ChildCapabilityRequest, ToolPolicy } from "./ca
 import type { ResourceOwner } from "./resource-owner.js";
 import type { ScopedExecutionGateway } from "./execution-runtime.js";
 import type { ExecutionRootLease, PathCreateResult, PathDirectoryEntry, PathReadResult, PathReplaceResult, PathTransformResult, PathWatchEvent } from "./path-policy.js";
+import type { SecurityAuditJournal } from "./security-audit-journal.js";
 
 /** 对话角色 */
 export type Role = "system" | "user" | "assistant" | "tool";
@@ -38,6 +39,8 @@ export interface ToolDefinition {
       type: "object";
       properties: Record<string, unknown>;
       required?: string[];
+      anyOf?: Array<{ required: string[] }>;
+      additionalProperties?: boolean;
     };
   };
 }
@@ -107,15 +110,36 @@ export interface ScopedPathGateway {
   ) => Promise<PathReplaceResult<T>>;
 }
 
+export interface ScopedNetworkGateway {
+  readonly fetch: (url: string, init?: RequestInit) => Promise<Response>;
+}
+
 export interface ToolInvocationServices {
+  /** Authentic Broker context from which detached children may attenuate. */
+  readonly capabilityContext: CapabilityContext;
+  /** Exact parent run cancellation scope. Nested tools inherit this signal unchanged. */
+  readonly signal: AbortSignal;
   readonly path: ScopedPathGateway;
+  readonly network: ScopedNetworkGateway;
   readonly execution: ScopedExecutionGateway;
   readonly resourceOwner: ResourceOwner;
   readonly deriveChild: (request: ChildCapabilityRequest) => CapabilityContext;
   readonly finishChild: (context: CapabilityContext) => void;
+  readonly deriveDetachedChild: (request: ChildCapabilityRequest, runId: string) => CapabilityContext;
+  readonly finishDetachedChild: (context: CapabilityContext) => Promise<void>;
+  readonly executeDetachedTool: (
+    context: CapabilityContext,
+    name: string,
+    args: Record<string, unknown> | string,
+    toolCallId: string,
+    signal: AbortSignal,
+  ) => Promise<string>;
+  readonly createDetachedNetwork: (context: CapabilityContext, signal: AbortSignal) => ScopedNetworkGateway;
+  readonly getUnattendedChildToolNames: () => readonly string[];
   readonly listCurrentToolDefinitions: () => ToolDefinition[];
   readonly getToolDefinitions: (context: CapabilityContext) => ToolDefinition[];
-  readonly executeTool: (context: CapabilityContext, name: string, args: Record<string, unknown>) => Promise<string>;
+  readonly auditContext: Readonly<{ journal: SecurityAuditJournal; parentRequestId: string }> | null;
+  readonly executeTool: (context: CapabilityContext, name: string, args: Record<string, unknown> | string, toolCallId: string) => Promise<string>;
 }
 
 /** 工具的实际执行函数 */
@@ -141,6 +165,27 @@ export interface LLMConfig {
   model: string;
 }
 
+export type ToolPipelineStage = "schema" | "capability" | "loop" | "approval" | "policy" | "execute" | "output" | "audit";
+export type ToolPipelineStageState = "passed" | "denied" | "error" | "skipped" | "truncated";
+export type ToolOutcomeStatus = "success" | "denied" | "error" | "timeout" | "cancelled";
+
+export interface ToolPipelineStageRecord {
+  readonly stage: ToolPipelineStage;
+  readonly state: ToolPipelineStageState;
+  readonly code: string | null;
+}
+
+export interface ToolExecutionOutcome {
+  readonly status: ToolOutcomeStatus;
+  readonly content: string;
+  readonly code: string | null;
+  /** Bytes actually delivered and committed to the audit result. */
+  readonly outputBytes: number;
+  /** Executor bytes observed before centralized output control. */
+  readonly originalOutputBytes: number;
+  readonly truncated: boolean;
+}
+
 /** agent 运行中的一步 */
 export interface AgentStep {
   type: "thinking" | "tool_call" | "tool_result" | "answer_chunk" | "answer_done" | "error"
@@ -148,6 +193,12 @@ export interface AgentStep {
   content: string;
   toolName?: string;
   toolArgs?: Record<string, unknown>;
+  toolStatus?: ToolOutcomeStatus;
+  toolCode?: string | null;
+  toolOutputBytes?: number;
+  toolOriginalOutputBytes?: number;
+  toolOutputTruncated?: boolean;
+  toolStages?: readonly ToolPipelineStageRecord[];
   /** 任务相关事件时的任务快照 */
   tasks?: TaskSnapshot[];
   timestamp: number;
@@ -157,14 +208,20 @@ export interface AgentStep {
 // 任务系统
 // ===========================================
 
-export type TaskStatus = "pending" | "in_progress" | "completed" | "failed";
+export type TaskStatus = "pending" | "in_progress" | "completed";
 
-/** 任务快照（给前端展示用） */
+/** Task DAG 快照（给前端/Agent 使用；ID 在一个 Session 内唯一）。 */
 export interface TaskSnapshot {
-  id: number;
-  subject: string;
-  status: TaskStatus;
-  activeForm: string | null;
+  readonly id: string;
+  readonly subject: string;
+  readonly description: string | null;
+  readonly status: TaskStatus;
+  readonly activeForm: string | null;
+  readonly owner: string | null;
+  readonly metadata: Readonly<Record<string, unknown>>;
+  readonly blockedBy: readonly string[];
+  readonly blocks: readonly string[];
+  readonly blocked: boolean;
 }
 
 // ===========================================

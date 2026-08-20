@@ -13,8 +13,9 @@
 // ===========================================
 
 import type { Message } from "./types.js";
-import type { LLMClient } from "./llm.js";
-import { insertMessage, getMessagesBySession } from "./db.js";
+import type { LLMClient, LLMFetchTransport } from "./llm.js";
+import { isRunCancellation, throwIfCancelled } from "./run-cancellation.js";
+import { insertMessage, getMessagesBySession, withTransaction } from "./db.js";
 
 // --- 常量 ---
 
@@ -188,30 +189,37 @@ export class ConversationMemory {
     this.messages.unshift({ role: "system", content: prompt });
   }
 
-  /** 添加一条消息（同时写入内存和数据库） */
+  /** 添加一条消息（同时写入内存和数据库）。 */
   add(message: Message): void {
-    // 工具结果在存入内存前压缩（但数据库存完整内容）
-    const memoryMsg: Message = { ...message };
-    if (message.role === "tool") {
-      memoryMsg.content = compressToolResult(message.content);
-    }
+    this.addMany([message]);
+  }
 
-    this.messages.push(memoryMsg);
-
-    // 基本的消息数量限制
-    this.enforceMessageLimit();
-
-    // 持久化到数据库（存完整内容，不压缩）
-    if (this.sessionId && message.role !== "system") {
-      insertMessage({
-        session_id: this.sessionId,
-        role: message.role,
-        content: message.content,
-        tool_calls: message.tool_calls ? JSON.stringify(message.tool_calls) : null,
-        tool_call_id: message.tool_call_id || null,
-        created_at: new Date().toISOString(),
+  /** 原子提交一组消息，避免取消时留下 assistant/tool 半条回合。 */
+  addMany(messages: readonly Message[]): void {
+    if (!Array.isArray(messages) || messages.length === 0) return;
+    const memoryMessages = messages.map((message) => ({
+      ...message,
+      content: message.role === "tool" ? compressToolResult(message.content) : message.content,
+    }));
+    if (this.sessionId) {
+      const sessionId = this.sessionId;
+      const createdAt = new Date().toISOString();
+      withTransaction(() => {
+        for (const message of messages) {
+          if (message.role === "system") continue;
+          insertMessage({
+            session_id: sessionId,
+            role: message.role,
+            content: message.content,
+            tool_calls: message.tool_calls ? JSON.stringify(message.tool_calls) : null,
+            tool_call_id: message.tool_call_id || null,
+            created_at: createdAt,
+          });
+        }
       });
     }
+    this.messages.push(...memoryMessages);
+    this.enforceMessageLimit();
   }
 
   /**
@@ -243,7 +251,8 @@ export class ConversationMemory {
    * @param llm LLM 客户端
    * @returns 是否执行了压缩
    */
-  async compact(llm: LLMClient): Promise<boolean> {
+  async compact(llm: LLMClient, signal?: AbortSignal, transport?: LLMFetchTransport): Promise<boolean> {
+    if (signal) throwIfCancelled(signal);
     const tokens = totalTokens(this.messages);
     if (tokens <= MAX_CONTEXT_TOKENS) return false;
 
@@ -292,7 +301,7 @@ export class ConversationMemory {
       const summaryResponse = await llm.chat([
         { role: "system", content: SUMMARIZER_SYSTEM },
         { role: "user", content: summaryPrompt },
-      ]);
+      ], undefined, signal, transport);
 
       if (!summaryResponse.content) {
         throw new Error("摘要 LLM 返回空内容");
@@ -304,6 +313,7 @@ export class ConversationMemory {
         content: SUMMARY_MARKER + summaryResponse.content,
       };
 
+      if (signal) throwIfCancelled(signal);
       this.messages = [...mainSystem, newSummary, ...recent];
 
       console.log(
@@ -314,6 +324,7 @@ export class ConversationMemory {
 
       return true;
     } catch (err) {
+      if (isRunCancellation(err) || signal?.aborted) throw err;
       // LLM 摘要失败，回退到删除策略
       console.error("⚠️ 上下文摘要失败，回退到删除:", err instanceof Error ? err.message : String(err));
       this.fallbackDelete(mainSystem, otherMsgs, recent);

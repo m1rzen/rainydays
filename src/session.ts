@@ -16,12 +16,15 @@ import {
   getMessagesUpTo,
   insertMessage,
   searchAcrossSessions,
+  getPinsBySession,
+  insertPin,
   type SessionRow,
   type MessageRow,
   type SearchResultRow,
   withTransaction,
 } from "./db.js";
 import { APP_VERSION, BUILD_ID, SESSION_EXPORT_VERSION } from "./version.js";
+import { copyTasksForFork } from "./task.js";
 import { registerSession, unregisterSession, postFromSession, type LinkIdentity } from "./link.js";
 
 const linkIdentities = new Map<string, LinkIdentity>();
@@ -29,7 +32,8 @@ const linkIdentities = new Map<string, LinkIdentity>();
 /** 将持久 Session 绑定到本进程私有的 Link 投递能力。 */
 export function ensureSessionLinkRegistration(id: string, title: string): void {
   const identity = linkIdentities.get(id) || Object.freeze({ sessionId: id, capability: Symbol(`mini-lux-link:${id}`) });
-  if (!registerSession(id, title, identity.capability)) throw new Error(`Link Session 身份冲突: ${id}`);
+  if (!registerSession(id, title, identity.capability))
+    throw new Error(`Link Session 身份冲突: ${id}`);
   linkIdentities.set(id, identity);
 }
 
@@ -43,14 +47,13 @@ export function postSessionLinkMessage(fromSessionId: string, to: string, conten
 /** 创建新会话 */
 export function createSession(persona: PersonaDefinition, title?: string): SessionRow {
   const now = new Date().toISOString();
-  const session: SessionRow = {
+  const session = {
     id: crypto.randomUUID(),
     persona_name: persona.name,
     title: title || "新对话",
     created_at: now,
     updated_at: now,
   };
-
   insertSession(session);
   ensureSessionLinkRegistration(session.id, session.title);
   return session;
@@ -91,7 +94,6 @@ export function touch(id: string): void {
  */
 export function loadSessionMessages(sessionId: string): Message[] {
   const rows = getMessagesBySession(sessionId);
-
   return rows.map((row) => {
     const msg: Message = {
       role: row.role as Message["role"],
@@ -117,9 +119,37 @@ export function loadSessionMessages(sessionId: string): Message[] {
 export function autoGenerateTitle(sessionId: string, firstUserMessage: string): string {
   const title = firstUserMessage.slice(0, 30).trim();
   if (title && title.length > 0) {
-    renameSession(sessionId, title + (firstUserMessage.length > 30 ? "..." : ""));
+    const stored = title + (firstUserMessage.length > 30 ? "..." : "");
+    renameSession(sessionId, stored);
+    return stored;
   }
   return title;
+}
+
+/**
+ * 后台使用 LLM 为首条消息生成语义标题；失败时保留同步回退标题，不影响会话与运行。
+ * 仅当当前标题仍是回退标题或默认标题时才会覆盖，不会覆盖用户手动命名。
+ */
+export async function generateSemanticSessionTitle(
+  llm: import("./llm.js").LLMClient,
+  sessionId: string,
+  firstUserMessage: string,
+  fallbackTitle: string,
+): Promise<void> {
+  try {
+    const message = await llm.chat([
+      { role: "system", content: "你是会话标题生成器。用不超过 20 个字概括用户请求的主题，只输出标题文本本身：不要引号、不要句号结尾、不要任何解释。" },
+      { role: "user", content: firstUserMessage.slice(0, 2000) },
+    ]);
+    const title = (message.content ?? "").trim().replace(/^["‘“]+|["’”]+$/gu, "").slice(0, 50);
+    if (!title) return;
+    const current = getSessionInfo(sessionId);
+    if (!current) return;
+    if (current.title !== fallbackTitle && current.title !== "新对话") return;
+    renameSession(sessionId, title);
+  } catch {
+    // 语义标题生成失败：保留回退标题
+  }
 }
 
 // ===========================================
@@ -161,56 +191,29 @@ export function forkSession(
           created_at: msg.created_at,
         });
       }
+      copyTasksForFork(sourceSessionId, newSession.id);
+      for (const pin of getPinsBySession(sourceSessionId)) {
+        insertPin(newSession.id, pin.content);
+      }
       touchSession(newSession.id);
       return newSession;
     });
   } catch (error) {
-    if (registeredSessionId) unregisterSession(registeredSessionId);
+    if (registeredSessionId) {
+      linkIdentities.delete(registeredSessionId);
+      unregisterSession(registeredSessionId);
+    }
     throw error;
   }
 }
 
-// ===========================================
-// 导出 / 导入
-// ===========================================
-
-export interface ExportData {
-  format: "mini-lux-session";
-  formatVersion: number;
-  producer: {
-    appVersion: string;
-    buildId: string;
-  };
-  exportedAt: string;
-  session: {
-    id: string;
-    persona_name: string;
-    title: string;
-    created_at: string;
-    updated_at: string;
-  };
-  messages: MessageRow[];
-}
-
-interface NormalizedImport {
-  title: string;
-  messages: Array<{
-    role: string;
-    content: string;
-    tool_calls: string | null;
-    tool_call_id: string | null;
-    created_at: string;
-    declaredToolCallIds: string[];
-  }>;
-}
-
 export class SessionImportError extends Error {
-  constructor(
-    message: string,
-    public readonly code: string,
-    public readonly foundVersion?: unknown,
-  ) {
+  readonly code: string;
+  readonly foundVersion: unknown;
+  constructor(message: string, code: string, foundVersion?: unknown) {
     super(message);
+    this.code = code;
+    this.foundVersion = foundVersion;
     this.name = "SessionImportError";
   }
 }
@@ -229,7 +232,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function requireExactKeys(value: Record<string, unknown>, allowed: readonly string[], field: string): void {
+function requireExactKeys(value: Record<string, unknown>, allowed: string[], field: string): void {
   const allowedSet = new Set(allowed);
   const missing = allowed.filter((key) => !Object.hasOwn(value, key));
   const extra = Object.keys(value).filter((key) => !allowedSet.has(key));
@@ -247,14 +250,18 @@ function requireString(value: unknown, field: string, maxLength: number, allowEm
 
 function requireTimestamp(value: unknown, field: string): string {
   const timestamp = requireString(value, field, 100);
-  if (Number.isNaN(Date.parse(timestamp))) throw new SessionImportError(`导入时间无效: ${field}`, "INVALID_SESSION_EXPORT");
+  if (Number.isNaN(Date.parse(timestamp)))
+    throw new SessionImportError(`导入时间无效: ${field}`, "INVALID_SESSION_EXPORT");
   return timestamp;
 }
 
 function validateToolCalls(value: string, field: string): string[] {
   let parsed: unknown;
-  try { parsed = JSON.parse(value); }
-  catch { throw new SessionImportError(`导入工具调用 JSON 无效: ${field}`, "INVALID_SESSION_EXPORT"); }
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new SessionImportError(`导入工具调用 JSON 无效: ${field}`, "INVALID_SESSION_EXPORT");
+  }
   if (!Array.isArray(parsed) || parsed.length > MAX_TOOL_CALLS_PER_MESSAGE) {
     throw new SessionImportError(`导入工具调用结构无效: ${field}`, "INVALID_SESSION_EXPORT");
   }
@@ -267,7 +274,8 @@ function validateToolCalls(value: string, field: string): string[] {
     requireExactKeys(call, ["id", "type", "function"], `${field}[${index}]`);
     requireExactKeys(call.function, ["name", "arguments"], `${field}[${index}].function`);
     const id = requireString(call.id, `${field}[${index}].id`, MAX_TOOL_CALL_ID_LENGTH);
-    if (ids.includes(id)) throw new SessionImportError(`导入工具调用 ID 重复: ${field}[${index}]`, "INVALID_SESSION_EXPORT");
+    if (ids.includes(id))
+      throw new SessionImportError(`导入工具调用 ID 重复: ${field}[${index}]`, "INVALID_SESSION_EXPORT");
     ids.push(id);
     requireString(call.function.name, `${field}[${index}].function.name`, 256);
     const argumentsJson = requireString(call.function.arguments, `${field}[${index}].function.arguments`, MAX_TOOL_CALLS_LENGTH, true);
@@ -281,31 +289,37 @@ function validateToolCalls(value: string, field: string): string[] {
   return ids;
 }
 
-function normalizeMessages(value: unknown, exportedSessionId: string): NormalizedImport["messages"] {
+function normalizeMessages(value: unknown, exportedSessionId: string) {
   if (!Array.isArray(value) || value.length > MAX_IMPORT_MESSAGES) {
     throw new SessionImportError(`导入消息数量无效，最多支持 ${MAX_IMPORT_MESSAGES} 条`, "INVALID_SESSION_EXPORT");
   }
-  const messages = value.map((raw, index) => {
+  const messages = value.map((raw: Record<string, unknown>, index: number) => {
     if (!isRecord(raw)) throw new SessionImportError(`导入消息无效: messages[${index}]`, "INVALID_SESSION_EXPORT");
     requireExactKeys(raw, ["id", "session_id", "role", "content", "tool_calls", "tool_call_id", "created_at"], `messages[${index}]`);
-    if (!Number.isInteger(raw.id) || Number(raw.id) < 1) throw new SessionImportError(`导入消息 ID 无效: messages[${index}].id`, "INVALID_SESSION_EXPORT");
+    if (!Number.isInteger(raw.id) || Number(raw.id) < 1)
+      throw new SessionImportError(`导入消息 ID 无效: messages[${index}].id`, "INVALID_SESSION_EXPORT");
     const messageSessionId = requireString(raw.session_id, `messages[${index}].session_id`, 200);
-    if (messageSessionId !== exportedSessionId) throw new SessionImportError(`导入消息会话 ID 不匹配: messages[${index}]`, "INVALID_SESSION_EXPORT");
+    if (messageSessionId !== exportedSessionId)
+      throw new SessionImportError(`导入消息会话 ID 不匹配: messages[${index}]`, "INVALID_SESSION_EXPORT");
     const role = requireString(raw.role, `messages[${index}].role`, 32);
-    if (!ALLOWED_ROLES.has(role)) throw new SessionImportError(`导入消息角色无效: ${role}`, "INVALID_SESSION_EXPORT");
+    if (!ALLOWED_ROLES.has(role))
+      throw new SessionImportError(`导入消息角色无效: ${role}`, "INVALID_SESSION_EXPORT");
     const content = requireString(raw.content, `messages[${index}].content`, MAX_CONTENT_LENGTH, true);
     let toolCalls: string | null = null;
     let declaredToolCallIds: string[] = [];
     if (raw.tool_calls !== null && raw.tool_calls !== undefined) {
-      if (role !== "assistant") throw new SessionImportError(`只有 assistant 消息可包含 tool_calls: messages[${index}]`, "INVALID_SESSION_EXPORT");
+      if (role !== "assistant")
+        throw new SessionImportError(`只有 assistant 消息可包含 tool_calls: messages[${index}]`, "INVALID_SESSION_EXPORT");
       toolCalls = requireString(raw.tool_calls, `messages[${index}].tool_calls`, MAX_TOOL_CALLS_LENGTH);
       declaredToolCallIds = validateToolCalls(toolCalls, `messages[${index}].tool_calls`);
     }
     const toolCallId = raw.tool_call_id === null || raw.tool_call_id === undefined
       ? null
       : requireString(raw.tool_call_id, `messages[${index}].tool_call_id`, MAX_TOOL_CALL_ID_LENGTH);
-    if (toolCallId !== null && role !== "tool") throw new SessionImportError(`只有 tool 消息可包含 tool_call_id: messages[${index}]`, "INVALID_SESSION_EXPORT");
-    if (role === "tool" && toolCallId === null) throw new SessionImportError(`tool 消息缺少 tool_call_id: messages[${index}]`, "INVALID_SESSION_EXPORT");
+    if (toolCallId !== null && role !== "tool")
+      throw new SessionImportError(`只有 tool 消息可包含 tool_call_id: messages[${index}]`, "INVALID_SESSION_EXPORT");
+    if (role === "tool" && toolCallId === null)
+      throw new SessionImportError(`tool 消息缺少 tool_call_id: messages[${index}]`, "INVALID_SESSION_EXPORT");
     return {
       role,
       content,
@@ -319,7 +333,8 @@ function normalizeMessages(value: unknown, exportedSessionId: string): Normalize
   const consumed = new Set<string>();
   for (const [index, message] of messages.entries()) {
     for (const id of message.declaredToolCallIds) {
-      if (declared.has(id)) throw new SessionImportError(`导入工具调用 ID 跨消息重复: messages[${index}]`, "INVALID_SESSION_EXPORT");
+      if (declared.has(id))
+        throw new SessionImportError(`导入工具调用 ID 跨消息重复: messages[${index}]`, "INVALID_SESSION_EXPORT");
       declared.add(id);
     }
     if (message.tool_call_id !== null) {
@@ -336,7 +351,7 @@ function normalizeMessages(value: unknown, exportedSessionId: string): Normalize
 }
 
 /** 验证并将当前或旧版导出格式归一化到 formatVersion 1。 */
-export function normalizeSessionImport(data: unknown): NormalizedImport {
+export function normalizeSessionImport(data: unknown) {
   if (!isRecord(data)) throw new SessionImportError("导入数据必须是对象", "INVALID_SESSION_EXPORT");
   const isCurrent = data.format === "mini-lux-session";
   const isLegacy = data.version === "1.0" && data.format === undefined && data.formatVersion === undefined;
@@ -348,11 +363,7 @@ export function normalizeSessionImport(data: unknown): NormalizedImport {
     throw new SessionImportError("无法识别的会话导出格式", "UNSUPPORTED_SESSION_EXPORT", found);
   }
   if (isCurrent && data.formatVersion !== SESSION_EXPORT_VERSION) {
-    throw new SessionImportError(
-      `会话导出版本不兼容: 当前 ${String(data.formatVersion)}，支持 ${SESSION_EXPORT_VERSION}`,
-      "UNSUPPORTED_SESSION_EXPORT",
-      data.formatVersion,
-    );
+    throw new SessionImportError(`会话导出版本不兼容: 当前 ${String(data.formatVersion)}，支持 ${SESSION_EXPORT_VERSION}`, "UNSUPPORTED_SESSION_EXPORT", data.formatVersion);
   }
   requireExactKeys(
     data,
@@ -384,6 +395,24 @@ export function normalizeSessionImport(data: unknown): NormalizedImport {
     title,
     messages: normalizeMessages(data.messages, exportedSessionId),
   };
+}
+
+export interface ExportData {
+  format: "mini-lux-session";
+  formatVersion: number;
+  producer: {
+    appVersion: string;
+    buildId: string;
+  };
+  exportedAt: string;
+  session: {
+    id: string;
+    persona_name: string;
+    title: string;
+    created_at: string;
+    updated_at: string;
+  };
+  messages: MessageRow[];
 }
 
 /** 导出会话为当前可序列化格式。 */
@@ -428,7 +457,10 @@ export function importSession(data: unknown, persona: PersonaDefinition): Sessio
       return newSession;
     });
   } catch (error) {
-    if (registeredSessionId) unregisterSession(registeredSessionId);
+    if (registeredSessionId) {
+      linkIdentities.delete(registeredSessionId);
+      unregisterSession(registeredSessionId);
+    }
     throw error;
   }
 }

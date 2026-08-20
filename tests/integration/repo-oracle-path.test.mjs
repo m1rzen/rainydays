@@ -95,9 +95,12 @@ await fs.mkdir(data, { recursive: true });
 await fs.writeFile(path.join(repository, "package.json"), JSON.stringify({ name: "governed-repository" }));
 await fs.writeFile(path.join(repository, "src", "main.ts"), "export const governed = true;\n");
 await fs.writeFile(path.join(repository, "README.md"), "# Governed Repository\n");
+await fs.writeFile(path.join(repository, "LICENSE"), "fixture license\n");
+await fs.writeFile(path.join(repository, "binary.bin"), Buffer.from([0, 1, 2, 3]));
+await fs.writeFile(path.join(repository, "long.txt"), "l".repeat(2_100));
 await fs.writeFile(externalSecretPath, externalSecret);
 await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["init", "--quiet"], { cwd: repository, windowsHide: true });
-await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "package.json", "README.md", "src/main.ts"], { cwd: repository, windowsHide: true });
+await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "package.json", "README.md", "LICENSE", "binary.bin", "long.txt", "src/main.ts"], { cwd: repository, windowsHide: true });
 
 process.env.RAINYDAYS_USER_DATA_DIR = fixture;
 process.env.RAINYDAYS_DATA_DIR = data;
@@ -177,6 +180,16 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
     const headers = await toolsModule.executeTool(root, "read_repo", { path: "", level: "headers" });
     assert.match(headers, /governed-repository/);
     assert.match(headers, /Governed Repository/);
+    const summary = await toolsModule.executeTool(root, "read_repo", { path: "", level: "summary", include: "*.ts" });
+    assert.match(summary, /文件数: 1/u);
+    assert.match(summary, /\.ts: 1/u);
+    const full = await toolsModule.executeTool(root, "read_repo", { path: "", level: "full", exclude: "*.md" });
+    assert.match(full, /governed-repository/u);
+    assert.doesNotMatch(full, /Governed Repository/u);
+    assert.match(full, /\(截断\)/u);
+    assert.equal(full.includes("\0"), false);
+    const unfilteredSummary = await toolsModule.executeTool(root, "read_repo", { path: "", level: "summary", exclude: "?.md" });
+    assert.match(unfilteredSummary, /\(no ext\): 1/u);
 
     const cwdBefore = await externalState();
     const cwdAttempt = await captureDenial(() => toolsModule.executeTool(root, "read_repo", { path: outside, level: "tree" }));

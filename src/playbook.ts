@@ -8,6 +8,7 @@ import type { CapabilityContext } from "./capability-broker.js";
 import { getManagedPathStore, validateManagedIdentifier } from "./managed-path-store.js";
 import { PathDeniedError } from "./path-policy.js";
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "./types.js";
+import { isRunCancellation, throwIfCancelled } from "./run-cancellation.js";
 
 export interface PlaybookStep {
   message: string;
@@ -40,7 +41,7 @@ export interface PlaybookRun {
 
 const activeRuns = new Map<string, PlaybookRun>();
 
-function parsePlaybook(name: string, bytes: Uint8Array): Playbook {
+export function validatePlaybookSource(name: string, bytes: Uint8Array): Playbook {
   const safeName = validateManagedIdentifier(name);
   const parsed: unknown = JSON.parse(Buffer.from(bytes).toString("utf8"));
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error(`Playbook ${safeName} 格式无效`);
@@ -64,7 +65,7 @@ export async function listPlaybooks(): Promise<{ name: string; description: stri
   const results: { name: string; description: string; steps: number }[] = [];
   for (const name of await store.listNames("playbooks", ".json")) {
     try {
-      const pb = parsePlaybook(name, await store.readNamed("playbooks", name, ".json"));
+      const pb = validatePlaybookSource(name, await store.readNamed("playbooks", name, ".json"));
       results.push({ name: pb.name, description: pb.description, steps: pb.steps.length });
     } catch (error) {
       if (error instanceof PathDeniedError) throw error;
@@ -79,7 +80,7 @@ export async function getPlaybook(name: string): Promise<Playbook | null> {
   const safeName = validateManagedIdentifier(name);
   const store = await getManagedPathStore();
   try {
-    return parsePlaybook(safeName, await store.readNamed("playbooks", safeName, ".json"));
+    return validatePlaybookSource(safeName, await store.readNamed("playbooks", safeName, ".json"));
   } catch (error) {
     if (error instanceof PathDeniedError && error.code === "PATH_NOT_FOUND") return null;
     throw error;
@@ -88,7 +89,7 @@ export async function getPlaybook(name: string): Promise<Playbook | null> {
 
 /** 使用exclusive create创建playbook，不覆盖既有定义。 */
 export async function createPlaybook(pb: Playbook): Promise<string> {
-  const normalized = parsePlaybook(validateManagedIdentifier(pb.name), Buffer.from(JSON.stringify(pb), "utf8"));
+  const normalized = validatePlaybookSource(validateManagedIdentifier(pb.name), Buffer.from(JSON.stringify(pb), "utf8"));
   const store = await getManagedPathStore();
   await store.createNamed("playbooks", normalized.name, ".json", Buffer.from(JSON.stringify(normalized, null, 2), "utf8"));
   return `✅ Playbook "${normalized.name}" 已创建，包含 ${normalized.steps.length} 个步骤`;
@@ -165,6 +166,7 @@ export async function executePlaybook(
   invocation: ToolInvocationServices,
   onStep?: PlaybookStepCallback
 ): Promise<PlaybookRun> {
+  throwIfCancelled(invocation.signal);
   const owner = { sessionId: capabilityContext.sessionId, runId: capabilityContext.runId };
   const pb = await getPlaybook(playbookName);
   if (!pb) {
@@ -178,6 +180,7 @@ export async function executePlaybook(
   const tools = invocation.getToolDefinitions(capabilityContext);
 
   for (let i = 0; i < pb.steps.length; i++) {
+    throwIfCancelled(invocation.signal);
     // 检查是否被中止
     if (run.status === "aborted") break;
 
@@ -191,16 +194,14 @@ export async function executePlaybook(
         { role: "user" as const, content: step.message },
       ];
 
-      const response = await llm.chat(messages, tools);
+      const response = await llm.chat(messages, tools, invocation.signal, invocation.network.fetch);
 
       // 如果 LLM 决定调用工具，执行工具
       let resultText = response.content || "";
       if (response.tool_calls && response.tool_calls.length > 0) {
         for (const tc of response.tool_calls) {
-          let parsed: unknown;
-          try { parsed = JSON.parse(tc.function.arguments); } catch { throw new Error(`工具参数不是合法 JSON: ${tc.function.name}`); }
-          if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error(`工具参数必须是 object: ${tc.function.name}`);
-          const toolResult = await invocation.executeTool(capabilityContext, tc.function.name, parsed as Record<string, unknown>);
+          throwIfCancelled(invocation.signal);
+          const toolResult = await invocation.executeTool(capabilityContext, tc.function.name, tc.function.arguments, tc.id);
           resultText += `\n[工具 ${tc.function.name}]: ${toolResult.slice(0, 500)}`;
         }
       }
@@ -208,6 +209,10 @@ export async function executePlaybook(
       updateRun(run.id, i + 1, resultText);
       if (onStep) onStep(run, i, step.message, resultText);
     } catch (err) {
+      if (isRunCancellation(err) || invocation.signal.aborted) {
+        run.status = "aborted";
+        throw err;
+      }
       const errMsg = err instanceof Error ? err.message : String(err);
       run.results.push(`步骤 ${i + 1} 失败: ${errMsg}`);
       run.status = "failed";
@@ -250,7 +255,10 @@ export function createPlaybookExecuteExec(llm: LLMClient, persona: { systemPromp
     try {
       const run = await executePlaybook(name, llm, persona, child, invocation);
       const lines = run.results.map((r, i) => `步骤 ${i + 1}: ${r.slice(0, 200)}`);
-      return `Playbook "${name}" 执行${run.status === "completed" ? "完成" : run.status === "failed" ? "失败" : "中止"} (${run.currentStep}/${run.totalSteps} 步):\n\n${lines.join("\n\n")}`;
+      if (run.status === "failed") {
+        throw new Error(`Playbook "${name}" 执行失败 (${run.currentStep}/${run.totalSteps} 步): ${lines.join("; ")}`);
+      }
+      return `Playbook "${name}" 执行${run.status === "completed" ? "完成" : "中止"} (${run.currentStep}/${run.totalSteps} 步):\n\n${lines.join("\n\n")}`;
     } finally {
       invocation.finishChild(child);
     }

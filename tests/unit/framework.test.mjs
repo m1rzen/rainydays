@@ -208,18 +208,54 @@ test("coverage scope is explicit and changed runtime files are governed", async 
   const { scope } = await loadCoverageScope();
   assert.equal(scope.schemaVersion, 3);
   assert.deepEqual(scope.additionalTestsByTask["GOV-03"], [
+    { sourceTask: "DATA-01", exactCasePath: "tests/integration/data01b-managed-restore.test.mjs" },
+    { sourceTask: "DATA-01", exactCasePath: "tests/unit/backup-container.test.mjs" },
+    { sourceTask: "RT-01", exactCasePath: "tests/contract/rt01-governance.test.mjs" },
+    { sourceTask: "RT-01", exactCasePath: "tests/integration/rt01-session-runtime.test.mjs" },
+    { sourceTask: "RT-01", exactCasePath: "tests/unit/run-interaction-channel.test.mjs" },
+    { sourceTask: "RT-01", exactCasePath: "tests/unit/session-runtime.test.mjs" },
+    { sourceTask: "RT-04", exactCasePath: "tests/contract/rt04-governance.test.mjs" },
+    { sourceTask: "RT-04", exactCasePath: "tests/integration/rt04-child-cancellation.test.mjs" },
+    { sourceTask: "RT-04", exactCasePath: "tests/integration/rt04-parser-cancellation.test.mjs" },
+    { sourceTask: "RT-04", exactCasePath: "tests/integration/rt04-runtime-cancellation.test.mjs" },
+    { sourceTask: "RT-04", exactCasePath: "tests/unit/run-cancellation.test.mjs" },
+    { sourceTask: "RT-05", exactCasePath: "tests/contract/rt05-governance.test.mjs" },
+    { sourceTask: "RT-05", exactCasePath: "tests/integration/process-cwd.test.mjs" },
+    { sourceTask: "RT-05", exactCasePath: "tests/integration/rt05-dynamic-adapters.test.mjs" },
+    { sourceTask: "RT-05", exactCasePath: "tests/integration/rt05-tool-pipeline.test.mjs" },
+    { sourceTask: "RT-05", exactCasePath: "tests/unit/network-policy.test.mjs" },
+    { sourceTask: "RT-05", exactCasePath: "tests/unit/tool-pipeline.test.mjs" },
+    { sourceTask: "RT-06", exactCasePath: "tests/contract/rt06-governance.test.mjs" },
+    { sourceTask: "RT-06", exactCasePath: "tests/integration/rt06-tool-scheduling.test.mjs" },
+    { sourceTask: "RT-06", exactCasePath: "tests/unit/tool-scheduler.test.mjs" },
+    { sourceTask: "RT-07", exactCasePath: "tests/contract/rt07-governance.test.mjs" },
+    { sourceTask: "RT-07", exactCasePath: "tests/integration/rt07-task-dag.test.mjs" },
+    { sourceTask: "RT-08", exactCasePath: "tests/contract/rt08-governance.test.mjs" },
+    { sourceTask: "RT-08", exactCasePath: "tests/unit/subagent-registry.test.mjs" },
+    { sourceTask: "RT-08", exactCasePath: "tests/unit/rt08-detached-capability.test.mjs" },
+    { sourceTask: "RT-08", exactCasePath: "tests/integration/rt08-subagent-lifecycle.test.mjs" },
+    { sourceTask: "RT-09", exactCasePath: "tests/integration/rt09-session-semantics.test.mjs" },
+    { sourceTask: "RT-09", exactCasePath: "tests/integration/rt09-restore.test.mjs" },
+    { sourceTask: "RT-09", exactCasePath: "tests/integration/sec01-agent.test.mjs" },
+    { sourceTask: "SEC-03", exactCasePath: "tests/integration/sec03-child-consent-transport.test.mjs" },
+    { sourceTask: "SEC-03", exactCasePath: "tests/integration/sec03-electron-auth.test.mjs" },
     { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-isolation.test.mjs" },
     { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-network-broker.test.mjs" },
     { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-root-lease.test.mjs" },
     { sourceTask: "SEC-03", exactCasePath: "tests/unit/native-process-consent.test.mjs" },
-    { sourceTask: "SEC-03", exactCasePath: "tests/integration/sec03-child-consent-transport.test.mjs" },
-    { sourceTask: "SEC-03", exactCasePath: "tests/integration/sec03-electron-auth.test.mjs" },
+    { sourceTask: "SEC-06", exactCasePath: "tests/unit/security-audit.test.mjs" },
   ]);
   assert(scope.thresholds.overallLines >= 80);
   assert(scope.thresholds.securityBranches >= 90);
   for (const entry of scope.securityCritical) assert(scope.overall.includes(entry));
   assert(scope.securityCritical.includes("dist/path-runtime.js"));
   assert.equal(scope.perFileLineMinimum["dist/path-runtime.js"], 100);
+  assert(scope.securityCritical.includes("dist/managed-restore.js"));
+  assert.equal(scope.perFileLineMinimum["dist/managed-restore.js"], 80);
+  assert(scope.securityCritical.includes("dist/security-audit.js"));
+  assert(scope.securityCritical.includes("dist/security-audit-journal.js"));
+  assert.equal(scope.perFileLineMinimum["dist/security-audit.js"], 95);
+  assert.equal(scope.perFileLineMinimum["dist/security-audit-journal.js"], 90);
   await validateCoverageGovernance(manifest, scope);
   assert.equal(manifest.coverageExemptions["electron/main.cjs"].evidenceLayer, "electron");
 });
@@ -295,6 +331,7 @@ test("TAP summary and process failure precedence are deterministic", () => {
   assert.throws(() => validateTap({ ...summary, failedTestIds: [] }), /count differs/);
   assert.throws(() => validateTap({ ...summary, nestedFailedTestIds: summary.nestedFailedTestIds.slice(0, 1) }), /count differs/);
   assert.throws(() => validateTap({ ...summary, failedTestIds: [summary.failedTestIds[0], summary.failedTestIds[0]] }), /duplicate/);
+  validateTap({ ...summary, failed: 0, cancelled: 4 });
   const boundedNestedFailures = Array(64).fill(0).map((_, index) => sha256Bytes(`nested:${index}`));
   validateTap({ ...summary, failed: 67, nestedFailedTestIds: boundedNestedFailures });
   assert.throws(() => validateTap({ ...summary, failed: 65, nestedFailedTestIds: boundedNestedFailures }), /count exceeds/);
@@ -318,8 +355,8 @@ test("packaged crash and observation failures are fail-closed", () => {
       manifest: { path: "dist/native/sec03-native-manifest.json", bytes: 128, sha256: "2".repeat(64) },
       sourceDigest: "3".repeat(64), toolchainDigest: "4".repeat(64), signatureStatus: "unsigned-local",
       binaries: [
-        { path: "dist/native/sandbox-host.exe", bytes: 128, sha256: "5".repeat(64), machine: "AMD64" },
-        { path: "dist/native/sandbox-launcher.node", bytes: 128, sha256: "6".repeat(64), machine: "AMD64" },
+        { path: "dist/native/sandbox-host.exe", bytes: 128, sha256: "5".repeat(64), machine: "AMD64", importedDllAllowlistDigest: "8".repeat(64) },
+        { path: "dist/native/sandbox-launcher.node", bytes: 128, sha256: "6".repeat(64), machine: "AMD64", importedDllAllowlistDigest: "9".repeat(64) },
       ],
       testProjection: { manifest: { path: ".sec03-native-test/sec03-native-test-manifest.json", bytes: 128, sha256: "7".repeat(64) } },
     },
@@ -417,6 +454,16 @@ test("packaged crash and observation failures are fail-closed", () => {
       matchingProcesses: [{ ...processMatch, imageName: "C:\\private\\RainyDays.exe" }],
     },
   }), /imageName is invalid/);
+  assert.throws(() => validatePackagedDetails({
+    ...packagedDetails,
+    packageBinding: {
+      ...packageBinding,
+      native: {
+        ...packageBinding.native,
+        binaries: [{ ...packageBinding.native.binaries[0], importedDllAllowlistDigest: "bad" }, packageBinding.native.binaries[1]],
+      },
+    },
+  }, { passed: true, sinkIdentity }), /importedDllAllowlistDigest is invalid/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, runtimeSinkSetSha256: "f".repeat(64) } }, { passed: true, sinkIdentity }), /runtime sink set differs/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, dialectPolicySha256: "f".repeat(64) } }, { passed: true, sinkIdentity }), /restricted dialect policy differs/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, missing: ["dist/bypass.js"] } }, { passed: true }), /asarPayloadBound is inconsistent/);

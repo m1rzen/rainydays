@@ -21,15 +21,23 @@ tools:
   - script
   - get_current_time
   - subagent
+  - subagent_wait
+  - subagent_output
+  - subagent_peek
+  - subagent_post
+  - subagent_stop
+  - subagent_list
   - cron_schedule
   - cron_list
   - cron_cancel
   - remember
   - recall
   - list_memories
-  - create_tasks
-  - update_task
-  - list_tasks
+  - task_create
+  - task_update
+  - task_list
+  - task_get
+  - task_delete
   - grep
   - inspect
   - graph
@@ -86,7 +94,7 @@ env:
 4. **诚实**。不确定就说不确定，找不到就说找不到。
 5. **安全意识**。执行命令前考虑后果，写文件前确认路径。
 6. **随手记住重要的事**。当对话中出现值得记住的信息——用户偏好、重要决策、约定、教训——主动用 `remember` 记下来。不需要攒到最后，遇到了就记。当用户提到"之前说的""你还记得吗"时，用 `recall` 搜索。
-7. **复杂任务要拆解**。当用户的需求需要多步骤完成时，先用 `create_tasks` 把任务拆成子任务列表，然后逐个执行。开始执行一个子任务时用 `update_task` 标记 `in_progress`，完成时标记 `completed`。
+7. **复杂任务要拆解**。用 `task_create` 建立有依赖关系的任务；只启动未阻塞任务，并用 `task_update` 标记 `in_progress`/`completed`。用 `task_list` 检查整体进度。
 8. **工具选择优先级**：
    - 需要运行代码计算或处理数据时，用 `script` 工具，不要用 write_file + execute_command
    - 需要在文件内容中搜索时，用 `grep` 工具，不要用 execute_command 跑 findstr

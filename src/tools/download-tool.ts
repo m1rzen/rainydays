@@ -5,6 +5,7 @@
 
 import path from "path";
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
+import { cancellationError, cancellationFailure, NEVER_ABORT_SIGNAL, throwIfCancelled, timeoutSignal } from "../run-cancellation.js";
 
 const MAX_DOWNLOAD_BYTES = 128 * 1024 * 1024;
 
@@ -15,13 +16,14 @@ function outputGateway(invocation?: ToolInvocationServices) {
   return { gateway: invocation.path, rootId };
 }
 
-async function readBoundedResponse(response: Response): Promise<Buffer> {
+async function readBoundedResponse(response: Response, signal: AbortSignal): Promise<Buffer> {
   const length = Number(response.headers.get("content-length"));
   if (Number.isFinite(length) && length > MAX_DOWNLOAD_BYTES) throw new Error("下载内容超过 128 MB 上限");
   if (!response.body) return Buffer.alloc(0);
   const chunks: Buffer[] = [];
   let total = 0;
   for await (const chunk of response.body) {
+    throwIfCancelled(signal);
     const buffer = Buffer.from(chunk);
     total += buffer.length;
     if (total > MAX_DOWNLOAD_BYTES) throw new Error("下载内容超过 128 MB 上限");
@@ -54,8 +56,10 @@ export const downloadDef: ToolDefinition = {
 };
 
 export const downloadExec: ToolExecutor = async (args, _env, invocation) => {
+  if (!invocation) throw new Error("Tool invocation services are required");
   const url = args.url as string;
   const { gateway, rootId } = outputGateway(invocation);
+  const cancellation = timeoutSignal(invocation?.signal ?? NEVER_ABORT_SIGNAL, 60_000, "download");
   let filename = (args.filename as string) || "";
   if (!filename) {
     try {
@@ -67,21 +71,35 @@ export const downloadExec: ToolExecutor = async (args, _env, invocation) => {
   }
 
   try {
+    throwIfCancelled(cancellation.signal);
     const reservation = await gateway.reserveFile(filename, { defaultRootId: rootId, maxBytes: MAX_DOWNLOAD_BYTES });
-    const response = await fetch(url, {
-      headers: { "User-Agent": "RainyDays/1.0" },
-      signal: AbortSignal.timeout(60000),
-    });
-
-    if (!response.ok) {
-      return `下载失败: HTTP ${response.status} ${response.statusText}`;
+    throwIfCancelled(cancellation.signal);
+    let response: Response;
+    try {
+      response = await invocation.network.fetch(url, {
+        headers: { "User-Agent": "RainyDays/1.0" },
+        signal: cancellation.signal,
+      });
+    } catch (error) {
+      if (cancellation.signal.aborted && error instanceof Error && error.name === "AbortError") {
+        throw cancellationError(cancellation.signal, "download was cancelled");
+      }
+      throw error;
     }
 
-    const buffer = await readBoundedResponse(response);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} ${response.statusText}`);
+    }
+
+    const buffer = await readBoundedResponse(response, cancellation.signal);
+    throwIfCancelled(cancellation.signal);
     await reservation.commit(buffer);
     const sizeKB = Math.round(buffer.length / 1024);
     return `✅ 文件已下载: ${filename} (${sizeKB} KB)`;
   } catch (err) {
-    return `下载失败: ${err instanceof Error ? err.message : String(err)}`;
+    if (cancellation.signal.aborted) throw cancellationFailure(cancellation.signal, err, "download was cancelled");
+    throw err instanceof Error ? err : new Error(String(err));
+  } finally {
+    cancellation.dispose();
   }
 };

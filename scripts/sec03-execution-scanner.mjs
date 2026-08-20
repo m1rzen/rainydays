@@ -181,7 +181,9 @@ export async function collectSec03AuthoredSources(projectRoot) {
   const out = new Map();
   for (const root of ["src", "electron", "scripts", "tests"]) await walk(projectRoot, root, out, name => scriptExtensions.has(path.extname(name)));
   await walk(projectRoot, "native", out, name => nativeExtensions.has(path.extname(name)));
-  await walk(projectRoot, "public", out, name => name.endsWith(".html"));
+  for (const sourcePath of ["public/index.html", "public/renderer.js"]) {
+    out.set(sourcePath, await readFile(path.join(projectRoot, ...sourcePath.split("/")), "utf8"));
+  }
   return out;
 }
 export async function scanSec03ExecutionSinks(projectRoot) { return scanSec03SourceSet(await collectSec03AuthoredSources(projectRoot)); }

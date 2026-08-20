@@ -30,6 +30,7 @@ import {
 import { consumeExecutionRootLease, type ExecutionRootLease } from "./path-policy.js";
 import { assertResourceOwner, assertResourceOwnerForCleanup, type ResourceOwner } from "./resource-owner.js";
 import type { ManualConsentEvidenceBinding, ManualConsentOperation } from "./manual-execution-consent.js";
+import { NEVER_ABORT_SIGNAL, throwIfCancelled } from "./run-cancellation.js";
 
 export interface IsolatedTerminalLease { readonly leaseId: string }
 
@@ -266,8 +267,10 @@ async function executeFiniteHttpsOperation(input: Readonly<{
   entryPoint: "E1" | "E2" | "E3";
   operations: readonly FiniteHttpsOperationDefinition[];
   invocation: FiniteHttpsInvocation;
+  signal: AbortSignal;
 }>): Promise<ObservedFiniteHttpsOperation> {
-  const { context, entryPoint, operations, invocation } = input;
+  const { context, entryPoint, operations, invocation, signal } = input;
+  throwIfCancelled(signal);
   const profile = entryPoint === "E1" ? "one-shot-shell" : entryPoint === "E2" ? "agent-shell" : "script";
   if (!context || !HASH.test(context.persona?.digest ?? "") || !context.executionDomainId || !context.sessionId || !context.runId
     || !Number.isSafeInteger(context.authorityEpoch) || context.authorityEpoch < 1 || context.networkPolicy.mode !== "allowlist") {
@@ -276,7 +279,7 @@ async function executeFiniteHttpsOperation(input: Readonly<{
   const broker = createFiniteHttpsBroker(context, operations);
   let observation: FiniteHttpsBrokerObservation;
   try {
-    observation = await broker.execute(context, invocation);
+    observation = await broker.execute(context, invocation, signal);
   } catch (error) {
     if (!(error instanceof FiniteHttpsBrokerError)) throw error;
     observation = error.observation;
@@ -287,7 +290,9 @@ async function executeFiniteHttpsOperation(input: Readonly<{
     authorityDigest: broker.authorityDigest,
     operationsDigest: broker.operationsDigest,
   });
+  throwIfCancelled(signal);
   const service = await executionService();
+  throwIfCancelled(signal);
   const nativeObservation = await service.observeBrokerOperation(Object.freeze({
     executionId: sha256Json({ schema: "mini-lux/sec03/finite-https-execution/v1", nonce: randomUUID() }),
     entryPoint,
@@ -372,8 +377,10 @@ export function createScopedExecutionGateway(input: Readonly<{
   context: CapabilityContext;
   inspected: InspectedToolCall;
   owner: ResourceOwner;
+  signal?: AbortSignal;
 }>): ScopedExecutionGateway {
-  const { context, inspected, owner } = input;
+  const { context, inspected, owner, signal = NEVER_ABORT_SIGNAL } = input;
+  throwIfCancelled(signal);
   const ownerMetadata = assertResourceOwner(owner);
   const bindingValid = ownerMetadata.sessionId === context.sessionId
     && ownerMetadata.authorityEpoch === context.authorityEpoch
@@ -384,6 +391,7 @@ export function createScopedExecutionGateway(input: Readonly<{
     && inspected.name === context.approvalGrant?.toolOrOperation;
   let consumed = false;
   const launch = async (entryPoint: "E1" | "E3", payloadText: string, rootLease: ExecutionRootLease): Promise<ExecutionResult> => {
+    throwIfCancelled(signal);
     if (!bindingValid) throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Execution invocation binding is invalid");
     if (consumed) throw new ExecutionDeniedError("EXEC_GRANT_REPLAYED", "Execution invocation was already consumed");
     consumed = true;
@@ -414,12 +422,13 @@ export function createScopedExecutionGateway(input: Readonly<{
       expiresAtMs: Date.now() + 5_000,
     };
       const service = await executionService();
-      return await service.launchOneShot(await service.issueExecutionGrantAuthenticated(request), owner, request);
+      return await service.launchOneShot(await service.issueExecutionGrantAuthenticated(request), owner, request, signal);
     } finally {
       root.revoke();
     }
   };
   const startPersistent = async (terminalId: string, shell: "cmd" | "powershell", rootLease: ExecutionRootLease): Promise<IsolatedTerminalLease> => {
+    throwIfCancelled(signal);
     if (!bindingValid || inspected.name !== "shell_start") throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Persistent launch binding is invalid");
     if (consumed) throw new ExecutionDeniedError("EXEC_GRANT_REPLAYED", "Execution invocation was already consumed");
     consumed = true;
@@ -454,7 +463,7 @@ export function createScopedExecutionGateway(input: Readonly<{
         expiresAtMs: Date.now() + 5_000,
       };
       service = await executionService();
-      nativeLease = await service.launchPersistent(await service.issueExecutionGrantAuthenticated(request), owner, request);
+      nativeLease = await service.launchPersistent(await service.issueExecutionGrantAuthenticated(request), owner, request, signal);
     } finally {
       root.revoke();
     }
@@ -472,7 +481,7 @@ export function createScopedExecutionGateway(input: Readonly<{
         throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Finite HTTPS operation is outside the approved invocation");
       }
       consumed = true;
-      return await executeFiniteHttpsOperation({ context, entryPoint, operations, invocation });
+      return await executeFiniteHttpsOperation({ context, entryPoint, operations, invocation, signal });
     },
     executeCommand: async ({ command, rootLease }: Readonly<{ command: string; rootLease: ExecutionRootLease }>) => {
       if (inspected.name !== "execute_command" || command !== inspected.args.command) {
@@ -489,6 +498,7 @@ export function createScopedExecutionGateway(input: Readonly<{
     startShell: async ({ terminalId, shell, rootLease }: Readonly<{ terminalId: string; shell: "cmd" | "powershell"; rootLease: ExecutionRootLease }>) =>
       startPersistent(terminalId, shell, rootLease),
     writeShell: async ({ lease, terminalId, data, appendNewline }: Readonly<{ lease: IsolatedTerminalLease; terminalId: string; data: string; appendNewline: boolean }>) => {
+      throwIfCancelled(signal);
       if (!bindingValid || inspected.name !== "shell_input" || consumed) throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Persistent input binding is invalid");
       consumed = true;
       const record = persistentRecords.get(lease);
@@ -514,7 +524,7 @@ export function createScopedExecutionGateway(input: Readonly<{
         expiresAtMs: Date.now() + 5_000,
       };
       const inputGrant = record.service.issueInputGrant(inputRequest);
-      await record.service.write(record.nativeLease, inputGrant, owner, inputRequest);
+      await record.service.write(record.nativeLease, inputGrant, owner, inputRequest, signal);
     },
   });
 }

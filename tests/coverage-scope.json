@@ -3,6 +3,130 @@
   "additionalTestsByTask": {
     "GOV-03": [
       {
+        "sourceTask": "DATA-01",
+        "exactCasePath": "tests/integration/data01b-managed-restore.test.mjs"
+      },
+      {
+        "sourceTask": "DATA-01",
+        "exactCasePath": "tests/unit/backup-container.test.mjs"
+      },
+      {
+        "sourceTask": "RT-01",
+        "exactCasePath": "tests/contract/rt01-governance.test.mjs"
+      },
+      {
+        "sourceTask": "RT-01",
+        "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs"
+      },
+      {
+        "sourceTask": "RT-01",
+        "exactCasePath": "tests/unit/run-interaction-channel.test.mjs"
+      },
+      {
+        "sourceTask": "RT-01",
+        "exactCasePath": "tests/unit/session-runtime.test.mjs"
+      },
+      {
+        "sourceTask": "RT-04",
+        "exactCasePath": "tests/contract/rt04-governance.test.mjs"
+      },
+      {
+        "sourceTask": "RT-04",
+        "exactCasePath": "tests/integration/rt04-child-cancellation.test.mjs"
+      },
+      {
+        "sourceTask": "RT-04",
+        "exactCasePath": "tests/integration/rt04-parser-cancellation.test.mjs"
+      },
+      {
+        "sourceTask": "RT-04",
+        "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs"
+      },
+      {
+        "sourceTask": "RT-04",
+        "exactCasePath": "tests/unit/run-cancellation.test.mjs"
+      },
+      {
+        "sourceTask": "RT-05",
+        "exactCasePath": "tests/contract/rt05-governance.test.mjs"
+      },
+      {
+        "sourceTask": "RT-05",
+        "exactCasePath": "tests/integration/process-cwd.test.mjs"
+      },
+      {
+        "sourceTask": "RT-05",
+        "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs"
+      },
+      {
+        "sourceTask": "RT-05",
+        "exactCasePath": "tests/integration/rt05-tool-pipeline.test.mjs"
+      },
+      {
+        "sourceTask": "RT-05",
+        "exactCasePath": "tests/unit/network-policy.test.mjs"
+      },
+      {
+        "sourceTask": "RT-05",
+        "exactCasePath": "tests/unit/tool-pipeline.test.mjs"
+      },
+      {
+        "sourceTask": "RT-06",
+        "exactCasePath": "tests/contract/rt06-governance.test.mjs"
+      },
+      {
+        "sourceTask": "RT-06",
+        "exactCasePath": "tests/integration/rt06-tool-scheduling.test.mjs"
+      },
+      {
+        "sourceTask": "RT-06",
+        "exactCasePath": "tests/unit/tool-scheduler.test.mjs"
+      },
+      {
+        "sourceTask": "RT-07",
+        "exactCasePath": "tests/contract/rt07-governance.test.mjs"
+      },
+      {
+        "sourceTask": "RT-07",
+        "exactCasePath": "tests/integration/rt07-task-dag.test.mjs"
+      },
+      {
+        "sourceTask": "RT-08",
+        "exactCasePath": "tests/contract/rt08-governance.test.mjs"
+      },
+      {
+        "sourceTask": "RT-08",
+        "exactCasePath": "tests/unit/subagent-registry.test.mjs"
+      },
+      {
+        "sourceTask": "RT-08",
+        "exactCasePath": "tests/unit/rt08-detached-capability.test.mjs"
+      },
+      {
+        "sourceTask": "RT-08",
+        "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs"
+      },
+      {
+        "sourceTask": "RT-09",
+        "exactCasePath": "tests/integration/rt09-session-semantics.test.mjs"
+      },
+      {
+        "sourceTask": "RT-09",
+        "exactCasePath": "tests/integration/rt09-restore.test.mjs"
+      },
+      {
+        "sourceTask": "RT-09",
+        "exactCasePath": "tests/integration/sec01-agent.test.mjs"
+      },
+      {
+        "sourceTask": "SEC-03",
+        "exactCasePath": "tests/integration/sec03-child-consent-transport.test.mjs"
+      },
+      {
+        "sourceTask": "SEC-03",
+        "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs"
+      },
+      {
         "sourceTask": "SEC-03",
         "exactCasePath": "tests/unit/execution-isolation.test.mjs"
       },
@@ -19,78 +143,128 @@
         "exactCasePath": "tests/unit/native-process-consent.test.mjs"
       },
       {
-        "sourceTask": "SEC-03",
-        "exactCasePath": "tests/integration/sec03-child-consent-transport.test.mjs"
-      },
-      {
-        "sourceTask": "SEC-03",
-        "exactCasePath": "tests/integration/sec03-electron-auth.test.mjs"
+        "sourceTask": "SEC-06",
+        "exactCasePath": "tests/unit/security-audit.test.mjs"
       }
     ]
   },
   "overall": [
-    "dist/version.js",
-    "dist/db.js",
+    "dist/agent.js",
+    "dist/backup-container.js",
     "dist/bootstrap-database.js",
     "dist/bootstrap-path-store.js",
-    "dist/session.js",
-    "dist/link.js",
     "dist/capability-broker.js",
     "dist/config.js",
+    "dist/data-backup.js",
+    "dist/db.js",
+    "dist/document-parser.js",
+    "dist/execution-isolation.js",
+    "dist/execution-native.js",
+    "dist/execution-network-broker.js",
+    "dist/execution-runtime.js",
     "dist/file-viewer.js",
+    "dist/link.js",
+    "dist/llm.js",
     "dist/managed-path-store.js",
+    "dist/managed-restore.js",
+    "dist/manual-execution-consent.js",
+    "dist/memory.js",
+    "dist/native-process-consent-transport.js",
+    "dist/native-process-consent.js",
+    "dist/network-policy.js",
     "dist/path-policy.js",
     "dist/path-runtime.js",
+    "dist/playbook.js",
     "dist/process-tree.js",
     "dist/resource-owner.js",
+    "dist/run-cancellation.js",
     "dist/runtime-paths.js",
+    "dist/security-audit-journal.js",
+    "dist/security-audit.js",
+    "dist/session-runtime.js",
+    "dist/session.js",
     "dist/settings-enrollment.js",
-    "dist/tool-policies.js",
-    "dist/tools/filesystem.js",
-    "dist/tools/index.js",
-    "dist/terminal.js",
+    "dist/subagent-registry.js",
+    "dist/subagent.js",
+    "dist/task.js",
     "dist/terminal-facade.js",
-    "parity/scripts/baseline-lib.mjs",
-    "dist/execution-isolation.js",
-    "dist/execution-network-broker.js",
-    "dist/execution-native.js",
-    "dist/execution-runtime.js",
-    "dist/manual-execution-consent.js",
-    "dist/native-process-consent.js",
-    "dist/native-process-consent-transport.js",
-    "dist/agent.js",
-    "electron/user-data-migration.cjs"
+    "dist/terminal.js",
+    "dist/tool-pipeline.js",
+    "dist/tool-policies.js",
+    "dist/tool-scheduler.js",
+    "dist/tools/ask-user-tool.js",
+    "dist/tools/download-tool.js",
+    "dist/tools/filesystem.js",
+    "dist/tools/image-helper.js",
+    "dist/tools/index.js",
+    "dist/tools/read-repo.js",
+    "dist/tools/save-persona.js",
+    "dist/tools/search-tool.js",
+    "dist/tools/subagent-tools.js",
+    "dist/tools/task-tools.js",
+    "dist/tools/web.js",
+    "dist/tools/writer.js",
+    "dist/version.js",
+    "electron/user-data-migration.cjs",
+    "parity/scripts/baseline-lib.mjs"
   ],
   "securityCritical": [
-    "dist/version.js",
-    "dist/db.js",
+    "dist/agent.js",
+    "dist/backup-container.js",
     "dist/bootstrap-database.js",
     "dist/bootstrap-path-store.js",
-    "dist/session.js",
-    "dist/link.js",
     "dist/capability-broker.js",
     "dist/config.js",
+    "dist/data-backup.js",
+    "dist/db.js",
+    "dist/document-parser.js",
+    "dist/execution-isolation.js",
+    "dist/execution-native.js",
+    "dist/execution-network-broker.js",
+    "dist/execution-runtime.js",
     "dist/file-viewer.js",
+    "dist/link.js",
+    "dist/llm.js",
     "dist/managed-path-store.js",
+    "dist/managed-restore.js",
+    "dist/manual-execution-consent.js",
+    "dist/memory.js",
+    "dist/native-process-consent-transport.js",
+    "dist/native-process-consent.js",
+    "dist/network-policy.js",
     "dist/path-policy.js",
     "dist/path-runtime.js",
+    "dist/playbook.js",
     "dist/process-tree.js",
     "dist/resource-owner.js",
+    "dist/run-cancellation.js",
     "dist/runtime-paths.js",
+    "dist/security-audit-journal.js",
+    "dist/security-audit.js",
+    "dist/session-runtime.js",
+    "dist/session.js",
     "dist/settings-enrollment.js",
-    "dist/tool-policies.js",
-    "dist/tools/filesystem.js",
-    "dist/tools/index.js",
-    "dist/terminal.js",
+    "dist/subagent-registry.js",
+    "dist/subagent.js",
+    "dist/task.js",
     "dist/terminal-facade.js",
-    "dist/execution-isolation.js",
-    "dist/execution-network-broker.js",
-    "dist/execution-native.js",
-    "dist/execution-runtime.js",
-    "dist/manual-execution-consent.js",
-    "dist/native-process-consent.js",
-    "dist/native-process-consent-transport.js",
-    "dist/agent.js",
+    "dist/terminal.js",
+    "dist/tool-pipeline.js",
+    "dist/tool-policies.js",
+    "dist/tool-scheduler.js",
+    "dist/tools/ask-user-tool.js",
+    "dist/tools/download-tool.js",
+    "dist/tools/filesystem.js",
+    "dist/tools/image-helper.js",
+    "dist/tools/index.js",
+    "dist/tools/read-repo.js",
+    "dist/tools/save-persona.js",
+    "dist/tools/search-tool.js",
+    "dist/tools/subagent-tools.js",
+    "dist/tools/task-tools.js",
+    "dist/tools/web.js",
+    "dist/tools/writer.js",
+    "dist/version.js",
     "electron/user-data-migration.cjs"
   ],
   "thresholds": {
@@ -98,36 +272,63 @@
     "securityBranches": 90
   },
   "perFileLineMinimum": {
-    "dist/version.js": 96,
-    "dist/db.js": 75,
+    "dist/agent.js": 80,
+    "dist/backup-container.js": 80,
     "dist/bootstrap-database.js": 90,
     "dist/bootstrap-path-store.js": 90,
-    "dist/session.js": 92,
-    "dist/link.js": 100,
     "dist/capability-broker.js": 80,
     "dist/config.js": 80,
+    "dist/data-backup.js": 80,
+    "dist/db.js": 75,
+    "dist/document-parser.js": 80,
+    "dist/execution-isolation.js": 80,
+    "dist/execution-native.js": 80,
+    "dist/execution-network-broker.js": 80,
+    "dist/execution-runtime.js": 80,
     "dist/file-viewer.js": 80,
+    "dist/link.js": 100,
+    "dist/llm.js": 80,
     "dist/managed-path-store.js": 80,
+    "dist/managed-restore.js": 80,
+    "dist/manual-execution-consent.js": 80,
+    "dist/memory.js": 80,
+    "dist/native-process-consent-transport.js": 80,
+    "dist/native-process-consent.js": 80,
+    "dist/network-policy.js": 80,
     "dist/path-policy.js": 90,
     "dist/path-runtime.js": 100,
+    "dist/playbook.js": 80,
     "dist/process-tree.js": 80,
     "dist/resource-owner.js": 80,
+    "dist/run-cancellation.js": 80,
     "dist/runtime-paths.js": 100,
+    "dist/security-audit-journal.js": 90,
+    "dist/security-audit.js": 95,
+    "dist/session-runtime.js": 80,
+    "dist/session.js": 92,
     "dist/settings-enrollment.js": 80,
-    "dist/tool-policies.js": 100,
-    "dist/tools/filesystem.js": 80,
-    "dist/tools/index.js": 80,
-    "dist/terminal.js": 80,
+    "dist/subagent-registry.js": 80,
+    "dist/subagent.js": 80,
+    "dist/task.js": 80,
     "dist/terminal-facade.js": 80,
-    "parity/scripts/baseline-lib.mjs": 95,
-    "dist/execution-isolation.js": 80,
-    "dist/execution-network-broker.js": 80,
-    "dist/execution-native.js": 80,
-    "dist/execution-runtime.js": 80,
-    "dist/manual-execution-consent.js": 80,
-    "dist/native-process-consent.js": 80,
-    "dist/native-process-consent-transport.js": 80,
-    "dist/agent.js": 80,
-    "electron/user-data-migration.cjs": 80
+    "dist/terminal.js": 80,
+    "dist/tool-pipeline.js": 80,
+    "dist/tool-policies.js": 100,
+    "dist/tool-scheduler.js": 90,
+    "dist/tools/ask-user-tool.js": 80,
+    "dist/tools/download-tool.js": 80,
+    "dist/tools/filesystem.js": 80,
+    "dist/tools/image-helper.js": 80,
+    "dist/tools/index.js": 80,
+    "dist/tools/read-repo.js": 80,
+    "dist/tools/save-persona.js": 80,
+    "dist/tools/search-tool.js": 80,
+    "dist/tools/subagent-tools.js": 80,
+    "dist/tools/task-tools.js": 80,
+    "dist/tools/web.js": 80,
+    "dist/tools/writer.js": 80,
+    "dist/version.js": 96,
+    "electron/user-data-migration.cjs": 80,
+    "parity/scripts/baseline-lib.mjs": 95
   }
 }

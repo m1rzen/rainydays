@@ -714,6 +714,10 @@ test("SEC01 malformed identities, policies, lifetimes and direct operations fail
     ["bad_path", { riskClasses: ["read"], approval: "none", effects: ["filesystem"], pathOperations: ["unknown"] }],
     ["bad_path_risk", { riskClasses: ["read"], approval: "none", effects: ["filesystem"], pathOperations: ["create-file"] }],
     ["bad_approval", { riskClasses: ["read"], approval: "maybe", effects: [] }],
+    ["bad_parallel_write", { riskClasses: ["read", "write"], approval: "none", effects: ["filesystem"], pathOperations: ["replace-file"], concurrency: "parallel-read" }],
+    ["bad_parallel_approval", { riskClasses: ["read"], approval: "user", effects: [], concurrency: "parallel-read" }],
+    ["bad_parallel_process", { riskClasses: ["read", "process"], approval: "none", effects: ["process"], concurrency: "parallel-read" }],
+    ["bad_concurrency", { riskClasses: ["read"], approval: "none", effects: [], concurrency: "parallel-write" }],
   ]) {
     assert.throws(() => broker.registerStaticTool(registered(name, policy).tool), TypeError);
   }

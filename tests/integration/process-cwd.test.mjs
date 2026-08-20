@@ -278,9 +278,9 @@ async function observeBeforeSpawnSwap(surface) {
     if (policy.isActive(authority)) policy.revoke(authority);
   }
   const denied = surface === "shell"
-    ? error === undefined && /命令执行出错/.test(value)
+    ? error instanceof Error && /命令执行出错/u.test(error.message) && value === undefined
     : surface === "script"
-      ? error === undefined && /代码执行出错/.test(value)
+      ? error instanceof Error && /代码执行出错/u.test(error.message) && value === undefined
       : error instanceof PathDeniedError;
   const actual = {
     denied,
@@ -360,14 +360,14 @@ test("SEC-02 Shell and Script use authorized initial CWD and deny external CWD b
     const shellActual = await captureRuntimeProcessDenial(
       outside,
       () => approved(externalRoot, "execute_command", { command: deniedCommand, cwd: outside }),
-      ({ value, error }) => error === undefined && /命令执行出错/.test(value)
+      ({ value, error }) => error?.code === "TOOL_EXECUTION_FAILED" && value === undefined
     );
     if (processRecorder.enabled) await processRecorder.observe("SEC02-P28-shell-external-cwd", shellActual);
 
     const scriptActual = await captureRuntimeProcessDenial(
       outside,
       () => approved(externalRoot, "script", { code: deniedScript }),
-      ({ value, error }) => error === undefined && /代码执行出错/.test(value)
+      ({ value, error }) => error?.code === "TOOL_EXECUTION_FAILED" && value === undefined
     );
     if (processRecorder.enabled) await processRecorder.observe("SEC02-P28-script-external-cwd", scriptActual);
 
@@ -398,14 +398,14 @@ test("SEC-02 Shell and Script use authorized initial CWD and deny external CWD b
     const shellActual = await captureRuntimeProcessDenial(
       reparse,
       () => approved(reparseRoot, "execute_command", { command: deniedCommand, cwd: reparse }),
-      ({ value, error }) => error === undefined && /命令执行出错/.test(value)
+      ({ value, error }) => error?.code === "TOOL_EXECUTION_FAILED" && value === undefined
     );
     if (processRecorder.enabled) await processRecorder.observe("SEC02-P28-shell-reparse-cwd", shellActual);
 
     const scriptActual = await captureRuntimeProcessDenial(
       reparse,
       () => approved(reparseRoot, "script", { code: deniedScript }),
-      ({ value, error }) => error === undefined && /代码执行出错/.test(value)
+      ({ value, error }) => error?.code === "TOOL_EXECUTION_FAILED" && value === undefined
     );
     if (processRecorder.enabled) await processRecorder.observe("SEC02-P28-script-reparse-cwd", scriptActual);
 
@@ -459,8 +459,9 @@ test("SEC-02 Shell and Script use authorized initial CWD and deny external CWD b
         originalLog(...args);
       };
       try {
-        const oldOutput = await toolsModule.executeTool(nextRoot, "shell_output", { terminalId });
-        newAuthorityControlDenied = /终端不存在/.test(oldOutput);
+        await toolsModule.executeTool(nextRoot, "shell_output", { terminalId });
+      } catch (error) {
+        newAuthorityControlDenied = error?.code === "TOOL_EXECUTION_FAILED" && /终端不存在/u.test(error.message);
       } finally {
         console.log = originalLog;
       }

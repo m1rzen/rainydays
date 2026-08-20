@@ -4,6 +4,7 @@
 // ===========================================
 
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
+import { throwIfCancelled } from "../run-cancellation.js";
 
 const MAX_OFFICE_BYTES = 64 * 1024 * 1024;
 
@@ -40,6 +41,8 @@ export const createDocxDef: ToolDefinition = {
 };
 
 export const createDocxExec: ToolExecutor = async (args, _env, invocation) => {
+  if (!invocation) throw new Error("Tool invocation services are required");
+  throwIfCancelled(invocation.signal);
   const relativePath = args.path as string;
   const { gateway, rootId } = outputGateway(invocation);
   const reservation = await gateway.reserveFile(relativePath, {
@@ -47,6 +50,7 @@ export const createDocxExec: ToolExecutor = async (args, _env, invocation) => {
     maxBytes: MAX_OFFICE_BYTES,
     requiredExtension: ".docx",
   });
+  throwIfCancelled(invocation.signal);
   const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
   const title = (args.title as string) || "";
   const paragraphs = (args.paragraphs as string[]) || [];
@@ -73,6 +77,7 @@ export const createDocxExec: ToolExecutor = async (args, _env, invocation) => {
 
   const doc = new Document({ sections: [{ children }] });
   const buffer = await Packer.toBuffer(doc);
+  throwIfCancelled(invocation.signal);
   await reservation.commit(buffer);
   return `✅ Word 文档已生成: ${relativePath}`;
 };
@@ -113,6 +118,8 @@ export const createXlsxDef: ToolDefinition = {
 };
 
 export const createXlsxExec: ToolExecutor = async (args, _env, invocation) => {
+  if (!invocation) throw new Error("Tool invocation services are required");
+  throwIfCancelled(invocation.signal);
   const relativePath = args.path as string;
   const { gateway, rootId } = outputGateway(invocation);
   const reservation = await gateway.reserveFile(relativePath, {
@@ -120,6 +127,7 @@ export const createXlsxExec: ToolExecutor = async (args, _env, invocation) => {
     maxBytes: MAX_OFFICE_BYTES,
     requiredExtension: ".xlsx",
   });
+  throwIfCancelled(invocation.signal);
   const XLSXModule = await import("xlsx");
   const XLSX = (XLSXModule as any).default || XLSXModule;
   const sheets = (args.sheets as Array<{ name: string; data: unknown[][] }>) || [];
@@ -132,6 +140,7 @@ export const createXlsxExec: ToolExecutor = async (args, _env, invocation) => {
   }
 
   const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+  throwIfCancelled(invocation.signal);
   await reservation.commit(buffer);
   return `✅ Excel 表格已生成: ${relativePath}`;
 };
