@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-09",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "dist/agent.js",
+    "dist/index.js",
+    "dist/session.js",
+    "public/renderer.js",
+    "src/agent.ts",
+    "src/index.ts",
+    "src/session.ts"
+  ],
+  "coverageExemptions": {
+    "dist/index.js": {
+      "reason": "The compiled server entrypoint is exercised through exact RT-09 restart-restore integration evidence rather than isolated coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt09-restore.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "public/renderer.js": {
+      "reason": "Renderer regenerate, draft, and input-history projection is browser code bound to exact RT-09 integration and SEC-07 contract evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt09-session-semantics.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/agent.ts": {
+      "reason": "The compiled Agent background-title path is governed directly; authored TypeScript stays bound to semantic-title fallback evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt09-session-semantics.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/index.ts": {
+      "reason": "The compiled startup restore-all loop is governed directly; authored TypeScript stays bound to the restart restore evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt09-restore.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/session.ts": {
+      "reason": "The compiled fork/pin/title module is governed directly; authored TypeScript stays bound to transactional fork and rollback evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt09-session-semantics.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/contract/rt09-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/integration/rt09-session-semantics.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/rt09-restore.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+      "layer": "integration"
+    }
+  ]
+}
