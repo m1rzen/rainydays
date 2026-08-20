@@ -3,6 +3,7 @@ dist/
 .electron-app/
 release/
 test-results/
+deliverables/
 coverage/
 parity/.probe/
 .env
