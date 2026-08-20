@@ -1,0 +1,424 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-05",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "sentinel",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "dist/agent.js",
+    "dist/index.js",
+    "dist/llm.js",
+    "dist/memory.js",
+    "dist/network-policy.js",
+    "dist/oracle.js",
+    "dist/playbook.js",
+    "dist/subagent.js",
+    "dist/tool-pipeline.js",
+    "dist/tools/advanced-tools.js",
+    "dist/tools/cron-tools.js",
+    "dist/tools/curate-tool.js",
+    "dist/tools/index.js",
+    "dist/tools/knowledge-tools.js",
+    "dist/tools/phase1-tools.js",
+    "dist/tools/save-persona.js",
+    "dist/tools/script.js",
+    "dist/tools/shell.js",
+    "dist/tools/subagent-tools.js",
+    "dist/tools/web.js",
+    "dist/types.js",
+    "src/agent.ts",
+    "src/index.ts",
+    "src/llm.ts",
+    "src/memory.ts",
+    "src/network-policy.ts",
+    "src/oracle.ts",
+    "src/playbook.ts",
+    "src/subagent.ts",
+    "src/tool-pipeline.ts",
+    "src/tools/advanced-tools.ts",
+    "src/tools/cron-tools.ts",
+    "src/tools/curate-tool.ts",
+    "src/tools/index.ts",
+    "src/tools/knowledge-tools.ts",
+    "src/tools/phase1-tools.ts",
+    "src/tools/save-persona.ts",
+    "src/tools/script.ts",
+    "src/tools/shell.ts",
+    "src/tools/subagent-tools.ts",
+    "src/tools/web.ts",
+    "src/types.ts"
+  ],
+  "coverageExemptions": {
+    "dist/index.js": {
+      "reason": "The compiled production SessionRuntime dynamic-tool assembly point is checked for the exact unified registration path.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/oracle.js": {
+      "reason": "This mixed adapter has a narrow RT-05 transport or output-boundary change verified by exact integration evidence; unrelated legacy branches remain outside this task scope.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/advanced-tools.js": {
+      "reason": "This mixed adapter file has a narrow RT-05 boundary change verified by exact integration evidence; unrelated legacy branches remain outside this task coverage scope.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/cron-tools.js": {
+      "reason": "This mixed adapter file has a narrow RT-05 boundary change verified by exact integration evidence; unrelated legacy branches remain outside this task coverage scope.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/curate-tool.js": {
+      "reason": "This mixed adapter has a narrow RT-05 transport or output-boundary change verified by exact integration evidence; unrelated legacy branches remain outside this task scope.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/knowledge-tools.js": {
+      "reason": "This mixed adapter file has a narrow RT-05 boundary change verified by exact integration evidence; unrelated legacy branches remain outside this task coverage scope.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/phase1-tools.js": {
+      "reason": "This mixed adapter file has a narrow RT-05 boundary change verified by exact integration evidence; unrelated legacy branches remain outside this task coverage scope.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/script.js": {
+      "reason": "This mixed adapter has a narrow RT-05 transport or output-boundary change verified by exact integration evidence; unrelated legacy branches remain outside this task scope.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/process-cwd.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/shell.js": {
+      "reason": "This mixed adapter has a narrow RT-05 transport or output-boundary change verified by exact integration evidence; unrelated legacy branches remain outside this task scope.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/process-cwd.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/tools/subagent-tools.js": {
+      "reason": "This mixed adapter file has a narrow RT-05 boundary change verified by exact integration evidence; unrelated legacy branches remain outside this task coverage scope.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/types.js": {
+      "reason": "This mixed adapter file has a narrow RT-05 boundary change verified by exact integration evidence; unrelated legacy branches remain outside this task coverage scope.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-tool-pipeline.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/agent.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-tool-pipeline.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/index.ts": {
+      "reason": "The production SessionRuntime dynamic-tool assembly point is identity-bound and checked for exact unified registrar use.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/llm.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/memory.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/network-policy.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/network-policy.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/oracle.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/playbook.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/subagent.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tool-pipeline.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool-pipeline.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tools/advanced-tools.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/cron-tools.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/curate-tool.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/index.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-tool-pipeline.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/knowledge-tools.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/phase1-tools.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/save-persona.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/managed-path-store.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/script.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/process-cwd.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/shell.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/process-cwd.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/subagent-tools.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/web.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/types.ts": {
+      "reason": "The compiled JavaScript equivalent is governed directly; this authored source identity remains bound to exact RT-05 evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt05-tool-pipeline.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/contract/rt05-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/integration/managed-path-store.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/process-cwd.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/rt05-tool-pipeline.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/unit/network-policy.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/tool-pipeline.test.mjs",
+      "layer": "unit"
+    }
+  ]
+}
