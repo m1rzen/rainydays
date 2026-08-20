@@ -524,6 +524,63 @@ function assertSchemaV3(database: typeof db = db): void {
   if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 3 不兼容: 完整性检查失败");
 }
 
+const SCHEMA_V4_SQL = `
+    CREATE TABLE IF NOT EXISTS events (
+      id                TEXT PRIMARY KEY NOT NULL CHECK (length(id) BETWEEN 4 AND 128 AND substr(id, 1, 4) = 'evt_'),
+      schema_version    INTEGER NOT NULL CHECK (schema_version = 1),
+      type              TEXT NOT NULL CHECK (length(type) BETWEEN 3 AND 64),
+      source            TEXT NOT NULL CHECK (source IN ('cron', 'link', 'wire', 'poll', 'system', 'ui')),
+      source_event_id   TEXT CHECK (source_event_id IS NULL OR length(source_event_id) BETWEEN 1 AND 128),
+      target_session_id TEXT CHECK (target_session_id IS NULL OR length(target_session_id) BETWEEN 1 AND 128),
+      tags_json         TEXT NOT NULL CHECK (json_valid(tags_json) AND json_type(tags_json) = 'array' AND length(tags_json) <= 2048),
+      payload_json      TEXT NOT NULL CHECK (json_valid(payload_json) AND length(payload_json) <= 131072),
+      created_at        INTEGER NOT NULL CHECK (created_at >= 0),
+      expires_at        INTEGER CHECK (expires_at IS NULL OR expires_at > 0),
+      status            TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'delivered', 'dead', 'expired')),
+      attempts          INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+      next_attempt_at   INTEGER NOT NULL DEFAULT 0 CHECK (next_attempt_at >= 0),
+      last_error        TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_events_due ON events (status, next_attempt_at);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_events_source_dedupe ON events (source, source_event_id) WHERE source_event_id IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS idx_events_target ON events (target_session_id, status) WHERE target_session_id IS NOT NULL;
+  `;
+
+function assertSchemaV4(database: typeof db = db): void {
+  const reference = createInMemoryBootstrapDatabase();
+  try {
+    reference.pragma("foreign_keys = ON");
+    reference.exec(SCHEMA_V1_SQL);
+    reference.exec(SCHEMA_V2_SQL);
+    applySchemaV3(reference);
+    reference.exec(SCHEMA_V4_SQL);
+    const objectRows = (target: typeof db): Array<{ type: string; name: string; tbl_name: string; sql: string | null }> => target.prepare(
+      "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
+    ).all() as Array<{ type: string; name: string; tbl_name: string; sql: string | null }>;
+    const actual = objectRows(database);
+    const expected = objectRows(reference);
+    const signatures = (rows: typeof actual): string[] => rows.map(entry => `${entry.type}|${entry.name}|${entry.tbl_name}`);
+    if (JSON.stringify(signatures(actual)) !== JSON.stringify(signatures(expected))) {
+      throw new Error("数据库 Schema 4 不兼容: 存在未知或缺失的 Schema 对象");
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const found = actual[index];
+      const wanted = expected[index];
+      if ((found.sql === null) !== (wanted.sql === null)
+        || (found.sql !== null && wanted.sql !== null && normalizeSchemaSql(found.sql) !== normalizeSchemaSql(wanted.sql))) {
+        throw new Error(`数据库 Schema 4 不兼容: ${wanted.type} ${wanted.name} SQL 定义错误`);
+      }
+    }
+  } finally {
+    reference.close();
+  }
+  const foreignKeyViolations = database.prepare("PRAGMA foreign_key_check").all();
+  if (foreignKeyViolations.length > 0) throw new Error("数据库 Schema 4 不兼容: 存在外键完整性错误");
+  const integrity = database.prepare("PRAGMA integrity_check").all() as Array<{ integrity_check?: string }>;
+  if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 4 不兼容: 完整性检查失败");
+}
+
 interface DatabaseMigration {
   readonly from: number;
   readonly to: number;
@@ -556,6 +613,15 @@ const DATABASE_MIGRATIONS: readonly DatabaseMigration[] = Object.freeze([
       assertSchemaV2(database);
       applySchemaV3(database);
       assertSchemaV3(database);
+    },
+  }),
+  Object.freeze({
+    from: 3,
+    to: 4,
+    apply: (database: typeof db): void => {
+      assertSchemaV3(database);
+      database.exec(SCHEMA_V4_SQL);
+      assertSchemaV4(database);
     },
   }),
 ]);
@@ -598,7 +664,7 @@ function migrateDatabase(): void {
   if (version !== DATABASE_SCHEMA_VERSION) {
     throw new Error(`数据库 Schema 迁移未达到目标版本: 当前 ${version}，目标 ${DATABASE_SCHEMA_VERSION}`);
   }
-  assertSchemaV3(db);
+  assertSchemaV4(db);
 }
 
 try {
@@ -635,7 +701,7 @@ export function validateDatabaseRestoreCandidate(
   }
   const bytes = fs.readFileSync(databasePath);
   const candidate = createInMemoryBootstrapDatabase(bytes);
-  try { assertSchemaV3(candidate); }
+  try { assertSchemaV4(candidate); }
   finally { candidate.close(); }
   return validation;
 }
@@ -1189,6 +1255,134 @@ export function deactivateCronJob(id: number): void {
 
 export function updateCronJobLastFired(id: number, lastFired: string): void {
   db.prepare(`UPDATE cron_jobs SET last_fired = ? WHERE id = ?`).run(lastFired, id);
+}
+
+// ===========================================
+// Events 持久队列 (EVT-01 EventBus)
+// ===========================================
+
+interface EventRow {
+  id: string;
+  schema_version: number;
+  type: string;
+  source: string;
+  source_event_id: string | null;
+  target_session_id: string | null;
+  tags_json: string;
+  payload_json: string;
+  created_at: number;
+  expires_at: number | null;
+  status: string;
+  attempts: number;
+  next_attempt_at: number;
+  last_error: string | null;
+}
+
+const EVENT_SOURCE_VALUES = new Set(["cron", "link", "wire", "poll", "system", "ui"]);
+const EVENT_STATUS_VALUES = new Set(["pending", "delivered", "dead", "expired"]);
+
+function mapEventRow(row: EventRow): import("./event-bus.js").StoredEvent {
+  if (row.schema_version !== 1 || !EVENT_SOURCE_VALUES.has(row.source) || !EVENT_STATUS_VALUES.has(row.status)) {
+    throw new Error(`事件行损坏: ${row.id}`);
+  }
+  let tags: unknown;
+  let payload: unknown;
+  try {
+    tags = JSON.parse(row.tags_json);
+    payload = JSON.parse(row.payload_json);
+  } catch {
+    throw new Error(`事件行 JSON 损坏: ${row.id}`);
+  }
+  if (!Array.isArray(tags) || tags.some(tag => typeof tag !== "string")) throw new Error(`事件行 tags 损坏: ${row.id}`);
+  return Object.freeze({
+    schemaVersion: 1,
+    id: row.id,
+    type: row.type,
+    source: row.source as import("./event-bus.js").EventSource,
+    sourceEventId: row.source_event_id,
+    targetSessionId: row.target_session_id,
+    tags: Object.freeze(tags as string[]),
+    payload,
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+    status: row.status as import("./event-bus.js").EventStatus,
+    attempts: row.attempts,
+    nextAttemptAt: row.next_attempt_at,
+    lastError: row.last_error,
+  });
+}
+
+const EVENT_COLUMNS = `id, schema_version, type, source, source_event_id, target_session_id, tags_json, payload_json, created_at, expires_at, status, attempts, next_attempt_at, last_error`;
+
+/** EventBus 的 SQLite EventStore 实现（EVT-01）。 */
+export function createEventStore(): import("./event-bus.js").EventStore {
+  return {
+    insertEvent(event) {
+      const info = db.prepare(`
+        INSERT OR IGNORE INTO events (${EVENT_COLUMNS})
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, 0, NULL)
+      `).run(
+        event.id,
+        event.schemaVersion,
+        event.type,
+        event.source,
+        event.sourceEventId,
+        event.targetSessionId,
+        JSON.stringify(event.tags),
+        JSON.stringify(event.payload),
+        event.createdAt,
+        event.expiresAt
+      );
+      if (info.changes === 1) return { inserted: true, existingId: null };
+      const existing = event.sourceEventId !== null
+        ? db.prepare(`SELECT id FROM events WHERE source = ? AND source_event_id = ?`).get(event.source, event.sourceEventId) as { id: string } | undefined
+        : db.prepare(`SELECT id FROM events WHERE id = ?`).get(event.id) as { id: string } | undefined;
+      return { inserted: false, existingId: existing?.id ?? null };
+    },
+    dueEvents(now, limit) {
+      const rows = db.prepare(`
+        SELECT ${EVENT_COLUMNS} FROM events
+        WHERE status = 'pending' AND next_attempt_at <= ?
+        ORDER BY next_attempt_at, created_at LIMIT ?
+      `).all(now, limit) as EventRow[];
+      return rows.map(mapEventRow);
+    },
+    recordAttempt(id, now) {
+      db.prepare(`UPDATE events SET attempts = attempts + 1 WHERE id = ?`).run(id);
+    },
+    settleEvent(id, status, lastError, now) {
+      db.prepare(`UPDATE events SET status = ?, last_error = ? WHERE id = ?`).run(status, lastError, id);
+    },
+    scheduleRetry(id, nextAttemptAt, lastError) {
+      db.prepare(`UPDATE events SET status = 'pending', next_attempt_at = ?, last_error = ? WHERE id = ?`).run(nextAttemptAt, lastError, id);
+    },
+    pruneEvents(now, deliveredCutoffMs, deadCutoffMs) {
+      const info = db.prepare(`
+        DELETE FROM events
+        WHERE (status = 'delivered' AND created_at < ?)
+           OR (status IN ('dead', 'expired') AND created_at < ?)
+      `).run(now - deliveredCutoffMs, now - deadCutoffMs);
+      return info.changes;
+    },
+    countByStatus() {
+      const rows = db.prepare(`SELECT status, COUNT(*) AS count FROM events GROUP BY status`).all() as Array<{ status: string; count: number }>;
+      const result = { pending: 0, delivered: 0, dead: 0, expired: 0 };
+      for (const row of rows) {
+        if (row.status === "pending" || row.status === "delivered" || row.status === "dead" || row.status === "expired") {
+          result[row.status] = row.count;
+        }
+      }
+      return result;
+    },
+    pendingEventsForSession(sessionId, limit) {
+      const rows = db.prepare(`
+        SELECT ${EVENT_COLUMNS} FROM events
+        WHERE target_session_id = ? AND status = 'pending'
+        ORDER BY next_attempt_at, created_at LIMIT ?
+      `).all(sessionId, limit) as EventRow[];
+      return rows.map(mapEventRow);
+    },
+  };
 }
 
 // ===========================================

@@ -4,6 +4,7 @@
 // ===========================================
 
 import { PROTOCOL_CAPABILITIES } from "./version.js";
+import { getDefaultEventBus } from "./event-bus.js";
 
 export interface SessionInfo {
   id: string;
@@ -86,6 +87,14 @@ function deliverLinkEnvelope(identity: unknown, envelope: unknown): boolean {
   if (queue) queue.push(msg);
   const callbacks = messageCallbacks.get(msg.to);
   if (callbacks) for (const cb of callbacks) cb(msg);
+  // EVT-01：已验证的 link 消息同时进入统一事件总线（持久投递 + 空闲唤醒）。
+  // 原内存快路径保留（运行中 Session 的 SSE 展示桥），bus 注入是纯增量。
+  void getDefaultEventBus().publish({
+    type: "link.message",
+    source: "link",
+    targetSessionId: msg.to,
+    payload: { from: msg.from, to: msg.to, content: msg.content, timestamp: msg.timestamp },
+  }).catch(() => undefined);
   return true;
 }
 

@@ -29,7 +29,8 @@ import {
   SessionImportError,
   searchSessions,
 } from "./session.js";
-import { closeDb, insertPin, getPinsBySession, deletePin, deleteMessagesAfterLastUserMessage, getDatabaseSchemaVersion } from "./db.js";
+import { closeDb, insertPin, getPinsBySession, deletePin, deleteMessagesAfterLastUserMessage, getDatabaseSchemaVersion, createEventStore } from "./db.js";
+import { getDefaultEventBus, type EventEnvelope, type SessionDeliveryOutcome } from "./event-bus.js";
 import { cancelRunInteraction, runWithInteractionChannel, submitAnswer } from "./tools/ask-user-tool.js";
 import { closeEmbedding } from "./embedding.js";
 import { migrateMissingEmbeddings } from "./tools/memory-tools.js";
@@ -2087,21 +2088,132 @@ app.post("/api/clear", async (req, res) => {
   }
 });
 
+// ===========================================
+// EVT-01 —— EventBus 接入与 Session 唤醒策略
+// ack = run 已 claim（claimRun 原子成功）→ at-most-once 注入；
+// claim 与 ack 落库之间的崩溃窗口只可能丢唤醒、不会重复注入（冻结合同）。
+// 运行中的目标 → retry 退避（真正的运行中注入属 EVT-02）。
+// ===========================================
+function wakeInputMessage(event: EventEnvelope): string {
+  return `[事件唤醒 ${event.type} ${event.id}]\n${JSON.stringify(event.payload, null, 2)}`;
+}
+
+async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<SessionDeliveryOutcome> {
+  const sessionId = event.targetSessionId;
+  if (!sessionId) return { outcome: "dead", error: "事件缺少 targetSessionId" };
+  if (!getSessionInfo(sessionId)) return { outcome: "dead", error: `目标 Session 不存在: ${sessionId}` };
+  if (!getCurrentProfile().apiKey) return { outcome: "retry", error: "当前 Provider 未配置 API Key" };
+  if (runtimeMutationReservations > 0 || !runtimeRegistry) return { outcome: "retry", error: "Session runtime 正在变更" };
+
+  const registry = requireRuntimeRegistry();
+  let runtime: AppSessionRuntime;
+  try {
+    runtime = await registry.ensure(sessionId);
+    if (runtimeMutationReservations > 0 || runtimeRegistry !== registry) throw new Error("Session runtime 正在变更");
+  } catch (error) {
+    return { outcome: "retry", error: error instanceof Error ? error.message : String(error) };
+  }
+
+  const runId = randomUUID();
+  let claim;
+  try {
+    claim = registry.claimRun(sessionId, runId);
+  } catch (error) {
+    if (error instanceof SessionRuntimeLifecycleError && error.code === "SESSION_RUNTIME_BUSY") {
+      return { outcome: "retry", error: "Session 正在运行" };
+    }
+    return { outcome: "retry", error: error instanceof Error ? error.message : String(error) };
+  }
+
+  // SEC-06：wake 决策走既有审计轨迹（system 触发的本地操作）。
+  const journal = securityAuditJournal;
+  const audit = journal
+    ? new DirectOperationAuditTrail(journal, `event-wake:${event.type}`, { eventId: event.id, targetSessionId: sessionId }, null, sessionId)
+    : null;
+  if (audit) {
+    try {
+      await audit.request({ eventId: event.id });
+      await audit.authorize("allowed", null);
+      await audit.execution(true);
+    } catch {
+      // 审计写入失败不启动 run（宁可重试唤醒，不可脱离审计启动）。
+      try { await registry.cancelRun(sessionId, runId, "client-disconnect"); } catch { /* claim 可能已结算 */ }
+      return { outcome: "retry", error: "安全审计写入失败" };
+    }
+  }
+
+  // ack-on-claim：claim 原子成功即确认投递。run 以 setImmediate 启动，
+  // 让 dispatch 循环的 ack 落库（同步 SQLite 写）先于 run 消费。
+  setImmediate(() => {
+    void (async () => {
+      const startedAt = Date.now();
+      const identity: ActiveRun = Object.freeze({ sessionId, runId });
+      activeRunInteractions.set(sessionId, identity);
+      updateSessionStatus(sessionId, "running");
+      let status: "idle" | "error" = "idle";
+      let settlementFailure: unknown = undefined;
+      try {
+        await runWithInteractionChannel(identity, { emit: () => undefined, signal: claim.signal }, async () => {
+          for await (const step of runtime.agent.run(wakeInputMessage(event), runId, claim.signal)) {
+            if (step?.type === "error") status = "error";
+          }
+        });
+      } catch (error) {
+        const cancelled = isRunCancellation(error);
+        if (isRunSettlementFailure(error) || (claim.signal.aborted && !cancelled)) settlementFailure = error;
+        status = cancelled ? "idle" : "error";
+      } finally {
+        if (activeRunInteractions.get(sessionId) === identity) activeRunInteractions.delete(sessionId);
+        updateSessionStatus(sessionId, status);
+        try {
+          registry.releaseRun(claim, settlementFailure);
+        } catch (error) {
+          if (!(error instanceof SessionRuntimeLifecycleError) || error.code !== "SESSION_RUNTIME_CLAIM_STALE") {
+            console.error("⚠️ 事件唤醒 run 结算失败:", error instanceof Error ? error.message : String(error));
+          }
+        }
+        if (audit) {
+          try {
+            await audit.result({ eventId: event.id, status }, Date.now() - startedAt, status === "idle" ? "success" : "error", null);
+          } catch { /* 结果审计失败已由 journal 毒化机制兜底 */ }
+        }
+      }
+    })();
+  });
+  return { outcome: "acked" };
+}
+
+/** 启动 EventBus：先接持久层（早于 cron 恢复，避免启动窗口丢事件），会话恢复后装策略并启动调度。 */
+function attachEventBusStore(): void {
+  getDefaultEventBus().attachStore(createEventStore());
+}
+
+function startEventBusDispatch(): void {
+  const bus = getDefaultEventBus();
+  bus.setSessionDelivery(eventSessionDeliveryHandler);
+  bus.start();
+}
+
 // --- Cron Manager ---
 let cronManager: CronManager | null = null;
 
-// 定时任务触发时的回调——推送到前端
-const cronCallbacks = new Set<(job: CronJobRow) => void>();
-
+// EVT-01：定时任务触发统一走 EventBus。持久投递 + 空闲唤醒由 bus 承担；
+// legacy SSE 形状（cron_triggered）由 /api/cron/events 的 bus listener 保持。
 function onCronFire(job: CronJobRow): void {
   console.log(`⏰ 定时任务触发: ${job.message}`);
-  for (const cb of cronCallbacks) {
-    cb(job);
-  }
+  const firedAt = new Date().toISOString();
+  void getDefaultEventBus().publish({
+    type: "cron.triggered",
+    source: "cron",
+    sourceEventId: `job:${job.id}:${firedAt}`,
+    targetSessionId: typeof job.session_id === "string" && job.session_id.length > 0 ? job.session_id : null,
+    tags: typeof job.tag === "string" && job.tag.length > 0 ? [job.tag] : [],
+    payload: { jobId: job.id, message: job.message, firedAt },
+  }).catch(() => undefined);
 }
 
 // ===========================================
-// Cron SSE —— 定时任务触发推送
+// Cron SSE —— 定时任务触发推送（legacy 形状，由 EventBus 供给）
 // ===========================================
 app.get("/api/cron/events", (req, res) => {
   res.writeHead(200, {
@@ -2110,19 +2222,45 @@ app.get("/api/cron/events", (req, res) => {
     Connection: "keep-alive",
   });
 
-  const cb = (job: CronJobRow) => {
+  const removeListener = getDefaultEventBus().addListener("cron.triggered", event => {
+    const payload = event.payload as { jobId?: number; message?: string };
     res.write(`data: ${JSON.stringify({
       type: "cron_triggered",
-      message: job.message,
-      jobId: job.id,
-      timestamp: Date.now(),
+      message: typeof payload?.message === "string" ? payload.message : "",
+      jobId: typeof payload?.jobId === "number" ? payload.jobId : null,
+      timestamp: event.createdAt,
     })}\n\n`);
-  };
-
-  cronCallbacks.add(cb);
+  });
 
   req.on("close", () => {
-    cronCallbacks.delete(cb);
+    removeListener();
+  });
+});
+
+// ===========================================
+// 统一事件 SSE (EVT-01) —— 全量 envelope 流（UI 接入面）
+// ===========================================
+app.get("/api/events", (req, res) => {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+
+  const removeListener = getDefaultEventBus().addListener("*", event => {
+    res.write(`data: ${JSON.stringify({ type: "event", event: {
+      id: event.id,
+      type: event.type,
+      source: event.source,
+      targetSessionId: event.targetSessionId,
+      tags: event.tags,
+      payload: event.payload,
+      createdAt: event.createdAt,
+    } })}\n\n`);
+  });
+
+  req.on("close", () => {
+    removeListener();
   });
 });
 
@@ -2134,6 +2272,7 @@ async function start() {
   await initializeConfig();
   securityAuditJournal = await openSecurityAuditJournal();
   await securityAuditJournal.verify();
+  attachEventBusStore(); // EVT-01：先接持久层再恢复 cron，避免启动窗口丢事件
   llm = createLlmClient();
   personas = await listPersonas();
   console.log(`✅ 已加载 ${personas.length} 个 persona`);
@@ -2176,6 +2315,7 @@ async function start() {
 
   // 工具注册完整性启动自检：所有 persona 声明的工具必须真实可执行。
   validatePersonaToolIntegrity(personas);
+  startEventBusDispatch(); // EVT-01：会话恢复完成后再开始调度（唤醒策略可安全 claim）
 
   const activeProfile = getCurrentProfile();
   console.log(JSON.stringify({
@@ -2348,6 +2488,7 @@ export async function shutdown(exitProcess = true): Promise<void> {
   const retiringRegistry = runtimeRegistry;
   const registryShutdown = retiringRegistry?.shutdown() ?? Promise.resolve();
   cronManager?.dispose();
+  await getDefaultEventBus().stop(); // EVT-01：停调度并等待在途投递收束
   await disposeWire();
   await Promise.all([
     serverClosed,

@@ -3,6 +3,7 @@
 // ===========================================
 
 import { randomUUID } from "node:crypto";
+import { getDefaultEventBus } from "./event-bus.js";
 import {
   assertResourceOwner,
   registerOwnedResource,
@@ -77,6 +78,14 @@ export async function subscribe(
         try { callback(wireEvent); }
         catch { /* One consumer cannot bypass or disrupt the governed watcher. */ }
       }
+      // EVT-01：watcher 事件同时进入统一事件总线（listener 级投影，无 session 定向；
+      // 定向订阅属 EVT-03）。未 attach 持久层的宿主环境下为零行为变化。
+      void getDefaultEventBus().publish({
+        type: "wire.file_event",
+        source: "wire",
+        tags: [current.source],
+        payload: wireEvent,
+      }).catch(() => undefined);
     });
     subscription.lease = lease;
     void lease.closed.then(() => closeSubscription(subscription)).catch(() => undefined);
