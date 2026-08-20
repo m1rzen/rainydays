@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-08",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/rt-08.json",
+    "sha256": "e415ac6d45660fcc33056f1161fbd6668a0dad44744d2685ea87ed7f91952c69"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/capability-broker.js",
+      "sha256": "27db7857f3aec193311ae98e48f891f87b828f03c2782561ce3ef34f296bba52",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "151cfa7eaa1e2e43e315d24e7e5cb67a6f29ac9d189a1ca3242825738d6835df",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "dist/network-policy.js",
+      "sha256": "0eafa198bc12e98b8883fd98f9b68f21ddce52879d8975d20ad7b4c40e665fa6",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "dist/subagent-registry.js",
+      "sha256": "4849d99f9a8cf5d50d72a3f5db8e0b18a744bc60416b3589eab5bdafa1a899e1",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "dist/subagent.js",
+      "sha256": "b1bc9a8882745a76939159c34248a70bf228f907798255e94d875dc714dfb45a",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "dist/tool-policies.js",
+      "sha256": "38751881419d143968616bc98ddb62c68815368315c0005bacdeca9a7f36f382",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "dist/tools/index.js",
+      "sha256": "41e7939284924efa6c5eeeee7cb6439bf02e98748449bda3ce98efc99c30ddee",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "dist/tools/subagent-tools.js",
+      "sha256": "84b7acb71f5b0c9ce0b27ee01f6d1ca222a01f26220ebdf1bbc68e7e6c1c5eef",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "dist/types.js",
+      "sha256": "f83194a028ad835129d2a26fa0c59dc527352befb5544616d118b01082ff748c",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "personas/developer.md",
+      "sha256": "5e364bd4f5bb3d34909042a737b8d6b9221d9d9bc67a2e125983efc988bb77b2",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "personas/general.md",
+      "sha256": "6d42b521b9d127ec565aaae5cbc13d37c30557ff063f89dcd0bee7ab98f299e2",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "public/index.html",
+      "sha256": "ff64b122729a9f558324899b13833a333e8c525cc80b6b50d1c6272ac9d5cbba",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "public/renderer.css",
+      "sha256": "71dbe3ae17ea5350183acef687bb5f2bda8e622be2bed72394cf5d52018d11ac",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "public/renderer.js",
+      "sha256": "02c09eae57967475995c504a1f489f9a538fde2546351ee4699e7fc09157512e",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "src/capability-broker.ts",
+      "sha256": "afdaba651ff01a101ff428aec39faf6d2c38a18d8f57b7435f01f3f44626f70d",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "154c887da2bb77a8504d592ff0eb169d462ab6f0309270607fa22975e5267c4f",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "src/network-policy.ts",
+      "sha256": "d3c8ac442364436c77e0c455d462ea2092c7559fa623fb0be56fa891ddf75ca4",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "src/subagent-registry.ts",
+      "sha256": "1b5b93092bcb1ddfb1e6401744253b6e9bd04d880000d01c37514c1a84c9c6d7",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "src/subagent.ts",
+      "sha256": "789f5a07b86c3100b90ac1707201b32c1be970a221631abad2b61afafa4464eb",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "61f976d38c2249372ae96eb7dff27f850f8cf466f8bb2600aa595021197bafc8",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "eecfbc45bbe00205f8a367e715604956be31ef9c8fca43e7e4fef0713e6b7485",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "src/tools/subagent-tools.ts",
+      "sha256": "13ba8d8afefc1f8b227514f99d7ffa881c61dfa09f90072c8df5fe5a7e770f73",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "src/types.ts",
+      "sha256": "a77056740d055c9b546251719900011e4ad53e0632cd618029f582fccd61f0f8",
+      "owner": "RT-08"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/rt08-governance.test.mjs",
+      "sha256": "5a938871b8714287e47f78d868ab8d39794a02b45343f3748e4a7fffad968781",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "tests/unit/subagent-registry.test.mjs",
+      "sha256": "675606059bac53a56a2a3780d5ce916b42750cbc5e497e3a3a13fa85f35ce94d",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "tests/unit/rt08-detached-capability.test.mjs",
+      "sha256": "e2b5ba901e57f6fb0d8e1687b4ea2802656a8ff0c39d1f0540245e1b66154502",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs",
+      "sha256": "8f0797e2771a0245f95aacb992c1cd733dddbc733565ae7ea01193f97d1ab7fb",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs",
+      "sha256": "492463c92fc8b91dcbd0a3a882117c0ce1ef065ec913ef4be97c03100af38afb",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "tests/integration/rt04-child-cancellation.test.mjs",
+      "sha256": "3b5ab545ead65ff6adf4a81e426ce7649d360d3ea96800718d6f28995203bc33",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+      "sha256": "e7620ab25b6548088f5e19807298139e6e5ca8063aad85db0253cbce825ca677",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-08"
+    },
+    {
+      "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+      "sha256": "8876c8cd48cd4169074002abaac52a96c880282dfbc6fc9264ca77bcd18ca8d4",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-08"
+    }
+  ],
+  "canonicalPayloadSha256": "c795f2f7def9f6c7f54a38f5aadf94bcf6a35c99f2fff549f104d45f500dac66"
+}

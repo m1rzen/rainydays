@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-08",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "dist/capability-broker.js",
+    "dist/index.js",
+    "dist/network-policy.js",
+    "dist/subagent-registry.js",
+    "dist/subagent.js",
+    "dist/tool-policies.js",
+    "dist/tools/index.js",
+    "dist/tools/subagent-tools.js",
+    "dist/types.js",
+    "personas/developer.md",
+    "personas/general.md",
+    "public/index.html",
+    "public/renderer.css",
+    "public/renderer.js",
+    "src/capability-broker.ts",
+    "src/index.ts",
+    "src/network-policy.ts",
+    "src/subagent-registry.ts",
+    "src/subagent.ts",
+    "src/tool-policies.ts",
+    "src/tools/index.ts",
+    "src/tools/subagent-tools.ts",
+    "src/types.ts"
+  ],
+  "coverageExemptions": {
+    "dist/index.js": {
+      "reason": "The compiled server entrypoint is exercised through exact RT-08 lifecycle integration and Session runtime evidence rather than isolated coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs", "layer": "integration" }]
+    },
+    "dist/types.js": {
+      "reason": "The compiled types module contains no executable runtime behavior and is bound to exact RT-08 integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs", "layer": "integration" }]
+    },
+    "personas/developer.md": {
+      "reason": "Developer lifecycle capability configuration is declarative and bound to exact RT-08 adapter integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs", "layer": "integration" }]
+    },
+    "personas/general.md": {
+      "reason": "General lifecycle capability configuration is declarative and bound to exact RT-08 adapter integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs", "layer": "integration" }]
+    },
+    "public/index.html": {
+      "reason": "The Subagent status panel structure is declarative and bound to the SEC-07 renderer contract and RT-08 lifecycle evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" }]
+    },
+    "public/renderer.css": {
+      "reason": "The Subagent status presentation is declarative and bound to the SEC-07 renderer contract and RT-08 lifecycle evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" }]
+    },
+    "public/renderer.js": {
+      "reason": "Renderer polling and Session identity projection are browser code bound to exact RT-08 integration and SEC-07 contract evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs", "layer": "integration" }]
+    },
+    "src/capability-broker.ts": {
+      "reason": "The compiled detached capability implementation is governed directly; authored TypeScript is bound to exact Broker lifecycle evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/rt08-detached-capability.test.mjs", "layer": "unit" }]
+    },
+    "src/index.ts": {
+      "reason": "The compiled Session runtime integration is governed directly; authored TypeScript is bound to lifecycle and dynamic registration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs", "layer": "integration" }]
+    },
+    "src/network-policy.ts": {
+      "reason": "The compiled detached network revalidation path is governed directly and bound to authentic capability integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs", "layer": "integration" }]
+    },
+    "src/subagent-registry.ts": {
+      "reason": "The compiled Registry state machine is governed directly; authored TypeScript is bound to concurrency and settlement evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/subagent-registry.test.mjs", "layer": "unit" }]
+    },
+    "src/subagent.ts": {
+      "reason": "The compiled child runner is governed directly; authored TypeScript is bound to cancellation and checkpoint evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs", "layer": "integration" }]
+    },
+    "src/tool-policies.ts": {
+      "reason": "The compiled lifecycle policy table is governed directly and bound to attenuation evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/rt08-detached-capability.test.mjs", "layer": "unit" }]
+    },
+    "src/tools/index.ts": {
+      "reason": "The compiled detached invocation services are governed directly and bound to adapter and cancellation evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs", "layer": "integration" }]
+    },
+    "src/tools/subagent-tools.ts": {
+      "reason": "The compiled seven-tool adapter surface is governed directly and bound to lifecycle integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs", "layer": "integration" }]
+    },
+    "src/types.ts": {
+      "reason": "Invocation service declarations erase at runtime and are bound to exact compiled adapter and Broker evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs", "layer": "integration" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/rt08-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/unit/subagent-registry.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/rt08-detached-capability.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/rt04-child-cancellation.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs", "layer": "integration" }
+  ]
+}
