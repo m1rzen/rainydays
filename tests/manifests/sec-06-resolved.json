@@ -38,12 +38,12 @@
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "2477843d5c44693f1f7ea3bb08db180b6b8eb520d77f460da140232a5dbfc5bf",
+      "sha256": "e2a787cad6c1179da8cd85272f6a3c2441bb9b6c000d257d9720cdf5918dcc94",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "154c887da2bb77a8504d592ff0eb169d462ab6f0309270607fa22975e5267c4f",
+      "sha256": "ecd30f28cd627aa6271288151d29d8f91b12caa1566a3e71bdcd2aa08366f2ec",
       "owner": "SEC-06"
     },
     {
@@ -73,7 +73,7 @@
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "72c1da45b80f500017850e9b8ed8d0b66f895c4b2216b926badf871bbd37921d",
+      "sha256": "037129e04f9d22625e3f56553ec6b24231b9eccefa8b80ebc43c5c82f7c6a943",
       "owner": "SEC-06"
     },
     {
@@ -98,12 +98,12 @@
     },
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "7a61061a0b21ea2d3813c811906ecb929c2f44f99e5f2f566a8a69603924fd3a",
+      "sha256": "f61ee46a34384f5869c775313eaaf5a0d26852933610b440d5cee97ec463235a",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "151cfa7eaa1e2e43e315d24e7e5cb67a6f29ac9d189a1ca3242825738d6835df",
+      "sha256": "56be2a8b458dce96fef626f7f1fd14497147f3b83baaa8a919485865557286b8",
       "owner": "SEC-06"
     },
     {
@@ -133,7 +133,7 @@
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "f391c4688d8e80099adce63f03ca5402af13821db339cf89e49a798c0fa3212c",
+      "sha256": "ba0dd140df9f1b6118d50278fb6af2ce9c07ddf8b7e224a88097bdfb689b114c",
       "owner": "SEC-06"
     }
   ],
@@ -168,7 +168,7 @@
     },
     {
       "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-      "sha256": "b98988394b82bb3f4a5607f97823a418c96be527af79d4ccae4db6d96abc8993",
+      "sha256": "cbfd5d64df0242513f1bb3dbb68ddc297ad92e2502af91abb1fbf5962732fbfc",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-06"
@@ -209,5 +209,5 @@
       "owner": "SEC-06"
     }
   ],
-  "canonicalPayloadSha256": "34c4da4d4d82e2e1034ad70e5e259014ae5e49d41407ac7c460f25cc9034cac6"
+  "canonicalPayloadSha256": "0ad87ac1e9d6d908d93beeeb5a27559cd5185c962ca20e827fa58c29678822f6"
 }
