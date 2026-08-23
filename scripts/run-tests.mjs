@@ -207,7 +207,7 @@ async function main() {
         "--report", reportPath,
         ...(sec02RunId ? ["--run-id", sec02RunId] : []),
       ], {
-        timeoutMs: layer === "packaged" ? 900_000 : layer === "integration" ? 780_000 : 360_000,
+        timeoutMs: layer === "packaged" ? 900_000 : layer === "integration" ? 840_000 : 360_000,
         echo: true,
         env: {
           ...withoutGov04DiagnosticChallenge(),

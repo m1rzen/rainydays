@@ -365,10 +365,10 @@ test("integration timeout budgets preserve a bounded cleanup envelope", async ()
   const innerMs = Number(inner[1].replaceAll("_", ""));
   const outerMs = Number(outer[1].replaceAll("_", ""));
   assert.equal(innerMs, 720_000);
-  assert.equal(outerMs, 780_000);
+  assert.equal(outerMs, 840_000);
   assert(outerMs > innerMs);
-  assert(outerMs - innerMs >= 60_000);
-  assert(outerMs <= 900_000);
+  assert(outerMs - innerMs >= 120_000);
+  assert(outerMs < 900_000);
 });
 
 test("packaged crash and observation failures are fail-closed", () => {

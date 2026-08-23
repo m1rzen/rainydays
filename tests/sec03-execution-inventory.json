@@ -5,7 +5,7 @@
   "scannerSha256": "d81dfe30bf6f7df1ce3221861923b011c495fb6be0af1efb026f8203f69d8cb1",
   "crosscheckSha256": "a2c62c23669d2924472d4c80761122a5c4446d12e6a27f8595221f55a0290093",
   "policySha256": "71ed4ee375bac800e28b5fe082874d34b1545408c42adaa202d03a9cd72e7b64",
-  "sourceSetSha256": "f260a0f9794550308f8c17f08caf0b3aeb829992d7cfa8f1997fba73abb13d7f",
+  "sourceSetSha256": "adbe2a4e0c9d797fd244bad488af3a7449f4abd1e8fa210e70b168aaa19f2557",
   "files": [
     {
       "sourcePath": "electron/ipc-contract.cjs",
@@ -418,7 +418,7 @@
     {
       "sourcePath": "scripts/run-tests.mjs",
       "bytes": 18442,
-      "sha256": "b85e156c4e1e778a9130e605079361af207acfda675ddc98be90e366ca9aaea2",
+      "sha256": "d825692c8e2bd6d6566d1d1fbf81a272f660d5465d12f06625366f408db007b1",
       "executionClass": "build-test"
     },
     {
@@ -1576,7 +1576,7 @@
     {
       "sourcePath": "tests/unit/framework.test.mjs",
       "bytes": 53100,
-      "sha256": "728d18ed1d05b18212f4d8614d28f53494d8c2c76f0d8b1277aeb7ba53fe280f",
+      "sha256": "16a51b1b26f4cb9bf1a6fb690ac8b9c1530ddd00dfc25f5a547f7d958a1e3f65",
       "executionClass": "build-test"
     },
     {
@@ -8825,5 +8825,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "7231ade37140f5890eb3e191de722595ae787071fe63ff248770030e386623cc"
+  "canonicalPayloadSha256": "745c4c755173af87f061186fb974cc3337a68dd24a3ee36cb405c1508d00548c"
 }

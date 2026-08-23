@@ -506,7 +506,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "c1822474510de16abdc12ae9353479d9314936ae4cb3a8ecb22a130e9b0c5c11",
+      "sha256": "30e4406aa979f7e5483971f8edb911bc402495d2460f59b40ada0d87d7d23cb7",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -697,7 +697,7 @@
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
-      "sha256": "b85e156c4e1e778a9130e605079361af207acfda675ddc98be90e366ca9aaea2",
+      "sha256": "d825692c8e2bd6d6566d1d1fbf81a272f660d5465d12f06625366f408db007b1",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -885,7 +885,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "728d18ed1d05b18212f4d8614d28f53494d8c2c76f0d8b1277aeb7ba53fe280f",
+      "sha256": "16a51b1b26f4cb9bf1a6fb690ac8b9c1530ddd00dfc25f5a547f7d958a1e3f65",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2466,7 +2466,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "c1822474510de16abdc12ae9353479d9314936ae4cb3a8ecb22a130e9b0c5c11",
+      "sha256": "30e4406aa979f7e5483971f8edb911bc402495d2460f59b40ada0d87d7d23cb7",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2657,7 +2657,7 @@
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
-      "sha256": "b85e156c4e1e778a9130e605079361af207acfda675ddc98be90e366ca9aaea2",
+      "sha256": "d825692c8e2bd6d6566d1d1fbf81a272f660d5465d12f06625366f408db007b1",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2845,7 +2845,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "728d18ed1d05b18212f4d8614d28f53494d8c2c76f0d8b1277aeb7ba53fe280f",
+      "sha256": "16a51b1b26f4cb9bf1a6fb690ac8b9c1530ddd00dfc25f5a547f7d958a1e3f65",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -3793,5 +3793,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "e55d6187d70fdf1de62e2d306f9ff45437ce49ff14a6498aa68d1e665e28b897"
+  "canonicalPayloadSha256": "9a65a15a500869ffbc9648a0db293e57da880cc4e48c0e8465d2a54efde9b3c3"
 }
