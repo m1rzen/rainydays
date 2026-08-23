@@ -16,6 +16,8 @@ import type { Message } from "./types.js";
 import type { LLMClient, LLMFetchTransport } from "./llm.js";
 import { isRunCancellation, throwIfCancelled } from "./run-cancellation.js";
 import { insertMessage, getMessagesBySession, withTransaction } from "./db.js";
+import { bindMessageAttachments, getMessageAttachmentMap } from "./attachment-store.js";
+import { messageAttachmentTokenText } from "./attachment.js";
 
 // --- 常量 ---
 
@@ -39,7 +41,7 @@ function estimateTokens(text: string): number {
 }
 
 function messageTokens(msg: Message): number {
-  let total = estimateTokens(msg.content || "");
+  let total = estimateTokens(msg.content || "") + estimateTokens(messageAttachmentTokenText(msg));
   if (msg.tool_calls) {
     for (const tc of msg.tool_calls) {
       total += estimateTokens(tc.function.name + tc.function.arguments);
@@ -100,7 +102,10 @@ function compressToolResult(content: string): string {
 
 function formatMessagesForSummary(messages: Message[]): string {
   return messages.map((m) => {
-    if (m.role === "user") return `用户: ${m.content}`;
+    if (m.role === "user") {
+      const attachments = messageAttachmentTokenText(m);
+      return `用户: ${m.content}${attachments ? `\n附件:\n${attachments}` : ""}`;
+    }
     if (m.role === "assistant") {
       if (m.tool_calls && m.tool_calls.length > 0) {
         const toolNames = m.tool_calls.map((tc) => tc.function.name).join(", ");
@@ -151,6 +156,7 @@ export class ConversationMemory {
   loadFromDb(sessionId: string): void {
     this.sessionId = sessionId;
     const rows = getMessagesBySession(sessionId);
+    const attachmentsByMessage = getMessageAttachmentMap(sessionId);
 
     let messages = rows.map((row) => {
       const msg: Message = {
@@ -167,6 +173,8 @@ export class ConversationMemory {
       if (row.tool_call_id) {
         msg.tool_call_id = row.tool_call_id;
       }
+      const attachments = attachmentsByMessage.get(row.id);
+      if (attachments?.length) msg.attachments = attachments;
       return msg;
     });
 
@@ -207,7 +215,8 @@ export class ConversationMemory {
       withTransaction(() => {
         for (const message of messages) {
           if (message.role === "system") continue;
-          insertMessage({
+          if (message.attachments?.length && message.role !== "user") throw new TypeError("Only user messages may contain attachments");
+          const messageId = insertMessage({
             session_id: sessionId,
             role: message.role,
             content: message.content,
@@ -215,6 +224,7 @@ export class ConversationMemory {
             tool_call_id: message.tool_call_id || null,
             created_at: createdAt,
           });
+          bindMessageAttachments(sessionId, messageId, message.attachments ?? []);
         }
       });
     }

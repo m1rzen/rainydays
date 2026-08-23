@@ -811,6 +811,86 @@ function assertSchemaV8(database: typeof db = db): void {
   if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 8 不兼容: 完整性检查失败");
 }
 
+const SCHEMA_V9_SQL = `
+    CREATE UNIQUE INDEX idx_messages_session_id ON messages (session_id, id);
+    CREATE TABLE attachments (
+      id          TEXT PRIMARY KEY NOT NULL CHECK (length(id) = 36 AND substr(id, 1, 4) = 'att_'),
+      session_id  TEXT NOT NULL,
+      message_id  INTEGER,
+      state       TEXT NOT NULL CHECK (state IN ('uploading', 'ready', 'failed', 'cancelled')),
+      kind        TEXT NOT NULL CHECK (kind IN ('image', 'text')),
+      name        TEXT NOT NULL CHECK (length(CAST(name AS BLOB)) BETWEEN 1 AND 255),
+      mime        TEXT NOT NULL CHECK (mime IN ('image/png', 'text/plain', 'text/markdown', 'text/csv', 'application/json')),
+      size        INTEGER NOT NULL CHECK (size BETWEEN 1 AND 8388608),
+      sha256      TEXT CHECK (sha256 IS NULL OR (length(sha256) = 64 AND sha256 NOT GLOB '*[^a-f0-9]*')),
+      content     BLOB,
+      error_code  TEXT CHECK (error_code IS NULL OR length(error_code) BETWEEN 1 AND 64),
+      created_at  INTEGER NOT NULL CHECK (created_at >= 0),
+      updated_at  INTEGER NOT NULL CHECK (updated_at >= created_at),
+      FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+      FOREIGN KEY (session_id, message_id) REFERENCES messages(session_id, id) ON DELETE CASCADE,
+      CHECK ((kind = 'image' AND substr(mime, 1, 6) = 'image/') OR (kind = 'text' AND substr(mime, 1, 6) <> 'image/')),
+      CHECK (
+        (state = 'uploading' AND message_id IS NULL AND sha256 IS NULL AND content IS NULL AND error_code IS NULL)
+        OR (state = 'ready' AND sha256 IS NOT NULL AND content IS NOT NULL AND length(content) = size AND error_code IS NULL)
+        OR (state IN ('failed', 'cancelled') AND message_id IS NULL AND sha256 IS NULL AND content IS NULL AND error_code IS NOT NULL)
+      )
+    );
+    CREATE INDEX idx_attachments_session_draft ON attachments (session_id, message_id, state, created_at, id);
+    CREATE INDEX idx_attachments_message ON attachments (message_id, id) WHERE message_id IS NOT NULL;
+    CREATE UNIQUE INDEX idx_attachments_draft_duplicate ON attachments (session_id, name, sha256)
+      WHERE message_id IS NULL AND state = 'ready';
+    CREATE TRIGGER attachments_user_message_insert BEFORE INSERT ON attachments
+      WHEN NEW.message_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM messages WHERE id = NEW.message_id AND session_id = NEW.session_id AND role = 'user'
+      )
+      BEGIN SELECT RAISE(ABORT, 'attachment message must be a same-session user message'); END;
+    CREATE TRIGGER attachments_user_message_update BEFORE UPDATE OF session_id, message_id ON attachments
+      WHEN NEW.message_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM messages WHERE id = NEW.message_id AND session_id = NEW.session_id AND role = 'user'
+      )
+      BEGIN SELECT RAISE(ABORT, 'attachment message must be a same-session user message'); END;
+  `;
+
+function assertSchemaV9(database: typeof db = db): void {
+  const reference = createInMemoryBootstrapDatabase();
+  try {
+    reference.pragma("foreign_keys = ON");
+    reference.exec(SCHEMA_V1_SQL);
+    reference.exec(SCHEMA_V2_SQL);
+    applySchemaV3(reference);
+    reference.exec(SCHEMA_V4_SQL);
+    reference.exec(SCHEMA_V5_SQL);
+    reference.exec(SCHEMA_V6_SQL);
+    reference.exec(SCHEMA_V7_SQL);
+    reference.exec(SCHEMA_V8_SQL);
+    reference.exec(SCHEMA_V9_SQL);
+    const objectRows = (target: typeof db): Array<{ type: string; name: string; tbl_name: string; sql: string | null }> => target.prepare(
+      "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
+    ).all() as Array<{ type: string; name: string; tbl_name: string; sql: string | null }>;
+    const actual = objectRows(database);
+    const expected = objectRows(reference);
+    const signatures = (rows: typeof actual): string[] => rows.map(entry => `${entry.type}|${entry.name}|${entry.tbl_name}`);
+    if (JSON.stringify(signatures(actual)) !== JSON.stringify(signatures(expected))) {
+      throw new Error("数据库 Schema 9 不兼容: 存在未知或缺失的 Schema 对象");
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const found = actual[index];
+      const wanted = expected[index];
+      if ((found.sql === null) !== (wanted.sql === null)
+        || (found.sql !== null && wanted.sql !== null && normalizeSchemaSql(found.sql) !== normalizeSchemaSql(wanted.sql))) {
+        throw new Error(`数据库 Schema 9 不兼容: ${wanted.type} ${wanted.name} SQL 定义错误`);
+      }
+    }
+  } finally {
+    reference.close();
+  }
+  const foreignKeyViolations = database.prepare("PRAGMA foreign_key_check").all();
+  if (foreignKeyViolations.length > 0) throw new Error("数据库 Schema 9 不兼容: 存在外键完整性错误");
+  const integrity = database.prepare("PRAGMA integrity_check").all() as Array<{ integrity_check?: string }>;
+  if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 9 不兼容: 完整性检查失败");
+}
+
 interface DatabaseMigration {
   readonly from: number;
   readonly to: number;
@@ -890,6 +970,15 @@ const DATABASE_MIGRATIONS: readonly DatabaseMigration[] = Object.freeze([
       assertSchemaV8(database);
     },
   }),
+  Object.freeze({
+    from: 8,
+    to: 9,
+    apply: (database: typeof db): void => {
+      assertSchemaV8(database);
+      database.exec(SCHEMA_V9_SQL);
+      assertSchemaV9(database);
+    },
+  }),
 ]);
 
 function assertMigrationRegistry(): void {
@@ -930,7 +1019,7 @@ function migrateDatabase(): void {
   if (version !== DATABASE_SCHEMA_VERSION) {
     throw new Error(`数据库 Schema 迁移未达到目标版本: 当前 ${version}，目标 ${DATABASE_SCHEMA_VERSION}`);
   }
-  assertSchemaV8(db);
+  assertSchemaV9(db);
 }
 
 try {
@@ -1186,6 +1275,22 @@ export interface MessageRow {
   created_at: string;
 }
 
+export interface AttachmentRow {
+  id: string;
+  session_id: string;
+  message_id: number | null;
+  state: "uploading" | "ready" | "failed" | "cancelled";
+  kind: "image" | "text";
+  name: string;
+  mime: string;
+  size: number;
+  sha256: string | null;
+  content: Buffer | null;
+  error_code: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
 // ===========================================
 // Sessions CRUD
 // ===========================================
@@ -1242,9 +1347,9 @@ export function deleteSession(id: string): void {
 // Messages CRUD
 // ===========================================
 
-/** 插入消息 */
-export function insertMessage(msg: Omit<MessageRow, "id">): void {
-  db.prepare(
+/** 插入消息并返回稳定的 SQLite 消息 ID。 */
+export function insertMessage(msg: Omit<MessageRow, "id">): number {
+  const result = db.prepare(
     `INSERT INTO messages (session_id, role, content, tool_calls, tool_call_id, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`
   ).run(
@@ -1255,6 +1360,9 @@ export function insertMessage(msg: Omit<MessageRow, "id">): void {
     msg.tool_call_id || null,
     msg.created_at
   );
+  const id = Number(result.lastInsertRowid);
+  if (!Number.isSafeInteger(id) || id < 1) throw new Error("Message ID is invalid");
+  return id;
 }
 
 /** 获取会话的所有消息（按时间正序） */
@@ -1267,6 +1375,149 @@ export function getMessagesBySession(sessionId: string): MessageRow[] {
 /** 删除会话的所有消息 */
 export function deleteMessagesBySession(sessionId: string): void {
   db.prepare(`DELETE FROM messages WHERE session_id = ?`).run(sessionId);
+}
+
+export function reserveAttachmentUpload(input: Readonly<{
+  sessionId: string;
+  kind: "image" | "text";
+  name: string;
+  mime: string;
+  size: number;
+}>): AttachmentRow {
+  const id = `att_${randomUUID().replaceAll("-", "")}`;
+  const now = Date.now();
+  db.prepare(
+    `INSERT INTO attachments (id, session_id, message_id, state, kind, name, mime, size, sha256, content, error_code, created_at, updated_at)
+     VALUES (?, ?, NULL, 'uploading', ?, ?, ?, ?, NULL, NULL, NULL, ?, ?)`
+  ).run(id, input.sessionId, input.kind, input.name, input.mime, input.size, now, now);
+  return getAttachmentBySession(input.sessionId, id)!;
+}
+
+export function getAttachmentBySession(sessionId: string, id: string): AttachmentRow | undefined {
+  return db.prepare(`SELECT * FROM attachments WHERE session_id = ? AND id = ?`).get(sessionId, id) as AttachmentRow | undefined;
+}
+
+export function getAttachmentById(id: string): AttachmentRow | undefined {
+  return db.prepare(`SELECT * FROM attachments WHERE id = ?`).get(id) as AttachmentRow | undefined;
+}
+
+export function listDraftAttachments(sessionId: string): AttachmentRow[] {
+  return db.prepare(
+    `SELECT * FROM attachments WHERE session_id = ? AND message_id IS NULL ORDER BY created_at, id`
+  ).all(sessionId) as AttachmentRow[];
+}
+
+export function listMessageAttachments(sessionId: string): AttachmentRow[] {
+  return db.prepare(
+    `SELECT * FROM attachments WHERE session_id = ? AND message_id IS NOT NULL ORDER BY message_id, created_at, id`
+  ).all(sessionId) as AttachmentRow[];
+}
+
+export function getAttachmentUsageBytes(sessionId?: string): number {
+  const row = sessionId === undefined
+    ? db.prepare(`SELECT COALESCE(SUM(size), 0) AS bytes FROM attachments WHERE state IN ('uploading', 'ready')`).get()
+    : db.prepare(`SELECT COALESCE(SUM(size), 0) AS bytes FROM attachments WHERE session_id = ? AND state IN ('uploading', 'ready')`).get(sessionId);
+  const bytes = Number((row as { bytes: number | bigint }).bytes);
+  if (!Number.isSafeInteger(bytes) || bytes < 0) throw new Error("Attachment usage is invalid");
+  return bytes;
+}
+
+export function deleteExpiredTerminalAttachments(cutoff: number): number {
+  return db.prepare(
+    `DELETE FROM attachments WHERE message_id IS NULL AND state IN ('failed', 'cancelled') AND updated_at < ?`
+  ).run(cutoff).changes;
+}
+
+export function pruneTerminalAttachments(sessionId: string, retain: number): number {
+  const rows = db.prepare(
+    `SELECT id FROM attachments WHERE session_id = ? AND message_id IS NULL AND state IN ('failed', 'cancelled')
+     ORDER BY updated_at DESC, id DESC`
+  ).all(sessionId) as Array<{ id: string }>;
+  if (rows.length <= retain) return 0;
+  const remove = db.prepare(`DELETE FROM attachments WHERE session_id = ? AND id = ? AND message_id IS NULL AND state IN ('failed', 'cancelled')`);
+  let deleted = 0;
+  for (const row of rows.slice(retain)) deleted += remove.run(sessionId, row.id).changes;
+  return deleted;
+}
+
+export function completeAttachmentUpload(sessionId: string, id: string, sha256: string, content: Buffer): boolean {
+  return db.prepare(
+    `UPDATE attachments SET state = 'ready', sha256 = ?, content = ?, updated_at = ?
+     WHERE session_id = ? AND id = ? AND message_id IS NULL AND state = 'uploading'`
+  ).run(sha256, content, Date.now(), sessionId, id).changes === 1;
+}
+
+export function finishAttachmentUploadWithError(
+  sessionId: string,
+  id: string,
+  state: "failed" | "cancelled",
+  errorCode: string,
+): boolean {
+  return db.prepare(
+    `UPDATE attachments SET state = ?, sha256 = NULL, content = NULL, error_code = ?, updated_at = ?
+     WHERE session_id = ? AND id = ? AND message_id IS NULL AND state = 'uploading'`
+  ).run(state, errorCode, Date.now(), sessionId, id).changes === 1;
+}
+
+export function deleteDraftAttachment(sessionId: string, id: string): boolean {
+  return db.prepare(`DELETE FROM attachments WHERE session_id = ? AND id = ? AND message_id IS NULL`).run(sessionId, id).changes === 1;
+}
+
+export function attachReadyArtifactsToMessage(sessionId: string, messageId: number, ids: readonly string[]): AttachmentRow[] {
+  const attached: AttachmentRow[] = [];
+  for (const id of ids) {
+    const changed = db.prepare(
+      `UPDATE attachments SET message_id = ?, updated_at = ?
+       WHERE session_id = ? AND id = ? AND message_id IS NULL AND state = 'ready'`
+    ).run(messageId, Date.now(), sessionId, id).changes;
+    if (changed !== 1) throw new Error(`Attachment is not ready for this Session: ${id}`);
+    attached.push(getAttachmentBySession(sessionId, id)!);
+  }
+  return attached;
+}
+
+export function copyMessageAttachments(sourceMessageId: number, targetSessionId: string, targetMessageId: number): void {
+  const rows = db.prepare(
+    `SELECT * FROM attachments WHERE message_id = ? AND state = 'ready' ORDER BY created_at, id`
+  ).all(sourceMessageId) as AttachmentRow[];
+  const statement = db.prepare(
+    `INSERT INTO attachments (id, session_id, message_id, state, kind, name, mime, size, sha256, content, error_code, created_at, updated_at)
+     VALUES (?, ?, ?, 'ready', ?, ?, ?, ?, ?, ?, NULL, ?, ?)`
+  );
+  for (const row of rows) {
+    statement.run(`att_${randomUUID().replaceAll("-", "")}`, targetSessionId, targetMessageId, row.kind,
+      row.name, row.mime, row.size, row.sha256, row.content, row.created_at, row.updated_at);
+  }
+}
+
+export function insertImportedAttachment(input: Readonly<{
+  sessionId: string;
+  messageId: number | null;
+  state: "ready" | "failed" | "cancelled";
+  kind: "image" | "text";
+  name: string;
+  mime: string;
+  size: number;
+  sha256: string | null;
+  content: Buffer | null;
+  errorCode: string | null;
+  createdAt: number;
+  updatedAt: number;
+}>): AttachmentRow {
+  const id = `att_${randomUUID().replaceAll("-", "")}`;
+  db.prepare(
+    `INSERT INTO attachments (id, session_id, message_id, state, kind, name, mime, size, sha256, content, error_code, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, input.sessionId, input.messageId, input.state, input.kind, input.name, input.mime, input.size,
+    input.sha256, input.content, input.errorCode, input.createdAt, input.updatedAt);
+  return getAttachmentBySession(input.sessionId, id)!;
+}
+
+export function failInterruptedAttachmentUploads(): number {
+  return db.prepare(
+    `UPDATE attachments SET state = 'failed', error_code = 'UPLOAD_INTERRUPTED', updated_at = ?
+     WHERE state = 'uploading' AND message_id IS NULL`
+  ).run(Date.now()).changes;
 }
 
 /** 关闭数据库并释放受管bootstrap lifetime lease。 */

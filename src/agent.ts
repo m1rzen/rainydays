@@ -7,7 +7,7 @@
 import { randomUUID } from "node:crypto";
 import type { LLMClient } from "./llm.js";
 import type { ConversationMemory } from "./memory.js";
-import type { AgentStep, PersonaDefinition, Message, TaskSnapshot, ToolCall, ToolExecutionOutcome, ToolPipelineStageRecord } from "./types.js";
+import type { AgentStep, PersonaDefinition, Message, MessageAttachment, TaskSnapshot, ToolCall, ToolExecutionOutcome, ToolPipelineStageRecord } from "./types.js";
 import type { CapabilityContext, InspectedToolCall, RuntimeAuthority, ToolPolicy } from "./capability-broker.js";
 import { CapabilityDeniedError } from "./capability-broker.js";
 import { PathDeniedError } from "./path-policy.js";
@@ -20,6 +20,7 @@ import { getRecentMemories, getPinsBySession } from "./db.js";
 import { approveToolCall } from "./supervisor.js";
 import { buildToolExecutionBatches } from "./tool-scheduler.js";
 import { askUserConfirm } from "./tools/ask-user-tool.js";
+import { readMessageAttachmentForSession } from "./attachment-store.js";
 import { requestNativeProcessConsent } from "./native-process-consent.js";
 import type { SecurityAuditJournal } from "./security-audit-journal.js";
 import { cancellationError, isRunCancellation, isRunSettlementFailure, NEVER_ABORT_SIGNAL, throwIfCancelled } from "./run-cancellation.js";
@@ -471,7 +472,12 @@ export class Agent {
    * 产出事件序列：
    *   [task_created] → [task_update] → tool_call → tool_result → ... → answer_chunk × N → answer_done
    */
-  async *run(userInput: string, runId?: string, signal: AbortSignal = NEVER_ABORT_SIGNAL): AsyncGenerator<AgentStep> {
+  async *run(
+    userInput: string,
+    runId?: string,
+    signal: AbortSignal = NEVER_ABORT_SIGNAL,
+    userAttachments: readonly MessageAttachment[] = [],
+  ): AsyncGenerator<AgentStep> {
     if (!this.sessionId) {
       yield {
         type: "error",
@@ -500,11 +506,13 @@ export class Agent {
     try {
       throwIfCancelled(signal);
       const isFirstMessage = this.memory.getAll().filter((m) => m.role === "user").length === 0;
-      this.memory.add({ role: "user", content: userInput });
+      const attachments = Object.freeze([...userAttachments]);
+      this.memory.add({ role: "user", content: userInput, ...(attachments.length ? { attachments } : {}) });
 
       if (isFirstMessage) {
-        const fallbackTitle = autoGenerateTitle(runSessionId, userInput);
-        void generateSemanticSessionTitle(this.llm, runSessionId, userInput, fallbackTitle).catch(() => undefined);
+        const titleInput = userInput.trim() || attachments.map(attachment => attachment.name).join(", ");
+        const fallbackTitle = autoGenerateTitle(runSessionId, titleInput);
+        void generateSemanticSessionTitle(this.llm, runSessionId, titleInput, fallbackTitle).catch(() => undefined);
       }
 
       this.refreshSystemPrompt(runSessionId);
@@ -560,7 +568,7 @@ export class Agent {
 
       const llmStart = Date.now();
       try {
-        for await (const event of this.llm.chatStream(this.memory.getAll(), tools, signal)) {
+        for await (const event of this.llm.chatStream(this.memory.getAll(), tools, signal, runSessionId, readMessageAttachmentForSession)) {
           if (event.type === "delta") {
             hasStreamedContent = true;
             yield {

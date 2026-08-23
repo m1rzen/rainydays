@@ -11,12 +11,22 @@ import type { SecurityAuditJournal } from "./security-audit-journal.js";
 /** 对话角色 */
 export type Role = "system" | "user" | "assistant" | "tool";
 
+export interface MessageAttachment {
+  readonly id: string;
+  readonly name: string;
+  readonly mime: string;
+  readonly size: number;
+  readonly sha256: string;
+  readonly kind: "image" | "text";
+}
+
 /** 一条对话消息 */
 export interface Message {
   role: Role;
   content: string;
   tool_call_id?: string;
   tool_calls?: ToolCall[];
+  attachments?: readonly MessageAttachment[];
 }
 
 /** 工具调用 */
@@ -163,6 +173,7 @@ export interface LLMConfig {
   apiKey: string;
   baseURL: string;
   model: string;
+  providerType?: string;
 }
 
 export type ToolPipelineStage = "schema" | "capability" | "loop" | "approval" | "policy" | "execute" | "output" | "audit";

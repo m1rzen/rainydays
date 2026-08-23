@@ -8,12 +8,12 @@
   "runtimeEntries": [
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "8ba53bacfe2e72e9c95bb75c2825939be968108af12a69719de61b4f7b5bfb00",
+      "sha256": "ed8a012e4dfcbaca9fce17807d3624d71ccb16239ce59fa1098698409e315c9b",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "ec9b192bb5b1d2a58f9222e51ac7a361d5e2f1aa585c5881c55b86e7497cc762",
+      "sha256": "40677ac4b9c09dcf80d7a4605720a50cbd82b89ca6a8541fea25114b78a136a7",
       "owner": "RT-01"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "aee91329304d13f0e24f7436d92d7643dbc701caa321f6d7bc0319595227ee5d",
+      "sha256": "56584e79f8830bfb4f1ca55f4d850a476741fba1a6715fb467ec38d6706ebaee",
       "owner": "RT-01"
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "exactCasePath": "src/session.ts",
-      "sha256": "cffaa85e615f7ef8b27cda8717822df5fdabff0e3401b8a9c5364dbf80eefba7",
+      "sha256": "e113b65255d5b450639b9ca9863cf11fb0516dcf09e3473bc8e4f40c222b810c",
       "owner": "RT-01"
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "ec110e0846b1719fa560058b38b4b721fbdc3287439dd86413e06153571bd1fb",
+      "sha256": "5efca8ac3aded948a6c8ae0b993a89e24f7fced7064cb2791ddc226ae102ccde",
       "owner": "RT-01"
     },
     {
@@ -58,7 +58,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "f06ab83d02eb2d48b6cb86c5e7302a7ac65ae2f646d8a49fce67f2f005ee6f3e",
+      "sha256": "92650ff9785153db33be2477d8c86d1db1a9ed1fb7f99001ccfacb8516a7dd3c",
       "owner": "RT-01"
     },
     {
@@ -68,7 +68,7 @@
     },
     {
       "exactCasePath": "dist/session.js",
-      "sha256": "8686a99a47741b9fc44938b255337fa15cfe8f030438fc16b5990b05c3a94703",
+      "sha256": "0f6015792fc6fe28347ee4ec42d5876ba7c2779865db202ec6074fab7c854d20",
       "owner": "RT-01"
     },
     {
@@ -106,14 +106,14 @@
     },
     {
       "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs",
-      "sha256": "5f1de82cf9dc8d3ca46f823749b02d4f00ebbc35503443b7f2985a535a975955",
+      "sha256": "dc52a6dbbf3ff6ef17fa0f97442e8951002011ae0b13b1d24078aa7e88c93991",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "232ea19085832d3594f55674ccb4526bb843f53a774254c18ce3b9f557be38c4",
+      "sha256": "bc71b8cdfedb27c8ccd388a47c48e6d4f7ef6145ea35261faaa466407533d44f",
       "kind": "test",
       "layer": "electron",
       "owner": "RT-01"
@@ -126,5 +126,5 @@
       "owner": "RT-01"
     }
   ],
-  "canonicalPayloadSha256": "4e483a69a4b7546641535aaf09c235338153e85cd43b6ed63b49ce97a4e6371d"
+  "canonicalPayloadSha256": "902787266405ddc4c7b2a0482a69242e73833e99e66a9b65c8313475a30e8dea"
 }

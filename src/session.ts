@@ -15,17 +15,24 @@ import {
   getMessagesBySession,
   getMessagesUpTo,
   insertMessage,
+  copyMessageAttachments,
+  insertImportedAttachment,
+  listDraftAttachments,
+  listMessageAttachments,
   searchAcrossSessions,
   getPinsBySession,
   insertPin,
   type SessionRow,
   type MessageRow,
+  type AttachmentRow,
   type SearchResultRow,
   withTransaction,
 } from "./db.js";
 import { APP_VERSION, BUILD_ID, SESSION_EXPORT_VERSION } from "./version.js";
 import { copyTasksForFork, exportTaskTransfer, normalizeTaskTransfer, restoreTaskTransfer, type TaskTransferSnapshot } from "./task.js";
 import { registerSession, unregisterSession, postFromSession, type LinkIdentity } from "./link.js";
+import { MAX_ATTACHMENTS_PER_MESSAGE, validateAttachmentContent, validateAttachmentId, validateAttachmentUploadMetadata } from "./attachment.js";
+import { assertAttachmentCapacity } from "./attachment-store.js";
 
 const linkIdentities = new Map<string, LinkIdentity>();
 
@@ -92,10 +99,12 @@ export function touch(id: string): void {
  * 加载会话的消息历史（用于恢复对话上下文）
  * 注意：不含 system prompt，system prompt 由 persona 提供
  */
-export function loadSessionMessages(sessionId: string): Message[] {
+export function loadSessionMessages(sessionId: string): Array<Message & { id: number; created_at: string }> {
   const rows = getMessagesBySession(sessionId);
   return rows.map((row) => {
-    const msg: Message = {
+    const msg: Message & { id: number; created_at: string } = {
+      id: row.id,
+      created_at: row.created_at,
       role: row.role as Message["role"],
       content: row.content,
     };
@@ -176,13 +185,18 @@ export function forkSession(
   const messages = upToMessageId
     ? getMessagesUpTo(sourceSessionId, upToMessageId)
     : getMessagesBySession(sourceSessionId);
+  const forkMessageIds = new Set(messages.map(message => message.id));
+  const attachmentBytes = listMessageAttachments(sourceSessionId)
+    .filter(attachment => attachment.message_id !== null && forkMessageIds.has(attachment.message_id))
+    .reduce((sum, attachment) => sum + attachment.size, 0);
   let registeredSessionId: string | null = null;
   try {
     return withTransaction(() => {
       const newSession = createSession(persona, `${sourceSession.title} (fork)`);
       registeredSessionId = newSession.id;
+      assertAttachmentCapacity(newSession.id, attachmentBytes);
       for (const msg of messages) {
-        insertMessage({
+        const messageId = insertMessage({
           session_id: newSession.id,
           role: msg.role,
           content: msg.content,
@@ -190,6 +204,7 @@ export function forkSession(
           tool_call_id: msg.tool_call_id,
           created_at: msg.created_at,
         });
+        copyMessageAttachments(msg.id, newSession.id, messageId);
       }
       copyTasksForFork(sourceSessionId, newSession.id);
       for (const pin of getPinsBySession(sourceSessionId)) {
@@ -226,8 +241,9 @@ export class SessionExportError extends Error {
   }
 }
 
-const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
+const MAX_IMPORT_BYTES = 96 * 1024 * 1024;
 const MAX_IMPORT_MESSAGES = 10_000;
+const MAX_IMPORT_ATTACHMENTS = 10_000;
 const MAX_IMPORT_PINS = 1_000;
 const MAX_TITLE_LENGTH = 500;
 const MAX_CONTENT_LENGTH = 1_000_000;
@@ -333,6 +349,7 @@ function normalizeMessages(value: unknown, exportedSessionId: string) {
     if (role === "tool" && toolCallId === null)
       throw new SessionImportError(`tool 消息缺少 tool_call_id: messages[${index}]`, "INVALID_SESSION_EXPORT");
     return {
+      source_id: Number(raw.id),
       role,
       content,
       tool_calls: toolCalls,
@@ -366,16 +383,106 @@ function normalizeMessages(value: unknown, exportedSessionId: string) {
   return messages;
 }
 
+interface AttachmentTransferSnapshot {
+  readonly id: string;
+  readonly messageId: number | null;
+  readonly state: "ready" | "failed" | "cancelled";
+  readonly kind: "image" | "text";
+  readonly name: string;
+  readonly mime: string;
+  readonly size: number;
+  readonly sha256: string | null;
+  readonly contentBase64: string | null;
+  readonly errorCode: string | null;
+  readonly createdAt: number;
+  readonly updatedAt: number;
+}
+
+interface NormalizedAttachmentTransfer extends Omit<AttachmentTransferSnapshot, "contentBase64"> {
+  readonly content: Buffer | null;
+}
+
+function normalizeAttachments(
+  value: unknown,
+  messages: readonly Readonly<{ source_id: number; role: string }>[],
+): readonly NormalizedAttachmentTransfer[] {
+  if (!Array.isArray(value) || value.length > MAX_IMPORT_ATTACHMENTS) {
+    throw new SessionImportError(`导入附件数量无效，最多支持 ${MAX_IMPORT_ATTACHMENTS} 个`, "INVALID_SESSION_EXPORT");
+  }
+  const messageRoles = new Map(messages.map(message => [message.source_id, message.role]));
+  const messageCounts = new Map<number, number>();
+  const draftIdentities = new Set<string>();
+  const ids = new Set<string>();
+  return Object.freeze(value.map((raw, index) => {
+    if (!isRecord(raw)) throw new SessionImportError(`导入附件无效: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT");
+    requireExactKeys(raw, ["id", "messageId", "state", "kind", "name", "mime", "size", "sha256", "contentBase64", "errorCode", "createdAt", "updatedAt"], `canvas.attachments[${index}]`);
+    let id: string;
+    try { id = validateAttachmentId(raw.id); }
+    catch { throw new SessionImportError(`导入附件 ID 无效: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT"); }
+    if (ids.has(id)) throw new SessionImportError(`导入附件 ID 重复: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT");
+    ids.add(id);
+    const state = raw.state;
+    if (state !== "ready" && state !== "failed" && state !== "cancelled") {
+      throw new SessionImportError(`导入附件状态无效: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT");
+    }
+    let metadata;
+    try { metadata = validateAttachmentUploadMetadata({ name: raw.name, mime: raw.mime, size: raw.size }); }
+    catch (error) { throw new SessionImportError(error instanceof Error ? error.message : String(error), "INVALID_SESSION_EXPORT"); }
+    if (raw.kind !== metadata.kind) throw new SessionImportError(`导入附件类型无效: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT");
+    const messageId = raw.messageId === null ? null : Number(raw.messageId);
+    if (messageId !== null && (!Number.isSafeInteger(messageId) || messageRoles.get(messageId) !== "user" || state !== "ready")) {
+      throw new SessionImportError(`导入附件消息关联无效: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT");
+    }
+    if (messageId !== null) {
+      const count = (messageCounts.get(messageId) ?? 0) + 1;
+      if (count > MAX_ATTACHMENTS_PER_MESSAGE) throw new SessionImportError(`导入消息附件过多: ${messageId}`, "INVALID_SESSION_EXPORT");
+      messageCounts.set(messageId, count);
+    }
+    const createdAt = Number(raw.createdAt);
+    const updatedAt = Number(raw.updatedAt);
+    if (!Number.isSafeInteger(createdAt) || createdAt < 0 || !Number.isSafeInteger(updatedAt) || updatedAt < createdAt) {
+      throw new SessionImportError(`导入附件时间无效: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT");
+    }
+    if (state === "ready") {
+      const sha256 = requireString(raw.sha256, `canvas.attachments[${index}].sha256`, 64);
+      const contentBase64 = requireString(raw.contentBase64, `canvas.attachments[${index}].contentBase64`, 12 * 1024 * 1024);
+      if (!/^[A-Za-z0-9+/]+={0,2}$/u.test(contentBase64)) throw new SessionImportError(`导入附件 Base64 无效: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT");
+      const content = Buffer.from(contentBase64, "base64");
+      if (content.toString("base64") !== contentBase64) throw new SessionImportError(`导入附件 Base64 非 canonical: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT");
+      let validated;
+      try { validated = validateAttachmentContent(metadata, content); }
+      catch (error) { throw new SessionImportError(error instanceof Error ? error.message : String(error), "INVALID_SESSION_EXPORT"); }
+      if (validated.sha256 !== sha256 || raw.errorCode !== null) throw new SessionImportError(`导入附件摘要无效: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT");
+      if (messageId === null) {
+        const identity = `${metadata.name}\0${sha256}`;
+        if (draftIdentities.has(identity)) throw new SessionImportError(`导入草稿附件重复: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT");
+        draftIdentities.add(identity);
+      }
+      return Object.freeze({ id, messageId, state, ...metadata, sha256, content, errorCode: null, createdAt, updatedAt });
+    }
+    if (messageId !== null || raw.sha256 !== null || raw.contentBase64 !== null
+      || typeof raw.errorCode !== "string" || !/^[A-Z][A-Z0-9_]{0,63}$/u.test(raw.errorCode)) {
+      throw new SessionImportError(`导入终态附件无效: canvas.attachments[${index}]`, "INVALID_SESSION_EXPORT");
+    }
+    return Object.freeze({ id, messageId: null, state, ...metadata, sha256: null, content: null, errorCode: raw.errorCode, createdAt, updatedAt });
+  }));
+}
+
 interface PinTransferSnapshot {
   readonly content: string;
   readonly createdAt: string;
 }
 
-function normalizeCanvas(value: unknown, enabled: boolean): {
+function normalizeCanvas(
+  value: unknown,
+  enabled: boolean,
+  messages: readonly Readonly<{ source_id: number; role: string }>[],
+): {
   readonly pins: readonly PinTransferSnapshot[];
   readonly tasks: readonly TaskTransferSnapshot[];
+  readonly attachments: readonly NormalizedAttachmentTransfer[];
 } {
-  if (!enabled) return { pins: Object.freeze([]), tasks: Object.freeze([]) };
+  if (!enabled) return { pins: Object.freeze([]), tasks: Object.freeze([]), attachments: Object.freeze([]) };
   if (!isRecord(value)) throw new SessionImportError("导入 Canvas 无效", "INVALID_SESSION_EXPORT");
   requireExactKeys(value, ["pins", "tasks", "attachments"], "canvas");
   if (!Array.isArray(value.pins) || value.pins.length > MAX_IMPORT_PINS) {
@@ -389,16 +496,14 @@ function normalizeCanvas(value: unknown, enabled: boolean): {
       createdAt: requireTimestamp(entry.createdAt, `canvas.pins[${index}].createdAt`),
     });
   });
-  if (!Array.isArray(value.attachments) || value.attachments.length !== 0) {
-    throw new SessionImportError("当前 Session Export 不支持非空附件", "INVALID_SESSION_EXPORT");
-  }
+  const attachments = normalizeAttachments(value.attachments, messages);
   let tasks: readonly TaskTransferSnapshot[];
   try {
     tasks = normalizeTaskTransfer(value.tasks);
   } catch (error) {
     throw new SessionImportError(error instanceof Error ? error.message : String(error), "INVALID_SESSION_EXPORT");
   }
-  return { pins: Object.freeze(pins), tasks };
+  return { pins: Object.freeze(pins), tasks, attachments };
 }
 
 /** 验证并将 legacy 1.0、current v1 或 current v2 归一化到当前格式。 */
@@ -458,13 +563,53 @@ export function normalizeSessionImport(input: unknown) {
   const title = requireString(data.session.title, "session.title", MAX_TITLE_LENGTH);
   requireTimestamp(data.session.created_at, "session.created_at");
   requireTimestamp(data.session.updated_at, "session.updated_at");
-  const canvas = normalizeCanvas(data.canvas, hasCanvas);
+  const messages = normalizeMessages(data.messages, exportedSessionId);
+  const canvas = normalizeCanvas(data.canvas, hasCanvas, messages);
   return {
     title,
-    messages: normalizeMessages(data.messages, exportedSessionId),
+    messages,
     pins: canvas.pins,
     tasks: canvas.tasks,
+    attachments: canvas.attachments,
   };
+}
+
+function exportAttachment(row: AttachmentRow): AttachmentTransferSnapshot {
+  if (row.state === "ready") {
+    if (!row.sha256 || !row.content) throw new SessionExportError(`附件内容不可用: ${row.id}`);
+    let validated;
+    try { validated = validateAttachmentContent({ name: row.name, mime: row.mime, size: row.size, kind: row.kind }, row.content); }
+    catch (error) { throw new SessionExportError(error instanceof Error ? error.message : `附件内容不可用: ${row.id}`); }
+    if (validated.sha256 !== row.sha256) throw new SessionExportError(`附件摘要不匹配: ${row.id}`);
+    return Object.freeze({
+      id: row.id,
+      messageId: row.message_id,
+      state: "ready",
+      kind: row.kind,
+      name: row.name,
+      mime: row.mime,
+      size: row.size,
+      sha256: row.sha256,
+      contentBase64: row.content.toString("base64"),
+      errorCode: null,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    });
+  }
+  return Object.freeze({
+    id: row.id,
+    messageId: null,
+    state: row.state === "cancelled" ? "cancelled" : "failed",
+    kind: row.kind,
+    name: row.name,
+    mime: row.mime,
+    size: row.size,
+    sha256: null,
+    contentBase64: null,
+    errorCode: row.error_code ?? "UPLOAD_INTERRUPTED",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
 }
 
 export interface ExportData {
@@ -486,7 +631,7 @@ export interface ExportData {
   canvas: {
     pins: PinTransferSnapshot[];
     tasks: readonly TaskTransferSnapshot[];
-    attachments: [];
+    attachments: readonly AttachmentTransferSnapshot[];
   };
 }
 
@@ -510,7 +655,9 @@ export function exportSession(sessionId: string): ExportData | null {
     canvas: {
       pins: getPinsBySession(sessionId).map(pin => ({ content: pin.content, createdAt: pin.created_at })),
       tasks: exportTaskTransfer(sessionId),
-      attachments: [],
+      attachments: [...listDraftAttachments(sessionId), ...listMessageAttachments(sessionId)]
+        .sort((left, right) => left.created_at - right.created_at || left.id.localeCompare(right.id))
+        .map(exportAttachment),
     },
   };
   try {
@@ -529,14 +676,36 @@ export function importSession(data: unknown, persona: PersonaDefinition): Sessio
     return withTransaction(() => {
       const newSession = createSession(persona, normalized.title || "导入的对话");
       registeredSessionId = newSession.id;
+      assertAttachmentCapacity(newSession.id, normalized.attachments.reduce((sum, attachment) =>
+        sum + (attachment.state === "ready" ? attachment.size : 0), 0));
+      const importedMessageIds = new Map<number, number>();
       for (const msg of normalized.messages) {
-        insertMessage({
+        const messageId = insertMessage({
           session_id: newSession.id,
           role: msg.role,
           content: msg.content,
           tool_calls: msg.tool_calls,
           tool_call_id: msg.tool_call_id,
           created_at: msg.created_at,
+        });
+        importedMessageIds.set(msg.source_id, messageId);
+      }
+      for (const attachment of normalized.attachments) {
+        const messageId = attachment.messageId === null ? null : importedMessageIds.get(attachment.messageId);
+        if (attachment.messageId !== null && messageId === undefined) throw new SessionImportError("导入附件消息映射无效", "INVALID_SESSION_EXPORT");
+        insertImportedAttachment({
+          sessionId: newSession.id,
+          messageId: messageId ?? null,
+          state: attachment.state,
+          kind: attachment.kind,
+          name: attachment.name,
+          mime: attachment.mime,
+          size: attachment.size,
+          sha256: attachment.sha256,
+          content: attachment.content,
+          errorCode: attachment.errorCode,
+          createdAt: attachment.createdAt,
+          updatedAt: attachment.updatedAt,
         });
       }
       for (const pin of normalized.pins) insertPin(newSession.id, pin.content, pin.createdAt);

@@ -8,6 +8,8 @@
   },
   "personaChain": ["architect", "developer", "debugger", "reviewer"],
   "runtimeFiles": [
+    "src/attachment-store.ts",
+    "src/attachment.ts",
     "src/db.ts",
     "src/index.ts",
     "src/session.ts",
@@ -24,6 +26,8 @@
     "tests/helpers.mjs",
     "tests/unit/framework.test.mjs",
     "parity/GOV-02-VERSION-MODEL.md",
+    "dist/attachment-store.js",
+    "dist/attachment.js",
     "dist/db.js",
     "dist/index.js",
     "dist/session.js",
@@ -36,7 +40,15 @@
       "layer": "contract"
     },
     {
+      "exactCasePath": "tests/unit/attachment.test.mjs",
+      "layer": "unit"
+    },
+    {
       "exactCasePath": "tests/integration/data02-session-transfer.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/ds05-attachments.test.mjs",
       "layer": "integration"
     },
     {

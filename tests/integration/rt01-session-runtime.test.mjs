@@ -352,8 +352,8 @@ test("RT-01 real server isolates parallel Session runtimes and run-local interac
     assert(eventsA.some(event => event.type === "answer_chunk" && event.content === "reply-a"));
     assert(eventsB.some(event => event.type === "answer_chunk" && event.content === "reply-b"));
 
-    const historyA = await api(product.base, token, `/sessions/${sessionA}/messages`);
-    const historyB = await api(product.base, token, `/sessions/${sessionB}/messages`);
+    const historyA = await api(product.base, token, `/sessions/${sessionA}/messages`, { headers: { "X-RainyDays-Session": sessionA } });
+    const historyB = await api(product.base, token, `/sessions/${sessionB}/messages`, { headers: { "X-RainyDays-Session": sessionB } });
     assert(historyA.body.messages.some(message => message.content === "hold-a"));
     assert(historyA.body.messages.some(message => message.content === "reply-a"));
     assert(!historyA.body.messages.some(message => message.content === "hold-b" || message.content === "reply-b"));

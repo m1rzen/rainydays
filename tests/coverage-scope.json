@@ -143,6 +143,18 @@
         "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs"
       },
       {
+        "sourceTask": "DS-05",
+        "exactCasePath": "tests/contract/ds05-governance.test.mjs"
+      },
+      {
+        "sourceTask": "DS-05",
+        "exactCasePath": "tests/unit/attachment.test.mjs"
+      },
+      {
+        "sourceTask": "DS-05",
+        "exactCasePath": "tests/integration/ds05-attachments.test.mjs"
+      },
+      {
         "sourceTask": "EVT-01",
         "exactCasePath": "tests/contract/evt01-governance.test.mjs"
       },

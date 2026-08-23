@@ -32,14 +32,14 @@ try {
     assert.throws(() => db.saveWorkbenchLayoutSnapshot("{", 2));
     assert.throws(() => db.saveWorkbenchLayoutSnapshot("{}", 2));
     assert.equal(db.getWorkbenchLayoutSnapshot()?.revision, 2);
-    console.log(JSON.stringify({ mode, schemaVersion: 8, revision: 2, tabs: secondLayout.root.tabs.length }));
+    console.log(JSON.stringify({ mode, schemaVersion: 9, revision: 2, tabs: secondLayout.root.tabs.length }));
   } else {
     const snapshot = db.getWorkbenchLayoutSnapshot();
     assert.equal(snapshot?.revision, 2);
     const layout = layoutModel.parseWorkbenchLayout(JSON.parse(snapshot.layoutJson));
     assert.equal(layout.root.type, "pane");
     assert.deepEqual(layout.root.tabs.map(tab => tab.kind), ["session", "file"]);
-    console.log(JSON.stringify({ mode, schemaVersion: 8, revision: snapshot.revision, tabs: layout.root.tabs.length }));
+    console.log(JSON.stringify({ mode, schemaVersion: 9, revision: snapshot.revision, tabs: layout.root.tabs.length }));
   }
 } finally {
   await db.closeDb();

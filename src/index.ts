@@ -96,6 +96,20 @@ import type { TerminalOwner, TerminalShell } from "./terminal.js";
 import { terminalFacade } from "./terminal-facade.js";
 import { fileViewerService, type FileRootSnapshotInput } from "./file-viewer.js";
 import { applyWorkbenchOperation, encodeWorkbenchLayout, parseWorkbenchLayout } from "./workbench-layout.js";
+import {
+  AttachmentStoreError,
+  cancelAttachmentUpload,
+  completeAttachment,
+  failAttachmentUpload,
+  getDraftAttachments,
+  getMessageAttachmentMap,
+  prepareMessageAttachments,
+  readAttachmentForSession,
+  recoverInterruptedAttachments,
+  removeDraftAttachment,
+  reserveAttachment,
+} from "./attachment-store.js";
+import { MAX_ATTACHMENT_BYTES, validateAttachmentId } from "./attachment.js";
 import { DATA_DIR } from "./runtime-paths.js";
 import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 import { APP_VERSION, BUILD_ID, BUILD_INFO, PROTOCOL_CAPABILITIES, getPublicVersionInfo } from "./version.js";
@@ -148,6 +162,7 @@ function createLlmClient(): LLMClient {
     apiKey: profile.apiKey || "not-configured",
     baseURL: profile.baseURL,
     model: profile.model,
+    providerType: profile.providerType || "openai-compatible",
   });
 }
 
@@ -219,6 +234,16 @@ type ActiveRunInjection = Readonly<{
 }>;
 const activeRunInjections = new Map<string, ActiveRunInjection[]>();
 const MAX_ACTIVE_RUN_INJECTIONS = 100;
+type ActiveAttachmentUpload = Readonly<{
+  sessionId: string;
+  attachmentId: string;
+  size: number;
+  request: Request;
+}>;
+const activeAttachmentUploads = new Map<string, ActiveAttachmentUpload>();
+const MAX_ACTIVE_ATTACHMENT_UPLOADS = 4;
+const MAX_SESSION_ACTIVE_ATTACHMENT_UPLOADS = 2;
+const MAX_ACTIVE_ATTACHMENT_BYTES = 32 * 1024 * 1024;
 let runtimeMutationReservations = 0;
 
 /** 返回的 Promise 在 flow 真正取走 injection 时 ack；取消前未取走则 retry。 */
@@ -1308,7 +1333,6 @@ app.use((err: Error, _req: Request, res: Response, next: NextFunction) => {
   }
   next(err);
 });
-app.use(express.json({ limit: "10mb" }));
 app.use((_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "no-referrer");
@@ -1383,6 +1407,70 @@ app.use("/api", (req, res, next) => {
   }
   directRequestSession.run(rawSessionId ?? null, next);
 });
+const standardJsonBodyParser = express.json({ limit: "10mb" });
+const sessionImportJsonBodyParser = express.json({ limit: "96mb" });
+app.use((req, res, next) => {
+  if (req.method === "POST" && req.path === "/api/sessions/import") { next(); return; }
+  standardJsonBodyParser(req, res, next);
+});
+
+function sendAttachmentError(res: Response, error: unknown): void {
+  if (error instanceof AttachmentStoreError) {
+    res.status(error.httpStatus).json({ code: error.code, error: error.message });
+    return;
+  }
+  if (error instanceof TypeError) {
+    res.status(400).json({ code: "ATTACHMENT_REQUEST_INVALID", error: error.message });
+    return;
+  }
+  res.status(500).json({ code: "ATTACHMENT_STORE_FAILED", error: error instanceof Error ? error.message : String(error) });
+}
+
+function attachmentUploadKey(sessionId: string, attachmentId: string): string {
+  return `${sessionId}\0${attachmentId}`;
+}
+
+function registerActiveAttachmentUpload(
+  sessionId: string,
+  attachmentId: string,
+  size: number,
+  request: Request,
+): () => void {
+  const key = attachmentUploadKey(sessionId, attachmentId);
+  const sessionUploads = [...activeAttachmentUploads.values()].filter(upload => upload.sessionId === sessionId);
+  const activeBytes = [...activeAttachmentUploads.values()].reduce((sum, upload) => sum + upload.size, 0);
+  if (activeAttachmentUploads.has(key)) throw new AttachmentStoreError("ATTACHMENT_UPLOAD_CONFLICT", "Attachment upload is already active", 409);
+  if (activeAttachmentUploads.size >= MAX_ACTIVE_ATTACHMENT_UPLOADS || sessionUploads.length >= MAX_SESSION_ACTIVE_ATTACHMENT_UPLOADS
+    || activeBytes + size > MAX_ACTIVE_ATTACHMENT_BYTES) {
+    throw new AttachmentStoreError("ATTACHMENT_UPLOAD_CAPACITY", "Attachment upload concurrency limit exceeded", 429);
+  }
+  const active = Object.freeze({ sessionId, attachmentId, size, request });
+  activeAttachmentUploads.set(key, active);
+  return () => { if (activeAttachmentUploads.get(key) === active) activeAttachmentUploads.delete(key); };
+}
+
+async function readAttachmentRequestBytes(req: Request, expectedSize: number): Promise<Buffer> {
+  const rawLength = req.header("Content-Length");
+  if (req.header("Transfer-Encoding") !== undefined
+    || typeof rawLength !== "string" || !/^(0|[1-9]\d*)$/u.test(rawLength) || Number(rawLength) !== expectedSize
+    || expectedSize < 1 || expectedSize > MAX_ATTACHMENT_BYTES) {
+    throw new AttachmentStoreError("ATTACHMENT_LENGTH_MISMATCH", "Attachment Content-Length differs from the reservation", 400);
+  }
+  const chunks: Buffer[] = [];
+  let total = 0;
+  for await (const chunk of req) {
+    if (req.aborted) throw new AttachmentStoreError("ATTACHMENT_UPLOAD_ABORTED", "Attachment upload was aborted", 499);
+    const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array);
+    total += bytes.length;
+    if (total > expectedSize || total > MAX_ATTACHMENT_BYTES) {
+      req.resume();
+      throw new AttachmentStoreError("ATTACHMENT_LENGTH_MISMATCH", "Attachment body exceeds the reservation", 400);
+    }
+    chunks.push(bytes);
+  }
+  if (req.aborted || total !== expectedSize) throw new AttachmentStoreError("ATTACHMENT_UPLOAD_ABORTED", "Attachment upload was incomplete", 400);
+  return Buffer.concat(chunks, total);
+}
 
 // ===========================================
 // Persona API
@@ -1816,13 +1904,91 @@ app.post("/api/sessions/:id/select", async (req, res) => {
   }
 });
 
-/** 获取会话的消息历史 */
+/** Session-scoped attachment draft list. */
+app.get("/api/sessions/:id/attachments", (req, res) => {
+  try {
+    const sessionId = resolveBodySessionIdentity(req.params.id, true)!;
+    res.json({ attachments: getDraftAttachments(sessionId) });
+  } catch (error) { sendAttachmentError(res, error); }
+});
+
+/** Reserve persistent metadata before streaming bytes so cancellation/failure has durable state. */
+app.post("/api/sessions/:id/attachments", (req, res) => {
+  try {
+    const sessionId = resolveBodySessionIdentity(req.params.id, true)!;
+    res.status(201).json({ attachment: reserveAttachment(sessionId, req.body) });
+  } catch (error) { sendAttachmentError(res, error); }
+});
+
+app.put("/api/sessions/:id/attachments/:attachmentId/content", async (req, res) => {
+  let sessionId: string | null = null;
+  let attachmentId: string | null = null;
+  let releaseUpload: () => void = () => undefined;
+  try {
+    sessionId = resolveBodySessionIdentity(req.params.id, true)!;
+    attachmentId = validateAttachmentId(req.params.attachmentId);
+    if (req.header("Content-Type")?.toLowerCase() !== "application/octet-stream") {
+      throw new AttachmentStoreError("ATTACHMENT_CONTENT_TYPE_INVALID", "Attachment upload must use application/octet-stream", 415);
+    }
+    const reservation = getDraftAttachments(sessionId).find(attachment => attachment.id === attachmentId);
+    if (!reservation) throw new AttachmentStoreError("ATTACHMENT_NOT_FOUND", "Attachment reservation does not exist", 404);
+    if (reservation.state !== "uploading") throw new AttachmentStoreError("ATTACHMENT_STATE_CONFLICT", "Attachment upload state changed", 409);
+    releaseUpload = registerActiveAttachmentUpload(sessionId, attachmentId, reservation.size, req);
+    const bytes = await readAttachmentRequestBytes(req, reservation.size);
+    res.json({ attachment: completeAttachment(sessionId, attachmentId, bytes) });
+  } catch (error) {
+    if (sessionId && attachmentId) {
+      try { failAttachmentUpload(sessionId, attachmentId, "UPLOAD_FAILED"); }
+      catch { /* Validation may already have moved the reservation to a terminal state. */ }
+    }
+    if (!res.headersSent && !res.destroyed) sendAttachmentError(res, error);
+  } finally {
+    releaseUpload();
+  }
+});
+
+app.post("/api/sessions/:id/attachments/:attachmentId/cancel", (req, res) => {
+  try {
+    const sessionId = resolveBodySessionIdentity(req.params.id, true)!;
+    const attachmentId = validateAttachmentId(req.params.attachmentId);
+    const attachment = cancelAttachmentUpload(sessionId, attachmentId);
+    activeAttachmentUploads.get(attachmentUploadKey(sessionId, attachmentId))?.request.destroy(new Error("Attachment upload cancelled"));
+    res.json({ attachment });
+  } catch (error) { sendAttachmentError(res, error); }
+});
+
+app.delete("/api/sessions/:id/attachments/:attachmentId", (req, res) => {
+  try {
+    const sessionId = resolveBodySessionIdentity(req.params.id, true)!;
+    removeDraftAttachment(sessionId, req.params.attachmentId);
+    res.json({ success: true });
+  } catch (error) { sendAttachmentError(res, error); }
+});
+
+app.get("/api/sessions/:id/attachments/:attachmentId/content", (req, res) => {
+  try {
+    const sessionId = resolveBodySessionIdentity(req.params.id, true)!;
+    const content = readAttachmentForSession(sessionId, req.params.attachmentId);
+    res.setHeader("Content-Type", content.attachment.mime);
+    res.setHeader("Content-Length", String(content.bytes.length));
+    res.setHeader("Cache-Control", "private, no-store");
+    res.end(content.bytes);
+  } catch (error) { sendAttachmentError(res, error); }
+});
+
+/** 获取会话的消息历史与结构化附件元数据。 */
 app.get("/api/sessions/:id/messages", (req, res) => {
-  const id = req.params.id;
-  const session = getSessionInfo(id);
-  if (!session) { res.status(404).json({ error: "会话不存在" }); return; }
-  const messages = loadSessionMessages(id);
-  res.json({ session, messages });
+  try {
+    const id = resolveBodySessionIdentity(req.params.id, true)!;
+    const session = getSessionInfo(id);
+    if (!session) { res.status(404).json({ error: "会话不存在" }); return; }
+    const attachmentMap = getMessageAttachmentMap(id);
+    const messages = loadSessionMessages(id).map(message => ({
+      ...message,
+      attachments: attachmentMap.get(message.id) ?? [],
+    }));
+    res.json({ session, messages });
+  } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : String(error) }); }
 });
 
 /** 删除会话 */
@@ -1834,6 +2000,9 @@ app.delete("/api/sessions/:id", async (req, res) => {
       ensureRuntimeAccepting();
       const registry = requireRuntimeRegistry();
       if (registry.isRunning(id)) throw new SessionRuntimeLifecycleError("SESSION_RUNTIME_BUSY", "Agent 正在运行，不能删除该会话");
+      for (const upload of activeAttachmentUploads.values()) {
+        if (upload.sessionId === id) upload.request.destroy(new Error("Attachment Session deleted"));
+      }
       await registry.retire(id);
       removeSession(id);
       if (selectedSessionId === id) selectSessionIdentity(null);
@@ -1937,7 +2106,9 @@ app.get("/api/search", (req, res) => {
 // Fork API（从指定消息处分叉新会话）
 // ===========================================
 app.post("/api/sessions/:id/fork", async (req, res) => {
-  const id = req.params.id;
+  let id: string;
+  try { id = resolveBodySessionIdentity(req.params.id, true)!; }
+  catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : String(error) }); return; }
   const messageId = req.body?.messageId as number | undefined;
   const source = getSessionInfo(id);
   if (!source) { res.status(404).json({ error: "源会话不存在" }); return; }
@@ -1971,8 +2142,8 @@ app.post("/api/sessions/:id/fork", async (req, res) => {
 // Export API（导出会话）
 // ===========================================
 app.get("/api/sessions/:id/export", (req, res) => {
-  const id = req.params.id;
   try {
+    const id = resolveBodySessionIdentity(req.params.id, true)!;
     const data = exportSession(id);
     if (!data) { res.status(404).json({ error: "会话不存在" }); return; }
     const safeName = (data.session.title || "export").replace(/[^\w\u4e00-\u9fa5]/g, "_");
@@ -1990,7 +2161,7 @@ app.get("/api/sessions/:id/export", (req, res) => {
 // ===========================================
 // Import API（导入会话）
 // ===========================================
-app.post("/api/sessions/import", async (req, res) => {
+app.post("/api/sessions/import", sessionImportJsonBodyParser, async (req, res) => {
   const persona = selectedPersona();
   if (!persona) { res.status(400).json({ error: "请先选择 persona" }); return; }
   try {
@@ -2208,13 +2379,22 @@ app.post("/api/chat/cancel", async (req, res) => {
 });
 
 app.post("/api/chat", async (req, res) => {
-  const { message } = req.body;
-  if (!message || typeof message !== "string") { res.status(400).json({ error: "缺少 message" }); return; }
+  const body = req.body as Record<string, unknown> | null;
+  if (!body || typeof body !== "object" || Array.isArray(body)
+    || Object.keys(body).some(key => !new Set(["sessionId", "message", "attachmentIds"]).has(key))
+    || typeof body.message !== "string") {
+    res.status(400).json({ error: "Chat request is invalid" });
+    return;
+  }
+  const message = body.message;
   let chatSessionId: string;
+  let initialAttachments: ReturnType<typeof prepareMessageAttachments>;
   try {
-    chatSessionId = resolveBodySessionIdentity(req.body?.sessionId, true)!;
+    chatSessionId = resolveBodySessionIdentity(body.sessionId, true)!;
+    initialAttachments = prepareMessageAttachments(chatSessionId, body.attachmentIds);
+    if (!message.trim() && initialAttachments.length === 0) throw new TypeError("Message or attachment is required");
   } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    sendAttachmentError(res, error);
     return;
   }
   if (!getSessionInfo(chatSessionId)) { res.status(404).json({ error: "Session 不存在" }); return; }
@@ -2276,8 +2456,10 @@ app.post("/api/chat", async (req, res) => {
   try {
     await runWithInteractionChannel(identity, { emit, signal: claim.signal }, async () => {
       let input: string | null = message;
+      let attachments = initialAttachments;
       while (input !== null) {
-        for await (const step of runtime.agent.run(input, runId, claim.signal)) emit(step);
+        for await (const step of runtime.agent.run(input, runId, claim.signal, attachments)) emit(step);
+        attachments = Object.freeze([]);
         input = takeActiveRunInjection(chatSessionId, claim.signal);
       }
     });
@@ -2597,6 +2779,8 @@ app.get("/api/events", (req, res) => {
 async function start() {
   childNativeProcessConsentCleanup = await installInheritedNativeProcessConsentTransport();
   await initializeConfig();
+  const interruptedAttachments = recoverInterruptedAttachments();
+  if (interruptedAttachments > 0) console.warn(`⚠️ 已将 ${interruptedAttachments} 个未完成附件上传标记为失败`);
   securityAuditJournal = await openSecurityAuditJournal();
   await securityAuditJournal.verify();
   attachEventStores(); // EVT-01/03：先接持久层再恢复 cron/外部事件，避免启动窗口丢事件

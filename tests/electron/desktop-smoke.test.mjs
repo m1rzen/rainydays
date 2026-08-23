@@ -537,6 +537,50 @@ async function probeDs04Xterm(client) {
   })()`);
 }
 
+async function createDs05AttachmentDrafts(client) {
+  return client.evaluate(`(async()=>{
+    await newChat();
+    const sessionId=currentSessionId;
+    const fromBase64=value=>Uint8Array.from(atob(value),character=>character.charCodeAt(0));
+    let altVInvoked=false;
+    attachmentFileInputEl.addEventListener('click',event=>{event.preventDefault();altVInvoked=true;},{once:true});
+    const altVEvent=new KeyboardEvent('keydown',{bubbles:true,cancelable:true,altKey:true,key:'v'});
+    document.dispatchEvent(altVEvent);
+
+    const pasteTransfer=new DataTransfer();
+    pasteTransfer.items.add(new File([
+      fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAX+XDSwAAAABJRU5ErkJggg==')
+    ],'clipboard.png',{type:'image/png'}));
+    const pasteEvent=new Event('paste',{bubbles:true,cancelable:true});
+    Object.defineProperty(pasteEvent,'clipboardData',{value:pasteTransfer});
+    inputEl.dispatchEvent(pasteEvent);
+
+    const dropTransfer=new DataTransfer();
+    dropTransfer.items.add(new File(['dropped attachment'], 'dropped.txt', {type:'text/plain'}));
+    const dropEvent=new Event('drop',{bubbles:true,cancelable:true});
+    Object.defineProperty(dropEvent,'dataTransfer',{value:dropTransfer});
+    document.getElementById('chat-view').dispatchEvent(dropEvent);
+
+    const deadline=Date.now()+15000;
+    while(Date.now()<deadline){
+      if(attachmentDrafts.length===2&&attachmentDrafts.every(value=>value.state==='ready')) break;
+      await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    return {
+      sessionId,
+      prevented:{altV:altVEvent.defaultPrevented,paste:pasteEvent.defaultPrevented,drop:dropEvent.defaultPrevented},
+      altVInvoked,
+      xhrContract:/new XMLHttpRequest\\(\\)/u.test(uploadReservedAttachment.toString()),
+      drafts:attachmentDrafts.map(({id,name,mime,size,state,kind})=>({id,name,mime,size,state,kind})),
+      chips:[...document.querySelectorAll('#attachment-draft-list .attachment-chip')].map(chip=>({
+        name:chip.querySelector('.attachment-name')?.textContent,
+        state:chip.querySelector('.attachment-state')?.textContent,
+        image:Boolean(chip.querySelector('img.attachment-thumb')),
+      })),
+    };
+  })()`);
+}
+
 test("RT-01 renderer source keeps runs and questions session-bound", async () => {
   const source = await readFile(path.join(projectRoot, "public", "renderer.js"), "utf8");
   assert.doesNotMatch(source, /\blet\s+(?:isRunning|currentQuestion)\b/u);
@@ -675,6 +719,72 @@ test("DS-04 real Electron loads the offline xterm truecolor and alternate-screen
     }, { terminalGlobal: "function", fitGlobal: "function", node: true, rawInputContract: true, resizeContract: true });
     assert.deepEqual(probe.alternate, { type: "alternate", fgRgb: true, fgColor: 0x010203 });
     assert.equal(probe.restoredType, "normal");
+    client.close(); client = null;
+    await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    client?.close();
+    if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture);
+  }
+  assert.equal(await pathExists(fixture), false);
+});
+
+test("DS-05 real Electron persists clipboard and drop File uploads across reload", { timeout: 90_000 }, async (context) => {
+  const fixture = await makeTempDir("mini-lux-ds05-electron-");
+  const userData = path.join(fixture, "user-data");
+  const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
+  let instance;
+  let client;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal);
+    client = await connectCdp(cdpPort);
+    await probeIdentity(client, buildInfo, httpPort);
+    const created = await createDs05AttachmentDrafts(client);
+    assert.deepEqual(created.prevented, { altV: true, paste: true, drop: true });
+    assert.equal(created.altVInvoked, true);
+    assert.equal(created.xhrContract, true);
+    assert.deepEqual(created.drafts.map(value => ({ name: value.name, mime: value.mime, size: value.size, state: value.state, kind: value.kind })).sort((a, b) => a.name.localeCompare(b.name)), [
+      { name: "clipboard.png", mime: "image/png", size: 70, state: "ready", kind: "image" },
+      { name: "dropped.txt", mime: "text/plain", size: 18, state: "ready", kind: "text" },
+    ]);
+    assert.deepEqual(created.chips.map(value => value.name).sort(), ["clipboard.png", "dropped.txt"]);
+    assert.equal(created.chips.find(value => value.name === "clipboard.png")?.image, true);
+
+    await client.evaluate("location.reload(); true");
+    await waitFor(async () => {
+      try { return await client.evaluate("document.readyState === 'complete' && typeof selectSession === 'function'"); }
+      catch { return false; }
+    }, { timeoutMs: 20_000, label: "DS-05 renderer reload" });
+    await client.evaluate(`selectSession(${JSON.stringify(created.sessionId)}).then(()=>true)`);
+    const restored = await client.evaluate(`(async()=>{
+      const deadline=Date.now()+10000;
+      while(Date.now()<deadline){
+        if(currentSessionId===${JSON.stringify(created.sessionId)}&&attachmentDrafts.length===2&&attachmentDrafts.every(value=>value.state==='ready')) break;
+        await new Promise(resolve=>setTimeout(resolve,50));
+      }
+      const contents=[];
+      for(const attachment of attachmentDrafts){
+        const response=await fetch(attachmentContentUrl(currentSessionId,attachment.id),{headers:sessionHeaders(currentSessionId)});
+        contents.push({name:attachment.name,status:response.status,size:(await response.arrayBuffer()).byteLength});
+      }
+      return {
+        currentSessionId,
+        drafts:attachmentDrafts.map(({name,state})=>({name,state})),
+        chips:[...document.querySelectorAll('#attachment-draft-list .attachment-chip')].map(chip=>chip.querySelector('.attachment-name')?.textContent),
+        contents,
+      };
+    })()`);
+    assert.equal(restored.currentSessionId, created.sessionId);
+    assert.deepEqual(restored.drafts.sort((a, b) => a.name.localeCompare(b.name)), [
+      { name: "clipboard.png", state: "ready" },
+      { name: "dropped.txt", state: "ready" },
+    ]);
+    assert.deepEqual(restored.chips.sort(), ["clipboard.png", "dropped.txt"]);
+    assert.deepEqual(restored.contents.sort((a, b) => a.name.localeCompare(b.name)), [
+      { name: "clipboard.png", status: 200, size: 70 },
+      { name: "dropped.txt", status: 200, size: 18 },
+    ]);
     client.close(); client = null;
     await stopElectron(instance, httpPort, cdpPort); instance = null;
   } finally {

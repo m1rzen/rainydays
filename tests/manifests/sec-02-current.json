@@ -82,13 +82,13 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "d6325c236f8541a5e44eaaa424aab9d8f71ea2cc8d8ac54d53a12858176bfc89",
+          "sha256": "8001de4628dc452c0c08273f816dedeb420dddc085013cc4b210fd5366b37d05",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "232ea19085832d3594f55674ccb4526bb843f53a774254c18ce3b9f557be38c4",
+          "sha256": "bc71b8cdfedb27c8ccd388a47c48e6d4f7ef6145ea35261faaa466407533d44f",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
@@ -350,13 +350,13 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "d6325c236f8541a5e44eaaa424aab9d8f71ea2cc8d8ac54d53a12858176bfc89",
+          "sha256": "8001de4628dc452c0c08273f816dedeb420dddc085013cc4b210fd5366b37d05",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "232ea19085832d3594f55674ccb4526bb843f53a774254c18ce3b9f557be38c4",
+          "sha256": "bc71b8cdfedb27c8ccd388a47c48e6d4f7ef6145ea35261faaa466407533d44f",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
@@ -416,7 +416,7 @@
         },
         {
           "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-          "sha256": "9c560a53fd0e7e54b4fe3bb4d9b10926aea998035e93f25c63cb531476d7947c",
+          "sha256": "d09b55e686332f001bee08a11db11e9ebbde996af33e08149184ef0821e18912",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1042,13 +1042,13 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "d6325c236f8541a5e44eaaa424aab9d8f71ea2cc8d8ac54d53a12858176bfc89",
+          "sha256": "8001de4628dc452c0c08273f816dedeb420dddc085013cc4b210fd5366b37d05",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "232ea19085832d3594f55674ccb4526bb843f53a774254c18ce3b9f557be38c4",
+          "sha256": "bc71b8cdfedb27c8ccd388a47c48e6d4f7ef6145ea35261faaa466407533d44f",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
@@ -1108,7 +1108,7 @@
         },
         {
           "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-          "sha256": "9c560a53fd0e7e54b4fe3bb4d9b10926aea998035e93f25c63cb531476d7947c",
+          "sha256": "d09b55e686332f001bee08a11db11e9ebbde996af33e08149184ef0821e18912",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1168,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "6be3b8290bf62699761b2335ce83baefe92311f5f8e5e4bca050851d8f67733f",
+          "sha256": "2f4cc3a64cb8f20fe71e77346b6b18741f0a43569954c6d331558c0841002973",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -1691,7 +1691,7 @@
   "coverageScope": {
     "source": {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "ce808b53b5fda7889f6cb29e21ed1258b360747b177a5f13ec044b326b3e3aca"
+      "sha256": "69e1470d8a711b93a43920aab786fa7565af6e4669c3adb40f7739cbcda48456"
     },
     "overallFiles": [
       "dist/agent.js",
@@ -7074,11 +7074,11 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "ce808b53b5fda7889f6cb29e21ed1258b360747b177a5f13ec044b326b3e3aca"
+      "sha256": "69e1470d8a711b93a43920aab786fa7565af6e4669c3adb40f7739cbcda48456"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "5257ebce2cac53121d603aaea96bd1d05af0b5376273f1cf928838b045e6bacc"
+      "sha256": "d2719a9880f0616ed3b085a5f87ee64c653cf3f983b283ae78027c0ab1c472aa"
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
@@ -7122,7 +7122,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "e4f5a7e836b110bdd0943364ed8d47befb982097e4a83fd18b31f641dfa02789"
+      "sha256": "703e21a0cc30be38f4ca5ca6c13e3af923b45adcfd3f1eb0bde6196cc8d0c712"
     },
     {
       "exactCasePath": "scripts/sec02-sink-scanner.mjs",
@@ -7138,7 +7138,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "263bfa65e3a710b54b7b6684ed16fd6204386c3875d9133e34c61f96d4053f97"
+      "sha256": "38b414b0c33d27590fe3e1f2b071f0acff2cdce58706e41c9360829ac3c14d71"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7194,7 +7194,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "76c0d06d8955c739f9659fe16442cc6c7aa09873581cca62cac585508608222e"
+      "sha256": "0778191fa63292e89a01a7f634e1952f5eda6948482e413e7515904430bf7685"
     },
     {
       "exactCasePath": "package-lock.json",
@@ -7202,5 +7202,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "2bd5c8d652ef5d9e461220c19232482819ce70e3ed2b7ceda0c5bec3a0a137f1"
+  "canonicalPayloadSha256": "8719d0e5cec0238f03b06ed3eced15345336f5a5faf0035d0d1d6bab2336a600"
 }

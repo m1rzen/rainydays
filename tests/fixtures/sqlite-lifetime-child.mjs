@@ -888,7 +888,7 @@ if (scenario === "normal") {
   db.insertMessage({ session_id: "snapshot-session", role: "user", content: "committed-in-wal", tool_calls: null, tool_call_id: null, created_at: now });
   assert.equal(await fs.access(`${mainPath}-wal`).then(() => true, () => false), true);
   const snapshot = await db.createConsistentDatabaseSnapshot();
-  assert.equal(snapshot.validation.schemaVersion, 8);
+  assert.equal(snapshot.validation.schemaVersion, 9);
   assert.equal(snapshot.validation.quickCheck, "ok");
   assert.equal(snapshot.validation.integrityCheck, "ok");
   assert.equal(snapshot.validation.foreignKeyViolations, 0);

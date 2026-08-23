@@ -14,10 +14,10 @@ test("DS-03 schema 8 persists one canonical WorkbenchLayout with optimistic revi
   try {
     const write = await runProcess(process.execPath, [child, "write", fixture], { cwd: projectRoot, timeoutMs: 15_000 });
     assert.equal(write.code, 0, write.stderr);
-    assert.deepEqual(payload(write.stdout), { mode: "write", schemaVersion: 8, revision: 2, tabs: 2 });
+    assert.deepEqual(payload(write.stdout), { mode: "write", schemaVersion: 9, revision: 2, tabs: 2 });
     const read = await runProcess(process.execPath, [child, "read", fixture], { cwd: projectRoot, timeoutMs: 15_000 });
     assert.equal(read.code, 0, read.stderr);
-    assert.deepEqual(payload(read.stdout), { mode: "read", schemaVersion: 8, revision: 2, tabs: 2 });
+    assert.deepEqual(payload(read.stdout), { mode: "read", schemaVersion: 9, revision: 2, tabs: 2 });
   } finally {
     await removeFixture(fixture);
   }

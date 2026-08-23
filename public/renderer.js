@@ -24,6 +24,8 @@
     const appVersionEl = document.getElementById("app-version");
     const workbenchTreeEl = document.getElementById("workbench-pane-tree");
     const workbenchStagingEl = document.getElementById("workbench-staging");
+    const attachmentDraftListEl = document.getElementById("attachment-draft-list");
+    const attachmentFileInputEl = document.getElementById("attachment-file-input");
 
     let currentSessionId = null;
     let sessionSelectionGeneration = 0;
@@ -61,6 +63,9 @@
     }
     const activeRunsBySession = new Map();
     const questionsBySession = new Map();
+    const attachmentUploads = new Map();
+    let attachmentDrafts = [];
+    let attachmentLoadGeneration = 0;
     let subagentPollTimer = null;
 
     function sessionHeaders(sessionId = currentSessionId, json = false) {
@@ -237,7 +242,7 @@
       if (!currentSessionId) { addSystemMessage("⚠️ 请先选择一个对话"); return; }
       try {
         const res = await fetch(`/api/sessions/${currentSessionId}/fork`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
+          method: "POST", headers: sessionHeaders(currentSessionId, true),
           body: JSON.stringify({ messageId: messageId || null }),
         });
         const data = await res.json();
@@ -255,7 +260,7 @@
     async function exportCurrentSession() {
       if (!currentSessionId) { addSystemMessage("⚠️ 请先选择一个对话"); return; }
       try {
-        const res = await fetch(`/api/sessions/${currentSessionId}/export`);
+        const res = await fetch(`/api/sessions/${currentSessionId}/export`, { headers: sessionHeaders(currentSessionId) });
         const data = await res.json();
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -323,7 +328,7 @@
       const res = await fetch(`/api/sessions/${currentSessionId}/rollback`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { addSystemMessage("⚠️ " + (data.error || "回退失败")); return; }
-      const mres = await fetch(`/api/sessions/${currentSessionId}/messages`);
+      const mres = await fetch(`/api/sessions/${currentSessionId}/messages`, { headers: sessionHeaders(currentSessionId) });
       const mdata = await mres.json().catch(() => ({}));
       const lastUser = [...(mdata.messages || [])].reverse().find(m => m.role === "user");
       await selectSession(currentSessionId);
@@ -1525,7 +1530,7 @@
       if (data.session) {
         currentSessionId = data.session.id; currentTitleEl.textContent = data.session.title; messagesEl.innerHTML = ""; restoreDraft(data.session.id);
         taskPanel.classList.remove("visible"); subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling();
-        refreshRunControls(); refreshQuestionForCurrentSession(); await loadSessions(); await loadPins();
+        refreshRunControls(); refreshQuestionForCurrentSession(); await loadSessions(); await loadPins(); await loadAttachmentDrafts(data.session.id);
         if (workbenchLayout) await ensureWorkbenchTab({ id: workbenchId("tab"), kind: "session", title: data.session.title, sessionId: data.session.id });
         inputEl.focus(); updateStatus();
       }
@@ -1547,11 +1552,11 @@
         if (generation !== sessionSelectionGeneration) return;
         showPersonaInfo(pdata.personas.find(p => p.name === data.persona));
       }
-      const mres = await fetch(`/api/sessions/${id}/messages`); const mdata = await mres.json();
+      const mres = await fetch(`/api/sessions/${id}/messages`, { headers: sessionHeaders(id) }); const mdata = await mres.json();
       if (generation !== sessionSelectionGeneration) return;
       messagesEl.innerHTML = "";
-      for (const msg of mdata.messages) { if (msg.role === "user") addMessage("user", msg.content, msg.id); else if (msg.role === "assistant" && msg.content) addMessage("assistant", msg.content, msg.id); }
-      await loadSessions(); await loadPins(); await loadSessionTasks(id); await loadSessionSubagents(id); updateStatus();
+      for (const msg of mdata.messages) { if (msg.role === "user") addMessage("user", msg.content, msg.id, msg.attachments); else if (msg.role === "assistant" && msg.content) addMessage("assistant", msg.content, msg.id); }
+      await loadSessions(); await loadPins(); await loadAttachmentDrafts(id); await loadSessionTasks(id); await loadSessionSubagents(id); updateStatus();
       if (generation !== sessionSelectionGeneration) return;
       if (!fromWorkbench && workbenchLayout) {
         await ensureWorkbenchTab({ id: workbenchId("tab"), kind: "session", title: data.session.title, sessionId: id });
@@ -1566,8 +1571,9 @@
       }
       activeRunsBySession.delete(id);
       questionsBySession.delete(id);
+      for (const upload of attachmentUploads.values()) if (upload.sessionId === id) upload.xhr.abort();
       knownSessions = knownSessions.filter(session => session.id !== id);
-      if (currentSessionId === id) { currentSessionId = null; currentTitleEl.textContent = "未选择对话"; messagesEl.innerHTML = '<div class="msg msg-assistant"><div class="bubble">对话已删除。</div></div>'; subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling(); refreshRunControls(); refreshQuestionForCurrentSession(); }
+      if (currentSessionId === id) { currentSessionId = null; attachmentDrafts = []; renderAttachmentDrafts(); currentTitleEl.textContent = "未选择对话"; messagesEl.innerHTML = '<div class="msg msg-assistant"><div class="bubble">对话已删除。</div></div>'; subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling(); refreshRunControls(); refreshQuestionForCurrentSession(); }
       if (knownSessions.length === 0) {
         const created = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
         if (!created.ok) throw new Error("删除最后 Session 后无法创建工作台回退会话");
@@ -1619,6 +1625,180 @@
     function sendMessage(text) { inputEl.value = text; formEl.requestSubmit(); }
     function sendSlashMessage(text) { if (!currentSessionId) newChat().then(() => sendMessage(text)); else sendMessage(text); }
 
+    function attachmentSize(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
+    }
+
+    function attachmentContentUrl(sessionId, attachmentId) {
+      return `/api/sessions/${encodeURIComponent(sessionId)}/attachments/${encodeURIComponent(attachmentId)}/content?sessionId=${encodeURIComponent(sessionId)}`;
+    }
+
+    function renderAttachmentDrafts() {
+      attachmentDraftListEl.replaceChildren();
+      const sessionId = currentSessionId;
+      if (!sessionId) return;
+      for (const attachment of attachmentDrafts) {
+        const chip = document.createElement("div");
+        chip.className = `attachment-chip ${attachment.state}`;
+        if (attachment.kind === "image" && attachment.state === "ready") {
+          const image = document.createElement("img");
+          image.className = "attachment-thumb";
+          image.alt = "";
+          image.src = attachmentContentUrl(sessionId, attachment.id);
+          chip.appendChild(image);
+        } else {
+          const icon = document.createElement("span");
+          icon.className = "attachment-icon";
+          icon.textContent = attachment.kind === "image" ? "🖼️" : "📄";
+          chip.appendChild(icon);
+        }
+        const copy = document.createElement("div");
+        copy.className = "attachment-copy";
+        const name = document.createElement("div");
+        name.className = "attachment-name";
+        name.title = attachment.name;
+        name.textContent = attachment.name;
+        const state = document.createElement("div");
+        state.className = "attachment-state";
+        const upload = attachmentUploads.get(attachment.id);
+        const labels = {
+          uploading: `上传中 ${upload?.progress ?? 0}%`,
+          ready: `已就绪 · ${attachmentSize(attachment.size)}`,
+          failed: `失败 · ${attachment.errorCode || "UPLOAD_FAILED"}`,
+          cancelled: "已取消",
+        };
+        state.textContent = labels[attachment.state] || attachment.state;
+        copy.append(name, state);
+        if (attachment.state === "uploading") {
+          const progress = document.createElement("progress");
+          progress.className = "attachment-progress";
+          progress.max = 100;
+          progress.value = Math.max(0, Math.min(100, upload?.progress ?? 0));
+          copy.appendChild(progress);
+        }
+        chip.appendChild(copy);
+        const action = document.createElement("button");
+        action.className = "attachment-action";
+        action.type = "button";
+        action.dataset.attachmentId = attachment.id;
+        action.title = attachment.state === "uploading" ? "取消上传" : "移除附件";
+        action.textContent = attachment.state === "uploading" ? "■" : "✕";
+        chip.appendChild(action);
+        attachmentDraftListEl.appendChild(chip);
+      }
+    }
+
+    async function loadAttachmentDrafts(sessionId = currentSessionId) {
+      const generation = ++attachmentLoadGeneration;
+      if (!sessionId) { attachmentDrafts = []; renderAttachmentDrafts(); return; }
+      const response = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/attachments`, { headers: sessionHeaders(sessionId) });
+      if (!response.ok) throw new Error((await response.json()).error || "附件草稿加载失败");
+      const data = await response.json();
+      if (generation !== attachmentLoadGeneration || currentSessionId !== sessionId) return;
+      attachmentDrafts = Array.isArray(data.attachments) ? data.attachments : [];
+      renderAttachmentDrafts();
+    }
+
+    function uploadReservedAttachment(sessionId, attachment, file) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const record = { xhr, sessionId, progress: 0 };
+        attachmentUploads.set(attachment.id, record);
+        renderAttachmentDrafts();
+        xhr.open("PUT", `/api/sessions/${encodeURIComponent(sessionId)}/attachments/${encodeURIComponent(attachment.id)}/content`);
+        xhr.setRequestHeader("X-RainyDays-Session", sessionId);
+        xhr.setRequestHeader("Content-Type", "application/octet-stream");
+        xhr.upload.addEventListener("progress", event => {
+          if (!event.lengthComputable || attachmentUploads.get(attachment.id) !== record) return;
+          record.progress = Math.round((event.loaded / event.total) * 100);
+          if (currentSessionId === sessionId) renderAttachmentDrafts();
+        });
+        xhr.addEventListener("load", () => {
+          attachmentUploads.delete(attachment.id);
+          let data = {};
+          try { data = JSON.parse(xhr.responseText || "{}"); } catch {}
+          if (xhr.status >= 200 && xhr.status < 300) resolve(data.attachment);
+          else reject(new Error(data.error || `附件上传失败 (${xhr.status})`));
+        });
+        xhr.addEventListener("error", () => { attachmentUploads.delete(attachment.id); reject(new Error("附件上传网络失败")); });
+        xhr.addEventListener("abort", () => { attachmentUploads.delete(attachment.id); reject(new DOMException("附件上传已取消", "AbortError")); });
+        xhr.send(file);
+      });
+    }
+
+    async function queueAttachmentFile(file) {
+      if (!(file instanceof File)) throw new TypeError("附件文件无效");
+      if (!currentSessionId) await newChat();
+      const sessionId = currentSessionId;
+      if (!sessionId) throw new Error("无法创建附件 Session");
+      const response = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/attachments`, {
+        method: "POST",
+        headers: sessionHeaders(sessionId, true),
+        body: JSON.stringify({ name: file.name, mime: file.type || "", size: file.size }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "附件预留失败");
+      if (currentSessionId === sessionId) {
+        attachmentDrafts.push(data.attachment);
+        renderAttachmentDrafts();
+      }
+      try { await uploadReservedAttachment(sessionId, data.attachment, file); }
+      finally { if (currentSessionId === sessionId) await loadAttachmentDrafts(sessionId); }
+    }
+
+    async function queueAttachmentFiles(files) {
+      const candidates = [...files].filter(file => file instanceof File);
+      if (candidates.length === 0) return;
+      const settlements = await Promise.allSettled(candidates.map(queueAttachmentFile));
+      for (const settlement of settlements) {
+        if (settlement.status === "rejected" && settlement.reason?.name !== "AbortError") {
+          addSystemMessage(`⚠️ ${settlement.reason instanceof Error ? settlement.reason.message : String(settlement.reason)}`);
+        }
+      }
+    }
+
+    async function cancelOrRemoveAttachment(attachmentId) {
+      const attachment = attachmentDrafts.find(candidate => candidate.id === attachmentId);
+      const sessionId = currentSessionId;
+      if (!attachment || !sessionId) return;
+      if (attachment.state === "uploading") {
+        attachmentUploads.get(attachmentId)?.xhr.abort();
+        const response = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/attachments/${encodeURIComponent(attachmentId)}/cancel`, {
+          method: "POST", headers: sessionHeaders(sessionId),
+        });
+        if (!response.ok && response.status !== 409) throw new Error((await response.json()).error || "取消附件失败");
+      } else {
+        const response = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/attachments/${encodeURIComponent(attachmentId)}`, {
+          method: "DELETE", headers: sessionHeaders(sessionId),
+        });
+        if (!response.ok) throw new Error((await response.json()).error || "移除附件失败");
+      }
+      await loadAttachmentDrafts(sessionId);
+    }
+
+    attachmentFileInputEl.addEventListener("change", () => {
+      const files = attachmentFileInputEl.files ? [...attachmentFileInputEl.files] : [];
+      attachmentFileInputEl.value = "";
+      void queueAttachmentFiles(files);
+    });
+    attachmentDraftListEl.addEventListener("click", event => {
+      const button = event.target instanceof Element ? event.target.closest("button[data-attachment-id]") : null;
+      if (!button) return;
+      void cancelOrRemoveAttachment(button.dataset.attachmentId).catch(error => addSystemMessage(`⚠️ ${error.message}`));
+    });
+    inputEl.addEventListener("paste", event => {
+      const clipboardFiles = [...(event.clipboardData?.files ?? [])];
+      const images = clipboardFiles.filter(file => file.type === "image/png");
+      if (images.length === 0) {
+        if (clipboardFiles.some(file => file.type.startsWith("image/"))) addSystemMessage("⚠️ 当前附件安全策略仅支持静态 PNG 图片");
+        return;
+      }
+      event.preventDefault();
+      void queueAttachmentFiles(images);
+    });
+
     function resizeMessageInput() {
       inputEl.rows = 1;
       inputEl.rows = Math.min(5, Math.max(1, Math.ceil(inputEl.scrollHeight / 24)));
@@ -1664,20 +1844,29 @@
     function updateSlashSelection() { slashMenu.querySelectorAll(".slash-item").forEach((el, i) => el.classList.toggle("selected", i === slashSelectedIdx)); }
 
     formEl.addEventListener("submit", async (e) => {
-      e.preventDefault(); const text = inputEl.value.trim(); if (!text || isSessionRunning()) return;
-      if (text.startsWith("/")) { const handled = handleSlashCommand(text); if (handled) { inputEl.value = ""; inputEl.rows = 1; slashMenu.classList.remove("visible"); return; } }
+      e.preventDefault();
+      const text = inputEl.value.trim();
+      const readyAttachments = attachmentDrafts.filter(attachment => attachment.state === "ready");
+      if ((!text && readyAttachments.length === 0) || isSessionRunning()) return;
+      if (attachmentDrafts.some(attachment => attachment.state === "uploading")) { addSystemMessage("⚠️ 请等待附件上传完成或取消上传"); return; }
+      if (text.startsWith("/") && readyAttachments.length === 0) { const handled = handleSlashCommand(text); if (handled) { inputEl.value = ""; inputEl.rows = 1; slashMenu.classList.remove("visible"); return; } }
       if (!currentSessionId) await newChat();
       const chatSessionId = currentSessionId;
       if (!chatSessionId || isSessionRunning(chatSessionId)) return;
       const runToken = beginSessionRun(chatSessionId);
-      addMessage("user", text); inputEl.value = ""; inputEl.rows = 1; slashMenu.classList.remove("visible");
+      addMessage("user", text, null, readyAttachments); inputEl.value = ""; inputEl.rows = 1; slashMenu.classList.remove("visible");
       historyNavIndex = -1; saveDraft(chatSessionId, ""); pushSessionHistory(chatSessionId, text);
       const assistantEl = addMessage("assistant", ""); const bubbleEl = assistantEl.querySelector(".bubble");
       runToken.bubble = bubbleEl;
       bubbleEl.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
       let streamingStarted = false; let fullText = "";
       try {
-        const response = await fetch("/api/chat", { method: "POST", headers: sessionHeaders(chatSessionId, true), body: JSON.stringify({ sessionId: chatSessionId, message: text }), signal: runToken.controller.signal });
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: sessionHeaders(chatSessionId, true),
+          body: JSON.stringify({ sessionId: chatSessionId, message: text, attachmentIds: readyAttachments.map(attachment => attachment.id) }),
+          signal: runToken.controller.signal,
+        });
         if (!response.ok) { const err = await response.json(); bubbleEl.innerHTML = ""; bubbleEl.textContent = "⚠️ " + (err.error || "请求失败"); return; }
         const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
         while (true) {
@@ -1715,18 +1904,37 @@
         bubbleEl.textContent = runToken.controller.signal.aborted || err?.name === "AbortError" ? "已中断" : "⚠️ 连接错误: " + err.message;
       }
       finally { finishSessionRun(chatSessionId, runToken); if (currentSessionId === chatSessionId) inputEl.focus(); }
-      await loadSessions(); await loadPins(); await loadPersonas(); if (currentSessionId === chatSessionId) await loadSessionSubagents(chatSessionId);
-      if (currentSessionId) { const sres = await fetch(`/api/sessions/${currentSessionId}/messages`); const sdata = await sres.json(); if (sdata.session) currentTitleEl.textContent = sdata.session.title; }
+      await loadSessions(); await loadPins(); await loadPersonas(); if (currentSessionId === chatSessionId) { await loadAttachmentDrafts(chatSessionId); await loadSessionSubagents(chatSessionId); }
+      if (currentSessionId) { const sres = await fetch(`/api/sessions/${currentSessionId}/messages`, { headers: sessionHeaders(currentSessionId) }); const sdata = await sres.json(); if (sdata.session) currentTitleEl.textContent = sdata.session.title; }
       messagesEl.scrollTop = messagesEl.scrollHeight; updateStatus();
     });
 
-    function addMessage(role, content, messageId) {
+    function addMessage(role, content, messageId, attachments = []) {
       const el = document.createElement("div");
       el.className = `msg msg-${role} message-relative`;
       const bubble = document.createElement("div");
       bubble.className = "bubble";
       if (role === "user") bubble.textContent = content;
       else if (content) bubble.innerHTML = renderMarkdown(content);
+      if (Array.isArray(attachments) && attachments.length > 0 && currentSessionId) {
+        const list = document.createElement("div");
+        list.className = "message-attachments";
+        for (const attachment of attachments) {
+          const item = document.createElement("div");
+          item.className = "message-attachment";
+          if (attachment.kind === "image") {
+            const image = document.createElement("img");
+            image.alt = attachment.name;
+            image.src = attachmentContentUrl(currentSessionId, attachment.id);
+            item.appendChild(image);
+          }
+          const label = document.createElement("span");
+          label.textContent = `${attachment.name} · ${attachmentSize(attachment.size)}`;
+          item.appendChild(label);
+          list.appendChild(item);
+        }
+        bubble.appendChild(list);
+      }
       el.appendChild(bubble);
       if (messageId) {
         const actions = document.createElement("div");
@@ -2055,6 +2263,7 @@
       "close-settings": () => closeSettings(),
       "export-session": () => exportCurrentSession(),
       "choose-import": () => document.getElementById("import-file").click(),
+      "choose-attachments": () => attachmentFileInputEl.click(),
       "toggle-asr": () => toggleASR(),
       "create-terminal": () => createTerminal(),
       "clear-terminal": () => clearActiveTerminal(),
@@ -2117,12 +2326,30 @@
       }));
     });
     document.addEventListener("dragover", event => {
+      const chat = event.target instanceof Element ? event.target.closest("#chat-view") : null;
+      if (chat && event.dataTransfer?.types.includes("Files")) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+        chat.classList.add("attachment-drag-active");
+        return;
+      }
       const target = event.target instanceof Element ? event.target.closest(".workbench-tab[data-pane-id], [data-workbench-drop-pane]") : null;
       if (!target || !event.dataTransfer?.types.includes("application/x-rainydays-workbench-tab")) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
     });
+    document.addEventListener("dragleave", event => {
+      const chat = document.getElementById("chat-view");
+      if (!chat.contains(event.relatedTarget instanceof Node ? event.relatedTarget : null)) chat.classList.remove("attachment-drag-active");
+    });
     document.addEventListener("drop", event => {
+      const chat = event.target instanceof Element ? event.target.closest("#chat-view") : null;
+      if (chat && event.dataTransfer?.files?.length) {
+        event.preventDefault();
+        chat.classList.remove("attachment-drag-active");
+        void queueAttachmentFiles(event.dataTransfer.files);
+        return;
+      }
       const target = event.target instanceof Element ? event.target.closest(".workbench-tab[data-pane-id], [data-workbench-drop-pane]") : null;
       if (!target || !event.dataTransfer) return;
       event.preventDefault();
@@ -2139,6 +2366,11 @@
     document.getElementById("settings-modal").addEventListener("click", event => { if (event.target === event.currentTarget) closeSettings(); });
     document.getElementById("ask-input").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); submitAskAnswer(); } });
     document.addEventListener("keydown", (e) => {
+      if (e.altKey && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "v") {
+        e.preventDefault();
+        attachmentFileInputEl.click();
+        return;
+      }
       if ((e.key === "Enter" || e.key === " ") && document.activeElement?.dataset?.action && document.activeElement.tagName !== "BUTTON") {
         e.preventDefault();
         document.activeElement.click();

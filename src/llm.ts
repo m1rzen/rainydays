@@ -5,8 +5,9 @@
 // ===========================================
 
 import OpenAI, { APIUserAbortError } from "openai";
-import type { LLMConfig, Message, ScopedNetworkGateway, ToolDefinition } from "./types.js";
+import type { LLMConfig, Message, MessageAttachment, ScopedNetworkGateway, ToolDefinition } from "./types.js";
 import { abortableDelay, cancellationError, cancellationFailure, throwIfCancelled } from "./run-cancellation.js";
+import { MAX_DRAFT_ATTACHMENT_BYTES } from "./attachment.js";
 
 /** 最大重试次数 */
 const MAX_RETRIES = 3;
@@ -59,15 +60,64 @@ function isRetryableError(err: unknown): { retry: boolean; rateLimit?: boolean; 
 
 export type LLMFetchTransport = ScopedNetworkGateway["fetch"];
 
+export type AttachmentResolver = (
+  sessionId: string,
+  attachmentId: string,
+) => Readonly<{ attachment: MessageAttachment; bytes: Buffer }>;
+
+export function projectMessagesForProvider(
+  sessionId: string | null,
+  messages: readonly Message[],
+  resolveAttachment: AttachmentResolver | null,
+  imageInput: "none" | "data-uri" = "none",
+): OpenAI.Chat.ChatCompletionMessageParam[] {
+  let attachmentBytes = 0;
+  return messages.map(message => {
+    const { attachments, ...base } = message;
+    if (!attachments?.length) return base as OpenAI.Chat.ChatCompletionMessageParam;
+    if (message.role !== "user") throw new TypeError("Only user messages may contain attachments");
+    if (!sessionId || !resolveAttachment) throw new Error("Attachment Provider projection requires a Session-bound resolver");
+    const content: OpenAI.Chat.ChatCompletionContentPart[] = [];
+    if (message.content) content.push({ type: "text", text: message.content });
+    for (const expected of attachments) {
+      const resolved = resolveAttachment(sessionId, expected.id);
+      const actual = resolved.attachment;
+      attachmentBytes += resolved.bytes.length;
+      if (attachmentBytes > MAX_DRAFT_ATTACHMENT_BYTES) throw new Error("Provider attachment payload exceeds the request budget");
+      if (actual.id !== expected.id || actual.sha256 !== expected.sha256 || actual.size !== expected.size
+        || actual.mime !== expected.mime || actual.kind !== expected.kind || resolved.bytes.length !== expected.size) {
+        throw new Error("Message attachment identity changed before Provider projection");
+      }
+      if (actual.kind === "image") {
+        if (imageInput !== "data-uri") throw new Error("PROVIDER_IMAGE_INPUT_UNSUPPORTED: current Provider profile does not enable data-uri images");
+        content.push({
+          type: "image_url",
+          image_url: { url: `data:${actual.mime};base64,${resolved.bytes.toString("base64")}`, detail: "auto" },
+        });
+      } else {
+        const label = JSON.stringify({ id: actual.id, name: actual.name, mime: actual.mime, sha256: actual.sha256 });
+        content.push({
+          type: "text",
+          text: `\n<user_attachment metadata=${label}>\n${resolved.bytes.toString("utf8")}\n</user_attachment>`,
+        });
+      }
+    }
+    if (content.length === 0) content.push({ type: "text", text: "[User supplied attachments]" });
+    return { role: "user", content };
+  });
+}
+
 export class LLMClient {
   private client: OpenAI;
   private model: string;
   private config: Readonly<LLMConfig>;
+  private imageInput: "none" | "data-uri";
 
   constructor(config: LLMConfig) {
     this.config = Object.freeze({ ...config });
     this.client = this.createClient();
     this.model = config.model;
+    this.imageInput = config.providerType === "openai-compatible-vision" ? "data-uri" : "none";
   }
 
   private createClient(transport?: LLMFetchTransport): OpenAI {
@@ -100,11 +150,13 @@ export class LLMClient {
     tools?: ToolDefinition[],
     signal?: AbortSignal,
     transport?: LLMFetchTransport,
+    attachmentSessionId: string | null = null,
+    attachmentResolver: AttachmentResolver | null = null,
   ): Promise<Message> {
     const client = transport ? this.createClient(transport) : this.client;
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.model,
-      messages: messages as OpenAI.Chat.ChatCompletionMessageParam[],
+      messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
     };
 
     if (tools && tools.length > 0) {
@@ -174,11 +226,13 @@ export class LLMClient {
   async *chatStream(
     messages: Message[],
     tools?: ToolDefinition[],
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    attachmentSessionId: string | null = null,
+    attachmentResolver: AttachmentResolver | null = null,
   ): AsyncGenerator<StreamEvent> {
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.model,
-      messages: messages as OpenAI.Chat.ChatCompletionMessageParam[],
+      messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
       stream: true,
     };
 

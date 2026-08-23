@@ -59,11 +59,14 @@
         </div>
         <div id="slash-menu"></div>
         <div id="input-area">
+          <div id="attachment-draft-list" aria-live="polite"></div>
           <form id="input-form" autocomplete="off">
+            <button type="button" class="attachment-btn" title="添加附件 (Alt+V)" data-action="choose-attachments">＋</button>
             <button type="button" class="voice-btn" id="mic-btn" title="语音输入" data-action="toggle-asr">🎙</button>
-            <textarea id="input" rows="1" placeholder="输入消息，或输入 / 查看命令..." autofocus></textarea>
+            <textarea id="input" rows="1" placeholder="输入消息；Ctrl+V 粘贴图片，Alt+V 添加文件..." autofocus></textarea>
             <button type="submit" id="submit">发送</button>
           </form>
+          <input id="attachment-file-input" class="hidden-control" type="file" multiple accept="image/png,text/plain,text/markdown,text/csv,application/json,.md,.markdown,.json,.csv,.txt">
         </div>
       </section>
       <div id="terminal-panel" class="workbench-view" aria-label="终端">

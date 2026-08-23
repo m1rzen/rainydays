@@ -93,14 +93,14 @@
       "family": "network",
       "api": "fetch",
       "container": "<top-level>",
-      "occurrenceId": "exec-6c1ef4ce8ba793a41fad1ead"
+      "occurrenceId": "exec-3efc6f67b1160862856a9d4f"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "<top-level>",
-      "occurrenceId": "exec-93919a3f3bf11edc45932a51"
+      "occurrenceId": "exec-ece8dd9c2a7944f81e16fcea"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -135,14 +135,14 @@
       "family": "network",
       "api": "fetch",
       "container": "deleteSession",
-      "occurrenceId": "exec-84491aa4acc1be9e0839c080"
+      "occurrenceId": "exec-15ce43e5c8744aac867db93f"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "deleteSession",
-      "occurrenceId": "exec-35148edae18b8cdcbab1c997"
+      "occurrenceId": "exec-3864690b02429b796e31f5e4"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -170,14 +170,14 @@
       "family": "network",
       "api": "fetch",
       "container": "exportCurrentSession",
-      "occurrenceId": "exec-9144487809b95eb59c07d0fc"
+      "occurrenceId": "exec-6b583c6edf082bb13532846c"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "forkCurrentSession",
-      "occurrenceId": "exec-3abf1f0c32f7b0669cce53c7"
+      "occurrenceId": "exec-0c9afc99bfa5a8d7b23ba902"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -261,7 +261,7 @@
       "family": "network",
       "api": "fetch",
       "container": "newChat",
-      "occurrenceId": "exec-88689c5fb02707a317cc9969"
+      "occurrenceId": "exec-7c23c2fa2fbb593106196260"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -310,14 +310,14 @@
       "family": "network",
       "api": "fetch",
       "container": "regenerateResponse",
-      "occurrenceId": "exec-b94c7e972ed5870146d5fa52"
+      "occurrenceId": "exec-6bb68133b385a8154a9e67a8"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "regenerateResponse",
-      "occurrenceId": "exec-bc849eb7e000cfba360f3dc5"
+      "occurrenceId": "exec-06ee75266dc66be04128a945"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -359,21 +359,21 @@
       "family": "network",
       "api": "fetch",
       "container": "selectSessionNow",
-      "occurrenceId": "exec-be85affabc5b3a1305cb55b8"
+      "occurrenceId": "exec-2643b6084b7917aa63d5472b"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "selectSessionNow",
-      "occurrenceId": "exec-10bc41de8bc911ef27f74d79"
+      "occurrenceId": "exec-9f48b212fa2cdceef4ba359f"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "selectSessionNow",
-      "occurrenceId": "exec-41195aeeb54637cb5da87fa1"
+      "occurrenceId": "exec-5b26ed0911a62086a7a15018"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -402,6 +402,34 @@
       "api": "fetch",
       "container": "updateStatus",
       "occurrenceId": "exec-08ed20709e6475b25d1acc03"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "loadAttachmentDrafts",
+      "occurrenceId": "exec-24558ad5af80a2f4dc0575a7"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "queueAttachmentFile",
+      "occurrenceId": "exec-f6c3f806c6ef9737165bed1f"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "cancelOrRemoveAttachment",
+      "occurrenceId": "exec-1557f8213f4f0cdf2a4922fa"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "cancelOrRemoveAttachment",
+      "occurrenceId": "exec-568e583ab7699ebbd24d0bcc"
     },
     {
       "sourcePath": "src/daemon.ts",
@@ -827,5 +855,5 @@
       "occurrenceId": "exec-c52f91fdd68fcd90774471b7"
     }
   ],
-  "canonicalPayloadSha256": "35911b24355ab2c3eef64b64c15828887caece7692ec3e42cfe01fc00cdf60ce"
+  "canonicalPayloadSha256": "499ae0d7daa0f2fd390c9fc42d150a9451d1ad95e9b8bb1109dd7cb83c8a6694"
 }
