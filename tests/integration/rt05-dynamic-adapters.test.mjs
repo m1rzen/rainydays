@@ -53,7 +53,6 @@ test("RT-05 LLM-backed dynamic adapters use the run-scoped network transport", a
     assert.equal(scopedUrl, "https://provider.example/v1/chat/completions");
 
     const transportBindings = [
-      ["src/tools/phase1-tools.ts", /invocation\.signal, invocation\.network\.fetch/u],
       ["src/tools/knowledge-tools.ts", /invocation\.signal, invocation\.network\.fetch/u],
       ["src/tools/advanced-tools.ts", /invocation\.signal, invocation\.network\.fetch/u],
       ["src/tools/curate-tool.ts", /invocation\.signal, invocation\.network\.fetch/u],
@@ -118,15 +117,34 @@ test("RT-05 dynamic adapters preserve strict schemas and typed failures", async 
     const schedule = createCronScheduleExec(() => assert.fail("invalid schedule reached publication"));
     await assert.rejects(() => schedule({ message: "x", delay: "invalid" }, { _SESSION_ID: "rt05-schema" }), /无效的时间格式/u);
 
-    let museTransport;
-    const llm = { chat: async (...args) => {
-      museTransport = args[3];
-      return { role: "assistant", content: "complete" };
-    } };
+    const llm = { chat: async () => ({ role: "assistant", content: "complete" }) };
     const networkFetch = async () => new Response("unreachable");
-    const invocation = { signal: new AbortController().signal, network: { fetch: networkFetch } };
-    assert.match(await createMuseExec(llm)({ topic: "network" }, undefined, invocation), /complete/u);
-    assert.equal(museTransport, networkFetch);
+    const invocation = {
+      signal: new AbortController().signal,
+      network: { fetch: networkFetch },
+      capabilityContext: { sessionId: "rt05-muse" },
+    };
+    let museSpawn;
+    const museDependencies = {
+      registry: { spawn: async request => {
+        museSpawn = request;
+        return { taskId: "muse-reflection-fixture", status: "running" };
+      } },
+      llm,
+      persona: { name: "fixture", tools: ["read", "fetch_url", "memo_add", "task_create"], networkPolicy: { mode: "unrestricted" } },
+    };
+    const museResult = JSON.parse(await createMuseExec(museDependencies)({ topic: "network", perspective: "risk" }, { _SESSION_ID: "rt05-muse" }, invocation));
+    assert.equal(museResult.task_id, "muse-reflection-fixture");
+    assert.equal(museResult.session_id, "rt05-muse");
+    assert.equal(museResult.limits.maxIterations, 10);
+    assert.equal(museResult.limits.permissions, "read-only-attenuated-parent");
+    assert.equal(museResult.limits.restart, "abort-no-auto-resume");
+    assert.equal(museSpawn.inheritCanvas, false);
+    assert.match(museSpawn.prompt, /network/u);
+    assert.equal(museSpawn.parentInvocation, invocation);
+    assert.deepEqual(museSpawn.toolAllowlist, ["read", "glob", "grep", "recall", "inspect", "graph", "search_tools", "fetch_url"]);
+    assert.equal(museSpawn.toolAllowlist.includes("memo_add"), false);
+    assert.equal(museSpawn.toolAllowlist.includes("task_create"), false);
 
     await assert.rejects(
       () => runWithInteractionChannel(
@@ -139,7 +157,7 @@ test("RT-05 dynamic adapters preserve strict schemas and typed failures", async 
 
     await assert.rejects(() => createConsolidateExec(llm)({}), /invocation services are required/iu);
     await assert.rejects(() => createOracleQueryExec(llm)({ question: "x" }), /invocation services are required/iu);
-    await assert.rejects(() => createMuseExec(llm)({ topic: "x" }), /invocation services are required/iu);
+    await assert.rejects(() => createMuseExec(museDependencies)({ topic: "x" }), /invocation services are required/iu);
     await assert.rejects(
       () => createSubagentExecutors({
         registry: {},

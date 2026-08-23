@@ -375,12 +375,12 @@ async function main() {
     await writeFile(path.join(unsupportedMetadataRoot, "package.json"), JSON.stringify({ version: secondBuild.appVersion }));
     await writeFile(path.join(unsupportedMetadataRoot, "build-info.json"), JSON.stringify({
       ...secondBuild,
-      versions: { ...secondBuild.versions, databaseSchema: 7 },
+      versions: { ...secondBuild.versions, databaseSchema: 8 },
     }));
     const unsupportedMetadata = runHelper("version-info", unsupportedMetadataRoot, unsupportedMetadataRoot);
     assert.notEqual(unsupportedMetadata.status, 0);
     assert.match(unsupportedMetadata.stderr, /database schema version is unsupported/);
-    pass("semantically unsupported metadata rejected", "database schema 7 rejected before runtime initialization");
+    pass("semantically unsupported metadata rejected", "database schema 8 rejected before runtime initialization");
 
     const forgedMetadataRoot = path.join(tempRoot, "forged-metadata");
     await mkdir(forgedMetadataRoot, { recursive: true });
@@ -480,7 +480,7 @@ async function main() {
     await writeFile(path.join(emptyDatabaseRoot, "data", "mini-lux.db"), Buffer.alloc(0));
     const emptyDatabaseRun = runHelper("db-version", emptyDatabaseRoot);
     assert.equal(emptyDatabaseRun.status, 0, emptyDatabaseRun.stderr);
-    assert.equal(emptyDatabaseRun.payload?.userVersion, 6);
+    assert.equal(emptyDatabaseRun.payload?.userVersion, 7);
 
     const invalidHeaderRoot = path.join(tempRoot, "invalid-header");
     await mkdir(path.join(invalidHeaderRoot, "data"), { recursive: true });
@@ -505,14 +505,14 @@ async function main() {
     }
     const crashZeroRecovery = runHelper("db-version", crashZero);
     assert.equal(crashZeroRecovery.status, 0, crashZeroRecovery.stderr);
-    assert.equal(crashZeroRecovery.payload?.userVersion, 6);
+    assert.equal(crashZeroRecovery.payload?.userVersion, 7);
 
     const fresh = path.join(tempRoot, "fresh");
     await mkdir(fresh, { recursive: true });
     const freshRun = runHelper("db-version", fresh);
     assert.equal(freshRun.status, 0, freshRun.stderr);
-    assert.equal(freshRun.payload?.userVersion, 6);
-    pass("fresh database migrates 0 to 6", "user_version=6");
+    assert.equal(freshRun.payload?.userVersion, 7);
+    pass("fresh database migrates 0 to 7", "user_version=7");
 
     const lifecycleWrite = runHelper("db-lifecycle-write", fresh);
     assert.equal(lifecycleWrite.status, 0, lifecycleWrite.stderr);
@@ -534,13 +534,13 @@ async function main() {
     const beforeRepeat = logicalSnapshot();
     const lifecycleRestart = runHelper("db-version", fresh);
     assert.equal(lifecycleRestart.status, 0, lifecycleRestart.stderr);
-    assert.equal(lifecycleRestart.payload?.userVersion, 6);
+    assert.equal(lifecycleRestart.payload?.userVersion, 7);
     const afterRepeat = logicalSnapshot();
     assert.deepEqual(afterRepeat, beforeRepeat);
     assert.equal(afterRepeat.sessions.find(entry => entry.id === "restart-session")?.title, "Restart");
     assert.equal(afterRepeat.memos[0]?.content, "restart-memo");
-    pass("legitimate memo and session writes survive database restart", "Schema 6 reopens with session and memo rows preserved");
-    pass("Schema 6 repeated startup is a migration no-op", "user_version, complete sqlite_master and sentinel rows remain logically identical");
+    pass("legitimate memo and session writes survive database restart", "Schema 7 reopens with session and memo rows preserved");
+    pass("Schema 7 repeated startup is a migration no-op", "user_version, complete sqlite_master and sentinel rows remain logically identical");
 
     const legacy = path.join(tempRoot, "legacy");
     await mkdir(path.join(legacy, "data"), { recursive: true });
@@ -551,14 +551,19 @@ async function main() {
     const legacyRun = runHelper("db-version", legacy);
     assert.equal(legacyRun.status, 0, legacyRun.stderr);
     database = new Database(legacyPath, { readonly: true });
-    assert.equal(database.pragma("user_version", { simple: true }), 6);
+    assert.equal(database.pragma("user_version", { simple: true }), 7);
     assert.equal(database.prepare("SELECT content FROM memories").get().content, "preserve-me");
     assert(database.prepare("PRAGMA table_info(memories)").all().some((entry) => entry.name === "embedding"));
     assert(database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='security_audit_events'").get());
     database.close();
-    pass("legacy database migrates 0 to 6 without data loss", "sentinel row, audit table, Task DAG, EventBus, Cron target, and Poll subscription schema preserved");
+    pass("legacy database migrates 0 to 7 without data loss", "sentinel row, audit table, Task DAG, EventBus, Cron target, Poll subscription, and Session memo schema preserved");
 
     const removeSchemaThreeSql = `
+      DROP INDEX IF EXISTS idx_memos_cron_job;
+      DROP INDEX IF EXISTS idx_memos_session_status;
+      ALTER TABLE memos DROP COLUMN last_reminded_at;
+      ALTER TABLE memos DROP COLUMN cron_job_id;
+      ALTER TABLE memos DROP COLUMN session_id;
       DROP INDEX IF EXISTS idx_poll_batch_events_batch;
       DROP TABLE IF EXISTS poll_batch_events;
       DROP INDEX IF EXISTS idx_poll_batches_due;
@@ -635,7 +640,7 @@ async function main() {
     assert.equal(schemaOneRun.status, 0, schemaOneRun.stderr);
     database = new Database(schemaOnePath, { readonly: true });
     try {
-      assert.equal(database.pragma("user_version", { simple: true }), 6);
+      assert.equal(database.pragma("user_version", { simple: true }), 7);
       assert.equal(database.prepare("SELECT title FROM sessions WHERE id='schema-one-sentinel'").get().title, "Schema One");
       const auditObjects = database.prepare("SELECT type,name FROM sqlite_master WHERE name IN ('security_audit_state','security_audit_state_no_delete','security_audit_state_no_update','security_audit_head','security_audit_head_no_delete','security_audit_events','idx_security_audit_request','idx_security_audit_run','idx_security_audit_session','security_audit_events_no_delete','security_audit_events_no_update') ORDER BY type,name").all();
       assert.deepEqual(auditObjects.map(entry => `${entry.type}:${entry.name}`), [
@@ -654,19 +659,19 @@ async function main() {
     } finally {
       database.close();
     }
-    pass("Schema 1 migrates transactionally to 6", "sentinel row preserved and exact audit, Task DAG, EventBus, Cron target, and Poll objects installed");
+    pass("Schema 1 migrates transactionally to 7", "sentinel row preserved and exact audit, Task DAG, EventBus, Cron target, Poll, and Session memo objects installed");
 
     const future = path.join(tempRoot, "future");
     await mkdir(path.join(future, "data"), { recursive: true });
     const futurePath = path.join(future, "data", "mini-lux.db");
-    database = new Database(futurePath); database.pragma("user_version = 7"); database.close();
+    database = new Database(futurePath); database.pragma("user_version = 8"); database.close();
     const futureHashBefore = createHash("sha256").update(await readFile(futurePath)).digest("hex");
     const futureRun = runHelper("db-version", future);
     assert.notEqual(futureRun.status, 0);
     const futureHashAfter = createHash("sha256").update(await readFile(futurePath)).digest("hex");
     assert.equal(futureHashAfter, futureHashBefore);
     database = new Database(futurePath, { readonly: true });
-    assert.equal(database.pragma("user_version", { simple: true }), 7); database.close();
+    assert.equal(database.pragma("user_version", { simple: true }), 8); database.close();
     pass("future database rejected without mutation", `database SHA-256 unchanged: ${futureHashBefore}`);
 
     const futureWal = path.join(tempRoot, "future-wal");
@@ -892,7 +897,7 @@ async function main() {
       assert.deepEqual(version, runtimeBuild);
       assert.deepEqual(status.version, runtimeBuild);
       assert.deepEqual(diagnostics.version, runtimeBuild);
-      assert.equal(diagnostics.databaseSchemaVersion, 6);
+      assert.equal(diagnostics.databaseSchemaVersion, 7);
       assert.equal(diagnostics.runtime.electron, "33.4.11");
       assert.equal(diagnostics.protocols.worker.version, null);
       assert.equal(diagnostics.protocols.worker.enabled, false);

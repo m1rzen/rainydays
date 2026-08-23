@@ -39,9 +39,15 @@ function createFakeStore() {
         .slice(0, limit)
         .map(row => ({ ...row }));
     },
+    claimPendingEvent(id, now) {
+      const row = rows.get(id);
+      if (!row || row.status !== "pending" || row.nextAttemptAt > now) return false;
+      row.attempts += 1;
+      return true;
+    },
     recordAttempt(id) {
       const row = rows.get(id);
-      if (row) row.attempts += 1;
+      if (row?.status === "pending") row.attempts += 1;
     },
     settleEvent(id, status, lastError) {
       const row = rows.get(id);
@@ -181,6 +187,30 @@ test("handler ack → delivered；重复 dispatch 无重复副作用", async () 
   assert.equal((await bus.dispatchDueEvents()).attempted, 0); // 已 delivered 不再调度
   assert.deepEqual(delivered, [result.id]);
   assert.equal(store.rows.get(result.id).status, "delivered");
+});
+
+test("RT-11 cancellation after due snapshot wins before Session delivery", async () => {
+  const store = createFakeStore();
+  const bus = new EventBus(quietOptions());
+  bus.attachStore(store);
+  let deliveries = 0;
+  bus.setSessionDelivery(() => { deliveries += 1; return { outcome: "acked" }; });
+  const published = await bus.publish({
+    type: "cron.triggered",
+    source: "cron",
+    sourceEventId: "memo:cancel-race",
+    targetSessionId: "s1",
+    payload: { jobId: 42 },
+  });
+  const originalClaim = store.claimPendingEvent.bind(store);
+  store.claimPendingEvent = (id, now) => {
+    store.settleEvent(id, "dead", "memo completed", now);
+    return originalClaim(id, now);
+  };
+  const outcome = await bus.dispatchDueEvents();
+  assert.deepEqual(outcome, { attempted: 0, delivered: 0, retried: 0, dead: 0, expired: 0 });
+  assert.equal(deliveries, 0);
+  assert.equal(store.rows.get(published.id).status, "dead");
 });
 
 test("handler retry → 指数退避重排；attempts 达上限 → dead", async () => {

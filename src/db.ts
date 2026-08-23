@@ -708,6 +708,56 @@ function assertSchemaV6(database: typeof db = db): void {
   if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 6 不兼容: 完整性检查失败");
 }
 
+const SCHEMA_V7_SQL = `
+    ALTER TABLE memos ADD COLUMN session_id TEXT
+      REFERENCES sessions(id) ON DELETE CASCADE;
+    ALTER TABLE memos ADD COLUMN cron_job_id INTEGER
+      REFERENCES cron_jobs(id) ON DELETE SET NULL;
+    ALTER TABLE memos ADD COLUMN last_reminded_at TEXT;
+    UPDATE memos
+      SET session_id = (SELECT id FROM sessions ORDER BY datetime(updated_at) DESC, id LIMIT 1)
+      WHERE session_id IS NULL AND EXISTS (SELECT 1 FROM sessions);
+    CREATE INDEX idx_memos_session_status ON memos (session_id, status, id);
+    CREATE UNIQUE INDEX idx_memos_cron_job ON memos (cron_job_id) WHERE cron_job_id IS NOT NULL;
+  `;
+
+function assertSchemaV7(database: typeof db = db): void {
+  const reference = createInMemoryBootstrapDatabase();
+  try {
+    reference.pragma("foreign_keys = ON");
+    reference.exec(SCHEMA_V1_SQL);
+    reference.exec(SCHEMA_V2_SQL);
+    applySchemaV3(reference);
+    reference.exec(SCHEMA_V4_SQL);
+    reference.exec(SCHEMA_V5_SQL);
+    reference.exec(SCHEMA_V6_SQL);
+    reference.exec(SCHEMA_V7_SQL);
+    const objectRows = (target: typeof db): Array<{ type: string; name: string; tbl_name: string; sql: string | null }> => target.prepare(
+      "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
+    ).all() as Array<{ type: string; name: string; tbl_name: string; sql: string | null }>;
+    const actual = objectRows(database);
+    const expected = objectRows(reference);
+    const signatures = (rows: typeof actual): string[] => rows.map(entry => `${entry.type}|${entry.name}|${entry.tbl_name}`);
+    if (JSON.stringify(signatures(actual)) !== JSON.stringify(signatures(expected))) {
+      throw new Error("数据库 Schema 7 不兼容: 存在未知或缺失的 Schema 对象");
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const found = actual[index];
+      const wanted = expected[index];
+      if ((found.sql === null) !== (wanted.sql === null)
+        || (found.sql !== null && wanted.sql !== null && normalizeSchemaSql(found.sql) !== normalizeSchemaSql(wanted.sql))) {
+        throw new Error(`数据库 Schema 7 不兼容: ${wanted.type} ${wanted.name} SQL 定义错误`);
+      }
+    }
+  } finally {
+    reference.close();
+  }
+  const foreignKeyViolations = database.prepare("PRAGMA foreign_key_check").all();
+  if (foreignKeyViolations.length > 0) throw new Error("数据库 Schema 7 不兼容: 存在外键完整性错误");
+  const integrity = database.prepare("PRAGMA integrity_check").all() as Array<{ integrity_check?: string }>;
+  if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 7 不兼容: 完整性检查失败");
+}
+
 interface DatabaseMigration {
   readonly from: number;
   readonly to: number;
@@ -769,6 +819,15 @@ const DATABASE_MIGRATIONS: readonly DatabaseMigration[] = Object.freeze([
       assertSchemaV6(database);
     },
   }),
+  Object.freeze({
+    from: 6,
+    to: 7,
+    apply: (database: typeof db): void => {
+      assertSchemaV6(database);
+      database.exec(SCHEMA_V7_SQL);
+      assertSchemaV7(database);
+    },
+  }),
 ]);
 
 function assertMigrationRegistry(): void {
@@ -809,7 +868,7 @@ function migrateDatabase(): void {
   if (version !== DATABASE_SCHEMA_VERSION) {
     throw new Error(`数据库 Schema 迁移未达到目标版本: 当前 ${version}，目标 ${DATABASE_SCHEMA_VERSION}`);
   }
-  assertSchemaV6(db);
+  assertSchemaV7(db);
 }
 
 try {
@@ -846,7 +905,7 @@ export function validateDatabaseRestoreCandidate(
   }
   const bytes = fs.readFileSync(databasePath);
   const candidate = createInMemoryBootstrapDatabase(bytes);
-  try { assertSchemaV6(candidate); }
+  try { assertSchemaV7(candidate); }
   finally { candidate.close(); }
   return validation;
 }
@@ -1106,9 +1165,15 @@ export function touchSession(id: string): void {
   );
 }
 
-/** 删除会话（消息会因外键级联自动删除） */
+/** 删除会话；级联前先停用 Memo Cron 并撤销尚未投递的提醒事件。 */
 export function deleteSession(id: string): void {
-  db.prepare(`DELETE FROM sessions WHERE id = ?`).run(id);
+  db.transaction(() => {
+    const jobs = db.prepare(
+      `SELECT cron_job_id AS id FROM memos WHERE session_id = ? AND cron_job_id IS NOT NULL`
+    ).all(id) as Array<{ id: number }>;
+    for (const job of jobs) cancelCronJob(job.id);
+    db.prepare(`DELETE FROM sessions WHERE id = ?`).run(id);
+  })();
 }
 
 // ===========================================
@@ -1359,6 +1424,111 @@ export function insertTaskDependency(row: TaskDependencyRow): void {
 }
 
 // ===========================================
+// Memo CRUD（RT-11：Session 定向提醒）
+// ===========================================
+
+export interface MemoRow {
+  id: number;
+  content: string;
+  remind_at: string | null;
+  repeat_rule: "daily" | "weekly" | "monthly" | null;
+  status: "active" | "done";
+  tags: string | null;
+  created_at: string;
+  session_id: string | null;
+  cron_job_id: number | null;
+  last_reminded_at: string | null;
+}
+
+export interface MemoCreateInput {
+  readonly sessionId: string;
+  readonly content: string;
+  readonly remindAt: string | null;
+  readonly repeatRule: MemoRow["repeat_rule"];
+  readonly cronInterval: string | null;
+  readonly tags: string | null;
+}
+
+function claimLegacyMemos(sessionId: string): void {
+  db.prepare("UPDATE memos SET session_id = ? WHERE session_id IS NULL").run(sessionId);
+}
+
+function cancelPendingCronEvents(jobId: number, reason: string): number {
+  return db.prepare(
+    `UPDATE events SET status = 'dead', last_error = ?
+     WHERE source = 'cron' AND status = 'pending'
+       AND json_extract(payload_json, '$.jobId') = ?`
+  ).run(reason, jobId).changes;
+}
+
+export function createMemoWithCron(input: MemoCreateInput): Readonly<{ memo: MemoRow; cronJob: CronJobRow | null }> {
+  return db.transaction(() => {
+    claimLegacyMemos(input.sessionId);
+    const now = new Date().toISOString();
+    const result = db.prepare(
+      `INSERT INTO memos (content, remind_at, repeat_rule, status, tags, created_at, session_id)
+       VALUES (?, ?, ?, 'active', ?, ?, ?)`
+    ).run(input.content, input.remindAt, input.repeatRule, input.tags, now, input.sessionId);
+    const id = Number(result.lastInsertRowid);
+    let cronJob: CronJobRow | null = null;
+    if (input.remindAt) {
+      const cronId = insertCronJob({
+        session_id: input.sessionId,
+        target_session_id: input.sessionId,
+        broadcast: 0,
+        message: `备忘提醒: ${input.content}`,
+        fire_at: input.remindAt,
+        interval: input.cronInterval,
+        tag: `memo:${id}`,
+      });
+      db.prepare("UPDATE memos SET cron_job_id = ? WHERE id = ? AND session_id = ?").run(cronId, id, input.sessionId);
+      cronJob = getCronJob(cronId) ?? null;
+      if (!cronJob) throw new Error("Memo Cron 创建后不可见");
+    }
+    const memo = getMemoBySessionAndId(input.sessionId, id);
+    if (!memo) throw new Error("Memo 创建后不可见");
+    return Object.freeze({ memo, cronJob });
+  })();
+}
+
+export function getMemoBySessionAndId(sessionId: string, id: number): MemoRow | undefined {
+  return db.prepare("SELECT * FROM memos WHERE session_id = ? AND id = ?").get(sessionId, id) as MemoRow | undefined;
+}
+
+export function listMemosBySession(sessionId: string, status: "active" | "done" | null, tags: string | null): MemoRow[] {
+  claimLegacyMemos(sessionId);
+  const clauses = ["session_id = ?"];
+  const params: unknown[] = [sessionId];
+  if (status) { clauses.push("status = ?"); params.push(status); }
+  if (tags) { clauses.push("tags LIKE ?"); params.push(`%${tags}%`); }
+  return db.prepare(
+    `SELECT * FROM memos WHERE ${clauses.join(" AND ")} ORDER BY datetime(created_at) DESC, id DESC LIMIT 50`
+  ).all(...params) as MemoRow[];
+}
+
+export function completeMemo(sessionId: string, id: number): Readonly<{ changed: boolean; cronJobId: number | null }> {
+  return db.transaction(() => {
+    claimLegacyMemos(sessionId);
+    const memo = getMemoBySessionAndId(sessionId, id);
+    if (!memo) return Object.freeze({ changed: false, cronJobId: null });
+    if (memo.status === "done") return Object.freeze({ changed: false, cronJobId: memo.cron_job_id });
+    const changed = db.prepare("UPDATE memos SET status = 'done' WHERE id = ? AND session_id = ? AND status = 'active'")
+      .run(id, sessionId).changes === 1;
+    if (changed && memo.cron_job_id !== null) {
+      deactivateCronJob(memo.cron_job_id);
+      cancelPendingCronEvents(memo.cron_job_id, "Memo completed before delivery");
+    }
+    return Object.freeze({ changed, cronJobId: memo.cron_job_id });
+  })();
+}
+
+export function markMemoRemindedByCronJob(cronJobId: number, scheduledAt: string): void {
+  db.prepare(
+    "UPDATE memos SET last_reminded_at = ? WHERE cron_job_id = ? AND status = 'active'"
+  ).run(scheduledAt, cronJobId);
+}
+
+// ===========================================
 // Cron Jobs CRUD（定时任务）
 // ===========================================
 
@@ -1417,6 +1587,19 @@ export function getCronJob(id: number): CronJobRow | undefined {
 
 export function deactivateCronJob(id: number): void {
   db.prepare(`UPDATE cron_jobs SET active = 0 WHERE id = ?`).run(id);
+}
+
+/** 用户显式取消：停用 Cron、撤销尚未投递事件，并让关联 Memo 不再显示活跃提醒。 */
+export function cancelCronJob(id: number): boolean {
+  return db.transaction(() => {
+    const changed = db.prepare(`UPDATE cron_jobs SET active = 0 WHERE id = ? AND active = 1`).run(id).changes === 1;
+    cancelPendingCronEvents(id, "Cron cancelled before delivery");
+    db.prepare(
+      `UPDATE memos SET remind_at = NULL, repeat_rule = NULL, cron_job_id = NULL
+       WHERE cron_job_id = ? AND status = 'active'`
+    ).run(id);
+    return changed;
+  })();
 }
 
 export function updateCronJobLastFired(id: number, lastFired: string): void {
@@ -1522,8 +1705,13 @@ export function createEventStore(): import("./event-bus.js").EventStore {
       `).all(now, limit) as EventRow[];
       return rows.map(mapEventRow);
     },
+    claimPendingEvent(id, now) {
+      return db.prepare(
+        `UPDATE events SET attempts = attempts + 1 WHERE id = ? AND status = 'pending' AND next_attempt_at <= ?`
+      ).run(id, now).changes === 1;
+    },
     recordAttempt(id, now) {
-      db.prepare(`UPDATE events SET attempts = attempts + 1 WHERE id = ?`).run(id);
+      db.prepare(`UPDATE events SET attempts = attempts + 1 WHERE id = ? AND status = 'pending'`).run(id);
     },
     settleEvent(id, status, lastError, now) {
       db.prepare(`UPDATE events SET status = ?, last_error = ? WHERE id = ?`).run(status, lastError, id);

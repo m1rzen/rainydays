@@ -30,7 +30,7 @@ import {
   SessionImportError,
   searchSessions,
 } from "./session.js";
-import { closeDb, insertPin, getPinsBySession, deletePin, deleteMessagesAfterLastUserMessage, getDatabaseSchemaVersion, createEventStore, createPollStore } from "./db.js";
+import { closeDb, insertPin, getPinsBySession, deletePin, deleteMessagesAfterLastUserMessage, getDatabaseSchemaVersion, createEventStore, createPollStore, markMemoRemindedByCronJob } from "./db.js";
 import { getDefaultEventBus, type EventEnvelope, type SessionDeliveryOutcome } from "./event-bus.js";
 import { getDefaultPollManager } from "./poll.js";
 import { cancelRunInteraction, runOutsideInteractionChannel, runWithInteractionChannel, submitAnswer } from "./tools/ask-user-tool.js";
@@ -60,7 +60,7 @@ import {
 import { initSupervisor } from "./supervisor.js";
 import { discoverSessions, updateSessionStatus, onMessage } from "./link.js";
 import { disposeAll as disposeWire } from "./wire.js";
-import { createMuseExec } from "./tools/phase1-tools.js";
+import { createMuseExec, setMemoCronCallbacks } from "./tools/phase1-tools.js";
 import { createCurateExec } from "./tools/curate-tool.js";
 import { createConsolidateExec } from "./tools/knowledge-tools.js";
 import { createOracleQueryExec } from "./tools/advanced-tools.js";
@@ -2296,6 +2296,7 @@ async function onCronFire(job: CronJobRow, scheduledAt: string): Promise<boolean
     });
     if (result.status === "rejected") return false;
   }
+  markMemoRemindedByCronJob(job.id, scheduledAt);
   return true;
 }
 
@@ -2391,6 +2392,10 @@ async function start() {
   for (const p of personas) console.log(`   • ${p.displayName} (${p.name})`);
 
   cronManager = new CronManager(onCronFire);
+  setMemoCronCallbacks({
+    schedule: job => cronManager?.scheduleJob(job),
+    cancel: id => cronManager?.cancelJob(id),
+  });
   cronManager.loadFromDb();
   initSupervisor(llm);
 
@@ -2545,7 +2550,7 @@ function registerDynamicTools(
   registerDynamicTool(authority, {
     name: "muse",
     definition: museDef,
-    executor: createMuseExec(runtimeLlm),
+    executor: createMuseExec({ registry: subagents, llm: runtimeLlm, persona }),
   });
 
   // playbook_execute —— 需要 llm + persona

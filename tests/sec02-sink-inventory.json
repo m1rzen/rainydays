@@ -5,12 +5,12 @@
   "reviewPolicySha256": "3d8f70aac2b19518dfa845572a51977be8f21e931c10c5b66ed35bd047c512ce",
   "dialectCheckerSha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
   "dialectPolicySha256": "e71e8be1b0a4220a50275bb6e88ead58e82f610dade5bd5c53e6242df7c4d769",
-  "dialectImportSetSha256": "35b2c390b98c90043e0823bc82859654287c55049628f118f68a3c1688246c20",
-  "runtimeSinkSetSha256": "c189db2d71af7c41b3e3fc5c224a65a33c55f28790cd0cf5bad90751317317ff",
+  "dialectImportSetSha256": "208c19687ea4917fba30ec42face6c4569f5537f092a98f9628c444b8c60d121",
+  "runtimeSinkSetSha256": "1701ec5bb113a19dc5383a444d12907c7420a0c90c3bb1bf1ae1460431421663",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
     "executableFileCount": 88,
-    "executableManifestSha256": "dfce4e2a00744e20da9965ad1e9cf88ea938a519c69383845d6733bbd1513911",
+    "executableManifestSha256": "77bd84e9aad875bf93753db773e7a89ca884413ea8243144328b4830d1db5bbc",
     "dialectImportCount": 38,
     "dialectExceptionCount": 2
   },
@@ -101,8 +101,8 @@
     },
     {
       "sourcePath": "src/cron.ts",
-      "bytes": 5918,
-      "sha256": "4351a825cad3383efa165acaa73da2a473751e708ad764063d0c13eb36c43ac5",
+      "bytes": 8290,
+      "sha256": "61d8f6d6732e7c6a4c31b10044193ebedc52b68404dd5b2d55bf869fcd42fd90",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -122,8 +122,8 @@
     },
     {
       "sourcePath": "src/db.ts",
-      "bytes": 87989,
-      "sha256": "bf9294221a9ba639e6d269f8337f11f70d293af1b51edaefc051207d5cdc6e13",
+      "bytes": 96306,
+      "sha256": "06df2e8ba60f159b2b57b3a7b23c7c62731c134d569267c36bc52cdf9dd0248a",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -150,8 +150,8 @@
     },
     {
       "sourcePath": "src/event-bus.ts",
-      "bytes": 15392,
-      "sha256": "97d442ee82c9d38585df9c84110b5c5fdb6181339a10106e23558a03efed1604",
+      "bytes": 15674,
+      "sha256": "840a044878a0324e05dc9ceaef14aad2da4b61eb956a9c6fe29f4a6f5d08d9f5",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -192,8 +192,8 @@
     },
     {
       "sourcePath": "src/index.ts",
-      "bytes": 105048,
-      "sha256": "8270621fcfcc5727e792ca80dd14078220a2cc23e5200899f40e55d6a5ba49f5",
+      "bytes": 105315,
+      "sha256": "8dea8d339a7acec790ea1b6315dc06eb10166d7be5f6d4868be362071cafbebc",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -381,8 +381,8 @@
     },
     {
       "sourcePath": "src/subagent-registry.ts",
-      "bytes": 19754,
-      "sha256": "1b5b93092bcb1ddfb1e6401744253b6e9bd04d880000d01c37514c1a84c9c6d7",
+      "bytes": 20544,
+      "sha256": "cb9426bfdab53c58a8e27d275dba15fa9de0070048cdd4c1e990044eebbbecc2",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -458,8 +458,8 @@
     },
     {
       "sourcePath": "src/tools/cron-tools.ts",
-      "bytes": 7809,
-      "sha256": "52eb29b3facfd557ebcc09b0823510ceda3fd33883788e2f4d53ccfc0df61953",
+      "bytes": 7797,
+      "sha256": "24bd742bd88a5164ab1083e07cc7eefbf9ae43289731dab59f97daa94b48c0bd",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -528,8 +528,8 @@
     },
     {
       "sourcePath": "src/tools/phase1-tools.ts",
-      "bytes": 8168,
-      "sha256": "3b448e5e844911243cd25050f30d0f217be436a6291df6ef9db7dd4ae2006db6",
+      "bytes": 11326,
+      "sha256": "578145c99073dde95d9ba380a514699651bc571a1a9ddbb332aa71cd9ae297b2",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -620,7 +620,7 @@
     {
       "sourcePath": "src/version.ts",
       "bytes": 11376,
-      "sha256": "98c608618faa21f7016f2ce656b0b1ea06d0ad83fa5e3c90b41690d326979f03",
+      "sha256": "3510a97b57cdfcd9585b9cf30213e6807e2553314769e22a7a5c91d8e3bc8bec",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -639,7 +639,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/bootstrap-database-lifetime.test.mjs",
       "testCaseId": "SEC-02 SQLite connection lifetime blocks bootstrap retirement until clean close",
-      "testFileSha256": "81fed980ea60c5a63f20151db7e34dead77badb6c8ceae55215efaf814080a2a"
+      "testFileSha256": "6a65cb7488128840e3afb7aa0ba3f4ba941021a7441e0ea9448375fee9e38297"
     },
     {
       "id": "daemon-lifetime",
@@ -3274,8 +3274,8 @@
       "id": "sink-8ecfb8f883d2ef88a920bb61",
       "occurrence": 1,
       "sourcePath": "src/db.ts",
-      "fileSha256": "bf9294221a9ba639e6d269f8337f11f70d293af1b51edaefc051207d5cdc6e13",
-      "line": 847,
+      "fileSha256": "06df2e8ba60f159b2b57b3a7b23c7c62731c134d569267c36bc52cdf9dd0248a",
+      "line": 906,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "validateDatabaseRestoreCandidate",
@@ -3307,8 +3307,8 @@
       "id": "sink-8de00407646059c0723b3b01",
       "occurrence": 1,
       "sourcePath": "src/db.ts",
-      "fileSha256": "bf9294221a9ba639e6d269f8337f11f70d293af1b51edaefc051207d5cdc6e13",
-      "line": 858,
+      "fileSha256": "06df2e8ba60f159b2b57b3a7b23c7c62731c134d569267c36bc52cdf9dd0248a",
+      "line": 917,
       "column": 35,
       "nodeKind": "CallExpression",
       "container": "createConsistentDatabaseSnapshot",
@@ -5356,8 +5356,8 @@
       "id": "sink-a64279e39d868e3951568483",
       "occurrence": 1,
       "sourcePath": "src/tools/phase1-tools.ts",
-      "fileSha256": "3b448e5e844911243cd25050f30d0f217be436a6291df6ef9db7dd4ae2006db6",
-      "line": 96,
+      "fileSha256": "578145c99073dde95d9ba380a514699651bc571a1a9ddbb332aa71cd9ae297b2",
+      "line": 147,
       "column": 36,
       "nodeKind": "CallExpression",
       "container": "mascotNotifyExec",
@@ -5509,5 +5509,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "a377e6d76951f7321f6b9c300d1d7de8f86bcba5b58cb35280ca78eefe7b3dad"
+  "canonicalPayloadSha256": "2bc21f7b1b26542588ff2b130babe3d040b1339eaed52b38621d64dc74edfde4"
 }

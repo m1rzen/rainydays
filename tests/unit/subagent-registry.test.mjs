@@ -67,14 +67,14 @@ function parentInvocation(sessionId, options = {}) {
     auditContext: null,
     deriveChild: () => assert.fail("attached child derivation is unexpected"),
     finishChild: () => assert.fail("attached child finish is unexpected"),
-    deriveDetachedChild: (_request, runId) => {
+    deriveDetachedChild: (request, runId) => {
       const child = Object.freeze({
         ...context(sessionId, `child-${sequence += 1}`),
         contextId: `child-${sequence}`,
         executionDomainId: `child-domain-${sequence}`,
         runId,
         principal: "subagent",
-        allowedTools: Object.freeze([]),
+        allowedTools: Object.freeze([...(request.tools ?? [])]),
       });
       derived.push(child);
       return child;
@@ -90,7 +90,7 @@ function parentInvocation(sessionId, options = {}) {
       if (options.networkFailure) throw new Error("synthetic network construction failure");
       return { fetch: async () => new Response("unused") };
     },
-    getUnattendedChildToolNames: () => [],
+    getUnattendedChildToolNames: () => options.toolNames ?? [],
     listCurrentToolDefinitions: () => [],
     getToolDefinitions: () => [],
     executeTool: async () => "unused",
@@ -145,6 +145,35 @@ test("RT-08 spawn returns immediately and post steers the next child checkpoint 
   assert(seen[1].some(message => message.content.includes("use corrected direction")));
   assert.equal(registry.peek(spawned.taskId, "full").events.some(event => event.type === "sideband"), true);
   assert.equal(parent.finished.length, 1);
+  await registry.shutdown();
+});
+
+test("RT-11 specialized child tool allowlists enforce host-side capability attenuation", async () => {
+  const registry = new SubagentRegistry("session-muse");
+  const parent = parentInvocation("session-muse", { toolNames: ["read", "fetch_url", "memo_add", "task_create"] });
+  const childPersona = Object.freeze({ ...persona("muse"), tools: Object.freeze(["read", "fetch_url", "memo_add", "task_create"]) });
+  const spawned = await registry.spawn({
+    description: "muse reflection",
+    prompt: "review",
+    persona: childPersona,
+    llm: { chat: async () => ({ role: "assistant", content: "done" }) },
+    parentContext: parent.context,
+    parentInvocation: parent.invocation,
+    toolAllowlist: ["read", "fetch_url"],
+  });
+  assert.equal((await registry.wait(spawned.taskId)).status, "completed");
+  assert.deepEqual(parent.derived[0].allowedTools, ["read", "fetch_url"]);
+  assert.equal(parent.derived[0].allowedTools.includes("memo_add"), false);
+  assert.equal(parent.derived[0].allowedTools.includes("task_create"), false);
+  await assert.rejects(() => registry.spawn({
+    description: "invalid allowlist",
+    prompt: "review",
+    persona: childPersona,
+    llm: { chat: async () => ({ role: "assistant", content: "done" }) },
+    parentContext: parent.context,
+    parentInvocation: parent.invocation,
+    toolAllowlist: ["read", "read"],
+  }), /duplicates/u);
   await registry.shutdown();
 });
 

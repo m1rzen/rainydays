@@ -8,12 +8,12 @@
   "runtimeEntries": [
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "bf9294221a9ba639e6d269f8337f11f70d293af1b51edaefc051207d5cdc6e13",
+      "sha256": "06df2e8ba60f159b2b57b3a7b23c7c62731c134d569267c36bc52cdf9dd0248a",
       "owner": "DATA-02"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "8270621fcfcc5727e792ca80dd14078220a2cc23e5200899f40e55d6a5ba49f5",
+      "sha256": "8dea8d339a7acec790ea1b6315dc06eb10166d7be5f6d4868be362071cafbebc",
       "owner": "DATA-02"
     },
     {
@@ -28,12 +28,12 @@
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "98c608618faa21f7016f2ce656b0b1ea06d0ad83fa5e3c90b41690d326979f03",
+      "sha256": "3510a97b57cdfcd9585b9cf30213e6807e2553314769e22a7a5c91d8e3bc8bec",
       "owner": "DATA-02"
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "5971f753ad95a5e5440de331e78ec964254d43a40cfdd6eef56edf3486a09410",
+      "sha256": "14e012577520ab0ddab98200dd7f87da2cbac0df19c137572a0d0ff9106167f6",
       "owner": "DATA-02"
     },
     {
@@ -48,27 +48,27 @@
     },
     {
       "exactCasePath": "scripts/generate-build-info.mjs",
-      "sha256": "2d100bccdbae3b19d74e103a87a352468f47106bbf5df7346e97d79a7de7580c",
+      "sha256": "9d8a423230d0004a2b3e6ab6484c033ce7c3bb592d8100f31eb34f3faa9a865c",
       "owner": "DATA-02"
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "9c9b931b20a509223cbd9b97e48646124cfefaf6d3597bcef2839343d304157e",
+      "sha256": "d3254a46a4e5db4bc4a8b57d65baf35e5bde1c2ff58b207cea99895dc7403baa",
       "owner": "DATA-02"
     },
     {
       "exactCasePath": "scripts/test-version-model.mjs",
-      "sha256": "6f702d2b0d03a85ddca71077911f12fffb987c0013a27c3c6cc0de3fd633885a",
+      "sha256": "bf3764814e8b44b5dcbccb2392bee717e192457853d2810c408038ed050c735f",
       "owner": "DATA-02"
     },
     {
       "exactCasePath": "scripts/version-test-child.mjs",
-      "sha256": "3051708c0f452b3b0c1009fa836fefbb06a04de15698fd1558e395c70732e565",
+      "sha256": "46114fe2d8ee5d607d33804e1832efd83c99d59be0a15b907ac4ce82b251eb54",
       "owner": "DATA-02"
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "33dd0da9877a2e6b6a023be3fb9a03bd905713266a08a6b64d8cc45e84f0c382",
+      "sha256": "b280174170d693dc09b2c44e055a6e6527bbae36b06507f31ba26066a7aa8391",
       "owner": "DATA-02"
     },
     {
@@ -88,12 +88,12 @@
     },
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "f938c73aaa736e63d7bc54c38ef67a997747300db5db3fcaec4103dfabb717e7",
+      "sha256": "7b14659f933c87f196590e8240f43db631885a5176bc032ce353e975b8ae2614",
       "owner": "DATA-02"
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "c404074c1b5631eebc1c6d62a8f846c9d92f56c5b13f9674033bac145ff6b723",
+      "sha256": "e7721346986cdf29758a0263b63000f875d8f1bda9e42f6a1339f9417c03876f",
       "owner": "DATA-02"
     },
     {
@@ -108,7 +108,7 @@
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "5b35b3fbd3e59c980dab5366cdc4935e4fba7eca7845576595fc0d2181aeefba",
+      "sha256": "343bf591804e41e8f2e397e4a0f6643a07ed780b72627d2d5cd2e0e80cc334b8",
       "owner": "DATA-02"
     }
   ],
@@ -129,11 +129,11 @@
     },
     {
       "exactCasePath": "tests/integration/version-model.test.mjs",
-      "sha256": "8edc73e24dab1a1b95a22ad62e4b069483a293da52045b13e8b71f0709e9daf0",
+      "sha256": "889f07a74e521bae20b331757c3630794fbf3ee78a318c6fce126a3997911763",
       "kind": "test",
       "layer": "integration",
       "owner": "DATA-02"
     }
   ],
-  "canonicalPayloadSha256": "37a5205b9cf908d37173983e33afb94c5408e4345dddb9d13b0ecde57644e775"
+  "canonicalPayloadSha256": "6f4624f47cbf520c56a158ef6f7dd0eb0435991686fe86d4770c0e3f5372324e"
 }

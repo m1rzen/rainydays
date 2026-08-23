@@ -45,6 +45,8 @@ export interface StoredEvent extends EventEnvelope {
 export interface EventStore {
   insertEvent(event: EventEnvelope): { inserted: boolean; existingId: string | null };
   dueEvents(now: number, limit: number): StoredEvent[];
+  /** Production stores atomically recheck pending status and increment attempts before delivery. */
+  claimPendingEvent?(id: string, now: number): boolean;
   recordAttempt(id: string, now: number): void;
   settleEvent(id: string, status: "delivered" | "dead" | "expired", lastError: string | null, now: number): void;
   scheduleRetry(id: string, nextAttemptAt: number, lastError: string | null): void;
@@ -291,8 +293,12 @@ export class EventBus {
         counts.expired += 1;
         continue;
       }
+      if (store.claimPendingEvent) {
+        if (!store.claimPendingEvent(event.id, now)) continue;
+      } else {
+        store.recordAttempt(event.id, now);
+      }
       counts.attempted += 1;
-      store.recordAttempt(event.id, now);
       if (event.targetSessionId === null) {
         // 仅持久化的 listener 级事件：入队即视为完成投递
         store.settleEvent(event.id, "delivered", null, now);

@@ -16,6 +16,7 @@ const MAX_TIMEOUT_MS = 2_147_483_647;
 const PUBLISH_RETRY_MS = 1_000;
 const DURATION_PATTERN = /^(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/u;
 const DURATION_FACTORS = [24 * 60 * 60 * 1_000, 60 * 60 * 1_000, 60 * 1_000, 1_000] as const;
+const MONTHLY_INTERVAL_PATTERN = /^calendar:monthly:(\d{1,2})$/u;
 
 /** 复合 duration：单位必须按 d→h→m→s 降序且每种至多一次。 */
 export function parseCronDurationMs(value: string): number {
@@ -33,6 +34,47 @@ export function parseCronDurationMs(value: string): number {
   }
   if (total < 1_000) throw new Error(`时间必须至少为 1s: ${value}`);
   return total;
+}
+
+/** Memo 内部月历间隔；锚定初始 UTC 日，月底按当月最后一天收敛但下月恢复锚点。 */
+export function createMonthlyCronInterval(scheduledAt: string): string {
+  const timestamp = Date.parse(scheduledAt);
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString() !== scheduledAt) throw new Error("月度提醒时间无效");
+  return `calendar:monthly:${new Date(timestamp).getUTCDate()}`;
+}
+
+function parseCronInterval(value: string): Readonly<{ kind: "fixed"; milliseconds: number } | { kind: "monthly"; anchorDay: number }> {
+  const monthly = MONTHLY_INTERVAL_PATTERN.exec(value);
+  if (!monthly) return Object.freeze({ kind: "fixed", milliseconds: parseCronDurationMs(value) });
+  const anchorDay = Number(monthly[1]);
+  if (!Number.isInteger(anchorDay) || anchorDay < 1 || anchorDay > 31) throw new Error(`月度 Cron 锚点无效: ${value}`);
+  return Object.freeze({ kind: "monthly", anchorDay });
+}
+
+/** 从已触发的月历 slot 推进到严格晚于 now 的最小 UTC 月 slot。 */
+export function nextMonthlyFireAt(scheduledAt: number, anchorDay: number, now: number): number {
+  if (![scheduledAt, now].every(Number.isFinite) || !Number.isInteger(anchorDay) || anchorDay < 1 || anchorDay > 31) {
+    throw new Error("Cron 月历参数无效");
+  }
+  const scheduled = new Date(scheduledAt);
+  const current = new Date(now);
+  let months = Math.max(1,
+    (current.getUTCFullYear() - scheduled.getUTCFullYear()) * 12
+      + current.getUTCMonth() - scheduled.getUTCMonth(),
+  );
+  const candidate = (offset: number): number => {
+    const first = new Date(Date.UTC(
+      scheduled.getUTCFullYear(), scheduled.getUTCMonth() + offset, 1,
+      scheduled.getUTCHours(), scheduled.getUTCMinutes(), scheduled.getUTCSeconds(), scheduled.getUTCMilliseconds(),
+    ));
+    const finalDay = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+    first.setUTCDate(Math.min(anchorDay, finalDay));
+    return first.getTime();
+  };
+  let next = candidate(months);
+  if (next <= now) next = candidate(++months);
+  if (!Number.isSafeInteger(next)) throw new Error("Cron 下一月历触发时间溢出");
+  return next;
 }
 
 /** 从已触发的固定频率 slot 推进到严格晚于 now 的最小 slot。 */
@@ -73,7 +115,7 @@ export class CronManager {
       return;
     }
     if (job.interval) {
-      try { parseCronDurationMs(job.interval); }
+      try { parseCronInterval(job.interval); }
       catch {
         deactivateCronJob(job.id);
         return;
@@ -131,8 +173,10 @@ export class CronManager {
       this.timers.delete(job.id);
       return;
     }
-    const intervalMs = parseCronDurationMs(current.interval);
-    const nextAt = nextFixedRateFireAt(scheduledAt, intervalMs, Date.now());
+    const interval = parseCronInterval(current.interval);
+    const nextAt = interval.kind === "fixed"
+      ? nextFixedRateFireAt(scheduledAt, interval.milliseconds, Date.now())
+      : nextMonthlyFireAt(scheduledAt, interval.anchorDay, Date.now());
     const nextIso = new Date(nextAt).toISOString();
     advanceCronJob(job.id, firedAt, nextIso);
     this.scheduleJob({ ...current, fire_at: nextIso, last_fired: firedAt });

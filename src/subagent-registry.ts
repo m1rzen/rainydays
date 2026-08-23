@@ -62,6 +62,8 @@ export interface SpawnSubagentRequest {
   readonly parentInvocation: ToolInvocationServices;
   readonly inheritCanvas?: boolean;
   readonly canvasSnapshot?: readonly Message[];
+  /** Optional host-enforced attenuation for specialized children such as Muse. */
+  readonly toolAllowlist?: readonly string[];
 }
 
 interface SubagentRecord {
@@ -210,7 +212,19 @@ export class SubagentRegistry {
     while (this.#records.has(taskId));
     const runId = `subagent:${taskId}`;
     const parentTools = new Set(request.parentInvocation.getUnattendedChildToolNames());
-    const tools = request.persona.tools.filter(name => parentTools.has(name) && !FORBIDDEN_CHILD_TOOLS.has(name));
+    let requestedTools: ReadonlySet<string> | null = null;
+    if (request.toolAllowlist !== undefined) {
+      if (!Array.isArray(request.toolAllowlist) || request.toolAllowlist.some(name => typeof name !== "string" || name.length === 0)) {
+        throw new SubagentRegistryError("SUBAGENT_INVALID", "Subagent tool allowlist is invalid");
+      }
+      requestedTools = new Set(request.toolAllowlist);
+      if (requestedTools.size !== request.toolAllowlist.length) {
+        throw new SubagentRegistryError("SUBAGENT_INVALID", "Subagent tool allowlist contains duplicates");
+      }
+    }
+    const tools = request.persona.tools.filter(name => parentTools.has(name)
+      && (requestedTools === null || requestedTools.has(name))
+      && !FORBIDDEN_CHILD_TOOLS.has(name));
     const context = request.parentInvocation.deriveDetachedChild({
       principal: "subagent",
       tools,

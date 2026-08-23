@@ -82,7 +82,7 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "8edc73e24dab1a1b95a22ad62e4b069483a293da52045b13e8b71f0709e9daf0",
+          "sha256": "889f07a74e521bae20b331757c3630794fbf3ee78a318c6fce126a3997911763",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -350,7 +350,7 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "8edc73e24dab1a1b95a22ad62e4b069483a293da52045b13e8b71f0709e9daf0",
+          "sha256": "889f07a74e521bae20b331757c3630794fbf3ee78a318c6fce126a3997911763",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -416,7 +416,7 @@
         },
         {
           "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-          "sha256": "81fed980ea60c5a63f20151db7e34dead77badb6c8ceae55215efaf814080a2a",
+          "sha256": "6a65cb7488128840e3afb7aa0ba3f4ba941021a7441e0ea9448375fee9e38297",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1042,7 +1042,7 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "8edc73e24dab1a1b95a22ad62e4b069483a293da52045b13e8b71f0709e9daf0",
+          "sha256": "889f07a74e521bae20b331757c3630794fbf3ee78a318c6fce126a3997911763",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -1108,7 +1108,7 @@
         },
         {
           "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-          "sha256": "81fed980ea60c5a63f20151db7e34dead77badb6c8ceae55215efaf814080a2a",
+          "sha256": "6a65cb7488128840e3afb7aa0ba3f4ba941021a7441e0ea9448375fee9e38297",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1691,7 +1691,7 @@
   "coverageScope": {
     "source": {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "33dd0da9877a2e6b6a023be3fb9a03bd905713266a08a6b64d8cc45e84f0c382"
+      "sha256": "b280174170d693dc09b2c44e055a6e6527bbae36b06507f31ba26066a7aa8391"
     },
     "overallFiles": [
       "dist/agent.js",
@@ -7071,7 +7071,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "33dd0da9877a2e6b6a023be3fb9a03bd905713266a08a6b64d8cc45e84f0c382"
+      "sha256": "b280174170d693dc09b2c44e055a6e6527bbae36b06507f31ba26066a7aa8391"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
@@ -7119,7 +7119,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "9c9b931b20a509223cbd9b97e48646124cfefaf6d3597bcef2839343d304157e"
+      "sha256": "d3254a46a4e5db4bc4a8b57d65baf35e5bde1c2ff58b207cea99895dc7403baa"
     },
     {
       "exactCasePath": "scripts/sec02-sink-scanner.mjs",
@@ -7135,7 +7135,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "0206b6fc89cd2bef06334d43710972879cb2df4dec1a2674cf78e4e48906b1e1"
+      "sha256": "f43aed078a6f851c20b939966e2844943d7acdfd41605c40abf23b0ffa931b5c"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7191,7 +7191,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "5971f753ad95a5e5440de331e78ec964254d43a40cfdd6eef56edf3486a09410"
+      "sha256": "14e012577520ab0ddab98200dd7f87da2cbac0df19c137572a0d0ff9106167f6"
     },
     {
       "exactCasePath": "package-lock.json",
@@ -7199,5 +7199,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "62a932e6436dc6a7ed302542a98d972ef27ca90812fd3d431f65fee748b497f6"
+  "canonicalPayloadSha256": "2d3918f011b8ab20babee2913c56113af5db1d8864e26283bee7183d83e40d20"
 }

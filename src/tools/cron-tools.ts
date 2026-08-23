@@ -3,7 +3,7 @@
 // ===========================================
 
 import type { ToolDefinition, ToolExecutor } from "../types.js";
-import { insertCronJob, listCronJobs, deactivateCronJob, type CronJobRow } from "../db.js";
+import { insertCronJob, listCronJobs, cancelCronJob, type CronJobRow } from "../db.js";
 import { parseCronDurationMs } from "../cron.js";
 import { discoverSessions, type SessionInfo } from "../link.js";
 import { truncateCodePoints } from "../tool-pipeline.js";
@@ -178,7 +178,7 @@ export function createCronCancelExec(onCancel: (id: number) => void): ToolExecut
 
     if (id) {
       if (!owned.some(job => job.id === id)) return `定时任务 ${id} 不存在`;
-      deactivateCronJob(id);
+      cancelCronJob(id);
       onCancel(id);
       return `✅ 定时任务 ${id} 已取消`;
     }
@@ -186,7 +186,7 @@ export function createCronCancelExec(onCancel: (id: number) => void): ToolExecut
     if (tag) {
       const matching = owned.filter(job => job.tag === tag);
       for (const job of matching) {
-        deactivateCronJob(job.id);
+        cancelCronJob(job.id);
         onCancel(job.id);
       }
       return `✅ 已取消 ${matching.length} 个标签为 "${tag}" 的定时任务`;

@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-11",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/rt-11.json",
+    "sha256": "5f690d5e4a73eab383fe72110f46d2c083d3dd1371b2085f227f7d64cc5d7c06"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/cron.js",
+      "sha256": "ebb124c04a188ad49bcf9555e4abeba2061575b4f577e7b3dafac29024b97fd1",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "dist/db.js",
+      "sha256": "7b14659f933c87f196590e8240f43db631885a5176bc032ce353e975b8ae2614",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "dist/event-bus.js",
+      "sha256": "3386dcf72f7342a3dff5686347cbaef549bb89340f0d33abd982bb7433294667",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "e7721346986cdf29758a0263b63000f875d8f1bda9e42f6a1339f9417c03876f",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "dist/subagent-registry.js",
+      "sha256": "5e5de469772e1d3b9b4ecbed5301f18e5fa6b051b542530b3b0ee97e485bc42e",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "dist/tools/cron-tools.js",
+      "sha256": "5cabaa500cf371bd82b1728094b16ca68923fb8a275001ca0ff3132ddc3ed669",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "dist/tools/phase1-tools.js",
+      "sha256": "2a09fe110c6914749b4652d00d8403836b7ac3993882694a2b786a4de7088348",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "scripts/generate-build-info.mjs",
+      "sha256": "9d8a423230d0004a2b3e6ab6484c033ce7c3bb592d8100f31eb34f3faa9a865c",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "scripts/prepare-electron-app.mjs",
+      "sha256": "d3254a46a4e5db4bc4a8b57d65baf35e5bde1c2ff58b207cea99895dc7403baa",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "scripts/test-version-model.mjs",
+      "sha256": "bf3764814e8b44b5dcbccb2392bee717e192457853d2810c408038ed050c735f",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "scripts/version-test-child.mjs",
+      "sha256": "46114fe2d8ee5d607d33804e1832efd83c99d59be0a15b907ac4ce82b251eb54",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "src/cron.ts",
+      "sha256": "61d8f6d6732e7c6a4c31b10044193ebedc52b68404dd5b2d55bf869fcd42fd90",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "06df2e8ba60f159b2b57b3a7b23c7c62731c134d569267c36bc52cdf9dd0248a",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "src/event-bus.ts",
+      "sha256": "840a044878a0324e05dc9ceaef14aad2da4b61eb956a9c6fe29f4a6f5d08d9f5",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "8dea8d339a7acec790ea1b6315dc06eb10166d7be5f6d4868be362071cafbebc",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "src/subagent-registry.ts",
+      "sha256": "cb9426bfdab53c58a8e27d275dba15fa9de0070048cdd4c1e990044eebbbecc2",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "src/tools/cron-tools.ts",
+      "sha256": "24bd742bd88a5164ab1083e07cc7eefbf9ae43289731dab59f97daa94b48c0bd",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "src/tools/phase1-tools.ts",
+      "sha256": "578145c99073dde95d9ba380a514699651bc571a1a9ddbb332aa71cd9ae297b2",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "src/version.ts",
+      "sha256": "3510a97b57cdfcd9585b9cf30213e6807e2553314769e22a7a5c91d8e3bc8bec",
+      "owner": "RT-11"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/rt11-governance.test.mjs",
+      "sha256": "fc1b7a4ab11bf2dd6301bf357c5ec6ea9e271a8cdfedd2e91e4897e01f0bdf24",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "tests/unit/cron.test.mjs",
+      "sha256": "a9dfeefcd3bdb46c620bebef07b25b7312a2c654a7970b098a5c45bd78587003",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "tests/unit/event-bus.test.mjs",
+      "sha256": "26d331cef5e230921d42bd8c11e127b9005efcdf9a82a16032a4d13ce2584938",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "tests/unit/subagent-registry.test.mjs",
+      "sha256": "58d4a86286a265617c9bbe03215e12331335c9f46bd25eb5ce005210faf7b9d4",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+      "sha256": "9277efc6821133a78c11abf8bbebb30a7aff890e6e01db4ece4cf869385821e7",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs",
+      "sha256": "762d3ea4709434fd56288af076bdd81fae4d007a23da95c64b2793f7c05d23ca",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "tests/integration/evt02-cron-flow.test.mjs",
+      "sha256": "711c416ed1efecec13ce3c4430b44a1b40458c150185ea5520b2f297eac3b4f6",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs",
+      "sha256": "492463c92fc8b91dcbd0a3a882117c0ce1ef065ec913ef4be97c03100af38afb",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-11"
+    },
+    {
+      "exactCasePath": "tests/integration/version-model.test.mjs",
+      "sha256": "889f07a74e521bae20b331757c3630794fbf3ee78a318c6fce126a3997911763",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-11"
+    }
+  ],
+  "canonicalPayloadSha256": "31aca61f7aee0b47fe6d38717c5f5d4c2e58935cbbcbb55cfb850e1860bf8a01"
+}

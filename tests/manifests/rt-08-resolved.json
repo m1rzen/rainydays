@@ -13,7 +13,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "c404074c1b5631eebc1c6d62a8f846c9d92f56c5b13f9674033bac145ff6b723",
+      "sha256": "e7721346986cdf29758a0263b63000f875d8f1bda9e42f6a1339f9417c03876f",
       "owner": "RT-08"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "dist/subagent-registry.js",
-      "sha256": "4849d99f9a8cf5d50d72a3f5db8e0b18a744bc60416b3589eab5bdafa1a899e1",
+      "sha256": "5e5de469772e1d3b9b4ecbed5301f18e5fa6b051b542530b3b0ee97e485bc42e",
       "owner": "RT-08"
     },
     {
@@ -83,7 +83,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "8270621fcfcc5727e792ca80dd14078220a2cc23e5200899f40e55d6a5ba49f5",
+      "sha256": "8dea8d339a7acec790ea1b6315dc06eb10166d7be5f6d4868be362071cafbebc",
       "owner": "RT-08"
     },
     {
@@ -93,7 +93,7 @@
     },
     {
       "exactCasePath": "src/subagent-registry.ts",
-      "sha256": "1b5b93092bcb1ddfb1e6401744253b6e9bd04d880000d01c37514c1a84c9c6d7",
+      "sha256": "cb9426bfdab53c58a8e27d275dba15fa9de0070048cdd4c1e990044eebbbecc2",
       "owner": "RT-08"
     },
     {
@@ -132,7 +132,7 @@
     },
     {
       "exactCasePath": "tests/unit/subagent-registry.test.mjs",
-      "sha256": "675606059bac53a56a2a3780d5ce916b42750cbc5e497e3a3a13fa85f35ce94d",
+      "sha256": "58d4a86286a265617c9bbe03215e12331335c9f46bd25eb5ce005210faf7b9d4",
       "kind": "test",
       "layer": "unit",
       "owner": "RT-08"
@@ -174,11 +174,11 @@
     },
     {
       "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
-      "sha256": "cf1110246136d19d7ea721fc4a3d4898d10c44f1f89636517c2f167a57f8a483",
+      "sha256": "9277efc6821133a78c11abf8bbebb30a7aff890e6e01db4ece4cf869385821e7",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-08"
     }
   ],
-  "canonicalPayloadSha256": "02ab4a39f1f140ea769928e98954c731f7050c3b696f5064d1115655cb21de1a"
+  "canonicalPayloadSha256": "acbf5a191bd96d534d58a03206969a831ff01767f18dc6b7cd60a2c311c5b7f2"
 }

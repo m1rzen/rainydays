@@ -40,7 +40,7 @@ test("RT-07 runtime configuration exposes only the five-tool DAG surface and blo
   assert.match(planning, /Task DAG 拆解（task_create \/ task_update \/ task_list）/u);
 });
 
-test("RT-07 Schema 2 migration preserves legacy tasks in the current Schema 6 DAG", async () => {
+test("RT-07 Schema 2 migration preserves legacy tasks in the current Schema 7 DAG", async () => {
   const fixture = await makeTempDir("mini-lux-rt07-schema-two-");
   await mkdir(path.join(fixture, "data"), { recursive: true });
   const helper = path.join(projectRoot, "scripts", "version-test-child.mjs");
@@ -61,6 +61,11 @@ test("RT-07 Schema 2 migration preserves legacy tasks in the current Schema 6 DA
         DROP TABLE poll_batches;
         DROP TABLE poll_subscriptions;
         DROP TABLE events;
+        DROP INDEX idx_memos_cron_job;
+        DROP INDEX idx_memos_session_status;
+        ALTER TABLE memos DROP COLUMN last_reminded_at;
+        ALTER TABLE memos DROP COLUMN cron_job_id;
+        ALTER TABLE memos DROP COLUMN session_id;
         DROP TABLE cron_jobs;
         CREATE TABLE cron_jobs (
           id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -147,7 +152,7 @@ test("RT-07 Schema 2 migration preserves legacy tasks in the current Schema 6 DA
       timeoutMs: 20_000,
     });
     assert.equal(migrated.code, 0, migrated.stderr);
-    assert.equal(parseLastJson(migrated.stdout).userVersion, 6);
+    assert.equal(parseLastJson(migrated.stdout).userVersion, 7);
 
     database = new Database(databasePath, { readonly: true, fileMustExist: true });
     try {

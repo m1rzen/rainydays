@@ -69,7 +69,7 @@ async function databaseLifecycleWrite() {
   const tools = await import("../dist/tools/phase1-tools.js");
   const now = new Date().toISOString();
   db.insertSession({ id: "restart-session", persona_name: "general", title: "Restart", created_at: now, updated_at: now });
-  await tools.memoAddExec({ content: "restart-memo" });
+  await tools.memoAddExec({ content: "restart-memo" }, { _SESSION_ID: "restart-session" });
   console.log(JSON.stringify({
     sessions: db.db.prepare("SELECT COUNT(*) AS count FROM sessions").get().count,
     memos: db.db.prepare("SELECT COUNT(*) AS count FROM memos").get().count,
