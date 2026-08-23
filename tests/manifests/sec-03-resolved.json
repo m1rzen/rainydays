@@ -466,7 +466,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "adb8c6d2932d7a0fed24816dd9e98b5ceb1a52988ad482a7df9c93748f7a7ea8",
+      "sha256": "6dd84f25068a405bca8e99e3afc3e2e3114565345818ed97f35dac3a291a1232",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -506,7 +506,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "8a8e36e3e418535f7c757b04690bda8fc704aff4195e67702119ec970c2aecff",
+      "sha256": "c1822474510de16abdc12ae9353479d9314936ae4cb3a8ecb22a130e9b0c5c11",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -1138,7 +1138,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "037364e061a58c7a39aa2e175b8d4e4806f24e42ad56ff8e20af9117e42c41b5",
+      "sha256": "ce78eb6217c6180dc24a2c20f323f34b23a20b91b1fd5e105458581b7e850d78",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -1262,7 +1262,7 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "037364e061a58c7a39aa2e175b8d4e4806f24e42ad56ff8e20af9117e42c41b5",
+      "sha256": "ce78eb6217c6180dc24a2c20f323f34b23a20b91b1fd5e105458581b7e850d78",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-03",
@@ -2426,7 +2426,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "adb8c6d2932d7a0fed24816dd9e98b5ceb1a52988ad482a7df9c93748f7a7ea8",
+      "sha256": "6dd84f25068a405bca8e99e3afc3e2e3114565345818ed97f35dac3a291a1232",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2466,7 +2466,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "8a8e36e3e418535f7c757b04690bda8fc704aff4195e67702119ec970c2aecff",
+      "sha256": "c1822474510de16abdc12ae9353479d9314936ae4cb3a8ecb22a130e9b0c5c11",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -3793,5 +3793,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "eee047ac1a6d1c5792d72c06ae3953376e4fe0bf0cdb21ea8d44d957ed1216fe"
+  "canonicalPayloadSha256": "e55d6187d70fdf1de62e2d306f9ff45437ce49ff14a6498aa68d1e665e28b897"
 }

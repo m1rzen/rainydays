@@ -5,7 +5,7 @@
   "scannerSha256": "d81dfe30bf6f7df1ce3221861923b011c495fb6be0af1efb026f8203f69d8cb1",
   "crosscheckSha256": "a2c62c23669d2924472d4c80761122a5c4446d12e6a27f8595221f55a0290093",
   "policySha256": "71ed4ee375bac800e28b5fe082874d34b1545408c42adaa202d03a9cd72e7b64",
-  "sourceSetSha256": "ba5b8928742726efc4be44a67c2ce7e4306b898ccca6f426ef4f92fe9c83544d",
+  "sourceSetSha256": "f260a0f9794550308f8c17f08caf0b3aeb829992d7cfa8f1997fba73abb13d7f",
   "files": [
     {
       "sourcePath": "electron/ipc-contract.cjs",
@@ -1473,8 +1473,8 @@
     },
     {
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "bytes": 32698,
-      "sha256": "037364e061a58c7a39aa2e175b8d4e4806f24e42ad56ff8e20af9117e42c41b5",
+      "bytes": 33567,
+      "sha256": "ce78eb6217c6180dc24a2c20f323f34b23a20b91b1fd5e105458581b7e850d78",
       "executionClass": "build-test"
     },
     {
@@ -8494,7 +8494,7 @@
       "id": "exec-5ed86e440d5e948c6dacdc9e",
       "occurrence": 1,
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "line": 73,
+      "line": 101,
       "column": 15,
       "nodeKind": "PropertyAccessExpression",
       "container": "launchInstalled",
@@ -8508,10 +8508,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-ec9d8f63c4174b7b93d31605",
+      "id": "exec-2ea31df3f20f1fee443b2616",
       "occurrence": 1,
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "line": 382,
+      "line": 411,
       "column": 27,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -8825,5 +8825,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "f28589333476ce0407c9b2dd69a4e7c2c677004b94616043ed307c001cbaf454"
+  "canonicalPayloadSha256": "7231ade37140f5890eb3e191de722595ae787071fe63ff248770030e386623cc"
 }

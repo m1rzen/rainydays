@@ -68,6 +68,34 @@ function passedPathPolicyLaunch(launchIndex) {
   };
 }
 
+async function seedInstalledConfig(userData) {
+  const workspaceRoot = path.join(userData, "workspace");
+  const departmentDataRoot = path.join(userData, "department");
+  const outputDir = path.join(userData, "output");
+  await Promise.all([
+    mkdir(workspaceRoot, { recursive: true }),
+    mkdir(departmentDataRoot, { recursive: true }),
+    mkdir(outputDir, { recursive: true }),
+  ]);
+  await writeFile(path.join(userData, "config.json"), JSON.stringify({
+    defaultProfile: "default",
+    profiles: {
+      default: {
+        model: "packaged-smoke-model",
+        apiKey: "",
+        baseURL: "https://provider.invalid/v1",
+        providerType: "openai-compatible",
+      },
+    },
+    settings: {
+      defaultPersona: "general",
+      workspaceRoot,
+      departmentDataRoot,
+      outputDir,
+    },
+  }, null, 2));
+}
+
 function launchInstalled(executable, userData, httpPort, cdpPort) {
   return launchTracked(executable, [`--user-data-dir=${userData}`, `--remote-debugging-port=${cdpPort}`, "--disable-gpu"], {
     env: { ...process.env, PORT: String(httpPort), ELECTRON_ENABLE_LOGGING: "1" },
@@ -299,6 +327,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
   const missingRegistryRoot = `Software\\RainyDays-GOV03-Missing-${hashText(fixture).slice(0, 32)}`;
   await mkdir(executionDir, { recursive: true });
   await mkdir(executionTemp, { recursive: true });
+  await seedInstalledConfig(userData);
   const details = {
     phase: "preflight-process-baseline",
     artifactExecution: {
