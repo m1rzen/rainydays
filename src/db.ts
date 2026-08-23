@@ -4,6 +4,7 @@
 // ===========================================
 
 import fs from "node:fs";
+import { randomUUID } from "node:crypto";
 import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 import { createInMemoryBootstrapDatabase, openBootstrapDatabase, validateDatabaseSnapshotFile, writeConsistentDatabaseSnapshot, type DatabaseSnapshotValidation } from "./bootstrap-database.js";
 import { verifySecurityAuditChain, verifySecurityAuditCheckpoint, type SecurityAuditCheckpoint, type SecurityAuditEvent } from "./security-audit.js";
@@ -623,6 +624,90 @@ function assertSchemaV5(database: typeof db = db): void {
   if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 5 不兼容: 完整性检查失败");
 }
 
+const SCHEMA_V6_SQL = `
+    CREATE TABLE poll_subscriptions (
+      id               TEXT PRIMARY KEY NOT NULL CHECK (length(id) BETWEEN 3 AND 64 AND substr(id, 1, 2) = 'p_'),
+      session_id       TEXT NOT NULL,
+      source_pattern   TEXT NOT NULL CHECK (length(source_pattern) BETWEEN 1 AND 128),
+      tag_filters_json TEXT NOT NULL CHECK (json_valid(tag_filters_json) AND json_type(tag_filters_json) = 'object' AND length(tag_filters_json) <= 8192),
+      mode             TEXT NOT NULL CHECK (mode = 'wake'),
+      persistent       INTEGER NOT NULL CHECK (persistent IN (0, 1)),
+      debounce_ms      INTEGER NOT NULL CHECK (debounce_ms BETWEEN 0 AND 60000),
+      active           INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+      accepting        INTEGER NOT NULL DEFAULT 1 CHECK (accepting IN (0, 1)),
+      created_at       INTEGER NOT NULL CHECK (created_at >= 0),
+      FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+      UNIQUE (session_id, source_pattern, tag_filters_json, mode, persistent, debounce_ms)
+    );
+    CREATE INDEX idx_poll_subscriptions_session ON poll_subscriptions (session_id, active);
+
+    CREATE TABLE poll_batches (
+      id               TEXT PRIMARY KEY NOT NULL CHECK (length(id) BETWEEN 4 AND 64 AND substr(id, 1, 3) = 'pb_'),
+      subscription_id  TEXT NOT NULL,
+      created_at       INTEGER NOT NULL CHECK (created_at >= 0),
+      due_at           INTEGER NOT NULL CHECK (due_at >= 0),
+      status           TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'ready', 'publishing', 'delivered')),
+      attempts         INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+      next_attempt_at  INTEGER NOT NULL DEFAULT 0 CHECK (next_attempt_at >= 0),
+      last_error       TEXT,
+      settled_at       INTEGER CHECK (settled_at IS NULL OR settled_at >= 0),
+      FOREIGN KEY (subscription_id) REFERENCES poll_subscriptions(id) ON DELETE CASCADE,
+      UNIQUE (id, subscription_id)
+    );
+    CREATE INDEX idx_poll_batches_due ON poll_batches (status, due_at, next_attempt_at);
+
+    CREATE TABLE poll_batch_events (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      batch_id         TEXT NOT NULL,
+      subscription_id  TEXT NOT NULL,
+      source_event_id  TEXT NOT NULL CHECK (length(source_event_id) BETWEEN 1 AND 128),
+      source           TEXT NOT NULL CHECK (length(source) BETWEEN 1 AND 128),
+      tags_json        TEXT NOT NULL CHECK (json_valid(tags_json) AND json_type(tags_json) = 'object' AND length(tags_json) <= 8192),
+      payload_json     TEXT NOT NULL CHECK (json_valid(payload_json) AND length(payload_json) <= 65536),
+      created_at       INTEGER NOT NULL CHECK (created_at >= 0),
+      encoded_bytes    INTEGER NOT NULL CHECK (encoded_bytes BETWEEN 1 AND 65536),
+      FOREIGN KEY (batch_id, subscription_id) REFERENCES poll_batches(id, subscription_id) ON DELETE CASCADE,
+      UNIQUE (subscription_id, source, source_event_id)
+    );
+    CREATE INDEX idx_poll_batch_events_batch ON poll_batch_events (batch_id, id);
+  `;
+
+function assertSchemaV6(database: typeof db = db): void {
+  const reference = createInMemoryBootstrapDatabase();
+  try {
+    reference.pragma("foreign_keys = ON");
+    reference.exec(SCHEMA_V1_SQL);
+    reference.exec(SCHEMA_V2_SQL);
+    applySchemaV3(reference);
+    reference.exec(SCHEMA_V4_SQL);
+    reference.exec(SCHEMA_V5_SQL);
+    reference.exec(SCHEMA_V6_SQL);
+    const objectRows = (target: typeof db): Array<{ type: string; name: string; tbl_name: string; sql: string | null }> => target.prepare(
+      "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
+    ).all() as Array<{ type: string; name: string; tbl_name: string; sql: string | null }>;
+    const actual = objectRows(database);
+    const expected = objectRows(reference);
+    const signatures = (rows: typeof actual): string[] => rows.map(entry => `${entry.type}|${entry.name}|${entry.tbl_name}`);
+    if (JSON.stringify(signatures(actual)) !== JSON.stringify(signatures(expected))) {
+      throw new Error("数据库 Schema 6 不兼容: 存在未知或缺失的 Schema 对象");
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const found = actual[index];
+      const wanted = expected[index];
+      if ((found.sql === null) !== (wanted.sql === null)
+        || (found.sql !== null && wanted.sql !== null && normalizeSchemaSql(found.sql) !== normalizeSchemaSql(wanted.sql))) {
+        throw new Error(`数据库 Schema 6 不兼容: ${wanted.type} ${wanted.name} SQL 定义错误`);
+      }
+    }
+  } finally {
+    reference.close();
+  }
+  const foreignKeyViolations = database.prepare("PRAGMA foreign_key_check").all();
+  if (foreignKeyViolations.length > 0) throw new Error("数据库 Schema 6 不兼容: 存在外键完整性错误");
+  const integrity = database.prepare("PRAGMA integrity_check").all() as Array<{ integrity_check?: string }>;
+  if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 6 不兼容: 完整性检查失败");
+}
+
 interface DatabaseMigration {
   readonly from: number;
   readonly to: number;
@@ -675,6 +760,15 @@ const DATABASE_MIGRATIONS: readonly DatabaseMigration[] = Object.freeze([
       assertSchemaV5(database);
     },
   }),
+  Object.freeze({
+    from: 5,
+    to: 6,
+    apply: (database: typeof db): void => {
+      assertSchemaV5(database);
+      database.exec(SCHEMA_V6_SQL);
+      assertSchemaV6(database);
+    },
+  }),
 ]);
 
 function assertMigrationRegistry(): void {
@@ -715,7 +809,7 @@ function migrateDatabase(): void {
   if (version !== DATABASE_SCHEMA_VERSION) {
     throw new Error(`数据库 Schema 迁移未达到目标版本: 当前 ${version}，目标 ${DATABASE_SCHEMA_VERSION}`);
   }
-  assertSchemaV5(db);
+  assertSchemaV6(db);
 }
 
 try {
@@ -752,7 +846,7 @@ export function validateDatabaseRestoreCandidate(
   }
   const bytes = fs.readFileSync(databasePath);
   const candidate = createInMemoryBootstrapDatabase(bytes);
-  try { assertSchemaV5(candidate); }
+  try { assertSchemaV6(candidate); }
   finally { candidate.close(); }
   return validation;
 }
@@ -1462,6 +1556,279 @@ export function createEventStore(): import("./event-bus.js").EventStore {
         ORDER BY next_attempt_at, created_at LIMIT ?
       `).all(sessionId, limit) as EventRow[];
       return rows.map(mapEventRow);
+    },
+  };
+}
+
+// ===========================================
+// Poll subscriptions / durable debounce batches (EVT-03)
+// ===========================================
+
+interface PollSubscriptionRow {
+  id: string;
+  session_id: string;
+  source_pattern: string;
+  tag_filters_json: string;
+  mode: string;
+  persistent: number;
+  debounce_ms: number;
+  active: number;
+  created_at: number;
+}
+
+interface PollBatchRow {
+  id: string;
+  subscription_id: string;
+}
+
+interface PollBatchEventRow {
+  source_event_id: string;
+  source: string;
+  tags_json: string;
+  payload_json: string;
+  created_at: number;
+}
+
+const POLL_SUBSCRIPTION_COLUMNS = "id, session_id, source_pattern, tag_filters_json, mode, persistent, debounce_ms, active, created_at";
+
+function parseJsonObject(text: string, field: string): Record<string, unknown> {
+  let parsed: unknown;
+  try { parsed = JSON.parse(text); }
+  catch { throw new Error(`${field} JSON 损坏`); }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error(`${field} 不是对象`);
+  return parsed as Record<string, unknown>;
+}
+
+function mapPollSubscription(row: PollSubscriptionRow): import("./poll.js").PollSubscription {
+  const filters = parseJsonObject(row.tag_filters_json, `Poll subscription ${row.id} filters`);
+  if (Object.values(filters).some(value => typeof value !== "string") || row.mode !== "wake"
+    || (row.persistent !== 0 && row.persistent !== 1)) {
+    throw new Error(`Poll subscription 行损坏: ${row.id}`);
+  }
+  return Object.freeze({
+    id: row.id,
+    sessionId: row.session_id,
+    sourcePattern: row.source_pattern,
+    tagFilters: Object.freeze(filters as Record<string, string>),
+    mode: "wake",
+    persistent: row.persistent === 1,
+    debounceMs: row.debounce_ms,
+    createdAt: row.created_at,
+  });
+}
+
+function mapPollBatchEvent(row: PollBatchEventRow): import("./poll.js").ExternalEvent {
+  const tags = parseJsonObject(row.tags_json, `Poll event ${row.source_event_id} tags`);
+  if (Object.values(tags).some(value => typeof value !== "string")) throw new Error(`Poll event tags 损坏: ${row.source_event_id}`);
+  let payload: unknown;
+  try { payload = JSON.parse(row.payload_json); }
+  catch { throw new Error(`Poll event payload 损坏: ${row.source_event_id}`); }
+  return Object.freeze({
+    sourceEventId: row.source_event_id,
+    source: row.source,
+    tags: Object.freeze(tags as Record<string, string>),
+    payload,
+    createdAt: row.created_at,
+  });
+}
+
+/** PollManager 的 SQLite store。所有 batch 状态迁移均在事务内。 */
+export function createPollStore(): import("./poll.js").PollStore {
+  return {
+    recoverInterruptedBatches() {
+      db.prepare("UPDATE poll_batches SET status = 'ready' WHERE status = 'publishing'").run();
+    },
+    createSubscription(subscription, maxPerSession, maxGlobal) {
+      return withTransaction(() => {
+        const filtersJson = JSON.stringify(subscription.tagFilters);
+        const existing = db.prepare(`
+          SELECT ${POLL_SUBSCRIPTION_COLUMNS} FROM poll_subscriptions
+          WHERE session_id = ? AND source_pattern = ? AND tag_filters_json = ?
+            AND mode = 'wake' AND persistent = ? AND debounce_ms = ?
+        `).get(
+          subscription.sessionId,
+          subscription.sourcePattern,
+          filtersJson,
+          subscription.persistent ? 1 : 0,
+          subscription.debounceMs
+        ) as PollSubscriptionRow | undefined;
+        if (existing?.active === 1) return { created: false, subscription: mapPollSubscription(existing) };
+        const count = db.prepare("SELECT COUNT(*) AS count FROM poll_subscriptions WHERE session_id = ? AND active = 1")
+          .get(subscription.sessionId) as { count: number };
+        if (count.count >= maxPerSession) throw new Error(`每个 Session 最多 ${maxPerSession} 个 Poll 订阅`);
+        const globalCount = db.prepare("SELECT COUNT(*) AS count FROM poll_subscriptions WHERE active = 1").get() as { count: number };
+        if (globalCount.count >= maxGlobal) throw new Error(`全局最多 ${maxGlobal} 个 Poll 订阅`);
+        if (existing) {
+          db.prepare("UPDATE poll_subscriptions SET active = 1, accepting = 1, created_at = ? WHERE id = ? AND active = 0")
+            .run(subscription.createdAt, existing.id);
+          return {
+            created: true,
+            subscription: mapPollSubscription({ ...existing, active: 1, created_at: subscription.createdAt }),
+          };
+        }
+        db.prepare(`
+          INSERT INTO poll_subscriptions
+            (id, session_id, source_pattern, tag_filters_json, mode, persistent, debounce_ms, active, accepting, created_at)
+          VALUES (?, ?, ?, ?, 'wake', ?, ?, 1, 1, ?)
+        `).run(
+          subscription.id,
+          subscription.sessionId,
+          subscription.sourcePattern,
+          filtersJson,
+          subscription.persistent ? 1 : 0,
+          subscription.debounceMs,
+          subscription.createdAt
+        );
+        return { created: true, subscription };
+      });
+    },
+    listSubscriptions(sessionId) {
+      return (db.prepare(`SELECT ${POLL_SUBSCRIPTION_COLUMNS} FROM poll_subscriptions WHERE session_id = ? AND active = 1 ORDER BY created_at, id`)
+        .all(sessionId) as PollSubscriptionRow[]).map(mapPollSubscription);
+    },
+    listActiveSubscriptions() {
+      return (db.prepare(`SELECT ${POLL_SUBSCRIPTION_COLUMNS} FROM poll_subscriptions WHERE active = 1 AND accepting = 1 ORDER BY created_at, id`)
+        .all() as PollSubscriptionRow[]).map(mapPollSubscription);
+    },
+    deleteSubscriptions(sessionId, selector) {
+      const info = selector === null
+        ? db.prepare("DELETE FROM poll_subscriptions WHERE session_id = ?").run(sessionId)
+        : /^p_[0-9a-f]{8}$/u.test(selector)
+          ? db.prepare("DELETE FROM poll_subscriptions WHERE session_id = ? AND id = ?").run(sessionId, selector)
+          : db.prepare("DELETE FROM poll_subscriptions WHERE session_id = ? AND source_pattern = ?").run(sessionId, selector);
+      return info.changes;
+    },
+    enqueueEvent(subscription, event, options) {
+      return withTransaction(() => {
+        const active = db.prepare("SELECT 1 AS present FROM poll_subscriptions WHERE id = ? AND session_id = ? AND active = 1 AND accepting = 1")
+          .get(subscription.id, subscription.sessionId);
+        if (!active) return { status: "duplicate" as const, batchId: null };
+        const duplicate = db.prepare(`
+          SELECT batch_id FROM poll_batch_events
+          WHERE subscription_id = ? AND source = ? AND source_event_id = ?
+        `).get(subscription.id, event.source, event.sourceEventId) as { batch_id: string } | undefined;
+        if (duplicate) return { status: "duplicate" as const, batchId: duplicate.batch_id };
+
+        const encodedBytes = Buffer.byteLength(JSON.stringify(event), "utf8");
+        if (encodedBytes > options.maxBytes) throw new Error("单个 external event 超过 Poll batch 大小限制");
+        const globalBytes = db.prepare("SELECT COALESCE(SUM(encoded_bytes), 0) AS bytes FROM poll_batch_events").get() as { bytes: number };
+        if (globalBytes.bytes + encodedBytes > options.maxGlobalBytes) throw new Error("Poll 全局持久事件存储已达上限");
+        const sessionBytes = db.prepare(`
+          SELECT COALESCE(SUM(e.encoded_bytes), 0) AS bytes
+          FROM poll_batch_events e JOIN poll_subscriptions s ON s.id = e.subscription_id
+          WHERE s.session_id = ?
+        `).get(subscription.sessionId) as { bytes: number };
+        if (sessionBytes.bytes + encodedBytes > options.maxSessionBytes) throw new Error("当前 Session 的 Poll 持久事件存储已达上限");
+        const now = Date.now();
+        let batch = db.prepare(`
+          SELECT b.id, COUNT(e.id) AS event_count, COALESCE(SUM(e.encoded_bytes), 0) AS encoded_bytes
+          FROM poll_batches b LEFT JOIN poll_batch_events e ON e.batch_id = b.id
+          WHERE b.subscription_id = ? AND b.status = 'open'
+          GROUP BY b.id ORDER BY b.created_at DESC LIMIT 1
+        `).get(subscription.id) as { id: string; event_count: number; encoded_bytes: number } | undefined;
+        if (batch && (batch.event_count >= options.maxEvents || batch.encoded_bytes + encodedBytes > options.maxBytes)) {
+          db.prepare("UPDATE poll_batches SET status = 'ready', due_at = MIN(due_at, ?) WHERE id = ? AND status = 'open'")
+            .run(now, batch.id);
+          batch = undefined;
+        }
+        const batchId = batch?.id ?? `pb_${randomUUID()}`;
+        const dueAt = now + subscription.debounceMs;
+        if (!batch) {
+          db.prepare(`
+            INSERT INTO poll_batches (id, subscription_id, created_at, due_at, status, attempts, next_attempt_at, last_error, settled_at)
+            VALUES (?, ?, ?, ?, 'open', 0, 0, NULL, NULL)
+          `).run(batchId, subscription.id, now, dueAt);
+        }
+        db.prepare(`
+          INSERT INTO poll_batch_events
+            (batch_id, subscription_id, source_event_id, source, tags_json, payload_json, created_at, encoded_bytes)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          batchId,
+          subscription.id,
+          event.sourceEventId,
+          event.source,
+          JSON.stringify(event.tags),
+          JSON.stringify(event.payload),
+          event.createdAt,
+          encodedBytes
+        );
+        db.prepare("UPDATE poll_batches SET due_at = ? WHERE id = ? AND status = 'open'").run(dueAt, batchId);
+        if (!subscription.persistent) {
+          db.prepare("UPDATE poll_subscriptions SET accepting = 0 WHERE id = ? AND active = 1").run(subscription.id);
+        }
+        return { status: "enqueued" as const, batchId };
+      });
+    },
+    claimDueBatches(now, limit) {
+      return withTransaction(() => {
+        const rows = db.prepare(`
+          SELECT b.id, b.subscription_id
+          FROM poll_batches b JOIN poll_subscriptions s ON s.id = b.subscription_id
+          WHERE s.active = 1 AND b.status IN ('open', 'ready')
+            AND b.due_at <= ? AND b.next_attempt_at <= ?
+          ORDER BY b.due_at, b.created_at LIMIT ?
+        `).all(now, now, limit) as PollBatchRow[];
+        const deliveries: import("./poll.js").PollBatchDelivery[] = [];
+        for (const row of rows) {
+          const claimed = db.prepare("UPDATE poll_batches SET status = 'publishing' WHERE id = ? AND status IN ('open', 'ready')")
+            .run(row.id);
+          if (claimed.changes !== 1) continue;
+          const subscriptionRow = db.prepare(`SELECT ${POLL_SUBSCRIPTION_COLUMNS} FROM poll_subscriptions WHERE id = ? AND active = 1`)
+            .get(row.subscription_id) as PollSubscriptionRow | undefined;
+          if (!subscriptionRow) {
+            db.prepare("DELETE FROM poll_batches WHERE id = ?").run(row.id);
+            continue;
+          }
+          const eventRows = db.prepare(`
+            SELECT source_event_id, source, tags_json, payload_json, created_at
+            FROM poll_batch_events WHERE batch_id = ? ORDER BY id
+          `).all(row.id) as PollBatchEventRow[];
+          if (eventRows.length === 0) {
+            db.prepare("DELETE FROM poll_batches WHERE id = ?").run(row.id);
+            continue;
+          }
+          deliveries.push(Object.freeze({
+            id: row.id,
+            subscription: mapPollSubscription(subscriptionRow),
+            events: Object.freeze(eventRows.map(mapPollBatchEvent)),
+          }));
+        }
+        return deliveries;
+      });
+    },
+    settleBatch(batchId, deactivateSubscription) {
+      withTransaction(() => {
+        const row = db.prepare("SELECT subscription_id FROM poll_batches WHERE id = ? AND status = 'publishing'")
+          .get(batchId) as { subscription_id: string } | undefined;
+        if (!row) return;
+        const settledAt = Date.now();
+        db.prepare("UPDATE poll_batches SET status = 'delivered', settled_at = ?, last_error = NULL WHERE id = ?")
+          .run(settledAt, batchId);
+        if (deactivateSubscription) {
+          db.prepare("UPDATE poll_subscriptions SET active = 0, accepting = 0 WHERE id = ? AND active = 1")
+            .run(row.subscription_id);
+        }
+      });
+    },
+    retryBatch(batchId, nextAttemptAt, error) {
+      db.prepare(`
+        UPDATE poll_batches
+        SET status = 'ready', attempts = attempts + 1, next_attempt_at = ?, last_error = ?, settled_at = NULL
+        WHERE id = ? AND status = 'publishing'
+      `).run(nextAttemptAt, error.slice(0, 1024), batchId);
+    },
+    pruneDeliveredBatches(cutoff) {
+      return withTransaction(() => {
+        const deleted = db.prepare("DELETE FROM poll_batches WHERE status = 'delivered' AND settled_at < ?").run(cutoff).changes;
+        db.prepare(`
+          DELETE FROM poll_subscriptions
+          WHERE active = 0 AND NOT EXISTS (
+            SELECT 1 FROM poll_batches WHERE poll_batches.subscription_id = poll_subscriptions.id
+          )
+        `).run();
+        return deleted;
+      });
     },
   };
 }

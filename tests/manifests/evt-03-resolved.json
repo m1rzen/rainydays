@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "taskId": "EVT-03",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/evt-03.json",
+    "sha256": "b4c643f214f974d8d4fe0d8b373abfde61af4b771c9fe191d88f9cccb9975f97"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/db.js",
+      "sha256": "381cb95e1d2d49ea9fb9c2e189a4c9458fdd3e9a2d3b188f0e62ef784a92c89e",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "fb808f634905b290574a43eaf42d5ff373bb06cb36441601b6595dfb6495ffbe",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "dist/poll.js",
+      "sha256": "be53fa89714b61d1408ba5862e99b19f3b00f8d6228e609c90793150c7405702",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "dist/tool-policies.js",
+      "sha256": "abe04a04bea191ff5bad451d91c63a453b5ee5552b2675b282da8d4cc1b228fa",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "dist/tools/advanced-tools.js",
+      "sha256": "bc238cf75b444102d087d29e927597adbe4b0d2d09e7f99088fb570fea8d6602",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "dist/version.js",
+      "sha256": "4bb898c71ef0d7025a974cb41f4db1f7718b733b04691464ca20fb80f4508b80",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "dist/wire.js",
+      "sha256": "9cbc5bb6f81c9c3d9419caeea94c11a6d4537cc1341bc2c11228dd8c51c7143c",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "b038229a26c450f5503e549abd1ed8c731b0116b5a5058fb1deb8557089620bd",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "dcf7b27f1b38ab091f5958b34b62431947cc91fdbafcfe717c1e88e381e92eb4",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "src/poll.ts",
+      "sha256": "38b73ac5126f13e0a5da09c846fdf1c8a5ee3c62629b8f480478666e3eb728ea",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "aca78443a92e40441501b71e829e8ef33f610f7147ce3bdc11abb61f4c00fa53",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "src/tools/advanced-tools.ts",
+      "sha256": "293fbfe5b14ef9d258d742da88d47e4e5f16dfc7bf34ccb0bcd1cb7d2c91bedb",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "src/version.ts",
+      "sha256": "02c5aa7d7e0aac5c884237283b9cb3779b66e21f5dc5efa9678864b2a6487f88",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "src/wire.ts",
+      "sha256": "932746a969352a7bc230f55ed3861f17fda285288202eac2c89464f13e275ea0",
+      "owner": "EVT-03"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/evt03-governance.test.mjs",
+      "sha256": "484ef0be331f97af559f068cdd52b3ecb9901c4388b00012a5591539e453a141",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "tests/unit/poll.test.mjs",
+      "sha256": "c04e5515bfe741aacd6281538d75f857157eec962bb706d38553abb759401a36",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "tests/integration/evt03-poll-batching.test.mjs",
+      "sha256": "6f17f9b67a9b82c3dc03064a9e00d6c81a099537bbbcab667e04ecb480e81c82",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "tests/integration/evt03-poll-flow.test.mjs",
+      "sha256": "3fde039a04a1c7f4c4cdc992da9c5a2c10c9bc904e2683d7b5ed49b4ff7124af",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "tests/integration/evt03-poll-persistence.test.mjs",
+      "sha256": "788a9587ef4605c60e882c3b97c01a7677ed9ae20d6f258c67884345e6781f19",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "tests/integration/watcher-authority.test.mjs",
+      "sha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "EVT-03"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "740fe9548917f83c882015c17edabf8e1bb29734a284c721e9a334aa75a676e1",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "EVT-03"
+    }
+  ],
+  "canonicalPayloadSha256": "b38c080b66409c4313d9a58306bb6b5776afd2a5a4c36c6bf2e7c6597350a453"
+}

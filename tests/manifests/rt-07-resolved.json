@@ -13,7 +13,7 @@
     },
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "e5e886b634e71be5f245d4b62ad31bd6b57c5f82a0224f10571be2d2e608a073",
+      "sha256": "381cb95e1d2d49ea9fb9c2e189a4c9458fdd3e9a2d3b188f0e62ef784a92c89e",
       "owner": "RT-07"
     },
     {
@@ -28,7 +28,7 @@
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "38751881419d143968616bc98ddb62c68815368315c0005bacdeca9a7f36f382",
+      "sha256": "abe04a04bea191ff5bad451d91c63a453b5ee5552b2675b282da8d4cc1b228fa",
       "owner": "RT-07"
     },
     {
@@ -43,7 +43,7 @@
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "1e04ae3a9a7ffa7947bd5c962a205095ef67829491979c6653fcc7ccdeab587e",
+      "sha256": "4bb898c71ef0d7025a974cb41f4db1f7718b733b04691464ca20fb80f4508b80",
       "owner": "RT-07"
     },
     {
@@ -93,7 +93,7 @@
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "30b306f4b1c720430d6a5594df6e25991466001030e4f7830aa9a54cc81d8b9a",
+      "sha256": "b038229a26c450f5503e549abd1ed8c731b0116b5a5058fb1deb8557089620bd",
       "owner": "RT-07"
     },
     {
@@ -108,7 +108,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "61f976d38c2249372ae96eb7dff27f850f8cf466f8bb2600aa595021197bafc8",
+      "sha256": "aca78443a92e40441501b71e829e8ef33f610f7147ce3bdc11abb61f4c00fa53",
       "owner": "RT-07"
     },
     {
@@ -128,7 +128,7 @@
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "20f30133af9f24be6e5ea87e4d3dc1f3fe09d80b0fefdcd93b17f1d1fd4ef651",
+      "sha256": "02c5aa7d7e0aac5c884237283b9cb3779b66e21f5dc5efa9678864b2a6487f88",
       "owner": "RT-07"
     }
   ],
@@ -156,11 +156,11 @@
     },
     {
       "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-      "sha256": "a187a1e156f0012951bb8e2b52886d622964c7d12ca8517b0e4c7b882668dcdc",
+      "sha256": "81fed980ea60c5a63f20151db7e34dead77badb6c8ceae55215efaf814080a2a",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-07"
     }
   ],
-  "canonicalPayloadSha256": "0bef4abb4e7b8959293aeb0b34e14725966e6d74fc23282df155e37719730352"
+  "canonicalPayloadSha256": "c8f92f979fe390528d2fd65f7b72df62c94bc4dbbdf5bcc8109a9d36f25814fb"
 }

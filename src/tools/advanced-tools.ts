@@ -12,9 +12,7 @@ import {
 } from "../playbook.js";
 import { discoverSessions, peekSession } from "../link.js";
 import { postSessionLinkMessage } from "../session.js";
-import {
-  subscribe, unsubscribe, listSubscriptions,
-} from "../wire.js";
+import { getDefaultPollManager } from "../poll.js";
 import { isSupervisorEnabled, getSupervisorRules } from "../supervisor.js";
 
 // ========== Oracle ==========
@@ -144,40 +142,66 @@ export const linkPostExec: ToolExecutor = async (args, env) => {
   return `✅ 消息已发送到 ${args.id}`;
 };
 
-// ========== Wire ==========
+// ========== Poll / Wire source adapters (EVT-03) ==========
 export const pollSubscribeDef: ToolDefinition = {
   type: "function",
   function: {
-    name: "poll_subscribe", description: "订阅文件变化事件。当指定目录下的文件发生变化时通知你。",
-    parameters: { type: "object", properties: { path: { type: "string", description: "要监听的目录路径" }, source: { type: "string", description: "事件源名称（可选）" } }, required: ["path"] },
+    name: "poll_subscribe",
+    description: "Subscribe to external events. Matching events wake an idle Session or inject the running flow.",
+    parameters: {
+      type: "object",
+      properties: {
+        source: { type: "string", minLength: 1, maxLength: 128, description: "Source glob, e.g. wechat:message, webhook:* or *." },
+        tagFilters: {
+          type: "object",
+          additionalProperties: { type: "string", minLength: 1, maxLength: 128 },
+          description: "Optional key/value glob filters. Every entry must match (AND).",
+        },
+        mode: { type: "string", enum: ["wake"], description: "Only wake is supported." },
+        persistent: { type: "boolean", description: "False removes the subscription after its first delivered batch. Default true." },
+        debounceMs: { type: "number", minimum: 0, maximum: 60000, description: "Trailing debounce window in milliseconds." },
+      },
+      required: ["source"],
+    },
   },
 };
 export const pollSubscribeExec: ToolExecutor = async (args, _env, invocation) => {
-  if (!invocation) throw new Error("Watcher invocation services are required");
-  const result = await subscribe(invocation.resourceOwner, invocation.path, args.path as string, args.source as string);
-  if (result.error) throw new Error(`订阅失败: ${result.error}`);
-  return `✅ 已订阅 ${args.path} 的文件变化 (ID: ${result.id})`;
+  if (!invocation) throw new Error("Poll invocation services are required");
+  const result = getDefaultPollManager().subscribe(invocation.resourceOwner, {
+    source: args.source as string,
+    tagFilters: args.tagFilters as Record<string, string> | undefined,
+    mode: args.mode as "wake" | undefined,
+    persistent: args.persistent as boolean | undefined,
+    debounceMs: args.debounceMs as number | undefined,
+  });
+  return `${result.created ? "✅ 已订阅" : "ℹ️ 订阅已存在"} ${result.subscription.sourcePattern} (ID: ${result.subscription.id})`;
 };
 
 export const pollUnsubscribeDef: ToolDefinition = {
   type: "function",
-  function: { name: "poll_unsubscribe", description: "取消事件订阅。", parameters: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
+  function: {
+    name: "poll_unsubscribe",
+    description: "Unsubscribe by subscription ID or source pattern. Omit id to remove all subscriptions for this Session.",
+    parameters: { type: "object", properties: { id: { type: "string", minLength: 1, maxLength: 128 } } },
+  },
 };
 export const pollUnsubscribeExec: ToolExecutor = async (args, _env, invocation) => {
-  if (!invocation) throw new Error("Watcher invocation services are required");
-  const success = await unsubscribe(invocation.resourceOwner, args.id as string);
-  return success ? `✅ 已取消订阅 ${args.id}` : `订阅 ${args.id} 不存在`;
+  if (!invocation) throw new Error("Poll invocation services are required");
+  const count = getDefaultPollManager().unsubscribe(invocation.resourceOwner, args.id as string | undefined);
+  return count > 0 ? `✅ 已取消 ${count} 个订阅` : "没有匹配的订阅。";
 };
 
 export const pollListDef: ToolDefinition = {
   type: "function",
-  function: { name: "poll_list", description: "列出所有活跃的事件订阅。", parameters: { type: "object", properties: {} } },
+  function: { name: "poll_list", description: "List active event subscriptions for this Session.", parameters: { type: "object", properties: {} } },
 };
 export const pollListExec: ToolExecutor = async (_args, _env, invocation) => {
-  if (!invocation) throw new Error("Watcher invocation services are required");
-  const subs = listSubscriptions(invocation.resourceOwner);
-  if (subs.length === 0) return "没有活跃的订阅。";
-  return subs.map(s => `[${s.id}] ${s.source} — ${s.path}`).join("\n");
+  if (!invocation) throw new Error("Poll invocation services are required");
+  const subscriptions = getDefaultPollManager().list(invocation.resourceOwner);
+  if (subscriptions.length === 0) return "没有活跃的订阅。";
+  return subscriptions.map(subscription =>
+    `[${subscription.id}] ${subscription.sourcePattern} · ${subscription.mode} · ${subscription.persistent ? "persistent" : "one-shot"} · debounce=${subscription.debounceMs}ms · filters=${JSON.stringify(subscription.tagFilters)}`
+  ).join("\n");
 };
 
 // ========== Supervisor ==========

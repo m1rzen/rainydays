@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "taskId": "EVT-03",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "15dfdf516db4115e9aa92dc4cb097a30d6e832001c4a8da7f2eae5a02bd1ce54"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "dist/db.js",
+    "dist/index.js",
+    "dist/poll.js",
+    "dist/tool-policies.js",
+    "dist/tools/advanced-tools.js",
+    "dist/version.js",
+    "dist/wire.js",
+    "src/db.ts",
+    "src/index.ts",
+    "src/poll.ts",
+    "src/tool-policies.ts",
+    "src/tools/advanced-tools.ts",
+    "src/version.ts",
+    "src/wire.ts"
+  ],
+  "coverageExemptions": {
+    "dist/index.js": {
+      "reason": "The compiled server entrypoint owns authenticated external ingress and Poll/EventBus startup-shutdown ordering; its exact assembled lifecycle is exercised by real-server evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/evt03-poll-flow.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/index.ts": {
+      "reason": "The server entrypoint requires the real API token middleware, SessionRuntime registry, EventBus delivery and provider flow to prove routing without caller-supplied targets.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/evt03-poll-flow.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "dist/wire.js": {
+      "reason": "Native fs.watch events and PathPolicy authority retirement require an integration fixture with real watcher leases and reparse-point attacks.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/watcher-authority.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/wire.ts": {
+      "reason": "Wire is an owner-bound PathPolicy adapter whose fail-closed native lease behavior is proven by the watcher authority integration matrix.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/watcher-authority.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/contract/evt03-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/unit/poll.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/integration/evt03-poll-batching.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/evt03-poll-flow.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/evt03-poll-persistence.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/watcher-authority.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "layer": "electron"
+    }
+  ]
+}

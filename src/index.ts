@@ -29,8 +29,9 @@ import {
   SessionImportError,
   searchSessions,
 } from "./session.js";
-import { closeDb, insertPin, getPinsBySession, deletePin, deleteMessagesAfterLastUserMessage, getDatabaseSchemaVersion, createEventStore } from "./db.js";
+import { closeDb, insertPin, getPinsBySession, deletePin, deleteMessagesAfterLastUserMessage, getDatabaseSchemaVersion, createEventStore, createPollStore } from "./db.js";
 import { getDefaultEventBus, type EventEnvelope, type SessionDeliveryOutcome } from "./event-bus.js";
+import { getDefaultPollManager } from "./poll.js";
 import { cancelRunInteraction, runOutsideInteractionChannel, runWithInteractionChannel, submitAnswer } from "./tools/ask-user-tool.js";
 import { closeEmbedding } from "./embedding.js";
 import { migrateMissingEmbeddings } from "./tools/memory-tools.js";
@@ -2243,14 +2244,16 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
 }
 
 /** 启动 EventBus：先接持久层（早于 cron 恢复，避免启动窗口丢事件），会话恢复后装策略并启动调度。 */
-function attachEventBusStore(): void {
+function attachEventStores(): void {
   getDefaultEventBus().attachStore(createEventStore());
+  getDefaultPollManager().attachStore(createPollStore());
 }
 
-function startEventBusDispatch(): void {
+function startEventDispatch(): void {
   const bus = getDefaultEventBus();
   bus.setSessionDelivery(eventSessionDeliveryHandler);
   bus.start();
+  getDefaultPollManager().start();
 }
 
 // --- Cron Manager ---
@@ -2314,6 +2317,29 @@ app.get("/api/cron/events", (req, res) => {
 });
 
 // ===========================================
+// External event ingress (EVT-03) —— authenticated adapter/webhook/test input
+// target 由 Poll subscription 匹配决定，调用方不得指定 Session。
+// ===========================================
+app.post("/api/events", async (req, res) => {
+  if (req.body?.targetSessionId !== undefined || req.body?.target !== undefined) {
+    res.status(400).json({ error: "external event 不允许指定 target" });
+    return;
+  }
+  try {
+    const result = await getDefaultPollManager().ingest({
+      sourceEventId: req.body?.sourceEventId,
+      source: req.body?.source,
+      tags: req.body?.tags,
+      payload: req.body?.payload,
+      createdAt: req.body?.createdAt,
+    });
+    res.status(202).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+// ===========================================
 // 统一事件 SSE (EVT-01) —— 全量 envelope 流（UI 接入面）
 // ===========================================
 app.get("/api/events", (req, res) => {
@@ -2349,7 +2375,7 @@ async function start() {
   await initializeConfig();
   securityAuditJournal = await openSecurityAuditJournal();
   await securityAuditJournal.verify();
-  attachEventBusStore(); // EVT-01：先接持久层再恢复 cron，避免启动窗口丢事件
+  attachEventStores(); // EVT-01/03：先接持久层再恢复 cron/外部事件，避免启动窗口丢事件
   llm = createLlmClient();
   personas = await listPersonas();
   console.log(`✅ 已加载 ${personas.length} 个 persona`);
@@ -2392,7 +2418,7 @@ async function start() {
 
   // 工具注册完整性启动自检：所有 persona 声明的工具必须真实可执行。
   validatePersonaToolIntegrity(personas);
-  startEventBusDispatch(); // EVT-01：会话恢复完成后再开始调度（唤醒策略可安全 claim）
+  startEventDispatch(); // EVT-01/03：会话恢复完成后再开始 EventBus/Poll 调度
 
   const activeProfile = getCurrentProfile();
   console.log(JSON.stringify({
@@ -2563,10 +2589,11 @@ export async function shutdown(exitProcess = true): Promise<void> {
     : Promise.resolve();
 
   const retiringRegistry = runtimeRegistry;
-  const registryShutdown = retiringRegistry?.shutdown() ?? Promise.resolve();
   cronManager?.dispose();
-  await getDefaultEventBus().stop(); // EVT-01：停调度并等待在途投递收束
+  await getDefaultPollManager().stop(); // EVT-03：先停 source batch 投递，再停下游 EventBus
+  await getDefaultEventBus().stop();
   await disposeWire();
+  const registryShutdown = retiringRegistry?.shutdown() ?? Promise.resolve();
   await Promise.all([
     serverClosed,
     runtimeMutationTail.catch(() => undefined),

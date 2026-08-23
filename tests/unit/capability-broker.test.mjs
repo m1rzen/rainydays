@@ -527,19 +527,25 @@ test("SEC01 authorized arguments and executor environment are private frozen sna
   });
   const root = broker.beginAgentRun(authority, "session-a");
   const nested = { flag: true };
+  const dangerous = JSON.parse('{"__proto__":"preserved"}');
   const args = {
     get value() {
       getterReads += 1;
       return "original";
     },
     nested,
+    dangerous,
   };
   const inspected = prepare(broker, root, "snapshot_probe", args);
   nested.flag = false;
   assert.equal(getterReads, 1);
-  assert.deepEqual(inspected.args, { value: "original", nested: { flag: true } });
+  assert.deepEqual(inspected.args, { value: "original", nested: { flag: true }, dangerous });
+  assert.equal(Object.hasOwn(inspected.args.dangerous, "__proto__"), true);
+  assert.equal(inspected.args.dangerous.__proto__, "preserved");
+  assert.strictEqual(Object.getPrototypeOf(inspected.args.dangerous), Object.prototype);
   assert(Object.isFrozen(inspected.args));
   assert(Object.isFrozen(inspected.args.nested));
+  assert(Object.isFrozen(inspected.args.dangerous));
   assert.equal(await broker.invokeTool(root, inspected), "snapshot");
   assert.equal(getterReads, 1, "executor must not reread caller-owned accessors");
   assert.strictEqual(capturedArgs, inspected.args);

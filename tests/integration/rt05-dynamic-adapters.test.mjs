@@ -85,7 +85,7 @@ test("RT-05 dynamic adapters preserve strict schemas and typed failures", async 
   const [
     { createCronScheduleExec, cronCancelDef, cronScheduleDef },
     { createConsolidateExec },
-    { createOracleQueryExec },
+    { createOracleQueryExec, pollSubscribeDef, pollUnsubscribeDef },
     { createMuseExec, mascotNotifyExec },
     { createSubagentExecutors, subagentDef },
     { createPlaybookExecuteExec },
@@ -105,13 +105,18 @@ test("RT-05 dynamic adapters preserve strict schemas and typed failures", async 
   ]);
 
   try {
-    assert.equal(cronScheduleDef.function.parameters.properties.delay.pattern, "^\\d+(s|m|h|d)$");
+    assert.equal(cronScheduleDef.function.parameters.properties.delay.pattern, "^(?:\\d+d)?(?:\\d+h)?(?:\\d+m)?(?:\\d+s)?$");
     assert.deepEqual(cronCancelDef.function.parameters.anyOf, [{ required: ["id"] }, { required: ["tag"] }]);
     assert.equal(subagentDef.function.parameters.properties.prompt.minLength, 1);
     assert.equal(savePersonaDef.function.parameters.properties.name.pattern, "^[a-z0-9][a-z0-9-]{0,63}$");
+    assert.deepEqual(pollSubscribeDef.function.parameters.required, ["source"]);
+    assert.equal(pollSubscribeDef.function.parameters.properties.path, undefined);
+    assert.deepEqual(pollSubscribeDef.function.parameters.properties.mode.enum, ["wake"]);
+    assert.equal(pollSubscribeDef.function.parameters.properties.tagFilters.additionalProperties.type, "string");
+    assert.deepEqual(pollUnsubscribeDef.function.parameters.required, undefined);
 
     const schedule = createCronScheduleExec(() => assert.fail("invalid schedule reached publication"));
-    await assert.rejects(() => schedule({ message: "x", delay: "invalid" }), /无效的时间格式/u);
+    await assert.rejects(() => schedule({ message: "x", delay: "invalid" }, { _SESSION_ID: "rt05-schema" }), /无效的时间格式/u);
 
     let museTransport;
     const llm = { chat: async (...args) => {

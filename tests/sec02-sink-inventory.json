@@ -6,11 +6,11 @@
   "dialectCheckerSha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
   "dialectPolicySha256": "e71e8be1b0a4220a50275bb6e88ead58e82f610dade5bd5c53e6242df7c4d769",
   "dialectImportSetSha256": "35b2c390b98c90043e0823bc82859654287c55049628f118f68a3c1688246c20",
-  "runtimeSinkSetSha256": "9fc190bd6517436183606c06fc157649e8e28800b20e6c33b41b069a9ac69803",
+  "runtimeSinkSetSha256": "3b952ffe8a616b4bde395df04a7ecd9280268d2a1edf92db39a008812d241725",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
-    "executableFileCount": 87,
-    "executableManifestSha256": "b5e9b50006741d0c00ad04256c46b20d6f8bb0511ce9bf47b9e61297a992463a",
+    "executableFileCount": 88,
+    "executableManifestSha256": "5f34e321a6d68c2208e5c796f06e61d46ab30153db37332905f5fc25c1fec6be",
     "dialectImportCount": 38,
     "dialectExceptionCount": 2
   },
@@ -80,8 +80,8 @@
     },
     {
       "sourcePath": "src/capability-broker.ts",
-      "bytes": 63832,
-      "sha256": "afdaba651ff01a101ff428aec39faf6d2c38a18d8f57b7435f01f3f44626f70d",
+      "bytes": 63972,
+      "sha256": "1241eba8375eb65e7f0d67b8ea835d6cdd6c34c5d7f87467351a13fe2531ca49",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -122,8 +122,8 @@
     },
     {
       "sourcePath": "src/db.ts",
-      "bytes": 69644,
-      "sha256": "30b306f4b1c720430d6a5594df6e25991466001030e4f7830aa9a54cc81d8b9a",
+      "bytes": 87966,
+      "sha256": "b038229a26c450f5503e549abd1ed8c731b0116b5a5058fb1deb8557089620bd",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -192,8 +192,8 @@
     },
     {
       "sourcePath": "src/index.ts",
-      "bytes": 103734,
-      "sha256": "e9a180f7c1549567010e65b24075e54d98561dbde1f2c0325dffbbd913ae3dbe",
+      "bytes": 104828,
+      "sha256": "dcf7b27f1b38ab091f5958b34b62431947cc91fdbafcfe717c1e88e381e92eb4",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -306,6 +306,13 @@
       "sourcePath": "src/playbook.ts",
       "bytes": 11105,
       "sha256": "a420fdd834db4c8279dc866223a35de37df1a585dde4a35afc4af3f2bc1b004d",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/poll.ts",
+      "bytes": 13138,
+      "sha256": "38b73ac5126f13e0a5da09c846fdf1c8a5ee3c62629b8f480478666e3eb728ea",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -423,8 +430,8 @@
     },
     {
       "sourcePath": "src/tool-policies.ts",
-      "bytes": 7782,
-      "sha256": "61f976d38c2249372ae96eb7dff27f850f8cf466f8bb2600aa595021197bafc8",
+      "bytes": 7756,
+      "sha256": "aca78443a92e40441501b71e829e8ef33f610f7147ce3bdc11abb61f4c00fa53",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -437,8 +444,8 @@
     },
     {
       "sourcePath": "src/tools/advanced-tools.ts",
-      "bytes": 9001,
-      "sha256": "dc1fb9fc90a41e26221862159363e86620cda5f75a476f59a97851d69c95b4be",
+      "bytes": 10247,
+      "sha256": "293fbfe5b14ef9d258d742da88d47e4e5f16dfc7bf34ccb0bcd1cb7d2c91bedb",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -613,14 +620,14 @@
     {
       "sourcePath": "src/version.ts",
       "bytes": 11376,
-      "sha256": "20f30133af9f24be6e5ea87e4d3dc1f3fe09d80b0fefdcd93b17f1d1fd4ef651",
+      "sha256": "02c5aa7d7e0aac5c884237283b9cb3779b66e21f5dc5efa9678864b2a6487f88",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/wire.ts",
-      "bytes": 5328,
-      "sha256": "a319c8152021a75288c7307908ecc559c8b743fc2d9dbfaa3d5b1c9fc232d41c",
+      "bytes": 5682,
+      "sha256": "932746a969352a7bc230f55ed3861f17fda285288202eac2c89464f13e275ea0",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     }
@@ -632,7 +639,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/bootstrap-database-lifetime.test.mjs",
       "testCaseId": "SEC-02 SQLite connection lifetime blocks bootstrap retirement until clean close",
-      "testFileSha256": "a187a1e156f0012951bb8e2b52886d622964c7d12ca8517b0e4c7b882668dcdc"
+      "testFileSha256": "81fed980ea60c5a63f20151db7e34dead77badb6c8ceae55215efaf814080a2a"
     },
     {
       "id": "daemon-lifetime",
@@ -712,7 +719,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/watcher-authority.test.mjs",
       "testCaseId": "SEC-02 watcher events and controls remain bound to one runtime authority",
-      "testFileSha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000"
+      "testFileSha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8"
     }
   ],
   "sinks": [
@@ -3267,8 +3274,8 @@
       "id": "sink-8ecfb8f883d2ef88a920bb61",
       "occurrence": 1,
       "sourcePath": "src/db.ts",
-      "fileSha256": "30b306f4b1c720430d6a5594df6e25991466001030e4f7830aa9a54cc81d8b9a",
-      "line": 753,
+      "fileSha256": "b038229a26c450f5503e549abd1ed8c731b0116b5a5058fb1deb8557089620bd",
+      "line": 847,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "validateDatabaseRestoreCandidate",
@@ -3300,8 +3307,8 @@
       "id": "sink-8de00407646059c0723b3b01",
       "occurrence": 1,
       "sourcePath": "src/db.ts",
-      "fileSha256": "30b306f4b1c720430d6a5594df6e25991466001030e4f7830aa9a54cc81d8b9a",
-      "line": 764,
+      "fileSha256": "b038229a26c450f5503e549abd1ed8c731b0116b5a5058fb1deb8557089620bd",
+      "line": 858,
       "column": 35,
       "nodeKind": "CallExpression",
       "container": "createConsistentDatabaseSnapshot",
@@ -5502,5 +5509,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "95457faf1092271463d5ca6161f3c886d0aff3361a76468da50991e5836f6e69"
+  "canonicalPayloadSha256": "e39e236dbbfe649aff080109b5debe5cedd367f1f896e77f6b84325ee2fc8b01"
 }

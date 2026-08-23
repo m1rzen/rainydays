@@ -4,6 +4,7 @@
 
 import { randomUUID } from "node:crypto";
 import { getDefaultEventBus } from "./event-bus.js";
+import { getDefaultPollManager } from "./poll.js";
 import {
   assertResourceOwner,
   registerOwnedResource,
@@ -78,12 +79,19 @@ export async function subscribe(
         try { callback(wireEvent); }
         catch { /* One consumer cannot bypass or disrupt the governed watcher. */ }
       }
-      // EVT-01：watcher 事件同时进入统一事件总线（listener 级投影，无 session 定向；
-      // 定向订阅属 EVT-03）。未 attach 持久层的宿主环境下为零行为变化。
+      // EVT-03：Wire 是 external source adapter；匹配/持久/debounce/Session 路由由 PollManager 承担。
+      await getDefaultPollManager().ingest({
+        sourceEventId: `wire:${id}:${randomUUID()}`,
+        source: "wire:file",
+        tags: { adapter: "file", event_type: wireEvent.type, source: current.source },
+        payload: wireEvent,
+        createdAt: wireEvent.timestamp,
+      });
+      // EventBus listener 仍保留 best-effort UI projection，但 user-facing source 不进入 machine tags。
       void getDefaultEventBus().publish({
         type: "wire.file_event",
         source: "wire",
-        tags: [current.source],
+        tags: [],
         payload: wireEvent,
       }).catch(() => undefined);
     });

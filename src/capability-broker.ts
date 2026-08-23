@@ -136,7 +136,14 @@ function cloneJsonValue(value: unknown, label: string): unknown {
     const prototype = Object.getPrototypeOf(value);
     if (prototype !== Object.prototype && prototype !== null) throw new TypeError(`${label} must be plain JSON data`);
     const result: Record<string, unknown> = {};
-    for (const [key, entry] of Object.entries(value)) result[key] = cloneJsonValue(entry, `${label}.${key}`);
+    for (const [key, entry] of Object.entries(value)) {
+      Object.defineProperty(result, key, {
+        value: cloneJsonValue(entry, `${label}.${key}`),
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
+    }
     return result;
   }
   throw new TypeError(`${label} contains unsupported data`);

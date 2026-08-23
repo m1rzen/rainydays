@@ -40,7 +40,7 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "f6e51ff5723e3f4c649f721d0bcd31c790f53c54f4ace969a233a65e9ce7d989",
+          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -82,7 +82,7 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "431349e05c7c6ec3cf47ecf86248769ca5ecd8ef327179c26942a00e08ddc130",
+          "sha256": "8edc73e24dab1a1b95a22ad62e4b069483a293da52045b13e8b71f0709e9daf0",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -308,7 +308,7 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "f6e51ff5723e3f4c649f721d0bcd31c790f53c54f4ace969a233a65e9ce7d989",
+          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -350,7 +350,7 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "431349e05c7c6ec3cf47ecf86248769ca5ecd8ef327179c26942a00e08ddc130",
+          "sha256": "8edc73e24dab1a1b95a22ad62e4b069483a293da52045b13e8b71f0709e9daf0",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -416,7 +416,7 @@
         },
         {
           "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-          "sha256": "a187a1e156f0012951bb8e2b52886d622964c7d12ca8517b0e4c7b882668dcdc",
+          "sha256": "81fed980ea60c5a63f20151db7e34dead77badb6c8ceae55215efaf814080a2a",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -470,7 +470,7 @@
         },
         {
           "exactCasePath": "tests/integration/watcher-authority.test.mjs",
-          "sha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000",
+          "sha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8",
           "layer": "integration",
           "sourceTask": "SEC-02"
         }
@@ -1000,7 +1000,7 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "f6e51ff5723e3f4c649f721d0bcd31c790f53c54f4ace969a233a65e9ce7d989",
+          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -1042,7 +1042,7 @@
         },
         {
           "exactCasePath": "tests/integration/version-model.test.mjs",
-          "sha256": "431349e05c7c6ec3cf47ecf86248769ca5ecd8ef327179c26942a00e08ddc130",
+          "sha256": "8edc73e24dab1a1b95a22ad62e4b069483a293da52045b13e8b71f0709e9daf0",
           "layer": "integration",
           "sourceTask": "SEC-01"
         },
@@ -1108,7 +1108,7 @@
         },
         {
           "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-          "sha256": "a187a1e156f0012951bb8e2b52886d622964c7d12ca8517b0e4c7b882668dcdc",
+          "sha256": "81fed980ea60c5a63f20151db7e34dead77badb6c8ceae55215efaf814080a2a",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1162,13 +1162,13 @@
         },
         {
           "exactCasePath": "tests/integration/watcher-authority.test.mjs",
-          "sha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000",
+          "sha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "a763293e93cc0f2cac36bd23637009c910cbe5f8eb95aed552e2776faf48057f",
+          "sha256": "5db24df4188e4e8ab209bb144297dc602fe88aea94d227853e8f7a761197a1d7",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -1691,7 +1691,7 @@
   "coverageScope": {
     "source": {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "9593cac10c842a56bca0305773f1070aa78df44f3eac64846f5f28869eb0e190"
+      "sha256": "b26f0fc47e4059f09d54dcf029dbc3ead1a9373bff14fc8e8ea7ebfd7ff7aa95"
     },
     "overallFiles": [
       "dist/agent.js",
@@ -5523,7 +5523,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "f6e51ff5723e3f4c649f721d0bcd31c790f53c54f4ace969a233a65e9ce7d989"
+          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7"
         },
         "testCaseId": "SEC-02 Session deletion closes PathPolicy leases before removing the session identity",
         "producer": "node-test"
@@ -6195,7 +6195,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/watcher-authority.test.mjs",
-          "sha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000"
+          "sha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8"
         },
         "testCaseId": "SEC-02 watcher events and controls remain bound to one runtime authority",
         "producer": "node-test"
@@ -6207,7 +6207,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/watcher-authority.test.mjs",
-          "sha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000"
+          "sha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8"
         },
         "testCaseId": "SEC-02 watcher events and controls remain bound to one runtime authority",
         "producer": "node-test"
@@ -6219,7 +6219,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/watcher-authority.test.mjs",
-          "sha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000"
+          "sha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8"
         },
         "testCaseId": "SEC-02 watcher events and controls remain bound to one runtime authority",
         "producer": "node-test"
@@ -6231,7 +6231,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/watcher-authority.test.mjs",
-          "sha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000"
+          "sha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8"
         },
         "testCaseId": "SEC-02 watcher events and controls remain bound to one runtime authority",
         "producer": "node-test"
@@ -6243,7 +6243,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/watcher-authority.test.mjs",
-          "sha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000"
+          "sha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8"
         },
         "testCaseId": "SEC-02 watcher events and controls remain bound to one runtime authority",
         "producer": "node-test"
@@ -6255,7 +6255,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/watcher-authority.test.mjs",
-          "sha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000"
+          "sha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8"
         },
         "testCaseId": "SEC-02 watcher events and controls remain bound to one runtime authority",
         "producer": "node-test"
@@ -6651,7 +6651,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "f6e51ff5723e3f4c649f721d0bcd31c790f53c54f4ace969a233a65e9ce7d989"
+          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7"
         },
         "testCaseId": "SEC-02 child PathAuthority and ResourceOwner preserve only the exact root subset",
         "producer": "node-test"
@@ -6663,7 +6663,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "f6e51ff5723e3f4c649f721d0bcd31c790f53c54f4ace969a233a65e9ce7d989"
+          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7"
         },
         "testCaseId": "SEC-02 same configured root string cannot substitute a new filesystem identity",
         "producer": "node-test"
@@ -6675,7 +6675,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "f6e51ff5723e3f4c649f721d0bcd31c790f53c54f4ace969a233a65e9ce7d989"
+          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7"
         },
         "testCaseId": "SEC-02 Broker gateway denies root object replacement during an in-flight read",
         "producer": "node-test"
@@ -6687,7 +6687,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "f6e51ff5723e3f4c649f721d0bcd31c790f53c54f4ace969a233a65e9ce7d989"
+          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7"
         },
         "testCaseId": "SEC-02 attenuated child gateway cannot fall back to broader parent roots",
         "producer": "node-test"
@@ -7019,7 +7019,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/watcher-authority.test.mjs",
-          "sha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000"
+          "sha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8"
         },
         "testCaseId": "SEC-02 watcher events and controls remain bound to one runtime authority",
         "producer": "node-test"
@@ -7071,11 +7071,11 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "9593cac10c842a56bca0305773f1070aa78df44f3eac64846f5f28869eb0e190"
+      "sha256": "b26f0fc47e4059f09d54dcf029dbc3ead1a9373bff14fc8e8ea7ebfd7ff7aa95"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "7c42a028c9ec9711b657d42825a6dc732ad3e38bdcfb3053bd4f1e24e837deeb"
+      "sha256": "d220a6211c90ee88a6f31871c5aba55373ef13ea3666dcd95562822defb538a7"
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
@@ -7119,7 +7119,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "a89eef52c6f3a045911a33ae825dddc4c2f358f186b22d99c8b0b535da6b4ae2"
+      "sha256": "aa2cf7b4c98836da5ecc7bbb0ab0bff915c9a61960b7db140f048afdc1ea7848"
     },
     {
       "exactCasePath": "scripts/sec02-sink-scanner.mjs",
@@ -7135,7 +7135,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "a13e254b40a2713afa7538400325fab91da71795c7440621cc7d5b8da9d49a90"
+      "sha256": "adb8c6d2932d7a0fed24816dd9e98b5ceb1a52988ad482a7df9c93748f7a7ea8"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7191,7 +7191,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "3f6e23e745cbfcddac9f2bc2d117b069475d867fcf1a1fa0c5656553e474cd3c"
+      "sha256": "33e32d4a5bd9ef3465c81479be69ebc4bd17ccccf09c1ba86b8ec04990d786ca"
     },
     {
       "exactCasePath": "package-lock.json",
@@ -7199,5 +7199,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "e904715fb7b1e4bcbebc16cbca045a846b3345d40b3ef8c265a016a399876a22"
+  "canonicalPayloadSha256": "c208f2f1d0789f6ecf28ac9a5ecf5494a73e52a532e9e5083e5cb754c24b7202"
 }
