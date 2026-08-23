@@ -6,11 +6,11 @@
   "dialectCheckerSha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
   "dialectPolicySha256": "e71e8be1b0a4220a50275bb6e88ead58e82f610dade5bd5c53e6242df7c4d769",
   "dialectImportSetSha256": "35b2c390b98c90043e0823bc82859654287c55049628f118f68a3c1688246c20",
-  "runtimeSinkSetSha256": "612d9eedbb60afdfb9aafa1edfa8dbfb35d63b8a02862978ec64ec07a8f109f0",
+  "runtimeSinkSetSha256": "9fc190bd6517436183606c06fc157649e8e28800b20e6c33b41b069a9ac69803",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
     "executableFileCount": 87,
-    "executableManifestSha256": "75780222a21721fd2d66a64416749686462a20b6eb1ef2dfd920cefa06a05b0f",
+    "executableManifestSha256": "b5e9b50006741d0c00ad04256c46b20d6f8bb0511ce9bf47b9e61297a992463a",
     "dialectImportCount": 38,
     "dialectExceptionCount": 2
   },
@@ -101,8 +101,8 @@
     },
     {
       "sourcePath": "src/cron.ts",
-      "bytes": 3343,
-      "sha256": "0d1ce315c15f514e90e1ab6b16aa00cb41425012e39aa088d14276436d61b88c",
+      "bytes": 5918,
+      "sha256": "4351a825cad3383efa165acaa73da2a473751e708ad764063d0c13eb36c43ac5",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -122,8 +122,8 @@
     },
     {
       "sourcePath": "src/db.ts",
-      "bytes": 66059,
-      "sha256": "e2a787cad6c1179da8cd85272f6a3c2441bb9b6c000d257d9720cdf5918dcc94",
+      "bytes": 69644,
+      "sha256": "30b306f4b1c720430d6a5594df6e25991466001030e4f7830aa9a54cc81d8b9a",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -192,8 +192,8 @@
     },
     {
       "sourcePath": "src/index.ts",
-      "bytes": 100114,
-      "sha256": "ecd30f28cd627aa6271288151d29d8f91b12caa1566a3e71bdcd2aa08366f2ec",
+      "bytes": 103734,
+      "sha256": "e9a180f7c1549567010e65b24075e54d98561dbde1f2c0325dffbbd913ae3dbe",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -444,15 +444,15 @@
     },
     {
       "sourcePath": "src/tools/ask-user-tool.ts",
-      "bytes": 10273,
-      "sha256": "5ed3f0272efb057ea27cb3df8f7c9bf514d43d1cd77b7c0214d19e9bb27037c6",
+      "bytes": 10589,
+      "sha256": "1566e6606325bf4ac926c735e11e06ee2936b931288d6d73eb8037653668801e",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/cron-tools.ts",
-      "bytes": 5170,
-      "sha256": "ff7f6b249051c880cbb4c7f4e537f573eeb80771cd7157745dbfdde991235d7d",
+      "bytes": 7809,
+      "sha256": "52eb29b3facfd557ebcc09b0823510ceda3fd33883788e2f4d53ccfc0df61953",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -613,7 +613,7 @@
     {
       "sourcePath": "src/version.ts",
       "bytes": 11376,
-      "sha256": "037129e04f9d22625e3f56553ec6b24231b9eccefa8b80ebc43c5c82f7c6a943",
+      "sha256": "20f30133af9f24be6e5ea87e4d3dc1f3fe09d80b0fefdcd93b17f1d1fd4ef651",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -632,7 +632,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/bootstrap-database-lifetime.test.mjs",
       "testCaseId": "SEC-02 SQLite connection lifetime blocks bootstrap retirement until clean close",
-      "testFileSha256": "cbfd5d64df0242513f1bb3dbb68ddc297ad92e2502af91abb1fbf5962732fbfc"
+      "testFileSha256": "a187a1e156f0012951bb8e2b52886d622964c7d12ca8517b0e4c7b882668dcdc"
     },
     {
       "id": "daemon-lifetime",
@@ -656,7 +656,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/electron/desktop-smoke.test.mjs",
       "testCaseId": "real Electron main, preload and renderer preserve identity and session across restart",
-      "testFileSha256": "cbc8b9c1327ec35222c187aabd85eaad22d9a2e9c8279aa0e6c136659e3b9465"
+      "testFileSha256": "740fe9548917f83c882015c17edabf8e1bb29734a284c721e9a334aa75a676e1"
     },
     {
       "id": "file-viewer",
@@ -3267,8 +3267,8 @@
       "id": "sink-8ecfb8f883d2ef88a920bb61",
       "occurrence": 1,
       "sourcePath": "src/db.ts",
-      "fileSha256": "e2a787cad6c1179da8cd85272f6a3c2441bb9b6c000d257d9720cdf5918dcc94",
-      "line": 702,
+      "fileSha256": "30b306f4b1c720430d6a5594df6e25991466001030e4f7830aa9a54cc81d8b9a",
+      "line": 753,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "validateDatabaseRestoreCandidate",
@@ -3300,8 +3300,8 @@
       "id": "sink-8de00407646059c0723b3b01",
       "occurrence": 1,
       "sourcePath": "src/db.ts",
-      "fileSha256": "e2a787cad6c1179da8cd85272f6a3c2441bb9b6c000d257d9720cdf5918dcc94",
-      "line": 713,
+      "fileSha256": "30b306f4b1c720430d6a5594df6e25991466001030e4f7830aa9a54cc81d8b9a",
+      "line": 764,
       "column": 35,
       "nodeKind": "CallExpression",
       "container": "createConsistentDatabaseSnapshot",
@@ -5502,5 +5502,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "1057b3b72bdb74954e7e24b3d41b8bde1b8633e3d2b1c90d5af684b3f668bc3f"
+  "canonicalPayloadSha256": "95457faf1092271463d5ca6161f3c886d0aff3361a76468da50991e5836f6e69"
 }

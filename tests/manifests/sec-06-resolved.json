@@ -38,12 +38,12 @@
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "e2a787cad6c1179da8cd85272f6a3c2441bb9b6c000d257d9720cdf5918dcc94",
+      "sha256": "30b306f4b1c720430d6a5594df6e25991466001030e4f7830aa9a54cc81d8b9a",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "ecd30f28cd627aa6271288151d29d8f91b12caa1566a3e71bdcd2aa08366f2ec",
+      "sha256": "e9a180f7c1549567010e65b24075e54d98561dbde1f2c0325dffbbd913ae3dbe",
       "owner": "SEC-06"
     },
     {
@@ -73,7 +73,7 @@
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "037129e04f9d22625e3f56553ec6b24231b9eccefa8b80ebc43c5c82f7c6a943",
+      "sha256": "20f30133af9f24be6e5ea87e4d3dc1f3fe09d80b0fefdcd93b17f1d1fd4ef651",
       "owner": "SEC-06"
     },
     {
@@ -98,12 +98,12 @@
     },
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "f61ee46a34384f5869c775313eaaf5a0d26852933610b440d5cee97ec463235a",
+      "sha256": "e5e886b634e71be5f245d4b62ad31bd6b57c5f82a0224f10571be2d2e608a073",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "56be2a8b458dce96fef626f7f1fd14497147f3b83baaa8a919485865557286b8",
+      "sha256": "8218bda2008f819d3408c1e94ee0ab4c7b74afda93900bf01f2f1bd95eeeb911",
       "owner": "SEC-06"
     },
     {
@@ -133,7 +133,7 @@
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "ba0dd140df9f1b6118d50278fb6af2ce9c07ddf8b7e224a88097bdfb689b114c",
+      "sha256": "1e04ae3a9a7ffa7947bd5c962a205095ef67829491979c6653fcc7ccdeab587e",
       "owner": "SEC-06"
     }
   ],
@@ -168,7 +168,7 @@
     },
     {
       "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-      "sha256": "cbfd5d64df0242513f1bb3dbb68ddc297ad92e2502af91abb1fbf5962732fbfc",
+      "sha256": "a187a1e156f0012951bb8e2b52886d622964c7d12ca8517b0e4c7b882668dcdc",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-06"
@@ -196,7 +196,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "cbc8b9c1327ec35222c187aabd85eaad22d9a2e9c8279aa0e6c136659e3b9465",
+      "sha256": "740fe9548917f83c882015c17edabf8e1bb29734a284c721e9a334aa75a676e1",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-06"
@@ -209,5 +209,5 @@
       "owner": "SEC-06"
     }
   ],
-  "canonicalPayloadSha256": "0ad87ac1e9d6d908d93beeeb5a27559cd5185c962ca20e827fa58c29678822f6"
+  "canonicalPayloadSha256": "76a7a9db08358a31e47ff94a54dad503e0543f583166c76704654887f88fa3de"
 }
