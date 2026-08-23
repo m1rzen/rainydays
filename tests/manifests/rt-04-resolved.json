@@ -408,7 +408,7 @@
     },
     {
       "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-      "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca",
+      "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-04"
@@ -429,7 +429,7 @@
     },
     {
       "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
-      "sha256": "e7620ab25b6548088f5e19807298139e6e5ca8063aad85db0253cbce825ca677",
+      "sha256": "b8c794941b2b198e895d543003a883350129e075d240073e46a002f7879926f4",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-04"
@@ -449,5 +449,5 @@
       "owner": "RT-04"
     }
   ],
-  "canonicalPayloadSha256": "624a177f5cd673961085a4a432a7a2daadebf85254b7f14d5d8f35a4ae07797b"
+  "canonicalPayloadSha256": "d9417e04992c8fb8c1013a17354057989c9289f8771e56baa4eb9e944be732a6"
 }

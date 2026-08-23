@@ -234,7 +234,7 @@
     },
     {
       "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-      "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca",
+      "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-05"
@@ -248,7 +248,7 @@
     },
     {
       "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
-      "sha256": "e7620ab25b6548088f5e19807298139e6e5ca8063aad85db0253cbce825ca677",
+      "sha256": "b8c794941b2b198e895d543003a883350129e075d240073e46a002f7879926f4",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-05"
@@ -276,7 +276,7 @@
     },
     {
       "exactCasePath": "tests/unit/network-policy.test.mjs",
-      "sha256": "7f52cbce92d945d2247666e32ff0efd0a9a4ff06d454af820efcf3d4b1f05ad3",
+      "sha256": "114dcd4adb81ded95d8c9132c4c542288ed2cda4bc2276482a27ec52b4570f8d",
       "kind": "test",
       "layer": "unit",
       "owner": "RT-05"
@@ -289,5 +289,5 @@
       "owner": "RT-05"
     }
   ],
-  "canonicalPayloadSha256": "6d6f664efccaf02130d32fd3ca268bd24aca6d7d1a06f048dc1b8e95a1ddabab"
+  "canonicalPayloadSha256": "8109c846b4e99e6c1a27c2827ecac12b9ba2fe7546ef763b28685a6dc4afff76"
 }

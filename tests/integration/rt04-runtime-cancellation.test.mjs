@@ -430,6 +430,40 @@ test("RT-04 LLM retry classification remains cancellable across rate, server, ne
       for await (const _event of llm.chatStream([{ role: "user", content: "bad" }])) { /* no events */ }
     }, /LLM 流式请求失败: bad stream/u);
 
+    llm.client.chat.completions.create = async () => (async function* defaultIndexStream() {
+      yield { choices: [{ delta: { tool_calls: [{ id: "default-index", function: { name: "fixture", arguments: "{}" } }] } }] };
+    })();
+    const defaultIndexEvents = [];
+    for await (const event of llm.chatStream([{ role: "user", content: "default index" }])) defaultIndexEvents.push(event);
+    assert.equal(defaultIndexEvents.at(-1).message.tool_calls[0].id, "default-index");
+
+    attempts = 0;
+    llm.client.chat.completions.create = async () => {
+      attempts += 1;
+      if (attempts === 1) throw new Error("stream network retry");
+      return (async function* recoveredStream() { yield { choices: [{ delta: { content: "recovered" } }] }; })();
+    };
+    const recoveredEvents = [];
+    for await (const event of llm.chatStream([{ role: "user", content: "network retry" }])) recoveredEvents.push(event);
+    assert.equal(recoveredEvents.at(-1).message.content, "recovered");
+
+    attempts = 0;
+    llm.client.chat.completions.create = async () => {
+      attempts += 1;
+      if (attempts === 1) throw Object.assign(new Error("signalled rate"), { status: 429 });
+      return (async function* signalledStream() { yield { choices: [{ delta: {} }] }; })();
+    };
+    for await (const _event of llm.chatStream([{ role: "user", content: "signalled retry" }], undefined, NEVER_ABORT_SIGNAL)) { /* consume */ }
+
+    attempts = 0;
+    llm.client.chat.completions.create = async () => {
+      attempts += 1;
+      throw attempts === 1 ? new Error("network failed") : Object.assign(new Error("then deny"), { status: 400 });
+    };
+    await assert.rejects(async () => {
+      for await (const _event of llm.chatStream([{ role: "user", content: "retry then deny" }])) { /* no events */ }
+    }, /then deny \(已重试 1 次\)/u);
+
     const cancelled = new AbortController();
     const reason = new RunCancellationError("RUN_CANCELLED", "stream cancelled");
     llm.client.chat.completions.create = async () => (async function* heldStream() {
@@ -479,6 +513,54 @@ test("RT-04 memory and subagent reject malformed persisted and child-turn states
     return { role: "assistant", content: "merged" };
   } }), true);
 
+  const large = "x".repeat(75_000);
+  const tooFew = new ConversationMemory(100);
+  for (let index = 0; index < 8; index += 1) tooFew.add({ role: "user", content: large });
+  assert.equal(await tooFew.compact({ chat: async () => assert.fail("too few messages reached summarizer") }), false);
+
+  const boundary = new ConversationMemory(100);
+  boundary.addMany([
+    { role: "developer", content: large },
+    { role: "assistant", content: "tool boundary", tool_calls: [{ id: "edge", type: "function", function: { name: "fixture", arguments: "{}" } }] },
+    { role: "tool", content: "paired", tool_call_id: "edge" },
+    { role: "tool", content: "orphan", tool_call_id: "orphan" },
+    ...Array.from({ length: 6 }, (_, index) => ({ role: "user", content: `recent-${index}` })),
+  ]);
+  assert.equal(await boundary.compact({ chat: async messages => {
+    assert.match(messages[1].content, /x{20}/u);
+    assert.match(messages[1].content, /tool boundary/u);
+    assert.match(messages[1].content, /paired/u);
+    return { role: "assistant", content: "boundary summary" };
+  } }), true);
+  assert.equal(boundary.getAll().some(message => message.content === "orphan"), false);
+
+  const emptySummary = new ConversationMemory(100);
+  emptySummary.addMany([{ role: "user", content: large }, ...Array.from({ length: 9 }, (_, index) => ({ role: "user", content: `empty-${index}` }))]);
+  assert.equal(await emptySummary.compact({ chat: async () => ({ role: "assistant", content: "" }) }), true);
+
+  const primitiveFallback = new ConversationMemory(100);
+  primitiveFallback.addMany([
+    { role: "user", content: large },
+    { role: "tool", content: "fallback orphan", tool_call_id: "fallback" },
+    ...Array.from({ length: 8 }, (_, index) => ({ role: "user", content: `fallback-${index}` })),
+  ]);
+  const originalError = console.error;
+  console.error = () => undefined;
+  try {
+    assert.equal(await primitiveFallback.compact({ chat: async () => { throw "primitive summary failure"; } }), true);
+  } finally {
+    console.error = originalError;
+  }
+  assert.equal(primitiveFallback.getAll().some(message => message.content === "fallback orphan"), false);
+
+  const cancelledSummary = new ConversationMemory(100);
+  cancelledSummary.addMany([{ role: "user", content: large }, ...Array.from({ length: 9 }, (_, index) => ({ role: "user", content: `cancel-${index}` }))]);
+  const summaryController = new AbortController();
+  await assert.rejects(
+    () => cancelledSummary.compact({ chat: async () => { summaryController.abort(new Error("summary cancelled")); throw new Error("provider cleanup failed"); } }, summaryController.signal),
+    /provider cleanup failed/u,
+  );
+
   const child = { sessionId: "session-edge", runId: "run-edge" };
   const base = { persona: { systemPrompt: "edge" }, prompt: "edge", capabilityContext: child, invocation: invocation() };
   await assert.rejects(() => runSubAgent({ ...base, llm: { chat: async () => null } }), /子 agent 返回为空/u);
@@ -501,6 +583,13 @@ test("RT-04 memory and subagent reject malformed persisted and child-turn states
 });
 
 test("RT-04 playbook validates definitions and makes failure, callback, and cancellation states observable", async () => {
+  if (!(await playbook.getPlaybook("rt04-runtime"))) {
+    await playbook.createPlaybook({
+      name: "rt04-runtime",
+      description: "RT-04 runtime fixture",
+      steps: [{ message: "tool step" }, { message: "final step", description: "finish" }],
+    });
+  }
   const bytes = value => Buffer.from(JSON.stringify(value), "utf8");
   assert.throws(() => playbook.validatePlaybookSource("edge", bytes([])), /格式无效/u);
   assert.throws(() => playbook.validatePlaybookSource("edge", bytes({ name: "other", description: "x", steps: [] })), /定义无效/u);
@@ -524,6 +613,49 @@ test("RT-04 playbook validates definitions and makes failure, callback, and canc
   assert.equal(partial.status, "running");
 
   const child = { sessionId: "session-playbook-edge", runId: "run-playbook-edge" };
+  const successfulCallbacks = [];
+  const successful = await playbook.executePlaybook(
+    "rt04-runtime",
+    { chat: async () => ({ role: "assistant", content: "success" }) },
+    { systemPrompt: "edge" },
+    child,
+    invocation(),
+    (...args) => successfulCallbacks.push(args),
+  );
+  assert.equal(successful.status, "completed");
+  assert.equal(successfulCallbacks.length, 2);
+
+  const primitiveFailure = await playbook.executePlaybook(
+    "rt04-runtime",
+    { chat: async () => { throw "primitive step failure"; } },
+    { systemPrompt: "edge" },
+    child,
+    invocation(),
+  );
+  assert.equal(primitiveFailure.status, "failed");
+  assert.match(primitiveFailure.results[0], /primitive step failure/u);
+
+  const abortedChild = { sessionId: "session-playbook-aborted", runId: "run-playbook-aborted" };
+  let abortedFinishes = 0;
+  const abortedExecutor = playbook.createPlaybookExecuteExec({ chat: async () => assert.fail("aborted run reached LLM") }, { systemPrompt: "edge" });
+  const abortedOutput = await abortedExecutor({ name: "rt04-runtime" }, undefined, invocation(NEVER_ABORT_SIGNAL, {
+    deriveChild: () => abortedChild,
+    finishChild: candidate => { assert.equal(candidate, abortedChild); abortedFinishes += 1; },
+    getToolDefinitions: candidate => {
+      const run = playbook.listActiveRuns(candidate).find(entry => entry.status === "running");
+      assert(run);
+      assert.equal(playbook.abortRun(run.id, candidate), true);
+      return [];
+    },
+  }));
+  assert.match(abortedOutput, /执行中止/u);
+  assert.equal(abortedFinishes, 1);
+
+  const missingExecutor = playbook.createPlaybookExecuteExec({ chat: async () => assert.fail("missing playbook reached LLM") }, { systemPrompt: "edge" });
+  await assert.rejects(() => missingExecutor({ name: "missing-playbook" }, undefined, invocation(NEVER_ABORT_SIGNAL, {
+    deriveChild: () => ({ sessionId: "missing-session", runId: "missing-run" }),
+    finishChild: () => undefined,
+  })), /执行失败/u);
   const callbackEvents = [];
   const failed = await playbook.executePlaybook(
     "rt04-runtime",

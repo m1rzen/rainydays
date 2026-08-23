@@ -655,7 +655,7 @@
       "executionContract": "sec02-receipt",
       "testFile": "tests/integration/path-tool-gateway.test.mjs",
       "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
-      "testFileSha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+      "testFileSha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
     },
     {
       "id": "electron-source",
@@ -5509,5 +5509,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "1c0d57ad2eaa3f3081bbe82cc0f17b76020e440d93a2765ff04612dcf6aaf85f"
+  "canonicalPayloadSha256": "eaf31766dcf6dce75ee6878703955cc4b66658c259c74a6ddbd067fcd17a435a"
 }

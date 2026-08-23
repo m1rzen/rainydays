@@ -600,6 +600,66 @@ test("SEC-02 rejected download target invokes zero fetches", async t => {
   assert.equal(fetches, 0);
 });
 
+test("SEC-02 download closes invocation, naming, response, transport, and size boundaries", async () => {
+  await assert.rejects(() => downloadExec({ url: "https://example.test/file" }, {}), /Tool invocation services are required/u);
+  await assert.rejects(
+    () => downloadExec({ url: "https://example.test/file" }, {}, invocation(gateway({ rootIdForEnv: () => null }))),
+    /Path root is unavailable: OUTPUT_DIR/u,
+  );
+
+  const committed = [];
+  const names = [];
+  const pathGateway = gateway({
+    reserveFile: async name => {
+      names.push(name);
+      return Object.freeze({ commit: async bytes => { committed.push(Buffer.from(bytes)); return {}; } });
+    },
+  });
+  const withoutSignal = {
+    path: pathGateway,
+    network: Object.freeze({ fetch: async () => new Response(null, { status: 200 }) }),
+    resourceOwner: fixtureResourceOwner,
+  };
+  await downloadExec({ url: "https://example.test/path/derived.bin" }, {}, withoutSignal);
+  await downloadExec({ url: "https://example.test/" }, {}, withoutSignal);
+  await downloadExec({ url: "not a url" }, {}, withoutSignal);
+  assert.deepEqual(names, ["derived.bin", "download", "download"]);
+  assert(committed.every(buffer => buffer.length === 0));
+
+  const responseInvocation = (fetchImpl) => ({ ...invocation(pathGateway), network: Object.freeze({ fetch: fetchImpl }) });
+  await assert.rejects(
+    () => downloadExec({ url: "https://example.test/large", filename: "large.bin" }, {}, responseInvocation(async () => new Response(null, {
+      status: 200,
+      headers: { "content-length": String(128 * 1024 * 1024 + 1) },
+    }))),
+    /超过 128 MB/u,
+  );
+  await assert.rejects(
+    () => downloadExec({ url: "https://example.test/missing", filename: "missing.bin" }, {}, responseInvocation(async () => new Response(null, {
+      status: 404,
+      statusText: "Missing",
+    }))),
+    /HTTP 404 Missing/u,
+  );
+  await assert.rejects(
+    () => downloadExec({ url: "https://example.test/string-error", filename: "error.bin" }, {}, responseInvocation(async () => { throw "transport failed"; })),
+    /transport failed/u,
+  );
+
+  const controller = new AbortController();
+  await assert.rejects(
+    () => downloadExec({ url: "https://example.test/abort", filename: "abort.bin" }, {}, {
+      ...invocation(pathGateway),
+      signal: controller.signal,
+      network: Object.freeze({ fetch: async () => {
+        controller.abort(new Error("cancel during fetch"));
+        throw new DOMException("transport aborted", "AbortError");
+      } }),
+    }),
+    error => error?.code === "RUN_CANCELLED" && /cancel during fetch/u.test(error.message),
+  );
+});
+
 test("RT-04 Office writers stop after reservation and publish no file when the run is cancelled", async () => {
   for (const [execute, args] of [
     [createDocxExec, { path: "cancelled.docx", paragraphs: ["never generated"] }],
@@ -622,6 +682,23 @@ test("RT-04 Office writers stop after reservation and publish no file when the r
     );
     assert.equal(commits, 0);
   }
+});
+
+test("SEC-02 Office writers close invocation, root, and empty-content boundaries", async () => {
+  await assert.rejects(() => createDocxExec({ path: "missing.docx", paragraphs: [] }, {}), /Tool invocation services are required/u);
+  await assert.rejects(() => createXlsxExec({ path: "missing.xlsx", sheets: [] }, {}), /Tool invocation services are required/u);
+  const unavailable = invocation(gateway({ rootIdForEnv: () => null }));
+  await assert.rejects(() => createDocxExec({ path: "missing.docx", paragraphs: [] }, {}, unavailable), /Path root is unavailable: OUTPUT_DIR/u);
+  await assert.rejects(() => createXlsxExec({ path: "missing.xlsx", sheets: [] }, {}, unavailable), /Path root is unavailable: OUTPUT_DIR/u);
+
+  const commits = [];
+  const emptyGateway = gateway({
+    reserveFile: async input => Object.freeze({ commit: async bytes => { commits.push([input, Buffer.from(bytes)]); return {}; } }),
+  });
+  await createDocxExec({ path: "empty.docx" }, {}, invocation(emptyGateway));
+  await assert.rejects(() => createXlsxExec({ path: "empty.xlsx" }, {}, invocation(emptyGateway)), /Workbook is empty/u);
+  assert.deepEqual(commits.map(([name]) => name), ["empty.docx"]);
+  assert(commits.every(([, bytes]) => bytes.length > 0));
 });
 
 test("SEC-02 Office writers reserve extension before generation and commit buffers", async () => {

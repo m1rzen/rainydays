@@ -452,7 +452,7 @@
         },
         {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca",
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1144,7 +1144,7 @@
         },
         {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca",
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1168,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "16a51b1b26f4cb9bf1a6fb690ac8b9c1530ddd00dfc25f5a547f7d958a1e3f65",
+          "sha256": "9dcf13bed1151ffb87dc59d17114938568548d35d8b951266b3fa2cf97a54eb3",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -1691,7 +1691,7 @@
   "coverageScope": {
     "source": {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "b26f0fc47e4059f09d54dcf029dbc3ead1a9373bff14fc8e8ea7ebfd7ff7aa95"
+      "sha256": "fd57379102c692bfc14910d277b78e944e2828c4ee51d69c5a73856fbfe8b271"
     },
     "overallFiles": [
       "dist/agent.js",
@@ -5667,7 +5667,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5679,7 +5679,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5691,7 +5691,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5703,7 +5703,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5715,7 +5715,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5727,7 +5727,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5739,7 +5739,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5751,7 +5751,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5763,7 +5763,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -5775,7 +5775,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -5787,7 +5787,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -5799,7 +5799,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -5811,7 +5811,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -5823,7 +5823,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 image_helper reads authorized bytes before provider setup",
         "producer": "node-test"
@@ -6759,7 +6759,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -6839,7 +6839,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 list_directory delegates the raw input and exact DATA_ROOT ID",
         "producer": "node-test"
@@ -6849,7 +6849,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 search_files reauthorizes the tree on every invocation",
         "producer": "node-test"
@@ -6859,7 +6859,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 grep uses only search-tree directory and bounded file operations",
         "producer": "node-test"
@@ -6889,7 +6889,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -6899,7 +6899,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -6909,7 +6909,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 download reserves its target before fetch and commits bounded bytes",
         "producer": "node-test"
@@ -6919,7 +6919,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "738487551dd142a0b0e710493160e6d42a0b37e5690dda4dd4fb04019b283eca"
+          "sha256": "527b71db9fea59bc3a5d5a405bfd2d6378e600ffe9d276923e47de01a06bb3ed"
         },
         "testCaseId": "SEC-02 image_helper reads authorized bytes before provider setup",
         "producer": "node-test"
@@ -7071,7 +7071,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "b26f0fc47e4059f09d54dcf029dbc3ead1a9373bff14fc8e8ea7ebfd7ff7aa95"
+      "sha256": "fd57379102c692bfc14910d277b78e944e2828c4ee51d69c5a73856fbfe8b271"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
@@ -7135,7 +7135,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "b2580592036dd3e4bf1f215b772ccfe2437457f7ba10ec85ffe576df37294248"
+      "sha256": "cbf590e00685c56f2f1534c7bc7695628f62014282d91f48b2f42c329f507d82"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7199,5 +7199,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "3f7c736ce698aa2f0e3e53a6da62a0bab3b5baa5e86fbeb6a9a9ea8197fe0dd2"
+  "canonicalPayloadSha256": "76f267d92350468454a3393f91f3b261b1fcb20c8a84385fe5dfbfcd4fd47ea7"
 }

@@ -142,7 +142,7 @@
     },
     {
       "exactCasePath": "tests/integration/rt07-task-dag.test.mjs",
-      "sha256": "a9569e6cbd1d8a76abf9eb3014bbc74164705bf6de69b1f9ba83421dd7b030d8",
+      "sha256": "3f1490ce32f49445125a6a01950c59f77cec0da321d6c8611417910eeacc107e",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-07"
@@ -162,5 +162,5 @@
       "owner": "RT-07"
     }
   ],
-  "canonicalPayloadSha256": "c8f92f979fe390528d2fd65f7b72df62c94bc4dbbdf5bcc8109a9d36f25814fb"
+  "canonicalPayloadSha256": "26155d0f0ef882b9f52740d82cf439eda8bc7ebb3992d0a4134acef581abf5b4"
 }

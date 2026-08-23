@@ -78,7 +78,7 @@
     },
     {
       "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
-      "sha256": "e7620ab25b6548088f5e19807298139e6e5ca8063aad85db0253cbce825ca677",
+      "sha256": "b8c794941b2b198e895d543003a883350129e075d240073e46a002f7879926f4",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-06"
@@ -98,5 +98,5 @@
       "owner": "RT-06"
     }
   ],
-  "canonicalPayloadSha256": "f8dc1cfdfc9467f79ea9252bbd944d1ff3d9181b643ff93731c97f5a6a7540de"
+  "canonicalPayloadSha256": "4b3719eca3f71b3ed079fd03c22aa2093439e9145e3a956e85005cb59c4d575b"
 }
