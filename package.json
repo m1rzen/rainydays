@@ -88,6 +88,9 @@
     "governance:evt01:generate": "node scripts/generate-evt01-resolved-manifest.mjs",
     "governance:evt01:check": "node scripts/generate-evt01-resolved-manifest.mjs --check",
     "test:evt01": "node scripts/run-tests.mjs --task EVT-01 --profile full",
+    "governance:evt02:generate": "node scripts/generate-evt02-resolved-manifest.mjs",
+    "governance:evt02:check": "node scripts/generate-evt02-resolved-manifest.mjs --check",
+    "test:evt02": "node scripts/run-tests.mjs --task EVT-02 --profile full",
     "test:rt09": "node scripts/run-tests.mjs --task RT-09 --profile full"
   },
   "dependencies": {

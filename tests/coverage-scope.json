@@ -131,6 +131,18 @@
         "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs"
       },
       {
+        "sourceTask": "EVT-02",
+        "exactCasePath": "tests/contract/evt02-governance.test.mjs"
+      },
+      {
+        "sourceTask": "EVT-02",
+        "exactCasePath": "tests/unit/cron.test.mjs"
+      },
+      {
+        "sourceTask": "EVT-02",
+        "exactCasePath": "tests/integration/evt02-cron-flow.test.mjs"
+      },
+      {
         "sourceTask": "SEC-03",
         "exactCasePath": "tests/integration/sec03-child-consent-transport.test.mjs"
       },

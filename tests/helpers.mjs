@@ -27,6 +27,7 @@ import { loadRt07ResolvedManifest } from "../scripts/rt07-governance.mjs";
 import { loadRt08ResolvedManifest } from "../scripts/rt08-governance.mjs";
 import { loadRt09ResolvedManifest } from "../scripts/rt09-governance.mjs";
 import { loadEvt01ResolvedManifest } from "../scripts/evt01-governance.mjs";
+import { loadEvt02ResolvedManifest } from "../scripts/evt02-governance.mjs";
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const processTemporaryRootRequest = path.resolve(os.tmpdir());
@@ -613,6 +614,29 @@ async function loadEvt01TaskView(root = projectRoot) {
   };
 }
 
+async function loadEvt02TaskView(root = projectRoot) {
+  const resolved = await loadEvt02ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "evt-02.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "EVT-02",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
 export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
   if (taskId === "DATA-01") return loadData01TaskView(root);
   if (taskId === "SEC-06") return loadSec06TaskView(root);
@@ -624,6 +648,7 @@ export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
   if (taskId === "RT-08") return loadRt08TaskView(root);
   if (taskId === "RT-09") return loadRt09TaskView(root);
   if (taskId === "EVT-01") return loadEvt01TaskView(root);
+  if (taskId === "EVT-02") return loadEvt02TaskView(root);
   if (taskId === "SEC-03") return loadSec03ResolvedTaskView(root);
   if (taskId === "SEC-02" || taskId === "GOV-03") return loadResolvedTaskView(taskId, root);
   return loadSourceTaskManifest(taskId, root);
