@@ -9,6 +9,7 @@ const {
   cancelRunInteraction,
   emitRunNotification,
   getRunInteractionIdentity,
+  runOutsideInteractionChannel,
   runWithInteractionChannel,
   setAskUserSseCallback,
   submitAnswer,
@@ -132,6 +133,35 @@ test("RT-01 detached async descendants cannot reopen a completed run channel", a
   );
   assert.deepEqual(await detached, { answer: "(当前运行已结束)", notification: false });
   assert.deepEqual(events, []);
+});
+
+test("EVT-02 background event flow can explicitly detach an inherited run-local scope", async () => {
+  let background;
+  await runWithInteractionChannel(
+    { sessionId: "origin", runId: "origin-run" },
+    { emit: () => undefined },
+    async () => {
+      assert.deepEqual(getRunInteractionIdentity(), { sessionId: "origin", runId: "origin-run" });
+      background = new Promise((resolve, reject) => {
+        setImmediate(() => {
+          try {
+            resolve(runOutsideInteractionChannel(() => ({
+              identity: getRunInteractionIdentity(),
+              nested: runWithInteractionChannel(
+                { sessionId: "target", runId: "event-run" },
+                { emit: () => undefined },
+                () => "started",
+              ),
+            })));
+          } catch (error) { reject(error); }
+        });
+      });
+    },
+  );
+  const detached = await background;
+  assert.equal(detached.identity, null);
+  assert.equal(await detached.nested, "started");
+  assert.throws(() => runOutsideInteractionChannel(null), /action is invalid/u);
 });
 
 test("RT-01 run completion cancels questions left pending by that run", async () => {

@@ -26,6 +26,35 @@ function expectedUi(buildInfo) {
 }
 
 async function startElectron(userData, httpPort, cdpPort, signal) {
+  // Keep all three runtime roots distinct and fixture-local. Inheriting the host default
+  // department root (for example an unavailable network drive) makes this smoke nondeterministic.
+  const workspaceRoot = path.join(userData, "workspace");
+  const departmentDataRoot = path.join(userData, "department");
+  const outputDir = path.join(userData, "output");
+  await Promise.all([
+    mkdir(workspaceRoot, { recursive: true }),
+    mkdir(departmentDataRoot, { recursive: true }),
+    mkdir(outputDir, { recursive: true }),
+  ]);
+  // Electron intentionally strips root env variables before spawning the daemon. Seed the
+  // managed config instead so both launches use the same self-contained path identities.
+  await writeFile(path.join(userData, "config.json"), JSON.stringify({
+    defaultProfile: "default",
+    profiles: {
+      default: {
+        model: "electron-smoke-model",
+        apiKey: "",
+        baseURL: "https://provider.invalid/v1",
+        providerType: "openai-compatible",
+      },
+    },
+    settings: {
+      defaultPersona: "general",
+      workspaceRoot,
+      departmentDataRoot,
+      outputDir,
+    },
+  }, null, 2));
   const child = spawnManaged(electronExecutable, [projectRoot, `--user-data-dir=${userData}`, `--remote-debugging-port=${cdpPort}`, "--disable-gpu"], {
     env: {
       ...process.env,
@@ -478,7 +507,13 @@ test("real Electron main, preload and renderer preserve identity and session acr
     await probeIdentity(client, buildInfo, firstHttpPort);
     await assertRendererHardening(client, firstHttpPort);
     console.log("[electron-e2e] first identity and renderer hardening passed");
-    const created = await client.evaluate(`fetch('/api/sessions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:'GOV-03 Electron persistence'})}).then(r=>r.json())`);
+    let created;
+    try {
+      created = await client.evaluate(`fetch('/api/sessions', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:'GOV-03 Electron persistence'})}).then(r=>r.json())`);
+    } catch (error) {
+      const logs = first.logs();
+      throw new Error(`${error instanceof Error ? error.message : String(error)}\nElectron stdout:\n${logs.stdout}\nElectron stderr:\n${logs.stderr}`);
+    }
     sessionId = created.session.id;
     assert.match(sessionId, /^[0-9a-f-]{36}$/);
     console.log("[electron-e2e] first path policy");
