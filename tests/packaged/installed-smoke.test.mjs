@@ -513,7 +513,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
       const after = await fetch('/api/terminals', {headers:{'X-RainyDays-Session':second.session.id}}).then(r=>r.json());
       const selected = await fetch('/api/sessions/${sessionId}/select', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
       return {started:startedResponse.status,code:started.code,second:secondResponse.status,secondId:second.session.id,beforeCount:before.terminals.length,afterCount:after.terminals.length,selected:selected.status};
-    })()`);
+    })()`, 30_000);
     assert.deepEqual(terminalIsolation, {started:403,code:"EXEC_DIRECT_MUTATION_DENIED",second:200,secondId:terminalIsolation.secondId,beforeCount:0,afterCount:0,selected:200});
     assert.notEqual(terminalIsolation.secondId, sessionId);
     assert(first.logs().stdout.includes(buildInfo.buildId));

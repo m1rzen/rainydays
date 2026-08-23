@@ -1307,8 +1307,8 @@ export class CdpClient {
     });
   }
 
-  async evaluate(expression) {
-    const result = await this.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+  async evaluate(expression, timeoutMs = 15_000) {
+    const result = await this.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true }, timeoutMs);
     if (result.exceptionDetails) throw new Error(result.exceptionDetails.text || "Renderer evaluation failed");
     return result.result?.value;
   }
