@@ -45,7 +45,7 @@ const semverPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\
 const hashPattern = /^[a-f0-9]{64}$/;
 const buildIdPattern = /^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$/;
 const SUPPORTED_DATABASE_SCHEMA_VERSION = 6;
-const SUPPORTED_SESSION_EXPORT_VERSION = 1;
+const SUPPORTED_SESSION_EXPORT_VERSION = 2;
 const EXPECTED_BASELINE = Object.freeze({
   schemaVersion: 1,
   targetVersion: "0.1.898",

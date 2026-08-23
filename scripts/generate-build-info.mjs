@@ -91,7 +91,7 @@ async function main() {
     builtAt,
     versions: {
       databaseSchema: 6,
-      sessionExport: 1,
+      sessionExport: 2,
       executionIsolation: {
         architectureSha256: sec03ArchitectureSha256,
         protocolVersion: 1,

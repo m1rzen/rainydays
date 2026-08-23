@@ -62,6 +62,17 @@ export interface TaskUpdateInput {
   readonly addBlocks?: readonly string[];
 }
 
+export interface TaskTransferSnapshot {
+  readonly id: string;
+  readonly subject: string;
+  readonly description: string | null;
+  readonly status: TaskStatus;
+  readonly activeForm: string | null;
+  readonly owner: string | null;
+  readonly metadata: Readonly<Record<string, unknown>>;
+  readonly blockedBy: readonly string[];
+}
+
 function invalid(message: string): never {
   throw new TaskDagError("TASK_INVALID", message);
 }
@@ -313,6 +324,101 @@ export function getNextPendingTask(sessionId: string): TaskSnapshot | null {
 export function allTasksCompleted(sessionId: string): boolean {
   const values = snapshots(sessionId);
   return values.length === 0 || values.every(value => value.status === "completed");
+}
+
+function transferRecord(value: unknown, field: string): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) invalid(`${field} is invalid`);
+  return value as Record<string, unknown>;
+}
+
+function exactTransferKeys(value: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  const allowedSet = new Set(allowed);
+  if (allowed.some(key => !Object.hasOwn(value, key)) || Object.keys(value).some(key => !allowedSet.has(key))) {
+    invalid(`${field} fields are invalid`);
+  }
+}
+
+function nullableTransferString(value: unknown, field: string, maximum: number): string | null {
+  return value === null ? null : boundedString(value, field, maximum);
+}
+
+/** Validate a complete task-DAG transfer before the Session import transaction starts. */
+export function normalizeTaskTransfer(value: unknown): readonly TaskTransferSnapshot[] {
+  if (!Array.isArray(value) || value.length > MAX_TASKS_PER_SESSION) invalid("canvas.tasks is invalid");
+  const normalized = value.map((entry, index) => {
+    const field = `canvas.tasks[${index}]`;
+    const raw = transferRecord(entry, field);
+    exactTransferKeys(raw, ["id", "subject", "description", "status", "activeForm", "owner", "metadata", "blockedBy"], field);
+    const status = raw.status;
+    if (status !== "pending" && status !== "in_progress" && status !== "completed") invalid(`${field}.status is invalid`);
+    return Object.freeze({
+      id: taskId(raw.id, `${field}.id`),
+      subject: boundedString(raw.subject, `${field}.subject`, MAX_SUBJECT_LENGTH),
+      description: nullableTransferString(raw.description, `${field}.description`, MAX_DESCRIPTION_LENGTH),
+      status,
+      activeForm: nullableTransferString(raw.activeForm, `${field}.activeForm`, MAX_ACTIVE_FORM_LENGTH),
+      owner: nullableTransferString(raw.owner, `${field}.owner`, MAX_OWNER_LENGTH),
+      metadata: Object.freeze(metadata(raw.metadata)),
+      blockedBy: Object.freeze(ids(raw.blockedBy as readonly string[], `${field}.blockedBy`)),
+    });
+  });
+  const byId = new Map<string, TaskTransferSnapshot>();
+  for (const task of normalized) {
+    if (byId.has(task.id)) invalid("canvas.tasks contains duplicate IDs");
+    byId.set(task.id, task);
+  }
+  const graph = new Map<string, ReadonlySet<string>>();
+  for (const task of normalized) {
+    if (task.blockedBy.includes(task.id)) throw new TaskDagError("TASK_CYCLE", "Task cannot block itself");
+    for (const blocker of task.blockedBy) {
+      if (!byId.has(blocker)) throw new TaskDagError("TASK_BLOCKER_NOT_FOUND", `Blocker ${blocker} does not exist in the transfer`);
+    }
+    graph.set(task.id, new Set(task.blockedBy));
+    if (task.status !== "pending" && task.blockedBy.some(blocker => byId.get(blocker)?.status !== "completed")) {
+      throw new TaskDagError("TASK_BLOCKED", `Task ${task.id} is blocked in the transfer`);
+    }
+  }
+  assertAcyclic([...byId.keys()], graph);
+  return Object.freeze(normalized);
+}
+
+export function exportTaskTransfer(sessionId: string): readonly TaskTransferSnapshot[] {
+  return Object.freeze(snapshots(sessionId).map(task => Object.freeze({
+    id: task.id,
+    subject: task.subject,
+    description: task.description,
+    status: task.status,
+    activeForm: task.activeForm,
+    owner: task.owner,
+    metadata: task.metadata,
+    blockedBy: task.blockedBy,
+  })));
+}
+
+/** Revalidates and restores one complete Task DAG atomically, including for direct callers. */
+export function restoreTaskTransfer(sessionId: string, value: unknown): void {
+  const tasks = normalizeTaskTransfer(value);
+  withTransaction(() => {
+    const now = new Date().toISOString();
+    tasks.forEach((task, sortOrder) => insertTaskRow({
+      session_id: sessionId,
+      task_id: task.id,
+      subject: task.subject,
+      description: task.description,
+      status: task.status,
+      active_form: task.activeForm,
+      owner: task.owner,
+      metadata_json: JSON.stringify(task.metadata),
+      sort_order: sortOrder,
+      created_at: now,
+      updated_at: now,
+    }));
+    for (const task of tasks) {
+      for (const blocker of task.blockedBy) {
+        insertTaskDependency({ session_id: sessionId, task_id: task.id, blocker_id: blocker, created_at: now });
+      }
+    }
+  });
 }
 
 export function copyTasksForFork(sourceSessionId: string, targetSessionId: string): void {

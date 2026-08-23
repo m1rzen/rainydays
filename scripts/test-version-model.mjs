@@ -442,7 +442,7 @@ async function main() {
       ["source digest", { ...secondBuild, sourceDigest: "bad" }, /sourceDigest is invalid/],
       ["dist integrity", { ...secondBuild, distIntegritySha256: "bad" }, /distIntegritySha256 is invalid/],
       ["versions missing", { ...secondBuild, versions: null }, /versions are missing/],
-      ["session export version", { ...secondBuild, versions: { ...secondBuild.versions, sessionExport: 2 } }, /Session Export version is unsupported/],
+      ["session export version", { ...secondBuild, versions: { ...secondBuild.versions, sessionExport: 1 } }, /Session Export version is unsupported/],
       ["isolation missing", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: null } }, /execution isolation metadata is missing/],
       ["isolation identity", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, architectureSha256: "bad" } } }, /execution isolation metadata is invalid/],
       ["isolation artifact", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, artifacts: [{ ...secondBuild.versions.executionIsolation.artifacts[0], bytes: 0 }, secondBuild.versions.executionIsolation.artifacts[1]] } } }, /execution isolation artifact is invalid/],
@@ -811,7 +811,7 @@ async function main() {
     const sessionRun = runHelper("session-formats", sessionRoot);
     assert.equal(sessionRun.status, 0, sessionRun.stderr);
     assert.equal(sessionRun.payload.exportFormat, "mini-lux-session");
-    assert.equal(sessionRun.payload.exportVersion, 1);
+    assert.equal(sessionRun.payload.exportVersion, 2);
     assert.deepEqual(sessionRun.payload.failures, [
       "UNSUPPORTED_SESSION_EXPORT",
       "INVALID_SESSION_EXPORT",

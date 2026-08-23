@@ -1950,10 +1950,10 @@ export interface PinRow {
   created_at: string;
 }
 
-export function insertPin(sessionId: string, content: string): number {
+export function insertPin(sessionId: string, content: string, createdAt = new Date().toISOString()): number {
   const result = db.prepare(
     `INSERT INTO pins (session_id, content, created_at) VALUES (?, ?, ?)`
-  ).run(sessionId, content, new Date().toISOString());
+  ).run(sessionId, content, createdAt);
   return Number(result.lastInsertRowid);
 }
 

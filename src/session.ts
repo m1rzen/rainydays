@@ -24,7 +24,7 @@ import {
   withTransaction,
 } from "./db.js";
 import { APP_VERSION, BUILD_ID, SESSION_EXPORT_VERSION } from "./version.js";
-import { copyTasksForFork } from "./task.js";
+import { copyTasksForFork, exportTaskTransfer, normalizeTaskTransfer, restoreTaskTransfer, type TaskTransferSnapshot } from "./task.js";
 import { registerSession, unregisterSession, postFromSession, type LinkIdentity } from "./link.js";
 
 const linkIdentities = new Map<string, LinkIdentity>();
@@ -218,9 +218,20 @@ export class SessionImportError extends Error {
   }
 }
 
+export class SessionExportError extends Error {
+  readonly code = "SESSION_EXPORT_TOO_LARGE";
+  constructor(message: string) {
+    super(message);
+    this.name = "SessionExportError";
+  }
+}
+
+const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
 const MAX_IMPORT_MESSAGES = 10_000;
+const MAX_IMPORT_PINS = 1_000;
 const MAX_TITLE_LENGTH = 500;
 const MAX_CONTENT_LENGTH = 1_000_000;
+const MAX_PIN_CONTENT_LENGTH = 100_000;
 const MAX_TOOL_CALLS_LENGTH = 1_000_000;
 const MAX_TOOL_CALLS_PER_MESSAGE = 100;
 const MAX_TOOL_CALL_ID_LENGTH = 500;
@@ -250,7 +261,8 @@ function requireString(value: unknown, field: string, maxLength: number, allowEm
 
 function requireTimestamp(value: unknown, field: string): string {
   const timestamp = requireString(value, field, 100);
-  if (Number.isNaN(Date.parse(timestamp)))
+  const parsed = new Date(timestamp);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString() !== timestamp)
     throw new SessionImportError(`导入时间无效: ${field}`, "INVALID_SESSION_EXPORT");
   return timestamp;
 }
@@ -330,28 +342,79 @@ function normalizeMessages(value: unknown, exportedSessionId: string) {
     };
   });
   const declared = new Set<string>();
-  const consumed = new Set<string>();
+  let pending = new Set<string>();
   for (const [index, message] of messages.entries()) {
+    if (message.tool_call_id !== null) {
+      if (!pending.delete(message.tool_call_id)) {
+        throw new SessionImportError(`导入 tool_call_id 未引用当前 assistant 调用: messages[${index}]`, "INVALID_SESSION_EXPORT");
+      }
+      continue;
+    }
+    if (pending.size > 0) {
+      throw new SessionImportError(`导入 assistant 工具调用缺少连续 tool 结果: messages[${index}]`, "INVALID_SESSION_EXPORT");
+    }
     for (const id of message.declaredToolCallIds) {
       if (declared.has(id))
         throw new SessionImportError(`导入工具调用 ID 跨消息重复: messages[${index}]`, "INVALID_SESSION_EXPORT");
       declared.add(id);
-    }
-    if (message.tool_call_id !== null) {
-      if (!declared.has(message.tool_call_id) || consumed.has(message.tool_call_id)) {
-        throw new SessionImportError(`导入 tool_call_id 未引用此前 assistant 调用: messages[${index}]`, "INVALID_SESSION_EXPORT");
-      }
-      consumed.add(message.tool_call_id);
+      pending.add(id);
     }
   }
-  if (declared.size !== consumed.size) {
+  if (pending.size > 0) {
     throw new SessionImportError("导入 assistant 工具调用缺少 tool 结果", "INVALID_SESSION_EXPORT");
   }
   return messages;
 }
 
-/** 验证并将当前或旧版导出格式归一化到 formatVersion 1。 */
-export function normalizeSessionImport(data: unknown) {
+interface PinTransferSnapshot {
+  readonly content: string;
+  readonly createdAt: string;
+}
+
+function normalizeCanvas(value: unknown, enabled: boolean): {
+  readonly pins: readonly PinTransferSnapshot[];
+  readonly tasks: readonly TaskTransferSnapshot[];
+} {
+  if (!enabled) return { pins: Object.freeze([]), tasks: Object.freeze([]) };
+  if (!isRecord(value)) throw new SessionImportError("导入 Canvas 无效", "INVALID_SESSION_EXPORT");
+  requireExactKeys(value, ["pins", "tasks", "attachments"], "canvas");
+  if (!Array.isArray(value.pins) || value.pins.length > MAX_IMPORT_PINS) {
+    throw new SessionImportError(`导入 Pin 数量无效，最多支持 ${MAX_IMPORT_PINS} 条`, "INVALID_SESSION_EXPORT");
+  }
+  const pins = value.pins.map((entry, index) => {
+    if (!isRecord(entry)) throw new SessionImportError(`导入 Pin 无效: canvas.pins[${index}]`, "INVALID_SESSION_EXPORT");
+    requireExactKeys(entry, ["content", "createdAt"], `canvas.pins[${index}]`);
+    return Object.freeze({
+      content: requireString(entry.content, `canvas.pins[${index}].content`, MAX_PIN_CONTENT_LENGTH),
+      createdAt: requireTimestamp(entry.createdAt, `canvas.pins[${index}].createdAt`),
+    });
+  });
+  if (!Array.isArray(value.attachments) || value.attachments.length !== 0) {
+    throw new SessionImportError("当前 Session Export 不支持非空附件", "INVALID_SESSION_EXPORT");
+  }
+  let tasks: readonly TaskTransferSnapshot[];
+  try {
+    tasks = normalizeTaskTransfer(value.tasks);
+  } catch (error) {
+    throw new SessionImportError(error instanceof Error ? error.message : String(error), "INVALID_SESSION_EXPORT");
+  }
+  return { pins: Object.freeze(pins), tasks };
+}
+
+/** 验证并将 legacy 1.0、current v1 或 current v2 归一化到当前格式。 */
+export function normalizeSessionImport(input: unknown) {
+  let serialized: string;
+  try {
+    const encoded = JSON.stringify(input);
+    if (typeof encoded !== "string") throw new Error("not serializable");
+    serialized = encoded;
+  } catch { throw new SessionImportError("导入数据不是可序列化 JSON", "INVALID_SESSION_EXPORT"); }
+  if (Buffer.byteLength(serialized, "utf8") > MAX_IMPORT_BYTES) {
+    throw new SessionImportError(`导入数据超过 ${MAX_IMPORT_BYTES} 字节上限`, "INVALID_SESSION_EXPORT");
+  }
+  let data: unknown;
+  try { data = JSON.parse(serialized); }
+  catch { throw new SessionImportError("导入数据不是有效 JSON", "INVALID_SESSION_EXPORT"); }
   if (!isRecord(data)) throw new SessionImportError("导入数据必须是对象", "INVALID_SESSION_EXPORT");
   const isCurrent = data.format === "mini-lux-session";
   const isLegacy = data.version === "1.0" && data.format === undefined && data.formatVersion === undefined;
@@ -362,13 +425,17 @@ export function normalizeSessionImport(data: unknown) {
     const found = data.formatVersion ?? data.version ?? data.format;
     throw new SessionImportError("无法识别的会话导出格式", "UNSUPPORTED_SESSION_EXPORT", found);
   }
-  if (isCurrent && data.formatVersion !== SESSION_EXPORT_VERSION) {
-    throw new SessionImportError(`会话导出版本不兼容: 当前 ${String(data.formatVersion)}，支持 ${SESSION_EXPORT_VERSION}`, "UNSUPPORTED_SESSION_EXPORT", data.formatVersion);
+  const currentVersion = isCurrent ? data.formatVersion : null;
+  if (isCurrent && currentVersion !== 1 && currentVersion !== SESSION_EXPORT_VERSION) {
+    throw new SessionImportError(`会话导出版本不兼容: 当前 ${String(data.formatVersion)}，支持 1..${SESSION_EXPORT_VERSION}`, "UNSUPPORTED_SESSION_EXPORT", data.formatVersion);
   }
+  const hasCanvas = isCurrent && currentVersion === SESSION_EXPORT_VERSION;
   requireExactKeys(
     data,
     isCurrent
-      ? ["format", "formatVersion", "producer", "exportedAt", "session", "messages"]
+      ? hasCanvas
+        ? ["format", "formatVersion", "producer", "exportedAt", "session", "messages", "canvas"]
+        : ["format", "formatVersion", "producer", "exportedAt", "session", "messages"]
       : ["version", "exported_at", "session", "messages"],
     "root",
   );
@@ -391,9 +458,12 @@ export function normalizeSessionImport(data: unknown) {
   const title = requireString(data.session.title, "session.title", MAX_TITLE_LENGTH);
   requireTimestamp(data.session.created_at, "session.created_at");
   requireTimestamp(data.session.updated_at, "session.updated_at");
+  const canvas = normalizeCanvas(data.canvas, hasCanvas);
   return {
     title,
     messages: normalizeMessages(data.messages, exportedSessionId),
+    pins: canvas.pins,
+    tasks: canvas.tasks,
   };
 }
 
@@ -413,13 +483,18 @@ export interface ExportData {
     updated_at: string;
   };
   messages: MessageRow[];
+  canvas: {
+    pins: PinTransferSnapshot[];
+    tasks: readonly TaskTransferSnapshot[];
+    attachments: [];
+  };
 }
 
 /** 导出会话为当前可序列化格式。 */
 export function exportSession(sessionId: string): ExportData | null {
   const session = getSession(sessionId);
   if (!session) return null;
-  return {
+  const exported: ExportData = {
     format: "mini-lux-session",
     formatVersion: SESSION_EXPORT_VERSION,
     producer: { appVersion: APP_VERSION, buildId: BUILD_ID },
@@ -432,7 +507,18 @@ export function exportSession(sessionId: string): ExportData | null {
       updated_at: session.updated_at,
     },
     messages: getMessagesBySession(sessionId),
+    canvas: {
+      pins: getPinsBySession(sessionId).map(pin => ({ content: pin.content, createdAt: pin.created_at })),
+      tasks: exportTaskTransfer(sessionId),
+      attachments: [],
+    },
   };
+  try {
+    normalizeSessionImport(exported);
+  } catch (error) {
+    throw new SessionExportError(error instanceof Error ? `会话无法安全导出: ${error.message}` : "会话无法安全导出");
+  }
+  return exported;
 }
 
 /** 验证完整导入数据后，在单一事务中创建新会话和消息。 */
@@ -453,6 +539,8 @@ export function importSession(data: unknown, persona: PersonaDefinition): Sessio
           created_at: msg.created_at,
         });
       }
+      for (const pin of normalized.pins) insertPin(newSession.id, pin.content, pin.createdAt);
+      restoreTaskTransfer(newSession.id, normalized.tasks);
       touchSession(newSession.id);
       return newSession;
     });

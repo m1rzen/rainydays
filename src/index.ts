@@ -26,6 +26,7 @@ import {
   exportSession,
   importSession,
   ensureSessionLinkRegistration,
+  SessionExportError,
   SessionImportError,
   searchSessions,
 } from "./session.js";
@@ -1757,11 +1758,19 @@ app.post("/api/sessions/:id/fork", async (req, res) => {
 // ===========================================
 app.get("/api/sessions/:id/export", (req, res) => {
   const id = req.params.id;
-  const data = exportSession(id);
-  if (!data) { res.status(404).json({ error: "会话不存在" }); return; }
-  const safeName = (data.session.title || "export").replace(/[^\w\u4e00-\u9fa5]/g, "_");
-  res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(safeName)}.json"`);
-  res.json(data);
+  try {
+    const data = exportSession(id);
+    if (!data) { res.status(404).json({ error: "会话不存在" }); return; }
+    const safeName = (data.session.title || "export").replace(/[^\w\u4e00-\u9fa5]/g, "_");
+    res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(safeName)}.json"`);
+    res.json(data);
+  } catch (error) {
+    if (error instanceof SessionExportError) {
+      res.status(413).json({ error: error.message, code: error.code });
+      return;
+    }
+    throw error;
+  }
 });
 
 // ===========================================

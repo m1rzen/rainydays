@@ -18,6 +18,7 @@ import {
   validateSec03ResolvedManifest,
 } from "../scripts/sec03-governance.mjs";
 import { loadData01ResolvedManifest } from "../scripts/data01-governance.mjs";
+import { loadData02ResolvedManifest } from "../scripts/data02-governance.mjs";
 import { loadSec06ResolvedManifest } from "../scripts/sec06-governance.mjs";
 import { loadRt01ResolvedManifest } from "../scripts/rt01-governance.mjs";
 import { loadRt04ResolvedManifest } from "../scripts/rt04-governance.mjs";
@@ -408,6 +409,29 @@ async function loadData01TaskView(root = projectRoot) {
   };
 }
 
+async function loadData02TaskView(root = projectRoot) {
+  const resolved = await loadData02ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "data-02.json");
+  const source = JSON.parse(await readFile(sourcePath, "utf8"));
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DATA-02",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: {},
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
 async function loadSec06TaskView(root = projectRoot) {
   const resolved = await loadSec06ResolvedManifest({ root });
   const sourcePath = path.join(root, "tests", "manifests", "sec-06.json");
@@ -663,6 +687,7 @@ async function loadEvt03TaskView(root = projectRoot) {
 
 export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
   if (taskId === "DATA-01") return loadData01TaskView(root);
+  if (taskId === "DATA-02") return loadData02TaskView(root);
   if (taskId === "SEC-06") return loadSec06TaskView(root);
   if (taskId === "RT-01") return loadRt01TaskView(root);
   if (taskId === "RT-04") return loadRt04TaskView(root);

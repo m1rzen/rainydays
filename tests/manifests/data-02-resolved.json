@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DATA-02",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/data-02.json",
+    "sha256": "75a3a4a9203f69dc08cd17fa8c25c7a9c08a5aab75dc7e5dc512e39491182c8f"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "bf9294221a9ba639e6d269f8337f11f70d293af1b51edaefc051207d5cdc6e13",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "8270621fcfcc5727e792ca80dd14078220a2cc23e5200899f40e55d6a5ba49f5",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "src/session.ts",
+      "sha256": "cffaa85e615f7ef8b27cda8717822df5fdabff0e3401b8a9c5364dbf80eefba7",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "src/task.ts",
+      "sha256": "cf9ec58234504e2122be24f96a6c159e32a0e0ccc7ba6e6d807b28586ff09bbf",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "src/version.ts",
+      "sha256": "98c608618faa21f7016f2ce656b0b1ea06d0ad83fa5e3c90b41690d326979f03",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "package.json",
+      "sha256": "5971f753ad95a5e5440de331e78ec964254d43a40cfdd6eef56edf3486a09410",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "scripts/data02-governance.mjs",
+      "sha256": "b51048668ef63ce10c2bf92b1e0078dfd56ef52ec3861ca50742458098d2fe15",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "scripts/generate-data02-resolved-manifest.mjs",
+      "sha256": "12a5d83dd9853778aab0745cd39b8074b2aca194315f60a3a5b286a52d2b253a",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "scripts/generate-build-info.mjs",
+      "sha256": "2d100bccdbae3b19d74e103a87a352468f47106bbf5df7346e97d79a7de7580c",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "scripts/prepare-electron-app.mjs",
+      "sha256": "9c9b931b20a509223cbd9b97e48646124cfefaf6d3597bcef2839343d304157e",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "scripts/test-version-model.mjs",
+      "sha256": "6f702d2b0d03a85ddca71077911f12fffb987c0013a27c3c6cc0de3fd633885a",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "scripts/version-test-child.mjs",
+      "sha256": "3051708c0f452b3b0c1009fa836fefbb06a04de15698fd1558e395c70732e565",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "33dd0da9877a2e6b6a023be3fb9a03bd905713266a08a6b64d8cc45e84f0c382",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "a4e0f0cd731f199e6bd808955e701fe6265c7bdb2f6bd6b003c952fe3a140ece",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "dd2d4d7d73b17e366b27f002e70c86871e452e63f1bc71c9d707a02041d24794",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "parity/GOV-02-VERSION-MODEL.md",
+      "sha256": "34bb1dc90db1c5734be8a7031a47e54fcadaf80e5218124e9f1448ea46031e17",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "dist/db.js",
+      "sha256": "f938c73aaa736e63d7bc54c38ef67a997747300db5db3fcaec4103dfabb717e7",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "c404074c1b5631eebc1c6d62a8f846c9d92f56c5b13f9674033bac145ff6b723",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "dist/session.js",
+      "sha256": "8686a99a47741b9fc44938b255337fa15cfe8f030438fc16b5990b05c3a94703",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "dist/task.js",
+      "sha256": "59e41a1537d15765c2771a7fa05b13a06adefa2d51b73d5d2a48fb71b8724c89",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "dist/version.js",
+      "sha256": "5b35b3fbd3e59c980dab5366cdc4935e4fba7eca7845576595fc0d2181aeefba",
+      "owner": "DATA-02"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/data02-governance.test.mjs",
+      "sha256": "170a6c6c7bb7b82e1be81b7b6875a191430c11f5b270708a9cee21a418de0e7b",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "tests/integration/data02-session-transfer.test.mjs",
+      "sha256": "57f86d5df5017458d1e49275321b7cca5847dd635e2e482e4c4a4702ec543160",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DATA-02"
+    },
+    {
+      "exactCasePath": "tests/integration/version-model.test.mjs",
+      "sha256": "8edc73e24dab1a1b95a22ad62e4b069483a293da52045b13e8b71f0709e9daf0",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DATA-02"
+    }
+  ],
+  "canonicalPayloadSha256": "37a5205b9cf908d37173983e33afb94c5408e4345dddb9d13b0ecde57644e775"
+}

@@ -136,7 +136,7 @@ async function sessionFormats() {
   delete missingNullableFields.tool_call_id;
   const failures = [];
   for (const input of [
-    { ...exported, formatVersion: 2 },
+    { ...exported, formatVersion: 99 },
     {
       ...exported,
       messages: [
