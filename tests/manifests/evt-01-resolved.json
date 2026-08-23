@@ -13,7 +13,7 @@
     },
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "7b14659f933c87f196590e8240f43db631885a5176bc032ce353e975b8ae2614",
+      "sha256": "370b636b099afc1f85f9eb7d65c51a2447a30446eb9e22ad2f8432f3ad9a9e99",
       "owner": "EVT-01"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "e7721346986cdf29758a0263b63000f875d8f1bda9e42f6a1339f9417c03876f",
+      "sha256": "582e59ec4bd695a59edfd601d32c9350f833311d586f13b33c82dfe127ecadf4",
       "owner": "EVT-01"
     },
     {
@@ -43,7 +43,7 @@
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "06df2e8ba60f159b2b57b3a7b23c7c62731c134d569267c36bc52cdf9dd0248a",
+      "sha256": "566b5c86a3a4c68a02d1b046d0fa08a00e727b722fb5940735ea552506ed540f",
       "owner": "EVT-01"
     },
     {
@@ -53,7 +53,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "8dea8d339a7acec790ea1b6315dc06eb10166d7be5f6d4868be362071cafbebc",
+      "sha256": "872f10951c6c7fba73428b2cff39c2655ee45370f1903157c966eb7987f9c8e7",
       "owner": "EVT-01"
     },
     {
@@ -84,18 +84,18 @@
     },
     {
       "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs",
-      "sha256": "762d3ea4709434fd56288af076bdd81fae4d007a23da95c64b2793f7c05d23ca",
+      "sha256": "e0341f12eff27c0b367506bd68c816f55af3a5b6ce009e080d6b533c2987dd4d",
       "kind": "test",
       "layer": "integration",
       "owner": "EVT-01"
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "740fe9548917f83c882015c17edabf8e1bb29734a284c721e9a334aa75a676e1",
+      "sha256": "fbe1b6a093829496e446e9917297ae18140862f5f59888526eec0cf25f75490b",
       "kind": "test",
       "layer": "electron",
       "owner": "EVT-01"
     }
   ],
-  "canonicalPayloadSha256": "4278d754aa5974e751832e9726c47e2e2b2e3ad8b2e5f4b9c90e3ff0eaa25684"
+  "canonicalPayloadSha256": "64a42ac50233f7ad5a0cb9abbe9024f037870df9e57000fb0a824e53089ad7f6"
 }

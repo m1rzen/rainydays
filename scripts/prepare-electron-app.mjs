@@ -132,7 +132,7 @@ if (!/^[a-f0-9]{64}$/.test(buildInfo.candidateId)
   || (buildInfo.buildIdSource !== "derived" && buildInfo.buildIdSource !== "ci")
   || (buildInfo.buildIdSource === "derived" && (buildInfo.buildId !== `${buildInfo.appVersion}+local.${buildInfo.sourceDigest.slice(0, 12)}` || buildInfo.candidateId !== buildInfo.sourceDigest))
   || (buildInfo.buildIdSource === "ci" && buildInfo.buildId !== `${buildInfo.appVersion}+ci.${buildInfo.candidateId}`)
-  || buildInfo.versions?.databaseSchema !== 7 || buildInfo.versions?.sessionExport !== 2
+  || buildInfo.versions?.databaseSchema !== 8 || buildInfo.versions?.sessionExport !== 2
   || buildInfo.versions?.executionIsolation?.architectureSha256 !== "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe"
   || buildInfo.versions?.executionIsolation?.protocolVersion !== 1
   || !/^[a-f0-9]{64}$/.test(buildInfo.versions?.executionIsolation?.nativeSourceDigest || "")

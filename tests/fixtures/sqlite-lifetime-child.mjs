@@ -199,7 +199,7 @@ if (scenario === "normal") {
   const snapshot = await db.createConsistentDatabaseSnapshot();
   const incompatible = await backupContainer.createBackupContainer({
     appVersion: "9.9.9",
-    databaseSchemaVersion: 7,
+    databaseSchemaVersion: 8,
     files: [{ role: "database-snapshot", path: "data/mini-lux.db", bytes: snapshot.bytes }],
   }, credentialStore.createBackupDataKeyWrapper());
   await assert.rejects(() => prepareManagedRestore(incompatible), /app version is incompatible/iu);
@@ -264,7 +264,7 @@ if (scenario === "normal") {
   );
   const lease = await store.stageValidatedDatabaseRestore(
     snapshot.bytes,
-    candidate => db.validateDatabaseRestoreCandidate(candidate, 7)
+    candidate => db.validateDatabaseRestoreCandidate(candidate, 8)
   );
   assert.equal(lease.isActive(), true);
   assert.deepEqual(await lease.readBytes(), snapshot.bytes);
@@ -277,9 +277,9 @@ if (scenario === "normal") {
 
   const publishLease = await store.stageValidatedDatabaseRestore(
     snapshot.bytes,
-    candidate => db.validateDatabaseRestoreCandidate(candidate, 7)
+    candidate => db.validateDatabaseRestoreCandidate(candidate, 8)
   );
-  const activeConnection = await openBootstrapDatabase(7);
+  const activeConnection = await openBootstrapDatabase(8);
   await assert.rejects(() => publishLease.publish(), error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_STALE");
   await activeConnection.close();
 
@@ -352,7 +352,7 @@ if (scenario === "normal") {
   }), "utf8");
   const vaultContainer = await backupContainer.createBackupContainer({
     appVersion: "0.1.0",
-    databaseSchemaVersion: 7,
+    databaseSchemaVersion: 8,
     files: [
       { role: "database-snapshot", path: "data/mini-lux.db", bytes: snapshot.bytes },
       { role: "config", path: "config.json", bytes: config },
@@ -422,7 +422,7 @@ if (scenario === "normal") {
   }
   const auditContainer = await backupContainer.createBackupContainer({
     appVersion: "0.1.0",
-    databaseSchemaVersion: 7,
+    databaseSchemaVersion: 8,
     files: [{ role: "database-snapshot", path: "data/mini-lux.db", bytes: foreignAuditBytes }],
   }, credentialStore.createBackupDataKeyWrapper());
   await assert.rejects(() => prepareManagedRestore(auditContainer), /audit key is unavailable/u);
@@ -449,7 +449,7 @@ if (scenario === "normal") {
   const { createBackupDataKeyWrapper } = credentialStore;
   const container = await createBackupContainer({
     appVersion: "0.1.0",
-    databaseSchemaVersion: 7,
+    databaseSchemaVersion: 8,
     files: [
       { role: "database-snapshot", path: "data/mini-lux.db", bytes: snapshot.bytes },
       { role: "config", path: "config.json", bytes: config },
@@ -847,7 +847,7 @@ if (scenario === "normal") {
         wal: await fs.readFile(`${mainPath}-wal`),
         shm: await fs.readFile(`${mainPath}-shm`),
       });
-      await assert.rejects(() => openBootstrapDatabase(7), /SQLite WAL/u, variant.name);
+      await assert.rejects(() => openBootstrapDatabase(8), /SQLite WAL/u, variant.name);
       assert.deepEqual(await fs.readFile(mainPath), before.main, `${variant.name} mutated main`);
       assert.deepEqual(await fs.readFile(`${mainPath}-wal`), before.wal, `${variant.name} mutated WAL`);
       assert.deepEqual(await fs.readFile(`${mainPath}-shm`), before.shm, `${variant.name} mutated SHM`);
@@ -857,7 +857,7 @@ if (scenario === "normal") {
     const walAlias = path.join(outside, "wal-hardlink-alias");
     await fs.link(`${mainPath}-wal`, walAlias);
     const linkedWal = await fs.readFile(`${mainPath}-wal`);
-    await assert.rejects(() => openBootstrapDatabase(7), /SQLite WAL|PATH_IDENTITY_CHANGED/u, "hardlinked WAL");
+    await assert.rejects(() => openBootstrapDatabase(8), /SQLite WAL|PATH_IDENTITY_CHANGED/u, "hardlinked WAL");
     assert.deepEqual(await fs.readFile(`${mainPath}-wal`), linkedWal);
     await fs.unlink(walAlias);
 
@@ -866,14 +866,14 @@ if (scenario === "normal") {
     await fs.mkdir(`${mainPath}-wal`);
     const beforeDirectoryMain = await fs.readFile(mainPath);
     const beforeDirectoryShm = await fs.readFile(`${mainPath}-shm`);
-    await assert.rejects(() => openBootstrapDatabase(7), /SQLite WAL|PATH_/u, "directory WAL");
+    await assert.rejects(() => openBootstrapDatabase(8), /SQLite WAL|PATH_/u, "directory WAL");
     assert.deepEqual(await fs.readFile(mainPath), beforeDirectoryMain);
     assert.deepEqual(await fs.readFile(`${mainPath}-shm`), beforeDirectoryShm);
     assert.equal((await fs.lstat(`${mainPath}-wal`)).isDirectory(), true);
     await fs.rmdir(`${mainPath}-wal`);
 
     await restoreBaseline(baseline.wal);
-    const recovered = await openBootstrapDatabase(7);
+    const recovered = await openBootstrapDatabase(8);
     assert.equal(recovered.database.prepare("SELECT value FROM wal_probe").get()?.value, "committed-in-wal");
     await recovered.close();
     await getBootstrapPathStore().close();
@@ -888,7 +888,7 @@ if (scenario === "normal") {
   db.insertMessage({ session_id: "snapshot-session", role: "user", content: "committed-in-wal", tool_calls: null, tool_call_id: null, created_at: now });
   assert.equal(await fs.access(`${mainPath}-wal`).then(() => true, () => false), true);
   const snapshot = await db.createConsistentDatabaseSnapshot();
-  assert.equal(snapshot.validation.schemaVersion, 7);
+  assert.equal(snapshot.validation.schemaVersion, 8);
   assert.equal(snapshot.validation.quickCheck, "ok");
   assert.equal(snapshot.validation.integrityCheck, "ok");
   assert.equal(snapshot.validation.foreignKeyViolations, 0);

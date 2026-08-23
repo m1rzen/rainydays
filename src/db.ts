@@ -9,6 +9,7 @@ import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 import { createInMemoryBootstrapDatabase, openBootstrapDatabase, validateDatabaseSnapshotFile, writeConsistentDatabaseSnapshot, type DatabaseSnapshotValidation } from "./bootstrap-database.js";
 import { verifySecurityAuditChain, verifySecurityAuditCheckpoint, type SecurityAuditCheckpoint, type SecurityAuditEvent } from "./security-audit.js";
 import { DATABASE_SCHEMA_VERSION } from "./version.js";
+import { encodeWorkbenchLayout } from "./workbench-layout.js";
 
 /** 仅在受管bootstrap identity与只读兼容探测通过后建立可写连接。 */
 const persistentConnection = await openBootstrapDatabase(DATABASE_SCHEMA_VERSION);
@@ -758,6 +759,58 @@ function assertSchemaV7(database: typeof db = db): void {
   if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 7 不兼容: 完整性检查失败");
 }
 
+const SCHEMA_V8_SQL = `
+    CREATE TABLE workbench_layout (
+      singleton      INTEGER PRIMARY KEY CHECK (singleton = 1),
+      schema_version INTEGER NOT NULL CHECK (schema_version = 1),
+      revision       INTEGER NOT NULL CHECK (revision >= 1),
+      layout_json    TEXT NOT NULL CHECK (
+        json_valid(layout_json)
+        AND json_type(layout_json) = 'object'
+        AND length(CAST(layout_json AS BLOB)) <= 65536
+      ),
+      updated_at     TEXT NOT NULL
+    );
+  `;
+
+function assertSchemaV8(database: typeof db = db): void {
+  const reference = createInMemoryBootstrapDatabase();
+  try {
+    reference.pragma("foreign_keys = ON");
+    reference.exec(SCHEMA_V1_SQL);
+    reference.exec(SCHEMA_V2_SQL);
+    applySchemaV3(reference);
+    reference.exec(SCHEMA_V4_SQL);
+    reference.exec(SCHEMA_V5_SQL);
+    reference.exec(SCHEMA_V6_SQL);
+    reference.exec(SCHEMA_V7_SQL);
+    reference.exec(SCHEMA_V8_SQL);
+    const objectRows = (target: typeof db): Array<{ type: string; name: string; tbl_name: string; sql: string | null }> => target.prepare(
+      "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
+    ).all() as Array<{ type: string; name: string; tbl_name: string; sql: string | null }>;
+    const actual = objectRows(database);
+    const expected = objectRows(reference);
+    const signatures = (rows: typeof actual): string[] => rows.map(entry => `${entry.type}|${entry.name}|${entry.tbl_name}`);
+    if (JSON.stringify(signatures(actual)) !== JSON.stringify(signatures(expected))) {
+      throw new Error("数据库 Schema 8 不兼容: 存在未知或缺失的 Schema 对象");
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const found = actual[index];
+      const wanted = expected[index];
+      if ((found.sql === null) !== (wanted.sql === null)
+        || (found.sql !== null && wanted.sql !== null && normalizeSchemaSql(found.sql) !== normalizeSchemaSql(wanted.sql))) {
+        throw new Error(`数据库 Schema 8 不兼容: ${wanted.type} ${wanted.name} SQL 定义错误`);
+      }
+    }
+  } finally {
+    reference.close();
+  }
+  const foreignKeyViolations = database.prepare("PRAGMA foreign_key_check").all();
+  if (foreignKeyViolations.length > 0) throw new Error("数据库 Schema 8 不兼容: 存在外键完整性错误");
+  const integrity = database.prepare("PRAGMA integrity_check").all() as Array<{ integrity_check?: string }>;
+  if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 8 不兼容: 完整性检查失败");
+}
+
 interface DatabaseMigration {
   readonly from: number;
   readonly to: number;
@@ -828,6 +881,15 @@ const DATABASE_MIGRATIONS: readonly DatabaseMigration[] = Object.freeze([
       assertSchemaV7(database);
     },
   }),
+  Object.freeze({
+    from: 7,
+    to: 8,
+    apply: (database: typeof db): void => {
+      assertSchemaV7(database);
+      database.exec(SCHEMA_V8_SQL);
+      assertSchemaV8(database);
+    },
+  }),
 ]);
 
 function assertMigrationRegistry(): void {
@@ -868,7 +930,7 @@ function migrateDatabase(): void {
   if (version !== DATABASE_SCHEMA_VERSION) {
     throw new Error(`数据库 Schema 迁移未达到目标版本: 当前 ${version}，目标 ${DATABASE_SCHEMA_VERSION}`);
   }
-  assertSchemaV7(db);
+  assertSchemaV8(db);
 }
 
 try {
@@ -1613,6 +1675,60 @@ export function advanceCronJob(id: number, lastFired: string, nextFireAt: string
     return;
   }
   db.prepare(`UPDATE cron_jobs SET last_fired = ?, fire_at = ? WHERE id = ? AND active = 1`).run(lastFired, nextFireAt, id);
+}
+
+// ===========================================
+// Workbench layout（DS-03：singleton + optimistic revision）
+// ===========================================
+
+export interface WorkbenchLayoutSnapshot {
+  readonly revision: number;
+  readonly layoutJson: string;
+  readonly updatedAt: string;
+}
+
+export class WorkbenchLayoutConflictError extends Error {
+  readonly code = "WORKBENCH_LAYOUT_CONFLICT";
+  readonly currentRevision: number;
+
+  constructor(currentRevision: number) {
+    super("Workbench layout revision is stale");
+    this.name = "WorkbenchLayoutConflictError";
+    this.currentRevision = currentRevision;
+  }
+}
+
+export function getWorkbenchLayoutSnapshot(): WorkbenchLayoutSnapshot | null {
+  const row = db.prepare(
+    "SELECT revision, layout_json, updated_at FROM workbench_layout WHERE singleton = 1"
+  ).get() as { revision: number; layout_json: string; updated_at: string } | undefined;
+  return row ? Object.freeze({ revision: row.revision, layoutJson: row.layout_json, updatedAt: row.updated_at }) : null;
+}
+
+export function saveWorkbenchLayoutSnapshot(layoutJson: string, expectedRevision: number): WorkbenchLayoutSnapshot {
+  if (typeof layoutJson !== "string" || Buffer.byteLength(layoutJson, "utf8") > 65_536) throw new TypeError("Workbench layout JSON is invalid");
+  const canonicalLayoutJson = encodeWorkbenchLayout(JSON.parse(layoutJson));
+  if (canonicalLayoutJson !== layoutJson) throw new TypeError("Workbench layout JSON is not canonical");
+  if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0) throw new TypeError("Workbench layout revision is invalid");
+  return db.transaction(() => {
+    const current = getWorkbenchLayoutSnapshot();
+    if (!current) {
+      if (expectedRevision !== 0) throw new WorkbenchLayoutConflictError(0);
+      const updatedAt = new Date().toISOString();
+      db.prepare(
+        "INSERT INTO workbench_layout (singleton, schema_version, revision, layout_json, updated_at) VALUES (1, 1, 1, ?, ?)"
+      ).run(layoutJson, updatedAt);
+      return Object.freeze({ revision: 1, layoutJson, updatedAt });
+    }
+    if (current.revision !== expectedRevision) throw new WorkbenchLayoutConflictError(current.revision);
+    const revision = current.revision + 1;
+    const updatedAt = new Date().toISOString();
+    const changed = db.prepare(
+      "UPDATE workbench_layout SET revision = ?, layout_json = ?, updated_at = ? WHERE singleton = 1 AND revision = ?"
+    ).run(revision, layoutJson, updatedAt, expectedRevision).changes;
+    if (changed !== 1) throw new WorkbenchLayoutConflictError(getWorkbenchLayoutSnapshot()?.revision ?? 0);
+    return Object.freeze({ revision, layoutJson, updatedAt });
+  })();
 }
 
 // ===========================================

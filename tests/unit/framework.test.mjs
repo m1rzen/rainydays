@@ -236,6 +236,10 @@ test("coverage scope is explicit and changed runtime files are governed", async 
     { sourceTask: "RT-08", exactCasePath: "tests/integration/rt08-subagent-lifecycle.test.mjs" },
     { sourceTask: "RT-09", exactCasePath: "tests/integration/rt09-session-semantics.test.mjs" },
     { sourceTask: "RT-09", exactCasePath: "tests/integration/rt09-restore.test.mjs" },
+    { sourceTask: "RT-11", exactCasePath: "tests/contract/rt11-governance.test.mjs" },
+    { sourceTask: "DS-03", exactCasePath: "tests/contract/ds03-governance.test.mjs" },
+    { sourceTask: "DS-03", exactCasePath: "tests/unit/workbench-layout.test.mjs" },
+    { sourceTask: "DS-03", exactCasePath: "tests/integration/ds03-workbench-layout.test.mjs" },
     { sourceTask: "EVT-01", exactCasePath: "tests/contract/evt01-governance.test.mjs" },
     { sourceTask: "EVT-01", exactCasePath: "tests/unit/event-bus.test.mjs" },
     { sourceTask: "EVT-01", exactCasePath: "tests/integration/evt01-event-persistence.test.mjs" },
@@ -260,6 +264,8 @@ test("coverage scope is explicit and changed runtime files are governed", async 
   for (const entry of scope.securityCritical) assert(scope.overall.includes(entry));
   assert(scope.securityCritical.includes("dist/path-runtime.js"));
   assert.equal(scope.perFileLineMinimum["dist/path-runtime.js"], 100);
+  assert(scope.securityCritical.includes("dist/workbench-layout.js"));
+  assert.equal(scope.perFileLineMinimum["dist/workbench-layout.js"], 90);
   assert(scope.securityCritical.includes("dist/managed-restore.js"));
   assert.equal(scope.perFileLineMinimum["dist/managed-restore.js"], 80);
   assert(scope.securityCritical.includes("dist/security-audit.js"));

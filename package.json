@@ -99,7 +99,10 @@
     "test:evt03": "node scripts/run-tests.mjs --task EVT-03 --profile full",
     "test:rt09": "node scripts/run-tests.mjs --task RT-09 --profile full",
     "governance:rt11:generate": "node scripts/generate-rt11-resolved-manifest.mjs",
-    "governance:rt11:check": "node scripts/generate-rt11-resolved-manifest.mjs --check"
+    "governance:rt11:check": "node scripts/generate-rt11-resolved-manifest.mjs --check",
+    "governance:ds03:generate": "node scripts/generate-ds03-resolved-manifest.mjs",
+    "governance:ds03:check": "node scripts/generate-ds03-resolved-manifest.mjs --check",
+    "test:ds03": "node scripts/run-tests.mjs --task DS-03 --profile full"
   },
   "dependencies": {
     "@xenova/transformers": "^2.17.2",

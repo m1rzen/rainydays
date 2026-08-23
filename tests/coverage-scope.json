@@ -119,6 +119,18 @@
         "exactCasePath": "tests/contract/rt11-governance.test.mjs"
       },
       {
+        "sourceTask": "DS-03",
+        "exactCasePath": "tests/contract/ds03-governance.test.mjs"
+      },
+      {
+        "sourceTask": "DS-03",
+        "exactCasePath": "tests/unit/workbench-layout.test.mjs"
+      },
+      {
+        "sourceTask": "DS-03",
+        "exactCasePath": "tests/integration/ds03-workbench-layout.test.mjs"
+      },
+      {
         "sourceTask": "EVT-01",
         "exactCasePath": "tests/contract/evt01-governance.test.mjs"
       },
@@ -249,6 +261,7 @@
     "dist/tools/web.js",
     "dist/tools/writer.js",
     "dist/version.js",
+    "dist/workbench-layout.js",
     "electron/user-data-migration.cjs",
     "parity/scripts/baseline-lib.mjs"
   ],
@@ -309,6 +322,7 @@
     "dist/tools/web.js",
     "dist/tools/writer.js",
     "dist/version.js",
+    "dist/workbench-layout.js",
     "electron/user-data-migration.cjs"
   ],
   "thresholds": {
@@ -372,6 +386,7 @@
     "dist/tools/web.js": 80,
     "dist/tools/writer.js": 80,
     "dist/version.js": 96,
+    "dist/workbench-layout.js": 90,
     "electron/user-data-migration.cjs": 80,
     "parity/scripts/baseline-lib.mjs": 95
   }

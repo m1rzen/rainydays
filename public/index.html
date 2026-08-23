@@ -40,37 +40,44 @@
       </div>
     </header>
     <div id="persona-info" hidden></div>
-    <div id="task-panel">
-      <div id="task-panel-header"><span>📋 任务进度</span><span id="task-progress-text"></span></div>
-      <div id="task-list"></div>
+    <div id="workbench" aria-label="工作台">
+      <div id="workbench-pane-tree"></div>
     </div>
-    <div id="subagent-panel">
-      <div id="subagent-panel-header"><span>🤖 后台 Subagent</span><span id="subagent-progress-text"></span></div>
-      <div id="subagent-list"></div>
-    </div>
-    <div id="messages">
-      <div class="msg msg-assistant"><div class="bubble">👋 你好！我是 RainyDays。点击左侧「新建对话」开始。输入 <code>/</code> 查看可用命令。</div></div>
-    </div>
-    <div id="slash-menu"></div>
-    <div id="input-area">
-      <form id="input-form" autocomplete="off">
-        <button type="button" class="voice-btn" id="mic-btn" title="语音输入" data-action="toggle-asr">🎙</button>
-        <textarea id="input" rows="1" placeholder="输入消息，或输入 / 查看命令..." autofocus></textarea>
-        <button type="submit" id="submit">发送</button>
-      </form>
-    </div>
-    <div id="terminal-panel">
-      <div class="terminal-toolbar">
-        <div id="terminal-tabs"></div>
-        <select id="terminal-shell-select" class="terminal-tool-btn" title="新终端 Shell"><option value="cmd">cmd</option><option value="powershell">PowerShell</option></select>
-        <button class="terminal-tool-btn" data-action="create-terminal" title="新建终端">＋</button>
-        <button class="terminal-tool-btn" data-action="clear-terminal" title="清屏">清屏</button>
-        <button class="terminal-tool-btn danger" data-action="kill-terminal" title="终止进程树">停止</button>
-        <button class="terminal-tool-btn danger" data-action="close-terminal" title="关闭终端">关闭</button>
-        <button class="terminal-tool-btn" data-action="toggle-terminal" title="收起">⌄</button>
+    <div id="workbench-staging" hidden>
+      <section id="chat-view" class="workbench-view" aria-label="会话">
+        <div id="task-panel">
+          <div id="task-panel-header"><span>📋 任务进度</span><span id="task-progress-text"></span></div>
+          <div id="task-list"></div>
+        </div>
+        <div id="subagent-panel">
+          <div id="subagent-panel-header"><span>🤖 后台 Subagent</span><span id="subagent-progress-text"></span></div>
+          <div id="subagent-list"></div>
+        </div>
+        <div id="messages">
+          <div class="msg msg-assistant"><div class="bubble">👋 你好！我是 RainyDays。点击左侧「新建对话」开始。输入 <code>/</code> 查看可用命令。</div></div>
+        </div>
+        <div id="slash-menu"></div>
+        <div id="input-area">
+          <form id="input-form" autocomplete="off">
+            <button type="button" class="voice-btn" id="mic-btn" title="语音输入" data-action="toggle-asr">🎙</button>
+            <textarea id="input" rows="1" placeholder="输入消息，或输入 / 查看命令..." autofocus></textarea>
+            <button type="submit" id="submit">发送</button>
+          </form>
+        </div>
+      </section>
+      <div id="terminal-panel" class="workbench-view" aria-label="终端">
+        <div class="terminal-toolbar">
+          <div id="terminal-tabs"></div>
+          <select id="terminal-shell-select" class="terminal-tool-btn" title="新终端 Shell"><option value="cmd">cmd</option><option value="powershell">PowerShell</option></select>
+          <button class="terminal-tool-btn" data-action="create-terminal" title="新建终端">＋</button>
+          <button class="terminal-tool-btn" data-action="clear-terminal" title="清屏">清屏</button>
+          <button class="terminal-tool-btn danger" data-action="kill-terminal" title="终止进程树">停止</button>
+          <button class="terminal-tool-btn danger" data-action="close-terminal" title="关闭终端">关闭</button>
+          <button class="terminal-tool-btn" data-action="toggle-terminal" title="关闭终端标签">✕</button>
+        </div>
+        <div id="terminal-output"><div id="terminal-empty">点击 ＋ 创建持久终端</div></div>
+        <div class="terminal-input-row"><span class="terminal-prompt">›</span><input id="terminal-input" placeholder="输入命令，Enter 发送；Ctrl+L 清屏" disabled /></div>
       </div>
-      <div id="terminal-output"><div id="terminal-empty">点击 ＋ 创建持久终端</div></div>
-      <div class="terminal-input-row"><span class="terminal-prompt">›</span><input id="terminal-input" placeholder="输入命令，Enter 发送；Ctrl+L 清屏" disabled /></div>
     </div>
     <div id="status-bar">
       <div class="status-left">

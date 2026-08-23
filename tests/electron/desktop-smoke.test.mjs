@@ -466,6 +466,52 @@ async function assertCanonicalPathPolicy(client, userData, launchIndex, applicat
   assert.equal(terminalsAfter.body.terminals.length, terminalsBefore.body.terminals.length, "external CWD denial created a Terminal process record");
 }
 
+async function probeWorkbench(client, sessionId, configure) {
+  let lastState = "not evaluated";
+  if (configure) {
+    const steps = [
+      ["select Session", `selectSession(${JSON.stringify(sessionId)})`],
+      ["horizontal split", "splitWorkbenchPane(workbenchLayout.focusedPaneId,'horizontal')"],
+      ["open Terminal", "toggleTerminal(true)"],
+      ["vertical split", "splitWorkbenchPane(workbenchLayout.focusedPaneId,'vertical')"],
+      ["open File", "toggleFileViewer(true)"],
+    ];
+    for (const [label, expression] of steps) {
+      try { await client.evaluate(expression); }
+      catch (error) { throw new Error(`DS-03 ${label} failed: ${error instanceof Error ? error.message : String(error)}`); }
+    }
+  }
+  try {
+    return await waitFor(async () => {
+      try {
+        const value = await client.evaluate(`(async()=>{
+        if(!document.querySelector('#workbench-pane-tree .workbench-pane'))return null;
+        const response=await fetch('/api/workbench/layout');
+        const stored=await response.json();
+        const active=[];
+        const visit=node=>{if(node.type==='pane'){const tab=node.tabs.find(candidate=>candidate.id===node.activeTabId);active.push(tab?.kind||null);return}visit(node.first);visit(node.second)};
+        if(stored.layout)visit(stored.layout.root);
+        return {
+          status:response.status,
+          revision:stored.revision,
+          paneCount:document.querySelectorAll('#workbench-pane-tree .workbench-pane').length,
+          active,
+          mounted:{
+            session:Boolean(document.getElementById('chat-view')?.closest('.workbench-pane')),
+            terminal:Boolean(document.getElementById('terminal-panel')?.closest('.workbench-pane')),
+            file:Boolean(document.getElementById('file-viewer')?.closest('.workbench-pane')),
+          },
+        };
+      })()`);
+        lastState = JSON.stringify(value);
+        return value?.status === 200 && (!configure || value.paneCount === 3) ? value : null;
+      } catch (error) { lastState = error instanceof Error ? error.stack || error.message : String(error); return null; }
+    }, { timeoutMs: 20_000, label: configure ? "DS-03 workbench configuration" : "DS-03 workbench restore" });
+  } catch (error) {
+    throw new Error(`${error instanceof Error ? error.message : String(error)}; last DS-03 state: ${lastState}`);
+  }
+}
+
 test("RT-01 renderer source keeps runs and questions session-bound", async () => {
   const source = await readFile(path.join(projectRoot, "public", "renderer.js"), "utf8");
   assert.doesNotMatch(source, /\blet\s+(?:isRunning|currentQuestion)\b/u);
@@ -521,6 +567,10 @@ test("real Electron main, preload and renderer preserve identity and session acr
     console.log("[electron-e2e] first path policy passed");
     await assertRendererSessionIsolation(client, sessionId);
     console.log("[electron-e2e] renderer session isolation passed");
+    const workbenchFirst = await probeWorkbench(client, sessionId, true);
+    assert.deepEqual([...workbenchFirst.active].sort(), ["file", "session", "terminal"]);
+    assert.deepEqual(workbenchFirst.mounted, { session: true, terminal: true, file: true });
+    assert(workbenchFirst.revision >= 5);
     await client.evaluate("location.reload(); true");
     const afterReload = await waitFor(async () => {
       try {
@@ -529,6 +579,11 @@ test("real Electron main, preload and renderer preserve identity and session acr
       } catch { return null; }
     }, { timeoutMs: 20_000, label: "renderer reload" });
     assert(afterReload.sessions.some((entry) => entry.id === sessionId));
+    const workbenchReload = await probeWorkbench(client, sessionId, false);
+    assert.equal(workbenchReload.revision, workbenchFirst.revision);
+    assert.equal(workbenchReload.paneCount, 3);
+    assert.deepEqual([...workbenchReload.active].sort(), ["file", "session", "terminal"]);
+    assert.deepEqual(workbenchReload.mounted, { session: true, terminal: true, file: true });
     assert(first.logs().stdout.includes(buildInfo.buildId));
     client.close(); client = null;
     console.log("[electron-e2e] stopping first launch");
@@ -548,6 +603,11 @@ test("real Electron main, preload and renderer preserve identity and session acr
     const afterRestart = await client.evaluate("fetch('/api/sessions').then(r=>r.json())");
     assert(afterRestart.sessions.some((entry) => entry.id === sessionId));
     assert.equal(afterRestart.current, sessionId);
+    const workbenchRestart = await probeWorkbench(client, sessionId, false);
+    assert.equal(workbenchRestart.revision, workbenchFirst.revision);
+    assert.equal(workbenchRestart.paneCount, 3);
+    assert.deepEqual([...workbenchRestart.active].sort(), ["file", "session", "terminal"]);
+    assert.deepEqual(workbenchRestart.mounted, { session: true, terminal: true, file: true });
     client.close(); client = null;
     await stopElectron(second, secondHttpPort, secondCdpPort); second = null;
   } finally {

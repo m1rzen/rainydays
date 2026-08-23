@@ -30,7 +30,11 @@ import {
   SessionImportError,
   searchSessions,
 } from "./session.js";
-import { closeDb, insertPin, getPinsBySession, deletePin, deleteMessagesAfterLastUserMessage, getDatabaseSchemaVersion, createEventStore, createPollStore, markMemoRemindedByCronJob } from "./db.js";
+import {
+  closeDb, insertPin, getPinsBySession, deletePin, deleteMessagesAfterLastUserMessage,
+  getDatabaseSchemaVersion, createEventStore, createPollStore, markMemoRemindedByCronJob,
+  getWorkbenchLayoutSnapshot, saveWorkbenchLayoutSnapshot, WorkbenchLayoutConflictError,
+} from "./db.js";
 import { getDefaultEventBus, type EventEnvelope, type SessionDeliveryOutcome } from "./event-bus.js";
 import { getDefaultPollManager } from "./poll.js";
 import { cancelRunInteraction, runOutsideInteractionChannel, runWithInteractionChannel, submitAnswer } from "./tools/ask-user-tool.js";
@@ -91,6 +95,7 @@ import type { PersonaDefinition } from "./types.js";
 import type { TerminalOwner, TerminalShell } from "./terminal.js";
 import { terminalFacade } from "./terminal-facade.js";
 import { fileViewerService, type FileRootSnapshotInput } from "./file-viewer.js";
+import { applyWorkbenchOperation, encodeWorkbenchLayout, parseWorkbenchLayout } from "./workbench-layout.js";
 import { DATA_DIR } from "./runtime-paths.js";
 import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 import { APP_VERSION, BUILD_ID, BUILD_INFO, PROTOCOL_CAPABILITIES, getPublicVersionInfo } from "./version.js";
@@ -1264,6 +1269,73 @@ app.post("/api/switch-persona", async (req, res) => {
     success: true,
     persona: { name: persona.name, displayName: persona.displayName, description: persona.description, tools: persona.tools },
   });
+});
+
+// ===========================================
+// Workbench layout API (DS-03)
+// ===========================================
+
+app.get("/api/workbench/layout", (_req, res) => {
+  try {
+    const snapshot = getWorkbenchLayoutSnapshot();
+    if (!snapshot) {
+      res.json({ revision: 0, layout: null, updatedAt: null });
+      return;
+    }
+    const layout = parseWorkbenchLayout(JSON.parse(snapshot.layoutJson));
+    res.json({ revision: snapshot.revision, layout, updatedAt: snapshot.updatedAt });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+app.put("/api/workbench/layout", (req, res) => {
+  try {
+    const body = req.body;
+    if (!body || typeof body !== "object" || Array.isArray(body)
+      || Object.keys(body).length !== 2 || !Object.hasOwn(body, "revision") || !Object.hasOwn(body, "layout")) {
+      throw new TypeError("Workbench layout request fields are invalid");
+    }
+    const layout = parseWorkbenchLayout(body.layout);
+    const layoutJson = encodeWorkbenchLayout(layout);
+    const snapshot = saveWorkbenchLayoutSnapshot(layoutJson, body.revision);
+    res.json({ revision: snapshot.revision, layout, updatedAt: snapshot.updatedAt });
+  } catch (error) {
+    if (error instanceof WorkbenchLayoutConflictError) {
+      res.status(409).json({ error: error.message, currentRevision: error.currentRevision });
+      return;
+    }
+    if (error instanceof TypeError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+app.post("/api/workbench/layout/operations", (req, res) => {
+  try {
+    const body = req.body;
+    if (!body || typeof body !== "object" || Array.isArray(body)
+      || Object.keys(body).length !== 2 || !Object.hasOwn(body, "revision") || !Object.hasOwn(body, "operation")) {
+      throw new TypeError("Workbench operation request fields are invalid");
+    }
+    const current = getWorkbenchLayoutSnapshot();
+    if (!current || current.revision !== body.revision) throw new WorkbenchLayoutConflictError(current?.revision ?? 0);
+    const layout = applyWorkbenchOperation(parseWorkbenchLayout(JSON.parse(current.layoutJson)), body.operation);
+    const snapshot = saveWorkbenchLayoutSnapshot(encodeWorkbenchLayout(layout), body.revision);
+    res.json({ revision: snapshot.revision, layout, updatedAt: snapshot.updatedAt });
+  } catch (error) {
+    if (error instanceof WorkbenchLayoutConflictError) {
+      res.status(409).json({ error: error.message, currentRevision: error.currentRevision });
+      return;
+    }
+    if (error instanceof TypeError || error instanceof SyntaxError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  }
 });
 
 // ===========================================

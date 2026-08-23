@@ -6,11 +6,11 @@
   "dialectCheckerSha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
   "dialectPolicySha256": "e71e8be1b0a4220a50275bb6e88ead58e82f610dade5bd5c53e6242df7c4d769",
   "dialectImportSetSha256": "208c19687ea4917fba30ec42face6c4569f5537f092a98f9628c444b8c60d121",
-  "runtimeSinkSetSha256": "1701ec5bb113a19dc5383a444d12907c7420a0c90c3bb1bf1ae1460431421663",
+  "runtimeSinkSetSha256": "c034e28346a60a889cf5715f4148bd90e40f7eb3ba164470c98062f6c70f00a8",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
-    "executableFileCount": 88,
-    "executableManifestSha256": "77bd84e9aad875bf93753db773e7a89ca884413ea8243144328b4830d1db5bbc",
+    "executableFileCount": 89,
+    "executableManifestSha256": "92abc3373be9ed21051bb1db255299a20d0c5a0059d2f661572c8ad05bb3cae0",
     "dialectImportCount": 38,
     "dialectExceptionCount": 2
   },
@@ -122,8 +122,8 @@
     },
     {
       "sourcePath": "src/db.ts",
-      "bytes": 96306,
-      "sha256": "06df2e8ba60f159b2b57b3a7b23c7c62731c134d569267c36bc52cdf9dd0248a",
+      "bytes": 101877,
+      "sha256": "566b5c86a3a4c68a02d1b046d0fa08a00e727b722fb5940735ea552506ed540f",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -192,8 +192,8 @@
     },
     {
       "sourcePath": "src/index.ts",
-      "bytes": 105315,
-      "sha256": "8dea8d339a7acec790ea1b6315dc06eb10166d7be5f6d4868be362071cafbebc",
+      "bytes": 108423,
+      "sha256": "872f10951c6c7fba73428b2cff39c2655ee45370f1903157c966eb7987f9c8e7",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -620,7 +620,7 @@
     {
       "sourcePath": "src/version.ts",
       "bytes": 11376,
-      "sha256": "3510a97b57cdfcd9585b9cf30213e6807e2553314769e22a7a5c91d8e3bc8bec",
+      "sha256": "3dd1d1042bbff29b82dc1510cd1344c8bd462dc4be9e00c7ec5e43541fa300d0",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -628,6 +628,13 @@
       "sourcePath": "src/wire.ts",
       "bytes": 5682,
       "sha256": "932746a969352a7bc230f55ed3861f17fda285288202eac2c89464f13e275ea0",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/workbench-layout.ts",
+      "bytes": 18372,
+      "sha256": "26e514c576be7962ed5173c2d36d3dbda4a8ef1c130eb89a95df19fe61ed0c21",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     }
@@ -639,7 +646,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/bootstrap-database-lifetime.test.mjs",
       "testCaseId": "SEC-02 SQLite connection lifetime blocks bootstrap retirement until clean close",
-      "testFileSha256": "6a65cb7488128840e3afb7aa0ba3f4ba941021a7441e0ea9448375fee9e38297"
+      "testFileSha256": "9c560a53fd0e7e54b4fe3bb4d9b10926aea998035e93f25c63cb531476d7947c"
     },
     {
       "id": "daemon-lifetime",
@@ -663,7 +670,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/electron/desktop-smoke.test.mjs",
       "testCaseId": "real Electron main, preload and renderer preserve identity and session across restart",
-      "testFileSha256": "740fe9548917f83c882015c17edabf8e1bb29734a284c721e9a334aa75a676e1"
+      "testFileSha256": "fbe1b6a093829496e446e9917297ae18140862f5f59888526eec0cf25f75490b"
     },
     {
       "id": "file-viewer",
@@ -3274,8 +3281,8 @@
       "id": "sink-8ecfb8f883d2ef88a920bb61",
       "occurrence": 1,
       "sourcePath": "src/db.ts",
-      "fileSha256": "06df2e8ba60f159b2b57b3a7b23c7c62731c134d569267c36bc52cdf9dd0248a",
-      "line": 906,
+      "fileSha256": "566b5c86a3a4c68a02d1b046d0fa08a00e727b722fb5940735ea552506ed540f",
+      "line": 968,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "validateDatabaseRestoreCandidate",
@@ -3307,8 +3314,8 @@
       "id": "sink-8de00407646059c0723b3b01",
       "occurrence": 1,
       "sourcePath": "src/db.ts",
-      "fileSha256": "06df2e8ba60f159b2b57b3a7b23c7c62731c134d569267c36bc52cdf9dd0248a",
-      "line": 917,
+      "fileSha256": "566b5c86a3a4c68a02d1b046d0fa08a00e727b722fb5940735ea552506ed540f",
+      "line": 979,
       "column": 35,
       "nodeKind": "CallExpression",
       "container": "createConsistentDatabaseSnapshot",
@@ -5509,5 +5516,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "2bc21f7b1b26542588ff2b130babe3d040b1339eaed52b38621d64dc74edfde4"
+  "canonicalPayloadSha256": "dd67688df5c7d26b29e17f247923926b9f9f0898bbc984c0aff369289b79a98d"
 }

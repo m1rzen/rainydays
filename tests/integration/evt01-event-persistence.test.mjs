@@ -22,7 +22,7 @@ after(async () => {
 });
 
 test("EVT-01 events 表在当前 schema v7 保持完整", () => {
-  assert.equal(getDatabaseSchemaVersion(), 7);
+  assert.equal(getDatabaseSchemaVersion(), 8);
   const store = createEventStore();
   assert.deepEqual(store.countByStatus(), { pending: 0, delivered: 0, dead: 0, expired: 0 });
 });
@@ -101,7 +101,7 @@ test("EVT-01 断线不丢：seed 子进程写入 → drain 子进程重启后完
     const seedResult = JSON.parse(seed.stdout.trim().split("\n").pop());
     assert.equal(seedResult.published, "published");
     assert.equal(seedResult.duplicate, "duplicate"); // 断线前 dedupe 已生效
-    assert.equal(seedResult.schemaVersion, 7);
+    assert.equal(seedResult.schemaVersion, 8);
 
     const drain = await runProcess(process.execPath, ["tests/fixtures/evt01-persistence-child.mjs", "drain"], { env: childEnv, timeoutMs: 60_000 });
     assert.equal(drain.code, 0, `drain stderr: ${drain.stderr}`);

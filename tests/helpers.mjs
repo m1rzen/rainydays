@@ -27,9 +27,11 @@ import { loadRt06ResolvedManifest } from "../scripts/rt06-governance.mjs";
 import { loadRt07ResolvedManifest } from "../scripts/rt07-governance.mjs";
 import { loadRt08ResolvedManifest } from "../scripts/rt08-governance.mjs";
 import { loadRt09ResolvedManifest } from "../scripts/rt09-governance.mjs";
+import { loadRt11ResolvedManifest } from "../scripts/rt11-governance.mjs";
 import { loadEvt01ResolvedManifest } from "../scripts/evt01-governance.mjs";
 import { loadEvt02ResolvedManifest } from "../scripts/evt02-governance.mjs";
 import { loadEvt03ResolvedManifest } from "../scripts/evt03-governance.mjs";
+import { loadDs03ResolvedManifest } from "../scripts/ds03-governance.mjs";
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const processTemporaryRootRequest = path.resolve(os.tmpdir());
@@ -616,6 +618,29 @@ async function loadRt09TaskView(root = projectRoot) {
   };
 }
 
+async function loadRt11TaskView(root = projectRoot) {
+  const resolved = await loadRt11ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "rt-11.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "RT-11",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
 async function loadEvt01TaskView(root = projectRoot) {
   const resolved = await loadEvt01ResolvedManifest({ root });
   const sourcePath = path.join(root, "tests", "manifests", "evt-01.json");
@@ -685,6 +710,29 @@ async function loadEvt03TaskView(root = projectRoot) {
   };
 }
 
+async function loadDs03TaskView(root = projectRoot) {
+  const resolved = await loadDs03ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "ds-03.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DS-03",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
 export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
   if (taskId === "DATA-01") return loadData01TaskView(root);
   if (taskId === "DATA-02") return loadData02TaskView(root);
@@ -696,9 +744,11 @@ export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
   if (taskId === "RT-07") return loadRt07TaskView(root);
   if (taskId === "RT-08") return loadRt08TaskView(root);
   if (taskId === "RT-09") return loadRt09TaskView(root);
+  if (taskId === "RT-11") return loadRt11TaskView(root);
   if (taskId === "EVT-01") return loadEvt01TaskView(root);
   if (taskId === "EVT-02") return loadEvt02TaskView(root);
   if (taskId === "EVT-03") return loadEvt03TaskView(root);
+  if (taskId === "DS-03") return loadDs03TaskView(root);
   if (taskId === "SEC-03") return loadSec03ResolvedTaskView(root);
   if (taskId === "SEC-02" || taskId === "GOV-03") return loadResolvedTaskView(taskId, root);
   return loadSourceTaskManifest(taskId, root);

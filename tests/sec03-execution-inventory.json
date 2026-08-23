@@ -4,8 +4,8 @@
   "architectureSha256": "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe",
   "scannerSha256": "d81dfe30bf6f7df1ce3221861923b011c495fb6be0af1efb026f8203f69d8cb1",
   "crosscheckSha256": "a2c62c23669d2924472d4c80761122a5c4446d12e6a27f8595221f55a0290093",
-  "policySha256": "71ed4ee375bac800e28b5fe082874d34b1545408c42adaa202d03a9cd72e7b64",
-  "sourceSetSha256": "9f558a11164cb5c99cfda9d75f2c16e12f418c1cd72d6a3c8ab40f282dbee801",
+  "policySha256": "5759e5cdcce9c2482ffe8b771928987e51e21ebb5e1b884d1d492529c56fba18",
+  "sourceSetSha256": "18812c776a52608eaf0a1e75ae924247a6c6aeb13b72d5fd1070d2199f3781b2",
   "files": [
     {
       "sourcePath": "electron/ipc-contract.cjs",
@@ -75,14 +75,14 @@
     },
     {
       "sourcePath": "public/index.html",
-      "bytes": 10498,
-      "sha256": "ff64b122729a9f558324899b13833a333e8c525cc80b6b50d1c6272ac9d5cbba",
+      "bytes": 10899,
+      "sha256": "f2b77b67cd4a2c9832fe6926a72cd9ab33e5acb6d78ba36c7b88072ffbb3f1e4",
       "executionClass": "product-runtime"
     },
     {
       "sourcePath": "public/renderer.js",
-      "bytes": 87197,
-      "sha256": "02c09eae57967475995c504a1f489f9a538fde2546351ee4699e7fc09157512e",
+      "bytes": 109618,
+      "sha256": "17c8dc33e84fe475d55799131286d31708131f54aa85697968f7552fcb75d567",
       "executionClass": "product-runtime"
     },
     {
@@ -140,6 +140,12 @@
       "executionClass": "build-test"
     },
     {
+      "sourcePath": "scripts/ds03-governance.mjs",
+      "bytes": 11478,
+      "sha256": "20db49e4e301798980aa1019c49758cdda5743daf141cafd59c95074f3aab05d",
+      "executionClass": "build-test"
+    },
+    {
       "sourcePath": "scripts/electron-asar-integrity.mjs",
       "bytes": 15844,
       "sha256": "3c1f99f19a586b72340555254da01074ce1f066add0f98615cac606633bd698d",
@@ -172,7 +178,7 @@
     {
       "sourcePath": "scripts/generate-build-info.mjs",
       "bytes": 7730,
-      "sha256": "9d8a423230d0004a2b3e6ab6484c033ce7c3bb592d8100f31eb34f3faa9a865c",
+      "sha256": "87f79ce69f0243784bd947c5dd1e3d75e64d4a08109674cd58e094baad797ed3",
       "executionClass": "build-test"
     },
     {
@@ -191,6 +197,12 @@
       "sourcePath": "scripts/generate-dist-integrity.mjs",
       "bytes": 2875,
       "sha256": "25209d6b58808b2ee90ac3a60c79afcd9f74e4322a9d039706735ada58a83244",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "scripts/generate-ds03-resolved-manifest.mjs",
+      "bytes": 5860,
+      "sha256": "7a84d0d175b9d1f4f21a9ede00169de49594c659bab93458d1201bc0662ad9d5",
       "executionClass": "build-test"
     },
     {
@@ -364,7 +376,7 @@
     {
       "sourcePath": "scripts/prepare-electron-app.mjs",
       "bytes": 11176,
-      "sha256": "d3254a46a4e5db4bc4a8b57d65baf35e5bde1c2ff58b207cea99895dc7403baa",
+      "sha256": "e4f5a7e836b110bdd0943364ed8d47befb982097e4a83fd18b31f641dfa02789",
       "executionClass": "build-test"
     },
     {
@@ -531,8 +543,8 @@
     },
     {
       "sourcePath": "scripts/test-version-model.mjs",
-      "bytes": 58628,
-      "sha256": "bf3764814e8b44b5dcbccb2392bee717e192457853d2810c408038ed050c735f",
+      "bytes": 58691,
+      "sha256": "e6e8809df3efaa8f071039dcebf2f8da287850221cb3c22070f4bf8fb43131bd",
       "executionClass": "build-test"
     },
     {
@@ -609,8 +621,8 @@
     },
     {
       "sourcePath": "src/db.ts",
-      "bytes": 96306,
-      "sha256": "06df2e8ba60f159b2b57b3a7b23c7c62731c134d569267c36bc52cdf9dd0248a",
+      "bytes": 101877,
+      "sha256": "566b5c86a3a4c68a02d1b046d0fa08a00e727b722fb5940735ea552506ed540f",
       "executionClass": "product-runtime"
     },
     {
@@ -669,8 +681,8 @@
     },
     {
       "sourcePath": "src/index.ts",
-      "bytes": 105315,
-      "sha256": "8dea8d339a7acec790ea1b6315dc06eb10166d7be5f6d4868be362071cafbebc",
+      "bytes": 108423,
+      "sha256": "872f10951c6c7fba73428b2cff39c2655ee45370f1903157c966eb7987f9c8e7",
       "executionClass": "product-runtime"
     },
     {
@@ -1036,13 +1048,19 @@
     {
       "sourcePath": "src/version.ts",
       "bytes": 11376,
-      "sha256": "3510a97b57cdfcd9585b9cf30213e6807e2553314769e22a7a5c91d8e3bc8bec",
+      "sha256": "3dd1d1042bbff29b82dc1510cd1344c8bd462dc4be9e00c7ec5e43541fa300d0",
       "executionClass": "product-runtime"
     },
     {
       "sourcePath": "src/wire.ts",
       "bytes": 5682,
       "sha256": "932746a969352a7bc230f55ed3861f17fda285288202eac2c89464f13e275ea0",
+      "executionClass": "product-runtime"
+    },
+    {
+      "sourcePath": "src/workbench-layout.ts",
+      "bytes": 18372,
+      "sha256": "26e514c576be7962ed5173c2d36d3dbda4a8ef1c130eb89a95df19fe61ed0c21",
       "executionClass": "product-runtime"
     },
     {
@@ -1061,6 +1079,12 @@
       "sourcePath": "tests/contract/data02-governance.test.mjs",
       "bytes": 2657,
       "sha256": "170a6c6c7bb7b82e1be81b7b6875a191430c11f5b270708a9cee21a418de0e7b",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/contract/ds03-governance.test.mjs",
+      "bytes": 5038,
+      "sha256": "212edcd173769b8749547e94d50a26ef08cac11bbc886c77d16dd74e99c4d114",
       "executionClass": "build-test"
     },
     {
@@ -1203,8 +1227,14 @@
     },
     {
       "sourcePath": "tests/electron/desktop-smoke.test.mjs",
-      "bytes": 32578,
-      "sha256": "740fe9548917f83c882015c17edabf8e1bb29734a284c721e9a334aa75a676e1",
+      "bytes": 36003,
+      "sha256": "fbe1b6a093829496e446e9917297ae18140862f5f59888526eec0cf25f75490b",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/fixtures/ds03-workbench-child.mjs",
+      "bytes": 2401,
+      "sha256": "374ad29ab7c98f1526b16be198ba8d4ef85d56d1f7f50b82e4fa0597fc7b5127",
       "executionClass": "build-test"
     },
     {
@@ -1240,7 +1270,7 @@
     {
       "sourcePath": "tests/fixtures/rt07-task-dag-child.mjs",
       "bytes": 14665,
-      "sha256": "9c22a20395605ff3afc1752c05f713a50dba1a3af8ee8e8f50d43afa714e3709",
+      "sha256": "ed8a05781a9f69e84ad911fb957263d7b8262316945b9d96c76f2e5f366e0978",
       "executionClass": "build-test"
     },
     {
@@ -1276,7 +1306,7 @@
     {
       "sourcePath": "tests/fixtures/sqlite-lifetime-child.mjs",
       "bytes": 51473,
-      "sha256": "c84dc7c9f58d8a8bf3533e6ff7b6e84e46adf967ae952a890723ebffce5d780e",
+      "sha256": "790974dfc9b348a9ffe02288cb13fc11037b9a19b4ba57181915c53922759b58",
       "executionClass": "build-test"
     },
     {
@@ -1299,14 +1329,14 @@
     },
     {
       "sourcePath": "tests/helpers.mjs",
-      "bytes": 67800,
-      "sha256": "a4e0f0cd731f199e6bd808955e701fe6265c7bdb2f6bd6b003c952fe3a140ece",
+      "bytes": 69882,
+      "sha256": "e3c13e92669e3556544389d338633c1be80305032c4c81a6124b210956db5efe",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
       "bytes": 5975,
-      "sha256": "6a65cb7488128840e3afb7aa0ba3f4ba941021a7441e0ea9448375fee9e38297",
+      "sha256": "9c560a53fd0e7e54b4fe3bb4d9b10926aea998035e93f25c63cb531476d7947c",
       "executionClass": "build-test"
     },
     {
@@ -1328,6 +1358,12 @@
       "executionClass": "build-test"
     },
     {
+      "sourcePath": "tests/integration/ds03-workbench-layout.test.mjs",
+      "bytes": 1180,
+      "sha256": "75104cdb01f19b0693640f139f07da8c4c69da054e13995475d9c639b42a3816",
+      "executionClass": "build-test"
+    },
+    {
       "sourcePath": "tests/integration/embedding-path-lifetime.test.mjs",
       "bytes": 4022,
       "sha256": "4dcb9bd7067e5f9393542de9a01b231aeb4d59e8bac90ffd48de56275c125a04",
@@ -1336,7 +1372,7 @@
     {
       "sourcePath": "tests/integration/evt01-event-persistence.test.mjs",
       "bytes": 5310,
-      "sha256": "762d3ea4709434fd56288af076bdd81fae4d007a23da95c64b2793f7c05d23ca",
+      "sha256": "e0341f12eff27c0b367506bd68c816f55af3a5b6ce009e080d6b533c2987dd4d",
       "executionClass": "build-test"
     },
     {
@@ -1444,7 +1480,7 @@
     {
       "sourcePath": "tests/integration/rt07-task-dag.test.mjs",
       "bytes": 11216,
-      "sha256": "6d0f12275f57f9f4096d5ebc20e9ab7e0d94bd94b5d2d229559a2b9482465c59",
+      "sha256": "f75849b7fb5e1d5cf8d9fab67c5eab2603c587e183bc5e083ce9515191c5db9d",
       "executionClass": "build-test"
     },
     {
@@ -1498,7 +1534,7 @@
     {
       "sourcePath": "tests/integration/version-model.test.mjs",
       "bytes": 3066,
-      "sha256": "889f07a74e521bae20b331757c3630794fbf3ee78a318c6fce126a3997911763",
+      "sha256": "d6325c236f8541a5e44eaaa424aab9d8f71ea2cc8d8ac54d53a12858176bfc89",
       "executionClass": "build-test"
     },
     {
@@ -1617,8 +1653,8 @@
     },
     {
       "sourcePath": "tests/unit/framework.test.mjs",
-      "bytes": 53028,
-      "sha256": "dd2d4d7d73b17e366b27f002e70c86871e452e63f1bc71c9d707a02041d24794",
+      "bytes": 53527,
+      "sha256": "cbfc1710f7109a4f252a906324e5f166022c121ff97474a08f51522ef92a8706",
       "executionClass": "build-test"
     },
     {
@@ -1727,6 +1763,12 @@
       "sourcePath": "tests/unit/tool-scheduler.test.mjs",
       "bytes": 3236,
       "sha256": "97c9055054b83a25b5e9fa409089573ed3cb9319f81a68aa2d7d9943581f1b18",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/workbench-layout.test.mjs",
+      "bytes": 9950,
+      "sha256": "7094607131054f343024366c58d784e877c9f21603e75ba39c710d0dd4468a96",
       "executionClass": "build-test"
     }
   ],
@@ -2906,7 +2948,7 @@
       "id": "exec-c979625f1c86f7d2ef946b01",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 187,
+      "line": 195,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "doSearch",
@@ -2924,7 +2966,7 @@
       "id": "exec-3abf1f0c32f7b0669cce53c7",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 231,
+      "line": 239,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "forkCurrentSession",
@@ -2942,7 +2984,7 @@
       "id": "exec-9144487809b95eb59c07d0fc",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 250,
+      "line": 258,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "exportCurrentSession",
@@ -2960,7 +3002,7 @@
       "id": "exec-33483411b7be81a26affeb01",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 268,
+      "line": 276,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "importSession",
@@ -2978,7 +3020,7 @@
       "id": "exec-755f42ef41d602b7d1b79891",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 286,
+      "line": 294,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "addPin",
@@ -2996,7 +3038,7 @@
       "id": "exec-a892e9aa609fc1d9a9a0f206",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 292,
+      "line": 300,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "removePin",
@@ -3014,7 +3056,7 @@
       "id": "exec-fa5d600286e15f6781a75ec3",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 298,
+      "line": 306,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "loadPins",
@@ -3032,7 +3074,7 @@
       "id": "exec-532b079d464ce9a8d03912d1",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 308,
+      "line": 316,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "rollback",
@@ -3050,7 +3092,7 @@
       "id": "exec-bc849eb7e000cfba360f3dc5",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 315,
+      "line": 323,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "regenerateResponse",
@@ -3068,7 +3110,7 @@
       "id": "exec-b94c7e972ed5870146d5fa52",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 318,
+      "line": 326,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "regenerateResponse",
@@ -3083,10 +3125,82 @@
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-5fa70beb23fcd6bc79174af8",
+      "id": "exec-82925890ac71e08f2171383a",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 345,
+      "line": 516,
+      "column": 30,
+      "nodeKind": "CallExpression",
+      "container": "loadWorkbenchLayout",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "6cbd50d47e5c80743efc59b90bda68df63e5de4125d8070ba03d5b6613312c7e",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-eaa7735e59836a0c7d069568",
+      "occurrence": 1,
+      "sourcePath": "public/renderer.js",
+      "line": 521,
+      "column": 31,
+      "nodeKind": "CallExpression",
+      "container": "loadWorkbenchLayout",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "47b99e0c9d72335be1e3d8506892c34df67295df400f71e2e690782f120ceab6",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-0c95e871390fc93dacf972df",
+      "occurrence": 1,
+      "sourcePath": "public/renderer.js",
+      "line": 532,
+      "column": 32,
+      "nodeKind": "CallExpression",
+      "container": "persistWorkbenchLayout",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "b6e9a9b1a2fc7aa80e5661efc6a1a0f24446523d4aa65680e88ffce96c4d96ff",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-132dc38bb826621818c70edf",
+      "occurrence": 1,
+      "sourcePath": "public/renderer.js",
+      "line": 548,
+      "column": 32,
+      "nodeKind": "CallExpression",
+      "container": "performWorkbenchOperation",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "a2679931919c2ee213657ddaabc8128c96faa195bdecea9cb7b787a6a696dfbf",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-ed97feff9dcd232dca70ac3e",
+      "occurrence": 1,
+      "sourcePath": "public/renderer.js",
+      "line": 660,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "loadTerminals",
@@ -3096,15 +3210,15 @@
         "argument:0",
         "argument:1"
       ],
-      "normalizedNodeSha256": "2d67e5f3c077d8b7ed9f9adf4f9b5353379ec66bda3ab788782a43b4b9624794",
+      "normalizedNodeSha256": "6ee85d1de86fe0edd049a5b143c50fa29001bdef1f89d4ea5cbb4a0b1656b664",
       "executionClass": "product-runtime",
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-7489f9adae6f356ece02886e",
+      "id": "exec-2b07b7c0b342ce0430f48719",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 520,
+      "line": 849,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "ensureFileRoots",
@@ -3114,15 +3228,15 @@
         "argument:0",
         "argument:1"
       ],
-      "normalizedNodeSha256": "e6ea1236829831c094d540cb141e1d68d1d9372086343c4edb6fb57a0d0ade6b",
+      "normalizedNodeSha256": "73379f187822671efc5deb91c329c03e00fdea85911f9f3fe58f25d810b8aa84",
       "executionClass": "product-runtime",
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-e056f575bc0e13c75d6badf6",
+      "id": "exec-b9ba0626f065e58d2ee74386",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 562,
+      "line": 891,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "openFileDirectory",
@@ -3132,15 +3246,15 @@
         "argument:0",
         "argument:1"
       ],
-      "normalizedNodeSha256": "e59cdaebb8eadc6b1564a1aa82977074d7003c85eae8b0938cc4fd8361f96f4e",
+      "normalizedNodeSha256": "727fdb22ef6562803018e5389bd232f53f72114f30a3daf3a1f11e0b94475409",
       "executionClass": "product-runtime",
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-71548e5e584b358b15ff5698",
+      "id": "exec-9e3a73c1968ae1021c39aad0",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 683,
+      "line": 1012,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "previewFile",
@@ -3150,15 +3264,15 @@
         "argument:0",
         "argument:1"
       ],
-      "normalizedNodeSha256": "48852242a4fb593c19767cd35c30793eec0f34ed05dbd8db48d3ade9be0044a8",
+      "normalizedNodeSha256": "32190073d1194d4a13904b348b294757ae862975e269e3314b44242bdd4a006a",
       "executionClass": "product-runtime",
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-5e0695b8268f6711008ce336",
+      "id": "exec-a71e02b39527189828cb04ba",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 740,
+      "line": 1069,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "revealSelectedFile",
@@ -3168,15 +3282,15 @@
         "argument:0",
         "argument:1"
       ],
-      "normalizedNodeSha256": "1082264bf030dc3b8334a84fd9f1f9e6a8e4d5d1fb94480838fc29ff2c55307f",
+      "normalizedNodeSha256": "41cfed3b600793d0650eb5a7a6bae5a3de81e34f3010af0145cde5131eb9c3d9",
       "executionClass": "product-runtime",
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-d21767f05ed09fe90119121e",
+      "id": "exec-c3ee3d06a53cd845a55a3d25",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 774,
+      "line": 1103,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "openResolvedFilePath",
@@ -3186,15 +3300,15 @@
         "argument:0",
         "argument:1"
       ],
-      "normalizedNodeSha256": "d6967254fab00f45debe5ef874f745aea9e543588c91aa2ad401478537f5e397",
+      "normalizedNodeSha256": "0f047acc510653dab62224cd5e96631dc30d0735111787acd5b7ca86b45fa3df",
       "executionClass": "product-runtime",
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-40207eec1d08a1f55df5122a",
+      "id": "exec-a313741c51a192f4dc93a602",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 792,
+      "line": 1121,
       "column": 23,
       "nodeKind": "CallExpression",
       "container": "pathExistsInViewer",
@@ -3204,7 +3318,7 @@
         "argument:0",
         "argument:1"
       ],
-      "normalizedNodeSha256": "d6967254fab00f45debe5ef874f745aea9e543588c91aa2ad401478537f5e397",
+      "normalizedNodeSha256": "0f047acc510653dab62224cd5e96631dc30d0735111787acd5b7ca86b45fa3df",
       "executionClass": "product-runtime",
       "classification": "fixed-purpose-production"
     },
@@ -3212,7 +3326,7 @@
       "id": "exec-021f81934a63efeb78d410b3",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 887,
+      "line": 1216,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "openSettings",
@@ -3230,7 +3344,7 @@
       "id": "exec-557f794216e26697d16d40e8",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 981,
+      "line": 1310,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "refreshSettingsState",
@@ -3248,7 +3362,7 @@
       "id": "exec-4457b83b795bcac91fb2145f",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1004,
+      "line": 1333,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "saveGeneralSettings",
@@ -3266,7 +3380,7 @@
       "id": "exec-68b6e845a14d3aecd3ac5270",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1022,
+      "line": 1351,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "saveProvider",
@@ -3284,7 +3398,7 @@
       "id": "exec-4b483aeeeb70d00b17a1bd2e",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1034,
+      "line": 1363,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "switchCurrentProvider",
@@ -3302,7 +3416,7 @@
       "id": "exec-2d6e9d5717314f74348e7e1a",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1045,
+      "line": 1374,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "deleteCurrentProvider",
@@ -3320,7 +3434,7 @@
       "id": "exec-f59d405aad53a720fc6c6cf3",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1069,
+      "line": 1398,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "loadPersonas",
@@ -3338,7 +3452,7 @@
       "id": "exec-f59a51169d14a47c77f4606b",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1087,
+      "line": 1416,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "switchPersona",
@@ -3353,10 +3467,10 @@
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-47e5a31b907215d822a618e6",
+      "id": "exec-bc66e9de8ef3ec9bb54fd08e",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1092,
+      "line": 1421,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "loadSessions",
@@ -3371,10 +3485,10 @@
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-c1a6faac3e08d7baaf3bb3b1",
+      "id": "exec-88689c5fb02707a317cc9969",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1127,
+      "line": 1458,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "newChat",
@@ -3389,13 +3503,13 @@
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-200b2d2b077e2cdff15a5848",
+      "id": "exec-be85affabc5b3a1305cb55b8",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1131,
+      "line": 1474,
       "column": 25,
       "nodeKind": "CallExpression",
-      "container": "selectSession",
+      "container": "selectSessionNow",
       "family": "network",
       "api": "fetch",
       "operands": [
@@ -3407,13 +3521,13 @@
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-cae8b692c0fd4ea1e030bd6a",
+      "id": "exec-10bc41de8bc911ef27f74d79",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1133,
-      "column": 122,
+      "line": 1480,
+      "column": 28,
       "nodeKind": "CallExpression",
-      "container": "selectSession",
+      "container": "selectSessionNow",
       "family": "network",
       "api": "fetch",
       "operands": [
@@ -3425,13 +3539,13 @@
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-cc57eacc79e652a900e0af6e",
+      "id": "exec-41195aeeb54637cb5da87fa1",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1134,
+      "line": 1484,
       "column": 26,
       "nodeKind": "CallExpression",
-      "container": "selectSession",
+      "container": "selectSessionNow",
       "family": "network",
       "api": "fetch",
       "operands": [
@@ -3443,10 +3557,10 @@
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-2f16a0701bf2780e7201c2c0",
+      "id": "exec-84491aa4acc1be9e0839c080",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1140,
+      "line": 1495,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "deleteSession",
@@ -3461,10 +3575,28 @@
       "classification": "fixed-purpose-production"
     },
     {
+      "id": "exec-35148edae18b8cdcbab1c997",
+      "occurrence": 1,
+      "sourcePath": "public/renderer.js",
+      "line": 1506,
+      "column": 31,
+      "nodeKind": "CallExpression",
+      "container": "deleteSession",
+      "family": "network",
+      "api": "fetch",
+      "operands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "47b99e0c9d72335be1e3d8506892c34df67295df400f71e2e690782f120ceab6",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
       "id": "exec-c409160500213f79ab3cecb2",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1175,
+      "line": 1538,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "cancelSessionRun",
@@ -3482,7 +3614,7 @@
       "id": "exec-6c1ef4ce8ba793a41fad1ead",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1251,
+      "line": 1614,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -3500,7 +3632,7 @@
       "id": "exec-93919a3f3bf11edc45932a51",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1290,
+      "line": 1653,
       "column": 50,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -3518,7 +3650,7 @@
       "id": "exec-42fd00beab990d0cf99b3bdf",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1359,
+      "line": 1722,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "clearChat",
@@ -3536,7 +3668,7 @@
       "id": "exec-05f96d6b65e3f67c0e8f955b",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1386,
+      "line": 1749,
       "column": 74,
       "nodeKind": "CallExpression",
       "container": "loadSessionTasks",
@@ -3554,7 +3686,7 @@
       "id": "exec-20b428b65146e02ff103b1c2",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1434,
+      "line": 1797,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "loadSessionSubagents",
@@ -3572,7 +3704,7 @@
       "id": "exec-08ed20709e6475b25d1acc03",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1444,
+      "line": 1807,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "updateStatus",
@@ -3590,7 +3722,7 @@
       "id": "exec-1d239e0ede4b60ee695c8085",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1467,
+      "line": 1830,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "downloadDiagnostics",
@@ -3608,7 +3740,7 @@
       "id": "exec-455a1ab13937e40ff83b5dd9",
       "occurrence": 1,
       "sourcePath": "public/renderer.js",
-      "line": 1601,
+      "line": 1964,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "submitAskAnswer",
@@ -4147,7 +4279,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-c97e4b6cccbcdd5fee0a7305",
+      "id": "exec-806946aeae003f5571d50b19",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 198,
@@ -4164,7 +4296,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-edd1f96936743be58d566177",
+      "id": "exec-8c64d03ec2a408dcf75392be",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 199,
@@ -4188,7 +4320,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-8618e48915aabfca6181c143",
+      "id": "exec-2666329373d9bc78b8e02a21",
       "occurrence": 2,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 202,
@@ -4212,7 +4344,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-48cd0df4ce733889e8e9b495",
+      "id": "exec-2de238d2fdc77523aa5cb22f",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 204,
@@ -4236,7 +4368,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-6dcfdd2bd4015452b001741b",
+      "id": "exec-6a8ee1af0b4536890797448c",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 212,
@@ -4260,7 +4392,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-12b85376ac9223b1384a0633",
+      "id": "exec-9af9df371ead53640a373b9e",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 220,
@@ -4284,7 +4416,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-85a6b2299b2f362f377bd1d4",
+      "id": "exec-baba20c4cad1502f71d9bafa",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 240,
@@ -4308,7 +4440,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-708c6127497a153b265a3e19",
+      "id": "exec-a53f9011cb28e30a5021e232",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 271,
@@ -4332,7 +4464,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-0f34c593d0004a214d099afd",
+      "id": "exec-47442d872f6c08bccbfdcd86",
       "occurrence": 2,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 277,
@@ -4356,7 +4488,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-18bfbfb49526e9f4ef68430c",
+      "id": "exec-775411221d8f6a51adaa0e91",
       "occurrence": 3,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 288,
@@ -4380,7 +4512,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-2ce1dea9c9e79db4c3efaf87",
+      "id": "exec-2ac6f009a9bfeb4f48173813",
       "occurrence": 4,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 293,
@@ -4404,7 +4536,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-aa1bc30311a21f43cfd7b382",
+      "id": "exec-d9da3427868d1c22860a7303",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 300,
@@ -4428,7 +4560,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-a125d8e2338081d905cf6150",
+      "id": "exec-c4b129be59c0744f9db7071a",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 331,
@@ -4452,7 +4584,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-c6db8a66d887299e8d220932",
+      "id": "exec-f11858353ef7fc5d1dfa9618",
       "occurrence": 5,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 345,
@@ -4476,7 +4608,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-3b0a2956ede20868d7445a86",
+      "id": "exec-55b6c29a9d94efbe79036ae9",
       "occurrence": 6,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 350,
@@ -4500,7 +4632,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-80cc5f0179e62c75ff473eed",
+      "id": "exec-6bdfef177ba9270d91f4334e",
       "occurrence": 2,
       "sourcePath": "scripts/test-version-model.mjs",
       "line": 355,
@@ -4524,10 +4656,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-ac8229c4f7f5fe2bc3ba5fef",
+      "id": "exec-c69d7265b9830f25a8e3925e",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
-      "line": 893,
+      "line": 894,
       "column": 36,
       "nodeKind": "CallExpression",
       "container": "main",
@@ -4542,10 +4674,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-40819f85cb1c79e6139dc414",
+      "id": "exec-5823f19c62c308d062e3f1d4",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
-      "line": 894,
+      "line": 895,
       "column": 35,
       "nodeKind": "CallExpression",
       "container": "main",
@@ -4560,10 +4692,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-e64147c416d4a7d8d185c00d",
+      "id": "exec-10f569ef092088fad9a025ef",
       "occurrence": 1,
       "sourcePath": "scripts/test-version-model.mjs",
-      "line": 895,
+      "line": 896,
       "column": 40,
       "nodeKind": "CallExpression",
       "container": "main",
@@ -4990,7 +5122,7 @@
       "id": "exec-bcbbaefc6ec031a60417f9af",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 802,
+      "line": 852,
       "column": 22,
       "nodeKind": "CallExpression",
       "container": "freeDistinctPorts",
@@ -5008,7 +5140,7 @@
       "id": "exec-4d72e263650070e4f46172c4",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 837,
+      "line": 887,
       "column": 20,
       "nodeKind": "CallExpression",
       "container": "terminateProcessTree",
@@ -5032,7 +5164,7 @@
       "id": "exec-5ca156ed0e47fcaccab0e746",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 861,
+      "line": 911,
       "column": 18,
       "nodeKind": "CallExpression",
       "container": "terminateProcessTreeAsync",
@@ -5056,7 +5188,7 @@
       "id": "exec-d8b5f9dbd1e5660dbb490600",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 874,
+      "line": 924,
       "column": 10,
       "nodeKind": "CallExpression",
       "container": "spawnManaged",
@@ -5080,7 +5212,7 @@
       "id": "exec-452344dda55a36f3167a6821",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 876,
+      "line": 926,
       "column": 25,
       "nodeKind": "PropertyAccessExpression",
       "container": "spawnManaged",
@@ -5097,7 +5229,7 @@
       "id": "exec-d0ae00d0c66a51dda746205c",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 885,
+      "line": 935,
       "column": 76,
       "nodeKind": "PropertyAccessExpression",
       "container": "runProcess",
@@ -5114,7 +5246,7 @@
       "id": "exec-b987544437f2b411bf1b006e",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 960,
+      "line": 1010,
       "column": 34,
       "nodeKind": "CallExpression",
       "container": "validateAndLoadWindowsHandleObserverProjection",
@@ -5132,7 +5264,7 @@
       "id": "exec-9711044fc8f9132a2cdd4c38",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 964,
+      "line": 1014,
       "column": 18,
       "nodeKind": "CallExpression",
       "container": "validateAndLoadWindowsHandleObserverProjection",
@@ -5150,7 +5282,7 @@
       "id": "exec-ff5cf8422c89ad94f21de9e0",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1033,
+      "line": 1083,
       "column": 9,
       "nodeKind": "PropertyAccessExpression",
       "container": "runVerifiedWindowsExecutableCopy",
@@ -5167,7 +5299,7 @@
       "id": "exec-ce5fbce477083f7b7ebcaab4",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1284,
+      "line": 1334,
       "column": 10,
       "nodeKind": "CallExpression",
       "container": "boundedFetch",
@@ -5185,7 +5317,7 @@
       "id": "exec-fbfde060896b05d25c1d123f",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1309,
+      "line": 1359,
       "column": 19,
       "nodeKind": "NewExpression",
       "container": "CdpClient.constructor",
@@ -5376,7 +5508,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-51496a829db9cb25614ba5fa",
+      "id": "exec-43fd00d93ff4ab7e41e18a6f",
       "occurrence": 1,
       "sourcePath": "tests/integration/evt01-event-persistence.test.mjs",
       "line": 10,
@@ -5393,7 +5525,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-bbf367156061ea8253f9d3ce",
+      "id": "exec-a2a01f40cf93643aed24efa4",
       "occurrence": 1,
       "sourcePath": "tests/integration/evt01-event-persistence.test.mjs",
       "line": 94,
@@ -8516,7 +8648,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-f314ae7951bfb070a81410e0",
+      "id": "exec-3f1260325de081018a0b78f4",
       "occurrence": 1,
       "sourcePath": "tests/integration/version-model.test.mjs",
       "line": 40,
@@ -8725,7 +8857,7 @@
       "id": "exec-693086a31ebb12fadaeb0f4a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 588,
+      "line": 594,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -8742,7 +8874,7 @@
       "id": "exec-24100569dee2dd14234e340c",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 687,
+      "line": 693,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -8759,7 +8891,7 @@
       "id": "exec-4b7f1f53bc07e63b8b5cbfc3",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 750,
+      "line": 756,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -8776,7 +8908,7 @@
       "id": "exec-387dfc51837d56e5b8a74941",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 807,
+      "line": 813,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -8793,7 +8925,7 @@
       "id": "exec-f329446239415582c8492047",
       "occurrence": 2,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 824,
+      "line": 830,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -8810,7 +8942,7 @@
       "id": "exec-72508e1a9a55a21b5002012a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 850,
+      "line": 856,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -8884,5 +9016,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "3aa8cedf677b6994ed73e8ee9e67be647c4d862b2451958b8d4c268a1481913d"
+  "canonicalPayloadSha256": "7def3e9bdf510013e3f279c7f91602844b74fc9e2906a22407c66c4e6d8bf19b"
 }

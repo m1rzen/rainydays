@@ -22,8 +22,16 @@
     const statusModel = document.getElementById("status-model");
     const statusPersona = document.getElementById("status-persona");
     const appVersionEl = document.getElementById("app-version");
+    const workbenchTreeEl = document.getElementById("workbench-pane-tree");
+    const workbenchStagingEl = document.getElementById("workbench-staging");
 
     let currentSessionId = null;
+    let sessionSelectionGeneration = 0;
+    let sessionSelectionQueue = Promise.resolve();
+    let knownSessions = [];
+    let workbenchLayout = null;
+    let workbenchRevision = 0;
+    const closedWorkbenchTabs = [];
     const inputHistoryBySession = new Map();
     let historyNavIndex = -1;
     function sessionHistory(sessionId) {
@@ -323,26 +331,333 @@
       sendMessage(lastUser.content);
     }
 
+    // ========== Unified Workbench (DS-03) ==========
+    let workbenchSaveQueue = Promise.resolve();
+
+    function workbenchId(prefix) { return `${prefix}-${crypto.randomUUID()}`; }
+    function workbenchFallbackTab() {
+      const session = knownSessions.find(candidate => candidate.id === currentSessionId) || knownSessions[0];
+      if (!session) throw new Error("工作台需要一个真实 Session");
+      return { id: workbenchId("tab"), kind: "session", title: session.title, sessionId: session.id };
+    }
+    function createDefaultWorkbenchLayout() {
+      const tab = workbenchFallbackTab();
+      return { schemaVersion: 1, focusedPaneId: "pane-main", root: { type: "pane", id: "pane-main", tabs: [tab], activeTabId: tab.id } };
+    }
+    function workbenchPanes(node = workbenchLayout?.root, output = []) {
+      if (!node) return output;
+      if (node.type === "pane") output.push(node);
+      else { workbenchPanes(node.first, output); workbenchPanes(node.second, output); }
+      return output;
+    }
+    function findWorkbenchPane(paneId) { return workbenchPanes().find(pane => pane.id === paneId) || null; }
+    function findWorkbenchTab(tabId) {
+      for (const pane of workbenchPanes()) {
+        const index = pane.tabs.findIndex(tab => tab.id === tabId);
+        if (index >= 0) return { pane, tab: pane.tabs[index], index };
+      }
+      return null;
+    }
+    function focusedWorkbenchPane() { return findWorkbenchPane(workbenchLayout?.focusedPaneId) || workbenchPanes()[0] || null; }
+    function workbenchResourceMatches(left, right) {
+      if (left.kind !== right.kind) return false;
+      if (left.kind === "session") return left.sessionId === right.sessionId;
+      if (left.kind === "terminal") return left.sessionId === right.sessionId && left.terminalId === right.terminalId;
+      if (left.kind === "file") return left.sessionId === right.sessionId && left.rootId === right.rootId && left.path === right.path;
+      if (left.kind === "browser") return left.url === right.url;
+      return left.module === right.module;
+    }
+    function activeWorkbenchTab(pane = focusedWorkbenchPane()) {
+      return pane?.tabs.find(tab => tab.id === pane.activeTabId) || null;
+    }
+    function workbenchTabIcon(tab) {
+      if (tab.kind === "session") return isSessionRunning(tab.sessionId) ? "⏳" : "💬";
+      return { terminal: "⌨️", file: "📄", browser: "🌐", prism: "◇" }[tab.kind] || "•";
+    }
+    function workbenchPlaceholder(tab, reason) {
+      const host = document.createElement("div");
+      host.className = "workbench-placeholder";
+      const icon = document.createElement("div");
+      icon.textContent = workbenchTabIcon(tab);
+      const title = document.createElement("strong");
+      title.textContent = tab.title;
+      const detail = document.createElement("div");
+      detail.textContent = reason;
+      host.append(icon, title, detail);
+      return host;
+    }
+    function mountWorkbenchView(tab, paneId, livePaneByKind) {
+      const viewByKind = {
+        session: document.getElementById("chat-view"),
+        terminal: document.getElementById("terminal-panel"),
+        file: document.getElementById("file-viewer"),
+      };
+      const view = viewByKind[tab.kind];
+      if (!view) return workbenchPlaceholder(tab, `${tab.kind === "browser" ? "Browser" : "Prism"} 后端将在对应任务卡接入；布局已保留。`);
+      if (livePaneByKind.get(tab.kind) !== paneId) return workbenchPlaceholder(tab, "该视图实例已在另一 Pane 显示；聚焦此标签后会移动到这里。");
+      view.classList.add("workbench-mounted", "visible");
+      return view;
+    }
+    function renderWorkbenchNode(node, livePaneByKind) {
+      if (node.type === "split") {
+        const split = document.createElement("div");
+        split.className = `workbench-split ${node.direction} ratio-${Math.max(1, Math.min(9, Math.round(node.ratio * 10)))}`;
+        split.dataset.workbenchNodeId = node.id;
+        split.append(renderWorkbenchNode(node.first, livePaneByKind), renderWorkbenchNode(node.second, livePaneByKind));
+        return split;
+      }
+      const pane = document.createElement("section");
+      pane.className = `workbench-pane ${node.id === workbenchLayout.focusedPaneId ? "focused" : ""}`;
+      pane.dataset.workbenchPaneId = node.id;
+      const strip = document.createElement("div");
+      strip.className = "workbench-tabs";
+      strip.setAttribute("role", "tablist");
+      for (const tab of node.tabs) {
+        const button = document.createElement("button");
+        button.className = `workbench-tab ${tab.id === node.activeTabId ? "active" : ""}`;
+        button.dataset.action = "select-workbench-tab";
+        button.dataset.tabId = tab.id;
+        button.dataset.paneId = node.id;
+        if (tab.kind === "session") button.dataset.sessionId = tab.sessionId;
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-selected", String(tab.id === node.activeTabId));
+        button.setAttribute("draggable", "true");
+        const icon = document.createElement("span");
+        icon.className = "workbench-tab-kind";
+        icon.textContent = workbenchTabIcon(tab);
+        const title = document.createElement("span");
+        title.className = "workbench-tab-title";
+        title.textContent = tab.title;
+        const close = document.createElement("span");
+        close.className = "workbench-tab-close";
+        close.dataset.action = "close-workbench-tab";
+        close.dataset.tabId = tab.id;
+        close.setAttribute("role", "button");
+        close.setAttribute("aria-label", `关闭 ${tab.title}`);
+        close.textContent = "×";
+        button.append(icon, title, close);
+        strip.appendChild(button);
+      }
+      const tools = document.createElement("div");
+      tools.className = "workbench-pane-tools";
+      for (const [direction, label] of [["horizontal", "左右分屏"], ["vertical", "上下分屏"]]) {
+        const split = document.createElement("button");
+        split.className = "workbench-pane-tool";
+        split.dataset.action = "split-workbench-pane";
+        split.dataset.paneId = node.id;
+        split.dataset.direction = direction;
+        split.title = label;
+        split.textContent = direction === "horizontal" ? "↔" : "↕";
+        tools.appendChild(split);
+      }
+      const restore = document.createElement("button");
+      restore.className = "workbench-pane-tool";
+      restore.dataset.action = "restore-workbench-tab";
+      restore.dataset.paneId = node.id;
+      restore.title = "恢复最近关闭的标签";
+      restore.textContent = "↶";
+      restore.disabled = closedWorkbenchTabs.length === 0;
+      tools.appendChild(restore);
+      strip.appendChild(tools);
+      const content = document.createElement("div");
+      content.className = "workbench-pane-content";
+      content.dataset.workbenchDropPane = node.id;
+      content.appendChild(mountWorkbenchView(activeWorkbenchTab(node), node.id, livePaneByKind));
+      pane.append(strip, content);
+      return pane;
+    }
+    function renderWorkbenchLayout() {
+      if (!workbenchLayout) return;
+      for (const view of [document.getElementById("chat-view"), document.getElementById("terminal-panel"), document.getElementById("file-viewer")]) {
+        view.classList.remove("workbench-mounted", "visible");
+        workbenchStagingEl.appendChild(view);
+      }
+      const panes = workbenchPanes();
+      const focused = focusedWorkbenchPane();
+      const livePaneByKind = new Map();
+      for (const kind of ["session", "terminal", "file"]) {
+        const preferred = activeWorkbenchTab(focused)?.kind === kind ? focused : panes.find(pane => activeWorkbenchTab(pane)?.kind === kind);
+        if (preferred) livePaneByKind.set(kind, preferred.id);
+      }
+      const terminalPane = findWorkbenchPane(livePaneByKind.get("terminal"));
+      const terminalTab = activeWorkbenchTab(terminalPane);
+      const nextTerminalOwner = terminalTab?.kind === "terminal" ? terminalTab.sessionId : null;
+      if (nextTerminalOwner !== activeTerminalOwnerSessionId) {
+        if (terminalEvents) { terminalEvents.close(); terminalEvents = null; }
+        terminalSessions = [];
+        activeTerminalId = terminalTab?.kind === "terminal" && terminalTab.terminalId !== "terminal-manager" ? terminalTab.terminalId : null;
+      }
+      activeTerminalOwnerSessionId = nextTerminalOwner;
+      const filePane = findWorkbenchPane(livePaneByKind.get("file"));
+      const fileTab = activeWorkbenchTab(filePane);
+      const nextFileOwner = fileTab?.kind === "file" ? fileTab.sessionId : null;
+      if (nextFileOwner !== activeFileOwnerSessionId) {
+        fileDirectoryGeneration += 1;
+        filePreviewGeneration += 1;
+        fileRoots = [];
+      }
+      activeFileOwnerSessionId = nextFileOwner;
+      if (fileTab?.kind === "file") { currentFileRoot = fileTab.rootId; currentFilePath = fileTab.path === "." ? "" : fileTab.path; }
+      workbenchTreeEl.replaceChildren(renderWorkbenchNode(workbenchLayout.root, livePaneByKind));
+      refreshWorkbenchTabStatus();
+      const kinds = new Set(panes.map(pane => activeWorkbenchTab(pane)?.kind));
+      if (kinds.has("terminal")) Promise.resolve(loadTerminals()).catch(error => addSystemMessage(`⚠️ ${error.message}`));
+      if (kinds.has("file")) Promise.resolve(ensureFileRoots().then(() => openFileDirectory(currentFilePath, false))).catch(error => showFileError(error.message));
+    }
+    function refreshWorkbenchTabStatus() {
+      document.querySelectorAll(".workbench-tab[data-session-id]").forEach(button => {
+        const running = isSessionRunning(button.dataset.sessionId);
+        button.classList.toggle("running", running);
+        const icon = button.querySelector(".workbench-tab-kind");
+        if (icon) icon.textContent = running ? "⏳" : "💬";
+      });
+    }
+    async function loadWorkbenchLayout() {
+      const response = await fetch("/api/workbench/layout");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "工作台布局加载失败");
+      workbenchRevision = data.revision;
+      if (!data.layout && knownSessions.length === 0) {
+        const created = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+        if (!created.ok) throw new Error("工作台初始 Session 创建失败");
+        await loadSessions();
+      }
+      workbenchLayout = data.layout || createDefaultWorkbenchLayout();
+      renderWorkbenchLayout();
+      if (!data.layout) await persistWorkbenchLayout();
+    }
+    function persistWorkbenchLayout() {
+      const snapshot = JSON.parse(JSON.stringify(workbenchLayout));
+      workbenchSaveQueue = workbenchSaveQueue.catch(() => undefined).then(async () => {
+        const response = await fetch("/api/workbench/layout", {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ revision: workbenchRevision, layout: snapshot }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          if (response.status === 409) await loadWorkbenchLayout();
+          throw new Error(data.error || "工作台布局保存失败");
+        }
+        workbenchRevision = data.revision;
+        workbenchLayout = data.layout;
+      });
+      return workbenchSaveQueue;
+    }
+    function performWorkbenchOperation(operation) {
+      workbenchSaveQueue = workbenchSaveQueue.catch(() => undefined).then(async () => {
+        const response = await fetch("/api/workbench/layout/operations", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ revision: workbenchRevision, operation }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          if (response.status === 409) await loadWorkbenchLayout();
+          throw new Error(data.error || "工作台操作失败");
+        }
+        workbenchRevision = data.revision;
+        workbenchLayout = data.layout;
+        renderWorkbenchLayout();
+        return data.layout;
+      });
+      return workbenchSaveQueue;
+    }
+    async function ensureWorkbenchTab(tab, paneId = workbenchLayout?.focusedPaneId) {
+      const existing = workbenchPanes().flatMap(pane => pane.tabs.map(candidate => ({ pane, candidate })))
+        .find(entry => workbenchResourceMatches(entry.candidate, tab));
+      if (existing) {
+        await performWorkbenchOperation({ type: "activate", paneId: existing.pane.id, tabId: existing.candidate.id });
+        return;
+      }
+      const pane = findWorkbenchPane(paneId) || focusedWorkbenchPane();
+      await performWorkbenchOperation({ type: "restore", paneId: pane.id, tab, index: pane.tabs.length });
+    }
+    async function selectWorkbenchTab(tabId, paneId) {
+      const pane = findWorkbenchPane(paneId);
+      const located = findWorkbenchTab(tabId);
+      if (!pane || !located || located.pane !== pane) return;
+      await performWorkbenchOperation({ type: "activate", paneId, tabId });
+      if (located.tab.kind === "session") await selectSession(located.tab.sessionId, true);
+    }
+    async function closeWorkbenchTab(tabId) {
+      const located = findWorkbenchTab(tabId);
+      if (!located) return;
+      await performWorkbenchOperation({ type: "close", tabId, fallback: workbenchFallbackTab() });
+      closedWorkbenchTabs.push({ tab: { ...located.tab }, paneId: located.pane.id, index: located.index });
+      if (closedWorkbenchTabs.length > 20) closedWorkbenchTabs.shift();
+      renderWorkbenchLayout();
+    }
+    async function removeSessionWorkbenchTabs(sessionId) {
+      if (!workbenchLayout || !workbenchPanes().some(pane => pane.tabs.some(tab => tab.kind === "session" && tab.sessionId === sessionId))) return;
+      await performWorkbenchOperation({ type: "remove-session", sessionId, fallback: workbenchFallbackTab() });
+    }
+    async function restoreWorkbenchTab(paneId) {
+      const closed = closedWorkbenchTabs.at(-1);
+      const pane = findWorkbenchPane(paneId);
+      if (!closed || !pane || findWorkbenchTab(closed.tab.id)) return;
+      await performWorkbenchOperation({ type: "restore", paneId, tab: closed.tab, index: Math.min(closed.index, pane.tabs.length) });
+      closedWorkbenchTabs.pop();
+      renderWorkbenchLayout();
+    }
+    async function splitWorkbenchPane(paneId, direction) {
+      const pane = findWorkbenchPane(paneId);
+      const active = activeWorkbenchTab(pane);
+      if (!pane || !active || !["horizontal", "vertical"].includes(direction)) return;
+      await performWorkbenchOperation({
+        type: "split", paneId, direction, newTab: { ...active, id: workbenchId("tab") },
+        splitId: workbenchId("split"), newPaneId: workbenchId("pane"), ratio: 0.5,
+      });
+    }
+    function parseWorkbenchDrop(data) {
+      if (typeof data !== "string" || new TextEncoder().encode(data).byteLength > 1024) throw new Error("无效的工作台拖放数据");
+      const value = JSON.parse(data);
+      const idPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+      if (!value || typeof value !== "object" || Array.isArray(value)
+        || Object.keys(value).sort().join(",") !== "schemaVersion,sourcePaneId,tabId"
+        || value.schemaVersion !== 1 || !idPattern.test(value.tabId) || !idPattern.test(value.sourcePaneId)) throw new Error("无效的工作台拖放数据");
+      return value;
+    }
+    async function moveWorkbenchTabFromDrop(payload, targetPaneId, targetIndex) {
+      const located = findWorkbenchTab(payload.tabId);
+      const target = findWorkbenchPane(targetPaneId);
+      if (!located || located.pane.id !== payload.sourcePaneId || !target) throw new Error("工作台拖放目标已失效");
+      await performWorkbenchOperation({ type: "move", tabId: payload.tabId, targetPaneId, targetIndex });
+    }
+
     // ========== Persistent Terminal ==========
     let terminalSessions = [];
     let activeTerminalId = null;
+    let activeTerminalOwnerSessionId = null;
     let terminalEvents = null;
     let terminalHistory = [];
     let terminalHistoryIndex = -1;
 
-    async function toggleTerminal(forceOpen) {
-      const panel = document.getElementById("terminal-panel");
-      const shouldOpen = forceOpen === true || !panel.classList.contains("visible");
-      panel.classList.toggle("visible", shouldOpen);
-      if (shouldOpen) {
-        await loadTerminals();
-        document.getElementById("terminal-input").focus();
+    function requireCurrentTerminalOwner() {
+      if (!activeTerminalOwnerSessionId || currentSessionId !== activeTerminalOwnerSessionId) {
+        throw new Error("终端所属 Session 当前未激活；请先选择对应会话标签");
       }
+    }
+
+    async function toggleTerminal(forceOpen) {
+      const active = activeWorkbenchTab();
+      if (forceOpen === false || (forceOpen !== true && active?.kind === "terminal")) {
+        const terminal = active?.kind === "terminal" ? active : workbenchPanes().map(activeWorkbenchTab).find(tab => tab?.kind === "terminal");
+        if (terminal) await closeWorkbenchTab(terminal.id);
+        return;
+      }
+      if (!currentSessionId) throw new Error("终端标签需要已选择的 Session");
+      activeTerminalOwnerSessionId = currentSessionId;
+      await loadTerminals();
+      const terminal = terminalSessions.find(candidate => candidate.id === activeTerminalId);
+      await ensureWorkbenchTab({
+        id: workbenchId("tab"), kind: "terminal", title: terminal?.name || "终端",
+        sessionId: currentSessionId, terminalId: terminal?.id || "terminal-manager",
+      });
+      document.getElementById("terminal-input").focus();
     }
 
     async function loadTerminals() {
       try {
-        const res = await fetch("/api/terminals", { headers: sessionHeaders() });
+        const res = await fetch("/api/terminals", { headers: sessionHeaders(activeTerminalOwnerSessionId) });
         const data = await res.json();
         terminalSessions = data.terminals || [];
         renderTerminalTabs();
@@ -378,6 +693,7 @@
 
     async function createTerminal() {
       try {
+        requireCurrentTerminalOwner();
         const shell = document.getElementById("terminal-shell-select").value;
         if (typeof window.electronAPI?.terminalStart !== "function") throw new Error("manual terminal unavailable");
         const data = await window.electronAPI.terminalStart({ shell });
@@ -393,7 +709,7 @@
       const output = document.getElementById("terminal-output");
       output.textContent = "";
 
-      const eventSessionId = currentSessionId;
+      const eventSessionId = activeTerminalOwnerSessionId;
       terminalEvents = new EventSource(`/api/terminals/${encodeURIComponent(id)}/events?sessionId=${encodeURIComponent(eventSessionId || "")}`);
       terminalEvents.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -434,8 +750,8 @@
     function updateTerminalInputState() {
       const input = document.getElementById("terminal-input");
       const terminal = terminalSessions.find(t => t.id === activeTerminalId);
-      input.disabled = !terminal || terminal.status !== "running";
-      input.placeholder = input.disabled ? "终端未运行" : `发送到 ${terminal.name}`;
+      input.disabled = !terminal || terminal.status !== "running" || currentSessionId !== activeTerminalOwnerSessionId;
+      input.placeholder = currentSessionId !== activeTerminalOwnerSessionId ? "先选择终端所属 Session" : input.disabled ? "终端未运行" : `发送到 ${terminal.name}`;
     }
 
     async function sendTerminalInput() {
@@ -452,6 +768,7 @@
 
     async function clearActiveTerminal() {
       if (!activeTerminalId) return;
+      requireCurrentTerminalOwner();
       if (typeof window.electronAPI?.terminalClear !== "function") throw new Error("manual terminal unavailable");
       await window.electronAPI.terminalClear({ id:activeTerminalId });
       document.getElementById("terminal-output").textContent = "";
@@ -459,6 +776,7 @@
 
     async function killActiveTerminal() {
       if (!activeTerminalId) return;
+      requireCurrentTerminalOwner();
       if (typeof window.electronAPI?.terminalKill !== "function") throw new Error("manual terminal unavailable");
       try {
         const data = await window.electronAPI.terminalKill({ id:activeTerminalId });
@@ -468,6 +786,7 @@
 
     async function closeActiveTerminal() {
       if (!activeTerminalId) return;
+      requireCurrentTerminalOwner();
       const closingId = activeTerminalId;
       if (typeof window.electronAPI?.terminalClose !== "function") throw new Error("manual terminal unavailable");
       if (terminalEvents) { terminalEvents.close(); terminalEvents = null; }
@@ -490,6 +809,7 @@
 
     // ========== File Viewer ==========
     let fileRoots = [];
+    let activeFileOwnerSessionId = null;
     let currentFileRoot = "workspace";
     let currentFilePath = "";
     let fileEntries = [];
@@ -505,19 +825,28 @@
     let filePreviewGeneration = 0;
 
     async function toggleFileViewer(forceOpen) {
-      const panel = document.getElementById("file-viewer");
-      const shouldOpen = forceOpen === true || (forceOpen !== false && !panel.classList.contains("visible"));
-      panel.classList.toggle("visible", shouldOpen);
-      if (!shouldOpen) return;
+      const active = activeWorkbenchTab();
+      if (forceOpen === false || (forceOpen !== true && active?.kind === "file")) {
+        const file = active?.kind === "file" ? active : workbenchPanes().map(activeWorkbenchTab).find(tab => tab?.kind === "file");
+        if (file) await closeWorkbenchTab(file.id);
+        return;
+      }
       try {
+        if (!currentSessionId) throw new Error("文件标签需要已选择的 Session");
+        if (activeFileOwnerSessionId !== currentSessionId) fileRoots = [];
+        activeFileOwnerSessionId = currentSessionId;
         await ensureFileRoots();
+        await ensureWorkbenchTab({
+          id: workbenchId("tab"), kind: "file", title: "文件", sessionId: currentSessionId,
+          rootId: currentFileRoot, path: currentFilePath || ".",
+        });
         await openFileDirectory(currentFilePath, false);
       } catch (err) { showFileError(err.message); }
     }
 
     async function ensureFileRoots(force = false) {
       if (fileRoots.length > 0 && !force) return fileRoots;
-      const res = await fetch("/api/files/roots", { headers: sessionHeaders() });
+      const res = await fetch("/api/files/roots", { headers: sessionHeaders(activeFileOwnerSessionId) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "根目录加载失败");
       fileRoots = data.roots || [];
@@ -559,7 +888,7 @@
       const requestedRoot = currentFileRoot;
       const offset = append ? fileOffset : 0;
       const query = new URLSearchParams({ root: requestedRoot, path: relativePath, offset: String(offset), limit: String(filePageSize) });
-      const res = await fetch(`/api/files/list?${query}`, { headers: sessionHeaders() });
+      const res = await fetch(`/api/files/list?${query}`, { headers: sessionHeaders(activeFileOwnerSessionId) });
       const data = await res.json();
       if (generation !== fileDirectoryGeneration || requestedRoot !== currentFileRoot) return;
       if (!res.ok) throw new Error(data.error || "目录加载失败");
@@ -680,7 +1009,7 @@
       pager.hidden = true;
 
       const query = new URLSearchParams({ root: rootId, path: relativePath, lineOffset: String(lineOffset), lineLimit: String(previewPageSize) });
-      const res = await fetch(`/api/files/preview?${query}`, { headers: sessionHeaders() });
+      const res = await fetch(`/api/files/preview?${query}`, { headers: sessionHeaders(activeFileOwnerSessionId) });
       const data = await res.json();
       if (generation !== filePreviewGeneration || selectedFilePath !== relativePath || selectedFileRoot !== rootId) return;
       if (!res.ok) throw new Error(data.error || "文件预览失败");
@@ -738,7 +1067,7 @@
       if (!selectedFilePath) return;
       try {
         const res = await fetch("/api/files/reveal", {
-          method: "POST", headers: sessionHeaders(currentSessionId, true),
+          method: "POST", headers: sessionHeaders(activeFileOwnerSessionId, true),
           body: JSON.stringify({ root: selectedFileRoot, path: selectedFilePath }),
         });
         const data = await res.json();
@@ -771,7 +1100,7 @@
 
     async function openResolvedFilePath(absolutePath) {
       try {
-        const res = await fetch(`/api/files/resolve?path=${encodeURIComponent(absolutePath)}`, { headers: sessionHeaders() });
+        const res = await fetch(`/api/files/resolve?path=${encodeURIComponent(absolutePath)}`, { headers: sessionHeaders(activeFileOwnerSessionId) });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "无法打开该路径");
         currentFileRoot = data.rootId;
@@ -789,7 +1118,7 @@
 
     async function pathExistsInViewer(absolutePath) {
       if (resolvedPathCache.has(absolutePath)) return resolvedPathCache.get(absolutePath);
-      const request = fetch(`/api/files/resolve?path=${encodeURIComponent(absolutePath)}`, { headers: sessionHeaders() })
+      const request = fetch(`/api/files/resolve?path=${encodeURIComponent(absolutePath)}`, { headers: sessionHeaders(activeFileOwnerSessionId) })
         .then(res => res.ok)
         .catch(() => false);
       resolvedPathCache.set(absolutePath, request);
@@ -1054,10 +1383,10 @@
     async function init() {
       await loadPersonas();
       await loadSessions();
-      // 自动恢复：如果有 current session，加载它的消息
-      if (currentSessionId) {
-        await selectSession(currentSessionId);
-      }
+      await loadWorkbenchLayout();
+      const restoredSession = activeWorkbenchTab()?.kind === "session" ? activeWorkbenchTab().sessionId : null;
+      const sessionToRestore = knownSessions.some(session => session.id === restoredSession) ? restoredSession : currentSessionId;
+      if (sessionToRestore) await selectSession(sessionToRestore, true);
       const initialStatus = await updateStatus();
       if (initialStatus && !initialStatus.configured) {
         addSystemMessage("⚠️ 当前 Provider 尚未配置 API Key，请在 Settings 中完成配置后再开始对话。");
@@ -1090,6 +1419,7 @@
 
     async function loadSessions() {
       const res = await fetch("/api/sessions"); const data = await res.json();
+      knownSessions = data.sessions || [];
       currentSessionId = data.current;
       refreshRunControls();
       refreshQuestionForCurrentSession();
@@ -1124,17 +1454,42 @@
       }
     }
     async function newChat() {
+      sessionSelectionGeneration += 1;
       const res = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }); const data = await res.json();
-      if (data.session) { currentSessionId = data.session.id; currentTitleEl.textContent = data.session.title; messagesEl.innerHTML = ""; restoreDraft(data.session.id); taskPanel.classList.remove("visible"); subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling(); refreshRunControls(); refreshQuestionForCurrentSession(); await loadSessions(); await loadPins(); inputEl.focus(); updateStatus(); }
+      if (data.session) {
+        currentSessionId = data.session.id; currentTitleEl.textContent = data.session.title; messagesEl.innerHTML = ""; restoreDraft(data.session.id);
+        taskPanel.classList.remove("visible"); subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling();
+        refreshRunControls(); refreshQuestionForCurrentSession(); await loadSessions(); await loadPins();
+        if (workbenchLayout) await ensureWorkbenchTab({ id: workbenchId("tab"), kind: "session", title: data.session.title, sessionId: data.session.id });
+        inputEl.focus(); updateStatus();
+      }
     }
-    async function selectSession(id) {
-      const res = await fetch(`/api/sessions/${id}/select`, { method: "POST" }); const data = await res.json(); if (!data.session) return;
+    function selectSession(id, fromWorkbench = false) {
+      const generation = ++sessionSelectionGeneration;
+      sessionSelectionQueue = sessionSelectionQueue.catch(() => undefined).then(() => selectSessionNow(id, fromWorkbench, generation));
+      return sessionSelectionQueue;
+    }
+    async function selectSessionNow(id, fromWorkbench, generation) {
+      if (generation !== sessionSelectionGeneration) return;
+      const res = await fetch(`/api/sessions/${id}/select`, { method: "POST" });
+      const data = await res.json();
+      if (generation !== sessionSelectionGeneration || !data.session) return;
       currentSessionId = id; currentTitleEl.textContent = data.session.title; refreshRunControls(); refreshQuestionForCurrentSession(); restoreDraft(id);
-      if (data.persona && personaSelect.value !== data.persona) { personaSelect.value = data.persona; const pres = await fetch("/api/personas"); const pdata = await pres.json(); showPersonaInfo(pdata.personas.find(p => p.name === data.persona)); }
+      if (data.persona && personaSelect.value !== data.persona) {
+        personaSelect.value = data.persona;
+        const pres = await fetch("/api/personas"); const pdata = await pres.json();
+        if (generation !== sessionSelectionGeneration) return;
+        showPersonaInfo(pdata.personas.find(p => p.name === data.persona));
+      }
       const mres = await fetch(`/api/sessions/${id}/messages`); const mdata = await mres.json();
+      if (generation !== sessionSelectionGeneration) return;
       messagesEl.innerHTML = "";
       for (const msg of mdata.messages) { if (msg.role === "user") addMessage("user", msg.content, msg.id); else if (msg.role === "assistant" && msg.content) addMessage("assistant", msg.content, msg.id); }
       await loadSessions(); await loadPins(); await loadSessionTasks(id); await loadSessionSubagents(id); updateStatus();
+      if (generation !== sessionSelectionGeneration) return;
+      if (!fromWorkbench && workbenchLayout) {
+        await ensureWorkbenchTab({ id: workbenchId("tab"), kind: "session", title: data.session.title, sessionId: id });
+      }
     }
     async function deleteSession(id) {
       const response = await fetch(`/api/sessions/${id}`, { method: "DELETE" });
@@ -1145,7 +1500,14 @@
       }
       activeRunsBySession.delete(id);
       questionsBySession.delete(id);
+      knownSessions = knownSessions.filter(session => session.id !== id);
       if (currentSessionId === id) { currentSessionId = null; currentTitleEl.textContent = "未选择对话"; messagesEl.innerHTML = '<div class="msg msg-assistant"><div class="bubble">对话已删除。</div></div>'; subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling(); refreshRunControls(); refreshQuestionForCurrentSession(); }
+      if (knownSessions.length === 0) {
+        const created = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+        if (!created.ok) throw new Error("删除最后 Session 后无法创建工作台回退会话");
+        await loadSessions();
+      }
+      await removeSessionWorkbenchTabs(id);
       await loadSessions();
     }
 
@@ -1155,6 +1517,7 @@
       submitBtn.disabled = running;
       statusDot.className = running ? "status-dot busy" : "status-dot";
       statusText.textContent = running ? "思考中..." : "就绪";
+      refreshWorkbenchTabStatus();
     }
     function beginSessionRun(sessionId) {
       const token = { controller: new AbortController(), runId: null, cancelling: false, bubble: null };
@@ -1612,6 +1975,16 @@
       "toggle-file-viewer": () => toggleFileViewer(),
       "close-file-viewer": () => toggleFileViewer(false),
       "toggle-terminal": () => toggleTerminal(),
+      "select-workbench-tab": (_event, target) => target.dataset.tabId && target.dataset.paneId
+        ? selectWorkbenchTab(target.dataset.tabId, target.dataset.paneId) : undefined,
+      "close-workbench-tab": (event, target) => {
+        event.stopPropagation();
+        if (target.dataset.tabId) return closeWorkbenchTab(target.dataset.tabId);
+      },
+      "split-workbench-pane": (_event, target) => target.dataset.paneId && target.dataset.direction
+        ? splitWorkbenchPane(target.dataset.paneId, target.dataset.direction) : undefined,
+      "restore-workbench-tab": (_event, target) => target.dataset.paneId
+        ? restoreWorkbenchTab(target.dataset.paneId) : undefined,
       "open-settings": () => openSettings(),
       "close-settings": () => closeSettings(),
       "export-session": () => exportCurrentSession(),
@@ -1669,6 +2042,34 @@
     document.addEventListener("click", dispatchAction);
     document.addEventListener("change", dispatchAction);
     document.addEventListener("input", dispatchAction);
+    document.addEventListener("dragstart", event => {
+      const tab = event.target instanceof Element ? event.target.closest(".workbench-tab[data-tab-id][data-pane-id]") : null;
+      if (!tab || !event.dataTransfer) return;
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("application/x-rainydays-workbench-tab", JSON.stringify({
+        schemaVersion: 1, tabId: tab.dataset.tabId, sourcePaneId: tab.dataset.paneId,
+      }));
+    });
+    document.addEventListener("dragover", event => {
+      const target = event.target instanceof Element ? event.target.closest(".workbench-tab[data-pane-id], [data-workbench-drop-pane]") : null;
+      if (!target || !event.dataTransfer?.types.includes("application/x-rainydays-workbench-tab")) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    });
+    document.addEventListener("drop", event => {
+      const target = event.target instanceof Element ? event.target.closest(".workbench-tab[data-pane-id], [data-workbench-drop-pane]") : null;
+      if (!target || !event.dataTransfer) return;
+      event.preventDefault();
+      try {
+        const payload = parseWorkbenchDrop(event.dataTransfer.getData("application/x-rainydays-workbench-tab"));
+        const paneId = target.dataset.paneId || target.dataset.workbenchDropPane;
+        const pane = findWorkbenchPane(paneId);
+        const targetIndex = target.classList.contains("workbench-tab")
+          ? pane.tabs.findIndex(tab => tab.id === target.dataset.tabId)
+          : pane.tabs.length;
+        Promise.resolve(moveWorkbenchTabFromDrop(payload, paneId, targetIndex)).catch(error => addSystemMessage(`⚠️ ${error.message}`));
+      } catch (error) { addSystemMessage(`⚠️ ${error instanceof Error ? error.message : String(error)}`); }
+    });
     document.getElementById("settings-modal").addEventListener("click", event => { if (event.target === event.currentTarget) closeSettings(); });
     document.getElementById("ask-input").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); submitAskAnswer(); } });
     document.addEventListener("keydown", (e) => {

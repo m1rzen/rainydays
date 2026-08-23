@@ -282,7 +282,7 @@ if (action === "seed") {
   const isolatedId = process.env.RT07_ISOLATED_ID;
   const forkId = process.env.RT07_FORK_ID;
   assert(sourceId && isolatedId && forkId, "RT-07 verification identities are missing");
-  assert.equal(db.getDatabaseSchemaVersion(), 7);
+  assert.equal(db.getDatabaseSchemaVersion(), 8);
   const source = task.getTasksBySession(sourceId);
   const isolated = task.getTasksBySession(isolatedId);
   const fork = task.getTasksBySession(forkId);
@@ -291,7 +291,7 @@ if (action === "seed") {
   assert.equal(fork.map(entry => entry.id).join(","), "setup,build,release");
   assert.equal(fork.find(entry => entry.id === "build")?.blockedBy.join(","), "setup");
   assert.equal(fork.find(entry => entry.id === "release")?.blockedBy.join(","), "build");
-  console.log(JSON.stringify({ schemaVersion: 7, source, isolated, fork }));
+  console.log(JSON.stringify({ schemaVersion: 8, source, isolated, fork }));
   db.closeDb();
 } else {
   throw new Error(`Unknown RT-07 fixture action: ${action}`);
