@@ -40,6 +40,12 @@ const pendingQuestions = new Map<string, PendingQuestion>();
 /** Legacy fallback used only until the HTTP chat route is migrated to runWithInteractionChannel. */
 let legacySseCallback: ((data: unknown) => void) | null = null;
 
+/** 持久后台事件启动新 flow 时清除 timer/Promise 继承的旧 run-local ALS scope。 */
+export function runOutsideInteractionChannel<T>(action: () => T): T {
+  if (typeof action !== "function") throw new TypeError("Background interaction action is invalid");
+  return interactionStorage.exit(action);
+}
+
 function validateIdentityPart(value: unknown, field: string): string {
   if (typeof value !== "string" || value.length === 0 || value.length > 256 || value.includes("\0")) {
     throw new TypeError(`${field} is invalid`);

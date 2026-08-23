@@ -4,23 +4,38 @@
 
 import type { ToolDefinition, ToolExecutor } from "../types.js";
 import { insertCronJob, listCronJobs, deactivateCronJob, type CronJobRow } from "../db.js";
+import { parseCronDurationMs } from "../cron.js";
+import { discoverSessions, type SessionInfo } from "../link.js";
 import { truncateCodePoints } from "../tool-pipeline.js";
 
-/** 解析延迟字符串为未来时间 ISO */
+export interface ResolvedCronTarget {
+  readonly targetSessionId: string | null;
+  readonly broadcast: boolean;
+  readonly label: string;
+}
+
+/** target 省略=self；*=触发时广播；命名目标按 exact id 或唯一 exact name 解析。 */
+export function resolveCronTarget(
+  requested: unknown,
+  ownerSessionId: unknown,
+  sessions: readonly SessionInfo[] = discoverSessions(),
+): ResolvedCronTarget {
+  if (typeof ownerSessionId !== "string" || ownerSessionId.length === 0) throw new Error("cron_schedule 需要当前 Session 身份");
+  if (requested === undefined || requested === null || requested === "") {
+    return Object.freeze({ targetSessionId: ownerSessionId, broadcast: false, label: ownerSessionId });
+  }
+  if (typeof requested !== "string" || requested.length > 128 || requested.includes("\0")) throw new Error("target 无效");
+  if (requested === "*") return Object.freeze({ targetSessionId: null, broadcast: true, label: "*" });
+  const exactId = sessions.find(session => session.id === requested);
+  if (exactId) return Object.freeze({ targetSessionId: exactId.id, broadcast: false, label: exactId.name });
+  const exactNames = sessions.filter(session => session.name === requested);
+  if (exactNames.length === 0) throw new Error(`目标 Session 不存在: ${requested}`);
+  if (exactNames.length > 1) throw new Error(`目标 Session 名称不唯一: ${requested}`);
+  return Object.freeze({ targetSessionId: exactNames[0].id, broadcast: false, label: exactNames[0].name });
+}
+
 function parseDelayToISO(delay: string): string {
-  const match = delay.match(/^(\d+)(s|m|h|d)$/);
-  if (!match) throw new Error(`无效的时间格式: ${delay}`);
-
-  const n = parseInt(match[1], 10);
-  const unit = match[2];
-  const ms = n * (
-    unit === "s" ? 1000 :
-    unit === "m" ? 60 * 1000 :
-    unit === "h" ? 60 * 60 * 1000 :
-    unit === "d" ? 24 * 60 * 60 * 1000 : 0
-  );
-
-  return new Date(Date.now() + ms).toISOString();
+  return new Date(Date.now() + parseCronDurationMs(delay)).toISOString();
 }
 
 // cron_schedule
@@ -29,7 +44,7 @@ export const cronScheduleDef: ToolDefinition = {
   function: {
     name: "cron_schedule",
     description:
-      "创建定时任务。支持一次性延迟触发和周期性触发。到时间后会向用户发送消息。",
+      "创建延迟或周期消息。触发时像 link_post 一样启动空闲 Session 或注入运行中的 flow；target 省略为自己，'*' 广播所有 Session。",
     parameters: {
       type: "object",
       properties: {
@@ -39,19 +54,27 @@ export const cronScheduleDef: ToolDefinition = {
         },
         delay: {
           type: "string",
-          pattern: "^\\d+(s|m|h|d)$",
+          pattern: "^(?:\\d+d)?(?:\\d+h)?(?:\\d+m)?(?:\\d+s)?$",
+          minLength: 2,
           maxLength: 32,
-          description: "首次触发的延迟时间。格式：数字+单位，如 '30s'(30秒)、'5m'(5分钟)、'1h'(1小时)、'1d'(1天)。",
+          description: "首次触发延迟。支持复合 duration，如 '30m'、'2h30m'、'1d6h'。单位顺序 d→h→m→s。",
         },
         repeat: {
           type: "string",
-          pattern: "^\\d+(s|m|h|d)$",
+          pattern: "^(?:\\d+d)?(?:\\d+h)?(?:\\d+m)?(?:\\d+s)?$",
+          minLength: 2,
           maxLength: 32,
-          description: "重复间隔（可选）。格式同 delay，如 '1h' 表示每小时重复。不传则为一次性任务。",
+          description: "可选重复间隔，格式同 delay。采用固定频率锚点，不随进程重启漂移。",
+        },
+        target: {
+          type: "string",
+          maxLength: 128,
+          description: "可选目标 Session ID 或唯一名称。省略为自己；'*' 表示触发时广播所有 Session。",
         },
         tag: {
           type: "string",
-          description: "任务标签（可选），便于管理。如 '日报检查'。",
+          maxLength: 100,
+          description: "任务标签（可选），便于按标签取消。",
         },
       },
       required: ["message", "delay"],
@@ -66,26 +89,36 @@ export function createCronScheduleExec(onSchedule: (job: CronJobRow) => void): T
     const repeat = args.repeat as string | undefined;
     const tag = args.tag as string | undefined;
     const sessionId = env?._SESSION_ID;
+    const target = resolveCronTarget(args.target, sessionId);
 
     const fireAt = parseDelayToISO(delay);
+    if (repeat !== undefined) parseCronDurationMs(repeat);
     const id = insertCronJob({
       session_id: sessionId || null,
+      target_session_id: target.targetSessionId,
+      broadcast: target.broadcast ? 1 : 0,
       message,
       fire_at: fireAt,
       interval: repeat || null,
       tag: tag || null,
     });
 
-    // 调度
-    const job = {
-      id, session_id: sessionId || null, message,
-      fire_at: fireAt, interval: repeat || null,
-      tag: tag || null, active: 1, last_fired: null,
+    const job: CronJobRow = {
+      id,
+      session_id: sessionId || null,
+      target_session_id: target.targetSessionId,
+      broadcast: target.broadcast ? 1 : 0,
+      message,
+      fire_at: fireAt,
+      interval: repeat || null,
+      tag: tag || null,
+      active: 1,
+      last_fired: null,
       created_at: new Date().toISOString(),
     };
-    onSchedule(job as CronJobRow);
+    onSchedule(job);
 
-    return `✅ 定时任务已创建 [ID: ${id}]\n消息: ${message}\n触发时间: ${new Date(fireAt).toLocaleString("zh-CN")}${repeat ? `\n重复间隔: ${repeat}` : " (一次性)"}`;
+    return `✅ 定时任务已创建 [ID: ${id}]\n消息: ${message}\n目标: ${target.label}\n触发时间: ${new Date(fireAt).toLocaleString("zh-CN")}${repeat ? `\n重复间隔: ${repeat}` : " (一次性)"}`;
   };
 }
 
@@ -102,16 +135,17 @@ export const cronListDef: ToolDefinition = {
   },
 };
 
-export const cronListExec: ToolExecutor = async () => {
-  const jobs = listCronJobs(true);
-  if (jobs.length === 0) {
-    return "当前没有活跃的定时任务。";
-  }
+export const cronListExec: ToolExecutor = async (_args, env) => {
+  const ownerSessionId = env?._SESSION_ID;
+  if (typeof ownerSessionId !== "string" || ownerSessionId.length === 0) throw new Error("cron_list 需要当前 Session 身份");
+  const jobs = listCronJobs(true).filter(job => job.session_id === ownerSessionId);
+  if (jobs.length === 0) return "当前没有活跃的定时任务。";
 
-  const lines = jobs.map((j) => {
-    const fireTime = new Date(j.fire_at).toLocaleString("zh-CN");
-    const type = j.interval ? `每 ${j.interval}` : "一次性";
-    return `[${j.id}] ${type} | 触发: ${fireTime} | ${truncateCodePoints(j.message, 50)}${j.tag ? ` | 标签: ${j.tag}` : ""}`;
+  const lines = jobs.map((job) => {
+    const fireTime = new Date(job.fire_at).toLocaleString("zh-CN");
+    const type = job.interval ? `每 ${job.interval}` : "一次性";
+    const target = job.broadcast === 1 ? "*" : job.target_session_id ?? job.session_id ?? "未知";
+    return `[${job.id}] ${type} | 触发: ${fireTime} | 目标: ${target} | ${truncateCodePoints(job.message, 50)}${job.tag ? ` | 标签: ${job.tag}` : ""}`;
   });
 
   return `活跃定时任务 (${jobs.length}):\n\n${lines.join("\n")}`;
@@ -135,22 +169,25 @@ export const cronCancelDef: ToolDefinition = {
 };
 
 export function createCronCancelExec(onCancel: (id: number) => void): ToolExecutor {
-  return async (args) => {
+  return async (args, env) => {
     const id = args.id as number | undefined;
     const tag = args.tag as string | undefined;
+    const ownerSessionId = env?._SESSION_ID;
+    if (typeof ownerSessionId !== "string" || ownerSessionId.length === 0) throw new Error("cron_cancel 需要当前 Session 身份");
+    const owned = listCronJobs(true).filter(job => job.session_id === ownerSessionId);
 
     if (id) {
+      if (!owned.some(job => job.id === id)) return `定时任务 ${id} 不存在`;
       deactivateCronJob(id);
       onCancel(id);
       return `✅ 定时任务 ${id} 已取消`;
     }
 
     if (tag) {
-      const jobs = listCronJobs(true);
-      const matching = jobs.filter((j) => j.tag === tag);
-      for (const j of matching) {
-        deactivateCronJob(j.id);
-        onCancel(j.id);
+      const matching = owned.filter(job => job.tag === tag);
+      for (const job of matching) {
+        deactivateCronJob(job.id);
+        onCancel(job.id);
       }
       return `✅ 已取消 ${matching.length} 个标签为 "${tag}" 的定时任务`;
     }

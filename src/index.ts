@@ -6,7 +6,7 @@ import express, { type NextFunction, type Request, type Response } from "express
 import type { Server } from "http";
 import { once } from "events";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { randomBytes, randomUUID, timingSafeEqual } from "crypto";
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from "crypto";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -31,7 +31,7 @@ import {
 } from "./session.js";
 import { closeDb, insertPin, getPinsBySession, deletePin, deleteMessagesAfterLastUserMessage, getDatabaseSchemaVersion, createEventStore } from "./db.js";
 import { getDefaultEventBus, type EventEnvelope, type SessionDeliveryOutcome } from "./event-bus.js";
-import { cancelRunInteraction, runWithInteractionChannel, submitAnswer } from "./tools/ask-user-tool.js";
+import { cancelRunInteraction, runOutsideInteractionChannel, runWithInteractionChannel, submitAnswer } from "./tools/ask-user-tool.js";
 import { closeEmbedding } from "./embedding.js";
 import { migrateMissingEmbeddings } from "./tools/memory-tools.js";
 import { getTasksBySession } from "./task.js";
@@ -56,7 +56,7 @@ import {
   type Config,
 } from "./config.js";
 import { initSupervisor } from "./supervisor.js";
-import { updateSessionStatus, onMessage } from "./link.js";
+import { discoverSessions, updateSessionStatus, onMessage } from "./link.js";
 import { disposeAll as disposeWire } from "./wire.js";
 import { createMuseExec } from "./tools/phase1-tools.js";
 import { createCurateExec } from "./tools/curate-tool.js";
@@ -194,7 +194,44 @@ type ActiveRun = Readonly<{
   runId: string;
 }>;
 const activeRunInteractions = new Map<string, ActiveRun>();
+type ActiveRunInjection = Readonly<{
+  input: string;
+  settle: (outcome: SessionDeliveryOutcome) => void;
+}>;
+const activeRunInjections = new Map<string, ActiveRunInjection[]>();
+const MAX_ACTIVE_RUN_INJECTIONS = 100;
 let runtimeMutationReservations = 0;
+
+/** 返回的 Promise 在 flow 真正取走 injection 时 ack；取消前未取走则 retry。 */
+function enqueueActiveRunInjection(sessionId: string, input: string): Promise<SessionDeliveryOutcome> | null {
+  if (!activeRunInteractions.has(sessionId)) return null;
+  let queue = activeRunInjections.get(sessionId);
+  if (!queue) {
+    queue = [];
+    activeRunInjections.set(sessionId, queue);
+  }
+  if (queue.length >= MAX_ACTIVE_RUN_INJECTIONS) return null;
+  let settle!: (outcome: SessionDeliveryOutcome) => void;
+  const outcome = new Promise<SessionDeliveryOutcome>(resolve => { settle = resolve; });
+  queue.push(Object.freeze({ input, settle }));
+  return outcome;
+}
+
+function takeActiveRunInjection(sessionId: string, signal: AbortSignal): string | null {
+  if (signal.aborted) return null;
+  const queue = activeRunInjections.get(sessionId);
+  if (!queue || queue.length === 0) return null;
+  const injection = queue.shift()!;
+  if (queue.length === 0) activeRunInjections.delete(sessionId);
+  injection.settle({ outcome: "acked" });
+  return injection.input;
+}
+
+function clearActiveRunInjections(sessionId: string): void {
+  const queue = activeRunInjections.get(sessionId);
+  activeRunInjections.delete(sessionId);
+  for (const injection of queue ?? []) injection.settle({ outcome: "retry", error: "active flow ended before injection was consumed" });
+}
 
 function cancelActiveRun(
   registry: SessionRuntimeRegistry<AppSessionRuntime>,
@@ -2014,7 +2051,11 @@ app.post("/api/chat", async (req, res) => {
   let cancellationCleanupFailure: unknown = undefined;
   try {
     await runWithInteractionChannel(identity, { emit, signal: claim.signal }, async () => {
-      for await (const step of runtime.agent.run(message, runId, claim.signal)) emit(step);
+      let input: string | null = message;
+      while (input !== null) {
+        for await (const step of runtime.agent.run(input, runId, claim.signal)) emit(step);
+        input = takeActiveRunInjection(chatSessionId, claim.signal);
+      }
     });
   } catch (error) {
     const cancelled = isRunCancellation(error);
@@ -2033,6 +2074,7 @@ app.post("/api/chat", async (req, res) => {
     unlinkMsg();
     res.off("close", closeInteraction);
     if (activeRunInteractions.get(chatSessionId) === identity) activeRunInteractions.delete(chatSessionId);
+    clearActiveRunInjections(chatSessionId);
     updateSessionStatus(chatSessionId, status);
     try { registry.releaseRun(claim, cancellationCleanupFailure); }
     catch (error) {
@@ -2094,8 +2136,8 @@ app.post("/api/clear", async (req, res) => {
 // claim 与 ack 落库之间的崩溃窗口只可能丢唤醒、不会重复注入（冻结合同）。
 // 运行中的目标 → retry 退避（真正的运行中注入属 EVT-02）。
 // ===========================================
-function wakeInputMessage(event: EventEnvelope): string {
-  return `[事件唤醒 ${event.type} ${event.id}]\n${JSON.stringify(event.payload, null, 2)}`;
+function eventInputMessage(event: EventEnvelope, mode: "wake" | "inject"): string {
+  return `[事件${mode === "wake" ? "唤醒" : "注入"} ${event.type} ${event.id}]\n${JSON.stringify(event.payload, null, 2)}`;
 }
 
 async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<SessionDeliveryOutcome> {
@@ -2112,6 +2154,12 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
     if (runtimeMutationReservations > 0 || runtimeRegistry !== registry) throw new Error("Session runtime 正在变更");
   } catch (error) {
     return { outcome: "retry", error: error instanceof Error ? error.message : String(error) };
+  }
+
+  // EVT-02：运行中的目标不再退避；注入当前 active flow 的 follow-up 队列。
+  if (registry.isRunning(sessionId)) {
+    return enqueueActiveRunInjection(sessionId, eventInputMessage(event, "inject"))
+      ?? { outcome: "retry", error: "Session 注入队列不可用或已满" };
   }
 
   const runId = randomUUID();
@@ -2137,7 +2185,7 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
       await audit.execution(true);
     } catch {
       // 审计写入失败不启动 run（宁可重试唤醒，不可脱离审计启动）。
-      try { await registry.cancelRun(sessionId, runId, "client-disconnect"); } catch { /* claim 可能已结算 */ }
+      try { registry.releaseRun(claim); } catch { /* claim 可能已失效 */ }
       return { outcome: "retry", error: "安全审计写入失败" };
     }
   }
@@ -2145,8 +2193,9 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
   // ack-on-claim：claim 原子成功即确认投递。run 以 setImmediate 启动，
   // 让 dispatch 循环的 ack 落库（同步 SQLite 写）先于 run 消费。
   setImmediate(() => {
-    void (async () => {
-      const startedAt = Date.now();
+    runOutsideInteractionChannel(() => {
+      void (async () => {
+        const startedAt = Date.now();
       const identity: ActiveRun = Object.freeze({ sessionId, runId });
       activeRunInteractions.set(sessionId, identity);
       updateSessionStatus(sessionId, "running");
@@ -2154,16 +2203,22 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
       let settlementFailure: unknown = undefined;
       try {
         await runWithInteractionChannel(identity, { emit: () => undefined, signal: claim.signal }, async () => {
-          for await (const step of runtime.agent.run(wakeInputMessage(event), runId, claim.signal)) {
-            if (step?.type === "error") status = "error";
+          let input: string | null = eventInputMessage(event, "wake");
+          while (input !== null) {
+            for await (const step of runtime.agent.run(input, runId, claim.signal)) {
+              if (step?.type === "error") status = "error";
+            }
+            input = takeActiveRunInjection(sessionId, claim.signal);
           }
         });
       } catch (error) {
         const cancelled = isRunCancellation(error);
         if (isRunSettlementFailure(error) || (claim.signal.aborted && !cancelled)) settlementFailure = error;
         status = cancelled ? "idle" : "error";
+        if (!cancelled) console.error("⚠️ 事件 Session flow 失败:", error instanceof Error ? error.stack || error.message : String(error));
       } finally {
         if (activeRunInteractions.get(sessionId) === identity) activeRunInteractions.delete(sessionId);
+        clearActiveRunInjections(sessionId);
         updateSessionStatus(sessionId, status);
         try {
           registry.releaseRun(claim, settlementFailure);
@@ -2177,9 +2232,13 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
             await audit.result({ eventId: event.id, status }, Date.now() - startedAt, status === "idle" ? "success" : "error", null);
           } catch { /* 结果审计失败已由 journal 毒化机制兜底 */ }
         }
-      }
-    })();
+        }
+      })();
+    });
   });
+  // 广播批次的 handler 在同一 turn 内串行执行；让出一次 setImmediate，保证刚调度的
+  // idle flow 真正开始，避免后续目标的审计/claim 阻塞前序 flow 启动。
+  await new Promise<void>(resolve => setImmediate(resolve));
   return { outcome: "acked" };
 }
 
@@ -2197,19 +2256,35 @@ function startEventBusDispatch(): void {
 // --- Cron Manager ---
 let cronManager: CronManager | null = null;
 
-// EVT-01：定时任务触发统一走 EventBus。持久投递 + 空闲唤醒由 bus 承担；
-// legacy SSE 形状（cron_triggered）由 /api/cron/events 的 bus listener 保持。
-function onCronFire(job: CronJobRow): void {
+// EVT-02：每个目标一个稳定 v1 envelope；全部持久化后 CronManager 才推进 slot。
+// 广播部分成功后重试同 slot，EventBus (source, sourceEventId) dedupe 保证不重复副作用。
+async function onCronFire(job: CronJobRow, scheduledAt: string): Promise<boolean> {
   console.log(`⏰ 定时任务触发: ${job.message}`);
-  const firedAt = new Date().toISOString();
-  void getDefaultEventBus().publish({
-    type: "cron.triggered",
-    source: "cron",
-    sourceEventId: `job:${job.id}:${firedAt}`,
-    targetSessionId: typeof job.session_id === "string" && job.session_id.length > 0 ? job.session_id : null,
-    tags: typeof job.tag === "string" && job.tag.length > 0 ? [job.tag] : [],
-    payload: { jobId: job.id, message: job.message, firedAt },
-  }).catch(() => undefined);
+  const targetIds = job.broadcast === 1
+    ? [...new Set(discoverSessions().map(session => session.id))].sort()
+    : [job.target_session_id ?? job.session_id].filter((value): value is string => typeof value === "string" && value.length > 0);
+  const observedAt = new Date().toISOString();
+  for (const targetSessionId of targetIds) {
+    const result = await getDefaultEventBus().publish({
+      type: "cron.triggered",
+      source: "cron",
+      sourceEventId: `job:${job.id}:${scheduledAt}:${createHash("sha256").update(targetSessionId).digest("hex").slice(0, 16)}`,
+      targetSessionId,
+      // Cron tag 是用户-facing 管理标签（可含中文/空格）；不得直接进入 EventBus machine tags。
+      tags: [],
+      payload: {
+        jobId: job.id,
+        message: job.message,
+        tag: job.tag,
+        scheduledAt,
+        observedAt,
+        targetSessionId,
+        broadcast: job.broadcast === 1,
+      },
+    });
+    if (result.status === "rejected") return false;
+  }
+  return true;
 }
 
 // ===========================================
@@ -2221,6 +2296,7 @@ app.get("/api/cron/events", (req, res) => {
     "Cache-Control": "no-cache",
     Connection: "keep-alive",
   });
+  res.flushHeaders();
 
   const removeListener = getDefaultEventBus().addListener("cron.triggered", event => {
     const payload = event.payload as { jobId?: number; message?: string };
@@ -2246,6 +2322,7 @@ app.get("/api/events", (req, res) => {
     "Cache-Control": "no-cache",
     Connection: "keep-alive",
   });
+  res.flushHeaders();
 
   const removeListener = getDefaultEventBus().addListener("*", event => {
     res.write(`data: ${JSON.stringify({ type: "event", event: {
@@ -2498,6 +2575,7 @@ export async function shutdown(exitProcess = true): Promise<void> {
 
   if (runtimeRegistry === retiringRegistry) runtimeRegistry = null;
   activeRunInteractions.clear();
+  for (const sessionId of [...activeRunInjections.keys()]) clearActiveRunInjections(sessionId);
 
   await terminalFacade.disposeAllForShutdown();
   await shutdownExecutionRuntime();

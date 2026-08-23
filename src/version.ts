@@ -44,7 +44,7 @@ export interface BuildInfo {
 const semverPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 const hashPattern = /^[a-f0-9]{64}$/;
 const buildIdPattern = /^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$/;
-const SUPPORTED_DATABASE_SCHEMA_VERSION = 4;
+const SUPPORTED_DATABASE_SCHEMA_VERSION = 5;
 const SUPPORTED_SESSION_EXPORT_VERSION = 1;
 const EXPECTED_BASELINE = Object.freeze({
   schemaVersion: 1,

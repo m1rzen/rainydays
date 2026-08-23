@@ -581,6 +581,48 @@ function assertSchemaV4(database: typeof db = db): void {
   if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 4 不兼容: 完整性检查失败");
 }
 
+const SCHEMA_V5_SQL = `
+    ALTER TABLE cron_jobs ADD COLUMN target_session_id TEXT
+      CHECK (target_session_id IS NULL OR length(target_session_id) BETWEEN 1 AND 128);
+    ALTER TABLE cron_jobs ADD COLUMN broadcast INTEGER NOT NULL DEFAULT 0
+      CHECK (broadcast IN (0, 1));
+  `;
+
+function assertSchemaV5(database: typeof db = db): void {
+  const reference = createInMemoryBootstrapDatabase();
+  try {
+    reference.pragma("foreign_keys = ON");
+    reference.exec(SCHEMA_V1_SQL);
+    reference.exec(SCHEMA_V2_SQL);
+    applySchemaV3(reference);
+    reference.exec(SCHEMA_V4_SQL);
+    reference.exec(SCHEMA_V5_SQL);
+    const objectRows = (target: typeof db): Array<{ type: string; name: string; tbl_name: string; sql: string | null }> => target.prepare(
+      "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
+    ).all() as Array<{ type: string; name: string; tbl_name: string; sql: string | null }>;
+    const actual = objectRows(database);
+    const expected = objectRows(reference);
+    const signatures = (rows: typeof actual): string[] => rows.map(entry => `${entry.type}|${entry.name}|${entry.tbl_name}`);
+    if (JSON.stringify(signatures(actual)) !== JSON.stringify(signatures(expected))) {
+      throw new Error("数据库 Schema 5 不兼容: 存在未知或缺失的 Schema 对象");
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const found = actual[index];
+      const wanted = expected[index];
+      if ((found.sql === null) !== (wanted.sql === null)
+        || (found.sql !== null && wanted.sql !== null && normalizeSchemaSql(found.sql) !== normalizeSchemaSql(wanted.sql))) {
+        throw new Error(`数据库 Schema 5 不兼容: ${wanted.type} ${wanted.name} SQL 定义错误`);
+      }
+    }
+  } finally {
+    reference.close();
+  }
+  const foreignKeyViolations = database.prepare("PRAGMA foreign_key_check").all();
+  if (foreignKeyViolations.length > 0) throw new Error("数据库 Schema 5 不兼容: 存在外键完整性错误");
+  const integrity = database.prepare("PRAGMA integrity_check").all() as Array<{ integrity_check?: string }>;
+  if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 5 不兼容: 完整性检查失败");
+}
+
 interface DatabaseMigration {
   readonly from: number;
   readonly to: number;
@@ -624,6 +666,15 @@ const DATABASE_MIGRATIONS: readonly DatabaseMigration[] = Object.freeze([
       assertSchemaV4(database);
     },
   }),
+  Object.freeze({
+    from: 4,
+    to: 5,
+    apply: (database: typeof db): void => {
+      assertSchemaV4(database);
+      database.exec(SCHEMA_V5_SQL);
+      assertSchemaV5(database);
+    },
+  }),
 ]);
 
 function assertMigrationRegistry(): void {
@@ -664,7 +715,7 @@ function migrateDatabase(): void {
   if (version !== DATABASE_SCHEMA_VERSION) {
     throw new Error(`数据库 Schema 迁移未达到目标版本: 当前 ${version}，目标 ${DATABASE_SCHEMA_VERSION}`);
   }
-  assertSchemaV4(db);
+  assertSchemaV5(db);
 }
 
 try {
@@ -701,7 +752,7 @@ export function validateDatabaseRestoreCandidate(
   }
   const bytes = fs.readFileSync(databasePath);
   const candidate = createInMemoryBootstrapDatabase(bytes);
-  try { assertSchemaV4(candidate); }
+  try { assertSchemaV5(candidate); }
   finally { candidate.close(); }
   return validation;
 }
@@ -1219,8 +1270,13 @@ export function insertTaskDependency(row: TaskDependencyRow): void {
 
 export interface CronJobRow {
   id: number;
+  /** 创建者/所有者 Session；用于 list/cancel 隔离。 */
   session_id: string | null;
+  /** canonical 目标 Session。null 表示 legacy/self；broadcast=1 时忽略。 */
+  target_session_id: string | null;
+  broadcast: number;
   message: string;
+  /** 下一次固定频率计划触发点。 */
   fire_at: string;
   interval: string | null;
   tag: string | null;
@@ -1229,12 +1285,28 @@ export interface CronJobRow {
   created_at: string;
 }
 
-export function insertCronJob(job: Omit<CronJobRow, "id" | "active" | "last_fired" | "created_at"> & { active?: number }): number {
+type CronJobInsert = Omit<CronJobRow, "id" | "active" | "last_fired" | "created_at" | "target_session_id" | "broadcast"> & {
+  readonly active?: number;
+  readonly target_session_id?: string | null;
+  readonly broadcast?: number;
+};
+
+export function insertCronJob(job: CronJobInsert): number {
   const now = new Date().toISOString();
   const result = db.prepare(
-    `INSERT INTO cron_jobs (session_id, message, fire_at, interval, tag, active, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(job.session_id || null, job.message, job.fire_at, job.interval || null, job.tag || null, job.active ?? 1, now);
+    `INSERT INTO cron_jobs (session_id, target_session_id, broadcast, message, fire_at, interval, tag, active, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    job.session_id || null,
+    job.target_session_id || null,
+    job.broadcast === 1 ? 1 : 0,
+    job.message,
+    job.fire_at,
+    job.interval || null,
+    job.tag || null,
+    job.active ?? 1,
+    now,
+  );
   return Number(result.lastInsertRowid);
 }
 
@@ -1255,6 +1327,15 @@ export function deactivateCronJob(id: number): void {
 
 export function updateCronJobLastFired(id: number, lastFired: string): void {
   db.prepare(`UPDATE cron_jobs SET last_fired = ? WHERE id = ?`).run(lastFired, id);
+}
+
+/** 一次原子写入完成当前 slot，并推进到下一固定频率 slot；nextFireAt=null 表示 one-shot 结束。 */
+export function advanceCronJob(id: number, lastFired: string, nextFireAt: string | null): void {
+  if (nextFireAt === null) {
+    db.prepare(`UPDATE cron_jobs SET last_fired = ?, active = 0 WHERE id = ? AND active = 1`).run(lastFired, id);
+    return;
+  }
+  db.prepare(`UPDATE cron_jobs SET last_fired = ?, fire_at = ? WHERE id = ? AND active = 1`).run(lastFired, nextFireAt, id);
 }
 
 // ===========================================
