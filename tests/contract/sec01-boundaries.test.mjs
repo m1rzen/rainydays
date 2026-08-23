@@ -15,7 +15,7 @@ function namesFromPolicyBlock(text, exportName) {
   assert(start >= 0, `${exportName} block missing`);
   const end = text.indexOf("});", start);
   assert(end > start, `${exportName} block terminator missing`);
-  return [...text.slice(start, end).matchAll(/^\s{2}(?:"([^"]+)"|([a-z0-9_]+)):\s*policy/gm)]
+  return [...text.slice(start, end).matchAll(/^\s{2}(?:"([^"]+)"|([a-z0-9_]+)):\s*(?:policy|parallelReadPolicy)/gm)]
     .map((match) => match[1] ?? match[2]);
 }
 
@@ -29,10 +29,10 @@ async function verifyPolicyRegistryBoundary() {
   const staticPolicies = namesFromPolicyBlock(policies, "STATIC_TOOL_POLICIES");
   const runtimePolicies = namesFromPolicyBlock(policies, "RUNTIME_TOOL_POLICIES");
 
-  assert.equal(staticNames.length, 48);
-  assert.equal(runtimePolicies.length, 10);
+  assert.equal(staticNames.length, 50);
+  assert.equal(runtimePolicies.length, 16);
   assert.deepEqual([...staticNames].sort(), [...staticPolicies].sort());
-  assert.equal(new Set([...staticNames, ...runtimePolicies]).size, 58);
+  assert.equal(new Set([...staticNames, ...runtimePolicies]).size, 66);
   assert.match(registry, /registerDynamicTool\(authority: RuntimeAuthority/);
   assert.doesNotMatch(registry, /registerRuntimeTool\([^,]+,\s*tool\)(?![\s\S]*policy)/);
   return true;
