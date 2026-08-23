@@ -29,10 +29,10 @@ async function verifyPolicyRegistryBoundary() {
   const staticPolicies = namesFromPolicyBlock(policies, "STATIC_TOOL_POLICIES");
   const runtimePolicies = namesFromPolicyBlock(policies, "RUNTIME_TOOL_POLICIES");
 
-  assert.equal(staticNames.length, 50);
+  assert.equal(staticNames.length, 51);
   assert.equal(runtimePolicies.length, 16);
   assert.deepEqual([...staticNames].sort(), [...staticPolicies].sort());
-  assert.equal(new Set([...staticNames, ...runtimePolicies]).size, 66);
+  assert.equal(new Set([...staticNames, ...runtimePolicies]).size, 67);
   assert.match(registry, /registerDynamicTool\(authority: RuntimeAuthority/);
   assert.doesNotMatch(registry, /registerRuntimeTool\([^,]+,\s*tool\)(?![\s\S]*policy)/);
   return true;
@@ -73,7 +73,7 @@ async function verifyTerminalFacadeBoundary() {
   const index = await source("src/index.ts");
   const operationCounts = new Map([
     ["file:reveal", 1], ["terminal:list", 1], ["terminal:start", 2], ["terminal:output", 1],
-    ["terminal:input", 0], ["terminal:clear", 0], ["terminal:kill", 0], ["terminal:close", 0],
+    ["terminal:input", 1], ["terminal:resize", 1], ["terminal:clear", 0], ["terminal:kill", 0], ["terminal:close", 0],
     ["terminal:subscribe", 1],
   ]);
   for (const [operation, expectedCount] of operationCounts) {
@@ -82,7 +82,7 @@ async function verifyTerminalFacadeBoundary() {
   assert.match(index, /const directOperation = `terminal:\$\{storedOperation\.slice\("terminal-"\.length\)\}`;/);
   assert.match(index, /runDirectOperation\(directOperation, exactRequest,/);
 
-  for (const match of index.matchAll(/terminalFacade\.(list|start|output|input|get|clear|kill|close|subscribe)\(/g)) {
+  for (const match of index.matchAll(/terminalFacade\.(list|start|output|input|resize|get|clear|kill|close|subscribe)\(/g)) {
     const routeStart = index.lastIndexOf("app.", match.index);
     const authorizationStart = index.lastIndexOf("runDirectOperation(", match.index);
     assert(authorizationStart > routeStart, `${match[0]} bypasses direct-operation authorization`);

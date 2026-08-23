@@ -627,6 +627,10 @@ bool AuthenticatedControlFrame(const void* data, size_t size, const char* expect
   if (strcmp(expected_type, "input") == 0) {
     if (!ExactKeys(parsed, {"appendNewline", "data", "digest", "secret", "type", "v"}) || !Field(parsed, "appendNewline", Json::Kind::boolean) || !Field(parsed, "data", Json::Kind::string)) return false;
     const Json* digest = Field(parsed, "digest", Json::Kind::string); if (!digest || digest->scalar.size() != 64 || !std::all_of(digest->scalar.begin(), digest->scalar.end(), [](char c) { return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'); })) return false;
+  } else if (strcmp(expected_type, "resize") == 0) {
+    if (!ExactKeys(parsed, {"cols", "rows", "secret", "type", "v"})) return false;
+    const Json* cols = Field(parsed, "cols", Json::Kind::number); const Json* rows = Field(parsed, "rows", Json::Kind::number); uint64_t parsed_cols = 0, parsed_rows = 0;
+    if (!cols || !rows || !ParseUnsigned(cols->scalar, &parsed_cols) || !ParseUnsigned(rows->scalar, &parsed_rows) || parsed_cols < 2 || parsed_cols > 500 || parsed_rows < 1 || parsed_rows > 300) return false;
   } else {
     if (!ExactKeys(parsed, {"reason", "secret", "type", "v"})) return false;
     const Json* reason = Field(parsed, "reason", Json::Kind::string); if (!reason || reason->scalar.empty() || reason->scalar.size() > 64 || !std::all_of(reason->scalar.begin(), reason->scalar.end(), [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'; })) return false;
@@ -640,7 +644,11 @@ napi_value WriteFrame(napi_env env, napi_callback_info info) {
   size_t argc = 1; napi_value argv[1]; Execution* execution = GetExecution(env, info, &argc, argv);
   if (!execution || argc != 1 || execution->terminate_sent) return nullptr;
   bool is_buffer = false; napi_is_buffer(env, argv[0], &is_buffer); void* data = nullptr; size_t size = 0; std::vector<uint8_t> authenticated;
-  if (!is_buffer || napi_get_buffer_info(env, argv[0], &data, &size) != napi_ok || !AuthenticatedControlFrame(data, size, "input", execution->control_secret, &authenticated)) { Throw(env, "EXEC_NATIVE_PROTOCOL", "Input frame is invalid"); return nullptr; }
+  if (!is_buffer || napi_get_buffer_info(env, argv[0], &data, &size) != napi_ok
+    || (!AuthenticatedControlFrame(data, size, "input", execution->control_secret, &authenticated)
+      && !AuthenticatedControlFrame(data, size, "resize", execution->control_secret, &authenticated))) {
+    Throw(env, "EXEC_NATIVE_PROTOCOL", "Interactive control frame is invalid"); return nullptr;
+  }
   std::lock_guard<std::mutex> lock(execution->write_mutex);
   if (!WriteExact(execution->control, authenticated.data(), static_cast<DWORD>(authenticated.size()))) { Throw(env, "EXEC_NATIVE_IO", "Control pipe write failed"); return nullptr; }
   return ResolvedPromise(env);

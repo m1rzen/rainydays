@@ -117,7 +117,7 @@ const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule, t
 ]);
 
 const localApiPrincipal = toolsModule.capabilityBroker.createLocalApiPrincipal();
-const tools = ["execute_command", "script", "shell_start", "shell_input", "shell_output", "shell_list", "shell_kill"];
+const tools = ["execute_command", "script", "shell_start", "shell_input", "shell_output", "shell_resize", "shell_list", "shell_kill"];
 const persona = personaModule.createEffectivePersona({
   name: "sec02-process",
   displayName: "SEC02 Process",
@@ -505,6 +505,12 @@ test("SEC-02 tool Terminal binds CWD and controls to one runtime authority", asy
     const id = /ID:\s*(term_[a-z0-9]+)/i.exec(started)?.[1];
     assert(id, started);
     assert.match(started, /PID:\s*null\b/u, "Terminal projection exposed or invented a host PID");
+    const resized = await toolsModule.executeTool(root, "shell_resize", { terminalId: id, cols: 91, rows: 37 });
+    assert.match(resized, /91x37/u);
+    assert.deepEqual(
+      (({ cols, rows, pty }) => ({ cols, rows, pty }))(terminalModule.terminalFacade.get(owner, id)),
+      { cols: 91, rows: 37, pty: "conpty" },
+    );
 
     const cwdCommand = process.platform === "win32"
       ? "echo SEC02_TERMINAL_CWD:%CD%"

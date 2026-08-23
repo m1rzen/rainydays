@@ -13,12 +13,18 @@ function harness() {
   const states = new WeakMap();
   const statesByTerminal = new Map();
   const terminations = [];
-  const mutations = { launches: 0, stdinWrites: 0, terminations: 0 };
+  const mutations = { launches: 0, stdinWrites: 0, resizes: 0, terminations: 0 };
   const backend = {
     read(lease) {
       const state = states.get(lease);
       if (!state) throw new Error("unknown synthetic lease");
-      return { stdout: state.stdout, stderr: state.stderr, outputTruncated: false, running: state.running };
+      const stdoutBytes = Buffer.from(state.stdout, "utf8");
+      const stderrBytes = Buffer.from(state.stderr, "utf8");
+      return {
+        stdout: state.stdout, stderr: state.stderr, stdoutBytes, stderrBytes,
+        stdoutStart: 0, stdoutEnd: stdoutBytes.length, stderrStart: 0, stderrEnd: stderrBytes.length,
+        outputTruncated: false, running: state.running,
+      };
     },
     async terminate(lease, _owner, reason) {
       const state = states.get(lease);
@@ -27,13 +33,20 @@ function harness() {
       mutations.terminations += 1;
       terminations.push(reason);
     },
+    async resize(lease, _owner, cols, rows) {
+      const state = states.get(lease);
+      if (!state || !state.running) throw new Error("unknown synthetic lease");
+      state.cols = cols;
+      state.rows = rows;
+      mutations.resizes += 1;
+    },
   };
   const execution = {
     async executeCommand() { throw new Error("not available in Terminal projection test"); },
     async executeScript() { throw new Error("not available in Terminal projection test"); },
     async startShell(input) {
       const lease = Object.freeze({ leaseId: `synthetic-${input.terminalId}` });
-      const state = { stdout: "", stderr: "", running: true, terminalId: input.terminalId };
+      const state = { stdout: "", stderr: "", running: true, terminalId: input.terminalId, cols: 120, rows: 30 };
       states.set(lease, state);
       statesByTerminal.set(input.terminalId, state);
       mutations.launches += 1;
@@ -124,11 +137,13 @@ test("SEC-01/SEC-03 A13 Terminal projection keeps opaque leases Session/principa
     } finally {
       logger.warn = originalLifecycleLoggerWarn;
     }
+    await assert.rejects(() => facade.resize(otherSession, terminal.id, 80, 24), /终端不存在/);
     assert.deepEqual({
       launches: mutations.launches - beforeOwnerMismatch.launches,
       stdinWrites: mutations.stdinWrites - beforeOwnerMismatch.stdinWrites,
+      resizes: mutations.resizes - beforeOwnerMismatch.resizes,
       terminations: mutations.terminations - beforeOwnerMismatch.terminations,
-    }, { launches: 0, stdinWrites: 0, terminations: 0 }, "A13-03/04 mutation counters were not zero");
+    }, { launches: 0, stdinWrites: 0, resizes: 0, terminations: 0 }, "A13-03/04/resize mutation counters were not zero");
     assert.equal(facade.get(localOwner, terminal.id)?.status, "running", "A13-03/04 attenuated the target lease");
     assert.equal(facade.list(localOwner).length, 1, "A13-04 closed the target lease");
     assert.equal(lifecycleAuditCalls.length, 2);
@@ -146,6 +161,16 @@ test("SEC-01/SEC-03 A13 Terminal projection keeps opaque leases Session/principa
 
     assertSec01Probe("SEC01-A29", "terminal-owner-state", [facade.get(otherSession, terminal.id) ?? null, facade.list(otherSession)], [null, []]);
     assertSec01Probe("SEC01-A29", "terminal-resource-count", facade.list(localOwner).length, 1);
+
+    assert.deepEqual({ cols: terminal.cols, rows: terminal.rows, pty: terminal.pty }, { cols: 120, rows: 30, pty: "conpty" });
+    await assert.rejects(() => facade.resize(localOwner, terminal.id, 1, 24), /终端尺寸无效/);
+    await assert.rejects(() => facade.resize(localOwner, terminal.id, 80, 301), /终端尺寸无效/);
+    const resized = await facade.resize(localOwner, terminal.id, 80, 24);
+    assert.deepEqual({ cols: resized.cols, rows: resized.rows }, { cols: 80, rows: 24 });
+    assert.equal(mutations.resizes, 1);
+    assert(events.some(event => event.type === "resize" && event.terminalId === terminal.id && event.cols === 80 && event.rows === 24));
+    await facade.resize(localOwner, terminal.id, 80, 24);
+    assert.equal(mutations.resizes, 1, "identical PTY resize reached the native backend");
 
     await facade.input(localOwner, terminal.id, "echo SEC01_OWNER_PROBE", true, execution);
     const output = facade.output(localOwner, terminal.id, 0, 100_000);
@@ -212,6 +237,24 @@ test("SEC-02 Terminal projection normalizes blank names without ambient shell lo
     assert.match(facade.output(resourceOwner, terminal.id, 0, 1000).data, /SEC02_POWERSHELL/);
   } finally {
     await facade.close(resourceOwner, terminal.id);
+    await retireResourceOwner(resourceOwner);
+    await facade.disposeAllForShutdown();
+  }
+});
+
+test("DS-04 Terminal projection enforces the frozen eight-PTY concurrency limit", async () => {
+  const resourceOwner = owner("session-eight-pty");
+  const { facade, execution, mutations } = harness();
+  try {
+    const terminals = [];
+    for (let index = 0; index < 8; index += 1) {
+      terminals.push(await facade.start(resourceOwner, startOptions(execution, { name: `pty-${index + 1}` })));
+    }
+    assert.equal(new Set(terminals.map(terminal => terminal.id)).size, 8);
+    assert.equal(facade.list(resourceOwner).length, 8);
+    await assert.rejects(() => facade.start(resourceOwner, startOptions(execution, { name: "pty-nine" })), /最多同时运行 8 个终端/);
+    assert.equal(mutations.launches, 8, "limit rejection reached the native launch boundary");
+  } finally {
     await retireResourceOwner(resourceOwner);
     await facade.disposeAllForShutdown();
   }

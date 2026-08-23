@@ -3,10 +3,11 @@
 // ===========================================
 
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
+import { StringDecoder } from "node:string_decoder";
 import type { IsolatedTerminalLease, ScopedExecutionGateway } from "./execution-runtime.js";
 import type { NativeExecutionProof } from "./execution-native.js";
 import type { ExecutionRootLease } from "./path-policy.js";
-import { observeTerminalOwnerDenial, readIsolatedTerminal, retireIsolatedTerminal, terminateIsolatedTerminal } from "./execution-runtime.js";
+import { observeTerminalOwnerDenial, readIsolatedTerminal, resizeIsolatedTerminal, retireIsolatedTerminal, terminateIsolatedTerminal } from "./execution-runtime.js";
 import {
   assertResourceOwner,
   registerOwnedResource,
@@ -30,10 +31,14 @@ export interface TerminalInfo {
   updatedAt: string;
   outputStart: number;
   outputEnd: number;
+  cols: number;
+  rows: number;
+  pty: "conpty";
 }
 
 export type TerminalEvent =
   | { type: "output"; terminalId: string; data: string; start: number; end: number; timestamp: number }
+  | { type: "resize"; terminalId: string; cols: number; rows: number; timestamp: number }
   | { type: "status"; terminalId: string; status: TerminalStatus; exitCode: number | null; timestamp: number };
 
 interface TerminalSession extends TerminalInfo {
@@ -42,6 +47,8 @@ interface TerminalSession extends TerminalInfo {
   output: string;
   observedNativeStdout: number;
   observedNativeStderr: number;
+  stdoutDecoder: StringDecoder;
+  stderrDecoder: StringDecoder;
   subscribers: Set<(event: TerminalEvent) => void>;
   poller: NodeJS.Timeout | null;
   unregisterOwnedResource: () => void;
@@ -88,8 +95,13 @@ function auditTerminalOwnerDenial(
 }
 
 export interface TerminalIsolationBackend {
-  readonly read: (lease: IsolatedTerminalLease, owner: ResourceOwner) => Readonly<{ stdout: string; stderr: string; outputTruncated: boolean; running: boolean }>;
+  readonly read: (lease: IsolatedTerminalLease, owner: ResourceOwner) => Readonly<{
+    stdout: string; stderr: string; stdoutBytes: Uint8Array; stderrBytes: Uint8Array;
+    stdoutStart: number; stdoutEnd: number; stderrStart: number; stderrEnd: number;
+    outputTruncated: boolean; running: boolean;
+  }>;
   readonly terminate: (lease: IsolatedTerminalLease, owner: ResourceOwner, reason: string) => Promise<void>;
+  readonly resize?: (lease: IsolatedTerminalLease, owner: ResourceOwner, cols: number, rows: number) => Promise<void>;
   readonly retire?: (lease: IsolatedTerminalLease, owner: ResourceOwner, reason: string) => Promise<void>;
   readonly observeOwnerDenial?: (lease: IsolatedTerminalLease, requester: ResourceOwner, operation: "kill" | "close", terminalId: string) => Promise<NativeExecutionProof>;
 }
@@ -132,9 +144,14 @@ class TerminalManager {
       updatedAt: now,
       outputStart: 0,
       outputEnd: 0,
+      cols: 120,
+      rows: 30,
+      pty: "conpty",
       output: "",
       observedNativeStdout: 0,
       observedNativeStderr: 0,
+      stdoutDecoder: new StringDecoder("utf8"),
+      stderrDecoder: new StringDecoder("utf8"),
       subscribers: new Set(),
       poller: null,
       unregisterOwnedResource: () => undefined,
@@ -199,6 +216,23 @@ class TerminalManager {
     session.output = "";
     session.outputStart = session.outputEnd;
     session.updatedAt = new Date().toISOString();
+  }
+
+  async resize(owner: TerminalOwner, id: string, cols: number, rows: number): Promise<TerminalInfo> {
+    const session = this.#requireSession(owner, id, "resize");
+    if (session.status !== "running") throw new Error(`终端未运行: ${id} (${session.status})`);
+    if (!Number.isSafeInteger(cols) || cols < 2 || cols > 500 || !Number.isSafeInteger(rows) || rows < 1 || rows > 300) {
+      throw new Error("终端尺寸无效");
+    }
+    if (!this.#isolation.resize) throw new Error("PTY resize 不可用");
+    if (session.cols === cols && session.rows === rows) return this.#toInfo(session);
+    await this.#isolation.resize(session.isolationLease, owner, cols, rows);
+    session.cols = cols;
+    session.rows = rows;
+    session.updatedAt = new Date().toISOString();
+    const event: TerminalEvent = { type: "resize", terminalId: id, cols, rows, timestamp: Date.now() };
+    for (const subscriber of session.subscribers) subscriber(event);
+    return this.#toInfo(session);
   }
 
   async kill(owner: TerminalOwner, id: string): Promise<void> {
@@ -279,15 +313,8 @@ class TerminalManager {
     if (!this.#sessions.has(session.id)) return;
     try {
       const native = this.#isolation.read(session.isolationLease, session.owner);
-      if (native.stdout.length > session.observedNativeStdout) {
-        this.#appendOutput(session, native.stdout.slice(session.observedNativeStdout));
-        session.observedNativeStdout = native.stdout.length;
-      }
-      if (native.stderr.length > session.observedNativeStderr) {
-        const first = session.observedNativeStderr === 0;
-        this.#appendOutput(session, `${first ? "\r\n[stderr]\r\n" : ""}${native.stderr.slice(session.observedNativeStderr)}`);
-        session.observedNativeStderr = native.stderr.length;
-      }
+      this.#consumeNativeStream(session, "stdout", native.stdoutBytes, native.stdoutStart, native.stdoutEnd);
+      this.#consumeNativeStream(session, "stderr", native.stderrBytes, native.stderrStart, native.stderrEnd);
       if (!native.running && session.status === "running") this.#updateStatus(session, "exited", null);
     } catch (error) {
       if (session.status === "running") {
@@ -295,6 +322,31 @@ class TerminalManager {
         this.#updateStatus(session, "error", null);
       }
     }
+  }
+
+  #consumeNativeStream(
+    session: TerminalSession,
+    stream: "stdout" | "stderr",
+    retained: Uint8Array,
+    start: number,
+    end: number
+  ): void {
+    const observedKey = stream === "stdout" ? "observedNativeStdout" : "observedNativeStderr";
+    const decoderKey = stream === "stdout" ? "stdoutDecoder" : "stderrDecoder";
+    let observed = session[observedKey];
+    if (observed < start) {
+      session[decoderKey] = new StringDecoder("utf8");
+      observed = start;
+      this.#appendOutput(session, "\r\n\x1b[2m[earlier terminal output truncated]\x1b[0m\r\n");
+    }
+    if (end <= observed) return;
+    const bytes = Buffer.from(retained);
+    const offset = observed - start;
+    if (offset < 0 || offset > bytes.length || end - start !== bytes.length) throw new Error("Native PTY output offsets are invalid");
+    const firstStderr = stream === "stderr" && session.observedNativeStderr === 0;
+    const decoded = session[decoderKey].write(bytes.subarray(offset));
+    session[observedKey] = end;
+    if (decoded) this.#appendOutput(session, `${firstStderr ? "\r\n[stderr]\r\n" : ""}${decoded}`);
   }
 
   #appendOutput(session: TerminalSession, chunk: string): void {
@@ -330,6 +382,7 @@ class TerminalManager {
       id: session.id, name: session.name, shell: session.shell, cwd: session.cwd, pid: session.pid,
       status: session.status, exitCode: session.exitCode, createdAt: session.createdAt, updatedAt: session.updatedAt,
       outputStart: session.outputStart, outputEnd: session.outputEnd,
+      cols: session.cols, rows: session.rows, pty: session.pty,
     };
   }
 }
@@ -343,6 +396,7 @@ function facadeFor(manager: TerminalManager) {
       manager.input(owner, id, data, appendNewline, execution),
     output: (owner: TerminalOwner, id: string, offset?: number, limit = 20000) => manager.output(owner, id, offset, limit),
     clear: (owner: TerminalOwner, id: string): void => manager.clear(owner, id),
+    resize: (owner: TerminalOwner, id: string, cols: number, rows: number): Promise<TerminalInfo> => manager.resize(owner, id, cols, rows),
     kill: (owner: TerminalOwner, id: string): Promise<void> => manager.kill(owner, id),
     close: (owner: TerminalOwner, id: string): Promise<void> => manager.close(owner, id),
     subscribe: (owner: TerminalOwner, id: string, callback: (event: TerminalEvent) => void): (() => void) => manager.subscribe(owner, id, callback),
@@ -353,6 +407,7 @@ function facadeFor(manager: TerminalManager) {
 const productionIsolation: TerminalIsolationBackend = Object.freeze({
   read: readIsolatedTerminal,
   terminate: terminateIsolatedTerminal,
+  resize: resizeIsolatedTerminal,
   retire: retireIsolatedTerminal,
   observeOwnerDenial: observeTerminalOwnerDenial,
 });

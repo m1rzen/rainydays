@@ -53,6 +53,11 @@ export interface NativeInputFrame {
   readonly appendNewline: boolean;
 }
 
+export interface NativePtySize {
+  readonly cols: number;
+  readonly rows: number;
+}
+
 export interface NativeExecutionProof {
   readonly proof: Uint8Array;
   readonly mac: string;
@@ -107,6 +112,7 @@ export interface NativeExecutionHandle {
   readonly executionId: string;
   readonly completed: Promise<NativeExecutionCompletion>;
   readonly write: (frame: NativeInputFrame) => Promise<void>;
+  readonly resize: (size: NativePtySize) => Promise<void>;
   readonly terminate: (reason: string) => Promise<void>;
 }
 
@@ -218,7 +224,7 @@ async function assertFixedRegularFile(file: string, expectedBytes: number, expec
   }
 }
 
-function encodeFrame(type: "launch" | "input" | "terminate" | "service-denial" | "broker-observation", body: Record<string, unknown>): Buffer {
+function encodeFrame(type: "launch" | "input" | "resize" | "terminate" | "service-denial" | "broker-observation", body: Record<string, unknown>): Buffer {
   const payload = Buffer.from(JSON.stringify({ v: PROTOCOL_VERSION, type, ...body }), "utf8");
   if (payload.length < 1 || payload.length > MAX_CONTROL_FRAME_BYTES) throw failure("EXEC_NATIVE_PROTOCOL", "Native control frame exceeds its bound");
   const frame = Buffer.allocUnsafe(payload.length + 4);
@@ -427,6 +433,14 @@ export function createProductionNativeExecutionBridge(identity: NativeArtifactId
           if (protocolFailed || !Buffer.isBuffer(frame.bytes) || !HASH.test(frame.digest) || createHash("sha256").update(frame.bytes).digest("hex") !== frame.digest || typeof frame.appendNewline !== "boolean") throw failure("EXEC_NATIVE_PROTOCOL", "Native input is invalid");
           const writeFrame = addonHandle.writeFrame as (frame: Buffer) => Promise<void>;
           await writeFrame.call(addonHandle, encodeFrame("input", { secret: "0".repeat(64), data: Buffer.from(frame.bytes).toString("base64"), digest: frame.digest, appendNewline: frame.appendNewline }));
+        },
+        async resize(size: NativePtySize): Promise<void> {
+          if (protocolFailed || !Number.isSafeInteger(size?.cols) || size.cols < 2 || size.cols > 500
+            || !Number.isSafeInteger(size?.rows) || size.rows < 1 || size.rows > 300) {
+            throw failure("EXEC_NATIVE_PROTOCOL", "Native PTY size is invalid");
+          }
+          const writeFrame = addonHandle.writeFrame as (frame: Buffer) => Promise<void>;
+          await writeFrame.call(addonHandle, encodeFrame("resize", { secret: "0".repeat(64), cols: size.cols, rows: size.rows }));
         },
         async terminate(reason: string): Promise<void> {
           const safeReason = typeof reason === "string" && /^[a-z0-9-]{1,64}$/u.test(reason) ? reason : "invalid-reason";

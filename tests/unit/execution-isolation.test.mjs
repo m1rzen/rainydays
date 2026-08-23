@@ -87,12 +87,13 @@ function inputRequest(lease, resourceOwner, now, overrides = {}) {
 }
 
 function fakeBridge(options = {}) {
-  const state = { launches: 0, writes: 0, terminations: [], requests: [], writeGate: options.writeGate, terminateGate: options.terminateGate };
+  const state = { launches: 0, writes: 0, resizes: [], terminations: [], requests: [], writeGate: options.writeGate, terminateGate: options.terminateGate, emit: null };
   const completion = options.completion ?? Promise.resolve({ exitCode: 0, reason: "completed" });
   const bridge = {
     async launch(nativeRequest, onFrame) {
       state.launches += 1;
       state.requests.push(nativeRequest);
+      state.emit = onFrame;
       if (options.launchErrorRaw !== undefined) throw options.launchErrorRaw;
       if (options.launchError) throw options.launchError instanceof Error ? options.launchError : new Error("synthetic native failure");
       for (const frame of options.frames ?? []) onFrame(frame);
@@ -104,6 +105,10 @@ function fakeBridge(options = {}) {
           state.lastWrite = frame;
           if (options.writeError) throw new Error("synthetic input failure");
           if (state.writeGate) await state.writeGate.promise;
+        },
+        async resize(size) {
+          state.resizes.push(size);
+          if (options.resizeError) throw new Error("synthetic resize failure");
         },
         async terminate(reason) {
           state.terminations.push(reason);
@@ -757,6 +762,38 @@ test("SEC-03 E4 limits match the frozen profile maxima", () => {
   assert.doesNotThrow(() => service.issueExecutionGrant(request(resourceOwner, now, "E4", { principal: "local-user-api", limits: maximum })));
   for (const [key, value] of [["activeProcesses", 65], ["processMemoryBytes", 2 ** 30 + 1], ["jobMemoryBytes", 2 * 2 ** 30 + 1], ["cpuRatePercent", 51], ["jobUserTimeMs", 3_600_001], ["wallTimeMs", 28_800_001], ["idleTimeMs", 1_800_001], ["aggregateOutputBytes", 64 * 2 ** 20 + 1], ["retainedOutputBytes", 2 ** 20 + 1], ["inputBytes", 64 * 2 ** 10 + 1]]) {
     assert.throws(() => service.issueExecutionGrant(request(resourceOwner, now, "E4", { principal: "local-user-api", limits: { ...maximum, [key]: value } })), error => code(error, "EXEC_REQUEST_INVALID"), key);
+  }
+});
+
+test("DS-04 persistent PTY output remains live after retained-window rollover and resize stays owner-bound", async () => {
+  const now = 1_900_000_225_000;
+  const resourceOwner = owner();
+  const otherOwner = owner("session-other");
+  const completion = deferred();
+  const fake = fakeBridge({ completion: completion.promise });
+  const service = new ExecutionIsolationService(fake.bridge, { now: () => now });
+  const approved = request(resourceOwner, now, "E2", { limits: limits("E2", { aggregateOutputBytes: 64, retainedOutputBytes: 8 }) });
+  const lease = await service.launchPersistent(service.issueExecutionGrant(approved), resourceOwner, approved);
+  try {
+    fake.state.emit({ stream: "stdout", bytes: Buffer.from("AAAA") });
+    fake.state.emit({ stream: "stdout", bytes: Buffer.from("BBBBBBBB") });
+    let output = service.readOutput(lease, resourceOwner);
+    assert.deepEqual({ text: output.stdout, start: output.stdoutStart, end: output.stdoutEnd }, { text: "BBBBBBBB", start: 4, end: 12 });
+    assert.equal(output.outputTruncated, true);
+
+    fake.state.emit({ stream: "stdout", bytes: Buffer.from("CCCC") });
+    output = service.readOutput(lease, resourceOwner);
+    assert.deepEqual({ text: output.stdout, start: output.stdoutStart, end: output.stdoutEnd }, { text: "BBBBCCCC", start: 8, end: 16 });
+    assert.deepEqual(Buffer.from(output.stdoutBytes), Buffer.from("BBBBCCCC"));
+
+    await service.resize(lease, resourceOwner, 80, 24);
+    assert.deepEqual(fake.state.resizes, [{ cols: 80, rows: 24 }]);
+    await assert.rejects(() => service.resize(lease, otherOwner, 81, 25), error => code(error, "EXEC_BINDING_MISMATCH"));
+    assert.equal(fake.state.resizes.length, 1);
+  } finally {
+    completion.resolve({ exitCode: 0, reason: "completed" });
+    await service.terminate(lease, resourceOwner, "test-cleanup").catch(() => undefined);
+    await Promise.all([resourceOwner, otherOwner].map(value => retireResourceOwner(value)));
   }
 });
 

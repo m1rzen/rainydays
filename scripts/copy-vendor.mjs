@@ -9,6 +9,9 @@ const assets = [
   ["node_modules/marked/lib/marked.umd.js", "marked.umd.js"],
   ["node_modules/@highlightjs/cdn-assets/highlight.min.js", "highlight.min.js"],
   ["node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css", "github-dark.min.css"],
+  ["node_modules/@xterm/xterm/lib/xterm.js", "xterm.js"],
+  ["node_modules/@xterm/xterm/css/xterm.css", "xterm.css"],
+  ["node_modules/@xterm/addon-fit/lib/addon-fit.js", "xterm-addon-fit.js"],
 ];
 
 await fs.mkdir(vendorDir, { recursive: true });

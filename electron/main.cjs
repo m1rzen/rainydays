@@ -28,8 +28,9 @@ let quitCleanupPromise = null;
 let finalQuit = false;
 let port = Number(process.env.PORT || 3111);
 const apiToken = randomBytes(32).toString("hex");
-const terminalConsentOperations = Object.freeze(["start", "input", "clear", "kill", "close"]);
-const terminalConsentChannels = Object.freeze(terminalConsentOperations.map(operation => `rainydays:terminal-${operation}`));
+const terminalConsentOperations = Object.freeze(["start", "clear", "kill", "close"]);
+const terminalInteractionOperations = Object.freeze(["input", "resize"]);
+const terminalConsentChannels = Object.freeze([...terminalConsentOperations, ...terminalInteractionOperations].map(operation => `rainydays:terminal-${operation}`));
 const desktopIpcChannels = Object.freeze([
   "rainydays:capabilities",
   "rainydays:dialog-directory",
@@ -418,7 +419,9 @@ function invalidateAllNativeConsent() {
 function requireManualTerminalConsentServer() {
   if (!serverModule
     || typeof serverModule.prepareManualTerminalConsent !== "function"
-    || typeof serverModule.decideManualTerminalConsent !== "function") {
+    || typeof serverModule.decideManualTerminalConsent !== "function"
+    || typeof serverModule.writeInteractiveTerminal !== "function"
+    || typeof serverModule.resizeInteractiveTerminal !== "function") {
     throw new Error("Manual terminal consent is unavailable");
   }
   return serverModule;
@@ -478,6 +481,18 @@ function registerManualTerminalConsentHandlers() {
     ipcMain.handle(`rainydays:terminal-${operation}`, (event, request) =>
       handleManualTerminalConsent(event, `terminal-${operation}`, request));
   }
+  ipcMain.handle("rainydays:terminal-input", async (event, request) => {
+    const consentServer = requireManualTerminalConsentServer();
+    try { return await consentServer.writeInteractiveTerminal(request, manualTerminalPresence(event)); }
+    catch (error) {
+      if (error?.code !== "PTY_INTERACTION_GRANT_REQUIRED") throw error;
+      return handleManualTerminalConsent(event, "terminal-input", request);
+    }
+  });
+  ipcMain.handle("rainydays:terminal-resize", (event, request) => {
+    const consentServer = requireManualTerminalConsentServer();
+    return consentServer.resizeInteractiveTerminal(request, manualTerminalPresence(event));
+  });
 }
 
 function removeManualTerminalConsentHandlers() {

@@ -46,7 +46,7 @@
   "deltaEntries": [
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "9cdd66d2b332b38bc442a1c2700db43219a4d0cd4e047952e44ac19e57874af5",
+      "sha256": "650b1a21b03f457ba3e6a59ac63c77d5e04e197b2dddeee6e10a1a6cde2820e8",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -59,7 +59,7 @@
     },
     {
       "exactCasePath": "electron/preload.cjs",
-      "sha256": "7d98adb956a86d448ccde17537ef02b16a2cc984736c7edf2600cedcfb11bd91",
+      "sha256": "a189c7dc3353d6746a3d9237fce8d4bafea1fa6fb63a5dbc89d08bb2899bbe90",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -107,7 +107,7 @@
     },
     {
       "exactCasePath": "src/execution-isolation.ts",
-      "sha256": "d975e0fd7b09f084abf8e486c7ea0a2efbf30534a0adbd46729faabd485a96a5",
+      "sha256": "83dfdf6e98865acce425a66e8eb0bd4cded8425f2f7e2854334db4c730a28f00",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -125,7 +125,7 @@
     },
     {
       "exactCasePath": "src/execution-native.ts",
-      "sha256": "0fce8e5b2e923ea6b93785f552f3866ab18d6e47e4fa8d587823553f745fee6b",
+      "sha256": "d4a054185f239b1ff562012ebe0614e4128b1ceacd00c1ab652072c8f0bbd9d4",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -134,7 +134,7 @@
     },
     {
       "exactCasePath": "src/execution-runtime.ts",
-      "sha256": "404ec8eb97ccc8c2bfa1408754422ddc4e3c0378c362837b461435ff05dc0460",
+      "sha256": "80cf8eea23fea6711bd5ea36ba46fdfe2ad028ccd89b40bef16ee1785d22631d",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -170,7 +170,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "872f10951c6c7fba73428b2cff39c2655ee45370f1903157c966eb7987f9c8e7",
+      "sha256": "aee91329304d13f0e24f7436d92d7643dbc701caa321f6d7bc0319595227ee5d",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -196,7 +196,7 @@
     },
     {
       "exactCasePath": "src/terminal.ts",
-      "sha256": "14557456a3f783ec93b6739eabf931862361354c757dd882b0c80331d2ebd046",
+      "sha256": "279a985db0411eec484375642fabd841d7dc4024753a389c9c9d997eac3aecda",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -209,7 +209,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "aca78443a92e40441501b71e829e8ef33f610f7147ce3bdc11abb61f4c00fa53",
+      "sha256": "aefb937e923ade678dbf824395a97f185c6f275d7890f4ff2deeac56ec512e54",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -257,7 +257,7 @@
     },
     {
       "exactCasePath": "dist/execution-isolation.js",
-      "sha256": "6b681843b31c5b3d91b07bcc419c0414e9c575ec432bd347bed48b90dce40fe4",
+      "sha256": "b52727fa9a2a8da7e7746ccdec0bc38b9e714abf4f5baf4cd48f0f1d15653c80",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -275,7 +275,7 @@
     },
     {
       "exactCasePath": "dist/execution-native.js",
-      "sha256": "0864e021d2f5a5562c060da1093b632f39ba9ae0228b6ffbe0507669b57b2395",
+      "sha256": "feb7e1658ad929f386e40bbaf7dfdb8d65246c9cd03bfd098ae5af675dcfd086",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -284,7 +284,7 @@
     },
     {
       "exactCasePath": "dist/execution-runtime.js",
-      "sha256": "9586bfa453b7c348d5aaf25b83d7531a67e6dbee4d6c80e69d8a6452c210e109",
+      "sha256": "2c0624212aca1dee147bab0a3d776e2c239eafe2232c0402b971f7548317ac12",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -320,7 +320,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "582e59ec4bd695a59edfd601d32c9350f833311d586f13b33c82dfe127ecadf4",
+      "sha256": "f06ab83d02eb2d48b6cb86c5e7302a7ac65ae2f646d8a49fce67f2f005ee6f3e",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -346,7 +346,7 @@
     },
     {
       "exactCasePath": "dist/terminal.js",
-      "sha256": "a5cc801ee138567e7d9137a8c05377d79d0858c194ec000cbe702a7f9a502677",
+      "sha256": "8f546b71f2cd8a602bc8fbba58b13933bab887c9a5ca6620b971a5f90ba773f6",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -359,7 +359,7 @@
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "abe04a04bea191ff5bad451d91c63a453b5ee5552b2675b282da8d4cc1b228fa",
+      "sha256": "7dcbf110c4bd2d595551114c077e61506446e74b570eaa2119c3e14c1c7db212",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -399,7 +399,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
-      "sha256": "a04251d0feadd93c0730a3678b4494cda4e3d619461ec5dc148ff4f61397b8f0",
+      "sha256": "bd26c9f6e339b00cc8544189a741676c5f09b36dd037997e67e8e814b53e896b",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -408,7 +408,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "1714a0620f92095a303272e45694dd0a9d5f86036a15baf69345e044a4bda8c5",
+      "sha256": "812b4605305a6c6e0c6deb9bc4c13aa34751e16b27a8e6b4ec3e144d50664a62",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -466,7 +466,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "f09602c98cc92381dc0acfcd85b9b2e72b8cae175f2c9b45ca7044ce0531f135",
+      "sha256": "263bfa65e3a710b54b7b6684ed16fd6204386c3875d9133e34c61f96d4053f97",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -497,7 +497,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "a7d17c247828de0522cd750dfb86f8e8b336716b541f4cbfccf76e8aa2f5f63c",
+      "sha256": "71dabaff844b72de1272c61f830a64e424a931b2cfe80ad62a5b638d890b38bf",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -506,7 +506,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "6baf42d7bc929b6afc2ae7774192addbe73382884009fb601be946200185ddf7",
+      "sha256": "dea586866854bbe0da2347edf50b3fc8c54bcf73d36f552ca3cfc5697a71c8e1",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -723,7 +723,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "e3c13e92669e3556544389d338633c1be80305032c4c81a6124b210956db5efe",
+      "sha256": "5257ebce2cac53121d603aaea96bd1d05af0b5376273f1cf928838b045e6bacc",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -736,7 +736,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "62eb0451338fcb5621f34c49d54da1891df1b0f6c53fb0f3443b4bf78987f76a",
+      "sha256": "ce808b53b5fda7889f6cb29e21ed1258b360747b177a5f13ec044b326b3e3aca",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -749,7 +749,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "b6a666cf47f53a6f730c9e80a06cbef8579a907e3c56bd157dbdcb78932d6225",
+      "sha256": "76c0d06d8955c739f9659fe16442cc6c7aa09873581cca62cac585508608222e",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -762,7 +762,7 @@
     },
     {
       "exactCasePath": "package-lock.json",
-      "sha256": "1085e7e1f793e1eab7d6b2fbcece8b6fd1658064e5ade069a8aff466c1f7eca5",
+      "sha256": "36f621410cfe4acb3d993d87cb4c1317d98e4d955db57c245722ccd7a2b11788",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -793,7 +793,7 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "c5d43b2248e99acc353de431160d4e2d8d5a1c96253ff5f018e702770a4d7359",
+      "sha256": "c7b31ff6febde84380d2856105f92a2b7782d5aa8a7c6908365aab1bb430efdb",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -810,6 +810,7 @@
         "SEC-03 launch denial observer authenticates only exact E1/E3 invocation bindings",
         "SEC-03 input denial observer requires one exact live E2 session binding",
         "SEC-03 E4 limits match the frozen profile maxima",
+        "DS-04 persistent PTY output remains live after retained-window rollover and resize stays owner-bound",
         "SEC-03 E4 input accepts a new direct run only inside the launch authority incarnation",
         "SEC-03 persistent termination linearizes concurrent cleanup to one native frame",
         "SEC-03 output limit terminates the native host and returns a stable denial",
@@ -885,7 +886,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "cbfc1710f7109a4f252a906324e5f166022c121ff97474a08f51522ef92a8706",
+      "sha256": "6be3b8290bf62699761b2335ce83baefe92311f5f8e5e4bca050851d8f67733f",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -1027,7 +1028,7 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
-      "sha256": "f4788a75f84047059bc6109fa067b086184550f7846ee68b23e73a823d24403e",
+      "sha256": "f70a23c9e33d426c0229fdb13a99521de897526dd81b6955702766d1c910e970",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
@@ -1067,6 +1068,7 @@
         "SEC-03 native rejects malformed launch/non-local root and survives repeated launcher lifecycle",
         "SEC-03 native E3 runs exact stdin module with executable lease and denies ambient authority",
         "SEC-03 native ${entryPoint} uses authenticated ConPTY input/output and graceful cleanup",
+        "DS-04 eight real E4 ConPTY sessions route raw input and output without cross-talk",
         "SEC-03 real-host receipt harness authenticates all nine frozen host protocol denials",
         "SEC-03 J5 prepared ledger recovers a partial descendant mutation",
         "SEC-03 J5 prevents late outside hardlink propagation after preflight",
@@ -1121,13 +1123,14 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "fbe1b6a093829496e446e9917297ae18140862f5f59888526eec0cf25f75490b",
+      "sha256": "232ea19085832d3594f55674ccb4526bb843f53a774254c18ce3b9f557be38c4",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-03",
       "testCaseIds": [
         "RT-01 renderer source keeps runs and questions session-bound",
         "real Electron main, preload and renderer preserve identity and session across restart",
+        "DS-04 real Electron loads the offline xterm truecolor and alternate-screen renderer",
         "SEC-03 Electron stage emits all 48 authenticated projection receipts"
       ],
       "supersedes": {
@@ -1245,13 +1248,14 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "fbe1b6a093829496e446e9917297ae18140862f5f59888526eec0cf25f75490b",
+      "sha256": "232ea19085832d3594f55674ccb4526bb843f53a774254c18ce3b9f557be38c4",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-03",
       "testCaseIds": [
         "RT-01 renderer source keeps runs and questions session-bound",
         "real Electron main, preload and renderer preserve identity and session across restart",
+        "DS-04 real Electron loads the offline xterm truecolor and alternate-screen renderer",
         "SEC-03 Electron stage emits all 48 authenticated projection receipts"
       ],
       "supersedes": {
@@ -1452,7 +1456,7 @@
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "abe04a04bea191ff5bad451d91c63a453b5ee5552b2675b282da8d4cc1b228fa",
+      "sha256": "7dcbf110c4bd2d595551114c077e61506446e74b570eaa2119c3e14c1c7db212",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1465,7 +1469,7 @@
     },
     {
       "exactCasePath": "dist/tools/index.js",
-      "sha256": "41e7939284924efa6c5eeeee7cb6439bf02e98748449bda3ce98efc99c30ddee",
+      "sha256": "b3adb750458282888a8a01edd00761278c4de880405fc59fb42607db4e70ec92",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1474,7 +1478,7 @@
     },
     {
       "exactCasePath": "dist/terminal.js",
-      "sha256": "a5cc801ee138567e7d9137a8c05377d79d0858c194ec000cbe702a7f9a502677",
+      "sha256": "8f546b71f2cd8a602bc8fbba58b13933bab887c9a5ca6620b971a5f90ba773f6",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1522,7 +1526,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "872f10951c6c7fba73428b2cff39c2655ee45370f1903157c966eb7987f9c8e7",
+      "sha256": "aee91329304d13f0e24f7436d92d7643dbc701caa321f6d7bc0319595227ee5d",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1580,7 +1584,7 @@
     },
     {
       "exactCasePath": "src/terminal.ts",
-      "sha256": "14557456a3f783ec93b6739eabf931862361354c757dd882b0c80331d2ebd046",
+      "sha256": "279a985db0411eec484375642fabd841d7dc4024753a389c9c9d997eac3aecda",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1593,7 +1597,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "aca78443a92e40441501b71e829e8ef33f610f7147ce3bdc11abb61f4c00fa53",
+      "sha256": "aefb937e923ade678dbf824395a97f185c6f275d7890f4ff2deeac56ec512e54",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1624,7 +1628,7 @@
     },
     {
       "exactCasePath": "src/tools/index.ts",
-      "sha256": "eecfbc45bbe00205f8a367e715604956be31ef9c8fca43e7e4fef0713e6b7485",
+      "sha256": "ef4feb8ae3e804648be96609d475822443c3f59c88df8e7a68f846bfaf78a9bb",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1660,7 +1664,7 @@
     },
     {
       "exactCasePath": "src/tools/terminal-tools.ts",
-      "sha256": "500b76dc818208a7573ea2caab48277006270feeac7b320038f8c25382015e06",
+      "sha256": "0da183cef975e88012dd98a56780cc382d80eb6d0580b2406eea955949f522e9",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1754,7 +1758,7 @@
     },
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "9cdd66d2b332b38bc442a1c2700db43219a4d0cd4e047952e44ac19e57874af5",
+      "sha256": "650b1a21b03f457ba3e6a59ac63c77d5e04e197b2dddeee6e10a1a6cde2820e8",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1776,7 +1780,7 @@
     },
     {
       "exactCasePath": "electron/preload.cjs",
-      "sha256": "7d98adb956a86d448ccde17537ef02b16a2cc984736c7edf2600cedcfb11bd91",
+      "sha256": "a189c7dc3353d6746a3d9237fce8d4bafea1fa6fb63a5dbc89d08bb2899bbe90",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1852,7 +1856,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "582e59ec4bd695a59edfd601d32c9350f833311d586f13b33c82dfe127ecadf4",
+      "sha256": "f06ab83d02eb2d48b6cb86c5e7302a7ac65ae2f646d8a49fce67f2f005ee6f3e",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2197,7 +2201,7 @@
     },
     {
       "exactCasePath": "src/execution-isolation.ts",
-      "sha256": "d975e0fd7b09f084abf8e486c7ea0a2efbf30534a0adbd46729faabd485a96a5",
+      "sha256": "83dfdf6e98865acce425a66e8eb0bd4cded8425f2f7e2854334db4c730a28f00",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2215,7 +2219,7 @@
     },
     {
       "exactCasePath": "src/execution-native.ts",
-      "sha256": "0fce8e5b2e923ea6b93785f552f3866ab18d6e47e4fa8d587823553f745fee6b",
+      "sha256": "d4a054185f239b1ff562012ebe0614e4128b1ceacd00c1ab652072c8f0bbd9d4",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2224,7 +2228,7 @@
     },
     {
       "exactCasePath": "src/execution-runtime.ts",
-      "sha256": "404ec8eb97ccc8c2bfa1408754422ddc4e3c0378c362837b461435ff05dc0460",
+      "sha256": "80cf8eea23fea6711bd5ea36ba46fdfe2ad028ccd89b40bef16ee1785d22631d",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2269,7 +2273,7 @@
     },
     {
       "exactCasePath": "dist/execution-isolation.js",
-      "sha256": "6b681843b31c5b3d91b07bcc419c0414e9c575ec432bd347bed48b90dce40fe4",
+      "sha256": "b52727fa9a2a8da7e7746ccdec0bc38b9e714abf4f5baf4cd48f0f1d15653c80",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2287,7 +2291,7 @@
     },
     {
       "exactCasePath": "dist/execution-native.js",
-      "sha256": "0864e021d2f5a5562c060da1093b632f39ba9ae0228b6ffbe0507669b57b2395",
+      "sha256": "feb7e1658ad929f386e40bbaf7dfdb8d65246c9cd03bfd098ae5af675dcfd086",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2296,7 +2300,7 @@
     },
     {
       "exactCasePath": "dist/execution-runtime.js",
-      "sha256": "9586bfa453b7c348d5aaf25b83d7531a67e6dbee4d6c80e69d8a6452c210e109",
+      "sha256": "2c0624212aca1dee147bab0a3d776e2c239eafe2232c0402b971f7548317ac12",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2359,7 +2363,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
-      "sha256": "a04251d0feadd93c0730a3678b4494cda4e3d619461ec5dc148ff4f61397b8f0",
+      "sha256": "bd26c9f6e339b00cc8544189a741676c5f09b36dd037997e67e8e814b53e896b",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2368,7 +2372,7 @@
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "sha256": "1714a0620f92095a303272e45694dd0a9d5f86036a15baf69345e044a4bda8c5",
+      "sha256": "812b4605305a6c6e0c6deb9bc4c13aa34751e16b27a8e6b4ec3e144d50664a62",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2426,7 +2430,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "f09602c98cc92381dc0acfcd85b9b2e72b8cae175f2c9b45ca7044ce0531f135",
+      "sha256": "263bfa65e3a710b54b7b6684ed16fd6204386c3875d9133e34c61f96d4053f97",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2457,7 +2461,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "a7d17c247828de0522cd750dfb86f8e8b336716b541f4cbfccf76e8aa2f5f63c",
+      "sha256": "71dabaff844b72de1272c61f830a64e424a931b2cfe80ad62a5b638d890b38bf",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2466,7 +2470,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "6baf42d7bc929b6afc2ae7774192addbe73382884009fb601be946200185ddf7",
+      "sha256": "dea586866854bbe0da2347edf50b3fc8c54bcf73d36f552ca3cfc5697a71c8e1",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2683,7 +2687,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "e3c13e92669e3556544389d338633c1be80305032c4c81a6124b210956db5efe",
+      "sha256": "5257ebce2cac53121d603aaea96bd1d05af0b5376273f1cf928838b045e6bacc",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2696,7 +2700,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "62eb0451338fcb5621f34c49d54da1891df1b0f6c53fb0f3443b4bf78987f76a",
+      "sha256": "ce808b53b5fda7889f6cb29e21ed1258b360747b177a5f13ec044b326b3e3aca",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2709,7 +2713,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "b6a666cf47f53a6f730c9e80a06cbef8579a907e3c56bd157dbdcb78932d6225",
+      "sha256": "76c0d06d8955c739f9659fe16442cc6c7aa09873581cca62cac585508608222e",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2722,7 +2726,7 @@
     },
     {
       "exactCasePath": "package-lock.json",
-      "sha256": "1085e7e1f793e1eab7d6b2fbcece8b6fd1658064e5ade069a8aff466c1f7eca5",
+      "sha256": "36f621410cfe4acb3d993d87cb4c1317d98e4d955db57c245722ccd7a2b11788",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2753,7 +2757,7 @@
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "c5d43b2248e99acc353de431160d4e2d8d5a1c96253ff5f018e702770a4d7359",
+      "sha256": "c7b31ff6febde84380d2856105f92a2b7782d5aa8a7c6908365aab1bb430efdb",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2770,6 +2774,7 @@
         "SEC-03 launch denial observer authenticates only exact E1/E3 invocation bindings",
         "SEC-03 input denial observer requires one exact live E2 session binding",
         "SEC-03 E4 limits match the frozen profile maxima",
+        "DS-04 persistent PTY output remains live after retained-window rollover and resize stays owner-bound",
         "SEC-03 E4 input accepts a new direct run only inside the launch authority incarnation",
         "SEC-03 persistent termination linearizes concurrent cleanup to one native frame",
         "SEC-03 output limit terminates the native host and returns a stable denial",
@@ -2845,7 +2850,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "cbfc1710f7109a4f252a906324e5f166022c121ff97474a08f51522ef92a8706",
+      "sha256": "6be3b8290bf62699761b2335ce83baefe92311f5f8e5e4bca050851d8f67733f",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2987,7 +2992,7 @@
     },
     {
       "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
-      "sha256": "f4788a75f84047059bc6109fa067b086184550f7846ee68b23e73a823d24403e",
+      "sha256": "f70a23c9e33d426c0229fdb13a99521de897526dd81b6955702766d1c910e970",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-03",
@@ -3027,6 +3032,7 @@
         "SEC-03 native rejects malformed launch/non-local root and survives repeated launcher lifecycle",
         "SEC-03 native E3 runs exact stdin module with executable lease and denies ambient authority",
         "SEC-03 native ${entryPoint} uses authenticated ConPTY input/output and graceful cleanup",
+        "DS-04 eight real E4 ConPTY sessions route raw input and output without cross-talk",
         "SEC-03 real-host receipt harness authenticates all nine frozen host protocol denials",
         "SEC-03 J5 prepared ledger recovers a partial descendant mutation",
         "SEC-03 J5 prevents late outside hardlink propagation after preflight",
@@ -3793,5 +3799,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "7abd60555458b8ce97742882ed45a0157ccf3ceb612950e522537d0313191ac2"
+  "canonicalPayloadSha256": "4256bf6402717d0d424d3bab69e63873b4cc44f0c1210ef00c12ebf3ae9776aa"
 }

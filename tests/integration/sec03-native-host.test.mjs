@@ -193,6 +193,10 @@ function inputFrame(data, appendNewline = true) {
   return frame({ v: 1, type: "input", secret: "0".repeat(64), data: bytes.toString("base64"), digest: createHash("sha256").update(bytes).digest("hex"), appendNewline });
 }
 
+function resizeFrame(cols, rows) {
+  return frame({ v: 1, type: "resize", secret: "0".repeat(64), cols, rows });
+}
+
 function terminateFrame(reason = "requested") {
   return frame({ v: 1, type: "terminate", secret: "0".repeat(64), reason });
 }
@@ -2937,7 +2941,15 @@ for (const entryPoint of ["E2", "E4"]) {
     try {
       started = await start(addon, host, launcher, await terminalLaunchBody(root, entryPoint));
       assert.throws(() => started.handle.writeFrame(frame({ v: 1, type: "input", secret: "1".repeat(64), data: "WA==", digest: "0".repeat(64), appendNewline: true })), error => error?.code === "EXEC_NATIVE_PROTOCOL");
-      await started.handle.writeFrame(inputFrame(`echo ${marker}`));
+      assert.throws(() => started.handle.writeFrame(frame({ v: 1, type: "resize", secret: "1".repeat(64), cols: 80, rows: 24 })), error => error?.code === "EXEC_NATIVE_PROTOCOL");
+      assert.throws(() => started.handle.writeFrame(resizeFrame(1, 24)), error => error?.code === "EXEC_NATIVE_PROTOCOL");
+      await started.handle.writeFrame(resizeFrame(93, 41));
+      await started.handle.writeFrame(inputFrame("mode con\r", false));
+      await waitFor(async () => {
+        const output = decode(started.frames).map(value => value.text).join("");
+        return output.includes("93") && output.includes("41");
+      });
+      await started.handle.writeFrame(inputFrame(`echo ${marker}\r`, false));
       try {
         await Promise.race([
           waitFor(async () => decode(started.frames).some(value => value.text.includes(marker))),
@@ -2946,8 +2958,12 @@ for (const entryPoint of ["E2", "E4"]) {
       } catch (error) {
         assert.fail(`${error.message}\n${decode(started.frames).map(value => `${value.stream}: ${value.text}`).join("")}`);
       }
+      const afterInterrupt = `${marker}_AFTER_CTRL_C`;
+      await started.handle.writeFrame(inputFrame("\u0003", false));
+      await started.handle.writeFrame(inputFrame(`echo ${afterInterrupt}\r`, false));
+      await waitFor(async () => decode(started.frames).some(value => value.text.includes(afterInterrupt)));
       if (entryPoint === "E2") {
-        await started.handle.writeFrame(inputFrame("exit"));
+        await started.handle.writeFrame(inputFrame("exit\r", false));
       } else {
         await started.handle.terminateHost(terminateFrame("requested"));
         assert.throws(() => started.handle.terminateHost(terminateFrame("requested")), error => error?.code === "EXEC_NATIVE_PROTOCOL");
@@ -2966,6 +2982,41 @@ for (const entryPoint of ["E2", "E4"]) {
     }
   });
 }
+
+windowsTest("DS-04 eight real E4 ConPTY sessions route raw input and output without cross-talk", {
+  skip: "BLOCKED: SEC-03 shared-workspace ACL lease currently permits one live AppContainer root grant",
+  timeout: 60_000,
+}, async () => {
+  const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
+  const host = manifest.outputs.find(value => value.path === "dist/native/sandbox-host.exe");
+  const launcher = manifest.outputs.find(value => value.path === "dist/native/sandbox-launcher.node");
+  assert.ok(host && launcher);
+  const addon = require(addonPath);
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-ds04-eight-pty-"));
+  const terminals = [];
+  const markers = Array.from({ length: 8 }, (_, index) => `DS04_PTY_${index + 1}_${randomUUID().replaceAll("-", "").slice(0, 8)}`);
+  try {
+    for (let index = 0; index < markers.length; index += 1) {
+      terminals.push(await start(addon, host, launcher, await terminalLaunchBody(root, "E4")));
+    }
+    await Promise.all(terminals.map((terminal, index) => terminal.handle.writeFrame(inputFrame(`echo ${markers[index]}\r`, false))));
+    await Promise.all(terminals.map((terminal, index) => waitFor(async () =>
+      decode(terminal.frames).some(value => value.text.includes(markers[index])))));
+    for (let index = 0; index < terminals.length; index += 1) {
+      const output = decode(terminals[index].frames).map(value => value.text).join("");
+      assert.match(output, new RegExp(markers[index]));
+      for (let other = 0; other < markers.length; other += 1) {
+        if (other !== index) assert.equal(output.includes(markers[other]), false, `PTY ${index + 1} received PTY ${other + 1} output`);
+      }
+    }
+  } finally {
+    await Promise.all(terminals.map(async terminal => {
+      try { await terminal.handle.terminateHost(terminateFrame("test-cleanup")); } catch {}
+      await terminal.handle.completed.catch(() => undefined);
+    }));
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
 
 windowsTest("SEC-03 real-host receipt harness authenticates all nine frozen host protocol denials", { timeout: 120_000 }, async () => {
   const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();

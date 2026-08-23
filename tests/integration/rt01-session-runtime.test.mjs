@@ -179,7 +179,11 @@ async function childRequest(child, input) {
       clearTimeout(timer);
       child.off("message", onMessage);
       if (message.ok) resolve(message.value);
-      else reject(new Error(message.error || "RT-01 child request failed"));
+      else {
+        const error = new Error(message.error || "RT-01 child request failed");
+        if (typeof message.code === "string") error.code = message.code;
+        reject(error);
+      }
     };
     child.on("message", onMessage);
     child.send({ ...input, requestId }, error => {
@@ -512,6 +516,88 @@ test("RT-01 real server isolates parallel Session runtimes and run-local interac
     throw new Error(`RT-01 product flow failed: ${error instanceof Error ? error.stack || error.message : String(error)}\nstdout=${logs.stdout}\nstderr=${logs.stderr}`, { cause: error });
   } finally {
     if (product) await stopProduct(product);
+    await provider.close();
+    await removeFixture(fixture);
+  }
+});
+
+test("DS-04 real server binds raw PTY input and resize to a short focused interaction grant", {
+  skip: process.platform !== "win32" || process.arch !== "x64",
+  timeout: 90_000,
+}, async () => {
+  const fixture = await makeTempDir("mini-lux-ds04-interaction-");
+  const token = "ds04-interaction-token";
+  const provider = await startFakeProvider();
+  let product;
+  try {
+    product = await startProduct(fixture, provider.baseURL, token);
+    const created = await api(product.base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: "DS-04 PTY" }) });
+    const sessionId = created.body.session.id;
+    assert.equal((await api(product.base, token, `/sessions/${sessionId}/select`, { method: "POST" })).status, 200);
+
+    const challenge = await childRequest(product.child, {
+      type: "rt01-manual-consent-prepare",
+      operation: "terminal-start",
+      request: { shell: "cmd" },
+    });
+    const started = await childRequest(product.child, {
+      type: "rt01-manual-consent-decide",
+      challengeId: challenge.challengeId,
+      decision: "approve",
+      operation: challenge.operation,
+      argumentsDigest: challenge.argumentsDigest,
+    });
+    const terminalId = started.terminal.id;
+    assert.match(terminalId, /^term_[a-f0-9]{8}$/u);
+
+    await childRequest(product.child, {
+      type: "ds04-interactive-input",
+      request: { id: terminalId, input: "echo DS04_INTERACTION_OK\r", appendNewline: false },
+    });
+    await waitFor(async () => {
+      const output = await api(product.base, token, `/terminals/${terminalId}/output?offset=0&limit=100000`, {
+        headers: { "X-RainyDays-Session": sessionId },
+      });
+      return output.status === 200 && output.body.data.includes("DS04_INTERACTION_OK");
+    }, { timeoutMs: 15_000, label: "DS-04 raw PTY output" });
+
+    const resized = await childRequest(product.child, {
+      type: "ds04-interactive-resize",
+      request: { id: terminalId, cols: 91, rows: 37 },
+    });
+    assert.deepEqual({ cols: resized.terminal.cols, rows: resized.terminal.rows }, { cols: 91, rows: 37 });
+    await assert.rejects(() => childRequest(product.child, {
+      type: "ds04-interactive-resize",
+      request: { id: terminalId, cols: 92, rows: 38 },
+      presence: { windowId: 1, webContentsId: 1, topFrame: true, windowVisible: true, windowFocused: false },
+    }), /focused trusted renderer/iu);
+
+    await childRequest(product.child, { type: "ds04-invalidate-interaction" });
+    await assert.rejects(() => childRequest(product.child, {
+      type: "ds04-interactive-input",
+      request: { id: terminalId, input: "echo MUST_NOT_RUN\r", appendNewline: false },
+    }), error => error?.code === "PTY_INTERACTION_GRANT_REQUIRED");
+    const afterRevoke = await api(product.base, token, `/terminals/${terminalId}/output?offset=0&limit=100000`, {
+      headers: { "X-RainyDays-Session": sessionId },
+    });
+    assert.equal(afterRevoke.body.data.includes("MUST_NOT_RUN"), false);
+
+    const source = await fs.readFile(path.join(projectRoot, "src", "index.ts"), "utf8");
+    assert.match(source, /TERMINAL_INTERACTION_MAX_MS = 10 \* 60_000/u);
+    assert.match(source, /TERMINAL_INTERACTION_IDLE_MS = 2 \* 60_000/u);
+    assert.match(source, /now >= grant\.expiresAt \|\| now >= grant\.idleExpiresAt/u);
+    assert.match(source, /if \(terminalInteractionGrants\.get\(key\) !== grant\) return;/u);
+    assert.equal((source.match(/assertTerminalInteractionCurrent\(grant\);/gu) ?? []).length, 2);
+    const electronMain = await fs.readFile(path.join(projectRoot, "electron", "main.cjs"), "utf8");
+    assert.doesNotMatch(electronMain, /invalidateManualTerminalConsent\(false\)/u);
+  } catch (error) {
+    const logs = product?.logs() ?? { stdout: "", stderr: "" };
+    throw new Error(`DS-04 interaction flow failed: ${error instanceof Error ? error.stack || error.message : String(error)}\nstdout=${logs.stdout}\nstderr=${logs.stderr}`, { cause: error });
+  } finally {
+    if (product) {
+      await childRequest(product.child, { type: "rt01-shutdown" }).catch(() => undefined);
+      await stopProduct(product);
+    }
     await provider.close();
     await removeFixture(fixture);
   }

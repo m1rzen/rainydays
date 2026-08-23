@@ -39,6 +39,25 @@ test("SEC-07 freezes a sandboxed renderer with no inline code and a strict CSP",
   }
 });
 
+test("DS-04 xterm renderer assets are pinned, offline and covered by the strict CSP", async () => {
+  const [html, copyScript, packageJson, xterm, fit, css] = await Promise.all([
+    readFile(path.join(projectRoot, "public", "index.html"), "utf8"),
+    readFile(path.join(projectRoot, "scripts", "copy-vendor.mjs"), "utf8"),
+    readFile(path.join(projectRoot, "package.json"), "utf8").then(JSON.parse),
+    readFile(path.join(projectRoot, "public", "vendor", "xterm.js")),
+    readFile(path.join(projectRoot, "public", "vendor", "xterm-addon-fit.js")),
+    readFile(path.join(projectRoot, "public", "vendor", "xterm.css")),
+  ]);
+  assert.match(html, /<link rel="stylesheet" href="\/vendor\/xterm\.css">/u);
+  assert.match(html, /<script src="\/vendor\/xterm\.js"><\/script>/u);
+  assert.match(html, /<script src="\/vendor\/xterm-addon-fit\.js"><\/script>/u);
+  assert.doesNotMatch(html, /https?:\/\/[^"']*(?:xterm|unpkg|jsdelivr|cdnjs)/iu);
+  assert.match(copyScript, /@xterm\/xterm\/lib\/xterm\.js/u);
+  assert.equal(packageJson.dependencies["@xterm/xterm"], "5.5.0");
+  assert.equal(packageJson.dependencies["@xterm/addon-fit"], "0.10.0");
+  for (const asset of [xterm, fit, css]) assert(asset.byteLength > 100, "xterm vendor asset is empty");
+});
+
 test("DS-02 desktop IPC contract binds every privileged sink to the exact renderer origin", () => {
   assert.equal(
     assertTrustedRendererOrigin("http://127.0.0.1:3111/chat?session=one", "http://127.0.0.1:3111"),

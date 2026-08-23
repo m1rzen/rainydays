@@ -542,198 +542,205 @@
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
+      "api": "ResizePseudoConsole",
+      "container": "ControlMain",
+      "occurrenceId": "exec-e036b6c10215696a1f83c2cd"
+    },
+    {
+      "sourcePath": "native/sandbox-host/sandbox-host.cpp",
+      "family": "native-addon",
       "api": "CreateAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-c1f4a2827b66481c5a55cd29"
+      "occurrenceId": "exec-bca77f9be96a26e24c6d9257"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-dfe39eb350f0fc4d6ec4f1f1"
+      "occurrenceId": "exec-e114379242a459cf8b411503"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-a78a88b18b5fe4049a1d9b64"
+      "occurrenceId": "exec-58bd5ba2007a05bca8d32703"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-b6743c9400b8a1fce6ede23c"
+      "occurrenceId": "exec-a39e11087c750f6db5dabe96"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-be5a413832ab3e31c4748cee"
+      "occurrenceId": "exec-a7995b04b15297957925eee3"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-d8d5f050fd10c97507d9150b"
+      "occurrenceId": "exec-e29836963e1a68d78b2d0f34"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "CreateJobObjectW",
       "container": "Run",
-      "occurrenceId": "exec-10a34252e9f9353a33299102"
+      "occurrenceId": "exec-526285050c7e504408a98dc2"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "SetInformationJobObject",
       "container": "Run",
-      "occurrenceId": "exec-8ca5eeed82ff8df9c35c3beb"
+      "occurrenceId": "exec-56d088e8d623a7968128823b"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-7ecfd43b864850b5ed3ef554"
+      "occurrenceId": "exec-8109a167fb9b129a59812446"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "CreatePseudoConsole",
       "container": "Run",
-      "occurrenceId": "exec-aae57b1f60bf489c698b8d94"
+      "occurrenceId": "exec-4eb2bac52e902408ef7f4915"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "ClosePseudoConsole",
       "container": "Run",
-      "occurrenceId": "exec-2c3b7609bcf0dd404d77023c"
+      "occurrenceId": "exec-f8f24c6ca45e0f4ce0fc3430"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-9600fc5a038a840f3d5f372f"
+      "occurrenceId": "exec-97e3b28af74ae13c796d083a"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "ClosePseudoConsole",
       "container": "Run",
-      "occurrenceId": "exec-d27bc4686cc8822d753de9df"
+      "occurrenceId": "exec-df0af2bbf8f12535778431ae"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-0ef123a41aaabd0ca14d36fd"
+      "occurrenceId": "exec-e4f1b1adc6b2f4cd8574d9e7"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "ClosePseudoConsole",
       "container": "Run",
-      "occurrenceId": "exec-07e91f55c6d193d7749903ea"
+      "occurrenceId": "exec-3211397665ee0be42576e6bc"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-753a6af809c716890fa206b6"
+      "occurrenceId": "exec-03b190ad5d2fce18ebce2269"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "ClosePseudoConsole",
       "container": "Run",
-      "occurrenceId": "exec-8e55f5fbc1d0d82d1ee52343"
+      "occurrenceId": "exec-15e000cae22c1c34615d5a43"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-2a65cb081295dba6a285c1ff"
+      "occurrenceId": "exec-cf314bf52678afb8bae5c4e8"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "child-process",
       "api": "CreateProcessW",
       "container": "Run",
-      "occurrenceId": "exec-a1b333f88e54a8b6bedcd8f8"
+      "occurrenceId": "exec-021c50bf44a5bca2e4dccbc5"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "AssignProcessToJobObject",
       "container": "Run",
-      "occurrenceId": "exec-8b21fbe0ba574f64215ef894"
+      "occurrenceId": "exec-ed395120ad6caa62a765c91c"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "ClosePseudoConsole",
       "container": "Run",
-      "occurrenceId": "exec-41793576c9a1c0f765ec4fc3"
+      "occurrenceId": "exec-078fea0949f7763bdd92abeb"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-b584f7bd5a35e803e9d08dc1"
+      "occurrenceId": "exec-bf4bdbb7694216871cf0c6bd"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "TerminateJobObject",
       "container": "Run",
-      "occurrenceId": "exec-76d90cad063ccbe91d4ff570"
+      "occurrenceId": "exec-349209e850751f1fd02da7d7"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "TerminateJobObject",
       "container": "Run",
-      "occurrenceId": "exec-6092dd2a9dcc02ff7da483ba"
+      "occurrenceId": "exec-bee38d3db9eb139145f3b072"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "TerminateJobObject",
       "container": "Run",
-      "occurrenceId": "exec-fd1014424a3a5dd61bd7a30b"
+      "occurrenceId": "exec-46459ba98b3bf4f1d0bc35c6"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "TerminateJobObject",
       "container": "Run",
-      "occurrenceId": "exec-d7c61d753f6c216242762852"
+      "occurrenceId": "exec-b2c075f50253d5df8ad5c289"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "ClosePseudoConsole",
       "container": "Run",
-      "occurrenceId": "exec-43c923fb1aa4333739b04d10"
+      "occurrenceId": "exec-a4062360101c4877e28050e6"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "family": "native-addon",
       "api": "DeleteAppContainerProfile",
       "container": "Run",
-      "occurrenceId": "exec-8843f21af807bd7ba89480a5"
+      "occurrenceId": "exec-3cb6645a60416b31e13414b1"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
@@ -820,5 +827,5 @@
       "occurrenceId": "exec-c52f91fdd68fcd90774471b7"
     }
   ],
-  "canonicalPayloadSha256": "da9ad52d34723f262575fd8cdb782d0b5173964bb0c841b38a0e904c2ea83285"
+  "canonicalPayloadSha256": "35911b24355ab2c3eef64b64c15828887caece7692ec3e42cfe01fc00cdf60ce"
 }

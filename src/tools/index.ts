@@ -31,6 +31,7 @@ import {
   shellStartDef, shellStartExec,
   shellInputDef, shellInputExec,
   shellOutputDef, shellOutputExec,
+  shellResizeDef, shellResizeExec,
   shellListDef, shellListExec,
   shellKillDef, shellKillExec,
 } from "./terminal-tools.js";
@@ -122,6 +123,7 @@ const rawStaticTools: Omit<RegisteredTool, "policy">[] = [
   { name: "shell_start",     definition: shellStartDef,       executor: shellStartExec },
   { name: "shell_input",     definition: shellInputDef,       executor: shellInputExec },
   { name: "shell_output",    definition: shellOutputDef,      executor: shellOutputExec },
+  { name: "shell_resize",    definition: shellResizeDef,      executor: shellResizeExec },
   { name: "shell_list",      definition: shellListDef,        executor: shellListExec },
   { name: "shell_kill",      definition: shellKillDef,        executor: shellKillExec },
   { name: "fetch_url",       definition: fetchUrlDef,        executor: fetchUrlExec },

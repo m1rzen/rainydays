@@ -39,6 +39,13 @@ if (typeof process.send === "function") {
           message.argumentsDigest,
           presence,
         );
+      } else if (message.type === "ds04-interactive-input") {
+        value = await serverModule.writeInteractiveTerminal(message.request, message.presence ?? presence);
+      } else if (message.type === "ds04-interactive-resize") {
+        value = await serverModule.resizeInteractiveTerminal(message.request, message.presence ?? presence);
+      } else if (message.type === "ds04-invalidate-interaction") {
+        serverModule.invalidateManualTerminalConsent(message.webContentsId ?? 1);
+        value = { invalidated: true };
       } else if (message.type === "rt01-shutdown") {
         await serverModule.shutdown(false);
         value = { shutDown: true };
@@ -47,7 +54,12 @@ if (typeof process.send === "function") {
       }
       process.send?.({ requestId: message.requestId, ok: true, value });
     } catch (error) {
-      process.send?.({ requestId: message.requestId, ok: false, error: error instanceof Error ? error.message : String(error) });
+      process.send?.({
+        requestId: message.requestId,
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+        code: error && typeof error === "object" && typeof error.code === "string" ? error.code : null,
+      });
     }
   });
 }

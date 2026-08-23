@@ -46,13 +46,13 @@
         },
         {
           "exactCasePath": "tests/unit/terminal-owner.test.mjs",
-          "sha256": "3e457444384325c4b8ad9c57ceb66e366fd2866cfec79083081c7b35ef909c47",
+          "sha256": "88a8a471055e0e304e2477395cea2a56d45d2d0bd295443bccf1ddb98e3a0ed9",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "8ef9dd5562844d03bd477d822f5fd0e561e3c38bccf0af5cb05b368844fa4e9d",
+          "sha256": "78cf4c073e8e2a4d40fa6acd5b02efb96c4745af4aa6e00f428eb7f5a99ad523",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -88,7 +88,7 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "fbe1b6a093829496e446e9917297ae18140862f5f59888526eec0cf25f75490b",
+          "sha256": "232ea19085832d3594f55674ccb4526bb843f53a774254c18ce3b9f557be38c4",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
@@ -314,13 +314,13 @@
         },
         {
           "exactCasePath": "tests/unit/terminal-owner.test.mjs",
-          "sha256": "3e457444384325c4b8ad9c57ceb66e366fd2866cfec79083081c7b35ef909c47",
+          "sha256": "88a8a471055e0e304e2477395cea2a56d45d2d0bd295443bccf1ddb98e3a0ed9",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "8ef9dd5562844d03bd477d822f5fd0e561e3c38bccf0af5cb05b368844fa4e9d",
+          "sha256": "78cf4c073e8e2a4d40fa6acd5b02efb96c4745af4aa6e00f428eb7f5a99ad523",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -356,7 +356,7 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "fbe1b6a093829496e446e9917297ae18140862f5f59888526eec0cf25f75490b",
+          "sha256": "232ea19085832d3594f55674ccb4526bb843f53a774254c18ce3b9f557be38c4",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
@@ -458,7 +458,7 @@
         },
         {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4",
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1006,13 +1006,13 @@
         },
         {
           "exactCasePath": "tests/unit/terminal-owner.test.mjs",
-          "sha256": "3e457444384325c4b8ad9c57ceb66e366fd2866cfec79083081c7b35ef909c47",
+          "sha256": "88a8a471055e0e304e2477395cea2a56d45d2d0bd295443bccf1ddb98e3a0ed9",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "8ef9dd5562844d03bd477d822f5fd0e561e3c38bccf0af5cb05b368844fa4e9d",
+          "sha256": "78cf4c073e8e2a4d40fa6acd5b02efb96c4745af4aa6e00f428eb7f5a99ad523",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -1048,7 +1048,7 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "fbe1b6a093829496e446e9917297ae18140862f5f59888526eec0cf25f75490b",
+          "sha256": "232ea19085832d3594f55674ccb4526bb843f53a774254c18ce3b9f557be38c4",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
@@ -1150,7 +1150,7 @@
         },
         {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4",
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1168,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "cbfc1710f7109a4f252a906324e5f166022c121ff97474a08f51522ef92a8706",
+          "sha256": "6be3b8290bf62699761b2335ce83baefe92311f5f8e5e4bca050851d8f67733f",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -1691,7 +1691,7 @@
   "coverageScope": {
     "source": {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "62eb0451338fcb5621f34c49d54da1891df1b0f6c53fb0f3443b4bf78987f76a"
+      "sha256": "ce808b53b5fda7889f6cb29e21ed1258b360747b177a5f13ec044b326b3e3aca"
     },
     "overallFiles": [
       "dist/agent.js",
@@ -6042,7 +6042,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6054,7 +6054,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6066,7 +6066,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6078,7 +6078,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6090,7 +6090,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6102,7 +6102,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6114,7 +6114,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6126,7 +6126,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6138,7 +6138,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6150,7 +6150,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6162,7 +6162,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6174,7 +6174,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6186,7 +6186,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6982,7 +6982,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -6992,7 +6992,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
         "producer": "node-test"
@@ -7002,7 +7002,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/process-cwd.test.mjs",
-          "sha256": "6f6fc6199736430cba6550e141f80f3a24bcbcc02dd67d5a9e27ade47eb2f2b4"
+          "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
         },
         "testCaseId": "SEC-02 tool Terminal binds CWD and controls to one runtime authority",
         "producer": "node-test"
@@ -7074,11 +7074,11 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "62eb0451338fcb5621f34c49d54da1891df1b0f6c53fb0f3443b4bf78987f76a"
+      "sha256": "ce808b53b5fda7889f6cb29e21ed1258b360747b177a5f13ec044b326b3e3aca"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "e3c13e92669e3556544389d338633c1be80305032c4c81a6124b210956db5efe"
+      "sha256": "5257ebce2cac53121d603aaea96bd1d05af0b5376273f1cf928838b045e6bacc"
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
@@ -7138,7 +7138,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "f09602c98cc92381dc0acfcd85b9b2e72b8cae175f2c9b45ca7044ce0531f135"
+      "sha256": "263bfa65e3a710b54b7b6684ed16fd6204386c3875d9133e34c61f96d4053f97"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7194,13 +7194,13 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "b6a666cf47f53a6f730c9e80a06cbef8579a907e3c56bd157dbdcb78932d6225"
+      "sha256": "76c0d06d8955c739f9659fe16442cc6c7aa09873581cca62cac585508608222e"
     },
     {
       "exactCasePath": "package-lock.json",
-      "sha256": "1085e7e1f793e1eab7d6b2fbcece8b6fd1658064e5ade069a8aff466c1f7eca5"
+      "sha256": "36f621410cfe4acb3d993d87cb4c1317d98e4d955db57c245722ccd7a2b11788"
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "83adc1a7b41f9305e515ff114021cc85ca5fec8d329b5ac9e3607f314c464986"
+  "canonicalPayloadSha256": "2bd5c8d652ef5d9e461220c19232482819ce70e3ed2b7ceda0c5bec3a0a137f1"
 }

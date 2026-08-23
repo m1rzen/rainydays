@@ -28,12 +28,12 @@
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "abe04a04bea191ff5bad451d91c63a453b5ee5552b2675b282da8d4cc1b228fa",
+      "sha256": "7dcbf110c4bd2d595551114c077e61506446e74b570eaa2119c3e14c1c7db212",
       "owner": "RT-07"
     },
     {
       "exactCasePath": "dist/tools/index.js",
-      "sha256": "41e7939284924efa6c5eeeee7cb6439bf02e98748449bda3ce98efc99c30ddee",
+      "sha256": "b3adb750458282888a8a01edd00761278c4de880405fc59fb42607db4e70ec92",
       "owner": "RT-07"
     },
     {
@@ -78,7 +78,7 @@
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "17c8dc33e84fe475d55799131286d31708131f54aa85697968f7552fcb75d567",
+      "sha256": "8ba53bacfe2e72e9c95bb75c2825939be968108af12a69719de61b4f7b5bfb00",
       "owner": "RT-07"
     },
     {
@@ -108,12 +108,12 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "aca78443a92e40441501b71e829e8ef33f610f7147ce3bdc11abb61f4c00fa53",
+      "sha256": "aefb937e923ade678dbf824395a97f185c6f275d7890f4ff2deeac56ec512e54",
       "owner": "RT-07"
     },
     {
       "exactCasePath": "src/tools/index.ts",
-      "sha256": "eecfbc45bbe00205f8a367e715604956be31ef9c8fca43e7e4fef0713e6b7485",
+      "sha256": "ef4feb8ae3e804648be96609d475822443c3f59c88df8e7a68f846bfaf78a9bb",
       "owner": "RT-07"
     },
     {
@@ -162,5 +162,5 @@
       "owner": "RT-07"
     }
   ],
-  "canonicalPayloadSha256": "f46c62f2676c8df5c2a02910998178320273c350d2cdad936596c875a51ff611"
+  "canonicalPayloadSha256": "c0fac17792e6faef5796c375b8fd7e1f21fd4fe6a0430ab9b60d09e9c5336ffb"
 }

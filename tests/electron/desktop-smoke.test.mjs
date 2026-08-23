@@ -130,7 +130,7 @@ async function probeIdentity(client, buildInfo, httpPort) {
   assert.deepEqual(value.preloadKeys, [
     "appVersion", "buildId", "capabilities", "isElectron", "notify", "onNotificationClicked", "platform",
     "selectDirectory", "selectFile", "selectSavePath", "terminalClear", "terminalClose", "terminalInput",
-    "terminalKill", "terminalStart", "windowAction", "windowState",
+    "terminalKill", "terminalResize", "terminalStart", "windowAction", "windowState",
   ]);
   assert.equal("invoke" in value.preload, false);
   assert.deepEqual(value.capabilities, {
@@ -474,7 +474,7 @@ async function probeWorkbench(client, sessionId, configure) {
       ["horizontal split", "splitWorkbenchPane(workbenchLayout.focusedPaneId,'horizontal')"],
       ["open Terminal", "toggleTerminal(true)"],
       ["vertical split", "splitWorkbenchPane(workbenchLayout.focusedPaneId,'vertical')"],
-      ["open File", "toggleFileViewer(true)"],
+      ["open File", `ensureWorkbenchTab({id:workbenchId('tab'),kind:'file',title:'文件',sessionId:${JSON.stringify(sessionId)},rootId:'workspace',path:'.'})`],
     ];
     for (const [label, expression] of steps) {
       try { await client.evaluate(expression); }
@@ -510,6 +510,31 @@ async function probeWorkbench(client, sessionId, configure) {
   } catch (error) {
     throw new Error(`${error instanceof Error ? error.message : String(error)}; last DS-03 state: ${lastState}`);
   }
+}
+
+async function probeDs04Xterm(client) {
+  return await client.evaluate(`(async()=>{
+    const terminal=ensureXtermTerminal();
+    const write=value=>new Promise(resolve=>terminal.write(value,resolve));
+    await write('\\x1b[?1049h\\x1b[38;2;1;2;3mX');
+    const line=terminal.buffer.active.getLine(terminal.buffer.active.cursorY);
+    const cell=line?.getCell(Math.max(0,terminal.buffer.active.cursorX-1));
+    const alternate={
+      type:terminal.buffer.active.type,
+      fgRgb:cell?.isFgRGB?.()===true,
+      fgColor:cell?.getFgColor?.(),
+    };
+    await write('\\x1b[0m\\x1b[?1049l');
+    return {
+      terminalGlobal:typeof window.Terminal,
+      fitGlobal:typeof window.FitAddon?.FitAddon,
+      node:Boolean(document.querySelector('#terminal-screen .xterm')),
+      alternate,
+      restoredType:terminal.buffer.active.type,
+      rawInputContract:/appendNewline:\\s*false/u.test(sendTerminalInput.toString()),
+      resizeContract:/terminalResize/u.test(scheduleTerminalResize.toString()),
+    };
+  })()`);
 }
 
 test("RT-01 renderer source keeps runs and questions session-bound", async () => {
@@ -570,6 +595,16 @@ test("real Electron main, preload and renderer preserve identity and session acr
     const workbenchFirst = await probeWorkbench(client, sessionId, true);
     assert.deepEqual([...workbenchFirst.active].sort(), ["file", "session", "terminal"]);
     assert.deepEqual(workbenchFirst.mounted, { session: true, terminal: true, file: true });
+    const xtermProbe = await probeDs04Xterm(client);
+    assert.deepEqual({
+      terminalGlobal: xtermProbe.terminalGlobal,
+      fitGlobal: xtermProbe.fitGlobal,
+      node: xtermProbe.node,
+      rawInputContract: xtermProbe.rawInputContract,
+      resizeContract: xtermProbe.resizeContract,
+    }, { terminalGlobal: "function", fitGlobal: "function", node: true, rawInputContract: true, resizeContract: true });
+    assert.deepEqual(xtermProbe.alternate, { type: "alternate", fgRgb: true, fgColor: 0x010203 });
+    assert.equal(xtermProbe.restoredType, "normal");
     assert(workbenchFirst.revision >= 5);
     await client.evaluate("location.reload(); true");
     const afterReload = await waitFor(async () => {
@@ -614,6 +649,37 @@ test("real Electron main, preload and renderer preserve identity and session acr
     client?.close();
     if (first) await terminateProcessTreeAsync(first.child);
     if (second) await terminateProcessTreeAsync(second.child);
+    await removeFixture(fixture);
+  }
+  assert.equal(await pathExists(fixture), false);
+});
+
+test("DS-04 real Electron loads the offline xterm truecolor and alternate-screen renderer", { timeout: 90_000 }, async (context) => {
+  const fixture = await makeTempDir("mini-lux-ds04-electron-");
+  const userData = path.join(fixture, "user-data");
+  const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
+  let instance;
+  let client;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal);
+    client = await connectCdp(cdpPort);
+    await probeIdentity(client, buildInfo, httpPort);
+    const probe = await probeDs04Xterm(client);
+    assert.deepEqual({
+      terminalGlobal: probe.terminalGlobal,
+      fitGlobal: probe.fitGlobal,
+      node: probe.node,
+      rawInputContract: probe.rawInputContract,
+      resizeContract: probe.resizeContract,
+    }, { terminalGlobal: "function", fitGlobal: "function", node: true, rawInputContract: true, resizeContract: true });
+    assert.deepEqual(probe.alternate, { type: "alternate", fgRgb: true, fgColor: 0x010203 });
+    assert.equal(probe.restoredType, "normal");
+    client.close(); client = null;
+    await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    client?.close();
+    if (instance) await terminateProcessTreeAsync(instance.child);
     await removeFixture(fixture);
   }
   assert.equal(await pathExists(fixture), false);

@@ -18,7 +18,7 @@ const executable = path.join(projectRoot, "release", "win-unpacked", "RainyDays.
 const expectedKeys = [
   "appVersion", "buildId", "capabilities", "isElectron", "notify", "onNotificationClicked", "platform",
   "selectDirectory", "selectFile", "selectSavePath", "terminalClear", "terminalClose", "terminalInput",
-  "terminalKill", "terminalStart", "windowAction", "windowState",
+  "terminalKill", "terminalResize", "terminalStart", "windowAction", "windowState",
 ];
 
 async function listenerClosed(port) {

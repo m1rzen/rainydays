@@ -13,7 +13,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "872f10951c6c7fba73428b2cff39c2655ee45370f1903157c966eb7987f9c8e7",
+      "sha256": "aee91329304d13f0e24f7436d92d7643dbc701caa321f6d7bc0319595227ee5d",
       "owner": "DATA-02"
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "b6a666cf47f53a6f730c9e80a06cbef8579a907e3c56bd157dbdcb78932d6225",
+      "sha256": "76c0d06d8955c739f9659fe16442cc6c7aa09873581cca62cac585508608222e",
       "owner": "DATA-02"
     },
     {
@@ -68,17 +68,17 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "62eb0451338fcb5621f34c49d54da1891df1b0f6c53fb0f3443b4bf78987f76a",
+      "sha256": "ce808b53b5fda7889f6cb29e21ed1258b360747b177a5f13ec044b326b3e3aca",
       "owner": "DATA-02"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "e3c13e92669e3556544389d338633c1be80305032c4c81a6124b210956db5efe",
+      "sha256": "5257ebce2cac53121d603aaea96bd1d05af0b5376273f1cf928838b045e6bacc",
       "owner": "DATA-02"
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "cbfc1710f7109a4f252a906324e5f166022c121ff97474a08f51522ef92a8706",
+      "sha256": "6be3b8290bf62699761b2335ce83baefe92311f5f8e5e4bca050851d8f67733f",
       "owner": "DATA-02"
     },
     {
@@ -93,7 +93,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "582e59ec4bd695a59edfd601d32c9350f833311d586f13b33c82dfe127ecadf4",
+      "sha256": "f06ab83d02eb2d48b6cb86c5e7302a7ac65ae2f646d8a49fce67f2f005ee6f3e",
       "owner": "DATA-02"
     },
     {
@@ -135,5 +135,5 @@
       "owner": "DATA-02"
     }
   ],
-  "canonicalPayloadSha256": "ed4c28f542348d41f04c25764d701732eaf31f7545de5859ac3ac88ff249387f"
+  "canonicalPayloadSha256": "af2e15cd79ac351d154a7bc32f8ad761f7160d31f8a962aca638b2deaeab9904"
 }

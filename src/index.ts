@@ -196,6 +196,18 @@ type AppSessionRuntime = Readonly<{
 
 let runtimeRegistry: SessionRuntimeRegistry<AppSessionRuntime> | null = null;
 const manualConsentRuntimes = new Map<string, AppSessionRuntime>();
+type TerminalInteractionGrant = Readonly<{
+  runtime: AppSessionRuntime;
+  owner: TerminalOwner;
+  terminalId: string;
+  windowId: number;
+  webContentsId: number;
+  expiresAt: number;
+  idleExpiresAt: number;
+}>;
+const terminalInteractionGrants = new Map<string, TerminalInteractionGrant>();
+const TERMINAL_INTERACTION_MAX_MS = 10 * 60_000;
+const TERMINAL_INTERACTION_IDLE_MS = 2 * 60_000;
 type ActiveRun = Readonly<{
   sessionId: string;
   runId: string;
@@ -268,10 +280,23 @@ function selectedRuntime(): AppSessionRuntime | null {
   return selectedSessionId && runtimeRegistry ? runtimeRegistry.get(selectedSessionId) ?? null : null;
 }
 
+function terminalInteractionKey(webContentsId: number, terminalId: string): string {
+  return `${webContentsId}:${terminalId}`;
+}
+
+function revokeTerminalInteraction(terminalId: string): void {
+  for (const [key, grant] of terminalInteractionGrants) {
+    if (grant.terminalId === terminalId) terminalInteractionGrants.delete(key);
+  }
+}
+
 function invalidateManualConsentForSession(sessionId: string): void {
   manualExecutionConsent.invalidateSession(sessionId);
   for (const [challengeId, runtime] of manualConsentRuntimes) {
     if (runtime.sessionId === sessionId) manualConsentRuntimes.delete(challengeId);
+  }
+  for (const [key, grant] of terminalInteractionGrants) {
+    if (grant.runtime.sessionId === sessionId) terminalInteractionGrants.delete(key);
   }
 }
 
@@ -594,6 +619,87 @@ function exactManualTerminalRequest(
   return Object.freeze({ id: value.id, input: value.input, appendNewline: value.appendNewline !== false });
 }
 
+function exactManualTerminalResizeRequest(request: unknown): Readonly<{ id: string; cols: number; rows: number }> {
+  const value = requireManualRequest(request);
+  if (Object.keys(value).sort().join("\0") !== "cols\0id\0rows"
+    || typeof value.id !== "string" || !/^term_[a-f0-9]{8}$/u.test(value.id)
+    || !Number.isSafeInteger(value.cols) || (value.cols as number) < 2 || (value.cols as number) > 500
+    || !Number.isSafeInteger(value.rows) || (value.rows as number) < 1 || (value.rows as number) > 300) {
+    throw new TypeError("manual terminal resize request is invalid");
+  }
+  return Object.freeze({ id: value.id, cols: value.cols as number, rows: value.rows as number });
+}
+
+function exactTerminalInteractionPresence(presence: ManualTerminalPresence): ManualTerminalPresence {
+  if (!presence || !Number.isSafeInteger(presence.windowId) || presence.windowId < 1
+    || !Number.isSafeInteger(presence.webContentsId) || presence.webContentsId < 1
+    || presence.topFrame !== true || presence.windowVisible !== true || presence.windowFocused !== true) {
+    throw new Error("PTY interaction requires a focused trusted renderer");
+  }
+  return Object.freeze({ ...presence });
+}
+
+function issueTerminalInteraction(
+  runtime: AppSessionRuntime,
+  owner: TerminalOwner,
+  terminalId: string,
+  presence: ManualTerminalPresence
+): TerminalInteractionGrant {
+  const exactPresence = exactTerminalInteractionPresence(presence);
+  const now = Date.now();
+  const grant = Object.freeze({
+    runtime,
+    owner,
+    terminalId,
+    windowId: exactPresence.windowId,
+    webContentsId: exactPresence.webContentsId,
+    expiresAt: now + TERMINAL_INTERACTION_MAX_MS,
+    idleExpiresAt: now + TERMINAL_INTERACTION_IDLE_MS,
+  });
+  terminalInteractionGrants.set(terminalInteractionKey(exactPresence.webContentsId, terminalId), grant);
+  return grant;
+}
+
+function terminalInteractionRequired(): never {
+  const error = new Error("PTY interaction grant is unavailable") as Error & { code: string };
+  error.code = "PTY_INTERACTION_GRANT_REQUIRED";
+  throw error;
+}
+
+function requireTerminalInteraction(terminalId: string, presence: ManualTerminalPresence): TerminalInteractionGrant {
+  const exactPresence = exactTerminalInteractionPresence(presence);
+  const key = terminalInteractionKey(exactPresence.webContentsId, terminalId);
+  const grant = terminalInteractionGrants.get(key);
+  const now = Date.now();
+  if (!grant || grant.terminalId !== terminalId || grant.windowId !== exactPresence.windowId
+    || grant.webContentsId !== exactPresence.webContentsId || now >= grant.expiresAt || now >= grant.idleExpiresAt
+    || requireRuntimeRegistry().get(grant.runtime.sessionId) !== grant.runtime) {
+    terminalInteractionGrants.delete(key);
+    terminalInteractionRequired();
+  }
+  return grant;
+}
+
+function assertTerminalInteractionCurrent(grant: TerminalInteractionGrant): void {
+  const key = terminalInteractionKey(grant.webContentsId, grant.terminalId);
+  const now = Date.now();
+  if (terminalInteractionGrants.get(key) !== grant || now >= grant.expiresAt || now >= grant.idleExpiresAt
+    || requireRuntimeRegistry().get(grant.runtime.sessionId) !== grant.runtime) {
+    if (terminalInteractionGrants.get(key) === grant) terminalInteractionGrants.delete(key);
+    terminalInteractionRequired();
+  }
+}
+
+function refreshTerminalInteraction(grant: TerminalInteractionGrant): void {
+  const key = terminalInteractionKey(grant.webContentsId, grant.terminalId);
+  if (terminalInteractionGrants.get(key) !== grant) return;
+  const now = Date.now();
+  terminalInteractionGrants.set(key, Object.freeze({
+    ...grant,
+    idleExpiresAt: Math.min(grant.expiresAt, now + TERMINAL_INTERACTION_IDLE_MS),
+  }));
+}
+
 async function currentManualConsentBinding(
   operation: ManualConsentOperation,
   request: Readonly<Record<string, unknown>>,
@@ -713,8 +819,8 @@ export async function decideManualTerminalConsent(
       presence: { ...presence, ...consentBinding },
     }, async (storedOperation, exactRequest, storedRootQualificationDigest) => {
       if (storedOperation === "terminal-start") {
-        const info = await runDirectOperation("terminal:start", exactRequest, (authorized, owner, _authority, context) =>
-          capabilityBroker.withDirectExecutionRoot(
+        const started = await runDirectOperation("terminal:start", exactRequest, async (authorized, owner, _authority, context) => {
+          const info = await capabilityBroker.withDirectExecutionRoot(
             context,
             "terminal:start",
             String(authorized.cwd),
@@ -732,9 +838,11 @@ export async function decideManualTerminalConsent(
                 execution: createManualExecutionGateway({ context, owner, operation: storedOperation, exactRequest }),
               });
             }
-          ), runtime
-        );
-        result = { terminal: info };
+          );
+          issueTerminalInteraction(runtime, owner, info.id, presence);
+          return info;
+        }, runtime);
+        result = { terminal: started };
         return;
       }
       const directOperation = `terminal:${storedOperation.slice("terminal-".length)}`;
@@ -745,6 +853,7 @@ export async function decideManualTerminalConsent(
           const leaseInfo = terminalFacade.get(owner, id);
           if (!leaseInfo) throw new Error(`终端不存在: ${id}`);
           await terminalFacade.input(owner, id, String(authorized.input), authorized.appendNewline !== false, execution);
+          issueTerminalInteraction(runtime, owner, id, presence);
           return terminalFacade.get(owner, id);
         }
         if (storedOperation === "terminal-clear") {
@@ -753,9 +862,11 @@ export async function decideManualTerminalConsent(
         }
         if (storedOperation === "terminal-kill") {
           await terminalFacade.kill(owner, id);
+          revokeTerminalInteraction(id);
           return terminalFacade.get(owner, id);
         }
         await terminalFacade.close(owner, id);
+        revokeTerminalInteraction(id);
         return null;
       }, runtime);
       result = { success: true, terminal };
@@ -766,8 +877,39 @@ export async function decideManualTerminalConsent(
   }
 }
 
+export async function writeInteractiveTerminal(request: unknown, presence: ManualTerminalPresence): Promise<unknown> {
+  const exactRequest = exactManualTerminalRequest("terminal-input", request);
+  if (exactRequest.appendNewline !== false) throw new TypeError("PTY input must be raw");
+  const terminalId = String(exactRequest.id);
+  const grant = requireTerminalInteraction(terminalId, presence);
+  const terminal = await runDirectOperation("terminal:input", exactRequest, async (authorized, owner, _authority, context) => {
+    if (owner !== grant.owner) throw new Error("PTY interaction owner binding changed");
+    assertTerminalInteractionCurrent(grant);
+    const execution = createManualExecutionGateway({ context, owner, operation: "terminal-input", exactRequest });
+    await terminalFacade.input(owner, terminalId, String(authorized.input), false, execution);
+    return terminalFacade.get(owner, terminalId);
+  }, grant.runtime);
+  refreshTerminalInteraction(grant);
+  return { success: true, terminal };
+}
+
+export async function resizeInteractiveTerminal(request: unknown, presence: ManualTerminalPresence): Promise<unknown> {
+  const exactRequest = exactManualTerminalResizeRequest(request);
+  const grant = requireTerminalInteraction(exactRequest.id, presence);
+  const terminal = await runDirectOperation("terminal:resize", exactRequest, (authorized, owner) => {
+    if (owner !== grant.owner) throw new Error("PTY interaction owner binding changed");
+    assertTerminalInteractionCurrent(grant);
+    return terminalFacade.resize(owner, String(authorized.id), Number(authorized.cols), Number(authorized.rows));
+  }, grant.runtime);
+  refreshTerminalInteraction(grant);
+  return { success: true, terminal };
+}
+
 export function invalidateManualTerminalConsent(webContentsId: number): void {
   manualExecutionConsent.invalidateWebContents(webContentsId);
+  for (const [key, grant] of terminalInteractionGrants) {
+    if (grant.webContentsId === webContentsId) terminalInteractionGrants.delete(key);
+  }
 }
 
 /** 将 Settings 中的工作路径注入 persona，不修改 persona 源文件。 */

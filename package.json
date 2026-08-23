@@ -102,10 +102,15 @@
     "governance:rt11:check": "node scripts/generate-rt11-resolved-manifest.mjs --check",
     "governance:ds03:generate": "node scripts/generate-ds03-resolved-manifest.mjs",
     "governance:ds03:check": "node scripts/generate-ds03-resolved-manifest.mjs --check",
-    "test:ds03": "node scripts/run-tests.mjs --task DS-03 --profile full"
+    "test:ds03": "node scripts/run-tests.mjs --task DS-03 --profile full",
+    "governance:ds04:generate": "node scripts/generate-ds04-resolved-manifest.mjs",
+    "governance:ds04:check": "node scripts/generate-ds04-resolved-manifest.mjs --check",
+    "test:ds04": "node scripts/run-tests.mjs --task DS-04 --profile full"
   },
   "dependencies": {
     "@xenova/transformers": "^2.17.2",
+    "@xterm/addon-fit": "0.10.0",
+    "@xterm/xterm": "5.5.0",
     "ajv": "8.18.0",
     "ajv-formats": "^3.0.1",
     "better-sqlite3": "^12.11.1",

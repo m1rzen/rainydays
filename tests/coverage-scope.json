@@ -131,6 +131,18 @@
         "exactCasePath": "tests/integration/ds03-workbench-layout.test.mjs"
       },
       {
+        "sourceTask": "DS-04",
+        "exactCasePath": "tests/contract/ds04-governance.test.mjs"
+      },
+      {
+        "sourceTask": "DS-04",
+        "exactCasePath": "tests/unit/terminal-owner.test.mjs"
+      },
+      {
+        "sourceTask": "DS-04",
+        "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs"
+      },
+      {
         "sourceTask": "EVT-01",
         "exactCasePath": "tests/contract/evt01-governance.test.mjs"
       },

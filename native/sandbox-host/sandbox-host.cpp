@@ -621,7 +621,7 @@ bool FixedExecutable(const std::wstring& path, Handle* handle, BY_HANDLE_FILE_IN
 }
 
 struct RuntimeControl {
-  HANDLE job = nullptr; HANDLE input = nullptr; std::string secret; RuntimeLimits limits{}; bool persistent = false;
+  HANDLE job = nullptr; HANDLE input = nullptr; HPCON pseudo = nullptr; std::string secret; RuntimeLimits limits{}; bool persistent = false;
   std::atomic<bool> accepting{true}; std::atomic<int> reason{0}; std::atomic<unsigned long long> activity{0}; std::atomic<unsigned long long> aggregate{0}; std::atomic<unsigned long long> stdin_writes{0};
   std::mutex transcript_mutex; std::vector<unsigned char> transcript; std::string input_digest_material; std::set<std::string> control_frame_digests; std::string protocol_subcode = "none";
 };
@@ -649,6 +649,16 @@ void ControlMain(RuntimeControl* control) {
       if (!reason || reason->scalar.empty() || reason->scalar.size() > 64 || !std::all_of(reason->scalar.begin(), reason->scalar.end(), [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'; })) { FailProtocol(control, "state"); return; }
       const int termination_reason = reason->scalar == "owner-retired" ? 10 : reason->scalar == "session-retired" ? 11 : reason->scalar == "service-shutdown" ? 12 : 2;
       FailJob(control, termination_reason); return;
+    }
+    if (type->scalar == "resize" && control->persistent) {
+      if (!ExactKeys(frame, {"cols", "rows", "secret", "type", "v"})) { FailProtocol(control, "unknown-key"); return; }
+      const Json* cols = Field(frame, "cols", Json::Kind::number); const Json* rows = Field(frame, "rows", Json::Kind::number); uint64_t parsed_cols = 0, parsed_rows = 0;
+      if (!cols || !rows || !ParseUnsigned(cols->scalar, &parsed_cols) || !ParseUnsigned(rows->scalar, &parsed_rows)
+        || parsed_cols < 2 || parsed_cols > 500 || parsed_rows < 1 || parsed_rows > 300 || !control->pseudo
+        || FAILED(ResizePseudoConsole(control->pseudo, COORD{static_cast<SHORT>(parsed_cols), static_cast<SHORT>(parsed_rows)}))) {
+        FailProtocol(control, "state"); return;
+      }
+      control->activity = GetTickCount64(); continue;
     }
     if (type->scalar != "input" || !control->persistent) { FailProtocol(control, "state"); return; }
     if (!ExactKeys(frame, {"appendNewline", "data", "digest", "secret", "type", "v"})) { FailProtocol(control, "unknown-key"); return; }
@@ -970,7 +980,7 @@ int Run() {
   if (constrained && is_fixed_adversary) { fixed_input_ok = WriteExact(stdin_write, fixed_child_state.data(), static_cast<DWORD>(fixed_child_state.size())); CloseHandle(stdin_write); stdin_write = nullptr; }
   if (!constrained || !fixed_input_ok || ResumeThread(process.hThread) == static_cast<DWORD>(-1)) { if (created) { TerminateProcess(process.hProcess, 0xE003); CloseHandle(process.hThread); CloseHandle(process.hProcess); } if (pseudo) ClosePseudoConsole(pseudo); if (stdin_write) CloseHandle(stdin_write); if (stdout_read) CloseHandle(stdout_read); if (stderr_read) CloseHandle(stderr_read); if (is_fixed_adversary) RetireFixedImageGrant(&fixed_image_grant); for (auto& grant : grants) CleanupRoot(&grant, app_sid); DeleteAppContainerProfile(profile_name.c_str()); ::LocalFree(app_sid); const std::string detail = "EXEC_SANDBOX_LAUNCH_FAILED:constrain-created-" + std::to_string(created ? 1 : 0) + "-sentinel-" + std::to_string(unlisted_sentinel_blocked ? 1 : 0) + "-sentinel-win32-" + std::to_string(sentinel_probe_error) + "-assigned-" + std::to_string(assigned ? 1 : 0) + "-token-" + std::to_string(token_job ? 1 : 0) + "-handle-dup-" + std::to_string(sensitive_handle_duplication_blocked ? 1 : 0) + "-host-open-" + std::to_string(handle_duplication.host_open_error) + "-roots-" + std::to_string(roots_stable ? 1 : 0) + "-exe-" + std::to_string(executable_stable ? 1 : 0) + "-win32-" + std::to_string(create_error); Failure(detail.c_str()); return 73; }
   bool input_ok = fixed_input_ok; if (is_e3) { input_ok = WriteExact(stdin_write, command_bytes.data(), static_cast<DWORD>(command_bytes.size())); CloseHandle(stdin_write); stdin_write = nullptr; if (!input_ok) TerminateJobObject(job.value, 0xE003); }
-  CloseHandle(process.hThread); RuntimeControl control{}; control.job = job.value; control.input = persistent ? stdin_write : nullptr; control.secret = secret->scalar; control.limits = limits; control.persistent = persistent; control.activity = launch_started; control.stdin_writes = is_e3 ? 1 : 0;
+  CloseHandle(process.hThread); RuntimeControl control{}; control.job = job.value; control.input = persistent ? stdin_write : nullptr; control.pseudo = persistent ? pseudo : nullptr; control.secret = secret->scalar; control.limits = limits; control.persistent = persistent; control.activity = launch_started; control.stdin_writes = is_e3 ? 1 : 0;
   std::thread controller(ControlMain, &control); std::thread out(Drain, stdout_read, "stdout", &control); std::thread err; if (!persistent) err = std::thread(Drain, stderr_read, "stderr", &control);
   bool root_exited = false, active_process_zero = false;
   unsigned long long observed_process_count = 0, observed_descendant_count = 0, descendant_validation_failures = 0;

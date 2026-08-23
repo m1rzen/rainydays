@@ -7,6 +7,7 @@
   <script src="/vendor/marked.umd.js"></script>
   <link rel="stylesheet" href="/vendor/github-dark.min.css">
   <script src="/vendor/highlight.min.js"></script>
+  <link rel="stylesheet" href="/vendor/xterm.css">
   <link rel="stylesheet" href="/renderer.css">
 </head>
 <body>
@@ -75,8 +76,7 @@
           <button class="terminal-tool-btn danger" data-action="close-terminal" title="关闭终端">关闭</button>
           <button class="terminal-tool-btn" data-action="toggle-terminal" title="关闭终端标签">✕</button>
         </div>
-        <div id="terminal-output"><div id="terminal-empty">点击 ＋ 创建持久终端</div></div>
-        <div class="terminal-input-row"><span class="terminal-prompt">›</span><input id="terminal-input" placeholder="输入命令，Enter 发送；Ctrl+L 清屏" disabled /></div>
+        <div id="terminal-screen" role="application" aria-label="交互式 PTY 终端"><div id="terminal-empty">点击 ＋ 创建持久终端</div></div>
       </div>
     </div>
     <div id="status-bar">
@@ -185,6 +185,8 @@
     </div>
   </div>
 
+  <script src="/vendor/xterm.js"></script>
+  <script src="/vendor/xterm-addon-fit.js"></script>
   <script src="/renderer.js"></script>
 </body>
 </html>

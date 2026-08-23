@@ -737,6 +737,16 @@ export function readIsolatedTerminal(lease: IsolatedTerminalLease, owner: Resour
   return record.service.readOutput(record.nativeLease, owner);
 }
 
+export async function resizeIsolatedTerminal(
+  lease: IsolatedTerminalLease,
+  owner: ResourceOwner,
+  cols: number,
+  rows: number
+): Promise<void> {
+  const record = requirePersistent(lease, owner);
+  await record.service.resize(record.nativeLease, owner, cols, rows);
+}
+
 export async function terminateIsolatedTerminal(lease: IsolatedTerminalLease, owner: ResourceOwner, reason = "requested"): Promise<void> {
   const record = requirePersistent(lease, owner);
   if (record.closed) return;

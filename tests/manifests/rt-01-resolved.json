@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "17c8dc33e84fe475d55799131286d31708131f54aa85697968f7552fcb75d567",
+      "sha256": "8ba53bacfe2e72e9c95bb75c2825939be968108af12a69719de61b4f7b5bfb00",
       "owner": "RT-01"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "872f10951c6c7fba73428b2cff39c2655ee45370f1903157c966eb7987f9c8e7",
+      "sha256": "aee91329304d13f0e24f7436d92d7643dbc701caa321f6d7bc0319595227ee5d",
       "owner": "RT-01"
     },
     {
@@ -58,7 +58,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "582e59ec4bd695a59edfd601d32c9350f833311d586f13b33c82dfe127ecadf4",
+      "sha256": "f06ab83d02eb2d48b6cb86c5e7302a7ac65ae2f646d8a49fce67f2f005ee6f3e",
       "owner": "RT-01"
     },
     {
@@ -106,14 +106,14 @@
     },
     {
       "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs",
-      "sha256": "b4592a3b6d8510742ee54ecc3b4e0a9f8d936264475dbdb9ed967f9e69ef0246",
+      "sha256": "5f1de82cf9dc8d3ca46f823749b02d4f00ebbc35503443b7f2985a535a975955",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "fbe1b6a093829496e446e9917297ae18140862f5f59888526eec0cf25f75490b",
+      "sha256": "232ea19085832d3594f55674ccb4526bb843f53a774254c18ce3b9f557be38c4",
       "kind": "test",
       "layer": "electron",
       "owner": "RT-01"
@@ -126,5 +126,5 @@
       "owner": "RT-01"
     }
   ],
-  "canonicalPayloadSha256": "cd9fa3301d586ef49927a7381c1f03b2d40441ce435007b4ff36a65ad47477ef"
+  "canonicalPayloadSha256": "4e483a69a4b7546641535aaf09c235338153e85cd43b6ed63b49ce97a4e6371d"
 }

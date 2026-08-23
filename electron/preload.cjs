@@ -26,6 +26,7 @@ const electronAPI = Object.freeze({
   },
   terminalStart: request => ipcRenderer.invoke("rainydays:terminal-start", request),
   terminalInput: request => ipcRenderer.invoke("rainydays:terminal-input", request),
+  terminalResize: request => ipcRenderer.invoke("rainydays:terminal-resize", request),
   terminalClear: request => ipcRenderer.invoke("rainydays:terminal-clear", request),
   terminalKill: request => ipcRenderer.invoke("rainydays:terminal-kill", request),
   terminalClose: request => ipcRenderer.invoke("rainydays:terminal-close", request),

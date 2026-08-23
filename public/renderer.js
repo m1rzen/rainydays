@@ -628,8 +628,66 @@
     let activeTerminalId = null;
     let activeTerminalOwnerSessionId = null;
     let terminalEvents = null;
-    let terminalHistory = [];
-    let terminalHistoryIndex = -1;
+    let terminalViewGeneration = 0;
+    const terminalInputQueues = new Map();
+    let terminalResizeTimer = null;
+    let xtermTerminal = null;
+    let xtermFitAddon = null;
+    let xtermResizeObserver = null;
+
+    function ensureXtermTerminal() {
+      if (xtermTerminal) return xtermTerminal;
+      if (typeof window.Terminal !== "function" || typeof window.FitAddon?.FitAddon !== "function") {
+        throw new Error("xterm 离线运行时不可用");
+      }
+      const screen = document.getElementById("terminal-screen");
+      screen.replaceChildren();
+      xtermTerminal = new window.Terminal({
+        cursorBlink: true,
+        convertEol: false,
+        scrollback: 10000,
+        fontFamily: '"Cascadia Mono","Cascadia Code",Consolas,monospace',
+        fontSize: 13,
+        allowProposedApi: false,
+        theme: {
+          background: "#090b10", foreground: "#d6d9e0", cursor: "#8b7cf6",
+          black: "#090b10", red: "#f7768e", green: "#9ece6a", yellow: "#e0af68",
+          blue: "#7aa2f7", magenta: "#bb9af7", cyan: "#7dcfff", white: "#c0caf5",
+          brightBlack: "#565f89", brightRed: "#f7768e", brightGreen: "#9ece6a", brightYellow: "#e0af68",
+          brightBlue: "#7aa2f7", brightMagenta: "#bb9af7", brightCyan: "#7dcfff", brightWhite: "#ffffff",
+        },
+      });
+      xtermFitAddon = new window.FitAddon.FitAddon();
+      xtermTerminal.loadAddon(xtermFitAddon);
+      xtermTerminal.open(screen);
+      xtermTerminal.onData(data => sendTerminalInput(data));
+      xtermTerminal.onResize(({ cols, rows }) => scheduleTerminalResize(cols, rows));
+      xtermResizeObserver = new ResizeObserver(() => fitActiveTerminal());
+      xtermResizeObserver.observe(screen);
+      return xtermTerminal;
+    }
+
+    function fitActiveTerminal() {
+      if (!xtermTerminal || !xtermFitAddon || !document.getElementById("terminal-panel").classList.contains("workbench-mounted")) return;
+      requestAnimationFrame(() => {
+        try { xtermFitAddon.fit(); }
+        catch { /* transient zero-sized pane */ }
+      });
+    }
+
+    function scheduleTerminalResize(cols, rows) {
+      if (!activeTerminalId || currentSessionId !== activeTerminalOwnerSessionId || typeof window.electronAPI?.terminalResize !== "function") return;
+      if (terminalResizeTimer) clearTimeout(terminalResizeTimer);
+      const terminalId = activeTerminalId;
+      const ownerSessionId = activeTerminalOwnerSessionId;
+      terminalResizeTimer = setTimeout(() => {
+        terminalResizeTimer = null;
+        if (terminalId !== activeTerminalId || ownerSessionId !== activeTerminalOwnerSessionId) return;
+        Promise.resolve(window.electronAPI.terminalResize({ id: terminalId, cols, rows }))
+          .then(data => updateTerminalInfo(data?.terminal))
+          .catch(() => undefined);
+      }, 60);
+    }
 
     function requireCurrentTerminalOwner() {
       if (!activeTerminalOwnerSessionId || currentSessionId !== activeTerminalOwnerSessionId) {
@@ -652,7 +710,8 @@
         id: workbenchId("tab"), kind: "terminal", title: terminal?.name || "终端",
         sessionId: currentSessionId, terminalId: terminal?.id || "terminal-manager",
       });
-      document.getElementById("terminal-input").focus();
+      ensureXtermTerminal().focus();
+      fitActiveTerminal();
     }
 
     async function loadTerminals() {
@@ -687,7 +746,11 @@
         empty.className = "terminal-empty-label";
         empty.textContent = "无终端";
         tabs.appendChild(empty);
-        document.getElementById("terminal-output").innerHTML = '<div id="terminal-empty">点击 ＋ 创建持久终端</div>';
+        if (xtermTerminal) {
+          xtermTerminal.reset();
+          xtermTerminal.write("\x1b[2m点击 ＋ 创建持久终端\x1b[0m");
+          xtermTerminal.options.disableStdin = true;
+        }
       }
     }
 
@@ -704,32 +767,40 @@
 
     async function selectTerminal(id) {
       activeTerminalId = id;
+      const generation = ++terminalViewGeneration;
       if (terminalEvents) { terminalEvents.close(); terminalEvents = null; }
       renderTerminalTabs();
-      const output = document.getElementById("terminal-output");
-      output.textContent = "";
+      const terminal = ensureXtermTerminal();
+      terminal.reset();
 
       const eventSessionId = activeTerminalOwnerSessionId;
       terminalEvents = new EventSource(`/api/terminals/${encodeURIComponent(id)}/events?sessionId=${encodeURIComponent(eventSessionId || "")}`);
       terminalEvents.onmessage = (event) => {
+        if (generation !== terminalViewGeneration || activeTerminalId !== id) return;
         const data = JSON.parse(event.data);
         if (data.type === "snapshot") {
-          output.textContent = data.data || "";
+          terminal.reset();
+          terminal.write(data.data || "");
           updateTerminalInfo(data.info);
+          fitActiveTerminal();
         } else if (data.type === "output") {
           appendTerminalOutput(data.data || "");
+        } else if (data.type === "resize") {
+          const info = terminalSessions.find(candidate => candidate.id === id);
+          if (info) { info.cols = data.cols; info.rows = data.rows; }
         } else if (data.type === "status") {
-          const terminal = terminalSessions.find(t => t.id === id);
-          if (terminal) { terminal.status = data.status; terminal.exitCode = data.exitCode; }
+          const info = terminalSessions.find(candidate => candidate.id === id);
+          if (info) { info.status = data.status; info.exitCode = data.exitCode; }
           renderTerminalTabs(); updateTerminalInputState();
-          appendTerminalOutput(`\n[进程状态: ${data.status}${data.exitCode === null ? "" : `, exit ${data.exitCode}`} ]\n`);
+          appendTerminalOutput(`\r\n\x1b[2m[进程状态: ${data.status}${data.exitCode === null ? "" : `, exit ${data.exitCode}`} ]\x1b[0m\r\n`);
         }
       };
       terminalEvents.onerror = () => {
-        if (terminalEvents && activeTerminalId === id) updateTerminalInputState();
+        if (generation === terminalViewGeneration && terminalEvents && activeTerminalId === id) updateTerminalInputState();
       };
       updateTerminalInputState();
-      document.getElementById("terminal-input").focus();
+      terminal.focus();
+      fitActiveTerminal();
     }
 
     function updateTerminalInfo(info) {
@@ -741,29 +812,31 @@
     }
 
     function appendTerminalOutput(text) {
-      const output = document.getElementById("terminal-output");
-      output.textContent += text;
-      if (output.textContent.length > 500000) output.textContent = output.textContent.slice(-500000);
-      output.scrollTop = output.scrollHeight;
+      if (!text) return;
+      ensureXtermTerminal().write(text);
     }
 
     function updateTerminalInputState() {
-      const input = document.getElementById("terminal-input");
-      const terminal = terminalSessions.find(t => t.id === activeTerminalId);
-      input.disabled = !terminal || terminal.status !== "running" || currentSessionId !== activeTerminalOwnerSessionId;
-      input.placeholder = currentSessionId !== activeTerminalOwnerSessionId ? "先选择终端所属 Session" : input.disabled ? "终端未运行" : `发送到 ${terminal.name}`;
+      const terminal = terminalSessions.find(candidate => candidate.id === activeTerminalId);
+      if (!xtermTerminal) return;
+      xtermTerminal.options.disableStdin = !terminal || terminal.status !== "running" || currentSessionId !== activeTerminalOwnerSessionId;
     }
 
-    async function sendTerminalInput() {
-      const input = document.getElementById("terminal-input");
-      const command = input.value;
-      if (!activeTerminalId || !command || input.disabled) return;
-      try {
+    function sendTerminalInput(data) {
+      const terminalId = activeTerminalId;
+      const ownerSessionId = activeTerminalOwnerSessionId;
+      if (!terminalId || !data || currentSessionId !== ownerSessionId || xtermTerminal?.options.disableStdin) return;
+      const previous = terminalInputQueues.get(terminalId) || Promise.resolve();
+      const pending = previous.catch(() => undefined).then(async () => {
         if (typeof window.electronAPI?.terminalInput !== "function") throw new Error("manual terminal unavailable");
-        await window.electronAPI.terminalInput({ id:activeTerminalId, input:command });
-        terminalHistory.push(command); terminalHistoryIndex = terminalHistory.length;
-        input.value = "";
-      } catch (err) { appendTerminalOutput(`\n[发送失败] ${err.message}\n`); }
+        await window.electronAPI.terminalInput({ id: terminalId, input: data, appendNewline: false });
+      }).catch(error => {
+        if (terminalId === activeTerminalId) appendTerminalOutput(`\r\n\x1b[31m[发送失败] ${error.message}\x1b[0m\r\n`);
+      });
+      terminalInputQueues.set(terminalId, pending);
+      void pending.finally(() => {
+        if (terminalInputQueues.get(terminalId) === pending) terminalInputQueues.delete(terminalId);
+      });
     }
 
     async function clearActiveTerminal() {
@@ -771,7 +844,8 @@
       requireCurrentTerminalOwner();
       if (typeof window.electronAPI?.terminalClear !== "function") throw new Error("manual terminal unavailable");
       await window.electronAPI.terminalClear({ id:activeTerminalId });
-      document.getElementById("terminal-output").textContent = "";
+      xtermTerminal?.clear();
+      xtermTerminal?.write("\x1b[2J\x1b[H");
     }
 
     async function killActiveTerminal() {
@@ -798,14 +872,6 @@
       if (terminalSessions.length > 0) await selectTerminal(terminalSessions[0].id);
       else updateTerminalInputState();
     }
-
-    const terminalInputEl = document.getElementById("terminal-input");
-    terminalInputEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); sendTerminalInput(); }
-      else if (e.ctrlKey && e.key.toLowerCase() === "l") { e.preventDefault(); clearActiveTerminal(); }
-      else if (e.key === "ArrowUp" && terminalHistory.length > 0) { e.preventDefault(); terminalHistoryIndex = Math.max(0, terminalHistoryIndex - 1); terminalInputEl.value = terminalHistory[terminalHistoryIndex] || ""; }
-      else if (e.key === "ArrowDown" && terminalHistory.length > 0) { e.preventDefault(); terminalHistoryIndex = Math.min(terminalHistory.length, terminalHistoryIndex + 1); terminalInputEl.value = terminalHistory[terminalHistoryIndex] || ""; }
-    });
 
     // ========== File Viewer ==========
     let fileRoots = [];

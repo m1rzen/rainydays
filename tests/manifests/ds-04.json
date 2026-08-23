@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-04",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "dist/execution-isolation.js",
+    "dist/execution-native.js",
+    "dist/execution-runtime.js",
+    "dist/index.js",
+    "dist/terminal.js",
+    "dist/tool-policies.js",
+    "dist/tools/index.js",
+    "dist/tools/terminal-tools.js",
+    "electron/main.cjs",
+    "electron/preload.cjs",
+    "native/sandbox-host/sandbox-host.cpp",
+    "native/sandbox-host/sandbox-launcher.cpp",
+    "package-lock.json",
+    "package.json",
+    "public/index.html",
+    "public/renderer.css",
+    "public/renderer.js",
+    "public/vendor/xterm-addon-fit.js",
+    "public/vendor/xterm.css",
+    "public/vendor/xterm.js",
+    "scripts/copy-vendor.mjs",
+    "src/execution-isolation.ts",
+    "src/execution-native.ts",
+    "src/execution-runtime.ts",
+    "src/index.ts",
+    "src/terminal.ts",
+    "src/tool-policies.ts",
+    "src/tools/index.ts",
+    "src/tools/terminal-tools.ts"
+  ],
+  "coverageExemptions": {
+    "dist/index.js": {
+      "reason": "The trusted Electron interaction grant, raw input and resize boundary is exercised by the real server and Electron evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        { "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs", "layer": "integration" }
+      ]
+    },
+    "electron/main.cjs": {
+      "reason": "Typed terminal IPC, trusted focused-frame checks and interaction grant fallback are exercised by the real Electron smoke.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "electron/preload.cjs": {
+      "reason": "The exact terminal IPC allowlist including resize is exercised by unit, Electron and packaged bridge tests.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "native/sandbox-host/sandbox-host.cpp": {
+      "reason": "The authenticated ConPTY control host is covered by real native E2/E4 resize, raw input, Ctrl+C and cleanup cases.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        { "exactCasePath": "tests/integration/sec03-native-host.test.mjs", "layer": "integration" }
+      ]
+    },
+    "native/sandbox-host/sandbox-launcher.cpp": {
+      "reason": "The native launcher validates and authenticates resize control frames in the real native E2/E4 integration cases.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        { "exactCasePath": "tests/integration/sec03-native-host.test.mjs", "layer": "integration" }
+      ]
+    },
+    "package-lock.json": {
+      "reason": "Exact offline xterm dependency versions and generated assets are checked by the renderer asset contract.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        { "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" }
+      ]
+    },
+    "package.json": {
+      "reason": "Exact offline xterm dependency versions and DS-04 scripts are checked by the renderer asset contract.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        { "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" }
+      ]
+    },
+    "public/index.html": {
+      "reason": "The offline xterm host and strict same-origin asset references are exercised by unit and real Electron evidence.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "public/renderer.css": {
+      "reason": "The xterm terminal surface and pane sizing are exercised through the real Electron renderer smoke.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "public/renderer.js": {
+      "reason": "Raw xterm input, FitAddon resize, truecolor and alternate-screen behavior are exercised by the real Electron renderer smoke.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "public/vendor/xterm-addon-fit.js": {
+      "reason": "The pinned offline FitAddon asset is checked by the renderer asset contract and loaded by Electron.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        { "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" }
+      ]
+    },
+    "public/vendor/xterm.css": {
+      "reason": "The pinned offline xterm stylesheet is checked by the renderer asset contract and loaded by Electron.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        { "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" }
+      ]
+    },
+    "public/vendor/xterm.js": {
+      "reason": "The pinned offline xterm runtime is checked by unit contract and its parser is exercised by Electron.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "scripts/copy-vendor.mjs": {
+      "reason": "The deterministic offline xterm asset projection is checked by the renderer asset contract.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        { "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" }
+      ]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/ds04-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/contract/sec01-boundaries.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/unit/execution-isolation.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/terminal-owner.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/sec03-native-host.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/process-cwd.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" },
+    { "exactCasePath": "tests/packaged/ds02-win-unpacked-ipc.test.mjs", "layer": "packaged" }
+  ]
+}

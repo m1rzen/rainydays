@@ -87,6 +87,12 @@ export interface ExecutionResult {
 export interface SessionOutput {
   readonly stdout: string;
   readonly stderr: string;
+  readonly stdoutBytes: Uint8Array;
+  readonly stderrBytes: Uint8Array;
+  readonly stdoutStart: number;
+  readonly stdoutEnd: number;
+  readonly stderrStart: number;
+  readonly stderrEnd: number;
   readonly outputTruncated: boolean;
   readonly running: boolean;
 }
@@ -150,11 +156,19 @@ interface InputRecord {
   state: "fresh" | "consuming" | "consumed";
 }
 
+interface OutputFrame {
+  readonly stream: "stdout" | "stderr";
+  bytes: Buffer;
+}
+
 interface OutputRecord {
-  stdout: Buffer[];
-  stderr: Buffer[];
+  frames: OutputFrame[];
   retainedBytes: number;
   aggregateBytes: number;
+  stdoutStart: number;
+  stdoutEnd: number;
+  stderrStart: number;
+  stderrEnd: number;
   truncated: boolean;
 }
 
@@ -312,7 +326,17 @@ function assertOwner(recordOwner: ResourceOwner, supplied: ResourceOwner): void 
   assertResourceOwner(supplied);
 }
 
-function newOutput(): OutputRecord { return { stdout: [], stderr: [], retainedBytes: 0, aggregateBytes: 0, truncated: false }; }
+function newOutput(): OutputRecord {
+  return {
+    frames: [], retainedBytes: 0, aggregateBytes: 0,
+    stdoutStart: 0, stdoutEnd: 0, stderrStart: 0, stderrEnd: 0,
+    truncated: false,
+  };
+}
+
+function retainedStream(output: OutputRecord, stream: "stdout" | "stderr"): Buffer {
+  return Buffer.concat(output.frames.filter(frame => frame.stream === stream).map(frame => frame.bytes));
+}
 
 export class ExecutionIsolationService {
   readonly #bridge: NativeExecutionBridge;
@@ -441,8 +465,8 @@ export class ExecutionIsolationService {
         executionId: handle.executionId,
         exitCode: completion.exitCode,
         reason: completion.reason,
-        stdout: Buffer.concat(output.stdout).toString("utf8"),
-        stderr: Buffer.concat(output.stderr).toString("utf8"),
+        stdout: retainedStream(output, "stdout").toString("utf8"),
+        stderr: retainedStream(output, "stderr").toString("utf8"),
         outputTruncated: output.truncated,
       });
     } catch (error) {
@@ -655,12 +679,29 @@ export class ExecutionIsolationService {
 
   readOutput(lease: SessionLease, owner: ResourceOwner): SessionOutput {
     const session = this.#requireSession(lease, owner, true);
+    const stdoutBytes = retainedStream(session.output, "stdout");
+    const stderrBytes = retainedStream(session.output, "stderr");
     return Object.freeze({
-      stdout: Buffer.concat(session.output.stdout).toString("utf8"),
-      stderr: Buffer.concat(session.output.stderr).toString("utf8"),
+      stdout: stdoutBytes.toString("utf8"),
+      stderr: stderrBytes.toString("utf8"),
+      stdoutBytes,
+      stderrBytes,
+      stdoutStart: session.output.stdoutStart,
+      stdoutEnd: session.output.stdoutEnd,
+      stderrStart: session.output.stderrStart,
+      stderrEnd: session.output.stderrEnd,
       outputTruncated: session.output.truncated,
       running: session.state === "running",
     });
+  }
+
+  async resize(lease: SessionLease, owner: ResourceOwner, cols: number, rows: number): Promise<void> {
+    const session = this.#requireSession(lease, owner);
+    if (session.state !== "running") deny("EXEC_SESSION_STALE", "Execution session is stale");
+    if (!Number.isSafeInteger(cols) || cols < 2 || cols > 500 || !Number.isSafeInteger(rows) || rows < 1 || rows > 300) {
+      deny("EXEC_REQUEST_INVALID", "PTY size is invalid");
+    }
+    await session.native.resize(Object.freeze({ cols, rows }));
   }
 
   async terminate(lease: SessionLease, owner: ResourceOwner, reason = "requested"): Promise<void> {
@@ -861,13 +902,24 @@ export class ExecutionIsolationService {
       if (!(frame.bytes instanceof Uint8Array)) return;
       const bytes = Buffer.from(frame.bytes);
       output.aggregateBytes += bytes.length;
-      const remaining = Math.max(0, record.limits.retainedOutputBytes - output.retainedBytes);
-      if (remaining > 0) {
-        const retained = bytes.subarray(0, remaining);
-        output[frame.stream].push(retained);
-        output.retainedBytes += retained.length;
+      const previous = output.frames.at(-1);
+      if (previous?.stream === frame.stream && previous.bytes.length + bytes.length <= 64 * 1024) {
+        previous.bytes = Buffer.concat([previous.bytes, bytes]);
+      } else output.frames.push({ stream: frame.stream, bytes });
+      output.retainedBytes += bytes.length;
+      if (frame.stream === "stdout") output.stdoutEnd += bytes.length;
+      else output.stderrEnd += bytes.length;
+      while (output.retainedBytes > record.limits.retainedOutputBytes && output.frames.length > 0) {
+        const oldest = output.frames[0];
+        const excess = output.retainedBytes - record.limits.retainedOutputBytes;
+        const removed = Math.min(excess, oldest.bytes.length);
+        if (oldest.stream === "stdout") output.stdoutStart += removed;
+        else output.stderrStart += removed;
+        output.retainedBytes -= removed;
+        output.truncated = true;
+        if (removed === oldest.bytes.length) output.frames.shift();
+        else oldest.bytes = oldest.bytes.subarray(removed);
       }
-      if (remaining < bytes.length) output.truncated = true;
       if (output.aggregateBytes > record.limits.aggregateOutputBytes) {
         output.truncated = true;
         if (handle) void handle.terminate("output-limit").catch(() => undefined);
