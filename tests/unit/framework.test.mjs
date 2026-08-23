@@ -354,6 +354,23 @@ test("TAP summary and process failure precedence are deterministic", () => {
   assert.equal(classifyProcessResult({ code: 0, signal: null, timedOut: true }), "timed-out");
 });
 
+test("integration timeout budgets preserve a bounded cleanup envelope", async () => {
+  const [layerRunner, unifiedRunner] = await Promise.all([
+    readFile(path.join(projectRoot, "scripts", "run-test-layer.mjs"), "utf8"),
+    readFile(path.join(projectRoot, "scripts", "run-tests.mjs"), "utf8"),
+  ]);
+  const inner = /result\.layer === "integration" \? ([0-9_]+) : 300_000/u.exec(layerRunner);
+  const outer = /layer === "integration" \? ([0-9_]+) : 360_000/u.exec(unifiedRunner);
+  assert(inner && outer, "integration timeout bindings are missing");
+  const innerMs = Number(inner[1].replaceAll("_", ""));
+  const outerMs = Number(outer[1].replaceAll("_", ""));
+  assert.equal(innerMs, 720_000);
+  assert.equal(outerMs, 780_000);
+  assert(outerMs > innerMs);
+  assert(outerMs - innerMs >= 60_000);
+  assert(outerMs <= 900_000);
+});
+
 test("packaged crash and observation failures are fail-closed", () => {
   assert.equal(classifyInstallerResult({ code: 0xC0000005, signal: null }), "windows-crash");
   assert.equal(classifyInstallerResult({ code: null, signal: "SIGTERM" }), "signal-crash");

@@ -506,7 +506,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "4a2c72253c39e78b4c629101d34a4094a4c74147f643584edc0cdc5609dc5ea8",
+      "sha256": "8a8e36e3e418535f7c757b04690bda8fc704aff4195e67702119ec970c2aecff",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -684,7 +684,7 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "c77536f1bef698911c23e1d19d292ca5a0f3c3d7de6a9167ebed3163bff062c8",
+      "sha256": "4e32ab44550a72d0583ba21258c80a28ee5d5cb87c70b8b63ace9f052ec16726",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -697,7 +697,7 @@
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
-      "sha256": "a033ecde99fb788e99897878e2b9fc32a5bec0057352841a584b8aeae0418527",
+      "sha256": "b85e156c4e1e778a9130e605079361af207acfda675ddc98be90e366ca9aaea2",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -885,7 +885,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "5db24df4188e4e8ab209bb144297dc602fe88aea94d227853e8f7a761197a1d7",
+      "sha256": "728d18ed1d05b18212f4d8614d28f53494d8c2c76f0d8b1277aeb7ba53fe280f",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -898,6 +898,7 @@
         "coverage scope is explicit and changed runtime files are governed",
         "additional coverage tests require exact resolved task ownership and manifest identity",
         "TAP summary and process failure precedence are deterministic",
+        "integration timeout budgets preserve a bounded cleanup envelope",
         "packaged crash and observation failures are fail-closed",
         "packaged uninstall uses a leased external worker copy with bounded timeout cleanup and retry",
         "process timeout records successful child-tree reclamation",
@@ -2465,7 +2466,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "4a2c72253c39e78b4c629101d34a4094a4c74147f643584edc0cdc5609dc5ea8",
+      "sha256": "8a8e36e3e418535f7c757b04690bda8fc704aff4195e67702119ec970c2aecff",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2643,7 +2644,7 @@
     },
     {
       "exactCasePath": "scripts/run-test-layer.mjs",
-      "sha256": "c77536f1bef698911c23e1d19d292ca5a0f3c3d7de6a9167ebed3163bff062c8",
+      "sha256": "4e32ab44550a72d0583ba21258c80a28ee5d5cb87c70b8b63ace9f052ec16726",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2656,7 +2657,7 @@
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
-      "sha256": "a033ecde99fb788e99897878e2b9fc32a5bec0057352841a584b8aeae0418527",
+      "sha256": "b85e156c4e1e778a9130e605079361af207acfda675ddc98be90e366ca9aaea2",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2844,7 +2845,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "5db24df4188e4e8ab209bb144297dc602fe88aea94d227853e8f7a761197a1d7",
+      "sha256": "728d18ed1d05b18212f4d8614d28f53494d8c2c76f0d8b1277aeb7ba53fe280f",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -2857,6 +2858,7 @@
         "coverage scope is explicit and changed runtime files are governed",
         "additional coverage tests require exact resolved task ownership and manifest identity",
         "TAP summary and process failure precedence are deterministic",
+        "integration timeout budgets preserve a bounded cleanup envelope",
         "packaged crash and observation failures are fail-closed",
         "packaged uninstall uses a leased external worker copy with bounded timeout cleanup and retry",
         "process timeout records successful child-tree reclamation",
@@ -3791,5 +3793,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "672cb8a90f122afbf984c315973ed4d7009194f971ca3cfaa3c4a429437c98ea"
+  "canonicalPayloadSha256": "eee047ac1a6d1c5792d72c06ae3953376e4fe0bf0cdb21ea8d44d957ed1216fe"
 }

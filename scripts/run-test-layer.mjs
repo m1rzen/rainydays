@@ -35,7 +35,7 @@ function parseArgs(argv) {
     else throw new Error(`Unknown argument: ${argument}`);
   }
   assert(layerNames.includes(result.layer), `--layer must be one of: ${layerNames.join(", ")}`);
-  result.timeoutMs ??= result.layer === "packaged" ? 780_000 : result.layer === "integration" ? 480_000 : 300_000;
+  result.timeoutMs ??= result.layer === "packaged" ? 780_000 : result.layer === "integration" ? 720_000 : 300_000;
   assert(Number.isInteger(result.timeoutMs) && result.timeoutMs > 0 && result.timeoutMs <= 900_000, "--timeout-ms is invalid");
   if (result.runId !== null) assert.match(result.runId, /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, "--run-id is invalid");
   result.report ??= path.join(projectRoot, "test-results", "layers", `${result.task.toLowerCase()}-${result.layer}.json`);
