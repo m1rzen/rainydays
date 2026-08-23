@@ -5,7 +5,7 @@
   "scannerSha256": "d81dfe30bf6f7df1ce3221861923b011c495fb6be0af1efb026f8203f69d8cb1",
   "crosscheckSha256": "a2c62c23669d2924472d4c80761122a5c4446d12e6a27f8595221f55a0290093",
   "policySha256": "71ed4ee375bac800e28b5fe082874d34b1545408c42adaa202d03a9cd72e7b64",
-  "sourceSetSha256": "871106365d783651410dbcc7b74356e6091a92e0830a64ddaa6852da30486ccc",
+  "sourceSetSha256": "1e5e149bb8ea049481d46bf3a6c465a3d68a60392f86223630bbca76aa6a00dd",
   "files": [
     {
       "sourcePath": "electron/ipc-contract.cjs",
@@ -1269,8 +1269,8 @@
     },
     {
       "sourcePath": "tests/integration/evt02-cron-flow.test.mjs",
-      "bytes": 17437,
-      "sha256": "4725a46787ff575e426c30f9965aeab689a14cd3ffc8d72d63484c5a5f81da96",
+      "bytes": 17436,
+      "sha256": "711c416ed1efecec13ce3c4430b44a1b40458c150185ea5520b2f297eac3b4f6",
       "executionClass": "build-test"
     },
     {
@@ -8595,5 +8595,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "d63b0b3d8a9fa6d46169ee50344fe1b4b980b2ee1967386768fad4cbdc85e858"
+  "canonicalPayloadSha256": "6d4db46041c1dfe816b4a4df7fa936af9cd5223eaecdbdfcd508ea4d4d169995"
 }
