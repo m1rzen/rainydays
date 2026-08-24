@@ -268,7 +268,7 @@
       "family": "network",
       "api": "fetch",
       "container": "openFileDirectory",
-      "occurrenceId": "exec-b9ba0626f065e58d2ee74386"
+      "occurrenceId": "exec-3008619bde9a5dff14ab5f67"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -296,7 +296,14 @@
       "family": "network",
       "api": "fetch",
       "container": "previewFile",
-      "occurrenceId": "exec-9e3a73c1968ae1021c39aad0"
+      "occurrenceId": "exec-2628fdeb105e0239717f5efd"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "saveSelectedFile",
+      "occurrenceId": "exec-f6a706f99a5edd10f4756352"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -855,5 +862,5 @@
       "occurrenceId": "exec-c52f91fdd68fcd90774471b7"
     }
   ],
-  "canonicalPayloadSha256": "499ae0d7daa0f2fd390c9fc42d150a9451d1ad95e9b8bb1109dd7cb83c8a6694"
+  "canonicalPayloadSha256": "5ec14955069d312d048f3b49ebb7903d68b657a9ab1b2bc89df7ca63bc579506"
 }

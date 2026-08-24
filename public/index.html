@@ -116,12 +116,17 @@
         <div class="file-preview-header">
           <div id="file-preview-meta">选择文件以预览</div>
           <div id="file-preview-actions" hidden>
+            <button id="file-source-mode" class="file-viewer-btn" hidden data-action="show-file-source">源码</button>
+            <button id="file-preview-mode" class="file-viewer-btn" hidden data-action="show-file-preview">预览</button>
+            <button id="file-edit" class="file-viewer-btn" hidden data-action="edit-file">编辑</button>
+            <button id="file-save" class="file-viewer-btn file-save-btn" hidden disabled data-action="save-file">保存</button>
+            <button id="file-reload" class="file-viewer-btn" hidden data-action="reload-file">从磁盘重载</button>
             <button class="file-viewer-btn" data-action="copy-file-path">复制路径</button>
             <button class="file-viewer-btn" data-action="reveal-file">资源管理器</button>
             <button class="file-viewer-btn" data-action="use-file">交给 Agent</button>
           </div>
         </div>
-        <div id="file-preview-content"><div class="file-preview-empty">支持文本、代码、Markdown、图片、PDF、DOCX 和 XLSX</div></div>
+        <div id="file-preview-content"><div class="file-preview-empty">支持 Code、Markdown、HTML、PDF、Office、Image、Audio 和 Video</div></div>
         <div id="file-preview-pager" hidden><button id="file-preview-prev" class="file-viewer-btn" data-action="previous-file-page">上一页</button><span id="file-preview-page"></span><button id="file-preview-next" class="file-viewer-btn" data-action="next-file-page">下一页</button></div>
       </section>
     </div>

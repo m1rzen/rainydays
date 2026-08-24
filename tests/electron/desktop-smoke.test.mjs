@@ -795,6 +795,110 @@ test("DS-05 real Electron persists clipboard and drop File uploads across reload
   assert.equal(await pathExists(fixture), false);
 });
 
+test("DS-06 real Electron edits, sandboxes, refreshes and streams File Tabs offline", { timeout: 90_000 }, async (context) => {
+  const fixture = await makeTempDir("mini-lux-ds06-electron-");
+  const userData = path.join(fixture, "user-data");
+  const workspace = path.join(userData, "workspace");
+  const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
+  let instance;
+  let client;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal);
+    await Promise.all([
+      writeFile(path.join(workspace, "preview.html"), "<h1>DS-06</h1><script>parent.__ds06HtmlPwned=true</script>"),
+      writeFile(path.join(workspace, "note.md"), "# Initial\n"),
+      writeFile(path.join(workspace, "sample.mp3"), Buffer.from("ID3-DS06-ELECTRON-AUDIO")),
+      writeFile(path.join(workspace, "large.txt"), `${"0123456789abcdef".repeat(70_000)}\nlast`),
+    ]);
+    client = await connectCdp(cdpPort);
+    await probeIdentity(client, buildInfo, httpPort);
+    const sessionId = await client.evaluate("newChat().then(()=>currentSessionId)");
+    assert.equal(typeof sessionId, "string");
+    await client.evaluate("toggleFileViewer(true)");
+    await client.evaluate("previewFile('preview.html',1,'','workspace')");
+    const htmlProbe = await client.evaluate(`(()=>{
+      const frame=document.querySelector('#file-preview-content iframe');
+      return {
+        kind:selectedFilePreview?.kind,
+        sandbox:frame?.getAttribute('sandbox'),
+        csp:frame?.srcdoc?.includes("default-src 'none'"),
+        pwned:Boolean(window.__ds06HtmlPwned),
+        remoteAssets:[...document.querySelectorAll('script[src],link[href]')].some(node=>new URL(node.src||node.href,location.href).origin!==location.origin),
+      };
+    })()`);
+    assert.deepEqual(htmlProbe, { kind: "html", sandbox: "", csp: true, pwned: false, remoteAssets: false });
+    await client.evaluate("showFileSource()");
+    assert.match(await client.evaluate("document.querySelector('#file-preview-content code')?.textContent||''"), /parent\.__ds06HtmlPwned/u);
+    await client.evaluate("previewFile('note.md',1,'','workspace')");
+    await client.evaluate(`(()=>{
+      editSelectedFile();
+      const editor=document.querySelector('.file-editor');
+      editor.value='# Saved in Electron\\n';
+      editor.dispatchEvent(new Event('input',{bubbles:true}));
+      window.__ds06SaveError=null;
+      void saveSelectedFile().catch(error=>{window.__ds06SaveError=String(error)});
+      return true;
+    })()`);
+    await waitFor(async () => client.evaluate("fileSaving===false && fileEditing===false && fileEditDirty===false"), {
+      timeoutMs: 20_000, label: "DS-06 renderer save settlement",
+    });
+    const saved = await client.evaluate("({editing:fileEditing,dirty:fileEditDirty,text:selectedFilePreview?.fullText,error:window.__ds06SaveError})");
+    assert.deepEqual(saved, { editing: false, dirty: false, text: "# Saved in Electron\n", error: null });
+    assert.equal(await readFile(path.join(workspace, "note.md"), "utf8"), "# Saved in Electron\n");
+    await client.evaluate(`(()=>{
+      editSelectedFile();
+      const editor=document.querySelector('.file-editor');
+      editor.value='# Unsaved editor\\n';
+      editor.dispatchEvent(new Event('input',{bubbles:true}));
+      return true;
+    })()`);
+    await client.evaluate("previewFile('sample.mp3',1,'','workspace')");
+    const blockedNavigation = await client.evaluate(`({
+      path:selectedFilePath,
+      editing:fileEditing,
+      dirty:fileEditDirty,
+      editor:Boolean(document.querySelector('.file-editor')),
+    })`);
+    assert.deepEqual(blockedNavigation, { path: "note.md", editing: true, dirty: true, editor: true });
+    await writeFile(path.join(workspace, "note.md"), "# External change\n");
+    await waitFor(async () => client.evaluate("fileEditConflict===true && document.getElementById('file-save').disabled===true"), {
+      timeoutMs: 10_000, label: "DS-06 renderer conflict",
+    });
+    await client.evaluate("reloadSelectedFile()");
+    await waitFor(async () => client.evaluate("selectedFilePreview?.fullText==='# External change\\n' && fileEditConflict===false"), {
+      timeoutMs: 10_000, label: "DS-06 renderer reload",
+    });
+    await client.evaluate("previewFile('sample.mp3',1,'','workspace')");
+    const media = await client.evaluate(`(()=>{
+      const audio=document.querySelector('#file-preview-content audio');
+      return {kind:selectedFilePreview?.kind,controls:audio?.controls,origin:audio?new URL(audio.src).origin:null,session:new URL(audio.src).searchParams.get('sessionId')};
+    })()`);
+    assert.deepEqual(media, { kind: "audio", controls: true, origin: `http://127.0.0.1:${httpPort}`, session: sessionId });
+    await client.evaluate("previewFile('large.txt',1,'','workspace')");
+    const large = await client.evaluate(`({
+      editable:selectedFilePreview?.editable,
+      fullText:selectedFilePreview?.fullText,
+      renderedLines:(document.querySelector('#file-preview-content code')?.textContent||'').split('\\n').length,
+      pager:!document.getElementById('file-preview-pager').hidden,
+      editHidden:document.getElementById('file-edit').hidden,
+    })`);
+    assert.deepEqual({ editable: large.editable, fullText: large.fullText, pager: large.pager, editHidden: large.editHidden }, {
+      editable: false, fullText: null, pager: true, editHidden: true,
+    });
+    assert(large.renderedLines >= 1 && large.renderedLines <= 8, `large preview rendered ${large.renderedLines} virtual lines`);
+    await client.evaluate("closeFileEvents(); true");
+
+    client.close(); client = null;
+    await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    client?.close();
+    if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture);
+  }
+  assert.equal(await pathExists(fixture), false);
+});
+
 test("SEC-03 Electron stage emits all 48 authenticated projection receipts", { timeout: 120_000 }, async () => {
   const result = await emitSec03ProjectionReceipts({
     layer: "electron",

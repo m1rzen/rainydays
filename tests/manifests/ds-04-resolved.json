@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "92650ff9785153db33be2477d8c86d1db1a9ed1fb7f99001ccfacb8516a7dd3c",
+      "sha256": "7315e2bfead2abcda716a99a4b81e8344a90fbf15ef3f6e74a478dd95a4cb8e1",
       "owner": "DS-04"
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "7dcbf110c4bd2d595551114c077e61506446e74b570eaa2119c3e14c1c7db212",
+      "sha256": "985ee67eb79605e5b598dcdca527c2acacd40d3af65da9688d821dd57222f513",
       "owner": "DS-04"
     },
     {
@@ -73,22 +73,22 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "0778191fa63292e89a01a7f634e1952f5eda6948482e413e7515904430bf7685",
+      "sha256": "e0b886252c276633ab9ed78e175e6eafa71bb10cdbce00418bd5d4858ed1c166",
       "owner": "DS-04"
     },
     {
       "exactCasePath": "public/index.html",
-      "sha256": "389dea3588f28e4ee4523b25ebf477fd8fca8c316599ed3fa23c92cc87010562",
+      "sha256": "24cd34d034e9780823864eb2cc059ef5ef90427b76d65b457690403271be647d",
       "owner": "DS-04"
     },
     {
       "exactCasePath": "public/renderer.css",
-      "sha256": "7395ce0b4c64d021df3be25ce4660c35f5573d2b5a7555cab8f86102fcc499df",
+      "sha256": "d7b1b175fe630b3fe987825e1419d59f9bc6a0de512ececa7af866d67035cfbf",
       "owner": "DS-04"
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "ed8a012e4dfcbaca9fce17807d3624d71ccb16239ce59fa1098698409e315c9b",
+      "sha256": "265b1197b431d4382b6b16446a0e4d8d9e0bee470c689ea6aa0a31e9f34926a9",
       "owner": "DS-04"
     },
     {
@@ -128,7 +128,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "56584e79f8830bfb4f1ca55f4d850a476741fba1a6715fb467ec38d6706ebaee",
+      "sha256": "e9f57e4857fd936001aa016c26a558112ce7a5201cf8ba845387f33c957587c2",
       "owner": "DS-04"
     },
     {
@@ -138,7 +138,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "aefb937e923ade678dbf824395a97f185c6f275d7890f4ff2deeac56ec512e54",
+      "sha256": "b78b69d16c832f80085664a591881ebe48be31640c9a2dd7371e470f68572cc1",
       "owner": "DS-04"
     },
     {
@@ -211,18 +211,18 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "bc71b8cdfedb27c8ccd388a47c48e6d4f7ef6145ea35261faaa466407533d44f",
+      "sha256": "0a47dcdc6c71a499e6a1614d154d9ecdb1a37cf3e56143b79befbab31c9088f1",
       "kind": "test",
       "layer": "electron",
       "owner": "DS-04"
     },
     {
       "exactCasePath": "tests/packaged/ds02-win-unpacked-ipc.test.mjs",
-      "sha256": "d3a8f7a0c704ad27a4d5c7f74e2af8089a9c155815d1db8bd12ded363bf49549",
+      "sha256": "ff28ba8a4dda11d0570b04fbe14395e5e1e34301c55bb3f1b89231925eb20314",
       "kind": "test",
       "layer": "packaged",
       "owner": "DS-04"
     }
   ],
-  "canonicalPayloadSha256": "093f9b981b93f90cf20e34d9ca6ecb24e2e821cc812c6f7774a5e89a9e401cfb"
+  "canonicalPayloadSha256": "1b674752511d751eab8988ef51ee150da3b74f9b3d3e0aa08f98272c68a4a052"
 }

@@ -13,7 +13,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "92650ff9785153db33be2477d8c86d1db1a9ed1fb7f99001ccfacb8516a7dd3c",
+      "sha256": "7315e2bfead2abcda716a99a4b81e8344a90fbf15ef3f6e74a478dd95a4cb8e1",
       "owner": "RT-09"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "ed8a012e4dfcbaca9fce17807d3624d71ccb16239ce59fa1098698409e315c9b",
+      "sha256": "265b1197b431d4382b6b16446a0e4d8d9e0bee470c689ea6aa0a31e9f34926a9",
       "owner": "RT-09"
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "56584e79f8830bfb4f1ca55f4d850a476741fba1a6715fb467ec38d6706ebaee",
+      "sha256": "e9f57e4857fd936001aa016c26a558112ce7a5201cf8ba845387f33c957587c2",
       "owner": "RT-09"
     },
     {
@@ -72,5 +72,5 @@
       "owner": "RT-09"
     }
   ],
-  "canonicalPayloadSha256": "4382af12495e968bedc5ffed9f8c981e623ec2ded8b1916f5afefcf518e0e580"
+  "canonicalPayloadSha256": "7a2891667f0c7a8b0dc426c5fe3166ab8f756d92a649c49062d892c4e7cf8c55"
 }

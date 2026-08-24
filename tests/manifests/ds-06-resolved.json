@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-06",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/ds-06.json",
+    "sha256": "9fb2d0164f1fe5166355cc9f081b3f39e0ec2bfecd143574daa3198153f15db8"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/file-viewer.js",
+      "sha256": "221a5011d3d6ecce0c7b6582bb27d33a9cebc4178b28e272a48f1ca299d16b3c",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "7315e2bfead2abcda716a99a4b81e8344a90fbf15ef3f6e74a478dd95a4cb8e1",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "dist/tool-policies.js",
+      "sha256": "985ee67eb79605e5b598dcdca527c2acacd40d3af65da9688d821dd57222f513",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "package.json",
+      "sha256": "e0b886252c276633ab9ed78e175e6eafa71bb10cdbce00418bd5d4858ed1c166",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "public/index.html",
+      "sha256": "24cd34d034e9780823864eb2cc059ef5ef90427b76d65b457690403271be647d",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "public/renderer.css",
+      "sha256": "d7b1b175fe630b3fe987825e1419d59f9bc6a0de512ececa7af866d67035cfbf",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "public/renderer.js",
+      "sha256": "265b1197b431d4382b6b16446a0e4d8d9e0bee470c689ea6aa0a31e9f34926a9",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "scripts/ds06-governance.mjs",
+      "sha256": "20ec01e4da63c80dd7620127f6689c0b1a2961b9b7e53c0bca72bc2fda6557bf",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "scripts/generate-ds06-resolved-manifest.mjs",
+      "sha256": "5e3721586790bb0f0db3d3cb8f5e68288713043003d853aab43170ea2c5c2879",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "scripts/prepare-electron-app.mjs",
+      "sha256": "703e21a0cc30be38f4ca5ca6c13e3af923b45adcfd3f1eb0bde6196cc8d0c712",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "src/file-viewer.ts",
+      "sha256": "a9e5385ccf53aee18654fc9870afed1390b1601a6682d9d4dad2067fd4d67fc7",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "e9f57e4857fd936001aa016c26a558112ce7a5201cf8ba845387f33c957587c2",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "b78b69d16c832f80085664a591881ebe48be31640c9a2dd7371e470f68572cc1",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "4e5b9d9daca4db3f7988596a08813d7b3d939072d487307e092d0541a1e4ba30",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "6b3781a969a120895683a3abc67d454a2bb113902e72e335c2007ed7c2e7f53e",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "48cebab8be4826174f9b4dc1fa8a9e3a9d3a65ab0535f27e1b94b4122e4740aa",
+      "owner": "DS-06"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/ds06-governance.test.mjs",
+      "sha256": "d3a8e654df5a4ccf0f7838059d222fda530538b573ad2d198e8bebc3cd55198c",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
+      "sha256": "78cf4c073e8e2a4d40fa6acd5b02efb96c4745af4aa6e00f428eb7f5a99ad523",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "tests/unit/ds06-renderer-contract.test.mjs",
+      "sha256": "1f936b9e140d29f2d3f1a97892ec26c684cb7df1d973da278657e5bb5023f593",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "48cebab8be4826174f9b4dc1fa8a9e3a9d3a65ab0535f27e1b94b4122e4740aa",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "tests/integration/ds06-file-tab.test.mjs",
+      "sha256": "fe3e78cd7c06326d7197806c01de2e104df12e7a30edcc02f39d46b9b7f89d10",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "tests/integration/ds06-file-api.test.mjs",
+      "sha256": "2550957a57210fa1539bb5f72f6e761dccb210329a7fae3bf18a3ac5f63fc8a4",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "tests/integration/file-viewer-direct.test.mjs",
+      "sha256": "abc67f2463aca0af1ce8a0c4001e031203273bbddf043a44f06c8b02b6a8424e",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
+      "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-06"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "0a47dcdc6c71a499e6a1614d154d9ecdb1a37cf3e56143b79befbab31c9088f1",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "DS-06"
+    }
+  ],
+  "canonicalPayloadSha256": "3494fe42ff84cdb5f7d2d640eadb25fe1debfa05afcefd7fc0820c76e221b003"
+}

@@ -94,7 +94,7 @@ import type { CronJobRow } from "./db.js";
 import type { PersonaDefinition } from "./types.js";
 import type { TerminalOwner, TerminalShell } from "./terminal.js";
 import { terminalFacade } from "./terminal-facade.js";
-import { fileViewerService, type FileRootSnapshotInput } from "./file-viewer.js";
+import { FileEditConflictError, fileViewerService, type FileRootSnapshotInput } from "./file-viewer.js";
 import { applyWorkbenchOperation, encodeWorkbenchLayout, parseWorkbenchLayout } from "./workbench-layout.js";
 import {
   AttachmentStoreError,
@@ -526,7 +526,8 @@ async function runDirectOperation<T>(
     authority: RuntimeAuthority,
     context: CapabilityContext
   ) => T | Promise<T>,
-  targetRuntime?: AppSessionRuntime
+  targetRuntime?: AppSessionRuntime,
+  auditResult: (result: T) => unknown = result => result
 ): Promise<T> {
   ensureRuntimeAccepting();
   if (runtimeMutationReservations > 0) throw new Error("Session runtime 正在变更");
@@ -554,7 +555,7 @@ async function runDirectOperation<T>(
     await audit.execution(true);
     const owner = capabilityBroker.getResourceOwner(context);
     const result = await action(authorizedArgs, owner, authority, context);
-    await audit.result(result, Date.now() - startedAt, "success", null);
+    await audit.result(auditResult(result), Date.now() - startedAt, "success", null);
     return result;
   } catch (error) {
     if (error instanceof SecurityAuditDeliveryError) throw error;
@@ -1610,11 +1611,121 @@ app.get("/api/files/preview", async (req, res) => {
     if (!args.path) throw new Error("缺少文件路径");
     if (!Number.isFinite(args.lineOffset) || !Number.isFinite(args.lineLimit)) throw new Error("lineOffset 和 lineLimit 必须是数字");
     const result = await runDirectOperation("file:preview", args, (authorized, owner, authority, context) =>
-      fileViewerService.preview(authority, directPathAudit(context), owner, String(authorized.root), String(authorized.path), Number(authorized.lineOffset), Number(authorized.lineLimit))
-    );
+      fileViewerService.preview(authority, directPathAudit(context), owner, String(authorized.root), String(authorized.path), Number(authorized.lineOffset), Number(authorized.lineLimit)),
+    undefined,
+    value => {
+      const preview = value as Record<string, unknown>;
+      return Object.freeze({
+        kind: preview.kind,
+        size: preview.size,
+        modifiedAt: preview.modifiedAt,
+        revision: preview.revision ?? null,
+        watchRevision: preview.watchRevision ?? null,
+        editable: preview.editable ?? false,
+        lineOffset: preview.lineOffset ?? null,
+        lineEnd: preview.lineEnd ?? null,
+        totalLines: preview.totalLines ?? null,
+        hasMore: preview.hasMore ?? false,
+      });
+    });
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+app.put("/api/files/content", async (req, res) => {
+  try {
+    const body = req.body;
+    if (!body || typeof body !== "object" || Array.isArray(body)
+      || Object.keys(body).sort().join(",") !== "encoding,expectedRevision,path,root,text") {
+      throw new TypeError("文件保存请求字段无效");
+    }
+    if (typeof body.text !== "string") throw new TypeError("文件内容必须是字符串");
+    const args = {
+      root: String(body.root || "workspace"),
+      path: String(body.path || ""),
+      expectedRevision: String(body.expectedRevision || ""),
+      encoding: String(body.encoding || ""),
+      contentBytes: Buffer.byteLength(body.text, "utf8"),
+      contentSha256: createHash("sha256").update(body.text, "utf8").digest("hex"),
+    };
+    if (!args.path) throw new TypeError("缺少文件路径");
+    const text = body.text;
+    const result = await runDirectOperation("file:save", args, (authorized, owner, authority, context) =>
+      fileViewerService.saveText(
+        authority,
+        directPathAudit(context),
+        owner,
+        String(authorized.root),
+        String(authorized.path),
+        String(authorized.expectedRevision),
+        text,
+        String(authorized.encoding) as "utf-8" | "gbk"
+      )
+    );
+    res.json({ success: true, ...result });
+  } catch (error) {
+    if (error instanceof FileEditConflictError) {
+      res.status(409).json({ code: "FILE_EDIT_CONFLICT", error: error.message, currentRevision: error.currentRevision });
+      return;
+    }
+    res.status(error instanceof TypeError ? 400 : 400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+app.get("/api/files/events", async (req, res) => {
+  try {
+    const args = { root: String(req.query.root || "workspace"), path: String(req.query.path || "") };
+    if (!args.path) throw new TypeError("缺少文件路径");
+    await runDirectOperation("file:watch", args, async (authorized, owner, authority, context) => {
+      const ownerSessionId = context.sessionId;
+      let ready = false;
+      let closed = false;
+      const pendingEvents: unknown[] = [];
+      let heartbeat: ReturnType<typeof setInterval> | null = null;
+      let closeTracked: () => void = () => undefined;
+      const watch = await fileViewerService.watch(
+        authority,
+        directPathAudit(context),
+        owner,
+        String(authorized.root),
+        String(authorized.path),
+        event => {
+          if (isShuttingDown || runtimeRegistry?.get(ownerSessionId)?.authority !== authority) {
+            closeTracked();
+            return;
+          }
+          if (ready) res.write(`data: ${JSON.stringify(event)}\n\n`);
+          else pendingEvents.push(event);
+        }
+      );
+      const closeBase = () => {
+        if (closed) return;
+        closed = true;
+        if (heartbeat) clearInterval(heartbeat);
+        void watch.close();
+        if (!res.writableEnded) res.end();
+      };
+      closeTracked = registerRuntimeSubscription(authority, closeBase);
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      });
+      res.write(`data: ${JSON.stringify({ type: "snapshot", watchRevision: watch.revision })}\n\n`);
+      ready = true;
+      for (const event of pendingEvents) res.write(`data: ${JSON.stringify(event)}\n\n`);
+      heartbeat = setInterval(() => {
+        if (isShuttingDown || runtimeRegistry?.get(ownerSessionId)?.authority !== authority) closeTracked();
+        else res.write(": heartbeat\n\n");
+      }, 15000);
+      heartbeat.unref?.();
+      req.once("close", closeTracked);
+    });
+  } catch (error) {
+    if (!res.headersSent) res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 

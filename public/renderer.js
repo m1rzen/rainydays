@@ -499,6 +499,11 @@
       if (nextFileOwner !== activeFileOwnerSessionId) {
         fileDirectoryGeneration += 1;
         filePreviewGeneration += 1;
+        if (fileEvents) { fileEvents.close(); fileEvents = null; }
+        selectedFilePreview = null;
+        fileEditing = false;
+        fileEditDirty = false;
+        fileEditConflict = false;
         fileRoots = [];
       }
       activeFileOwnerSessionId = nextFileOwner;
@@ -567,6 +572,8 @@
       return workbenchSaveQueue;
     }
     async function ensureWorkbenchTab(tab, paneId = workbenchLayout?.focusedPaneId) {
+      const targetPane = findWorkbenchPane(paneId) || focusedWorkbenchPane();
+      if (activeWorkbenchTab(targetPane)?.kind === "file" && tab.kind !== "file" && blockDirtyFileNavigation()) return;
       const existing = workbenchPanes().flatMap(pane => pane.tabs.map(candidate => ({ pane, candidate })))
         .find(entry => workbenchResourceMatches(entry.candidate, tab));
       if (existing) {
@@ -580,12 +587,15 @@
       const pane = findWorkbenchPane(paneId);
       const located = findWorkbenchTab(tabId);
       if (!pane || !located || located.pane !== pane) return;
+      const current = activeWorkbenchTab(pane);
+      if (current?.kind === "file" && current.id !== tabId && blockDirtyFileNavigation()) return;
       await performWorkbenchOperation({ type: "activate", paneId, tabId });
       if (located.tab.kind === "session") await selectSession(located.tab.sessionId, true);
     }
     async function closeWorkbenchTab(tabId) {
       const located = findWorkbenchTab(tabId);
       if (!located) return;
+      if (located.tab.kind === "file" && blockDirtyFileNavigation()) return;
       await performWorkbenchOperation({ type: "close", tabId, fallback: workbenchFallbackTab() });
       closedWorkbenchTabs.push({ tab: { ...located.tab }, paneId: located.pane.id, index: located.index });
       if (closedWorkbenchTabs.length > 20) closedWorkbenchTabs.shift();
@@ -894,6 +904,14 @@
     const previewPageSize = 500;
     let fileDirectoryGeneration = 0;
     let filePreviewGeneration = 0;
+    let fileEvents = null;
+    let selectedFilePreview = null;
+    let fileDisplayMode = "preview";
+    let fileEditing = false;
+    let fileEditDirty = false;
+    let fileEditConflict = false;
+    let fileSaving = false;
+    let fileSaveToken = null;
 
     async function toggleFileViewer(forceOpen) {
       const active = activeWorkbenchTab();
@@ -937,7 +955,20 @@
       return fileRoots;
     }
 
+    function blockDirtyFileNavigation() {
+      if (!fileEditing || !fileEditDirty) return false;
+      const meta = document.getElementById("file-preview-meta");
+      meta.classList.add("file-conflict");
+      meta.textContent = `⚠️ 当前文件有未保存修改；请先保存或从磁盘重载。\n${selectedAbsoluteFilePath || selectedFilePath}`;
+      addSystemMessage("⚠️ 当前文件有未保存修改，已阻止导航。");
+      return true;
+    }
+
     async function changeFileRoot() {
+      if (blockDirtyFileNavigation()) {
+        document.getElementById("file-root-select").value = currentFileRoot;
+        return;
+      }
       currentFileRoot = document.getElementById("file-root-select").value;
       currentFilePath = "";
       selectedFilePath = "";
@@ -955,6 +986,7 @@
     }
 
     async function openFileDirectory(relativePath = "", append = false) {
+      if (!append && blockDirtyFileNavigation()) return;
       const generation = ++fileDirectoryGeneration;
       const requestedRoot = currentFileRoot;
       const offset = append ? fileOffset : 0;
@@ -1038,6 +1070,8 @@
       if ([".docx", ".doc"].includes(ext)) return "📘";
       if ([".xlsx", ".xls"].includes(ext)) return "📊";
       if ([".md", ".markdown"].includes(ext)) return "📝";
+      if ([".mp3", ".m4a", ".wav", ".ogg", ".oga"].includes(ext)) return "🎵";
+      if ([".mp4", ".m4v", ".webm", ".ogv", ".mov"].includes(ext)) return "🎬";
       return "📄";
     }
 
@@ -1056,16 +1090,137 @@
       clearFilePreview();
     }
 
+    function closeFileEvents() {
+      if (fileEvents) { fileEvents.close(); fileEvents = null; }
+    }
+
+    function resetFileEditState() {
+      selectedFilePreview = null;
+      fileDisplayMode = "preview";
+      fileEditing = false;
+      fileEditDirty = false;
+      fileEditConflict = false;
+      fileSaving = false;
+      fileSaveToken = null;
+      document.getElementById("file-preview-meta").classList.remove("file-conflict");
+    }
+
+    function updateFilePreviewActions() {
+      const data = selectedFilePreview;
+      const textKind = data && ["text", "markdown", "html"].includes(data.kind);
+      document.getElementById("file-source-mode").hidden = !textKind || fileEditing;
+      document.getElementById("file-preview-mode").hidden = !textKind || fileEditing || data.kind === "text";
+      document.getElementById("file-edit").hidden = !textKind || !data.editable || fileEditing;
+      document.getElementById("file-save").hidden = !fileEditing;
+      document.getElementById("file-save").disabled = !fileEditDirty || fileSaving || fileEditConflict;
+      document.getElementById("file-reload").hidden = !fileEditing && !fileEditConflict;
+    }
+
+    function fileContentUrl(data) {
+      const url = new URL(data.contentUrl, location.href);
+      url.searchParams.set("sessionId", activeFileOwnerSessionId || "");
+      return url.href;
+    }
+
+    function renderSelectedFilePreview() {
+      const data = selectedFilePreview;
+      if (!data) return;
+      const content = document.getElementById("file-preview-content");
+      content.innerHTML = "";
+      if (fileEditing) {
+        const editor = document.createElement("textarea");
+        editor.className = "file-editor";
+        editor.value = data.fullText || "";
+        editor.setAttribute("aria-label", `编辑 ${data.name}`);
+        editor.addEventListener("input", () => {
+          data.fullText = editor.value;
+          fileEditDirty = true;
+          updateFilePreviewActions();
+        });
+        content.appendChild(editor);
+        editor.focus();
+      } else if (data.kind === "image") {
+        const image = document.createElement("img"); image.src = fileContentUrl(data); image.alt = data.name; content.appendChild(image);
+      } else if (data.kind === "pdf") {
+        const frame = document.createElement("iframe"); frame.src = fileContentUrl(data); frame.title = data.name; content.appendChild(frame);
+      } else if (data.kind === "audio") {
+        const audio = document.createElement("audio"); audio.src = fileContentUrl(data); audio.controls = true; audio.preload = "metadata"; content.appendChild(audio);
+      } else if (data.kind === "video") {
+        const video = document.createElement("video"); video.src = fileContentUrl(data); video.controls = true; video.preload = "metadata"; content.appendChild(video);
+      } else if (data.kind === "html" && fileDisplayMode === "preview") {
+        const frame = document.createElement("iframe");
+        frame.setAttribute("sandbox", "");
+        frame.referrerPolicy = "no-referrer";
+        frame.title = data.name;
+        frame.srcdoc = `<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; media-src data:; style-src 'unsafe-inline'">${data.html || ""}`;
+        content.appendChild(frame);
+      } else if (data.kind === "markdown" && fileDisplayMode === "preview") {
+        const article = document.createElement("article"); article.className = "markdown-preview"; article.innerHTML = renderMarkdown(data.text || ""); content.appendChild(article);
+      } else if (["text", "markdown", "html", "office"].includes(data.kind)) {
+        const pre = document.createElement("pre");
+        const code = document.createElement("code"); code.className = `language-${data.language || "plaintext"}`; code.textContent = data.text || "";
+        pre.appendChild(code); content.appendChild(pre); setTimeout(highlightRenderedCode, 0);
+      } else {
+        const empty = document.createElement("div"); empty.className = "file-preview-empty"; empty.textContent = data.message || "暂不支持此文件类型"; content.appendChild(empty);
+      }
+      updateFilePreviewActions();
+    }
+
+    function markFileEditConflict(relativePath = selectedFilePath) {
+      fileEditConflict = true;
+      const meta = document.getElementById("file-preview-meta");
+      meta.classList.add("file-conflict");
+      meta.textContent = `⚠️ 文件已在外部修改，保存已锁定；请从磁盘重载。\n${selectedAbsoluteFilePath || relativePath}`;
+      updateFilePreviewActions();
+    }
+
+    function startFileEvents(generation, relativePath, rootId, ownerSessionId) {
+      closeFileEvents();
+      const query = new URLSearchParams({ root: rootId, path: relativePath, sessionId: ownerSessionId || "" });
+      const events = new EventSource(`/api/files/events?${query}`);
+      fileEvents = events;
+      events.onmessage = event => {
+        if (fileEvents !== events || generation !== filePreviewGeneration || selectedFilePath !== relativePath
+          || selectedFileRoot !== rootId || activeFileOwnerSessionId !== ownerSessionId) return;
+        let data;
+        try { data = JSON.parse(event.data); } catch { return; }
+        if (data.type === "snapshot") {
+          if (data.watchRevision === selectedFilePreview?.watchRevision) return;
+          if (fileEditDirty || fileEditing) markFileEditConflict(relativePath);
+          else previewFile(relativePath, filePreviewOffset, selectedAbsoluteFilePath, rootId).catch(error => showFileError(error.message));
+          return;
+        }
+        if (fileSaving) return;
+        if (fileEditDirty || fileEditing) {
+          markFileEditConflict(relativePath);
+          return;
+        }
+        if (data.type === "file_removed") {
+          closeFileEvents();
+          showFileError("文件已被外部删除");
+          return;
+        }
+        previewFile(relativePath, filePreviewOffset, selectedAbsoluteFilePath, rootId).catch(error => showFileError(error.message));
+      };
+    }
+
     function clearFilePreview() {
       filePreviewGeneration++;
+      closeFileEvents();
+      resetFileEditState();
       document.getElementById("file-preview-meta").textContent = "选择文件以预览";
       document.getElementById("file-preview-actions").hidden = true;
-      document.getElementById("file-preview-content").innerHTML = '<div class="file-preview-empty">支持文本、代码、Markdown、图片、PDF、DOCX 和 XLSX</div>';
+      document.getElementById("file-preview-content").innerHTML = '<div class="file-preview-empty">支持 Code、Markdown、HTML、PDF、Office、Image、Audio 和 Video</div>';
       document.getElementById("file-preview-pager").hidden = true;
     }
 
     async function previewFile(relativePath, lineOffset = 1, absolutePath = selectedAbsoluteFilePath, rootId = currentFileRoot) {
+      if ((selectedFilePath !== relativePath || selectedFileRoot !== rootId) && blockDirtyFileNavigation()) return;
       const generation = ++filePreviewGeneration;
+      const ownerSessionId = activeFileOwnerSessionId;
+      const sameFile = selectedFilePath === relativePath && selectedFileRoot === rootId;
+      closeFileEvents();
+      if (!sameFile) resetFileEditState();
       selectedFilePath = relativePath;
       selectedAbsoluteFilePath = absolutePath || "";
       selectedFileRoot = rootId;
@@ -1075,46 +1230,130 @@
       const meta = document.getElementById("file-preview-meta");
       const pager = document.getElementById("file-preview-pager");
       content.innerHTML = '<div class="file-preview-empty">正在加载预览...</div>';
+      meta.classList.remove("file-conflict");
       meta.textContent = selectedAbsoluteFilePath ? `${relativePath}\n${selectedAbsoluteFilePath}` : relativePath;
       document.getElementById("file-preview-actions").hidden = !selectedAbsoluteFilePath;
       pager.hidden = true;
 
       const query = new URLSearchParams({ root: rootId, path: relativePath, lineOffset: String(lineOffset), lineLimit: String(previewPageSize) });
-      const res = await fetch(`/api/files/preview?${query}`, { headers: sessionHeaders(activeFileOwnerSessionId) });
+      const res = await fetch(`/api/files/preview?${query}`, { headers: sessionHeaders(ownerSessionId) });
       const data = await res.json();
-      if (generation !== filePreviewGeneration || selectedFilePath !== relativePath || selectedFileRoot !== rootId) return;
+      if (generation !== filePreviewGeneration || selectedFilePath !== relativePath || selectedFileRoot !== rootId || activeFileOwnerSessionId !== ownerSessionId) return;
       if (!res.ok) throw new Error(data.error || "文件预览失败");
 
+      selectedFilePreview = data;
       selectedAbsoluteFilePath = data.absolutePath || selectedAbsoluteFilePath;
+      fileEditing = false;
+      fileEditDirty = false;
+      fileEditConflict = false;
+      if (data.kind === "text") fileDisplayMode = "source";
+      else if (!["markdown", "html"].includes(data.kind)) fileDisplayMode = "preview";
       document.getElementById("file-preview-actions").hidden = !selectedAbsoluteFilePath;
       meta.textContent = `${data.name} · ${formatBytes(data.size)} · ${data.modifiedAt ? new Date(data.modifiedAt).toLocaleString("zh-CN") : ""}\n${data.absolutePath || data.path}`;
-      content.innerHTML = "";
-      if (data.kind === "image") {
-        const contentUrl = new URL(data.contentUrl, location.href); contentUrl.searchParams.set("sessionId", currentSessionId || "");
-        const image = document.createElement("img"); image.src = contentUrl.href; image.alt = data.name; content.appendChild(image);
-      } else if (data.kind === "pdf") {
-        const contentUrl = new URL(data.contentUrl, location.href); contentUrl.searchParams.set("sessionId", currentSessionId || "");
-        const frame = document.createElement("iframe"); frame.src = contentUrl.href; frame.title = data.name; content.appendChild(frame);
-      } else if (data.kind === "markdown") {
-        const article = document.createElement("article"); article.className = "markdown-preview"; article.innerHTML = renderMarkdown(data.text || ""); content.appendChild(article);
-      } else if (data.kind === "text" || data.kind === "office") {
-        const pre = document.createElement("pre");
-        const code = document.createElement("code"); code.className = `language-${data.language || "plaintext"}`; code.textContent = data.text || "";
-        pre.appendChild(code); content.appendChild(pre); setTimeout(highlightRenderedCode, 0);
-      } else {
-        const empty = document.createElement("div"); empty.className = "file-preview-empty"; empty.textContent = data.message || "暂不支持此文件类型"; content.appendChild(empty);
-      }
+      renderSelectedFilePreview();
 
-      if (["text", "markdown", "office"].includes(data.kind)) {
+      if (["text", "markdown", "html", "office"].includes(data.kind)) {
         pager.hidden = false;
         document.getElementById("file-preview-page").textContent = `第 ${data.lineOffset}-${data.lineEnd} 行 / 共 ${data.totalLines} 行`;
         document.getElementById("file-preview-prev").disabled = data.lineOffset <= 1;
         document.getElementById("file-preview-next").disabled = !data.hasMore;
       }
+      startFileEvents(generation, relativePath, rootId, ownerSessionId);
+    }
+
+    function showFileSource() {
+      if (!selectedFilePreview || fileEditing) return;
+      fileDisplayMode = "source";
+      renderSelectedFilePreview();
+    }
+
+    function showFileRenderedPreview() {
+      if (!selectedFilePreview || fileEditing || !["markdown", "html"].includes(selectedFilePreview.kind)) return;
+      fileDisplayMode = "preview";
+      renderSelectedFilePreview();
+    }
+
+    function editSelectedFile() {
+      if (!selectedFilePreview?.editable || typeof selectedFilePreview.fullText !== "string") return;
+      fileDisplayMode = "source";
+      fileEditing = true;
+      fileEditDirty = false;
+      fileEditConflict = false;
+      document.getElementById("file-preview-pager").hidden = true;
+      renderSelectedFilePreview();
+    }
+
+    async function saveSelectedFile() {
+      const data = selectedFilePreview;
+      if (!data || !fileEditing || !fileEditDirty || fileEditConflict || fileSaving) return;
+      const operation = Object.freeze({
+        generation: filePreviewGeneration,
+        ownerSessionId: activeFileOwnerSessionId,
+        rootId: selectedFileRoot,
+        path: selectedFilePath,
+        absolutePath: selectedAbsoluteFilePath,
+        preview: data,
+      });
+      const isCurrent = () => fileSaveToken === operation
+        && operation.generation === filePreviewGeneration
+        && operation.ownerSessionId === activeFileOwnerSessionId
+        && operation.rootId === selectedFileRoot
+        && operation.path === selectedFilePath
+        && operation.preview === selectedFilePreview;
+      fileSaveToken = operation;
+      fileSaving = true;
+      updateFilePreviewActions();
+      try {
+        const response = await fetch("/api/files/content", {
+          method: "PUT",
+          headers: sessionHeaders(operation.ownerSessionId, true),
+          body: JSON.stringify({
+            root: operation.rootId,
+            path: operation.path,
+            expectedRevision: data.revision,
+            encoding: data.encoding,
+            text: data.fullText,
+          }),
+        });
+        const result = await response.json();
+        if (!isCurrent()) return;
+        if (!response.ok) {
+          if (response.status === 409) markFileEditConflict(operation.path);
+          throw new Error(result.error || "文件保存失败");
+        }
+        data.revision = result.revision;
+        fileEditDirty = false;
+        fileEditing = false;
+        await previewFile(operation.path, 1, operation.absolutePath, operation.rootId);
+      } catch (error) {
+        if (!isCurrent()) return;
+        if (!fileEditConflict) {
+          const meta = document.getElementById("file-preview-meta");
+          meta.classList.add("file-conflict");
+          meta.textContent = `⚠️ 保存失败：${error.message}\n${operation.absolutePath || operation.path}`;
+          addSystemMessage(`⚠️ 文件保存失败：${error.message}`);
+        }
+      } finally {
+        if (fileSaveToken === operation) {
+          fileSaveToken = null;
+          fileSaving = false;
+          updateFilePreviewActions();
+        }
+      }
+    }
+
+    async function reloadSelectedFile() {
+      if (!selectedFilePath || fileSaving) return;
+      fileEditing = false;
+      fileEditDirty = false;
+      fileEditConflict = false;
+      document.getElementById("file-preview-meta").classList.remove("file-conflict");
+      try { await previewFile(selectedFilePath, 1, selectedAbsoluteFilePath, selectedFileRoot); }
+      catch (error) { showFileError(error.message); }
     }
 
     async function pageFilePreview(direction) {
-      if (!selectedFilePath) return;
+      if (!selectedFilePath || fileEditing) return;
       const next = Math.max(1, filePreviewOffset + direction * previewPageSize);
       try { await previewFile(selectedFilePath, next, selectedAbsoluteFilePath, selectedFileRoot); }
       catch (err) { showFileError(err.message); }
@@ -1155,6 +1394,7 @@
     }
 
     function showFileError(message) {
+      closeFileEvents();
       const content = document.getElementById("file-preview-content");
       const error = document.createElement("div"); error.className = "file-preview-empty"; error.textContent = `⚠️ ${message}`;
       content.innerHTML = ""; content.appendChild(error);
@@ -2272,6 +2512,11 @@
       "toggle-tts": () => toggleTTS(),
       "refresh-files": () => refreshFileDirectory(),
       "load-more-files": () => loadMoreFiles(),
+      "show-file-source": () => showFileSource(),
+      "show-file-preview": () => showFileRenderedPreview(),
+      "edit-file": () => editSelectedFile(),
+      "save-file": () => saveSelectedFile(),
+      "reload-file": () => reloadSelectedFile(),
       "copy-file-path": () => copySelectedFilePath(),
       "reveal-file": () => revealSelectedFile(),
       "use-file": () => useSelectedFileWithAgent(),

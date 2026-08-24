@@ -3,6 +3,7 @@
 // ===========================================
 
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import iconv from "iconv-lite";
 import { getBootstrapPathStore } from "./bootstrap-path-store.js";
@@ -13,7 +14,7 @@ import { assertResourceOwner, registerOwnedResource, type ResourceOwner } from "
 import { parseDocumentIsolated } from "./document-parser.js";
 
 export type FileRootId = "workspace" | "department" | "output";
-export type PreviewKind = "text" | "markdown" | "office" | "image" | "pdf" | "unsupported";
+export type PreviewKind = "text" | "markdown" | "html" | "office" | "image" | "pdf" | "audio" | "video" | "unsupported";
 
 export interface FileRootInfo {
   id: FileRootId;
@@ -55,6 +56,20 @@ export interface FileContentLease {
   readonly close: () => Promise<void>;
 }
 
+export interface FileWatchLease {
+  readonly revision: string;
+  readonly close: () => Promise<void>;
+}
+
+export class FileEditConflictError extends Error {
+  readonly currentRevision: string | null;
+  constructor(currentRevision: string | null) {
+    super("File changed outside the editor");
+    this.name = "FileEditConflictError";
+    this.currentRevision = currentRevision;
+  }
+}
+
 const TEXT_EXTENSIONS = new Set([
   ".txt", ".md", ".markdown", ".csv", ".log", ".json", ".jsonl", ".xml", ".yaml", ".yml",
   ".toml", ".ini", ".conf", ".config", ".env", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx",
@@ -63,12 +78,23 @@ const TEXT_EXTENSIONS = new Set([
   ".sql", ".graphql", ".gql", ".dockerfile", ".gitignore", ".npmrc",
 ]);
 const MARKDOWN_EXTENSIONS = new Set([".md", ".markdown"]);
+const HTML_EXTENSIONS = new Set([".html", ".htm"]);
 const OFFICE_EXTENSIONS = new Set([".docx", ".xlsx", ".xls"]);
 const IMAGE_MIME: Record<string, string> = {
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif",
   ".webp": "image/webp", ".bmp": "image/bmp",
 };
+const AUDIO_MIME: Record<string, string> = {
+  ".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".wav": "audio/wav", ".ogg": "audio/ogg", ".oga": "audio/ogg",
+};
+const VIDEO_MIME: Record<string, string> = {
+  ".mp4": "video/mp4", ".m4v": "video/mp4", ".webm": "video/webm", ".ogv": "video/ogg", ".mov": "video/quicktime",
+};
 const MAX_TEXT_BYTES = 5 * 1024 * 1024;
+const MAX_EDIT_BYTES = 1024 * 1024;
+const MAX_HTML_PREVIEW_BYTES = 1024 * 1024;
+const MAX_PREVIEW_CHARACTERS = 128 * 1024;
+const MAX_VIRTUAL_LINE_CHARACTERS = 16 * 1024;
 const MAX_OFFICE_BYTES = 50 * 1024 * 1024;
 const MAX_MEDIA_BYTES = 100 * 1024 * 1024;
 const OPERATION_TIMEOUT_MS = 20_000;
@@ -88,9 +114,9 @@ async function withTimeout<T>(promise: Promise<T>, label: string, timeoutMs = OP
   }
 }
 
-function detectText(buffer: Buffer): string {
-  const utf8 = buffer.toString("utf8");
-  return utf8.includes("\uFFFD") ? iconv.decode(buffer, "gbk") : utf8;
+function detectText(buffer: Buffer): Readonly<{ text: string; encoding: "utf-8" | "gbk" }> {
+  try { return Object.freeze({ text: new TextDecoder("utf-8", { fatal: true }).decode(buffer), encoding: "utf-8" }); }
+  catch { return Object.freeze({ text: iconv.decode(buffer, "gbk"), encoding: "gbk" }); }
 }
 
 function extensionOf(filePath: string): string {
@@ -119,6 +145,17 @@ function snapshotSize(value: string, type: "file" | "directory"): number | null 
   if (type !== "file") return null;
   const size = Number(value);
   return Number.isSafeInteger(size) && size >= 0 ? size : null;
+}
+
+function fileWatchRevision(qualified: PathQualifiedResult): string {
+  return createHash("sha256").update([
+    qualified.identity.deviceId,
+    qualified.identity.objectId,
+    qualified.snapshot.size,
+    qualified.snapshot.mtimeNs,
+    qualified.snapshot.ctimeNs,
+    qualified.snapshot.linkCount,
+  ].join("\0")).digest("hex");
 }
 
 function normalizeRelative(relativePath: string): string {
@@ -223,16 +260,29 @@ export class FileViewerService {
         input, operation: "read-file", defaultRootId: root.id, auditIdentity: audit,
       }, MAX_TEXT_BYTES);
       const extension = extensionOf(read.canonicalPath);
-      let text = detectText(read.bytes);
+      const decoded = detectText(read.bytes);
+      let displayText = decoded.text;
       if (extension === ".json") {
-        try { text = JSON.stringify(JSON.parse(text), null, 2); }
-        catch { /* Preserve original text. */ }
+        try { displayText = JSON.stringify(JSON.parse(decoded.text), null, 2); }
+        catch { /* Preserve invalid JSON as source text. */ }
       }
+      const revision = createHash("sha256").update(read.bytes).digest("hex");
+      const editable = read.bytes.length <= MAX_EDIT_BYTES;
+      const kind: PreviewKind = HTML_EXTENSIONS.has(extension)
+        ? "html"
+        : MARKDOWN_EXTENSIONS.has(extension)
+          ? "markdown"
+          : "text";
       return {
         ...this.#fileBase(root, input, read),
-        ...this.#paginateText(text, lineOffset, lineLimit),
-        kind: MARKDOWN_EXTENSIONS.has(extension) ? "markdown" satisfies PreviewKind : "text" satisfies PreviewKind,
+        ...this.#paginateText(displayText, lineOffset, lineLimit),
+        kind,
         language: languageFor(extension),
+        encoding: decoded.encoding,
+        revision,
+        editable,
+        fullText: editable ? decoded.text : null,
+        html: kind === "html" && read.bytes.length <= MAX_HTML_PREVIEW_BYTES ? decoded.text : null,
       };
     }
 
@@ -250,7 +300,104 @@ export class FileViewerService {
       if (size > MAX_MEDIA_BYTES) throw new Error("PDF 超过 100MB，无法内嵌预览");
       return { ...base, kind: "pdf" satisfies PreviewKind, mime: "application/pdf", contentUrl: this.#contentUrl(root.id, input) };
     }
+    if (AUDIO_MIME[extension]) {
+      if (size > MAX_MEDIA_BYTES) throw new Error("音频超过 100MB，无法预览");
+      return { ...base, kind: "audio" satisfies PreviewKind, mime: AUDIO_MIME[extension], contentUrl: this.#contentUrl(root.id, input) };
+    }
+    if (VIDEO_MIME[extension]) {
+      if (size > MAX_MEDIA_BYTES) throw new Error("视频超过 100MB，无法预览");
+      return { ...base, kind: "video" satisfies PreviewKind, mime: VIDEO_MIME[extension], contentUrl: this.#contentUrl(root.id, input) };
+    }
     return { ...base, kind: "unsupported" satisfies PreviewKind, message: `暂不支持预览 ${extension || "无扩展名"} 文件` };
+  }
+
+  async saveText(
+    authority: RuntimeAuthority,
+    audit: PathAuditIdentity,
+    owner: ResourceOwner,
+    rootId: string,
+    relativePath: string,
+    expectedRevision: string,
+    text: string,
+    encoding: "utf-8" | "gbk"
+  ): Promise<{ revision: string; size: number }> {
+    const binding = this.#binding(authority);
+    const root = this.#root(binding, rootId);
+    this.#assertOwner(binding, owner, root.id);
+    const input = normalizeRelative(relativePath);
+    if (!TEXT_EXTENSIONS.has(extensionOf(input)) && !path.basename(input).startsWith(".")) throw new TypeError("该文件类型不可编辑");
+    if (!/^[a-f0-9]{64}$/u.test(expectedRevision)) throw new TypeError("文件 revision 无效");
+    if (typeof text !== "string") throw new TypeError("文件内容必须是字符串");
+    if (encoding !== "utf-8" && encoding !== "gbk") throw new TypeError("文件编码无效");
+    const output = encoding === "gbk" ? iconv.encode(text, "gbk") : Buffer.from(text, "utf8");
+    if (output.length > MAX_EDIT_BYTES) throw new TypeError("编辑内容超过 1MB");
+    const revision = createHash("sha256").update(output).digest("hex");
+    const result = await pathPolicy.replaceFile<{ conflictRevision: string | null }>(binding.pathAuthority, {
+      input, operation: "replace-file", defaultRootId: root.id, auditIdentity: audit,
+    }, current => {
+      const currentRevision = createHash("sha256").update(current).digest("hex");
+      if (currentRevision !== expectedRevision) {
+        return Object.freeze({ bytes: null, value: Object.freeze({ conflictRevision: currentRevision }) });
+      }
+      return Object.freeze({ bytes: output, value: Object.freeze({ conflictRevision: null }) });
+    }, MAX_EDIT_BYTES);
+    if (result.value.conflictRevision) throw new FileEditConflictError(result.value.conflictRevision);
+    return Object.freeze({ revision, size: output.length });
+  }
+
+  async watch(
+    authority: RuntimeAuthority,
+    audit: PathAuditIdentity,
+    owner: ResourceOwner,
+    rootId: string,
+    relativePath: string,
+    publish: (event: Readonly<{ type: "file_added" | "file_changed" | "file_removed"; timestamp: number }>) => void | Promise<void>
+  ): Promise<FileWatchLease> {
+    const binding = this.#binding(authority);
+    const root = this.#root(binding, rootId);
+    this.#assertOwner(binding, owner, root.id);
+    if (typeof publish !== "function") throw new TypeError("文件 watcher publish 无效");
+    const input = normalizeRelative(relativePath);
+    const target = await pathPolicy.qualifyExisting(binding.pathAuthority, {
+      input, operation: "read-file", defaultRootId: root.id, auditIdentity: audit,
+    }, "file");
+    const parent = path.dirname(input) === "." ? "" : path.dirname(input);
+    const targetIdentity = process.platform === "win32" ? target.canonicalPath.toLowerCase() : target.canonicalPath;
+    let unregister: () => void = () => undefined;
+    let closePromise: Promise<void> | null = null;
+    const lease = await pathPolicy.watchDirectory(binding.pathAuthority, {
+      input: parent, operation: "watch-directory", defaultRootId: root.id, auditIdentity: audit,
+    }, async event => {
+      const eventIdentity = process.platform === "win32" ? event.path.toLowerCase() : event.path;
+      if (eventIdentity !== targetIdentity) return;
+      assertResourceOwner(owner);
+      await publish(Object.freeze({ type: event.type, timestamp: event.timestamp }));
+    });
+    let current: PathQualifiedResult;
+    try {
+      current = await pathPolicy.qualifyExisting(binding.pathAuthority, {
+        input, operation: "read-file", defaultRootId: root.id, auditIdentity: audit,
+      }, "file");
+      const currentIdentity = process.platform === "win32" ? current.canonicalPath.toLowerCase() : current.canonicalPath;
+      if (currentIdentity !== targetIdentity) throw new PathDeniedError("PATH_IDENTITY_CHANGED", "Watched file identity changed");
+    } catch (error) {
+      await lease.close();
+      throw error;
+    }
+    const revision = fileWatchRevision(current);
+    const close = (): Promise<void> => {
+      if (closePromise) return closePromise;
+      unregister();
+      closePromise = lease.close();
+      return closePromise;
+    };
+    try {
+      unregister = registerOwnedResource(owner, close);
+      return Object.freeze({ revision, close });
+    } catch (error) {
+      await close();
+      throw error;
+    }
   }
 
   async content(authority: RuntimeAuthority, audit: PathAuditIdentity, owner: ResourceOwner, rootId: string, relativePath: string): Promise<FileContentLease> {
@@ -272,7 +419,7 @@ export class FileViewerService {
     try {
       unregister = registerOwnedResource(owner, close);
       const extension = extensionOf(lease.canonicalPath);
-      const mime = IMAGE_MIME[extension] || (extension === ".pdf" ? "application/pdf" : "");
+      const mime = IMAGE_MIME[extension] || AUDIO_MIME[extension] || VIDEO_MIME[extension] || (extension === ".pdf" ? "application/pdf" : "");
       if (!mime) throw new Error("该文件类型不允许通过预览内容接口读取");
       if (lease.size === 0) throw new Error("空文件无法作为媒体预览");
       return Object.freeze({
@@ -367,16 +514,38 @@ export class FileViewerService {
       extension,
       size: snapshotSize(qualified.snapshot.size, "file") ?? 0,
       modifiedAt: snapshotDate(qualified.snapshot.mtimeNs).toISOString(),
+      watchRevision: fileWatchRevision(qualified),
     };
   }
 
   #paginateText(text: string, lineOffset: number, lineLimit: number): Record<string, unknown> {
-    const lines = text.replace(/\r\n/gu, "\n").split("\n");
+    const lines = text.replace(/\r\n/gu, "\n").split("\n").flatMap(line => {
+      if (line.length <= MAX_VIRTUAL_LINE_CHARACTERS) return [line];
+      const chunks: string[] = [];
+      for (let offset = 0; offset < line.length; offset += MAX_VIRTUAL_LINE_CHARACTERS) {
+        chunks.push(line.slice(offset, offset + MAX_VIRTUAL_LINE_CHARACTERS));
+      }
+      return chunks;
+    });
     const offset = Math.max(1, Math.trunc(lineOffset) || 1);
     const limit = Math.min(Math.max(Math.trunc(lineLimit) || 500, 1), 2000);
     const start = Math.min(lines.length, offset - 1);
-    const selected = lines.slice(start, start + limit);
-    return { text: selected.join("\n"), lineOffset: offset, lineEnd: start + selected.length, totalLines: lines.length, hasMore: start + selected.length < lines.length };
+    const selected: string[] = [];
+    let characters = 0;
+    for (let index = start; index < lines.length && selected.length < limit; index += 1) {
+      const next = lines[index];
+      if (selected.length > 0 && characters + 1 + next.length > MAX_PREVIEW_CHARACTERS) break;
+      selected.push(next);
+      characters += next.length + (selected.length > 1 ? 1 : 0);
+    }
+    return {
+      text: selected.join("\n"),
+      lineOffset: offset,
+      lineEnd: start + selected.length,
+      totalLines: lines.length,
+      hasMore: start + selected.length < lines.length,
+      virtualized: lines.some(line => line.length === MAX_VIRTUAL_LINE_CHARACTERS),
+    };
   }
 
   #contentUrl(rootId: string, relativePath: string): string {

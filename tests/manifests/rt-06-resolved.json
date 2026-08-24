@@ -18,7 +18,7 @@
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "7dcbf110c4bd2d595551114c077e61506446e74b570eaa2119c3e14c1c7db212",
+      "sha256": "985ee67eb79605e5b598dcdca527c2acacd40d3af65da9688d821dd57222f513",
       "owner": "RT-06"
     },
     {
@@ -38,7 +38,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "aefb937e923ade678dbf824395a97f185c6f275d7890f4ff2deeac56ec512e54",
+      "sha256": "b78b69d16c832f80085664a591881ebe48be31640c9a2dd7371e470f68572cc1",
       "owner": "RT-06"
     },
     {
@@ -98,5 +98,5 @@
       "owner": "RT-06"
     }
   ],
-  "canonicalPayloadSha256": "98e41c8a6509530372ef65f5356390f3a3f7ad92b2497c2f856dc0171c1dba17"
+  "canonicalPayloadSha256": "1e5379570a04ab7ff2eeb036387f9825903a6c70f3b78d90a0a0d3309381eecf"
 }

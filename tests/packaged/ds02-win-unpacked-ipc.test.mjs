@@ -50,7 +50,7 @@ test("DS-02 win-unpacked exposes only the typed desktop bridge", { timeout: 90_0
     client = await connectCdp(cdpPort);
     await waitFor(async () => {
       try {
-        return await client.evaluate(`location.origin===${JSON.stringify(`http://127.0.0.1:${httpPort}`)}&&Boolean(window.electronAPI)`);
+        return await client.evaluate(`document.readyState==='complete'&&Boolean(document.body)&&location.origin===${JSON.stringify(`http://127.0.0.1:${httpPort}`)}&&Boolean(window.electronAPI)`);
       } catch { return false; }
     }, { timeoutMs: 20_000, label: "packaged SEC-07 renderer" });
     const result = await client.evaluate(`(async()=>{

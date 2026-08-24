@@ -6,11 +6,11 @@
   "dialectCheckerSha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
   "dialectPolicySha256": "e71e8be1b0a4220a50275bb6e88ead58e82f610dade5bd5c53e6242df7c4d769",
   "dialectImportSetSha256": "08f118f55fba7c2a16a8b5b53e57cb92b88cdd507dac50c8fd14aa47aa4da7a9",
-  "runtimeSinkSetSha256": "2d01de713e7faf5ff6ccf522779f4450005db9e4725a198774057b88389eaa1a",
+  "runtimeSinkSetSha256": "d6ae0b42995fd89fefe4a18565e2200b96a6509beae9c1baef60ab4bd930d4d4",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
     "executableFileCount": 91,
-    "executableManifestSha256": "0d7d0d005b1de0cc512c8df0193b927b2eaa0d9d31960f6c641a93d7a2ef77f9",
+    "executableManifestSha256": "66a3ebf5514bb2c4326a00bfd0218c0d07edb58bce08fe8bc9930a69d74ed1d5",
     "dialectImportCount": 38,
     "dialectExceptionCount": 2
   },
@@ -199,15 +199,15 @@
     },
     {
       "sourcePath": "src/file-viewer.ts",
-      "bytes": 17566,
-      "sha256": "8f303884032ac5bf19b7d5cb3eece4d2ec0621c9fb079d2aa203386733937e8d",
+      "bytes": 25356,
+      "sha256": "a9e5385ccf53aee18654fc9870afed1390b1601a6682d9d4dad2067fd4d67fc7",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/index.ts",
-      "bytes": 124295,
-      "sha256": "56584e79f8830bfb4f1ca55f4d850a476741fba1a6715fb467ec38d6706ebaee",
+      "bytes": 128773,
+      "sha256": "e9f57e4857fd936001aa016c26a558112ce7a5201cf8ba845387f33c957587c2",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -444,8 +444,8 @@
     },
     {
       "sourcePath": "src/tool-policies.ts",
-      "bytes": 7921,
-      "sha256": "aefb937e923ade678dbf824395a97f185c6f275d7890f4ff2deeac56ec512e54",
+      "bytes": 8089,
+      "sha256": "b78b69d16c832f80085664a591881ebe48be31640c9a2dd7371e470f68572cc1",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -684,7 +684,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/electron/desktop-smoke.test.mjs",
       "testCaseId": "real Electron main, preload and renderer preserve identity and session across restart",
-      "testFileSha256": "bc71b8cdfedb27c8ccd388a47c48e6d4f7ef6145ea35261faaa466407533d44f"
+      "testFileSha256": "0a47dcdc6c71a499e6a1614d154d9ecdb1a37cf3e56143b79befbab31c9088f1"
     },
     {
       "id": "file-viewer",
@@ -3736,8 +3736,8 @@
       "id": "sink-3fc3b6e9373519534bddfe0a",
       "occurrence": 1,
       "sourcePath": "src/file-viewer.ts",
-      "fileSha256": "8f303884032ac5bf19b7d5cb3eece4d2ec0621c9fb079d2aa203386733937e8d",
-      "line": 326,
+      "fileSha256": "a9e5385ccf53aee18654fc9870afed1390b1601a6682d9d4dad2067fd4d67fc7",
+      "line": 473,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "FileViewerService.reveal",
@@ -5530,5 +5530,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "3c4dcbe4cd4fddee41093b32f81447cb8edf55cdbbfd1ba680bc722fa4e8d23d"
+  "canonicalPayloadSha256": "8014539cfcfd38372a327c88dce2f0e4116793fccf81b667713fd21930eaa51f"
 }

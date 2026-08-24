@@ -113,6 +113,8 @@ export const DIRECT_OPERATION_POLICIES: Readonly<Record<string, ToolPolicy>> = O
   "file:roots": policy(["read", "control"], "none", ["filesystem", "control"]),
   "file:list": policy(["read", "control"], "none", ["filesystem", "control"]),
   "file:preview": policy(["read", "control"], "none", ["filesystem", "control"]),
+  "file:save": policy(["read", "write", "control"], "none", ["filesystem", "control"]),
+  "file:watch": policy(["read", "control"], "none", ["filesystem", "control"]),
   "file:resolve": policy(["read", "control"], "none", ["filesystem", "control"]),
   "file:content": policy(["read", "control"], "none", ["filesystem", "control"]),
   "file:reveal": policy(["read", "process", "control"], "none", ["filesystem", "process", "control"]),
