@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-07",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/ds-07.json",
+    "sha256": "7d02dd84870d7caab24ac82fa0f2c35b8a13d6b78f83cbfe4168c375290ee78e"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "bd889c2303822c19d5043aa172094dae05ef09484b026eb468e36e3cb3233bd2",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "public/index.html",
+      "sha256": "9d8f202d10938d71f479a9a44ecb32b5e951541cdbc6b8e248f3f3e3d279c648",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "public/keyboard-shortcuts.js",
+      "sha256": "3c4784788123632d6d3d568df21d6aef5dda668ec9fd3a769356946b7d0d79c3",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "public/renderer.js",
+      "sha256": "45adb28138e384f0b1778da08bb175cbf821bc34178bd937dc6a8dfe559c44d2",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "scripts/ds07-governance.mjs",
+      "sha256": "b560d8aa9f49535e482c85891a574d48f976d6e071d357a687fb1b04e39832e8",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "scripts/generate-ds07-resolved-manifest.mjs",
+      "sha256": "796249df88dfb5e37bd6784a088f873ecc04eb6aa8cffa960cf26afd9723f441",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "559d3321467fc3b29228764b988fe819451cff07ffa163806c0ff5b607eababf",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "a84b4f8906cca0ea550ce91640f4a84d11e06e2fd583819b267255fb377f3e50",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "8a1b7ed5ccaf44914728f56a58f7101481d18e7205d600e3ebc6d6e5b2daca1d",
+      "owner": "DS-07"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/ds07-governance.test.mjs",
+      "sha256": "a5f53b4f0195f26da6af878e5cb19a563cf2ec47d26583d84ca8daf8d70e9a29",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "tests/unit/keyboard-shortcuts.test.mjs",
+      "sha256": "2b2d8594fd9fe37120a2612b3e7b4e68eb18b74683cc5c3599b75124fcae9338",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "8a1b7ed5ccaf44914728f56a58f7101481d18e7205d600e3ebc6d6e5b2daca1d",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "tests/unit/run-cancellation.test.mjs",
+      "sha256": "093275a4bcbe6d824faaf01c3fd798899b13dc4feecbbfd147bf21e7bbf1b313",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "tests/unit/workbench-layout.test.mjs",
+      "sha256": "7094607131054f343024366c58d784e877c9f21603e75ba39c710d0dd4468a96",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+      "sha256": "b8c794941b2b198e895d543003a883350129e075d240073e46a002f7879926f4",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "tests/integration/ds03-workbench-layout.test.mjs",
+      "sha256": "aa6b9d1a7de55c18b23a1a87b44dad0ef6cb9fa7ce8d1a8db5f3b679d8cd52ec",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-07"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "36e58b35493721b945b26b5d6bf994e0f24239114d01daf2e2b43dad69db2ae6",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "DS-07"
+    }
+  ],
+  "canonicalPayloadSha256": "0c3eb3185fb3c08a97426a28535778b7cd45ab5d2fae32e5a6d6074b6945ee16"
+}

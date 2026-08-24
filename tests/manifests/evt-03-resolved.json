@@ -122,11 +122,11 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "0a47dcdc6c71a499e6a1614d154d9ecdb1a37cf3e56143b79befbab31c9088f1",
+      "sha256": "36e58b35493721b945b26b5d6bf994e0f24239114d01daf2e2b43dad69db2ae6",
       "kind": "test",
       "layer": "electron",
       "owner": "EVT-03"
     }
   ],
-  "canonicalPayloadSha256": "e88b8be7e86983692d8aca506909a750a1e3b6271db853c72dd08647ea171703"
+  "canonicalPayloadSha256": "3109a56c17b1d040bf488eef592c4731d8ff2fcf9b8bf3043cfd15e8dd7deae1"
 }

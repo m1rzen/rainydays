@@ -93,14 +93,14 @@
       "family": "network",
       "api": "fetch",
       "container": "<top-level>",
-      "occurrenceId": "exec-3efc6f67b1160862856a9d4f"
+      "occurrenceId": "exec-b72e6992a4c58196f5eea796"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "<top-level>",
-      "occurrenceId": "exec-ece8dd9c2a7944f81e16fcea"
+      "occurrenceId": "exec-c68990abf6b8ecd1cfc37578"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -862,5 +862,5 @@
       "occurrenceId": "exec-c52f91fdd68fcd90774471b7"
     }
   ],
-  "canonicalPayloadSha256": "5ec14955069d312d048f3b49ebb7903d68b657a9ab1b2bc89df7ca63bc579506"
+  "canonicalPayloadSha256": "d559c0482e9c0b6c50acb25622f08b94e5cd65653f12bedb3381addda99bd5fe"
 }

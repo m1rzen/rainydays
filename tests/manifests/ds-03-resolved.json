@@ -28,7 +28,7 @@
     },
     {
       "exactCasePath": "public/index.html",
-      "sha256": "24cd34d034e9780823864eb2cc059ef5ef90427b76d65b457690403271be647d",
+      "sha256": "9d8f202d10938d71f479a9a44ecb32b5e951541cdbc6b8e248f3f3e3d279c648",
       "owner": "DS-03"
     },
     {
@@ -38,7 +38,7 @@
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "265b1197b431d4382b6b16446a0e4d8d9e0bee470c689ea6aa0a31e9f34926a9",
+      "sha256": "45adb28138e384f0b1778da08bb175cbf821bc34178bd937dc6a8dfe559c44d2",
       "owner": "DS-03"
     },
     {
@@ -101,7 +101,7 @@
     },
     {
       "exactCasePath": "tests/integration/ds03-workbench-layout.test.mjs",
-      "sha256": "594ed01fc543e46f74f8824bdb1f180d51d27b9198cf691a88f53e44f1aeb6dc",
+      "sha256": "aa6b9d1a7de55c18b23a1a87b44dad0ef6cb9fa7ce8d1a8db5f3b679d8cd52ec",
       "kind": "test",
       "layer": "integration",
       "owner": "DS-03"
@@ -115,11 +115,11 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "0a47dcdc6c71a499e6a1614d154d9ecdb1a37cf3e56143b79befbab31c9088f1",
+      "sha256": "36e58b35493721b945b26b5d6bf994e0f24239114d01daf2e2b43dad69db2ae6",
       "kind": "test",
       "layer": "electron",
       "owner": "DS-03"
     }
   ],
-  "canonicalPayloadSha256": "1d692d953de9def09a73be56307d47b519b9f28967017d059459d36ea38d0aba"
+  "canonicalPayloadSha256": "1c9b4e2198b3d539c1941a0a11ce0e28e4879ad7fcf034728b3108800a867d61"
 }

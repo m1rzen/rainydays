@@ -899,6 +899,105 @@ test("DS-06 real Electron edits, sandboxes, refreshes and streams File Tabs offl
   assert.equal(await pathExists(fixture), false);
 });
 
+test("DS-07 real Electron prioritizes editing, history, Escape and Workbench shortcuts", { timeout: 90_000 }, async (context) => {
+  const fixture = await makeTempDir("mini-lux-ds07-electron-");
+  const userData = path.join(fixture, "user-data");
+  const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
+  let instance;
+  let client;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal);
+    client = await connectCdp(cdpPort);
+    await probeIdentity(client, buildInfo, httpPort);
+    const sessionId = await client.evaluate("newChat().then(()=>currentSessionId)");
+
+    const history = await client.evaluate(`(()=>{
+      pushSessionHistory(currentSessionId,'first command');
+      pushSessionHistory(currentSessionId,'second command');
+      inputEl.value='draft text'; saveDraft(currentSessionId,inputEl.value); inputEl.focus(); inputEl.setSelectionRange(0,0);
+      inputEl.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp',bubbles:true,cancelable:true}));
+      const previous=inputEl.value;
+      inputEl.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));
+      return {previous,restored:inputEl.value};
+    })()`);
+    assert.deepEqual(history, { previous: "second command", restored: "draft text" });
+
+    const editingGuard = await client.evaluate(`(async()=>{
+      const before=knownSessions.length;
+      inputEl.focus();
+      inputEl.dispatchEvent(new KeyboardEvent('keydown',{key:'n',ctrlKey:true,bubbles:true,cancelable:true}));
+      await new Promise(resolve=>setTimeout(resolve,100));
+      return {before,after:knownSessions.length,value:inputEl.value};
+    })()`);
+    assert.deepEqual(editingGuard, { before: editingGuard.before, after: editingGuard.before, value: "draft text" });
+
+    const escapePriority = await client.evaluate(`(async()=>{
+      const makeToken=()=>({controller:new AbortController(),runId:null,cancelling:false,bubble:null});
+      const settingsToken=makeToken(); activeRunsBySession.set(currentSessionId,settingsToken);
+      await openSettings();
+      document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+      const settings={visible:document.getElementById('settings-modal').classList.contains('visible'),aborted:settingsToken.controller.signal.aborted};
+      activeRunsBySession.delete(currentSessionId);
+
+      const slashToken=makeToken(); activeRunsBySession.set(currentSessionId,slashToken);
+      slashMenu.classList.add('visible'); inputEl.focus();
+      inputEl.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+      const slash={visible:slashMenu.classList.contains('visible'),aborted:slashToken.controller.signal.aborted};
+      activeRunsBySession.delete(currentSessionId);
+
+      const terminalToken=makeToken(); activeRunsBySession.set(currentSessionId,terminalToken);
+      const xterm=document.createElement('div'); xterm.className='xterm';
+      const helper=document.createElement('textarea'); xterm.appendChild(helper); document.getElementById('terminal-screen').appendChild(xterm);
+      helper.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+      const terminal={aborted:terminalToken.controller.signal.aborted}; xterm.remove(); activeRunsBySession.delete(currentSessionId);
+
+      const runToken=makeToken(); activeRunsBySession.set(currentSessionId,runToken);
+      document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+      await new Promise(resolve=>setTimeout(resolve,0));
+      const run={aborted:runToken.controller.signal.aborted,cancelling:runToken.cancelling}; activeRunsBySession.delete(currentSessionId); refreshRunControls();
+      return {settings,slash,terminal,run};
+    })()`);
+    assert.deepEqual(escapePriority, {
+      settings: { visible: false, aborted: false },
+      slash: { visible: false, aborted: false },
+      terminal: { aborted: false },
+      run: { aborted: true, cancelling: true },
+    });
+
+    const initialPanes = await client.evaluate("workbenchPanes().length");
+    await client.evaluate(`(()=>{
+      inputEl.blur();
+      document.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',altKey:true,shiftKey:true,bubbles:true,cancelable:true}));
+      return true;
+    })()`);
+    await waitFor(async () => client.evaluate(`workbenchPanes().length===${initialPanes + 1}`), { timeoutMs: 10_000, label: "DS-07 split shortcut" });
+    await client.evaluate(`(()=>{
+      document.dispatchEvent(new KeyboardEvent('keydown',{key:'f',ctrlKey:true,shiftKey:true,bubbles:true,cancelable:true}));
+      return true;
+    })()`);
+    await waitFor(async () => client.evaluate("activeWorkbenchTab()?.kind==='file'"), { timeoutMs: 10_000, label: "DS-07 File shortcut" });
+    const shortcutState = await client.evaluate(`({
+      sessionId:currentSessionId,
+      panes:workbenchPanes().length,
+      file:activeWorkbenchTab()?.kind,
+      commandMapping:RainyDaysKeyboard.eventMatches({key:'n',ctrlKey:false,metaKey:true,altKey:false,shiftKey:false},'Primary+N','darwin'),
+      settingsApi:Object.keys(window.rainyDaysShortcutSettings).sort(),
+    })`);
+    assert.deepEqual(shortcutState, {
+      sessionId, panes: initialPanes + 1, file: "file", commandMapping: true, settingsApi: ["get", "reset", "set"],
+    });
+
+    client.close(); client = null;
+    await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    client?.close();
+    if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture);
+  }
+  assert.equal(await pathExists(fixture), false);
+});
+
 test("SEC-03 Electron stage emits all 48 authenticated projection receipts", { timeout: 120_000 }, async () => {
   const result = await emitSec03ProjectionReceipts({
     layer: "electron",

@@ -196,7 +196,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "0a47dcdc6c71a499e6a1614d154d9ecdb1a37cf3e56143b79befbab31c9088f1",
+      "sha256": "36e58b35493721b945b26b5d6bf994e0f24239114d01daf2e2b43dad69db2ae6",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-06"
@@ -209,5 +209,5 @@
       "owner": "SEC-06"
     }
   ],
-  "canonicalPayloadSha256": "3963ecde51cfd21ebb2b88544d7f10440c434286b08ebb8ecd8d512bd54d3792"
+  "canonicalPayloadSha256": "6663f84391fda3d25ac5df9a613babf78e578695a3579692dda6d9ce6e9d94a2"
 }

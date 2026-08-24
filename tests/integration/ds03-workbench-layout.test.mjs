@@ -8,7 +8,7 @@ function payload(stdout) {
   return JSON.parse(lines.at(-1));
 }
 
-test("DS-03 schema 8 persists one canonical WorkbenchLayout with optimistic revision", { timeout: 30_000 }, async () => {
+test("DS-03 schema 9 persists one canonical WorkbenchLayout with optimistic revision", { timeout: 30_000 }, async () => {
   const fixture = await makeTempDir("mini-lux-ds03-layout-");
   const child = path.join("tests", "fixtures", "ds03-workbench-child.mjs");
   try {

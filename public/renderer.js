@@ -36,15 +36,20 @@
     const closedWorkbenchTabs = [];
     const inputHistoryBySession = new Map();
     let historyNavIndex = -1;
+    let historyDraftBeforeNavigation = "";
     function sessionHistory(sessionId) {
       if (!inputHistoryBySession.has(sessionId)) {
-        try { inputHistoryBySession.set(sessionId, JSON.parse(localStorage.getItem("rd-history-" + sessionId) || "[]")); }
-        catch { inputHistoryBySession.set(sessionId, []); }
+        let history = [];
+        try {
+          const parsed = JSON.parse(localStorage.getItem("rd-history-" + sessionId) || "[]");
+          if (Array.isArray(parsed)) history = parsed.filter(value => typeof value === "string" && value.length > 0 && value.length <= 32768).slice(-50);
+        } catch {}
+        inputHistoryBySession.set(sessionId, history);
       }
       return inputHistoryBySession.get(sessionId);
     }
     function pushSessionHistory(sessionId, text) {
-      if (!sessionId || !text) return;
+      if (!sessionId || typeof text !== "string" || text.length < 1 || text.length > 32768) return;
       const history = sessionHistory(sessionId);
       if (history[history.length - 1] !== text) history.push(text);
       if (history.length > 50) history.splice(0, history.length - 50);
@@ -56,6 +61,7 @@
     }
     function restoreDraft(sessionId) {
       historyNavIndex = -1;
+      historyDraftBeforeNavigation = "";
       let value = "";
       try { value = localStorage.getItem("rd-draft-" + sessionId) || ""; } catch {}
       inputEl.value = value;
@@ -2048,20 +2054,16 @@
       resizeMessageInput();
       const val = inputEl.value;
       historyNavIndex = -1;
+      historyDraftBeforeNavigation = val;
       saveDraft(currentSessionId, val);
       if (val.startsWith("/")) showSlashMenu(val.split(/\\s/)[0]); else slashMenu.classList.remove("visible");
-    });
-    document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape" || !isSessionRunning()) return;
-      event.preventDefault();
-      void cancelSessionRun().catch(() => undefined);
     });
     inputEl.addEventListener("keydown", (e) => {
       if (slashMenu.classList.contains("visible")) {
         if (e.key === "ArrowDown") { e.preventDefault(); slashSelectedIdx = Math.min(slashSelectedIdx + 1, slashMenu.children.length - 1); updateSlashSelection(); }
         else if (e.key === "ArrowUp") { e.preventDefault(); slashSelectedIdx = Math.max(slashSelectedIdx - 1, 0); updateSlashSelection(); }
         else if (e.key === "Tab" || (e.key === "Enter" && slashMenu.children.length > 0)) { const item = slashMenu.children[slashSelectedIdx]; if (item) { e.preventDefault(); inputEl.value = item.dataset.cmd + " "; slashMenu.classList.remove("visible"); inputEl.focus(); } }
-        else if (e.key === "Escape") slashMenu.classList.remove("visible");
+        else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); slashMenu.classList.remove("visible"); }
       }
       if (e.key === "Enter" && !e.shiftKey && !slashMenu.classList.contains("visible")) { e.preventDefault(); formEl.requestSubmit(); }
     });
@@ -2073,11 +2075,14 @@
       if (history.length === 0) return;
       const atStart = inputEl.selectionStart === 0 && inputEl.selectionEnd === 0;
       if (e.key === "ArrowUp" && atStart) {
-        if (historyNavIndex === -1) historyNavIndex = history.length;
+        if (historyNavIndex === -1) {
+          historyNavIndex = history.length;
+          historyDraftBeforeNavigation = inputEl.value;
+        }
         if (historyNavIndex > 0) { historyNavIndex -= 1; inputEl.value = history[historyNavIndex]; e.preventDefault(); resizeMessageInput(); }
       } else if (e.key === "ArrowDown" && historyNavIndex !== -1) {
         if (historyNavIndex < history.length - 1) { historyNavIndex += 1; inputEl.value = history[historyNavIndex]; }
-        else { historyNavIndex = -1; inputEl.value = ""; saveDraft(currentSessionId, ""); }
+        else { historyNavIndex = -1; inputEl.value = historyDraftBeforeNavigation; }
         e.preventDefault(); resizeMessageInput();
       }
     });
@@ -2095,7 +2100,7 @@
       if (!chatSessionId || isSessionRunning(chatSessionId)) return;
       const runToken = beginSessionRun(chatSessionId);
       addMessage("user", text, null, readyAttachments); inputEl.value = ""; inputEl.rows = 1; slashMenu.classList.remove("visible");
-      historyNavIndex = -1; saveDraft(chatSessionId, ""); pushSessionHistory(chatSessionId, text);
+      historyNavIndex = -1; historyDraftBeforeNavigation = ""; saveDraft(chatSessionId, ""); pushSessionHistory(chatSessionId, text);
       const assistantEl = addMessage("assistant", ""); const bubbleEl = assistantEl.querySelector(".bubble");
       runToken.bubble = bubbleEl;
       bubbleEl.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
@@ -2610,17 +2615,95 @@
     });
     document.getElementById("settings-modal").addEventListener("click", event => { if (event.target === event.currentTarget) closeSettings(); });
     document.getElementById("ask-input").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); submitAskAnswer(); } });
-    document.addEventListener("keydown", (e) => {
-      if (e.altKey && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "v") {
-        e.preventDefault();
+
+    const keyboardManager = window.RainyDaysKeyboard;
+    if (!keyboardManager) throw new Error("Keyboard shortcut manager is unavailable");
+    let shortcutBindings = keyboardManager.loadBindings();
+    window.rainyDaysShortcutSettings = Object.freeze({
+      get: () => ({ schemaVersion: 1, bindings: { ...shortcutBindings } }),
+      set: bindings => {
+        shortcutBindings = keyboardManager.saveBindings(bindings);
+        return { schemaVersion: 1, bindings: { ...shortcutBindings } };
+      },
+      reset: () => {
+        localStorage.removeItem(keyboardManager.storageKey);
+        shortcutBindings = keyboardManager.loadBindings();
+        return { schemaVersion: 1, bindings: { ...shortcutBindings } };
+      },
+    });
+
+    function shortcutTargetElement(event) {
+      return event.target instanceof Element ? event.target : document.activeElement instanceof Element ? document.activeElement : null;
+    }
+    function isTextEditingTarget(target) {
+      return Boolean(target?.closest("input, textarea, select, [contenteditable='true'], [contenteditable='']"));
+    }
+    function isTerminalShortcutTarget(target) {
+      return Boolean(target?.closest("#terminal-screen .xterm"));
+    }
+    async function selectRelativeWorkbenchTab(delta) {
+      const pane = focusedWorkbenchPane();
+      const active = activeWorkbenchTab(pane);
+      if (!pane || !active || pane.tabs.length < 2) return;
+      const currentIndex = pane.tabs.findIndex(tab => tab.id === active.id);
+      const target = pane.tabs[(currentIndex + delta + pane.tabs.length) % pane.tabs.length];
+      await selectWorkbenchTab(target.id, pane.id);
+    }
+    async function runShortcutAction(action) {
+      const pane = focusedWorkbenchPane();
+      const active = activeWorkbenchTab(pane);
+      if (action === "newSession") await newChat();
+      else if (action === "openFile") await toggleFileViewer(true);
+      else if (action === "openTerminal") await toggleTerminal(true);
+      else if (action === "openSettings") openSettings();
+      else if (action === "closeTab" && active) await closeWorkbenchTab(active.id);
+      else if (action === "previousTab") await selectRelativeWorkbenchTab(-1);
+      else if (action === "nextTab") await selectRelativeWorkbenchTab(1);
+      else if (action === "splitHorizontal" && pane) await splitWorkbenchPane(pane.id, "horizontal");
+      else if (action === "splitVertical" && pane) await splitWorkbenchPane(pane.id, "vertical");
+    }
+    function handleGlobalShortcut(event) {
+      const target = shortcutTargetElement(event);
+      const settingsVisible = document.getElementById("settings-modal").classList.contains("visible");
+      if (event.key === "Escape" && settingsVisible) {
+        event.preventDefault();
+        closeSettings();
+        return;
+      }
+      if ((event.key === "Enter" || event.key === " ") && document.activeElement?.dataset?.action && document.activeElement.tagName !== "BUTTON") {
+        event.preventDefault();
+        document.activeElement.click();
+        return;
+      }
+      const terminalTarget = isTerminalShortcutTarget(target);
+      if (terminalTarget) return;
+      const action = keyboardManager.actionForEvent(event, shortcutBindings, window.electronAPI?.platform || navigator.platform);
+      if (action === "cancelRun") {
+        if (!isSessionRunning()) return;
+        event.preventDefault();
+        void cancelSessionRun().catch(() => undefined);
+        return;
+      }
+      if (action === "attachFile") {
+        if (settingsVisible || target?.closest(".file-editor") || activeWorkbenchTab()?.kind !== "session") return;
+        event.preventDefault();
         attachmentFileInputEl.click();
         return;
       }
-      if ((e.key === "Enter" || e.key === " ") && document.activeElement?.dataset?.action && document.activeElement.tagName !== "BUTTON") {
-        e.preventDefault();
-        document.activeElement.click();
+      if (isTextEditingTarget(target) || settingsVisible) return;
+      if (event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && /^[1-9]$/u.test(event.key)) {
+        const pane = focusedWorkbenchPane();
+        const tab = pane?.tabs[Number(event.key) - 1];
+        if (tab) {
+          event.preventDefault();
+          void selectWorkbenchTab(tab.id, pane.id).catch(error => addSystemMessage(`⚠️ ${error.message}`));
+        }
+        return;
       }
-      if (e.key === "Escape" && document.getElementById("settings-modal").classList.contains("visible")) closeSettings();
-    });
+      if (!action || action === "attachFile") return;
+      event.preventDefault();
+      void runShortcutAction(action).catch(error => addSystemMessage(`⚠️ ${error.message}`));
+    }
+    document.addEventListener("keydown", handleGlobalShortcut);
 
     init();

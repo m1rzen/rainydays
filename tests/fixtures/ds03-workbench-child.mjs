@@ -13,7 +13,7 @@ await fs.mkdir(path.join(fixture, "data"), { recursive: true });
 const db = await import("../../dist/db.js");
 const layoutModel = await import("../../dist/workbench-layout.js");
 try {
-  assert.equal(db.getDatabaseSchemaVersion(), 8);
+  assert.equal(db.getDatabaseSchemaVersion(), 9);
   if (mode === "write") {
     assert.equal(db.getWorkbenchLayoutSnapshot(), null);
     const firstLayout = layoutModel.createWorkbenchLayout({ id: "tab-session", kind: "session", title: "Session", sessionId: "session-one" });

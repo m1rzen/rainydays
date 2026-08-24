@@ -171,6 +171,14 @@
         "exactCasePath": "tests/integration/ds06-file-api.test.mjs"
       },
       {
+        "sourceTask": "DS-07",
+        "exactCasePath": "tests/contract/ds07-governance.test.mjs"
+      },
+      {
+        "sourceTask": "DS-07",
+        "exactCasePath": "tests/unit/keyboard-shortcuts.test.mjs"
+      },
+      {
         "sourceTask": "EVT-01",
         "exactCasePath": "tests/contract/evt01-governance.test.mjs"
       },

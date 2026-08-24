@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "265b1197b431d4382b6b16446a0e4d8d9e0bee470c689ea6aa0a31e9f34926a9",
+      "sha256": "45adb28138e384f0b1778da08bb175cbf821bc34178bd937dc6a8dfe559c44d2",
       "owner": "RT-09"
     },
     {
@@ -72,5 +72,5 @@
       "owner": "RT-09"
     }
   ],
-  "canonicalPayloadSha256": "7a2891667f0c7a8b0dc426c5fe3166ab8f756d92a649c49062d892c4e7cf8c55"
+  "canonicalPayloadSha256": "387a7fe5ebe1678cbf34b9bd7730276dcce760395bf694e7faea8b6b33021425"
 }
