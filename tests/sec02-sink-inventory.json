@@ -691,7 +691,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/electron/desktop-smoke.test.mjs",
       "testCaseId": "real Electron main, preload and renderer preserve identity and session across restart",
-      "testFileSha256": "1813281f24b711b90d74ce588c76e243a57ef15bcd73402be73345b7d3695529"
+      "testFileSha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3"
     },
     {
       "id": "file-viewer",
@@ -5537,5 +5537,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "1b963c9c8756739b96f2277f31144b2c25067502f1702387da63a9491ef08e38"
+  "canonicalPayloadSha256": "12085c6764d1af746e2671e7a0877289496c1a3399c2300482ec442e6885a7f7"
 }

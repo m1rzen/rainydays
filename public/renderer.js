@@ -26,6 +26,7 @@
     const workbenchStagingEl = document.getElementById("workbench-staging");
     const attachmentDraftListEl = document.getElementById("attachment-draft-list");
     const attachmentFileInputEl = document.getElementById("attachment-file-input");
+    const responseAnnouncerEl = document.getElementById("response-announcer");
     const baseDocumentTitle = document.title;
 
     let currentSessionId = null;
@@ -81,6 +82,100 @@
     let attachmentDrafts = [];
     let attachmentLoadGeneration = 0;
     let subagentPollTimer = null;
+    const dialogStack = [];
+    const dialogReturnFocus = new WeakMap();
+    const focusableSelector = [
+      "button:not([disabled])", "a[href]", "input:not([disabled])", "select:not([disabled])",
+      "textarea:not([disabled])", "[tabindex]:not([tabindex='-1'])",
+    ].join(",");
+
+    function isRestorableFocusTarget(element) {
+      return element instanceof HTMLElement && element.isConnected
+        && !element.closest("[inert], [hidden], [aria-hidden='true']")
+        && element.getClientRects().length > 0;
+    }
+
+    function visibleFocusableElements(container) {
+      return Array.from(container.querySelectorAll(focusableSelector)).filter(isRestorableFocusTarget);
+    }
+
+    function syncDialogInertState() {
+      const active = dialogStack.at(-1) || null;
+      for (const child of document.body.children) {
+        if (child.tagName === "SCRIPT") continue;
+        child.inert = Boolean(active && child !== active);
+      }
+    }
+
+    function showAccessibleDialog(modal, initialFocus) {
+      const existingIndex = dialogStack.indexOf(modal);
+      if (existingIndex >= 0) dialogStack.splice(existingIndex, 1);
+      if (!dialogReturnFocus.has(modal)) dialogReturnFocus.set(modal, document.activeElement instanceof HTMLElement ? document.activeElement : null);
+      dialogStack.push(modal);
+      modal.classList.add("visible");
+      modal.setAttribute("aria-hidden", "false");
+      syncDialogInertState();
+      queueMicrotask(() => {
+        const preferred = typeof initialFocus === "string" ? modal.querySelector(initialFocus) : initialFocus;
+        (preferred || visibleFocusableElements(modal)[0] || modal).focus();
+      });
+    }
+
+    function hideAccessibleDialog(modal) {
+      const index = dialogStack.indexOf(modal);
+      const wasTop = index >= 0 && index === dialogStack.length - 1;
+      const previous = dialogReturnFocus.get(modal) || null;
+      if (index >= 0) {
+        for (const upperDialog of dialogStack.slice(index + 1)) {
+          const upperReturnTarget = dialogReturnFocus.get(upperDialog);
+          if (upperReturnTarget instanceof Node && modal.contains(upperReturnTarget)) dialogReturnFocus.set(upperDialog, previous);
+        }
+        dialogStack.splice(index, 1);
+      }
+      modal.classList.remove("visible");
+      modal.setAttribute("aria-hidden", "true");
+      dialogReturnFocus.delete(modal);
+      syncDialogInertState();
+      if (!wasTop) return;
+      const active = dialogStack.at(-1) || null;
+      const target = active
+        ? (previous && active.contains(previous) && isRestorableFocusTarget(previous) ? previous : visibleFocusableElements(active)[0] || active)
+        : previous;
+      if (isRestorableFocusTarget(target)) queueMicrotask(() => target.focus());
+    }
+
+    function installAccessibleNames() {
+      document.querySelectorAll("button[title]:not([aria-label])").forEach(button => button.setAttribute("aria-label", button.title));
+      document.querySelectorAll(".settings-grid").forEach(grid => {
+        let pendingLabel = "";
+        for (const child of grid.children) {
+          if (child.matches("label") && !child.querySelector("input,select,textarea")) {
+            pendingLabel = child.textContent.trim();
+            continue;
+          }
+          const controls = child.matches("input,select,textarea") ? [child] : Array.from(child.querySelectorAll("input,select,textarea"));
+          if (controls.length === 0) continue;
+          for (const control of controls) {
+            if (control.labels?.length || control.hasAttribute("aria-label") || control.hasAttribute("aria-labelledby")) continue;
+            const label = control.placeholder || pendingLabel;
+            if (label) control.setAttribute("aria-label", label);
+          }
+          pendingLabel = "";
+        }
+      });
+    }
+
+    function trapActiveDialogFocus(event) {
+      const active = dialogStack.at(-1);
+      if (!active || event.key !== "Tab") return false;
+      const focusable = visibleFocusableElements(active);
+      if (focusable.length === 0) { event.preventDefault(); active.focus(); return true; }
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      return true;
+    }
 
     function sessionHeaders(sessionId = currentSessionId, json = false) {
       const headers = {};
@@ -171,16 +266,24 @@
 
     let slashSelectedIdx = 0;
 
+    function closeSlashMenu() {
+      slashMenu.classList.remove("visible");
+      inputEl.setAttribute("aria-expanded", "false");
+      inputEl.removeAttribute("aria-activedescendant");
+    }
+
     function showSlashMenu(query) {
       const filtered = slashCommands.filter(c => c.cmd.startsWith(query));
-      if (filtered.length === 0) { slashMenu.classList.remove("visible"); return; }
+      if (filtered.length === 0) { closeSlashMenu(); return; }
       slashSelectedIdx = 0;
       slashMenu.innerHTML = filtered.map((c, i) =>
-        `<div class="slash-item ${i === 0 ? "selected" : ""}" data-cmd="${c.cmd}" data-idx="${i}"><span class="cmd">${c.cmd}</span><span class="desc">${c.desc}</span></div>`
+        `<button type="button" id="slash-option-${i}" role="option" aria-selected="${i === 0}" class="slash-item ${i === 0 ? "selected" : ""}" data-cmd="${c.cmd}" data-idx="${i}"><span class="cmd">${c.cmd}</span><span class="desc">${c.desc}</span></button>`
       ).join("");
       slashMenu.classList.add("visible");
+      inputEl.setAttribute("aria-expanded", "true");
+      inputEl.setAttribute("aria-activedescendant", "slash-option-0");
       slashMenu.querySelectorAll(".slash-item").forEach(item => {
-        item.addEventListener("click", () => { inputEl.value = item.dataset.cmd + " "; slashMenu.classList.remove("visible"); inputEl.focus(); });
+        item.addEventListener("click", () => { inputEl.value = item.dataset.cmd + " "; closeSlashMenu(); inputEl.focus(); });
       });
     }
 
@@ -235,7 +338,8 @@
 
         for (const [sid, group] of Object.entries(grouped)) {
           for (const item of group.items.slice(0, 2)) {
-            const el = document.createElement("div");
+            const el = document.createElement("button");
+            el.type = "button";
             el.className = "search-result-item";
             const snippet = item.content.slice(0, 80).replace(/\\n/g, " ");
             el.innerHTML = `<div class="sr-title">${escapeHtml(group.title)}</div><div class="sr-snippet">${escapeHtml(snippet)}...</div>`;
@@ -430,35 +534,51 @@
       pane.dataset.workbenchPaneId = node.id;
       const strip = document.createElement("div");
       strip.className = "workbench-tabs";
-      strip.setAttribute("role", "tablist");
+      const tablist = document.createElement("div");
+      tablist.className = "workbench-tab-list";
+      tablist.setAttribute("role", "tablist");
       for (const tab of node.tabs) {
+        const active = tab.id === node.activeTabId;
         const button = document.createElement("button");
-        button.className = `workbench-tab ${tab.id === node.activeTabId ? "active" : ""}`;
+        button.type = "button";
+        button.id = `workbench-tab-${tab.id}`;
+        button.className = `workbench-tab ${active ? "active" : ""}`;
         button.dataset.action = "select-workbench-tab";
         button.dataset.tabId = tab.id;
         button.dataset.paneId = node.id;
         if (tab.kind === "session") button.dataset.sessionId = tab.sessionId;
         button.setAttribute("role", "tab");
-        button.setAttribute("aria-selected", String(tab.id === node.activeTabId));
+        button.setAttribute("aria-selected", String(active));
+        button.setAttribute("aria-controls", `workbench-panel-${node.id}`);
+        button.tabIndex = active ? 0 : -1;
         button.setAttribute("draggable", "true");
+        button.addEventListener("keydown", event => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          const index = node.tabs.findIndex(candidate => candidate.id === tab.id);
+          const targetIndex = event.key === "Home" ? 0 : event.key === "End" ? node.tabs.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + node.tabs.length) % node.tabs.length;
+          void selectWorkbenchTab(node.tabs[targetIndex].id, node.id).then(() => document.getElementById(`workbench-tab-${node.tabs[targetIndex].id}`)?.focus());
+        });
         const icon = document.createElement("span");
         icon.className = "workbench-tab-kind";
         icon.textContent = workbenchTabIcon(tab);
         const title = document.createElement("span");
         title.className = "workbench-tab-title";
         title.textContent = tab.title;
-        const close = document.createElement("span");
-        close.className = "workbench-tab-close";
-        close.dataset.action = "close-workbench-tab";
-        close.dataset.tabId = tab.id;
-        close.setAttribute("role", "button");
-        close.setAttribute("aria-label", `关闭 ${tab.title}`);
-        close.textContent = "×";
-        button.append(icon, title, close);
-        strip.appendChild(button);
+        button.append(icon, title);
+        tablist.appendChild(button);
       }
+      strip.appendChild(tablist);
       const tools = document.createElement("div");
       tools.className = "workbench-pane-tools";
+      const closeActive = document.createElement("button");
+      closeActive.type = "button";
+      closeActive.className = "workbench-pane-tool workbench-tab-close";
+      closeActive.dataset.action = "close-workbench-tab";
+      closeActive.dataset.tabId = node.activeTabId;
+      closeActive.setAttribute("aria-label", `关闭 ${activeWorkbenchTab(node).title}`);
+      closeActive.textContent = "×";
+      tools.appendChild(closeActive);
       for (const [direction, label] of [["horizontal", "左右分屏"], ["vertical", "上下分屏"]]) {
         const split = document.createElement("button");
         split.className = "workbench-pane-tool";
@@ -479,7 +599,10 @@
       tools.appendChild(restore);
       strip.appendChild(tools);
       const content = document.createElement("div");
+      content.id = `workbench-panel-${node.id}`;
       content.className = "workbench-pane-content";
+      content.setAttribute("role", "tabpanel");
+      content.setAttribute("aria-labelledby", `workbench-tab-${node.activeTabId}`);
       content.dataset.workbenchDropPane = node.id;
       content.appendChild(mountWorkbenchView(activeWorkbenchTab(node), node.id, livePaneByKind));
       pane.append(strip, content);
@@ -762,10 +885,25 @@
       const tabs = document.getElementById("terminal-tabs");
       tabs.replaceChildren();
       for (const terminal of terminalSessions) {
+        const active = terminal.id === activeTerminalId;
         const tab = document.createElement("button");
-        tab.className = `terminal-tab ${terminal.id === activeTerminalId ? "active" : ""}`;
+        tab.type = "button";
+        tab.id = `terminal-tab-${terminal.id}`;
+        tab.className = `terminal-tab ${active ? "active" : ""}`;
         tab.dataset.action = "select-terminal";
         tab.dataset.terminalId = terminal.id;
+        tab.setAttribute("role", "tab");
+        tab.setAttribute("aria-selected", String(active));
+        tab.setAttribute("aria-controls", "terminal-output-panel");
+        if (active) document.getElementById("terminal-output-panel").setAttribute("aria-labelledby", tab.id);
+        tab.tabIndex = active ? 0 : -1;
+        tab.addEventListener("keydown", event => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          const index = terminalSessions.findIndex(candidate => candidate.id === terminal.id);
+          const targetIndex = event.key === "Home" ? 0 : event.key === "End" ? terminalSessions.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + terminalSessions.length) % terminalSessions.length;
+          void selectTerminal(terminalSessions[targetIndex].id).then(() => document.getElementById(`terminal-tab-${terminalSessions[targetIndex].id}`)?.focus());
+        });
         const dot = document.createElement("span");
         dot.className = `term-dot ${terminal.status === "running" ? "" : "stopped"}`;
         const name = document.createElement("span");
@@ -774,6 +912,7 @@
         tabs.appendChild(tab);
       }
       if (terminalSessions.length === 0) {
+        document.getElementById("terminal-output-panel").removeAttribute("aria-labelledby");
         const empty = document.createElement("span");
         empty.className = "terminal-empty-label";
         empty.textContent = "无终端";
@@ -1066,8 +1205,10 @@
         return;
       }
       for (const entry of visible) {
-        const row = document.createElement("div");
+        const row = document.createElement("button");
+        row.type = "button";
         row.className = `file-entry ${entry.path === selectedFilePath ? "active" : ""}`;
+        if (entry.path === selectedFilePath) row.setAttribute("aria-current", "true");
         row.title = entry.path;
         const icon = document.createElement("span"); icon.textContent = entry.type === "directory" ? "📁" : fileIcon(entry.extension);
         const name = document.createElement("span"); name.className = "file-entry-name"; name.textContent = entry.name;
@@ -1581,12 +1722,14 @@
     }
 
     async function openSettings() {
-      document.getElementById("settings-modal").classList.add("visible");
+      const modal = document.getElementById("settings-modal");
+      showAccessibleDialog(modal, ".settings-close");
       showSettingsMessage("正在加载设置...");
       try {
         const state = await loadSettingsRuntimeState();
         if (!state) return;
         renderSettingsPreservingDirty();
+        document.querySelector(".settings-domain-tab.active")?.focus();
         showSettingsMessage(`配置文件: ${settingsState.configPath}`);
       } catch (err) {
         showSettingsMessage(err.message, "error");
@@ -1594,14 +1737,19 @@
     }
 
     function closeSettings() {
-      document.getElementById("settings-modal").classList.remove("visible");
+      hideAccessibleDialog(document.getElementById("settings-modal"));
     }
 
     function switchSettingsDomain(domainId) {
       if (!settingsState?.domainManifest?.some(domain => domain.id === domainId)) return;
       activeSettingsDomain = domainId;
       document.querySelectorAll("[data-settings-domain]").forEach(panel => { panel.hidden = panel.dataset.settingsDomain !== domainId; });
-      document.querySelectorAll(".settings-domain-tab").forEach(button => button.classList.toggle("active", button.dataset.domainId === domainId));
+      document.querySelectorAll(".settings-domain-tab").forEach(button => {
+        const selected = button.dataset.domainId === domainId;
+        button.classList.toggle("active", selected);
+        button.setAttribute("aria-selected", String(selected));
+        button.tabIndex = selected ? 0 : -1;
+      });
       const profilesVisible = domainId === "profiles";
       document.getElementById("settings-provider-list").hidden = !profilesVisible;
       document.querySelector(".settings-new-provider").hidden = !profilesVisible;
@@ -1613,8 +1761,30 @@
       for (const domain of settingsState.domainManifest || []) {
         const button = document.createElement("button");
         button.className = "settings-domain-tab";
+        button.id = `settings-tab-${domain.id}`;
         button.dataset.action = "select-settings-domain";
         button.dataset.domainId = domain.id;
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-controls", `settings-panel-${domain.id}`);
+        button.setAttribute("aria-selected", String(domain.id === activeSettingsDomain));
+        button.tabIndex = domain.id === activeSettingsDomain ? 0 : -1;
+        button.addEventListener("keydown", event => {
+          if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          const tabs = settingsState.domainManifest || [];
+          const index = tabs.findIndex(candidate => candidate.id === domain.id);
+          const delta = event.key === "ArrowUp" || event.key === "ArrowLeft" ? -1 : 1;
+          const targetIndex = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + delta + tabs.length) % tabs.length;
+          switchSettingsDomain(tabs[targetIndex].id);
+          document.getElementById(`settings-tab-${tabs[targetIndex].id}`)?.focus();
+        });
+        const panel = document.querySelector(`[data-settings-domain="${domain.id}"]`);
+        if (panel) {
+          panel.id = `settings-panel-${domain.id}`;
+          panel.setAttribute("role", "tabpanel");
+          panel.setAttribute("aria-labelledby", button.id);
+          panel.tabIndex = 0;
+        }
         const label = document.createElement("span"); label.textContent = domain.label;
         const state = document.createElement("span"); state.className = "domain-state";
         state.textContent = domain.available ? (domain.applyMode === "immediate" ? "即时" : "重启") : "待接入";
@@ -2115,7 +2285,10 @@
         return;
       }
       for (const session of data.sessions) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "session-row";
         const item = document.createElement("button");
+        item.type = "button";
         item.className = `session-item ${session.id === currentSessionId ? "active" : ""}`;
         item.dataset.action = "select-session";
         item.dataset.sessionId = session.id;
@@ -2133,15 +2306,16 @@
         badge.className = "session-badge";
         badge.textContent = String(sessionState.unread || 0);
         badge.hidden = !sessionState.unread;
-        const remove = document.createElement("span");
-        remove.className = "del";
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "session-delete";
         remove.dataset.action = "delete-session";
         remove.dataset.sessionId = session.id;
-        remove.setAttribute("role", "button");
-        remove.setAttribute("aria-label", "删除对话");
+        remove.setAttribute("aria-label", `删除对话 ${session.title}`);
         remove.textContent = "✕";
-        item.append(icon, name, status, badge, remove);
-        sessionListEl.appendChild(item);
+        item.append(icon, name, status, badge);
+        wrapper.append(item, remove);
+        sessionListEl.appendChild(wrapper);
       }
     }
     async function newChat() {
@@ -2444,14 +2618,14 @@
       historyNavIndex = -1;
       historyDraftBeforeNavigation = val;
       saveDraft(currentSessionId, val);
-      if (val.startsWith("/")) showSlashMenu(val.split(/\\s/)[0]); else slashMenu.classList.remove("visible");
+      if (val.startsWith("/")) showSlashMenu(val.split(/\\s/)[0]); else closeSlashMenu();
     });
     inputEl.addEventListener("keydown", (e) => {
       if (slashMenu.classList.contains("visible")) {
         if (e.key === "ArrowDown") { e.preventDefault(); slashSelectedIdx = Math.min(slashSelectedIdx + 1, slashMenu.children.length - 1); updateSlashSelection(); }
         else if (e.key === "ArrowUp") { e.preventDefault(); slashSelectedIdx = Math.max(slashSelectedIdx - 1, 0); updateSlashSelection(); }
-        else if (e.key === "Tab" || (e.key === "Enter" && slashMenu.children.length > 0)) { const item = slashMenu.children[slashSelectedIdx]; if (item) { e.preventDefault(); inputEl.value = item.dataset.cmd + " "; slashMenu.classList.remove("visible"); inputEl.focus(); } }
-        else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); slashMenu.classList.remove("visible"); }
+        else if (e.key === "Tab" || (e.key === "Enter" && slashMenu.children.length > 0)) { const item = slashMenu.children[slashSelectedIdx]; if (item) { e.preventDefault(); inputEl.value = item.dataset.cmd + " "; closeSlashMenu(); inputEl.focus(); } }
+        else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeSlashMenu(); }
       }
       if (e.key === "Enter" && !e.shiftKey && !slashMenu.classList.contains("visible")) { e.preventDefault(); formEl.requestSubmit(); }
     });
@@ -2474,7 +2648,14 @@
         e.preventDefault(); resizeMessageInput();
       }
     });
-    function updateSlashSelection() { slashMenu.querySelectorAll(".slash-item").forEach((el, i) => el.classList.toggle("selected", i === slashSelectedIdx)); }
+    function updateSlashSelection() {
+      slashMenu.querySelectorAll(".slash-item").forEach((el, i) => {
+        const selected = i === slashSelectedIdx;
+        el.classList.toggle("selected", selected);
+        el.setAttribute("aria-selected", String(selected));
+      });
+      inputEl.setAttribute("aria-activedescendant", `slash-option-${slashSelectedIdx}`);
+    }
 
     formEl.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -2482,15 +2663,25 @@
       const readyAttachments = attachmentDrafts.filter(attachment => attachment.state === "ready");
       if ((!text && readyAttachments.length === 0) || isSessionRunning()) return;
       if (attachmentDrafts.some(attachment => attachment.state === "uploading")) { addSystemMessage("⚠️ 请等待附件上传完成或取消上传"); return; }
-      if (text.startsWith("/") && readyAttachments.length === 0) { const handled = handleSlashCommand(text); if (handled) { inputEl.value = ""; inputEl.rows = 1; slashMenu.classList.remove("visible"); return; } }
+      if (text.startsWith("/") && readyAttachments.length === 0) { const handled = handleSlashCommand(text); if (handled) { inputEl.value = ""; inputEl.rows = 1; closeSlashMenu(); return; } }
       if (!currentSessionId) await newChat();
       const chatSessionId = currentSessionId;
       if (!chatSessionId || isSessionRunning(chatSessionId)) return;
       const runToken = beginSessionRun(chatSessionId);
-      addMessage("user", text, null, readyAttachments); inputEl.value = ""; inputEl.rows = 1; slashMenu.classList.remove("visible");
+      addMessage("user", text, null, readyAttachments); inputEl.value = ""; inputEl.rows = 1; closeSlashMenu();
       historyNavIndex = -1; historyDraftBeforeNavigation = ""; saveDraft(chatSessionId, ""); pushSessionHistory(chatSessionId, text);
       const assistantEl = addMessage("assistant", ""); const bubbleEl = assistantEl.querySelector(".bubble");
       runToken.bubble = bubbleEl;
+      bubbleEl.setAttribute("aria-live", "off");
+      bubbleEl.setAttribute("aria-busy", "true");
+      responseAnnouncerEl.textContent = "";
+      let responseAnnouncementCompleted = false;
+      const completeAccessibleResponse = text => {
+        if (responseAnnouncementCompleted) return;
+        responseAnnouncementCompleted = true;
+        bubbleEl.setAttribute("aria-busy", "false");
+        queueMicrotask(() => { responseAnnouncerEl.textContent = text || "回复完成"; });
+      };
       bubbleEl.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
       let streamingStarted = false; let fullText = "";
       try {
@@ -2500,7 +2691,7 @@
           body: JSON.stringify({ sessionId: chatSessionId, message: text, attachmentIds: readyAttachments.map(attachment => attachment.id) }),
           signal: runToken.controller.signal,
         });
-        if (!response.ok) { const err = await response.json(); bubbleEl.innerHTML = ""; bubbleEl.textContent = "⚠️ " + (err.error || "请求失败"); return; }
+        if (!response.ok) { const err = await response.json(); bubbleEl.innerHTML = ""; bubbleEl.textContent = "⚠️ " + (err.error || "请求失败"); completeAccessibleResponse(bubbleEl.textContent); return; }
         const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
         while (true) {
           const { done, value } = await reader.read(); if (done) break;
@@ -2530,16 +2721,17 @@
             else if (step.type === "tool_call") { if (!streamingStarted) bubbleEl.innerHTML = ""; addToolCard(bubbleEl, step); }
             else if (step.type === "tool_result") updateLastToolCard(bubbleEl, step);
             else if (step.type === "task_created" || step.type === "task_update") { if (step.tasks && step.tasks.length > 0) renderTasks(step.tasks); }
-            else if (step.type === "answer_done") { if (!streamingStarted && step.content) { bubbleEl.innerHTML = ""; fullText = step.content; bubbleEl.innerHTML = renderMarkdown(fullText); } else if (!streamingStarted && !step.content) { bubbleEl.innerHTML = ""; bubbleEl.textContent = "(无回复)"; } if (fullText) { speakText(fullText.slice(0, 200)); enhanceLocalFileLinks(bubbleEl, fullText); } }
-            else if (step.type === "run_cancelled") { bubbleEl.innerHTML = ""; bubbleEl.textContent = "已中断"; }
-            else if (step.type === "error") { bubbleEl.innerHTML = ""; bubbleEl.textContent = "⚠️ " + step.content; }
+            else if (step.type === "answer_done") { if (!streamingStarted && step.content) { bubbleEl.innerHTML = ""; fullText = step.content; bubbleEl.innerHTML = renderMarkdown(fullText); } else if (!streamingStarted && !step.content) { bubbleEl.innerHTML = ""; bubbleEl.textContent = "(无回复)"; } if (fullText) { speakText(fullText.slice(0, 200)); enhanceLocalFileLinks(bubbleEl, fullText); } completeAccessibleResponse(fullText || bubbleEl.textContent); }
+            else if (step.type === "run_cancelled") { bubbleEl.innerHTML = ""; bubbleEl.textContent = "已中断"; completeAccessibleResponse(bubbleEl.textContent); }
+            else if (step.type === "error") { bubbleEl.innerHTML = ""; bubbleEl.textContent = "⚠️ " + step.content; completeAccessibleResponse(bubbleEl.textContent); }
           }
         }
       } catch (err) {
         bubbleEl.innerHTML = "";
         bubbleEl.textContent = runToken.controller.signal.aborted || err?.name === "AbortError" ? "已中断" : "⚠️ 连接错误: " + err.message;
+        completeAccessibleResponse(bubbleEl.textContent);
       }
-      finally { finishSessionRun(chatSessionId, runToken); if (currentSessionId === chatSessionId) inputEl.focus(); }
+      finally { completeAccessibleResponse(bubbleEl.textContent); finishSessionRun(chatSessionId, runToken); if (currentSessionId === chatSessionId) inputEl.focus(); }
       await loadSessions(); await loadPins(); await loadPersonas(); if (currentSessionId === chatSessionId) { await loadAttachmentDrafts(chatSessionId); await loadSessionSubagents(chatSessionId); }
       if (currentSessionId) { const sres = await fetch(`/api/sessions/${currentSessionId}/messages`, { headers: sessionHeaders(currentSessionId) }); const sdata = await sres.json(); if (sdata.session) currentTitleEl.textContent = sdata.session.title; }
       messagesEl.scrollTop = messagesEl.scrollHeight; updateStatus();
@@ -2771,7 +2963,7 @@
       }
       asrPreferences = nextAsr;
       const ttsButton = document.getElementById("tts-toggle");
-      if (ttsButton) { ttsButton.textContent = ttsEnabled ? "🔊" : "🔇"; ttsButton.title = ttsEnabled ? "语音播报已开启" : "语音播报已关闭"; }
+      if (ttsButton) { ttsButton.textContent = ttsEnabled ? "🔊" : "🔇"; ttsButton.title = ttsEnabled ? "语音播报已开启" : "语音播报已关闭"; ttsButton.setAttribute("aria-pressed", String(ttsEnabled)); }
     }
 
     function toggleTTS() {
@@ -2779,6 +2971,7 @@
       const btn = document.getElementById("tts-toggle");
       btn.textContent = ttsEnabled ? "🔊" : "🔇";
       btn.title = ttsEnabled ? "语音播报已开启" : "语音播报已关闭";
+      btn.setAttribute("aria-pressed", String(ttsEnabled));
       if (!ttsEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
     }
 
@@ -2870,7 +3063,7 @@
       const optsEl = document.getElementById("ask-options");
       const question = currentSessionId ? questionsBySession.get(currentSessionId) : null;
       if (!question) {
-        modal.classList.remove("visible");
+        hideAccessibleDialog(modal);
         document.getElementById("ask-question-text").textContent = "";
         document.getElementById("ask-input").value = "";
         optsEl.replaceChildren();
@@ -2879,22 +3072,22 @@
       document.getElementById("ask-question-text").textContent = question.question;
       optsEl.replaceChildren();
       for (const option of question.options) {
-        const btn = document.createElement("div");
+        const btn = document.createElement("button");
+        btn.type = "button";
         btn.className = "ask-option";
         btn.textContent = option;
         btn.addEventListener("click", () => { document.getElementById("ask-input").value = option; submitAskAnswer(); });
         optsEl.appendChild(btn);
       }
       document.getElementById("ask-input").value = "";
-      modal.classList.add("visible");
-      document.getElementById("ask-input").focus();
+      showAccessibleDialog(modal, "#ask-input");
     }
     async function submitAskAnswer() {
       const answer = document.getElementById("ask-input").value.trim();
       const answerSessionId = currentSessionId;
       const question = answerSessionId ? questionsBySession.get(answerSessionId) : null;
       if (!answer || !question || question.sessionId !== answerSessionId) return;
-      document.getElementById("ask-modal").classList.remove("visible");
+      hideAccessibleDialog(document.getElementById("ask-modal"));
       const response = await fetch("/api/ask-user/answer", {
         method: "POST",
         headers: sessionHeaders(answerSessionId, true),
@@ -3091,9 +3284,11 @@
       else if (action === "splitVertical" && pane) await splitWorkbenchPane(pane.id, "vertical");
     }
     function handleGlobalShortcut(event) {
+      if (trapActiveDialogFocus(event)) return;
       const target = shortcutTargetElement(event);
-      const settingsVisible = document.getElementById("settings-modal").classList.contains("visible");
-      if (event.key === "Escape" && settingsVisible) {
+      const settingsModal = document.getElementById("settings-modal");
+      const settingsVisible = settingsModal.classList.contains("visible");
+      if (event.key === "Escape" && dialogStack.at(-1) === settingsModal) {
         event.preventDefault();
         closeSettings();
         return;
@@ -3138,4 +3333,5 @@
       removeDesktopNotificationClick?.();
     }, { once: true });
 
+    installAccessibleNames();
     init();

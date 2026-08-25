@@ -120,7 +120,10 @@
     "test:ds08": "node scripts/run-tests.mjs --task DS-08 --profile full",
     "governance:ds09:generate": "node scripts/generate-ds09-resolved-manifest.mjs",
     "governance:ds09:check": "node scripts/generate-ds09-resolved-manifest.mjs --check",
-    "test:ds09": "node scripts/run-tests.mjs --task DS-09 --profile full"
+    "test:ds09": "node scripts/run-tests.mjs --task DS-09 --profile full",
+    "governance:ds10:generate": "node scripts/generate-ds10-resolved-manifest.mjs",
+    "governance:ds10:check": "node scripts/generate-ds10-resolved-manifest.mjs --check",
+    "test:ds10": "node scripts/run-tests.mjs --task DS-10 --profile full"
   },
   "dependencies": {
     "@xenova/transformers": "^2.17.2",
@@ -146,6 +149,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.0",
+    "axe-core": "4.10.3",
     "c8": "10.1.3",
     "electron": "43.1.1",
     "electron-builder": "26.15.3",

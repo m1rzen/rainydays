@@ -25,6 +25,15 @@ function expectedUi(buildInfo) {
   return `v${buildInfo.appVersion}${shortBuild ? ` · ${shortBuild}` : ""}`;
 }
 
+async function installAxe(client) {
+  const source = await readFile(path.join(projectRoot, "node_modules", "axe-core", "axe.min.js"), "utf8");
+  await client.evaluate(`${source}\n;typeof axe==='object'`, 30_000);
+}
+
+async function wcag21AaViolations(client) {
+  return client.evaluate(`axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']},resultTypes:['violations']}).then(result=>result.violations.map(item=>({id:item.id,impact:item.impact,nodes:item.nodes.map(node=>({target:node.target,html:node.html,failureSummary:node.failureSummary}))})))`, 30_000);
+}
+
 async function startElectron(userData, httpPort, cdpPort, signal) {
   // Keep all three runtime roots distinct and fixture-local. Inheriting the host default
   // department root (for example an unavailable network drive) makes this smoke nondeterministic.
@@ -1049,6 +1058,165 @@ test("DS-09 real Electron renders typed Settings and hot-applies TTS without sec
     await client.evaluate("closeSettings(); openSettings()");
     await waitFor(async () => client.evaluate("settingsState?.domains?.tts?.voice==='Electron Fixture Voice'"), { timeoutMs: 10_000, label: "DS-09 Settings reopen" });
     assert.equal(await client.evaluate("document.getElementById('setting-tts-voice').value"), "Electron Fixture Voice");
+    client.close(); client = null;
+    await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    client?.close();
+    if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture);
+  }
+  assert.equal(await pathExists(fixture), false);
+});
+
+test("DS-10 real Electron passes axe, keyboard focus, reflow and accessibility media gates", { timeout: 120_000 }, async (context) => {
+  const fixture = await makeTempDir("mini-lux-ds10-electron-");
+  const userData = path.join(fixture, "user-data");
+  const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
+  let instance;
+  let client;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal);
+    client = await connectCdp(cdpPort);
+    await probeIdentity(client, buildInfo, httpPort);
+    await installAxe(client);
+    const violations = [];
+    violations.push(...(await wcag21AaViolations(client)).map(item => ({ surface: "workbench", ...item })));
+    await client.send("Accessibility.enable");
+    const workbenchAxTree = await client.send("Accessibility.getFullAXTree");
+    assert(workbenchAxTree.nodes.some(node => !node.ignored && node.role?.value === "combobox" && node.name?.value === "消息"));
+    await client.evaluate("document.querySelector('.new-chat-btn').focus();openSettings()");
+    await waitFor(() => client.evaluate("document.querySelectorAll('.settings-domain-tab').length===11"), { timeoutMs: 10_000, label: "DS-10 Settings tabs" });
+    const domains = await client.evaluate("settingsState.domainManifest.map(domain=>domain.id)");
+    for (const domainId of domains) {
+      await client.evaluate(`switchSettingsDomain(${JSON.stringify(domainId)});true`);
+      violations.push(...(await wcag21AaViolations(client)).map(item => ({ surface: `settings:${domainId}`, ...item })));
+    }
+    assert.deepEqual(violations, []);
+    const settingsAxTree = await client.send("Accessibility.getFullAXTree");
+    const settingsAx = settingsAxTree.nodes.filter(node => !node.ignored).map(node => ({ role: node.role?.value, name: node.name?.value || "" }));
+    assert(settingsAx.some(node => node.role === "dialog" && node.name.includes("RainyDays Settings")), JSON.stringify(settingsAx));
+    const expectedSettingsTabs = ["Common", "Profiles", "MCP", "Wire", "Animas", "Nous", "TTS", "ASR", "Shell", "Relay", "Update"];
+    assert(expectedSettingsTabs.every(label => settingsAx.some(node => node.role === "tab" && node.name.startsWith(label))), JSON.stringify(settingsAx));
+
+    const focusTrap = await client.evaluate(`(()=>{
+      const modal=document.getElementById('settings-modal');
+      const items=visibleFocusableElements(modal);
+      items.at(-1).focus();
+      return {before:document.activeElement===items.at(-1),count:items.length};
+    })()`);
+    assert.equal(focusTrap.before, true);
+    assert(focusTrap.count > 2);
+    await client.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9, nativeVirtualKeyCode: 9 });
+    await client.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9, nativeVirtualKeyCode: 9 });
+    assert.equal(await client.evaluate("document.activeElement===visibleFocusableElements(document.getElementById('settings-modal'))[0]"), true);
+    await client.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", modifiers: 8, windowsVirtualKeyCode: 9, nativeVirtualKeyCode: 9 });
+    await client.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", modifiers: 8, windowsVirtualKeyCode: 9, nativeVirtualKeyCode: 9 });
+    assert.equal(await client.evaluate("document.activeElement===visibleFocusableElements(document.getElementById('settings-modal')).at(-1)"), true);
+    await client.evaluate("document.querySelector('.settings-domain-tab.active').focus();true");
+    const previousDomain = await client.evaluate("activeSettingsDomain");
+    await client.send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40, nativeVirtualKeyCode: 40 });
+    await client.send("Input.dispatchKeyEvent", { type: "keyUp", key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40, nativeVirtualKeyCode: 40 });
+    assert.equal(await client.evaluate(`activeSettingsDomain!==${JSON.stringify(previousDomain)} && document.activeElement===document.querySelector('.settings-domain-tab.active')`), true);
+    await client.evaluate("closeSettings()");
+    await delay(50);
+    const settingsRestore = await client.evaluate(`({
+      activeTag:document.activeElement?.tagName,
+      activeClass:document.activeElement?.className,
+      newChatFocused:document.activeElement===document.querySelector('.new-chat-btn'),
+      newChatInert:Boolean(document.querySelector('.new-chat-btn').closest('[inert]')),
+      stack:dialogStack.map(modal=>modal.id),
+      settingsHidden:document.getElementById('settings-modal').getAttribute('aria-hidden'),
+    })`);
+    assert.equal(settingsRestore.newChatFocused, true, JSON.stringify(settingsRestore));
+
+    const beforeSessions = await client.evaluate("knownSessions.length");
+    await client.evaluate("document.querySelector('.new-chat-btn').focus();true");
+    await client.send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: " ", code: "Space", text: " ", windowsVirtualKeyCode: 32, nativeVirtualKeyCode: 32 });
+    await client.send("Input.dispatchKeyEvent", { type: "keyUp", key: " ", code: "Space", windowsVirtualKeyCode: 32, nativeVirtualKeyCode: 32 });
+    await waitFor(() => client.evaluate(`knownSessions.length>${beforeSessions}`), { timeoutMs: 10_000, label: "DS-10 keyboard new Session" });
+
+    const installQuestion = `(()=>{
+      questionsBySession.set(currentSessionId,Object.freeze({sessionId:currentSessionId,runId:'ds10-run',questionId:'ds10-question',question:'Accessible question',options:Object.freeze(['First','Second'])}));
+      refreshQuestionForCurrentSession();
+      return true;
+    })()`;
+    await client.evaluate("document.querySelector('.new-chat-btn').focus();openSettings()");
+    await client.evaluate(installQuestion);
+    await waitFor(() => client.evaluate("dialogStack.length===2 && dialogStack.at(-1).id==='ask-modal'"), { timeoutMs: 5_000, label: "DS-10 nested Settings ask dialog" });
+    assert.deepEqual(await wcag21AaViolations(client), []);
+    assert.equal(await client.evaluate("document.activeElement===document.getElementById('ask-input') && document.getElementById('settings-modal').inert"), true);
+    const askAxTree = await client.send("Accessibility.getFullAXTree");
+    assert(askAxTree.nodes.some(node => !node.ignored && node.role?.value === "dialog" && String(node.name?.value).includes("Agent 需要你的回答")));
+    await client.send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+    await client.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+    assert.equal(await client.evaluate("document.getElementById('settings-modal').classList.contains('visible') && document.getElementById('ask-modal').classList.contains('visible')"), true);
+    await client.evaluate("closeSettings();true");
+    assert.equal(await client.evaluate("dialogStack.length===1 && dialogStack[0].id==='ask-modal' && document.activeElement===document.getElementById('ask-input')"), true);
+    await client.evaluate("questionsBySession.delete(currentSessionId);refreshQuestionForCurrentSession();true");
+    await waitFor(() => client.evaluate("dialogStack.length===0 && document.activeElement===document.querySelector('.new-chat-btn')"), { timeoutMs: 5_000, label: "DS-10 non-top dialog focus rebase" });
+
+    await client.evaluate("document.querySelector('.new-chat-btn').focus();true");
+    await client.evaluate(installQuestion);
+    await client.evaluate("openSettings()");
+    await waitFor(() => client.evaluate("dialogStack.length===2 && dialogStack.at(-1).id==='settings-modal'"), { timeoutMs: 5_000, label: "DS-10 reverse nested dialogs" });
+    await client.evaluate("questionsBySession.delete(currentSessionId);refreshQuestionForCurrentSession();true");
+    assert.equal(await client.evaluate("dialogStack.length===1 && dialogStack[0].id==='settings-modal' && document.activeElement.closest('#settings-modal')!==null"), true);
+    await client.evaluate("closeSettings()");
+    await waitFor(() => client.evaluate("dialogStack.length===0 && document.activeElement===document.querySelector('.new-chat-btn')"), { timeoutMs: 5_000, label: "DS-10 reverse nested focus restore" });
+
+    for (const width of [640, 320]) {
+      await client.send("Emulation.setDeviceMetricsOverride", { width, height: 720, deviceScaleFactor: 1, mobile: false });
+      await delay(50);
+      const reflow = await client.evaluate(`(()=>{
+        const sidebar=document.getElementById('sidebar').getBoundingClientRect();
+        const main=document.getElementById('main').getBoundingClientRect();
+        const input=document.getElementById('input').getBoundingClientRect();
+        return {innerWidth,scrollWidth:document.documentElement.scrollWidth,sidebarRight:sidebar.right,mainLeft:main.left,mainRight:main.right,inputWidth:input.width};
+      })()`);
+      assert(reflow.scrollWidth <= reflow.innerWidth + 1, JSON.stringify(reflow));
+      assert(reflow.mainRight <= reflow.innerWidth + 1, JSON.stringify(reflow));
+      assert(reflow.mainLeft >= reflow.sidebarRight - 1, JSON.stringify(reflow));
+      assert(reflow.inputWidth >= 40, JSON.stringify(reflow));
+    }
+    await client.send("Emulation.setDeviceMetricsOverride", { width: 320, height: 720, deviceScaleFactor: 1, mobile: false });
+    await client.evaluate("openSettings()");
+    const settingsReflow = await client.evaluate(`(()=>{
+      const panel=document.getElementById('settings-panel');const rect=panel.getBoundingClientRect();
+      return {left:rect.left,right:rect.right,bottom:rect.bottom,innerWidth,innerHeight,scrollWidth:panel.scrollWidth,clientWidth:panel.clientWidth};
+    })()`);
+    assert(settingsReflow.left >= 0 && settingsReflow.right <= settingsReflow.innerWidth + 1 && settingsReflow.bottom <= settingsReflow.innerHeight + 1, JSON.stringify(settingsReflow));
+    assert(settingsReflow.scrollWidth <= settingsReflow.clientWidth + 1, JSON.stringify(settingsReflow));
+    await client.evaluate("closeSettings()");
+    await client.evaluate("toggleFileViewer(true)", 30_000);
+    const fileReflow = await client.evaluate(`(()=>{const view=document.getElementById('file-viewer');const rect=view.getBoundingClientRect();return {kind:activeWorkbenchTab()?.kind,left:rect.left,right:rect.right,innerWidth,scrollWidth:view.scrollWidth,clientWidth:view.clientWidth};})()`);
+    assert.equal(fileReflow.kind, "file");
+    assert(fileReflow.left >= 0 && fileReflow.right <= fileReflow.innerWidth + 1 && fileReflow.scrollWidth <= fileReflow.clientWidth + 1, JSON.stringify(fileReflow));
+    await client.evaluate("toggleTerminal(true)", 30_000);
+    const terminalReflow = await client.evaluate(`(()=>{const view=document.getElementById('terminal-panel');const rect=view.getBoundingClientRect();return {kind:activeWorkbenchTab()?.kind,left:rect.left,right:rect.right,innerWidth,scrollWidth:view.scrollWidth,clientWidth:view.clientWidth};})()`);
+    assert.equal(terminalReflow.kind, "terminal");
+    assert(terminalReflow.left >= 0 && terminalReflow.right <= terminalReflow.innerWidth + 1 && terminalReflow.scrollWidth <= terminalReflow.clientWidth + 1, JSON.stringify(terminalReflow));
+
+    await client.send("Emulation.setEmulatedMedia", { features: [
+      { name: "prefers-reduced-motion", value: "reduce" },
+      { name: "forced-colors", value: "active" },
+    ] });
+    const media = await client.evaluate(`(()=>{
+      const probe=document.createElement('div');probe.className='msg';document.body.appendChild(probe);
+      const animation=getComputedStyle(probe).animationDuration;probe.remove();
+      return {
+        reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,
+        forced:matchMedia('(forced-colors: active)').matches,
+        animation,
+        buttonBorder:getComputedStyle(document.querySelector('.new-chat-btn')).borderTopStyle,
+        selectedOutline:getComputedStyle(document.querySelector('.workbench-tab.active')).outlineStyle,
+      };
+    })()`);
+    assert.equal(media.reduced, true);
+    assert.equal(media.forced, true);
+    assert.match(media.animation, /^(?:0\.00001s|1e-05s|0\.01ms)$/u);
+    assert.equal(media.buttonBorder, "solid");
+    assert.equal(media.selectedOutline, "solid");
     client.close(); client = null;
     await stopElectron(instance, httpPort, cdpPort); instance = null;
   } finally {

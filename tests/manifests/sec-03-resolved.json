@@ -466,7 +466,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "1807a873e11d3eac331677a9fd0d111b75a4fc0b0eb5948591cb1edb24fa5087",
+      "sha256": "50ffc384210a4e26c8ef330951829a73df512f0346197b6aad5da37c97578c1b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -497,7 +497,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "074a38cd849ade07e9098a76a73da77235dac65580b8bf225e1a5701b548079e",
+      "sha256": "9da9d490eb33eb82ddd2d92afb45c87829a53e11cc68c8973a7cc232d1ccc5e7",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -506,7 +506,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "c955de1daae1bd9ba1e4e923930ef520db365db4cb4a25aaf281270db83e2171",
+      "sha256": "4ad357b7ab81e7fcb5b811fba3d80017402b710a7b05ed3931f24eadd91b0037",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -723,7 +723,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "a075a1495e201ff2623692e53b162acc97cc36c7758c4d5a756a61db3ffa90fd",
+      "sha256": "ed1e5dd288b5ada95a0f74f0052cb2581fa191acd0f3e00b3fa9f61e9e228d9b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -736,7 +736,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "4da684c15d9a45ddca754ebe26fe8967d2bcc43263644a8ea5b79c802631a183",
+      "sha256": "2f24dd214d40ddf698ee1da7b6b10454d3586676b225d5cf5caeb54a9b12e5f8",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -749,7 +749,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "b964fa1ee649da0d8637f0ccb314cbac6ae4589559c4f68524c97781d67ff3fc",
+      "sha256": "52201ca9c849337eb04171b9bbaf8de93329d5536dc8cc8d88dbe182234b58d5",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -762,7 +762,7 @@
     },
     {
       "exactCasePath": "package-lock.json",
-      "sha256": "36f621410cfe4acb3d993d87cb4c1317d98e4d955db57c245722ccd7a2b11788",
+      "sha256": "70926481889d2a2b1098acbaaaa0a96db0c2b0f6e653324170a6622967c80740",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -886,7 +886,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "00ca7a6fcc24e0530e666a36cfedc2a4041fcc09ca6ab111535d7a2541476f5b",
+      "sha256": "a21dbf2f7b1d1c6ff4a2ef2246aff38689f700f648d2f8d783cfbc40d967d593",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -1123,7 +1123,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "1813281f24b711b90d74ce588c76e243a57ef15bcd73402be73345b7d3695529",
+      "sha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-03",
@@ -1135,6 +1135,7 @@
         "DS-06 real Electron edits, sandboxes, refreshes and streams File Tabs offline",
         "DS-07 real Electron prioritizes editing, history, Escape and Workbench shortcuts",
         "DS-09 real Electron renders typed Settings and hot-applies TTS without secret disclosure",
+        "DS-10 real Electron passes axe, keyboard focus, reflow and accessibility media gates",
         "SEC-03 Electron stage emits all 48 authenticated projection receipts"
       ],
       "supersedes": {
@@ -1252,7 +1253,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "1813281f24b711b90d74ce588c76e243a57ef15bcd73402be73345b7d3695529",
+      "sha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-03",
@@ -1264,6 +1265,7 @@
         "DS-06 real Electron edits, sandboxes, refreshes and streams File Tabs offline",
         "DS-07 real Electron prioritizes editing, history, Escape and Workbench shortcuts",
         "DS-09 real Electron renders typed Settings and hot-applies TTS without secret disclosure",
+        "DS-10 real Electron passes axe, keyboard focus, reflow and accessibility media gates",
         "SEC-03 Electron stage emits all 48 authenticated projection receipts"
       ],
       "supersedes": {
@@ -2438,7 +2440,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "1807a873e11d3eac331677a9fd0d111b75a4fc0b0eb5948591cb1edb24fa5087",
+      "sha256": "50ffc384210a4e26c8ef330951829a73df512f0346197b6aad5da37c97578c1b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2469,7 +2471,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "074a38cd849ade07e9098a76a73da77235dac65580b8bf225e1a5701b548079e",
+      "sha256": "9da9d490eb33eb82ddd2d92afb45c87829a53e11cc68c8973a7cc232d1ccc5e7",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2478,7 +2480,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "c955de1daae1bd9ba1e4e923930ef520db365db4cb4a25aaf281270db83e2171",
+      "sha256": "4ad357b7ab81e7fcb5b811fba3d80017402b710a7b05ed3931f24eadd91b0037",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2695,7 +2697,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "a075a1495e201ff2623692e53b162acc97cc36c7758c4d5a756a61db3ffa90fd",
+      "sha256": "ed1e5dd288b5ada95a0f74f0052cb2581fa191acd0f3e00b3fa9f61e9e228d9b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2708,7 +2710,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "4da684c15d9a45ddca754ebe26fe8967d2bcc43263644a8ea5b79c802631a183",
+      "sha256": "2f24dd214d40ddf698ee1da7b6b10454d3586676b225d5cf5caeb54a9b12e5f8",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2721,7 +2723,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "b964fa1ee649da0d8637f0ccb314cbac6ae4589559c4f68524c97781d67ff3fc",
+      "sha256": "52201ca9c849337eb04171b9bbaf8de93329d5536dc8cc8d88dbe182234b58d5",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2734,7 +2736,7 @@
     },
     {
       "exactCasePath": "package-lock.json",
-      "sha256": "36f621410cfe4acb3d993d87cb4c1317d98e4d955db57c245722ccd7a2b11788",
+      "sha256": "70926481889d2a2b1098acbaaaa0a96db0c2b0f6e653324170a6622967c80740",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2858,7 +2860,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "00ca7a6fcc24e0530e666a36cfedc2a4041fcc09ca6ab111535d7a2541476f5b",
+      "sha256": "a21dbf2f7b1d1c6ff4a2ef2246aff38689f700f648d2f8d783cfbc40d967d593",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -3807,5 +3809,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "3f1962a9d888daf1971f91821747c88f501fdbf1e0e8bed06fa02a53f863682e"
+  "canonicalPayloadSha256": "7ba83c1850c767b01a407f6c00c0b4539e96051e7ca0e8f5ad2d23edd2cf2999"
 }

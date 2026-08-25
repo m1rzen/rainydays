@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "441bae01f07bddc9085bfcfbe4a72c06c05671519ab7885216ba52c005cae11c",
+      "sha256": "64c83f779865c2b6705ad49efd8987f9dc1e2f2225d93daf267a7fe2ce6a5fa2",
       "owner": "RT-04"
     },
     {
@@ -436,7 +436,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "1813281f24b711b90d74ce588c76e243a57ef15bcd73402be73345b7d3695529",
+      "sha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3",
       "kind": "test",
       "layer": "electron",
       "owner": "RT-04"
@@ -449,5 +449,5 @@
       "owner": "RT-04"
     }
   ],
-  "canonicalPayloadSha256": "474715ebe1bed544ccac8d984cf0e32829c6d4426a5228298d188b63bb9db4e9"
+  "canonicalPayloadSha256": "1f96ee23ed7793ddca52bc447d31a09bc8e51d3f91b46f1b518efe9551e328d3"
 }

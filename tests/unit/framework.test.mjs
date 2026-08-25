@@ -259,6 +259,8 @@ test("coverage scope is explicit and changed runtime files are governed", async 
     { sourceTask: "DS-09", exactCasePath: "tests/unit/settings-schema.test.mjs" },
     { sourceTask: "DS-09", exactCasePath: "tests/unit/ds09-renderer-contract.test.mjs" },
     { sourceTask: "DS-09", exactCasePath: "tests/integration/ds09-settings-api.test.mjs" },
+    { sourceTask: "DS-10", exactCasePath: "tests/contract/ds10-governance.test.mjs" },
+    { sourceTask: "DS-10", exactCasePath: "tests/unit/ds10-accessibility-contract.test.mjs" },
     { sourceTask: "EVT-01", exactCasePath: "tests/contract/evt01-governance.test.mjs" },
     { sourceTask: "EVT-01", exactCasePath: "tests/unit/event-bus.test.mjs" },
     { sourceTask: "EVT-01", exactCasePath: "tests/integration/evt01-event-persistence.test.mjs" },

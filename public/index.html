@@ -15,10 +15,10 @@
     <div class="sidebar-header">
       <span class="dot"></span>
       <span class="title">RainyDays</span>
-      <span class="ver" id="app-version" role="button" tabindex="0" title="下载诊断信息" data-action="download-diagnostics">v--</span>
+      <button class="ver" id="app-version" type="button" aria-label="下载诊断信息" title="下载诊断信息" data-action="download-diagnostics">v--</button>
     </div>
     <button class="new-chat-btn" data-action="new-chat">＋ 新建对话</button>
-    <div id="search-area"><input id="search-input" placeholder="🔍 搜索对话..."></input></div>
+    <div id="search-area"><label class="sr-only" for="search-input">搜索对话</label><input id="search-input" type="search" placeholder="🔍 搜索对话..." /></div>
     <div id="session-list"><div class="empty-sessions">还没有对话<br>点击上方开始</div></div>
     <div id="search-results" hidden></div>
     <div id="pin-area"></div>
@@ -26,10 +26,10 @@
 
   <div id="main">
     <header>
-      <div id="current-title">未选择对话</div>
+      <div id="current-title" role="heading" aria-level="1">未选择对话</div>
       <div class="header-right">
         <div class="persona-selector">
-          <label>模式:</label>
+          <label for="persona-select">模式:</label>
           <select id="persona-select" data-action="switch-persona" data-event="change"><option value="">加载中...</option></select>
         </div>
         <button class="btn-icon" data-action="toggle-file-viewer" title="文件查看器">📁</button>
@@ -47,23 +47,24 @@
     <div id="workbench-staging" hidden>
       <section id="chat-view" class="workbench-view" aria-label="会话">
         <div id="task-panel">
-          <div id="task-panel-header"><span>📋 任务进度</span><span id="task-progress-text"></span></div>
+          <div id="task-panel-header"><span>📋 任务进度</span><span id="task-progress-text" role="status" aria-live="polite"></span></div>
           <div id="task-list"></div>
         </div>
         <div id="subagent-panel">
-          <div id="subagent-panel-header"><span>🤖 后台 Subagent</span><span id="subagent-progress-text"></span></div>
+          <div id="subagent-panel-header"><span>🤖 后台 Subagent</span><span id="subagent-progress-text" role="status" aria-live="polite"></span></div>
           <div id="subagent-list"></div>
         </div>
-        <div id="messages">
+        <div id="messages" role="log" aria-live="polite" aria-relevant="additions" aria-label="对话消息">
           <div class="msg msg-assistant"><div class="bubble">👋 你好！我是 RainyDays。点击左侧「新建对话」开始。输入 <code>/</code> 查看可用命令。</div></div>
         </div>
-        <div id="slash-menu"></div>
+        <div id="response-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+        <div id="slash-menu" role="listbox" aria-label="斜杠命令建议"></div>
         <div id="input-area">
           <div id="attachment-draft-list" aria-live="polite"></div>
           <form id="input-form" autocomplete="off">
             <button type="button" class="attachment-btn" title="添加附件 (Alt+V)" data-action="choose-attachments">＋</button>
             <button type="button" class="voice-btn" id="mic-btn" title="语音输入" data-action="toggle-asr">🎙</button>
-            <textarea id="input" rows="1" placeholder="输入消息；Ctrl+V 粘贴图片，Alt+V 添加文件..." autofocus></textarea>
+            <label class="sr-only" for="input">消息</label><textarea id="input" rows="1" role="combobox" aria-haspopup="listbox" aria-controls="slash-menu" aria-autocomplete="list" aria-expanded="false" placeholder="输入消息；Ctrl+V 粘贴图片，Alt+V 添加文件..." autofocus></textarea>
             <button type="submit" id="submit">发送</button>
           </form>
           <input id="attachment-file-input" class="hidden-control" type="file" multiple accept="image/png,text/plain,text/markdown,text/csv,application/json,.md,.markdown,.json,.csv,.txt">
@@ -71,45 +72,45 @@
       </section>
       <div id="terminal-panel" class="workbench-view" aria-label="终端">
         <div class="terminal-toolbar">
-          <div id="terminal-tabs"></div>
-          <select id="terminal-shell-select" class="terminal-tool-btn" title="新终端 Shell"><option value="cmd">cmd</option><option value="powershell">PowerShell</option></select>
+          <div id="terminal-tabs" role="tablist" aria-label="终端会话"></div>
+          <select id="terminal-shell-select" class="terminal-tool-btn" aria-label="新终端 Shell" title="新终端 Shell"><option value="cmd">cmd</option><option value="powershell">PowerShell</option></select>
           <button class="terminal-tool-btn" data-action="create-terminal" title="新建终端">＋</button>
           <button class="terminal-tool-btn" data-action="clear-terminal" title="清屏">清屏</button>
           <button class="terminal-tool-btn danger" data-action="kill-terminal" title="终止进程树">停止</button>
           <button class="terminal-tool-btn danger" data-action="close-terminal" title="关闭终端">关闭</button>
           <button class="terminal-tool-btn" data-action="toggle-terminal" title="关闭终端标签">✕</button>
         </div>
-        <div id="terminal-screen" role="application" aria-label="交互式 PTY 终端"><div id="terminal-empty">点击 ＋ 创建持久终端</div></div>
+        <div id="terminal-output-panel" role="tabpanel" tabindex="0"><div id="terminal-screen" role="application" aria-label="交互式 PTY 终端"><div id="terminal-empty">点击 ＋ 创建持久终端</div></div></div>
       </div>
     </div>
     <div id="status-bar">
       <div class="status-left">
-        <div class="status-item"><span class="status-dot" id="status-dot"></span><span id="status-text">就绪</span></div>
+        <div class="status-item"><span class="status-dot" id="status-dot"></span><span id="status-text" role="status" aria-live="polite">就绪</span></div>
         <div class="status-item" id="status-tokens">0 tokens</div>
         <div class="status-item" id="status-model">--</div>
       </div>
       <div class="status-right">
-        <span id="tts-toggle" class="tts-btn" role="button" tabindex="0" data-action="toggle-tts" title="语音播报开关">🔇</span>
+        <button id="tts-toggle" type="button" class="tts-btn" data-action="toggle-tts" aria-pressed="false" aria-label="语音播报开关" title="语音播报开关">🔇</button>
         <span id="status-persona">未选择</span>
       </div>
     </div>
   </div>
 
   <!-- File Viewer -->
-  <aside id="file-viewer" aria-label="文件查看器">
+  <aside id="file-viewer" aria-label="文件查看器" tabindex="-1">
     <div class="file-viewer-header">
       <span>📁</span><h2>文件查看器</h2>
       <button class="file-viewer-close" data-action="close-file-viewer" aria-label="关闭文件查看器">✕</button>
     </div>
     <div class="file-viewer-controls">
-      <select id="file-root-select" class="file-viewer-select" data-action="change-file-root" data-event="change"></select>
-      <input id="file-search" class="file-viewer-search" placeholder="筛选当前目录..." data-action="filter-files" data-event="input" />
+      <select id="file-root-select" class="file-viewer-select" aria-label="文件根目录" data-action="change-file-root" data-event="change"></select>
+      <input id="file-search" class="file-viewer-search" aria-label="筛选当前目录" placeholder="筛选当前目录..." data-action="filter-files" data-event="input" />
       <button class="file-viewer-btn" data-action="refresh-files">刷新</button>
     </div>
     <div id="file-breadcrumbs"></div>
     <div class="file-viewer-body">
       <section class="file-browser">
-        <div id="file-list"><div class="file-list-message">正在加载...</div></div>
+        <div id="file-list" aria-label="文件列表"><div class="file-list-message">正在加载...</div></div>
         <div class="file-list-footer"><span id="file-list-count">0 项</span><button id="file-load-more" class="file-viewer-btn" hidden data-action="load-more-files">加载更多</button></div>
       </section>
       <section class="file-preview">
@@ -133,13 +134,13 @@
   </aside>
 
   <!-- Settings 面板 -->
-  <div id="settings-modal">
+  <div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-hidden="true" tabindex="-1">
     <div id="settings-panel">
-      <div class="settings-header"><h2>⚙️ RainyDays Settings</h2><button class="settings-close" data-action="close-settings">✕</button></div>
+      <div class="settings-header"><h2 id="settings-title">⚙️ RainyDays Settings</h2><button class="settings-close" data-action="close-settings">✕</button></div>
       <div class="settings-body">
         <div class="settings-nav">
           <div class="settings-nav-title">Settings</div>
-          <div id="settings-domain-nav"></div>
+          <div id="settings-domain-nav" role="tablist" aria-label="设置分类" aria-orientation="vertical"></div>
           <div id="settings-provider-list"></div>
           <button class="settings-btn settings-new-provider" data-action="new-provider">＋ 新建 Provider</button>
         </div>
@@ -186,8 +187,8 @@
               <button class="settings-btn primary" data-action="save-provider">保存 Provider</button>
             </div>
           </div>
-          <div class="settings-section" data-settings-domain="mcp" hidden><h3>MCP</h3><div class="settings-domain-status" data-domain-status="mcp"></div><label class="settings-block-label">Servers JSON</label><textarea id="setting-mcp-servers" class="settings-code-input"></textarea><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="mcp">保存 MCP</button></div></div>
-          <div class="settings-section" data-settings-domain="wire" hidden><h3>Wire</h3><div class="settings-domain-status" data-domain-status="wire"></div><label class="settings-block-label">Sources JSON</label><textarea id="setting-wire-sources" class="settings-code-input"></textarea><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="wire">保存 Wire</button></div></div>
+          <div class="settings-section" data-settings-domain="mcp" hidden><h3>MCP</h3><div class="settings-domain-status" data-domain-status="mcp"></div><label class="settings-block-label" for="setting-mcp-servers">Servers JSON</label><textarea id="setting-mcp-servers" class="settings-code-input"></textarea><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="mcp">保存 MCP</button></div></div>
+          <div class="settings-section" data-settings-domain="wire" hidden><h3>Wire</h3><div class="settings-domain-status" data-domain-status="wire"></div><label class="settings-block-label" for="setting-wire-sources">Sources JSON</label><textarea id="setting-wire-sources" class="settings-code-input"></textarea><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="wire">保存 Wire</button></div></div>
           <div class="settings-section" data-settings-domain="animas" hidden><h3>Animas</h3><div class="settings-domain-status" data-domain-status="animas"></div><div class="settings-grid"><label>默认 Anima</label><input id="setting-anima-default" class="settings-input" /></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="animas">保存 Animas</button></div></div>
           <div class="settings-section" data-settings-domain="nous" hidden><h3>Nous</h3><div class="settings-domain-status" data-domain-status="nous"></div><div class="settings-grid"><label>启用</label><input id="setting-nous-enabled" type="checkbox" /><label>自动触发阈值</label><input id="setting-nous-threshold" type="number" min="1" max="100" class="settings-input" /><label>冷却（分钟）</label><input id="setting-nous-cooldown" type="number" min="1" max="1440" class="settings-input" /><label>独立 Profile</label><input id="setting-nous-profile" class="settings-input" /></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="nous">保存 Nous</button></div></div>
           <div class="settings-section" data-settings-domain="tts" hidden><h3>TTS</h3><div class="settings-domain-status" data-domain-status="tts"></div><div class="settings-grid"><label>默认启用</label><input id="setting-tts-enabled" type="checkbox" /><label>Voice</label><input id="setting-tts-voice" class="settings-input" /><label>语言</label><input id="setting-tts-language" class="settings-input" /><label>语速</label><input id="setting-tts-rate" type="number" min="0.5" max="2" step="0.1" class="settings-input" /></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="tts">保存 TTS</button></div></div>
@@ -198,19 +199,19 @@
         </div>
       </div>
       <div class="settings-footer"><button class="settings-btn" data-action="export-settings">导出设置</button><button class="settings-btn" data-action="choose-settings-import">导入设置</button><input id="settings-import-file" type="file" accept="application/json,.json" hidden data-action="import-settings" data-event="change" /></div>
-      <div id="settings-message"></div>
+      <div id="settings-message" role="status" aria-live="polite" aria-atomic="true"></div>
     </div>
   </div>
 
 
 
   <!-- ask_user 弹窗 -->
-  <div id="ask-modal">
+  <div id="ask-modal" role="dialog" aria-modal="true" aria-labelledby="ask-title" aria-describedby="ask-question-text" aria-hidden="true" tabindex="-1">
     <div id="ask-box">
-      <div class="ask-title">🤔 Agent 需要你的回答</div>
+      <div class="ask-title" id="ask-title">🤔 Agent 需要你的回答</div>
       <div class="ask-question" id="ask-question-text"></div>
       <div class="ask-options" id="ask-options"></div>
-      <input class="ask-input" id="ask-input" placeholder="或输入自定义答案..." />
+      <label class="sr-only" for="ask-input">回答</label><input class="ask-input" id="ask-input" placeholder="或输入自定义答案..." />
       <div class="ask-actions">
         <button class="ask-submit" data-action="submit-ask-answer">提交</button>
       </div>

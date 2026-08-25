@@ -63,17 +63,17 @@
     },
     {
       "exactCasePath": "public/index.html",
-      "sha256": "a53dd3bf131db1fce14eaf31d906b147e7b3491e100821a447fcb0612fc097f6",
+      "sha256": "fa0750bf311d23f9a97bc7474234dd58452392a536e537361da6ea633caaee44",
       "owner": "RT-08"
     },
     {
       "exactCasePath": "public/renderer.css",
-      "sha256": "93d8338e8ae57f2267660899dcca0a630b0546c85448eb4331daffabe4d4b656",
+      "sha256": "eefcbfdabf7f4cc0e228e484b3dccc8244639470ae45cd47264cd1bde0dd3d2b",
       "owner": "RT-08"
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "441bae01f07bddc9085bfcfbe4a72c06c05671519ab7885216ba52c005cae11c",
+      "sha256": "64c83f779865c2b6705ad49efd8987f9dc1e2f2225d93daf267a7fe2ce6a5fa2",
       "owner": "RT-08"
     },
     {
@@ -180,5 +180,5 @@
       "owner": "RT-08"
     }
   ],
-  "canonicalPayloadSha256": "1ddbd4a01b3b7944fec7acfcee9ec326ab75844cd64b631a2887b4af591239f4"
+  "canonicalPayloadSha256": "205e0e457244a58d675303794b6e6f30dfd544a41aa38a66ef9780f0edde14bc"
 }
