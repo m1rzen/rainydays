@@ -13,7 +13,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "7315e2bfead2abcda716a99a4b81e8344a90fbf15ef3f6e74a478dd95a4cb8e1",
+      "sha256": "b41ca1baee533fe3ce78923272f28c4e813c02b5e16f8e8f5c2378bee2776eaa",
       "owner": "RT-08"
     },
     {
@@ -68,12 +68,12 @@
     },
     {
       "exactCasePath": "public/renderer.css",
-      "sha256": "d7b1b175fe630b3fe987825e1419d59f9bc6a0de512ececa7af866d67035cfbf",
+      "sha256": "6ca62234c643615db329f77f7dc535ca6756a333a40304f6b75df38f0789e55e",
       "owner": "RT-08"
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "45adb28138e384f0b1778da08bb175cbf821bc34178bd937dc6a8dfe559c44d2",
+      "sha256": "fbf50bd32713b4004d1f813e26f614a5a0a5dfc467599bc44c4e58b19ddb7edd",
       "owner": "RT-08"
     },
     {
@@ -83,7 +83,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "e9f57e4857fd936001aa016c26a558112ce7a5201cf8ba845387f33c957587c2",
+      "sha256": "9bf451410fefd2ea4cf2f8042f7903db440c6e5baea49c079b0e5a74bda94efa",
       "owner": "RT-08"
     },
     {
@@ -146,7 +146,7 @@
     },
     {
       "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs",
-      "sha256": "7485bfeea4e8c36a22a453db239bf24bfb5e1ffab82f846f89056326bac4d6ff",
+      "sha256": "6a40934e02c117e8a1f4bd05c0d9e1b8104a18b61fb0f36a761ff1773c89db7a",
       "kind": "test",
       "layer": "unit",
       "owner": "RT-08"
@@ -180,5 +180,5 @@
       "owner": "RT-08"
     }
   ],
-  "canonicalPayloadSha256": "55c47250b86404a336d43c87edbb770b86b438a61555cc7a916c204385e85054"
+  "canonicalPayloadSha256": "97c50b148708f046c0233656511372ecc16b7601aeb1bf22fa46398121c5933f"
 }

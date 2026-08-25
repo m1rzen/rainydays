@@ -8,12 +8,12 @@
   "runtimeEntries": [
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "b62850fb0098b3936d3f7c9206ec56fc916344ea60174a9644e8ef8b4cb814c9",
+      "sha256": "f16bff9e7f74a503487b81e48f3034a97a7d2fc59b42c5871a55b20f8b7d3666",
       "owner": "EVT-03"
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "7315e2bfead2abcda716a99a4b81e8344a90fbf15ef3f6e74a478dd95a4cb8e1",
+      "sha256": "b41ca1baee533fe3ce78923272f28c4e813c02b5e16f8e8f5c2378bee2776eaa",
       "owner": "EVT-03"
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "9d7324ed1ffeb4313e57ebe9725ba0879c8cfcb6aaa434f4da671c24c3f2d9e7",
+      "sha256": "25eb86e05d4edb2b6c678d72076d529a18d56f96542b0b4400de952c9efabf45",
       "owner": "EVT-03"
     },
     {
@@ -43,12 +43,12 @@
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "3da7a732d1dc396e69d2cda3d3ed484235ebc30a6ce86b1be98ed138ec8beb0a",
+      "sha256": "3f713792d1be6150dc2161427463f2b123d7ec11c58fb72842cb3a4b723d3e91",
       "owner": "EVT-03"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "e9f57e4857fd936001aa016c26a558112ce7a5201cf8ba845387f33c957587c2",
+      "sha256": "9bf451410fefd2ea4cf2f8042f7903db440c6e5baea49c079b0e5a74bda94efa",
       "owner": "EVT-03"
     },
     {
@@ -68,7 +68,7 @@
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "4ab313a14719554df9d5312fdcc47925d3086ba7a02405fee05b3d0d92f01cc4",
+      "sha256": "e6d96ec852206d9173f54e30902efa4d6d391d25d57f63f12899b0cdca56243e",
       "owner": "EVT-03"
     },
     {
@@ -122,11 +122,11 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "36e58b35493721b945b26b5d6bf994e0f24239114d01daf2e2b43dad69db2ae6",
+      "sha256": "d2c37e36c31b5007213449967e0abbeafa623151820c77321ea4ccf8cf560bc1",
       "kind": "test",
       "layer": "electron",
       "owner": "EVT-03"
     }
   ],
-  "canonicalPayloadSha256": "3109a56c17b1d040bf488eef592c4731d8ff2fcf9b8bf3043cfd15e8dd7deae1"
+  "canonicalPayloadSha256": "974aed1aae063a228895c5011b9551a043ced7bf7961ef5b035f923c459a5750"
 }

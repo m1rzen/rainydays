@@ -130,7 +130,7 @@ async function probeIdentity(client, buildInfo, httpPort) {
   assert.deepEqual(value.preloadKeys, [
     "appVersion", "buildId", "capabilities", "isElectron", "notify", "onNotificationClicked", "platform",
     "selectDirectory", "selectFile", "selectSavePath", "terminalClear", "terminalClose", "terminalInput",
-    "terminalKill", "terminalResize", "terminalStart", "windowAction", "windowState",
+    "terminalKill", "terminalResize", "terminalStart", "updateTrayState", "windowAction", "windowState",
   ]);
   assert.equal("invoke" in value.preload, false);
   assert.deepEqual(value.capabilities, {

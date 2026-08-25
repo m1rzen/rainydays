@@ -46,7 +46,7 @@
   "deltaEntries": [
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "650b1a21b03f457ba3e6a59ac63c77d5e04e197b2dddeee6e10a1a6cde2820e8",
+      "sha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -59,7 +59,7 @@
     },
     {
       "exactCasePath": "electron/preload.cjs",
-      "sha256": "a189c7dc3353d6746a3d9237fce8d4bafea1fa6fb63a5dbc89d08bb2899bbe90",
+      "sha256": "e201976c91539242837cad4e7fd5e35c656258aca95643955ac8c58720944b14",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -170,7 +170,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "e9f57e4857fd936001aa016c26a558112ce7a5201cf8ba845387f33c957587c2",
+      "sha256": "9bf451410fefd2ea4cf2f8042f7903db440c6e5baea49c079b0e5a74bda94efa",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -320,7 +320,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "7315e2bfead2abcda716a99a4b81e8344a90fbf15ef3f6e74a478dd95a4cb8e1",
+      "sha256": "b41ca1baee533fe3ce78923272f28c4e813c02b5e16f8e8f5c2378bee2776eaa",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -466,7 +466,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "c9a37cd14301c2caaf12295dd15b2e1bf075f9d1fede8db51fedfa3d0e079595",
+      "sha256": "bde30a2266f712c11db076e79420c0302c4e772bc147dc2cccf52e5f288475cd",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -497,7 +497,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "e76653329931dcaa194c630289fdd57f7f2bfbeac164e4cdf15397356fa3d43c",
+      "sha256": "32684bbad4dba5ae0a33f46aed0a5cb626fe7f1269794912e39db70b3147f1b4",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -506,7 +506,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "a6f43c4bbf27e7579fea930f4617b6e83386f3e6583bd3d7fc8374d8e92061c1",
+      "sha256": "c762d4c3aa7c6ef225e83f10b5a71714d4f5e11bab2e844f1219b6c5fcf07f9b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -564,7 +564,7 @@
     },
     {
       "exactCasePath": "scripts/generate-build-info.mjs",
-      "sha256": "d23f3e1ab264ba49cb380e756592318a15ec7cd0b49de487b29759ad25416af9",
+      "sha256": "90edededb8648bfa97826fffbca8374cd4d5502ef70b38e2c8a7161b66b3f95e",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -658,7 +658,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "703e21a0cc30be38f4ca5ca6c13e3af923b45adcfd3f1eb0bde6196cc8d0c712",
+      "sha256": "e44076d6a37896b9111e49ce84333078218d1666e2914d578ae8b2965e6bc4e4",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -723,7 +723,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "a84b4f8906cca0ea550ce91640f4a84d11e06e2fd583819b267255fb377f3e50",
+      "sha256": "20306be423a136dbfb16ee74608c12a2957cd6ec091f84eeb4f2dbeceac8bca7",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -736,7 +736,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "559d3321467fc3b29228764b988fe819451cff07ffa163806c0ff5b607eababf",
+      "sha256": "c0de3bd9b5ba4dfd97b945959633f493b3c73b32870a713bd5035ef1ac3fc774",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -749,7 +749,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "bd889c2303822c19d5043aa172094dae05ef09484b026eb468e36e3cb3233bd2",
+      "sha256": "84ae1ec1d2e68ece58c5e30a7ab95b671745edaaaaac7745eb37a3a9cfe97311",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -886,7 +886,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "8a1b7ed5ccaf44914728f56a58f7101481d18e7205d600e3ebc6d6e5b2daca1d",
+      "sha256": "e144ef70d7f71a0ae1ec0c5e579c4298d304022547c5221d3bc7cf8595198fd3",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -1123,7 +1123,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "36e58b35493721b945b26b5d6bf994e0f24239114d01daf2e2b43dad69db2ae6",
+      "sha256": "d2c37e36c31b5007213449967e0abbeafa623151820c77321ea4ccf8cf560bc1",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-03",
@@ -1251,7 +1251,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "36e58b35493721b945b26b5d6bf994e0f24239114d01daf2e2b43dad69db2ae6",
+      "sha256": "d2c37e36c31b5007213449967e0abbeafa623151820c77321ea4ccf8cf560bc1",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-03",
@@ -1532,7 +1532,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "e9f57e4857fd936001aa016c26a558112ce7a5201cf8ba845387f33c957587c2",
+      "sha256": "9bf451410fefd2ea4cf2f8042f7903db440c6e5baea49c079b0e5a74bda94efa",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1764,7 +1764,7 @@
     },
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "650b1a21b03f457ba3e6a59ac63c77d5e04e197b2dddeee6e10a1a6cde2820e8",
+      "sha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1786,7 +1786,7 @@
     },
     {
       "exactCasePath": "electron/preload.cjs",
-      "sha256": "a189c7dc3353d6746a3d9237fce8d4bafea1fa6fb63a5dbc89d08bb2899bbe90",
+      "sha256": "e201976c91539242837cad4e7fd5e35c656258aca95643955ac8c58720944b14",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1835,7 +1835,7 @@
     },
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "b62850fb0098b3936d3f7c9206ec56fc916344ea60174a9644e8ef8b4cb814c9",
+      "sha256": "f16bff9e7f74a503487b81e48f3034a97a7d2fc59b42c5871a55b20f8b7d3666",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1862,7 +1862,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "7315e2bfead2abcda716a99a4b81e8344a90fbf15ef3f6e74a478dd95a4cb8e1",
+      "sha256": "b41ca1baee533fe3ce78923272f28c4e813c02b5e16f8e8f5c2378bee2776eaa",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1951,7 +1951,7 @@
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "9d7324ed1ffeb4313e57ebe9725ba0879c8cfcb6aaa434f4da671c24c3f2d9e7",
+      "sha256": "25eb86e05d4edb2b6c678d72076d529a18d56f96542b0b4400de952c9efabf45",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -1996,7 +1996,7 @@
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "3da7a732d1dc396e69d2cda3d3ed484235ebc30a6ce86b1be98ed138ec8beb0a",
+      "sha256": "3f713792d1be6150dc2161427463f2b123d7ec11c58fb72842cb3a4b723d3e91",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -2180,7 +2180,7 @@
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "4ab313a14719554df9d5312fdcc47925d3086ba7a02405fee05b3d0d92f01cc4",
+      "sha256": "e6d96ec852206d9173f54e30902efa4d6d391d25d57f63f12899b0cdca56243e",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-02",
@@ -2436,7 +2436,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "c9a37cd14301c2caaf12295dd15b2e1bf075f9d1fede8db51fedfa3d0e079595",
+      "sha256": "bde30a2266f712c11db076e79420c0302c4e772bc147dc2cccf52e5f288475cd",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2467,7 +2467,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "e76653329931dcaa194c630289fdd57f7f2bfbeac164e4cdf15397356fa3d43c",
+      "sha256": "32684bbad4dba5ae0a33f46aed0a5cb626fe7f1269794912e39db70b3147f1b4",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2476,7 +2476,7 @@
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "a6f43c4bbf27e7579fea930f4617b6e83386f3e6583bd3d7fc8374d8e92061c1",
+      "sha256": "c762d4c3aa7c6ef225e83f10b5a71714d4f5e11bab2e844f1219b6c5fcf07f9b",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2534,7 +2534,7 @@
     },
     {
       "exactCasePath": "scripts/generate-build-info.mjs",
-      "sha256": "d23f3e1ab264ba49cb380e756592318a15ec7cd0b49de487b29759ad25416af9",
+      "sha256": "90edededb8648bfa97826fffbca8374cd4d5502ef70b38e2c8a7161b66b3f95e",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2628,7 +2628,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "703e21a0cc30be38f4ca5ca6c13e3af923b45adcfd3f1eb0bde6196cc8d0c712",
+      "sha256": "e44076d6a37896b9111e49ce84333078218d1666e2914d578ae8b2965e6bc4e4",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2693,7 +2693,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "a84b4f8906cca0ea550ce91640f4a84d11e06e2fd583819b267255fb377f3e50",
+      "sha256": "20306be423a136dbfb16ee74608c12a2957cd6ec091f84eeb4f2dbeceac8bca7",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2706,7 +2706,7 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "559d3321467fc3b29228764b988fe819451cff07ffa163806c0ff5b607eababf",
+      "sha256": "c0de3bd9b5ba4dfd97b945959633f493b3c73b32870a713bd5035ef1ac3fc774",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2719,7 +2719,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "bd889c2303822c19d5043aa172094dae05ef09484b026eb468e36e3cb3233bd2",
+      "sha256": "84ae1ec1d2e68ece58c5e30a7ab95b671745edaaaaac7745eb37a3a9cfe97311",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -2856,7 +2856,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "8a1b7ed5ccaf44914728f56a58f7101481d18e7205d600e3ebc6d6e5b2daca1d",
+      "sha256": "e144ef70d7f71a0ae1ec0c5e579c4298d304022547c5221d3bc7cf8595198fd3",
       "kind": "test",
       "layer": "unit",
       "owner": "SEC-03",
@@ -3805,5 +3805,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "af2839efa157205feeba70a4878a58b70d49033dd519b56eb6239148c706d446"
+  "canonicalPayloadSha256": "2743efe7495cf791dad919ab7b8a850a3e799ae565fb570a343a147669a73882"
 }

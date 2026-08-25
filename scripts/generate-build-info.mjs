@@ -90,7 +90,7 @@ async function main() {
     distIntegritySha256: null,
     builtAt,
     versions: {
-      databaseSchema: 9,
+      databaseSchema: 10,
       sessionExport: 2,
       executionIsolation: {
         architectureSha256: sec03ArchitectureSha256,

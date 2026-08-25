@@ -93,14 +93,14 @@
       "family": "network",
       "api": "fetch",
       "container": "<top-level>",
-      "occurrenceId": "exec-b72e6992a4c58196f5eea796"
+      "occurrenceId": "exec-ac27cf5914e6d58a311cf32c"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "<top-level>",
-      "occurrenceId": "exec-c68990abf6b8ecd1cfc37578"
+      "occurrenceId": "exec-16746ca6ea4ede8c25c35423"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -218,6 +218,20 @@
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
+      "container": "loadDesktopState",
+      "occurrenceId": "exec-ab7d45c4895e3bf5dbc09ff8"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "markSessionNotificationsRead",
+      "occurrenceId": "exec-c6ac30c37898c48881b0c2ef"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
       "container": "loadPersonas",
       "occurrenceId": "exec-f59d405aad53a720fc6c6cf3"
     },
@@ -233,7 +247,7 @@
       "family": "network",
       "api": "fetch",
       "container": "loadSessions",
-      "occurrenceId": "exec-bc66e9de8ef3ec9bb54fd08e"
+      "occurrenceId": "exec-5160ad3d7f111c439246c21d"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -366,21 +380,21 @@
       "family": "network",
       "api": "fetch",
       "container": "selectSessionNow",
-      "occurrenceId": "exec-2643b6084b7917aa63d5472b"
+      "occurrenceId": "exec-51cbd23717a4c7e0f8e4920a"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "selectSessionNow",
-      "occurrenceId": "exec-9f48b212fa2cdceef4ba359f"
+      "occurrenceId": "exec-7bbf6f113bbd1b81c72c6d07"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "selectSessionNow",
-      "occurrenceId": "exec-5b26ed0911a62086a7a15018"
+      "occurrenceId": "exec-c071f68e2ba383dff624fc8a"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -862,5 +876,5 @@
       "occurrenceId": "exec-c52f91fdd68fcd90774471b7"
     }
   ],
-  "canonicalPayloadSha256": "d559c0482e9c0b6c50acb25622f08b94e5cd65653f12bedb3381addda99bd5fe"
+  "canonicalPayloadSha256": "8a66a84cf3fa4573c840e86cb7b78bad90171594f81bd0233c188af504efbf30"
 }

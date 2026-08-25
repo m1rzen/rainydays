@@ -26,11 +26,19 @@
     const workbenchStagingEl = document.getElementById("workbench-staging");
     const attachmentDraftListEl = document.getElementById("attachment-draft-list");
     const attachmentFileInputEl = document.getElementById("attachment-file-input");
+    const baseDocumentTitle = document.title;
 
     let currentSessionId = null;
     let sessionSelectionGeneration = 0;
     let sessionSelectionQueue = Promise.resolve();
     let knownSessions = [];
+    let desktopState = { schemaVersion: 1, unread: 0, running: 0, errors: 0, firstUnreadSessionId: null, sessions: [], notifications: [] };
+    let desktopEvents = null;
+    let desktopNavigationQueue = Promise.resolve();
+    let desktopNavigationReady = false;
+    const pendingDesktopNavigationTargets = [];
+    const handledDesktopNotificationIds = new Set();
+    let removeDesktopNotificationClick = null;
     let workbenchLayout = null;
     let workbenchRevision = 0;
     const closedWorkbenchTabs = [];
@@ -522,10 +530,13 @@
     }
     function refreshWorkbenchTabStatus() {
       document.querySelectorAll(".workbench-tab[data-session-id]").forEach(button => {
+        const sessionState = desktopSessionState(button.dataset.sessionId);
         const running = isSessionRunning(button.dataset.sessionId);
         button.classList.toggle("running", running);
+        button.classList.toggle("unread", sessionState.unread > 0);
+        button.title = sessionState.unread > 0 ? `${sessionState.unread} 条未读` : "";
         const icon = button.querySelector(".workbench-tab-kind");
-        if (icon) icon.textContent = running ? "⏳" : "💬";
+        if (icon) icon.textContent = running ? "⏳" : sessionState.status === "error" ? "❌" : sessionState.unread > 0 ? `💬${sessionState.unread}` : "💬";
       });
     }
     async function loadWorkbenchLayout() {
@@ -1697,13 +1708,128 @@
       } catch (err) { showSettingsMessage(err.message, "error"); }
     }
 
+    function desktopSessionState(sessionId) {
+      return desktopState.sessions.find(session => session.id === sessionId) || { unread: 0, status: "idle" };
+    }
+
+    function applyDesktopState(next, reconcileNotifications = false) {
+      if (!next || next.schemaVersion !== 1 || !Array.isArray(next.sessions) || !Array.isArray(next.notifications)) return;
+      const unseen = next.notifications.filter(notification => notification?.unread && typeof notification.id === "string" && !handledDesktopNotificationIds.has(notification.id));
+      for (const notification of next.notifications) if (typeof notification?.id === "string") handledDesktopNotificationIds.add(notification.id);
+      while (handledDesktopNotificationIds.size > 1000) handledDesktopNotificationIds.delete(handledDesktopNotificationIds.values().next().value);
+      desktopState = next;
+      document.title = next.unread > 0 ? `(${next.unread}) ${baseDocumentTitle}` : baseDocumentTitle;
+      document.querySelectorAll(".session-item[data-session-id]").forEach(item => {
+        const state = desktopSessionState(item.dataset.sessionId);
+        const badge = item.querySelector(".session-badge");
+        if (badge) { badge.textContent = String(state.unread || 0); badge.hidden = !state.unread; }
+        const status = item.querySelector(".session-state");
+        if (status) {
+          status.textContent = state.status === "running" ? "运行中" : state.status === "error" ? "错误" : "";
+          status.classList.toggle("error", state.status === "error");
+        }
+      });
+      refreshWorkbenchTabStatus();
+      if (typeof window.electronAPI?.updateTrayState === "function") {
+        void window.electronAPI.updateTrayState({
+          unread: Number(next.unread) || 0,
+          running: Number(next.running) || 0,
+          errors: Number(next.errors) || 0,
+          firstUnreadSessionId: typeof next.firstUnreadSessionId === "string" ? next.firstUnreadSessionId : null,
+        }).catch(() => undefined);
+      }
+      if (reconcileNotifications) for (const notification of unseen.slice(0, 5)) showDesktopNotification(notification);
+    }
+
+    async function loadDesktopState() {
+      const response = await fetch("/api/desktop/state");
+      const state = await response.json();
+      if (!response.ok) throw new Error(state.error || "桌面通知状态加载失败");
+      applyDesktopState(state);
+      return state;
+    }
+
+    async function markSessionNotificationsRead(sessionId) {
+      const response = await fetch(`/api/desktop/sessions/${encodeURIComponent(sessionId)}/read`, {
+        method: "POST",
+        headers: sessionHeaders(sessionId),
+      });
+      if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || "通知确认失败");
+    }
+
+    function consumeDesktopNotification(notification) {
+      if (!notification || typeof notification.id !== "string" || handledDesktopNotificationIds.has(notification.id)) return;
+      handledDesktopNotificationIds.add(notification.id);
+      showDesktopNotification(notification);
+    }
+
+    function showDesktopNotification(notification) {
+      if (!notification || typeof notification.id !== "string" || typeof notification.sessionId !== "string") return;
+      if (notification.sessionId === currentSessionId && !document.hidden && document.hasFocus()) {
+        void markSessionNotificationsRead(notification.sessionId).catch(() => undefined);
+        return;
+      }
+      if (typeof window.electronAPI?.notify !== "function") return;
+      const plain = value => String(value || "").replace(/[\u0000-\u001f\u007f]+/gu, " ").trim();
+      void window.electronAPI.notify({
+        id: notification.id,
+        title: plain(notification.title).slice(0, 80) || "RainyDays",
+        body: plain(notification.body).slice(0, 240) || "有新的后台消息",
+        sessionId: notification.sessionId,
+        targetTab: ["session", "terminal", "file"].includes(notification.targetTab) ? notification.targetTab : "session",
+      }).catch(() => undefined);
+    }
+
+    function queueDesktopNavigation(target) {
+      if (!desktopNavigationReady) {
+        pendingDesktopNavigationTargets.splice(0, pendingDesktopNavigationTargets.length, target);
+        return;
+      }
+      void navigateDesktopTarget(target).catch(() => undefined);
+    }
+
+    function navigateDesktopTarget(target) {
+      desktopNavigationQueue = desktopNavigationQueue.catch(() => undefined).then(async () => {
+        if (!target || typeof target.sessionId !== "string") return;
+        if (!knownSessions.some(session => session.id === target.sessionId)) await loadSessions();
+        if (!knownSessions.some(session => session.id === target.sessionId)) return;
+        await selectSession(target.sessionId);
+        if (target.targetTab === "terminal") await toggleTerminal(true);
+        else if (target.targetTab === "file") await toggleFileViewer(true);
+      });
+      return desktopNavigationQueue;
+    }
+
+    function connectDesktopEvents() {
+      desktopEvents?.close();
+      desktopEvents = new EventSource("/api/desktop/events");
+      desktopEvents.onmessage = event => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === "state") applyDesktopState(message.state, true);
+          else if (message.type === "notification") consumeDesktopNotification(message.notification);
+        } catch { /* malformed desktop event is ignored */ }
+      };
+    }
+
     async function init() {
+      const initialSelectionGeneration = sessionSelectionGeneration;
+      if (typeof window.electronAPI?.onNotificationClicked === "function") {
+        removeDesktopNotificationClick = window.electronAPI.onNotificationClicked(queueDesktopNavigation);
+      }
       await loadPersonas();
       await loadSessions();
+      try { await loadDesktopState(); }
+      catch (error) { console.warn("Desktop notification state unavailable:", error); }
+      connectDesktopEvents();
       await loadWorkbenchLayout();
       const restoredSession = activeWorkbenchTab()?.kind === "session" ? activeWorkbenchTab().sessionId : null;
       const sessionToRestore = knownSessions.some(session => session.id === restoredSession) ? restoredSession : currentSessionId;
-      if (sessionToRestore) await selectSession(sessionToRestore, true);
+      if (sessionToRestore && sessionSelectionGeneration === initialSelectionGeneration && pendingDesktopNavigationTargets.length === 0) {
+        await selectSession(sessionToRestore, true);
+      }
+      desktopNavigationReady = true;
+      for (const target of pendingDesktopNavigationTargets.splice(0)) queueDesktopNavigation(target);
       const initialStatus = await updateStatus();
       if (initialStatus && !initialStatus.configured) {
         addSystemMessage("⚠️ 当前 Provider 尚未配置 API Key，请在 Settings 中完成配置后再开始对话。");
@@ -1759,6 +1885,14 @@
         const name = document.createElement("span");
         name.className = "name";
         name.textContent = session.title;
+        const sessionState = desktopSessionState(session.id);
+        const status = document.createElement("span");
+        status.className = `session-state ${sessionState.status === "error" ? "error" : ""}`;
+        status.textContent = sessionState.status === "running" ? "运行中" : sessionState.status === "error" ? "错误" : "";
+        const badge = document.createElement("span");
+        badge.className = "session-badge";
+        badge.textContent = String(sessionState.unread || 0);
+        badge.hidden = !sessionState.unread;
         const remove = document.createElement("span");
         remove.className = "del";
         remove.dataset.action = "delete-session";
@@ -1766,7 +1900,7 @@
         remove.setAttribute("role", "button");
         remove.setAttribute("aria-label", "删除对话");
         remove.textContent = "✕";
-        item.append(icon, name, remove);
+        item.append(icon, name, status, badge, remove);
         sessionListEl.appendChild(item);
       }
     }
@@ -1802,8 +1936,20 @@
       if (generation !== sessionSelectionGeneration) return;
       messagesEl.innerHTML = "";
       for (const msg of mdata.messages) { if (msg.role === "user") addMessage("user", msg.content, msg.id, msg.attachments); else if (msg.role === "assistant" && msg.content) addMessage("assistant", msg.content, msg.id); }
-      await loadSessions(); await loadPins(); await loadAttachmentDrafts(id); await loadSessionTasks(id); await loadSessionSubagents(id); updateStatus();
+      if (generation !== sessionSelectionGeneration || currentSessionId !== id) return;
+      if (!document.hidden && document.hasFocus()) await markSessionNotificationsRead(id).catch(() => undefined);
+      if (generation !== sessionSelectionGeneration || currentSessionId !== id) return;
+      await loadSessions();
       if (generation !== sessionSelectionGeneration) return;
+      await loadPins();
+      if (generation !== sessionSelectionGeneration) return;
+      await loadAttachmentDrafts(id);
+      if (generation !== sessionSelectionGeneration) return;
+      await loadSessionTasks(id);
+      if (generation !== sessionSelectionGeneration) return;
+      await loadSessionSubagents(id);
+      if (generation !== sessionSelectionGeneration) return;
+      updateStatus();
       if (!fromWorkbench && workbenchLayout) {
         await ensureWorkbenchTab({ id: workbenchId("tab"), kind: "session", title: data.session.title, sessionId: id });
       }
@@ -1829,7 +1975,9 @@
       await loadSessions();
     }
 
-    function isSessionRunning(sessionId = currentSessionId) { return Boolean(sessionId && activeRunsBySession.has(sessionId)); }
+    function isSessionRunning(sessionId = currentSessionId) {
+      return Boolean(sessionId && (activeRunsBySession.has(sessionId) || desktopSessionState(sessionId).status === "running"));
+    }
     function refreshRunControls() {
       const running = isSessionRunning();
       submitBtn.disabled = running;
@@ -2131,7 +2279,10 @@
             if (currentSessionId !== chatSessionId) continue;
             if (step.type === "notification") {
               if (typeof window.electronAPI?.notify === "function") {
-                void window.electronAPI.notify({ id: `run-${step.runId}`, title: step.title, body: step.body }).catch(() => undefined);
+                void window.electronAPI.notify({
+                  id: `run-${step.runId}`, title: step.title, body: step.body,
+                  sessionId: chatSessionId, targetTab: "session",
+                }).catch(() => undefined);
               }
               continue;
             }
@@ -2705,5 +2856,9 @@
       void runShortcutAction(action).catch(error => addSystemMessage(`⚠️ ${error.message}`));
     }
     document.addEventListener("keydown", handleGlobalShortcut);
+    window.addEventListener("beforeunload", () => {
+      desktopEvents?.close();
+      removeDesktopNotificationClick?.();
+    }, { once: true });
 
     init();

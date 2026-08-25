@@ -179,6 +179,18 @@
         "exactCasePath": "tests/unit/keyboard-shortcuts.test.mjs"
       },
       {
+        "sourceTask": "DS-08",
+        "exactCasePath": "tests/contract/ds08-governance.test.mjs"
+      },
+      {
+        "sourceTask": "DS-08",
+        "exactCasePath": "tests/unit/ds08-renderer-contract.test.mjs"
+      },
+      {
+        "sourceTask": "DS-08",
+        "exactCasePath": "tests/integration/ds08-notifications.test.mjs"
+      },
+      {
         "sourceTask": "EVT-01",
         "exactCasePath": "tests/contract/evt01-governance.test.mjs"
       },

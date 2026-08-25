@@ -32,6 +32,9 @@
     .session-item.active { background: var(--tool-bg); }
     .session-item .icon { font-size: 14px; opacity: 0.6; flex-shrink: 0; }
     .session-item .name { flex: 1; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .session-item .session-badge { min-width:18px; padding:1px 5px; border-radius:9px; background:var(--accent); color:#fff; font-size:10px; font-weight:700; text-align:center; flex-shrink:0; }
+    .session-item .session-state { font-size:10px; color:var(--text-dim); flex-shrink:0; }
+    .session-item .session-state.error { color:var(--danger); }
     .session-item .del { opacity: 0; font-size: 14px; color: var(--text-dim); transition: opacity 0.15s; flex-shrink: 0; }
     .session-item:hover .del { opacity: 1; }
     .session-item .del:hover { color: var(--danger); }

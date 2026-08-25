@@ -891,6 +891,64 @@ function assertSchemaV9(database: typeof db = db): void {
   if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 9 不兼容: 完整性检查失败");
 }
 
+const SCHEMA_V10_SQL = `
+    CREATE TABLE desktop_notifications (
+      id               TEXT PRIMARY KEY NOT NULL CHECK (length(id) = 40 AND substr(id, 1, 4) = 'nfy-'),
+      source_key       TEXT NOT NULL UNIQUE CHECK (length(source_key) BETWEEN 1 AND 160),
+      session_id       TEXT NOT NULL,
+      kind             TEXT NOT NULL CHECK (kind IN ('event', 'success', 'error', 'info')),
+      title            TEXT NOT NULL CHECK (length(CAST(title AS BLOB)) BETWEEN 1 AND 240),
+      body             TEXT NOT NULL CHECK (length(CAST(body AS BLOB)) BETWEEN 1 AND 960),
+      target_tab       TEXT NOT NULL DEFAULT 'session' CHECK (target_tab IN ('session', 'terminal', 'file')),
+      unread           INTEGER NOT NULL DEFAULT 1 CHECK (unread IN (0, 1)),
+      created_at       INTEGER NOT NULL CHECK (created_at >= 0),
+      read_at          INTEGER CHECK (read_at IS NULL OR read_at >= created_at),
+      FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+    );
+    CREATE INDEX idx_desktop_notifications_unread ON desktop_notifications (unread, created_at DESC, id);
+    CREATE INDEX idx_desktop_notifications_session ON desktop_notifications (session_id, unread, created_at DESC, id);
+  `;
+
+function assertSchemaV10(database: typeof db = db): void {
+  const reference = createInMemoryBootstrapDatabase();
+  try {
+    reference.pragma("foreign_keys = ON");
+    reference.exec(SCHEMA_V1_SQL);
+    reference.exec(SCHEMA_V2_SQL);
+    applySchemaV3(reference);
+    reference.exec(SCHEMA_V4_SQL);
+    reference.exec(SCHEMA_V5_SQL);
+    reference.exec(SCHEMA_V6_SQL);
+    reference.exec(SCHEMA_V7_SQL);
+    reference.exec(SCHEMA_V8_SQL);
+    reference.exec(SCHEMA_V9_SQL);
+    reference.exec(SCHEMA_V10_SQL);
+    const objectRows = (target: typeof db): Array<{ type: string; name: string; tbl_name: string; sql: string | null }> => target.prepare(
+      "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
+    ).all() as Array<{ type: string; name: string; tbl_name: string; sql: string | null }>;
+    const actual = objectRows(database);
+    const expected = objectRows(reference);
+    const signatures = (rows: typeof actual): string[] => rows.map(entry => `${entry.type}|${entry.name}|${entry.tbl_name}`);
+    if (JSON.stringify(signatures(actual)) !== JSON.stringify(signatures(expected))) {
+      throw new Error("数据库 Schema 10 不兼容: 存在未知或缺失的 Schema 对象");
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const found = actual[index];
+      const wanted = expected[index];
+      if ((found.sql === null) !== (wanted.sql === null)
+        || (found.sql !== null && wanted.sql !== null && normalizeSchemaSql(found.sql) !== normalizeSchemaSql(wanted.sql))) {
+        throw new Error(`数据库 Schema 10 不兼容: ${wanted.type} ${wanted.name} SQL 定义错误`);
+      }
+    }
+  } finally {
+    reference.close();
+  }
+  const foreignKeyViolations = database.prepare("PRAGMA foreign_key_check").all();
+  if (foreignKeyViolations.length > 0) throw new Error("数据库 Schema 10 不兼容: 存在外键完整性错误");
+  const integrity = database.prepare("PRAGMA integrity_check").all() as Array<{ integrity_check?: string }>;
+  if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 10 不兼容: 完整性检查失败");
+}
+
 interface DatabaseMigration {
   readonly from: number;
   readonly to: number;
@@ -979,6 +1037,15 @@ const DATABASE_MIGRATIONS: readonly DatabaseMigration[] = Object.freeze([
       assertSchemaV9(database);
     },
   }),
+  Object.freeze({
+    from: 9,
+    to: 10,
+    apply: (database: typeof db): void => {
+      assertSchemaV9(database);
+      database.exec(SCHEMA_V10_SQL);
+      assertSchemaV10(database);
+    },
+  }),
 ]);
 
 function assertMigrationRegistry(): void {
@@ -1019,7 +1086,7 @@ function migrateDatabase(): void {
   if (version !== DATABASE_SCHEMA_VERSION) {
     throw new Error(`数据库 Schema 迁移未达到目标版本: 当前 ${version}，目标 ${DATABASE_SCHEMA_VERSION}`);
   }
-  assertSchemaV9(db);
+  assertSchemaV10(db);
 }
 
 try {
@@ -1056,7 +1123,7 @@ export function validateDatabaseRestoreCandidate(
   }
   const bytes = fs.readFileSync(databasePath);
   const candidate = createInMemoryBootstrapDatabase(bytes);
-  try { assertSchemaV7(candidate); }
+  try { assertSchemaV10(candidate); }
   finally { candidate.close(); }
   return validation;
 }
@@ -1340,6 +1407,172 @@ export function deleteSession(id: string): void {
     ).all(id) as Array<{ id: number }>;
     for (const job of jobs) cancelCronJob(job.id);
     db.prepare(`DELETE FROM sessions WHERE id = ?`).run(id);
+  })();
+}
+
+export interface DesktopNotificationRow {
+  id: string;
+  source_key: string;
+  session_id: string;
+  kind: "event" | "success" | "error" | "info";
+  title: string;
+  body: string;
+  target_tab: "session" | "terminal" | "file";
+  unread: 0 | 1;
+  created_at: number;
+  read_at: number | null;
+}
+
+export interface DesktopNotificationInput {
+  sourceKey: string;
+  sessionId: string;
+  kind: DesktopNotificationRow["kind"];
+  title: string;
+  body: string;
+  targetTab?: DesktopNotificationRow["target_tab"];
+  createdAt?: number;
+}
+
+function notificationText(value: string, field: string, maxBytes: number): string {
+  if (typeof value !== "string" || value.length < 1 || Buffer.byteLength(value, "utf8") > maxBytes || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value)) {
+    throw new TypeError(`${field} is invalid`);
+  }
+  return value;
+}
+
+type NormalizedDesktopNotificationInput = Readonly<{
+  sourceKey: string;
+  sessionId: string;
+  kind: DesktopNotificationRow["kind"];
+  title: string;
+  body: string;
+  targetTab: DesktopNotificationRow["target_tab"];
+  createdAt: number;
+}>;
+
+function normalizeDesktopNotificationInput(input: DesktopNotificationInput): NormalizedDesktopNotificationInput {
+  const sourceKey = notificationText(input.sourceKey, "notification sourceKey", 160);
+  const sessionId = notificationText(input.sessionId, "notification sessionId", 128);
+  const title = notificationText(input.title, "notification title", 240);
+  const body = notificationText(input.body, "notification body", 960);
+  if (!["event", "success", "error", "info"].includes(input.kind)) throw new TypeError("notification kind is invalid");
+  const targetTab = input.targetTab ?? "session";
+  if (!["session", "terminal", "file"].includes(targetTab)) throw new TypeError("notification targetTab is invalid");
+  const createdAt = input.createdAt ?? Date.now();
+  if (!Number.isSafeInteger(createdAt) || createdAt < 0) throw new TypeError("notification createdAt is invalid");
+  return Object.freeze({ sourceKey, sessionId, kind: input.kind, title, body, targetTab, createdAt });
+}
+
+function pruneDesktopNotifications(): void {
+  db.prepare(
+    `DELETE FROM desktop_notifications WHERE id IN (
+       SELECT id FROM desktop_notifications ORDER BY created_at DESC, id DESC LIMIT -1 OFFSET 500
+     )`
+  ).run();
+}
+
+function insertDesktopNotificationRecord(input: NormalizedDesktopNotificationInput, prune = true): { inserted: boolean; notification: DesktopNotificationRow } {
+  const id = `nfy-${randomUUID()}`;
+  const result = db.prepare(
+    `INSERT OR IGNORE INTO desktop_notifications
+     (id, source_key, session_id, kind, title, body, target_tab, unread, created_at, read_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, NULL)`
+  ).run(id, input.sourceKey, input.sessionId, input.kind, input.title, input.body, input.targetTab, input.createdAt);
+  const notification = db.prepare("SELECT * FROM desktop_notifications WHERE source_key = ?").get(input.sourceKey) as DesktopNotificationRow | undefined;
+  if (!notification) throw new Error("desktop notification persistence failed");
+  if (prune) pruneDesktopNotifications();
+  return { inserted: result.changes === 1, notification };
+}
+
+export function insertDesktopNotification(input: DesktopNotificationInput): { inserted: boolean; notification: DesktopNotificationRow } {
+  const normalized = normalizeDesktopNotificationInput(input);
+  return db.transaction(() => insertDesktopNotificationRecord(normalized))();
+}
+
+export function getDesktopNotificationBySourceKey(sourceKey: string): DesktopNotificationRow | undefined {
+  return db.prepare("SELECT * FROM desktop_notifications WHERE source_key = ?").get(sourceKey) as DesktopNotificationRow | undefined;
+}
+
+export function listDesktopNotifications(limit = 100): DesktopNotificationRow[] {
+  const bounded = Math.min(Math.max(Math.trunc(limit) || 100, 1), 500);
+  return db.prepare("SELECT * FROM desktop_notifications ORDER BY created_at DESC, id DESC LIMIT ?").all(bounded) as DesktopNotificationRow[];
+}
+
+export function markDesktopNotificationRead(id: string, sessionId: string, readAt = Date.now()): boolean {
+  if (!Number.isSafeInteger(readAt) || readAt < 0) throw new TypeError("notification readAt is invalid");
+  return db.prepare(
+    "UPDATE desktop_notifications SET unread = 0, read_at = ? WHERE id = ? AND session_id = ? AND unread = 1"
+  ).run(readAt, id, sessionId).changes === 1;
+}
+
+export function markSessionDesktopNotificationsRead(sessionId: string, readAt = Date.now()): number {
+  if (!Number.isSafeInteger(readAt) || readAt < 0) throw new TypeError("notification readAt is invalid");
+  return db.prepare(
+    "UPDATE desktop_notifications SET unread = 0, read_at = ? WHERE session_id = ? AND unread = 1"
+  ).run(readAt, sessionId).changes;
+}
+
+export function desktopNotificationUnreadCounts(): Array<{ session_id: string; count: number }> {
+  return db.prepare(
+    "SELECT session_id, COUNT(*) AS count FROM desktop_notifications WHERE unread = 1 GROUP BY session_id ORDER BY session_id"
+  ).all() as Array<{ session_id: string; count: number }>;
+}
+
+function utf8Projection(value: unknown, fallback: string, maxBytes: number): string {
+  const source = (typeof value === "string" ? value : fallback)
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/gu, " ")
+    .trim() || fallback;
+  let output = "";
+  for (const character of source) {
+    if (Buffer.byteLength(output + character, "utf8") > maxBytes) break;
+    output += character;
+  }
+  return output || fallback;
+}
+
+function eventDesktopNotificationInput(event: import("./event-bus.js").EventEnvelope): NormalizedDesktopNotificationInput | null {
+  if (!event.targetSessionId || !db.prepare("SELECT 1 FROM sessions WHERE id = ?").get(event.targetSessionId)) return null;
+  const payload = event.payload && typeof event.payload === "object" && !Array.isArray(event.payload)
+    ? event.payload as Record<string, unknown>
+    : null;
+  const encodedPayload = (() => {
+    try { return JSON.stringify(event.payload); }
+    catch { return ""; }
+  })();
+  return normalizeDesktopNotificationInput({
+    sourceKey: `event:${event.id}`,
+    sessionId: event.targetSessionId,
+    kind: "event",
+    title: utf8Projection(event.type, "后台事件", 240),
+    body: utf8Projection(payload?.message, encodedPayload || `${event.source} 事件已到达`, 960),
+    targetTab: "session",
+    createdAt: event.createdAt,
+  });
+}
+
+export function backfillDesktopNotificationsFromEvents(): number {
+  return db.transaction(() => {
+    const rows = db.prepare(
+      `SELECT ${EVENT_COLUMNS} FROM events
+       WHERE target_session_id IS NOT NULL
+         AND NOT EXISTS (SELECT 1 FROM desktop_notifications WHERE source_key = 'event:' || events.id)
+       ORDER BY created_at, id`
+    ).all() as EventRow[];
+    const insert = db.prepare(
+      `INSERT OR IGNORE INTO desktop_notifications
+       (id, source_key, session_id, kind, title, body, target_tab, unread, created_at, read_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, NULL)`
+    );
+    let inserted = 0;
+    for (const row of rows) {
+      const input = eventDesktopNotificationInput(mapEventRow(row));
+      if (!input) continue;
+      inserted += insert.run(
+        `nfy-${randomUUID()}`, input.sourceKey, input.sessionId, input.kind, input.title, input.body, input.targetTab, input.createdAt
+      ).changes;
+    }
+    pruneDesktopNotifications();
+    return inserted;
   })();
 }
 
@@ -2043,26 +2276,32 @@ const EVENT_COLUMNS = `id, schema_version, type, source, source_event_id, target
 export function createEventStore(): import("./event-bus.js").EventStore {
   return {
     insertEvent(event) {
-      const info = db.prepare(`
-        INSERT OR IGNORE INTO events (${EVENT_COLUMNS})
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, 0, NULL)
-      `).run(
-        event.id,
-        event.schemaVersion,
-        event.type,
-        event.source,
-        event.sourceEventId,
-        event.targetSessionId,
-        JSON.stringify(event.tags),
-        JSON.stringify(event.payload),
-        event.createdAt,
-        event.expiresAt
-      );
-      if (info.changes === 1) return { inserted: true, existingId: null };
-      const existing = event.sourceEventId !== null
-        ? db.prepare(`SELECT id FROM events WHERE source = ? AND source_event_id = ?`).get(event.source, event.sourceEventId) as { id: string } | undefined
-        : db.prepare(`SELECT id FROM events WHERE id = ?`).get(event.id) as { id: string } | undefined;
-      return { inserted: false, existingId: existing?.id ?? null };
+      return db.transaction(() => {
+        const info = db.prepare(`
+          INSERT OR IGNORE INTO events (${EVENT_COLUMNS})
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, 0, NULL)
+        `).run(
+          event.id,
+          event.schemaVersion,
+          event.type,
+          event.source,
+          event.sourceEventId,
+          event.targetSessionId,
+          JSON.stringify(event.tags),
+          JSON.stringify(event.payload),
+          event.createdAt,
+          event.expiresAt
+        );
+        if (info.changes === 1) {
+          const notification = eventDesktopNotificationInput(event);
+          if (notification) insertDesktopNotificationRecord(notification);
+          return { inserted: true, existingId: null };
+        }
+        const existing = event.sourceEventId !== null
+          ? db.prepare(`SELECT id FROM events WHERE source = ? AND source_event_id = ?`).get(event.source, event.sourceEventId) as { id: string } | undefined
+          : db.prepare(`SELECT id FROM events WHERE id = ?`).get(event.id) as { id: string } | undefined;
+        return { inserted: false, existingId: existing?.id ?? null };
+      })();
     },
     dueEvents(now, limit) {
       const rows = db.prepare(`

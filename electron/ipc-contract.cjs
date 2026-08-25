@@ -73,13 +73,45 @@ function parseWindowAction(value) {
   return Object.freeze({ action: request.action });
 }
 
+function parseSessionId(value, label, nullable = false) {
+  if (nullable && value === null) return null;
+  if (typeof value !== "string" || value.length < 1 || value.length > 128 || value.trim() !== value || containsControlCharacter(value)) {
+    throw new TypeError(`${label} is invalid`);
+  }
+  return value;
+}
+
+function parseTargetTab(value) {
+  if (!["session", "terminal", "file"].includes(value)) throw new TypeError("Notification target tab is invalid");
+  return value;
+}
+
 function parseNotification(value) {
-  const request = exactObject(value, ["id", "title", "body"], "Notification request");
+  const request = exactObject(value, ["id", "title", "body", "sessionId", "targetTab"], "Notification request");
   if (typeof request.id !== "string" || !notificationIdPattern.test(request.id)) throw new TypeError("Notification id is invalid");
   const title = optionalText(request.title, "Notification title", 80);
   const body = optionalText(request.body, "Notification body", 240);
   if (!title || !body) throw new TypeError("Notification content is required");
-  return Object.freeze({ id: request.id, title, body });
+  return Object.freeze({
+    id: request.id,
+    title,
+    body,
+    sessionId: parseSessionId(request.sessionId, "Notification session id"),
+    targetTab: parseTargetTab(request.targetTab),
+  });
+}
+
+function parseTrayState(value) {
+  const request = exactObject(value, ["unread", "running", "errors", "firstUnreadSessionId"], "Tray state request");
+  for (const key of ["unread", "running", "errors"]) {
+    if (!Number.isSafeInteger(request[key]) || request[key] < 0 || request[key] > 9999) throw new TypeError(`Tray ${key} count is invalid`);
+  }
+  return Object.freeze({
+    unread: request.unread,
+    running: request.running,
+    errors: request.errors,
+    firstUnreadSessionId: parseSessionId(request.firstUnreadSessionId, "Tray unread session id", true),
+  });
 }
 
 function assertTrustedJsonDownload(value, expectedOrigin) {
@@ -107,4 +139,5 @@ module.exports = Object.freeze({
   parseDialogRequest,
   parseWindowAction,
   parseNotification,
+  parseTrayState,
 });

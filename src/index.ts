@@ -34,6 +34,9 @@ import {
   closeDb, insertPin, getPinsBySession, deletePin, deleteMessagesAfterLastUserMessage,
   getDatabaseSchemaVersion, createEventStore, createPollStore, markMemoRemindedByCronJob,
   getWorkbenchLayoutSnapshot, saveWorkbenchLayoutSnapshot, WorkbenchLayoutConflictError,
+  backfillDesktopNotificationsFromEvents, desktopNotificationUnreadCounts, getDesktopNotificationBySourceKey,
+  insertDesktopNotification, listDesktopNotifications, markDesktopNotificationRead, markSessionDesktopNotificationsRead,
+  type DesktopNotificationInput, type DesktopNotificationRow,
 } from "./db.js";
 import { getDefaultEventBus, type EventEnvelope, type SessionDeliveryOutcome } from "./event-bus.js";
 import { getDefaultPollManager } from "./poll.js";
@@ -195,6 +198,14 @@ function resolveBodySessionIdentity(value: unknown, requireBody: boolean): strin
     throw new TypeError("Session runtime identity 冲突");
   }
   return bodyIdentity ?? transportIdentity;
+}
+
+function requireTransportSessionIdentity(expected: unknown): string {
+  const transportIdentity = directRequestSession.getStore();
+  if (!transportIdentity) throw new TypeError("缺少 Session transport identity");
+  const requested = exactSessionRuntimeIdentity(expected);
+  if (requested !== transportIdentity) throw new TypeError("Session runtime identity 冲突");
+  return requested;
 }
 
 type AppSessionRuntime = Readonly<{
@@ -359,6 +370,98 @@ function closeRuntimeSubscriptions(authority: RuntimeAuthority | null): void {
   const closers = [...(runtimeSubscriptionClosers.get(authority) ?? [])];
   for (const close of closers) close();
   runtimeSubscriptionClosers.delete(authority);
+}
+
+type DesktopNotificationView = Readonly<{
+  id: string;
+  sessionId: string;
+  kind: DesktopNotificationRow["kind"];
+  title: string;
+  body: string;
+  targetTab: DesktopNotificationRow["target_tab"];
+  unread: boolean;
+  createdAt: number;
+}>;
+
+const desktopNotificationListeners = new Set<(message: Readonly<Record<string, unknown>>) => void>();
+let removeDesktopEventListener: (() => void) | null = null;
+
+function desktopNotificationView(row: DesktopNotificationRow): DesktopNotificationView {
+  return Object.freeze({
+    id: row.id,
+    sessionId: row.session_id,
+    kind: row.kind,
+    title: row.title,
+    body: row.body,
+    targetTab: row.target_tab,
+    unread: row.unread === 1,
+    createdAt: row.created_at,
+  });
+}
+
+function notificationText(value: unknown, fallback: string, maxCharacters: number): string {
+  const text = typeof value === "string" ? value : fallback;
+  const safe = text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/gu, " ").trim();
+  return (safe || fallback).slice(0, maxCharacters);
+}
+
+function persistDesktopNotification(input: DesktopNotificationInput): DesktopNotificationView {
+  const persisted = insertDesktopNotification(input);
+  const view = desktopNotificationView(persisted.notification);
+  if (persisted.inserted) {
+    const message = Object.freeze({ type: "notification", notification: view });
+    for (const listener of desktopNotificationListeners) {
+      try { listener(message); } catch { /* one renderer listener cannot block persistence */ }
+    }
+    broadcastDesktopState();
+  }
+  return view;
+}
+
+function desktopStateSnapshot(): Readonly<Record<string, unknown>> {
+  const unreadCounts = desktopNotificationUnreadCounts();
+  const unreadBySession = Object.fromEntries(unreadCounts.map(entry => [entry.session_id, entry.count]));
+  const runtimeBySession = new Map(discoverSessions().map(session => [session.id, session.status]));
+  const sessions = getAllSessions().map(session => Object.freeze({
+    id: session.id,
+    title: session.title,
+    unread: unreadBySession[session.id] ?? 0,
+    status: runtimeBySession.get(session.id) ?? "idle",
+  }));
+  const notifications = listDesktopNotifications(500).map(desktopNotificationView);
+  const unread = unreadCounts.reduce((sum, entry) => sum + entry.count, 0);
+  return Object.freeze({
+    schemaVersion: 1,
+    unread,
+    running: sessions.filter(session => session.status === "running").length,
+    errors: sessions.filter(session => session.status === "error").length,
+    firstUnreadSessionId: notifications.find(notification => notification.unread)?.sessionId ?? null,
+    sessions,
+    notifications,
+  });
+}
+
+function broadcastDesktopState(): void {
+  const message = Object.freeze({ type: "state", state: desktopStateSnapshot() });
+  for (const listener of desktopNotificationListeners) {
+    try { listener(message); } catch { /* one renderer listener cannot block state fanout */ }
+  }
+}
+
+function updateDesktopSessionStatus(sessionId: string, status: "idle" | "running" | "error"): void {
+  updateSessionStatus(sessionId, status);
+  broadcastDesktopState();
+}
+
+function eventDesktopNotification(event: EventEnvelope): void {
+  const row = getDesktopNotificationBySourceKey(`event:${event.id}`);
+  if (!row) return;
+  const view = desktopNotificationView(row);
+  const message = Object.freeze({ type: "notification", notification: view });
+  for (const listener of desktopNotificationListeners) {
+    try { listener(message); } catch { /* one renderer listener cannot block committed event delivery */ }
+  }
+  broadcastDesktopState();
 }
 
 function rejectWhenRuntimeBusy(res: Response): boolean {
@@ -2460,6 +2563,63 @@ app.get("/api/status", (_req, res) => {
 });
 
 // ===========================================
+// Desktop notification inbox / state (DS-08)
+// ===========================================
+app.get("/api/desktop/state", (_req, res) => {
+  res.json(desktopStateSnapshot());
+});
+
+app.get("/api/desktop/events", (req, res) => {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+  const listener = (message: Readonly<Record<string, unknown>>) => {
+    if (!res.writableEnded) res.write(`data: ${JSON.stringify(message)}\n\n`);
+  };
+  desktopNotificationListeners.add(listener);
+  res.write(`data: ${JSON.stringify({ type: "state", state: desktopStateSnapshot() })}\n\n`);
+  const heartbeat = setInterval(() => {
+    if (!res.writableEnded) res.write(": heartbeat\n\n");
+  }, 15000);
+  heartbeat.unref?.();
+  req.once("close", () => {
+    clearInterval(heartbeat);
+    desktopNotificationListeners.delete(listener);
+  });
+});
+
+app.post("/api/desktop/notifications/:id/read", (req, res) => {
+  try {
+    const sessionId = requireTransportSessionIdentity(req.body?.sessionId);
+    const changed = markDesktopNotificationRead(req.params.id, sessionId);
+    const state = desktopStateSnapshot();
+    broadcastDesktopState();
+    res.json({ changed, state });
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+app.post("/api/desktop/sessions/:id/read", (req, res) => {
+  try {
+    const sessionId = requireTransportSessionIdentity(req.params.id);
+    if (!getSessionInfo(sessionId)) {
+      res.status(404).json({ error: "Session 不存在" });
+      return;
+    }
+    const changed = markSessionDesktopNotificationsRead(sessionId);
+    const state = desktopStateSnapshot();
+    broadcastDesktopState();
+    res.json({ changed, state });
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+// ===========================================
 // Chat API
 // ===========================================
 app.post("/api/chat/cancel", async (req, res) => {
@@ -2545,7 +2705,7 @@ app.post("/api/chat", async (req, res) => {
     catch { /* The run may already have settled while the response was closing. */ }
   };
   res.once("close", closeInteraction);
-  updateSessionStatus(chatSessionId, "running");
+  updateDesktopSessionStatus(chatSessionId, "running");
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
@@ -2564,6 +2724,7 @@ app.post("/api/chat", async (req, res) => {
   }));
 
   let cancellationCleanupFailure: unknown = undefined;
+  let runCancelled = false;
   try {
     await runWithInteractionChannel(identity, { emit, signal: claim.signal }, async () => {
       let input: string | null = message;
@@ -2576,6 +2737,7 @@ app.post("/api/chat", async (req, res) => {
     });
   } catch (error) {
     const cancelled = isRunCancellation(error);
+    runCancelled = cancelled;
     if (isRunSettlementFailure(error) || (claim.signal.aborted && !cancelled)) cancellationCleanupFailure = error;
     status = cancelled ? "idle" : "error";
     emit({
@@ -2592,7 +2754,18 @@ app.post("/api/chat", async (req, res) => {
     res.off("close", closeInteraction);
     if (activeRunInteractions.get(chatSessionId) === identity) activeRunInteractions.delete(chatSessionId);
     clearActiveRunInjections(chatSessionId);
-    updateSessionStatus(chatSessionId, status);
+    updateDesktopSessionStatus(chatSessionId, status);
+    if (!runCancelled) {
+      const sessionTitle = getSessionInfo(chatSessionId)?.title ?? "Session";
+      persistDesktopNotification({
+        sourceKey: `run:${runId}:settled`,
+        sessionId: chatSessionId,
+        kind: status === "error" ? "error" : "success",
+        title: status === "error" ? "运行失败" : "运行完成",
+        body: notificationText(sessionTitle, "Session", 240),
+        targetTab: "session",
+      });
+    }
     try { registry.releaseRun(claim, cancellationCleanupFailure); }
     catch (error) {
       if (!(error instanceof SessionRuntimeLifecycleError) || error.code !== "SESSION_RUNTIME_CLAIM_STALE") throw error;
@@ -2715,7 +2888,7 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
         const startedAt = Date.now();
       const identity: ActiveRun = Object.freeze({ sessionId, runId });
       activeRunInteractions.set(sessionId, identity);
-      updateSessionStatus(sessionId, "running");
+      updateDesktopSessionStatus(sessionId, "running");
       let status: "idle" | "error" = "idle";
       let settlementFailure: unknown = undefined;
       try {
@@ -2736,7 +2909,7 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
       } finally {
         if (activeRunInteractions.get(sessionId) === identity) activeRunInteractions.delete(sessionId);
         clearActiveRunInjections(sessionId);
-        updateSessionStatus(sessionId, status);
+        updateDesktopSessionStatus(sessionId, status);
         try {
           registry.releaseRun(claim, settlementFailure);
         } catch (error) {
@@ -2761,8 +2934,12 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
 
 /** 启动 EventBus：先接持久层（早于 cron 恢复，避免启动窗口丢事件），会话恢复后装策略并启动调度。 */
 function attachEventStores(): void {
-  getDefaultEventBus().attachStore(createEventStore());
+  const bus = getDefaultEventBus();
+  bus.attachStore(createEventStore());
   getDefaultPollManager().attachStore(createPollStore());
+  backfillDesktopNotificationsFromEvents();
+  removeDesktopEventListener?.();
+  removeDesktopEventListener = bus.addListener("*", eventDesktopNotification);
 }
 
 function startEventDispatch(): void {
@@ -3114,6 +3291,9 @@ export async function shutdown(exitProcess = true): Promise<void> {
   const retiringRegistry = runtimeRegistry;
   cronManager?.dispose();
   await getDefaultPollManager().stop(); // EVT-03：先停 source batch 投递，再停下游 EventBus
+  removeDesktopEventListener?.();
+  removeDesktopEventListener = null;
+  desktopNotificationListeners.clear();
   await getDefaultEventBus().stop();
   await disposeWire();
   const registryShutdown = retiringRegistry?.shutdown() ?? Promise.resolve();

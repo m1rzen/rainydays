@@ -40,7 +40,7 @@ test("RT-07 runtime configuration exposes only the five-tool DAG surface and blo
   assert.match(planning, /Task DAG 拆解（task_create \/ task_update \/ task_list）/u);
 });
 
-test("RT-07 Schema 2 migration preserves legacy tasks in the current Schema 9 DAG", async () => {
+test("RT-07 Schema 2 migration preserves legacy tasks in the current Schema 10 DAG", async () => {
   const fixture = await makeTempDir("mini-lux-rt07-schema-two-");
   await mkdir(path.join(fixture, "data"), { recursive: true });
   const helper = path.join(projectRoot, "scripts", "version-test-child.mjs");
@@ -57,6 +57,17 @@ test("RT-07 Schema 2 migration preserves legacy tasks in the current Schema 9 DA
       database.pragma("journal_mode = DELETE");
       database.pragma("foreign_keys = OFF");
       database.exec(`
+        DROP INDEX idx_desktop_notifications_unread;
+        DROP INDEX idx_desktop_notifications_session;
+        DROP TABLE desktop_notifications;
+        DROP TRIGGER attachments_user_message_insert;
+        DROP TRIGGER attachments_user_message_update;
+        DROP INDEX idx_attachments_session_draft;
+        DROP INDEX idx_attachments_message;
+        DROP INDEX idx_attachments_draft_duplicate;
+        DROP TABLE attachments;
+        DROP INDEX idx_messages_session_id;
+        DROP TABLE workbench_layout;
         DROP TABLE poll_batch_events;
         DROP TABLE poll_batches;
         DROP TABLE poll_subscriptions;
@@ -152,7 +163,7 @@ test("RT-07 Schema 2 migration preserves legacy tasks in the current Schema 9 DA
       timeoutMs: 20_000,
     });
     assert.equal(migrated.code, 0, migrated.stderr);
-    assert.equal(parseLastJson(migrated.stdout).userVersion, 9);
+    assert.equal(parseLastJson(migrated.stdout).userVersion, 10);
 
     database = new Database(databasePath, { readonly: true, fileMustExist: true });
     try {
@@ -242,7 +253,7 @@ test("RT-07 Task DAG is atomic, Session-scoped, fork-safe, and restart-persisten
     });
     assert.equal(verified.code, 0, verified.stderr);
     const persisted = parseLastJson(verified.stdout);
-    assert.equal(persisted.schemaVersion, 6);
+    assert.equal(persisted.schemaVersion, 10);
     assert.deepEqual(persisted.fork.find(entry => entry.id === "build").metadata, { verified: true });
     assert.equal(persisted.fork.find(entry => entry.id === "build").owner, "worker-b");
   } finally {

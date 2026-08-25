@@ -13,7 +13,7 @@
     },
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "b62850fb0098b3936d3f7c9206ec56fc916344ea60174a9644e8ef8b4cb814c9",
+      "sha256": "f16bff9e7f74a503487b81e48f3034a97a7d2fc59b42c5871a55b20f8b7d3666",
       "owner": "RT-07"
     },
     {
@@ -43,7 +43,7 @@
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "9d7324ed1ffeb4313e57ebe9725ba0879c8cfcb6aaa434f4da671c24c3f2d9e7",
+      "sha256": "25eb86e05d4edb2b6c678d72076d529a18d56f96542b0b4400de952c9efabf45",
       "owner": "RT-07"
     },
     {
@@ -78,7 +78,7 @@
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "45adb28138e384f0b1778da08bb175cbf821bc34178bd937dc6a8dfe559c44d2",
+      "sha256": "fbf50bd32713b4004d1f813e26f614a5a0a5dfc467599bc44c4e58b19ddb7edd",
       "owner": "RT-07"
     },
     {
@@ -93,7 +93,7 @@
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "3da7a732d1dc396e69d2cda3d3ed484235ebc30a6ce86b1be98ed138ec8beb0a",
+      "sha256": "3f713792d1be6150dc2161427463f2b123d7ec11c58fb72842cb3a4b723d3e91",
       "owner": "RT-07"
     },
     {
@@ -128,7 +128,7 @@
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "4ab313a14719554df9d5312fdcc47925d3086ba7a02405fee05b3d0d92f01cc4",
+      "sha256": "e6d96ec852206d9173f54e30902efa4d6d391d25d57f63f12899b0cdca56243e",
       "owner": "RT-07"
     }
   ],
@@ -142,7 +142,7 @@
     },
     {
       "exactCasePath": "tests/integration/rt07-task-dag.test.mjs",
-      "sha256": "56c4119550c2b876cbce4829a31827c8f1afde6c3fdc37052e209969b730316d",
+      "sha256": "8ca4d1eb9f336b1f4a780ba649e4974acdbd41e09e0f900f7d05ceecc200fc31",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-07"
@@ -156,11 +156,11 @@
     },
     {
       "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-      "sha256": "d09b55e686332f001bee08a11db11e9ebbde996af33e08149184ef0821e18912",
+      "sha256": "612efc83c8996ea9e319b3870dac5e6b5bbae44693ce4978b6a3091d5e1627b5",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-07"
     }
   ],
-  "canonicalPayloadSha256": "66aa260ea9ae31118f04a3d6ae78321f8f3745f74e649f686d35e15098437b7a"
+  "canonicalPayloadSha256": "9a6b912f65a2d8d82472f7b0821c5246d7f341930c38fa9097560410c2b60d78"
 }

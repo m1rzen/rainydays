@@ -6,7 +6,7 @@ import test from "node:test";
 import { projectRoot } from "../helpers.mjs";
 
 const require = createRequire(import.meta.url);
-const { assertTrustedJsonDownload, assertTrustedRendererBinding, assertTrustedRendererOrigin, parseDialogRequest, parseNotification, parseWindowAction } = require("../../electron/ipc-contract.cjs");
+const { assertTrustedJsonDownload, assertTrustedRendererBinding, assertTrustedRendererOrigin, parseDialogRequest, parseNotification, parseTrayState, parseWindowAction } = require("../../electron/ipc-contract.cjs");
 
 test("SEC-07 freezes a sandboxed renderer with no inline code and a strict CSP", async () => {
   const [html, renderer, main, server] = await Promise.all([
@@ -140,10 +140,17 @@ test("DS-02 desktop IPC contract accepts only the frozen request schemas", () =>
     defaultName: "session.json",
   });
   assert.deepEqual(parseWindowAction({ action: "toggle-fullscreen" }), { action: "toggle-fullscreen" });
-  assert.deepEqual(parseNotification({ id: "run-complete", title: "完成", body: "任务已完成" }), {
+  assert.deepEqual(parseNotification({
+    id: "run-complete", title: "完成", body: "任务已完成", sessionId: "session-one", targetTab: "session",
+  }), {
     id: "run-complete",
     title: "完成",
     body: "任务已完成",
+    sessionId: "session-one",
+    targetTab: "session",
+  });
+  assert.deepEqual(parseTrayState({ unread: 3, running: 2, errors: 1, firstUnreadSessionId: "session-one" }), {
+    unread: 3, running: 2, errors: 1, firstUnreadSessionId: "session-one",
   });
 });
 
@@ -154,7 +161,10 @@ test("DS-02 desktop IPC contract rejects unknown fields and unsafe native inputs
   assert.throws(() => parseDialogRequest({ defaultName: "CON?.txt" }, "save"), /file name is invalid/iu);
   assert.throws(() => parseWindowAction({ action: "close" }), /action is invalid/iu);
   assert.throws(() => parseWindowAction({ action: "minimize", channel: "shell" }), /fields are invalid/u);
-  assert.throws(() => parseNotification({ id: "../escape", title: "x", body: "y" }), /id is invalid/iu);
-  assert.throws(() => parseNotification({ id: "ok", title: "x", body: "y", route: "shell" }), /fields are invalid/u);
-  assert.throws(() => parseNotification({ id: "ok", title: "x", body: "z".repeat(241) }), /body is invalid/iu);
+  assert.throws(() => parseNotification({ id: "../escape", title: "x", body: "y", sessionId: "one", targetTab: "session" }), /id is invalid/iu);
+  assert.throws(() => parseNotification({ id: "ok", title: "x", body: "y", sessionId: "one", targetTab: "session", route: "shell" }), /fields are invalid/u);
+  assert.throws(() => parseNotification({ id: "ok", title: "x", body: "z".repeat(241), sessionId: "one", targetTab: "session" }), /body is invalid/iu);
+  assert.throws(() => parseNotification({ id: "ok", title: "x", body: "y", sessionId: "one", targetTab: "shell" }), /target tab is invalid/iu);
+  assert.throws(() => parseTrayState({ unread: -1, running: 0, errors: 0, firstUnreadSessionId: null }), /count is invalid/iu);
+  assert.throws(() => parseTrayState({ unread: 0, running: 0, errors: 0, firstUnreadSessionId: "../bad\n" }), /session id is invalid/iu);
 });

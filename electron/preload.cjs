@@ -2,9 +2,15 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 const notificationListeners = new Set();
-ipcRenderer.on("rainydays:notification-clicked", (_event, id) => {
-  if (typeof id !== "string") return;
-  for (const listener of notificationListeners) listener(id);
+const pendingNotificationTargets = [];
+ipcRenderer.on("rainydays:notification-clicked", (_event, target) => {
+  if (!target || typeof target !== "object" || Array.isArray(target)
+    || !(target.id === null || typeof target.id === "string")
+    || typeof target.sessionId !== "string"
+    || !["session", "terminal", "file"].includes(target.targetTab)) return;
+  const frozen = Object.freeze({ id: target.id, sessionId: target.sessionId, targetTab: target.targetTab });
+  if (notificationListeners.size === 0) pendingNotificationTargets.splice(0, pendingNotificationTargets.length, frozen);
+  else for (const listener of notificationListeners) listener(frozen);
 });
 
 const electronAPI = Object.freeze({
@@ -19,9 +25,11 @@ const electronAPI = Object.freeze({
   windowState: () => ipcRenderer.invoke("rainydays:window-state"),
   windowAction: request => ipcRenderer.invoke("rainydays:window-action", request),
   notify: request => ipcRenderer.invoke("rainydays:notify", request),
+  updateTrayState: request => ipcRenderer.invoke("rainydays:tray-state", request),
   onNotificationClicked: listener => {
     if (typeof listener !== "function") throw new TypeError("Notification listener must be a function");
     notificationListeners.add(listener);
+    for (const target of pendingNotificationTargets.splice(0)) listener(target);
     return () => notificationListeners.delete(listener);
   },
   terminalStart: request => ipcRenderer.invoke("rainydays:terminal-start", request),

@@ -114,7 +114,10 @@
     "test:ds06": "node scripts/run-tests.mjs --task DS-06 --profile full",
     "governance:ds07:generate": "node scripts/generate-ds07-resolved-manifest.mjs",
     "governance:ds07:check": "node scripts/generate-ds07-resolved-manifest.mjs --check",
-    "test:ds07": "node scripts/run-tests.mjs --task DS-07 --profile full"
+    "test:ds07": "node scripts/run-tests.mjs --task DS-07 --profile full",
+    "governance:ds08:generate": "node scripts/generate-ds08-resolved-manifest.mjs",
+    "governance:ds08:check": "node scripts/generate-ds08-resolved-manifest.mjs --check",
+    "test:ds08": "node scripts/run-tests.mjs --task DS-08 --profile full"
   },
   "dependencies": {
     "@xenova/transformers": "^2.17.2",

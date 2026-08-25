@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "bd889c2303822c19d5043aa172094dae05ef09484b026eb468e36e3cb3233bd2",
+      "sha256": "84ae1ec1d2e68ece58c5e30a7ab95b671745edaaaaac7745eb37a3a9cfe97311",
       "owner": "DS-07"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "45adb28138e384f0b1778da08bb175cbf821bc34178bd937dc6a8dfe559c44d2",
+      "sha256": "fbf50bd32713b4004d1f813e26f614a5a0a5dfc467599bc44c4e58b19ddb7edd",
       "owner": "DS-07"
     },
     {
@@ -38,17 +38,17 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "559d3321467fc3b29228764b988fe819451cff07ffa163806c0ff5b607eababf",
+      "sha256": "c0de3bd9b5ba4dfd97b945959633f493b3c73b32870a713bd5035ef1ac3fc774",
       "owner": "DS-07"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "a84b4f8906cca0ea550ce91640f4a84d11e06e2fd583819b267255fb377f3e50",
+      "sha256": "20306be423a136dbfb16ee74608c12a2957cd6ec091f84eeb4f2dbeceac8bca7",
       "owner": "DS-07"
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "8a1b7ed5ccaf44914728f56a58f7101481d18e7205d600e3ebc6d6e5b2daca1d",
+      "sha256": "e144ef70d7f71a0ae1ec0c5e579c4298d304022547c5221d3bc7cf8595198fd3",
       "owner": "DS-07"
     }
   ],
@@ -69,7 +69,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "8a1b7ed5ccaf44914728f56a58f7101481d18e7205d600e3ebc6d6e5b2daca1d",
+      "sha256": "e144ef70d7f71a0ae1ec0c5e579c4298d304022547c5221d3bc7cf8595198fd3",
       "kind": "test",
       "layer": "unit",
       "owner": "DS-07"
@@ -97,18 +97,18 @@
     },
     {
       "exactCasePath": "tests/integration/ds03-workbench-layout.test.mjs",
-      "sha256": "aa6b9d1a7de55c18b23a1a87b44dad0ef6cb9fa7ce8d1a8db5f3b679d8cd52ec",
+      "sha256": "1f332e78d18a07e3e548130a324b1a4951f519d50287ea42237ff2a8705d0120",
       "kind": "test",
       "layer": "integration",
       "owner": "DS-07"
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "36e58b35493721b945b26b5d6bf994e0f24239114d01daf2e2b43dad69db2ae6",
+      "sha256": "d2c37e36c31b5007213449967e0abbeafa623151820c77321ea4ccf8cf560bc1",
       "kind": "test",
       "layer": "electron",
       "owner": "DS-07"
     }
   ],
-  "canonicalPayloadSha256": "0c3eb3185fb3c08a97426a28535778b7cd45ab5d2fae32e5a6d6074b6945ee16"
+  "canonicalPayloadSha256": "a5acc31c187787d0c8fdbdf3809ffb92646deff316e3f5e27c0d2366dc8b07f4"
 }

@@ -10,7 +10,7 @@ const { spawn } = require("node:child_process");
 const { randomBytes } = require("node:crypto");
 const { ElectronBootstrapPathStore, ElectronPathError } = require("./path-bootstrap.cjs");
 const { migrateLegacyUserData } = require("./user-data-migration.cjs");
-const { assertTrustedJsonDownload, assertTrustedRendererBinding, parseDialogRequest, parseNotification, parseWindowAction } = require("./ipc-contract.cjs");
+const { assertTrustedJsonDownload, assertTrustedRendererBinding, parseDialogRequest, parseNotification, parseTrayState, parseWindowAction } = require("./ipc-contract.cjs");
 const originalFs = require("original-fs");
 
 let mainWindow = null;
@@ -39,8 +39,10 @@ const desktopIpcChannels = Object.freeze([
   "rainydays:window-state",
   "rainydays:window-action",
   "rainydays:notify",
+  "rainydays:tray-state",
 ]);
 const notificationTimes = [];
+let trayState = Object.freeze({ unread: 0, running: 0, errors: 0, firstUnreadSessionId: null });
 
 let legacyUserDataMigrationError = null;
 if (app.isPackaged && !process.argv.some(argument => argument === "--user-data-dir" || argument.startsWith("--user-data-dir="))) {
@@ -577,10 +579,20 @@ function registerDesktopIpcHandlers() {
       if (window.isDestroyed()) return;
       window.show();
       window.focus();
-      window.webContents.send("rainydays:notification-clicked", parsed.id);
+      window.webContents.send("rainydays:notification-clicked", Object.freeze({
+        id: parsed.id,
+        sessionId: parsed.sessionId,
+        targetTab: parsed.targetTab,
+      }));
     });
     notification.show();
     return Object.freeze({ shown: true, id: parsed.id });
+  });
+  ipcMain.handle("rainydays:tray-state", (event, request) => {
+    trustedRendererWindow(event);
+    trayState = parseTrayState(request);
+    updateTrayPresentation();
+    return trayState;
   });
 }
 
@@ -741,14 +753,33 @@ function createWindow() {
   createTray(icon);
 }
 
-function createTray(icon) {
-  tray = new Tray(icon);
-  tray.setToolTip(`RainyDays ${buildInfo.appVersion} (${buildInfo.buildId})`);
+function navigateFromTray(sessionId) {
+  if (!mainWindow || mainWindow.isDestroyed() || !sessionId) return;
+  mainWindow.show();
+  mainWindow.focus();
+  mainWindow.webContents.send("rainydays:notification-clicked", Object.freeze({
+    id: null,
+    sessionId,
+    targetTab: "session",
+  }));
+}
+
+function updateTrayPresentation() {
+  if (!tray || tray.isDestroyed()) return;
+  const counts = `${trayState.unread} 未读 · ${trayState.running} 运行 · ${trayState.errors} 错误`;
+  tray.setToolTip(`RainyDays ${buildInfo.appVersion} · ${counts}`);
   tray.setContextMenu(Menu.buildFromTemplate([
+    { label: counts, enabled: false },
+    { label: "打开首个未读会话", enabled: Boolean(trayState.firstUnreadSessionId), click: () => navigateFromTray(trayState.firstUnreadSessionId) },
     { label: "显示窗口", click: () => { mainWindow?.show(); mainWindow?.focus(); } },
     { type: "separator" },
     { label: "退出", click: () => { app.isQuitting = true; app.quit(); } },
   ]));
+}
+
+function createTray(icon) {
+  tray = new Tray(icon);
+  updateTrayPresentation();
   tray.on("click", () => {
     if (!mainWindow) return;
     if (mainWindow.isVisible()) mainWindow.hide();
