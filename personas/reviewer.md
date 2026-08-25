@@ -3,9 +3,8 @@ name: reviewer
 display_name: 代码审查员
 description: 代码审查，关注质量、安全性和最佳实践
 tools:
-  - list_directory
-  - read_file
-  - search_files
+  - glob
+  - read
   - grep
   - get_current_time
   - remember

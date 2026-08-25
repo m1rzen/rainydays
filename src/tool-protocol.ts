@@ -28,6 +28,15 @@ function sectionedBody(
 }
 
 const BODY_MODES: Readonly<Record<string, ToolBodyMode>> = Object.freeze({
+  write: rawBody("WRITE", "content", [header("file_path", "file_path", true)]),
+  edit: sectionedBody("EDIT", [
+    { blockName: "OLD_STRING", parameter: "old_string" },
+    { blockName: "NEW_STRING", parameter: "new_string" },
+  ], [header("file_path", "file_path", true), header("replace_all", "replace_all")]),
+  replace: sectionedBody("REPLACE", [
+    { blockName: "OLD_STRING", parameter: "old_string" },
+    { blockName: "NEW_STRING", parameter: "new_string" },
+  ], [header("file_path", "file_path", true), header("replace_all", "replace_all")]),
   write_file: rawBody("WRITE", "content", [header("path", "path", true)]),
   edit_file: sectionedBody("EDIT", [
     { blockName: "OLD_STRING", parameter: "old_string" },
@@ -38,11 +47,14 @@ const BODY_MODES: Readonly<Record<string, ToolBodyMode>> = Object.freeze({
 });
 
 const HOST_BOUND_TOOLS = new Set([
-  "list_directory", "read_file", "search_files", "write_file", "edit_file", "grep",
+  "read", "write", "edit", "replace", "glob", "grep",
+  "list_directory", "read_file", "search_files", "write_file", "edit_file",
   "execute_command", "script", "read_repo",
 ]);
 
 const TOOL_TIMEOUTS: Readonly<Record<string, number>> = Object.freeze({
+  glob: 10_000,
+  grep: 10_000,
   execute_command: 60_000,
   script: 60_000,
 });

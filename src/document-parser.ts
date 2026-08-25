@@ -2,7 +2,7 @@ import { Worker } from "node:worker_threads";
 import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 import { assertResourceOwner, registerOwnedResource, type ResourceOwner } from "./resource-owner.js";
 import { cancellationError, NEVER_ABORT_SIGNAL, RunSettlementError, throwIfCancelled } from "./run-cancellation.js";
-import type { ParseResult } from "./tools/parsers.js";
+import type { ParseFileOptions, ParseResult } from "./tools/parsers.js";
 
 const PARSER_TIMEOUT_MS = 20_000;
 
@@ -10,7 +10,8 @@ export async function parseDocumentIsolated(
   fileName: string,
   bytes: Uint8Array,
   owner: ResourceOwner,
-  signal: AbortSignal = NEVER_ABORT_SIGNAL
+  signal: AbortSignal = NEVER_ABORT_SIGNAL,
+  options: ParseFileOptions = {},
 ): Promise<ParseResult> {
   assertResourceOwner(owner);
   throwIfCancelled(signal);
@@ -27,7 +28,7 @@ export async function parseDocumentIsolated(
   return await new Promise<ParseResult>((resolve, reject) => {
     let worker: Worker;
     try {
-      worker = new Worker(codeLease.canonicalPath, { workerData: { fileName, bytes: Buffer.from(bytes) } });
+      worker = new Worker(codeLease.canonicalPath, { workerData: { fileName, bytes: Buffer.from(bytes), options } });
     } catch (error) {
       void codeLease.close().then(
         () => reject(error),

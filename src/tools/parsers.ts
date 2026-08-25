@@ -10,10 +10,16 @@ export interface ParseResult {
   success: boolean;
   text: string;
   error?: string;
+  pageCount?: number;
+  renderedPages?: number[];
+}
+
+export interface ParseFileOptions {
+  readonly pdfPages?: readonly number[] | null;
 }
 
 /** Parse bytes already read through an authorized, bounded file handle. */
-export async function parseFileBuffer(fileName: string, input: Uint8Array): Promise<ParseResult> {
+export async function parseFileBuffer(fileName: string, input: Uint8Array, options: ParseFileOptions = {}): Promise<ParseResult> {
   const ext = path.extname(fileName).toLowerCase();
   const baseName = path.basename(fileName).toLowerCase();
   const buffer = Buffer.from(input);
@@ -49,7 +55,7 @@ export async function parseFileBuffer(fileName: string, input: Uint8Array): Prom
         return await parseXlsx(buffer);
 
       case ".pdf":
-        return await parsePdf(buffer);
+        return await parsePdf(buffer, options.pdfPages ?? null);
 
       default:
         return {
@@ -123,12 +129,35 @@ async function parseXlsx(buffer: Buffer): Promise<ParseResult> {
 }
 
 /** PDF 文档 */
-async function parsePdf(buffer: Buffer): Promise<ParseResult> {
+async function parsePdf(buffer: Buffer, requestedPages: readonly number[] | null): Promise<ParseResult> {
   const pdfParse = (await import("pdf-parse")).default;
-  const data = await pdfParse(buffer);
-
+  const requested = requestedPages ? new Set(requestedPages) : null;
+  const renderedPages: number[] = [];
+  const pagerender = async (pageData: any): Promise<string> => {
+    const pageNumber = Number(pageData.pageNumber);
+    if (requested && !requested.has(pageNumber)) return "";
+    const textContent = await pageData.getTextContent({ normalizeWhitespace: false, disableCombineTextItems: false });
+    let lastY: number | undefined;
+    let text = "";
+    for (const item of textContent.items as Array<{ str: string; transform: number[] }>) {
+      text += lastY === undefined || lastY === item.transform[5] ? item.str : `\n${item.str}`;
+      lastY = item.transform[5];
+    }
+    renderedPages.push(pageNumber);
+    return `--- PDF Page ${pageNumber} ---\n${text}`;
+  };
+  const max = requestedPages?.length ? Math.max(...requestedPages) : 0;
+  const data = await pdfParse(buffer, { pagerender, max });
+  if (requestedPages?.some(pageNumber => pageNumber > data.numpages)) {
+    return { success: false, text: "", error: `请求页面超出 PDF 范围（共 ${data.numpages} 页）`, pageCount: data.numpages, renderedPages };
+  }
+  if (requested && renderedPages.length === 0) {
+    return { success: false, text: "", error: `请求页面超出 PDF 范围（共 ${data.numpages} 页）`, pageCount: data.numpages, renderedPages: [] };
+  }
   return {
     success: true,
-    text: data.text || "（PDF 内容为空或为扫描件）",
+    text: data.text.trim() || "（PDF 内容为空或为扫描件）",
+    pageCount: data.numpages,
+    renderedPages,
   };
 }

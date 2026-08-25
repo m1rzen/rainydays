@@ -499,7 +499,7 @@
       "family": "worker",
       "api": "Worker",
       "container": "parseDocumentIsolated",
-      "occurrenceId": "exec-a8397788ce0939f8acf81e93"
+      "occurrenceId": "exec-0654e24e54b135432ce2ac22"
     },
     {
       "sourcePath": "src/file-viewer.ts",
@@ -897,5 +897,5 @@
       "occurrenceId": "exec-c52f91fdd68fcd90774471b7"
     }
   ],
-  "canonicalPayloadSha256": "27f760fa2a60f361277d26c5435e0a124d9973a314a006ee3e4607330edc8649"
+  "canonicalPayloadSha256": "ac5d6fd79220a97e863bc01d7cc4d145df06259260ce839eb24d585cdce94986"
 }

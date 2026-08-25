@@ -15,7 +15,7 @@ let llmRef: LLMClient | null = null;
 
 /** 需要审批的工具（有副作用的） */
 const dangerousTools = new Set([
-  "write_file", "edit_file", "create_docx", "create_xlsx",
+  "write", "edit", "replace", "write_file", "edit_file", "create_docx", "create_xlsx",
   "execute_command", "shell_start", "shell_input", "shell_kill", "download",
 ]);
 

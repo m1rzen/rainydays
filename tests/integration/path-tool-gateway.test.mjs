@@ -270,13 +270,17 @@ test.after(async () => {
 });
 
 test("SEC-02 filesystem source has no raw filesystem or lexical authorization fallback", async () => {
-  const source = await fs.readFile(new URL("../../src/tools/filesystem.ts", import.meta.url), "utf8");
-  assert(!/from\s+["'](?:node:)?fs(?:\/promises)?["']/.test(source));
-  assert(!/\bfs\s*\./.test(source));
-  assert(!/path\.resolve\s*\(/.test(source));
-  assert(!/replace\s*\(\/\\\.\\\.\//.test(source));
-  assert(!/process\.env/.test(source));
-  assert.match(source, /parseDocumentIsolated\(/);
+  const sources = await Promise.all([
+    "filesystem.ts", "filesystem-lux.ts", "filesystem-grep.ts",
+  ].map(name => fs.readFile(new URL(`../../src/tools/${name}`, import.meta.url), "utf8")));
+  for (const source of sources) {
+    assert(!/from\s+["'](?:node:)?fs(?:\/promises)?["']/.test(source));
+    assert(!/\bfs\s*\./.test(source));
+    assert(!/path\.resolve\s*\(/.test(source));
+    assert(!/replace\s*\(\/\\\.\\\.\//.test(source));
+    assert(!/process\.env/.test(source));
+  }
+  assert.match(sources[1], /parseDocumentIsolated\(/);
 });
 
 test("SEC-02 list_directory delegates the raw input and exact DATA_ROOT ID", async () => {
@@ -401,7 +405,7 @@ test("SEC-02 edit_file no-match is a no-write transform result", async () => {
 test("SEC-02 grep uses only search-tree directory and bounded file operations", async () => {
   const calls = [];
   const output = await grepExec(
-    { pattern: "needle", path: "src", file_pattern: "*.txt" },
+    { pattern: "needle", path: "src", glob: "*.txt", output_mode: "content" },
     {},
     invocation(gateway({
       searchDirectory: async (input, options) => {
@@ -418,16 +422,16 @@ test("SEC-02 grep uses only search-tree directory and bounded file operations", 
     ["directory", "src", { defaultRootId: "workspace", maxEntries: 10_000 }],
     ["file", "src\\a.txt", { defaultRootId: "workspace", maxBytes: 8 * 1024 * 1024 }],
   ]);
-  assert.match(output, /src\\a\.txt:2: needle value/);
-  const realOutput = await (await realRuntime()).execute("grep", { pattern: "dispatcher", path: "" });
-  assert.match(realOutput, /input\.txt:1: dispatcher read content/);
+  assert.match(output, /src\\a\.txt:2:needle value/);
+  const realOutput = await (await realRuntime()).execute("grep", { pattern: "dispatcher", path: "", output_mode: "content" });
+  assert.match(realOutput, /input\.txt:1:dispatcher read content/);
   if (grepRecorder.enabled) await grepRecorder.positive("SEC02-POS-grep");
 });
 
 test("SEC-02 filesystem executors fail closed without invocation services", async () => {
   await assert.rejects(() => listDirectoryExec({}, {}), /Path gateway is required/);
-  await assert.rejects(() => readFileExec({ path: "x.txt" }, {}), /Path gateway is required/);
-  await assert.rejects(() => writeFileExec({ path: "x.txt", content: "x" }, {}), /Path gateway is required/);
+  await assert.rejects(() => readFileExec({ path: "x.txt" }, {}), /Tool invocation services are required/);
+  await assert.rejects(() => writeFileExec({ path: "x.txt", content: "x" }, {}), /Tool invocation services are required/);
 });
 
 test("SEC-02 filesystem coverage recovery closes bounded formatting and gateway edge branches", async () => {
@@ -447,11 +451,12 @@ test("SEC-02 filesystem coverage recovery closes bounded formatting and gateway 
   const truncated = await readFileExec({ path: "long.txt" }, {}, invocation(gateway({
     readFile: async () => ({ bytes: Buffer.from(longText), rootId: "workspace", identity: {}, snapshot: {} }),
   })));
-  assert.match(truncated, /省略中间内容/u);
+  assert.match(truncated, /89-xxxxxxxx/u);
+  assert(!truncated.includes("省略中间内容"));
   const paged = await readFileExec({ path: "short.txt", offset: 1, limit: 1 }, {}, invocation(gateway({
     readFile: async () => ({ bytes: Buffer.from("one\ntwo"), rootId: "workspace", identity: {}, snapshot: {} }),
   })));
-  assert.match(paged, /继续读取/u);
+  assert.match(paged, /下一页 offset=2/u);
 
   const many = Array.from({ length: 55 }, (_, index) => ({ name: `needle-${index}.txt`, type: "file" }));
   const manySearch = await searchFilesExec({ keyword: "needle", path: null }, {}, invocation(gateway({ searchDirectory: async () => many })));
@@ -468,7 +473,10 @@ test("SEC-02 filesystem coverage recovery closes bounded formatting and gateway 
     Date.now = originalNow;
   }
 
-  assert.equal(await editFileExec({ path: "x.txt", old_string: "", new_string: "x" }, {}, invocation(gateway())), "old_string 不能为空。");
+  await assert.rejects(
+    () => editFileExec({ path: "x.txt", old_string: "", new_string: "x" }, {}, invocation(gateway())),
+    error => error?.code === "TOOL_ARGUMENTS_INVALID",
+  );
   const ambiguous = await editFileExec({ path: "x.txt", old_string: "same", new_string: "new" }, {}, invocation(gateway({
     replaceFile: async (_input, transform) => {
       const value = await transform(Buffer.from("same same"));
@@ -484,19 +492,23 @@ test("SEC-02 filesystem coverage recovery closes bounded formatting and gateway 
   })));
   assert.match(unique, /替换 1 处/u);
 
-  assert.match(await grepExec({ pattern: "[" }, {}, invocation(gateway())), /无效的正则/u);
+  await assert.rejects(
+    () => grepExec({ pattern: "[" }, {}, invocation(gateway())),
+    error => error?.code === "TOOL_ARGUMENTS_INVALID",
+  );
   const noGrep = await grepExec({ pattern: "needle" }, {}, invocation(gateway({ searchDirectory: async () => [] })));
-  assert.match(noGrep, /未找到/u);
-  const manyGrep = await grepExec({ pattern: "needle", file_pattern: "*.txt" }, {}, invocation(gateway({
+  assert.match(noGrep, /No matches found/u);
+  const manyGrep = await grepExec({ pattern: "needle", glob: "*.txt", output_mode: "content", head_limit: 50 }, {}, invocation(gateway({
     searchDirectory: async input => input === "" ? [{ name: "matches.txt", type: "file" }, { name: ".hidden", type: "directory" }] : [],
     searchFile: async () => ({ bytes: Buffer.from(Array.from({ length: 60 }, () => "needle line").join("\n")), rootId: "workspace", identity: {}, snapshot: {} }),
   })));
-  assert.match(manyGrep, /还有 10 个结果/u);
+  assert.match(manyGrep, /matches\.txt:50:needle line/u);
+  assert(!manyGrep.includes("matches.txt:51:"));
   clockCalls = 0;
   Date.now = () => clockCalls++ === 0 ? 0 : 9_001;
   try {
     const timedGrep = await grepExec({ pattern: "needle" }, {}, invocation(gateway({ searchDirectory: async () => [] })));
-    assert.match(timedGrep, /搜索已超时/u);
+    assert.match(timedGrep, /search timed out/u);
   } finally {
     Date.now = originalNow;
   }

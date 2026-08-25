@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "taskId": "TOOL-02",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/tool-02.json",
+    "sha256": "617ac052ac5649ac110ea631e9b3598305a3538fe0604d7408692f61069211a2"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "e54b9c71091575084839e6582397d749bf3aa5ed861433b0ba55f5c5adf12528",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "scripts/tool02-governance.mjs",
+      "sha256": "e438d8a01f467782127bdf00db8e739c3c83b329e06a66a1f3d7124bb4bd3efa",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "scripts/generate-tool02-resolved-manifest.mjs",
+      "sha256": "8d4060d157d911ac3ca832467c55a035f759aa64de11569c7379be1661f074fb",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "7e1c10ebdb44aae7c8af81a9d2588905f743c0bfd0c6d31db9f6497b387009cb",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "src/document-parser-worker.ts",
+      "sha256": "90e6b362f0c354051219eaad36f3864832bcf07769113f5d52533f1780b5f4f5",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "src/document-parser.ts",
+      "sha256": "3d29c40948e839f67ba8252a41da09acbe791d07aeb6c7067e5dab4137ff806d",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "src/pdf-parse.d.ts",
+      "sha256": "07138d12dedc7449b012afa4d9606c64391064cb2d9bc212c1f14cca4a367a02",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "src/supervisor.ts",
+      "sha256": "cf7dee6b7c60f291f23af78f3302c9abe3a2a98a3229acf4e84d822aa5904d14",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "a470af73b19c2fce67f721a694062153cc5412d5f8d37934e7030474daf75ae0",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "src/tool-protocol.ts",
+      "sha256": "b4619568460adc6202c991b6c4702d48754c81a51feff2b4482f27353fb6df21",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "src/tools/filesystem.ts",
+      "sha256": "c7a860c9b36682d6e294397a0b3508a322033449d13e088e15b64b6bb362705e",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "src/tools/filesystem-lux.ts",
+      "sha256": "d236ee7a95d7a936abdf867f35d2091180b72eb6c657a71e6ee17f5961dd5063",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "src/tools/filesystem-grep.ts",
+      "sha256": "172f409ceda33192764bf4c385509e09b1a51070e0ab6f30950ccb3138958538",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "5d915958ec232b18503b151fed3a2224dab198f8b4f8c38b1baca50cd1e79c06",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "src/tools/parsers.ts",
+      "sha256": "f68209e83dafca9bd329f7ae75d946a3a7788a6ff38bdaa20495e331ded9c94b",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "personas/architect.md",
+      "sha256": "06d90851f7e4a86133fa333e92d2472fbdf252a24b5ec005e45341f50ea17ddc",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "personas/debugger.md",
+      "sha256": "e7a938a4a742dda14e1c0bbd4f62e6d4d861bc234849eb0cb966f8809ae0cc36",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "personas/developer.md",
+      "sha256": "d9771d57feb505722ea83f7ad4e7cb20098df9642a83ee759cb7840cea945fdb",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "personas/explorer.md",
+      "sha256": "f7138c3bc0e2d602f02c53c69947064b0b4386c10834ce1f7fac739a6dc7ecbe",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "personas/general.md",
+      "sha256": "95df6f07496a893c339a8a87fb1fd7d4e9d65f475d49de96fc9b7ba9656b47ef",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "personas/planner.md",
+      "sha256": "c5e3cd653cdc3957dd25b2ab05926dec61d15c9e361f745214edd343bb4b2aa7",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "personas/quick-fix.md",
+      "sha256": "3fb5ca626f95cd41e414e9c851a6d3592448d63ecf3b3e52dda1a105d4d3edc2",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "personas/rds-assistant.md",
+      "sha256": "e6b52a37624fd14ccca5c3870592cac5a9919e6986d1611771798085c1b2013b",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "personas/reviewer.md",
+      "sha256": "5019f653982bd3fdd9ca69172b7ee50b8018da572d4b1a08ab7bad7e85612b10",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "personas/sentinel.md",
+      "sha256": "6b9aac60acbbf97b9bdc4011ae5e21f732b859f7193713c8b382ecb0676bff5f",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "personas/writer.md",
+      "sha256": "150c22a42212f635e631b740a900cb3f7c41d98cae0199538048424692d0cee8",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/fixtures/tool02-two-pages.pdf",
+      "sha256": "a90926cac834eb553931027048ef7d6ec1cb66fe46e023845946427ff7a90cc6",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "9614cdb513f3989a26498f5975dd8d1110b33bcd7241b713f8f931c22f4be45b",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "f21be156821bce9508ada6e685a2540ade62aa2e35c15c84d528ab015b770c67",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "0d96abe68d1ae50cce4e533768446a17bb201dd44e17bbfb2411a40be1afaf82",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/manifests/sec-02-current.json",
+      "sha256": "16131f5e47a6f4c4de533789fc1c9b81a75f76fedd914d8a61b4347dd6e1b483",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/sec02-sink-inventory.json",
+      "sha256": "10e8968e9be2f2accd97ea151b811769c77bf2d8a90aa91038f2047ca34a6b6c",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/sec02-sink-policy.json",
+      "sha256": "28d99434d553f88e56fdfbed17e09854703e3c1ec66ed0ca7ea2ea640fa0eb3b",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/manifests/sec-03-resolved.json",
+      "sha256": "fda65370f48210c6bc3b1d59b840529956a52a573ec7ffd8702c08290307797e",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-inventory.json",
+      "sha256": "22215a1fdb6d52610887166c52031e6a8e10d9631de5d3d45f9295b891b94bb1",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-policy.json",
+      "sha256": "aaf93b54054bb12ff89f19b691521486933b0aaf300d33364e6ed5e08f21decd",
+      "owner": "TOOL-02"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/tool02-governance.test.mjs",
+      "sha256": "f303004785526a2d4ee2fc592acf0cd81fbef58b523487d2310f30d43e24be43",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+      "sha256": "a07f237fc6eef82e399d1733769ec465198964100a4d543df09aa7b99d15a56b",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
+      "sha256": "1fa6411755115d68d0b8fa2e356c1822428e771105c91995fc60461b1bb7b0ad",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+      "sha256": "2d558e20022f7ff1a3f8f64ab5c21cd088806b9dec023aaa1bfe8bb4430346d4",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "0d96abe68d1ae50cce4e533768446a17bb201dd44e17bbfb2411a40be1afaf82",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+      "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
+      "sha256": "ac668e55240e0ee8f5b53980429882c0031cbf4eb43f88ecb8d09159763302e3",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "TOOL-02"
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-execution-inventory.test.mjs",
+      "sha256": "88b05182e8d5e9f2cfa7c917cc26dd53c571254ac91a98a69994e1851c486e53",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "TOOL-02"
+    }
+  ],
+  "canonicalPayloadSha256": "36baac3a89f9f3be31d1629b9dc4318b6882543ddb81e883c0dc579033ac5599"
+}

@@ -43,7 +43,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "31ca7f8dfd5c8cf50185ba7204458edd1622a94993ea8a1a866eb600869d1461",
+      "sha256": "e54b9c71091575084839e6582397d749bf3aa5ed861433b0ba55f5c5adf12528",
       "owner": "DATA-02"
     },
     {
@@ -78,17 +78,17 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "790c78e5b99ecdcc371e3e295314aaf942b02cfea9511f8a8aea54869a7b2843",
+      "sha256": "9614cdb513f3989a26498f5975dd8d1110b33bcd7241b713f8f931c22f4be45b",
       "owner": "DATA-02"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "09d3264717aff73d702c45619fbdf28d764e9600cd79f7fab8a02a9aa620814c",
+      "sha256": "f21be156821bce9508ada6e685a2540ade62aa2e35c15c84d528ab015b770c67",
       "owner": "DATA-02"
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "837baa6a3bdbc4f6bc6b9589067900c13e46cd271f8bdd28f109e9ddd507f254",
+      "sha256": "0d96abe68d1ae50cce4e533768446a17bb201dd44e17bbfb2411a40be1afaf82",
       "owner": "DATA-02"
     },
     {
@@ -169,5 +169,5 @@
       "owner": "DATA-02"
     }
   ],
-  "canonicalPayloadSha256": "33c6ae155a481100bfaadd3c2ed72227baf328156b56c6df22c89633f59e630e"
+  "canonicalPayloadSha256": "c533c5e10d5243f3e857a9ff3c4c5510420e573de746211725f79df863337ad5"
 }

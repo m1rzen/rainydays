@@ -18,8 +18,9 @@ import {
   searchFilesDef, searchFilesExec,
   writeFileDef, writeFileExec,
   editFileDef, editFileExec,
-  grepDef, grepExec,
 } from "./filesystem.js";
+import { readDef, readExec, writeDef, writeExec, editDef, editExec, replaceDef, replaceExec, globDef, globExec } from "./filesystem-lux.js";
+import { grepDef, grepExec } from "./filesystem-grep.js";
 import {
   createDocxDef, createDocxExec,
   createXlsxDef, createXlsxExec,
@@ -112,12 +113,17 @@ export { createToolOutcome, isValidToolCallId, MAX_TOOL_OUTPUT_BYTES, parseToolA
 
 /** 全部已注册的工具（按名索引） */
 const rawStaticTools: Omit<RegisteredTool, "policy">[] = [
+  { name: "read",            definition: readDef,            executor: readExec },
+  { name: "write",           definition: writeDef,           executor: writeExec },
+  { name: "edit",            definition: editDef,            executor: editExec },
+  { name: "replace",         definition: replaceDef,         executor: replaceExec },
+  { name: "glob",            definition: globDef,            executor: globExec },
+  { name: "grep",            definition: grepDef,            executor: grepExec },
   { name: "list_directory",  definition: listDirectoryDef,  executor: listDirectoryExec },
   { name: "read_file",       definition: readFileDef,        executor: readFileExec },
   { name: "search_files",    definition: searchFilesDef,     executor: searchFilesExec },
   { name: "write_file",      definition: writeFileDef,       executor: writeFileExec },
   { name: "edit_file",       definition: editFileDef,        executor: editFileExec },
-  { name: "grep",            definition: grepDef,             executor: grepExec },
   { name: "create_docx",     definition: createDocxDef,      executor: createDocxExec },
   { name: "create_xlsx",     definition: createXlsxDef,      executor: createXlsxExec },
   { name: "execute_command", definition: executeCommandDef,  executor: executeCommandExec },
@@ -344,11 +350,14 @@ export function registerDynamicTool(authority: RuntimeAuthority, tool: Omit<Regi
 }
 
 export function getToolProtocolDescriptors(context: CapabilityContext): ToolProtocolDescriptor[] {
-  return capabilityBroker.getToolDescriptors(context).map(({ name, definition, policy }) => {
+  const descriptors = capabilityBroker.getToolDescriptors(context).map(({ name, definition, policy }) => {
     const strict = strictToolDefinition(definition);
     if (strict.function.name !== name) throw new Error(`Tool protocol binding identity differs: ${name}`);
     return createToolProtocolDescriptor(strict, policy);
   });
+  const names = new Set(descriptors.map(descriptor => descriptor.name));
+  return descriptors.filter(descriptor => descriptor.name !== "write_file" || !names.has("write"))
+    .filter(descriptor => descriptor.name !== "edit_file" || !names.has("edit"));
 }
 
 export function getToolDefinitions(context: CapabilityContext): ToolDefinition[] {

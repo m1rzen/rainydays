@@ -4,9 +4,8 @@ display_name: 调试员
 description: 深度调试，仔细分析，谨慎操作
 network_policy: unrestricted
 tools:
-  - list_directory
-  - read_file
-  - search_files
+  - glob
+  - read
   - grep
   - execute_command
   - shell_start

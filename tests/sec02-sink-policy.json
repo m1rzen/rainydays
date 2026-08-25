@@ -2512,16 +2512,17 @@
       }
     },
     {
-      "siteId": "sink-f597ad5fb448dad7892d50c2",
+      "siteId": "sink-7107aeeabde6a8690ae8ac8d",
       "sourcePath": "src/document-parser.ts",
-      "normalizedNodeSha256": "3714cab4873484c6e84409621bba5808c8dbd49de83c56714ad3d1fb47d35b55",
+      "normalizedNodeSha256": "5867a08692a8c06c5af781602de42aca9923f4cf2cf0227e274a3022ec3b733e",
       "container": "parseDocumentIsolated",
       "family": "worker",
       "api": "Worker",
       "pathOperands": [
         "argument:0",
         "argument:1.workerData.bytes",
-        "argument:1.workerData.fileName"
+        "argument:1.workerData.fileName",
+        "argument:1.workerData.options"
       ],
       "executionClass": "product-runtime",
       "packageExpectation": "compiled-to-asar",
@@ -2547,6 +2548,11 @@
             "selector": "argument:1.workerData.fileName",
             "classification": "basename-metadata",
             "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.fileName"
+          },
+          {
+            "selector": "argument:1.workerData.options",
+            "classification": "validated-parser-options",
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.options"
           }
         ]
       }
@@ -4075,5 +4081,5 @@
       }
     }
   ],
-  "canonicalPayloadSha256": "3d8f70aac2b19518dfa845572a51977be8f21e931c10c5b66ed35bd047c512ce"
+  "canonicalPayloadSha256": "86b952e5e379c1771d043ebfcec2f45e75832995a7d45fe16cf3109a0cfb3000"
 }

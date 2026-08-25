@@ -4,11 +4,11 @@ display_name: 快速修复
 description: 快速修复小问题，简洁回复，最少确认
 network_policy: unrestricted
 tools:
-  - list_directory
-  - read_file
-  - search_files
-  - write_file
-  - edit_file
+  - glob
+  - read
+  - write
+  - edit
+  - replace
   - grep
   - execute_command
   - shell_start

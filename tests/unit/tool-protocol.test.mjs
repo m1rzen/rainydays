@@ -10,6 +10,7 @@ import {
 } from "../../dist/tool-protocol.js";
 import { STATIC_TOOL_POLICIES } from "../../dist/tool-policies.js";
 import { editFileDef, writeFileDef } from "../../dist/tools/filesystem.js";
+import { editDef, replaceDef, writeDef } from "../../dist/tools/filesystem-lux.js";
 import { executeCommandDef } from "../../dist/tools/shell.js";
 import { scriptDef } from "../../dist/tools/script.js";
 
@@ -19,7 +20,12 @@ const descriptors = Object.freeze([
   createToolProtocolDescriptor(executeCommandDef, STATIC_TOOL_POLICIES.execute_command),
   createToolProtocolDescriptor(scriptDef, STATIC_TOOL_POLICIES.script),
 ]);
-const byName = new Map(descriptors.map(descriptor => [descriptor.name, descriptor]));
+const canonicalDescriptors = Object.freeze([
+  createToolProtocolDescriptor(writeDef, STATIC_TOOL_POLICIES.write),
+  createToolProtocolDescriptor(editDef, STATIC_TOOL_POLICIES.edit),
+  createToolProtocolDescriptor(replaceDef, STATIC_TOOL_POLICIES.replace),
+]);
+const byName = new Map([...descriptors, ...canonicalDescriptors].map(descriptor => [descriptor.name, descriptor]));
 
 function invalid(action) {
   assert.throws(action, error => error?.code === "TOOL_ARGUMENTS_INVALID");
@@ -38,6 +44,8 @@ test("TOOL-01 unified descriptors bind schema, body, policy, effects, routing, c
   assert.equal(write.hostBound, true);
   assert.equal(write.concurrency, "serial");
   assert.equal(write.timeoutMs, 30_000);
+  assert.equal(getToolTimeoutMs("glob"), 10_000);
+  assert.equal(getToolTimeoutMs("grep"), 10_000);
   assert.equal(byName.get("execute_command").timeoutMs, 60_000);
   assert.equal(byName.get("script").timeoutMs, 60_000);
   assert.equal(getToolTimeoutMs("unknown_fixture"), 30_000);
@@ -117,6 +125,15 @@ line two changed
     old_string: `const oldValue = "a\\b";\nline two`,
     new_string: `const newValue = 'x"y';\nline two changed`,
   });
+});
+
+test("TOOL-02 canonical write/edit/replace body modes use file_path and preserve raw values", () => {
+  const write = parseBodyToolArguments(`#+BEGIN_WRITE :file_path "folder/a b.txt"\nraw \\\\ "quoted" $value\n#+END_WRITE`, byName.get("write"));
+  assert.deepEqual({ ...write }, { file_path: "folder/a b.txt", content: String.raw`raw \\ "quoted" $value` });
+  const edit = parseBodyToolArguments(`#+BEGIN_EDIT :file_path "a.txt" :replace_all true\n#+BEGIN_OLD_STRING\nsame\n#+END_OLD_STRING\n#+BEGIN_NEW_STRING\nnew\n#+END_NEW_STRING\n#+END_EDIT`, byName.get("edit"));
+  assert.deepEqual({ ...edit }, { file_path: "a.txt", replace_all: true, old_string: "same", new_string: "new" });
+  const replace = parseBodyToolArguments(`#+BEGIN_REPLACE :file_path "a.txt"\n#+BEGIN_OLD_STRING\nold\n#+END_OLD_STRING\n#+BEGIN_NEW_STRING\nnew\n#+END_NEW_STRING\n#+END_REPLACE`, byName.get("replace"));
+  assert.deepEqual({ ...replace }, { file_path: "a.txt", old_string: "old", new_string: "new" });
 });
 
 test("TOOL-01 extraction supports multiple calls and leaves surrounding prose out of raw arguments", () => {

@@ -4,11 +4,11 @@ display_name: 开发者
 description: 日常开发工作，完整的读写和执行能力
 network_policy: unrestricted
 tools:
-  - list_directory
-  - read_file
-  - search_files
-  - write_file
-  - edit_file
+  - glob
+  - read
+  - write
+  - edit
+  - replace
   - grep
   - execute_command
   - shell_start

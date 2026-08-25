@@ -3,11 +3,10 @@ name: planner
 display_name: 规划师
 description: 需求分析与方案规划，输出结构化计划
 tools:
-  - list_directory
-  - read_file
-  - search_files
+  - glob
+  - read
   - grep
-  - write_file
+  - write
   - create_docx
   - get_current_time
   - remember

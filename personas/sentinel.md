@@ -11,7 +11,7 @@ tools:
   - shell_output
   - shell_list
   - shell_kill
-  - read_file
+  - read
   - grep
   - web_search
   - remember

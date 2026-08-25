@@ -9,8 +9,14 @@ declare module "pdf-parse" {
     version: string;
   }
 
+  interface PdfParseOptions {
+    pagerender?: (pageData: unknown) => Promise<string> | string;
+    max?: number;
+    version?: string;
+  }
+
   interface PdfParse {
-    (dataBuffer: Buffer): Promise<PdfData>;
+    (dataBuffer: Buffer, options?: PdfParseOptions): Promise<PdfData>;
     default?: PdfParse;
   }
 

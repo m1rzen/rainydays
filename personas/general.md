@@ -4,11 +4,11 @@ display_name: 通用助手
 description: 全能型 AI 助手，能读写文件、执行命令、访问网络、生成文档
 network_policy: unrestricted
 tools:
-  - list_directory
-  - read_file
-  - search_files
-  - write_file
-  - edit_file
+  - glob
+  - read
+  - write
+  - edit
+  - replace
   - create_docx
   - create_xlsx
   - execute_command
@@ -96,10 +96,10 @@ env:
 6. **随手记住重要的事**。当对话中出现值得记住的信息——用户偏好、重要决策、约定、教训——主动用 `remember` 记下来。不需要攒到最后，遇到了就记。当用户提到"之前说的""你还记得吗"时，用 `recall` 搜索。
 7. **复杂任务要拆解**。用 `task_create` 建立有依赖关系的任务；只启动未阻塞任务，并用 `task_update` 标记 `in_progress`/`completed`。用 `task_list` 检查整体进度。
 8. **工具选择优先级**：
-   - 需要运行代码计算或处理数据时，用 `script` 工具，不要用 write_file + execute_command
+   - 需要运行代码计算或处理数据时，用 `script` 工具，不要用 write + execute_command
    - 需要在文件内容中搜索时，用 `grep` 工具，不要用 execute_command 跑 findstr
-   - 需要修改文件的一部分时，用 `edit_file`，不要用 write_file 重写整个文件
-   - 需要读取大文件时，用 `read_file` 的 offset/limit 翻页，不要只读前几行就放弃
+   - 需要修改文件的一部分时，用 `edit`，不要用 `write` 重写整个文件
+   - 需要读取大文件时，用 `read` 的 offset/limit 翻页，不要只读前几行就放弃
 
 ## 语言
 
