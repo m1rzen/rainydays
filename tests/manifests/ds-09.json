@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-09",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "reviewer"],
+  "runtimeFiles": [
+    "package.json",
+    "electron/ipc-contract.cjs",
+    "electron/main.cjs",
+    "electron/preload.cjs",
+    "public/index.html",
+    "public/renderer.css",
+    "public/renderer.js",
+    "scripts/ds09-governance.mjs",
+    "scripts/generate-ds09-resolved-manifest.mjs",
+    "src/config.ts",
+    "src/credential-store.ts",
+    "src/index.ts",
+    "src/settings-schema.ts",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs"
+  ],
+  "coverageExemptions": {
+    "package.json": {
+      "reason": "DS-09 finite runner and governance registration are bound by the resolved governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds09-governance.test.mjs", "layer": "contract" }]
+    },
+    "electron/ipc-contract.cjs": {
+      "reason": "Native directory selection remains constrained by the exact trusted desktop IPC contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" }]
+    },
+    "electron/main.cjs": {
+      "reason": "The real Electron Settings smoke binds the native dialog capability to the packaged main process.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "electron/preload.cjs": {
+      "reason": "The frozen preload selectDirectory surface is exercised by real Electron and IPC contracts.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "public/index.html": {
+      "reason": "All eleven frozen Settings tabs and secret-empty inputs are exercised by renderer and Electron tests.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "public/renderer.css": {
+      "reason": "Typed Settings navigation, apply-state and editor classes are bound by the real renderer smoke.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "public/renderer.js": {
+      "reason": "Settings navigation, CAS saves, import/export and TTS/ASR adapters are exercised by renderer and Electron tests.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "scripts/ds09-governance.mjs": {
+      "reason": "Resolved identity validation is exercised by substitution-resistant DS-09 governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds09-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/generate-ds09-resolved-manifest.mjs": {
+      "reason": "Atomic resolved publication and parent pinning are exercised by DS-09 governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds09-governance.test.mjs", "layer": "contract" }]
+    },
+    "src/config.ts": {
+      "reason": "Config v2 migration, CAS, credential rotation and secret-free transfer are covered by contract and API integration.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/ds09-settings-api.test.mjs", "layer": "integration" }]
+    },
+    "src/credential-store.ts": {
+      "reason": "ASR and Relay values reuse the governed opaque credential reference and current-user protection contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/config-managed-store.test.mjs", "layer": "contract" }]
+    },
+    "src/index.ts": {
+      "reason": "Settings routes, mutation-lock revision checks and runtime rollback are covered by real server integration.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/ds09-settings-api.test.mjs", "layer": "integration" }]
+    },
+    "src/settings-schema.ts": {
+      "reason": "Exact domains, bounds, URLs, availability and public projection are covered by schema unit tests.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/settings-schema.test.mjs", "layer": "unit" }]
+    },
+    "tests/coverage-scope.json": {
+      "reason": "DS-09 exact coverage ownership is checked by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/helpers.mjs": {
+      "reason": "The DS-09 resolved task view is loaded and validated by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/unit/framework.test.mjs": {
+      "reason": "The framework test owns exact DS-09 additional coverage registration and validates itself.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/ds09-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/contract/config-managed-store.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/settings-schema.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/ds09-renderer-contract.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/ds09-settings-api.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/file-viewer-settings.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+  ]
+}

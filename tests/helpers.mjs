@@ -37,6 +37,7 @@ import { loadDs05ResolvedManifest } from "../scripts/ds05-governance.mjs";
 import { loadDs06ResolvedManifest } from "../scripts/ds06-governance.mjs";
 import { loadDs07ResolvedManifest } from "../scripts/ds07-governance.mjs";
 import { loadDs08ResolvedManifest } from "../scripts/ds08-governance.mjs";
+import { loadDs09ResolvedManifest } from "../scripts/ds09-governance.mjs";
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const processTemporaryRootRequest = path.resolve(os.tmpdir());
@@ -738,6 +739,29 @@ async function loadDs08TaskView(root = projectRoot) {
   };
 }
 
+async function loadDs09TaskView(root = projectRoot) {
+  const resolved = await loadDs09ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "ds-09.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DS-09",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
 async function loadDs07TaskView(root = projectRoot) {
   const resolved = await loadDs07ResolvedManifest({ root });
   const sourcePath = path.join(root, "tests", "manifests", "ds-07.json");
@@ -874,6 +898,7 @@ export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
   if (taskId === "DS-06") return loadDs06TaskView(root);
   if (taskId === "DS-07") return loadDs07TaskView(root);
   if (taskId === "DS-08") return loadDs08TaskView(root);
+  if (taskId === "DS-09") return loadDs09TaskView(root);
   if (taskId === "SEC-03") return loadSec03ResolvedTaskView(root);
   if (taskId === "SEC-02" || taskId === "GOV-03") return loadResolvedTaskView(taskId, root);
   return loadSourceTaskManifest(taskId, root);

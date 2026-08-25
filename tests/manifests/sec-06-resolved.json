@@ -28,7 +28,7 @@
     },
     {
       "exactCasePath": "src/credential-store.ts",
-      "sha256": "5bf70a8051d7274fa8dcd7aaa73f8b10bd8c870848125bf9a7cd490db5f51afa",
+      "sha256": "d58c86483e73f6b1b470b3caa16a62fb184e5506e5aaa2e74cbf439f225196b5",
       "owner": "SEC-06"
     },
     {
@@ -43,7 +43,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "9bf451410fefd2ea4cf2f8042f7903db440c6e5baea49c079b0e5a74bda94efa",
+      "sha256": "929d31439e4fa74b08e14e004ac74ce179ad51899bd88be4c1c88ae45089c0f2",
       "owner": "SEC-06"
     },
     {
@@ -88,7 +88,7 @@
     },
     {
       "exactCasePath": "dist/credential-store.js",
-      "sha256": "b31732aae0790ed77fecf4c2cb51ab993abcf3570968024e24663f11b7a2aabb",
+      "sha256": "fd345f18f8b1714aebaebea532719375285f844ff468ee207e28ac7fbf52640b",
       "owner": "SEC-06"
     },
     {
@@ -103,7 +103,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "b41ca1baee533fe3ce78923272f28c4e813c02b5e16f8e8f5c2378bee2776eaa",
+      "sha256": "f76526b8cd86ccf937bea39c5abb5f6e71c541f0dbab133543aaefe01ed9cbad",
       "owner": "SEC-06"
     },
     {
@@ -196,7 +196,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "d2c37e36c31b5007213449967e0abbeafa623151820c77321ea4ccf8cf560bc1",
+      "sha256": "1813281f24b711b90d74ce588c76e243a57ef15bcd73402be73345b7d3695529",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-06"
@@ -209,5 +209,5 @@
       "owner": "SEC-06"
     }
   ],
-  "canonicalPayloadSha256": "6e90384f0a5897aa43e6ef96fe57e4ecf252f295f695ccebec4486af321a963a"
+  "canonicalPayloadSha256": "33d30cad3944d071407a05793bb2717771112d198dccbfb9feb2df23701284c6"
 }

@@ -61,6 +61,11 @@ import {
   listProfiles,
   upsertProfile,
   deleteProfile,
+  exportSettings,
+  prepareSettingsImport,
+  prepareSettingsDomainUpdate,
+  updateSettingsDomain,
+  finalizeCredentialChanges,
   type AppSettings,
   type Config,
 } from "./config.js";
@@ -1243,7 +1248,10 @@ async function mutateGlobalConfigAndRuntimes(
     const sessionIds = previousRegistry.loadedSessionIds();
 
     await mutate();
-    if (!rebuild) return;
+    if (!rebuild) {
+      await finalizeCredentialChanges();
+      return;
+    }
 
     let candidate: SessionRuntimeRegistry<AppSessionRuntime>;
     let candidateLlm: LLMClient;
@@ -1251,8 +1259,9 @@ async function mutateGlobalConfigAndRuntimes(
       candidateLlm = createLlmClient();
       candidate = await prepareRuntimeRegistry(sessionIds, getAppSettings(), candidateLlm);
     } catch (error) {
-      await commitConfigSnapshot(previousConfig);
+      await commitConfigSnapshot(previousConfig, true);
       switchProfile(previousProfileName);
+      await finalizeCredentialChanges();
       throw error;
     }
 
@@ -1263,11 +1272,12 @@ async function mutateGlobalConfigAndRuntimes(
       await candidate.shutdown().catch(() => undefined);
       runtimeRegistry = null;
       try {
-        await commitConfigSnapshot(previousConfig);
+        await commitConfigSnapshot(previousConfig, true);
         switchProfile(previousProfileName);
         runtimeRegistry = await prepareRuntimeRegistry(sessionIds, previousConfig.settings, previousLlm);
         llm = previousLlm;
         initSupervisor(llm);
+        await finalizeCredentialChanges();
       } catch (recoveryError) {
         throw new AggregateError([retirementError, recoveryError], "Provider runtime retirement failed and recovery failed");
       }
@@ -1277,6 +1287,7 @@ async function mutateGlobalConfigAndRuntimes(
     runtimeRegistry = candidate;
     llm = candidateLlm;
     initSupervisor(llm);
+    await finalizeCredentialChanges();
   });
 }
 
@@ -1322,9 +1333,14 @@ interface SettingsEnrollmentPlan {
   readonly outputLease: PathDirectoryEnrollmentLease | null;
 }
 
-async function enrollAppSettings(input: Parameters<typeof prepareAppSettingsUpdate>[0]): Promise<void> {
+class SettingsRevisionConflictError extends Error {
+  constructor() { super("Settings 已被其他操作修改"); this.name = "SettingsRevisionConflictError"; }
+}
+
+async function enrollAppSettings(input: Parameters<typeof prepareAppSettingsUpdate>[0], commonDomain?: unknown, expectedRevision?: string): Promise<void> {
   return withRuntimeMutation(async () => {
     ensureRuntimeAccepting();
+    if (expectedRevision !== undefined && expectedRevision !== getConfigRevisionDigest()) throw new SettingsRevisionConflictError();
     const current = requireRuntimeRegistry();
     if (current.hasRunningSessions()) throw new Error("存在正在运行的 Session，不能更新根目录授权");
     invalidateAllPendingConsent();
@@ -1340,7 +1356,8 @@ async function enrollAppSettings(input: Parameters<typeof prepareAppSettingsUpda
         llm,
       }),
       prepareCandidate: async base => {
-        const candidateConfig = prepareAppSettingsUpdate(input, base.config);
+        const appCandidate = prepareAppSettingsUpdate(input, base.config);
+        const candidateConfig = commonDomain === undefined ? appCandidate : prepareSettingsDomainUpdate("common", commonDomain, appCandidate);
         await validateAppSettingsPaths(candidateConfig.settings, Object.freeze({
           sessionId: base.selectedSessionId,
           runId: randomBytes(16).toString("hex"),
@@ -1364,7 +1381,7 @@ async function enrollAppSettings(input: Parameters<typeof prepareAppSettingsUpda
         await base.registry.shutdown();
         if (runtimeRegistry === base.registry) runtimeRegistry = null;
       },
-      persistCandidate: plan => commitConfigSnapshot(plan.config),
+      persistCandidate: plan => commitConfigSnapshot(plan.config, true),
       publishCandidate: plan => { runtimeRegistry = plan.registry; },
       commitCandidate: plan => { plan.outputLease?.commit(); },
       discardCandidate: async plan => {
@@ -1372,12 +1389,14 @@ async function enrollAppSettings(input: Parameters<typeof prepareAppSettingsUpda
         if (plan.outputLease) await plan.outputLease.rollback();
       },
       recoverBase: async base => {
-        await commitConfigSnapshot(base.config);
+        await commitConfigSnapshot(base.config, true);
         const recovered = await prepareRuntimeRegistry(base.sessionIds, base.config.settings, base.llm);
         runtimeRegistry = recovered;
+        await finalizeCredentialChanges();
       },
       stopFailClosed: () => { runtimeRegistry = null; },
     });
+    await finalizeCredentialChanges();
   });
 }
 
@@ -2410,15 +2429,69 @@ app.post("/api/sessions/import", sessionImportJsonBodyParser, async (req, res) =
 // Settings / Provider API
 // ===========================================
 
-/** 查询设置。API Key 永远只返回掩码和 hasApiKey。 */
+/** 查询设置。敏感值与 secret-derived hint 永不回显，只返回 configured boolean。 */
 app.get("/api/settings", (_req, res) => {
   res.json(getPublicConfig());
+});
+
+/** 保存单一 typed Settings domain；敏感输入由 config 层写入 OS credential store。 */
+app.put("/api/settings/domains/:domainId", async (req, res) => {
+  if (rejectWhenRuntimeBusy(res)) return;
+  try {
+    if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)
+      || Object.keys(req.body).sort().join(",") !== "expectedRevision,value"
+      || typeof req.body.expectedRevision !== "string") throw new TypeError("Settings domain 请求无效");
+    const committed = await withRuntimeMutation(async () => {
+      ensureRuntimeAccepting();
+      if (requireRuntimeRegistry().hasRunningSessions()) throw new Error("存在正在运行的 Session，不能修改全局设置");
+      if (req.body.expectedRevision !== getConfigRevisionDigest()) return false;
+      await updateSettingsDomain(req.params.domainId, req.body.value);
+      return true;
+    });
+    if (!committed) {
+      res.status(409).json({ code: "SETTINGS_REVISION_CONFLICT", error: "Settings 已被其他操作修改", settings: getPublicConfig() });
+      return;
+    }
+    res.json({ success: true, settings: getPublicConfig() });
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+/** 可移植设置只包含非敏感值；credential value/ref 均不导出。 */
+app.get("/api/settings/export", (_req, res) => {
+  res.setHeader("Content-Disposition", "attachment; filename=rainydays-settings.json");
+  res.json(exportSettings());
+});
+
+/** Import 先做完整 schema/path/runtime 预检，成功后一次性发布；失败保持旧配置。 */
+app.post("/api/settings/import", async (req, res) => {
+  if (rejectWhenRuntimeBusy(res)) return;
+  try {
+    if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)
+      || Object.keys(req.body).sort().join(",") !== "bundle,expectedRevision"
+      || typeof req.body.expectedRevision !== "string") throw new TypeError("Settings import 请求无效");
+    await mutateGlobalConfigAndRuntimes(async () => {
+      if (req.body.expectedRevision !== getConfigRevisionDigest()) throw new SettingsRevisionConflictError();
+      const candidate = prepareSettingsImport(req.body.bundle);
+      await validateAppSettingsPaths(candidate.settings);
+      await commitConfigSnapshot(candidate, true);
+    }, true);
+    res.json({ success: true, settings: getPublicConfig() });
+  } catch (error) {
+    if (error instanceof SettingsRevisionConflictError) {
+      res.status(409).json({ code: "SETTINGS_REVISION_CONFLICT", error: error.message, settings: getPublicConfig() });
+      return;
+    }
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
 });
 
 /** 保存通用设置并立即刷新当前 persona 的运行时路径。 */
 app.put("/api/settings/general", async (req, res) => {
   if (rejectWhenRuntimeBusy(res)) return;
   try {
+    if (typeof req.body?.expectedRevision !== "string") throw new TypeError("Settings revision 缺失");
     const defaultPersona = req.body?.defaultPersona as string | undefined;
     if (defaultPersona && !personas.some((p) => p.name === defaultPersona)) {
       res.status(400).json({ error: `默认 Persona 不存在: ${defaultPersona}` });
@@ -2431,9 +2504,13 @@ app.put("/api/settings/general", async (req, res) => {
       workspaceRoot: req.body?.workspaceRoot,
       departmentDataRoot: req.body?.departmentDataRoot,
       outputDir: req.body?.outputDir,
-    });
+    }, req.body?.common, req.body?.expectedRevision);
     res.json({ success: true, settings: getPublicConfig() });
   } catch (err) {
+    if (err instanceof SettingsRevisionConflictError) {
+      res.status(409).json({ code: "SETTINGS_REVISION_CONFLICT", error: err.message, settings: getPublicConfig() });
+      return;
+    }
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
   }
 });
@@ -2442,16 +2519,29 @@ app.put("/api/settings/general", async (req, res) => {
 app.put("/api/settings/providers/:name", async (req, res) => {
   if (rejectWhenRuntimeBusy(res)) return;
   try {
+    if (typeof req.body?.expectedRevision !== "string") throw new TypeError("Settings revision 缺失");
     const name = req.params.name;
     const rebuild = name === getCurrentProfileName();
-    await mutateGlobalConfigAndRuntimes(() => upsertProfile(name, {
-      model: req.body?.model,
-      baseURL: req.body?.baseURL,
-      apiKey: req.body?.apiKey,
-      providerType: req.body?.providerType,
-    }), rebuild);
+    await mutateGlobalConfigAndRuntimes(() => {
+      if (req.body.expectedRevision !== getConfigRevisionDigest()) throw new SettingsRevisionConflictError();
+      return upsertProfile(name, {
+        model: req.body?.model,
+        baseURL: req.body?.baseURL,
+        apiKey: req.body?.apiKey,
+        providerType: req.body?.providerType,
+        codexTransport: req.body?.codexTransport,
+        proxy: req.body?.proxy,
+        stripImages: req.body?.stripImages,
+        knowledgeMaxCount: req.body?.knowledgeMaxCount,
+        personaProfileBindings: req.body?.personaProfileBindings,
+      }, true);
+    }, rebuild);
     res.json({ success: true, settings: getPublicConfig() });
   } catch (err) {
+    if (err instanceof SettingsRevisionConflictError) {
+      res.status(409).json({ code: "SETTINGS_REVISION_CONFLICT", error: err.message, settings: getPublicConfig() });
+      return;
+    }
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
   }
 });
@@ -2459,9 +2549,19 @@ app.put("/api/settings/providers/:name", async (req, res) => {
 app.delete("/api/settings/providers/:name", async (req, res) => {
   if (rejectWhenRuntimeBusy(res)) return;
   try {
-    await mutateGlobalConfigAndRuntimes(() => deleteProfile(req.params.name), false);
+    if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)
+      || Object.keys(req.body).sort().join(",") !== "expectedRevision"
+      || typeof req.body.expectedRevision !== "string") throw new TypeError("Provider delete 请求无效");
+    await mutateGlobalConfigAndRuntimes(() => {
+      if (req.body.expectedRevision !== getConfigRevisionDigest()) throw new SettingsRevisionConflictError();
+      return deleteProfile(req.params.name, true);
+    }, false);
     res.json({ success: true, settings: getPublicConfig() });
   } catch (err) {
+    if (err instanceof SettingsRevisionConflictError) {
+      res.status(409).json({ code: "SETTINGS_REVISION_CONFLICT", error: err.message, settings: getPublicConfig() });
+      return;
+    }
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
   }
 });
@@ -3091,7 +3191,8 @@ async function start() {
   runtimeRegistry = createRuntimeRegistry(getAppSettings(), llm);
   if (personas.length > 0) {
     const configuredDefault = getAppSettings().defaultPersona;
-    const rawDefaultPersona = personas.find(persona => persona.name === configuredDefault) || personas[0];
+    const rawDefaultPersona = personas.find(persona => persona.name === configuredDefault);
+    if (!rawDefaultPersona) throw new Error(`默认 Persona 不可用: ${configuredDefault}`);
     draftPersonaName = rawDefaultPersona.name;
 
     for (const session of sessions) {

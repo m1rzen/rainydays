@@ -55,27 +55,6 @@
   "fixedPurposeProduction": [
     {
       "sourcePath": "electron/main.cjs",
-      "family": "process-environment",
-      "api": "process.env",
-      "container": "<top-level>",
-      "occurrenceId": "exec-dfab20a8bc7fb2744db2973f"
-    },
-    {
-      "sourcePath": "electron/main.cjs",
-      "family": "network",
-      "api": "createServer",
-      "container": "canListen",
-      "occurrenceId": "exec-cbbeded32fa3f6a3e6f4e60a"
-    },
-    {
-      "sourcePath": "electron/main.cjs",
-      "family": "process-environment",
-      "api": "process.env",
-      "container": "startPackagedServer",
-      "occurrenceId": "exec-d59783cea970f275eb230a77"
-    },
-    {
-      "sourcePath": "electron/main.cjs",
       "family": "child-process",
       "api": "spawn",
       "container": "startServerProcess",
@@ -89,11 +68,25 @@
       "occurrenceId": "exec-73773f4ce2e5df4b35010c49"
     },
     {
-      "sourcePath": "public/renderer.js",
+      "sourcePath": "electron/main.cjs",
       "family": "network",
-      "api": "fetch",
+      "api": "createServer",
+      "container": "canListen",
+      "occurrenceId": "exec-cbbeded32fa3f6a3e6f4e60a"
+    },
+    {
+      "sourcePath": "electron/main.cjs",
+      "family": "process-environment",
+      "api": "process.env",
       "container": "<top-level>",
-      "occurrenceId": "exec-ac27cf5914e6d58a311cf32c"
+      "occurrenceId": "exec-dfab20a8bc7fb2744db2973f"
+    },
+    {
+      "sourcePath": "electron/main.cjs",
+      "family": "process-environment",
+      "api": "process.env",
+      "container": "startPackagedServer",
+      "occurrenceId": "exec-d59783cea970f275eb230a77"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -106,8 +99,29 @@
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
+      "container": "<top-level>",
+      "occurrenceId": "exec-ac27cf5914e6d58a311cf32c"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
       "container": "addPin",
       "occurrenceId": "exec-755f42ef41d602b7d1b79891"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "cancelOrRemoveAttachment",
+      "occurrenceId": "exec-1557f8213f4f0cdf2a4922fa"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "cancelOrRemoveAttachment",
+      "occurrenceId": "exec-568e583ab7699ebbd24d0bcc"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -128,7 +142,7 @@
       "family": "network",
       "api": "fetch",
       "container": "deleteCurrentProvider",
-      "occurrenceId": "exec-2d6e9d5717314f74348e7e1a"
+      "occurrenceId": "exec-820135cc9854e5b16ca16740"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -176,6 +190,13 @@
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
+      "container": "exportSettingsBundle",
+      "occurrenceId": "exec-f691597f139f18255d93f00a"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
       "container": "forkCurrentSession",
       "occurrenceId": "exec-0c9afc99bfa5a8d7b23ba902"
     },
@@ -190,29 +211,15 @@
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
-      "container": "loadWorkbenchLayout",
-      "occurrenceId": "exec-82925890ac71e08f2171383a"
+      "container": "importSettingsBundle",
+      "occurrenceId": "exec-9f56bdac33754fd24880bdc9"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
-      "container": "loadWorkbenchLayout",
-      "occurrenceId": "exec-eaa7735e59836a0c7d069568"
-    },
-    {
-      "sourcePath": "public/renderer.js",
-      "family": "network",
-      "api": "fetch",
-      "container": "performWorkbenchOperation",
-      "occurrenceId": "exec-132dc38bb826621818c70edf"
-    },
-    {
-      "sourcePath": "public/renderer.js",
-      "family": "network",
-      "api": "fetch",
-      "container": "persistWorkbenchLayout",
-      "occurrenceId": "exec-0c95e871390fc93dacf972df"
+      "container": "loadAttachmentDrafts",
+      "occurrenceId": "exec-24558ad5af80a2f4dc0575a7"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -220,13 +227,6 @@
       "api": "fetch",
       "container": "loadDesktopState",
       "occurrenceId": "exec-ab7d45c4895e3bf5dbc09ff8"
-    },
-    {
-      "sourcePath": "public/renderer.js",
-      "family": "network",
-      "api": "fetch",
-      "container": "markSessionNotificationsRead",
-      "occurrenceId": "exec-c6ac30c37898c48881b0c2ef"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -267,8 +267,36 @@
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
+      "container": "loadSettingsRuntimeState",
+      "occurrenceId": "exec-25c02135bd72148ed7026e0f"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
       "container": "loadTerminals",
       "occurrenceId": "exec-ed97feff9dcd232dca70ac3e"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "loadWorkbenchLayout",
+      "occurrenceId": "exec-82925890ac71e08f2171383a"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "loadWorkbenchLayout",
+      "occurrenceId": "exec-eaa7735e59836a0c7d069568"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "markSessionNotificationsRead",
+      "occurrenceId": "exec-c6ac30c37898c48881b0c2ef"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -295,15 +323,22 @@
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
-      "container": "openSettings",
-      "occurrenceId": "exec-021f81934a63efeb78d410b3"
+      "container": "pathExistsInViewer",
+      "occurrenceId": "exec-a313741c51a192f4dc93a602"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
-      "container": "pathExistsInViewer",
-      "occurrenceId": "exec-a313741c51a192f4dc93a602"
+      "container": "performWorkbenchOperation",
+      "occurrenceId": "exec-132dc38bb826621818c70edf"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "persistWorkbenchLayout",
+      "occurrenceId": "exec-0c95e871390fc93dacf972df"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -316,22 +351,15 @@
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
-      "container": "saveSelectedFile",
-      "occurrenceId": "exec-f6a706f99a5edd10f4756352"
+      "container": "queueAttachmentFile",
+      "occurrenceId": "exec-f6c3f806c6ef9737165bed1f"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "refreshSettingsState",
-      "occurrenceId": "exec-557f794216e26697d16d40e8"
-    },
-    {
-      "sourcePath": "public/renderer.js",
-      "family": "network",
-      "api": "fetch",
-      "container": "regenerateResponse",
-      "occurrenceId": "exec-6bb68133b385a8154a9e67a8"
+      "occurrenceId": "exec-8737c25ca3adb7777a925945"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -339,6 +367,13 @@
       "api": "fetch",
       "container": "regenerateResponse",
       "occurrenceId": "exec-06ee75266dc66be04128a945"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "regenerateResponse",
+      "occurrenceId": "exec-6bb68133b385a8154a9e67a8"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -366,14 +401,28 @@
       "family": "network",
       "api": "fetch",
       "container": "saveGeneralSettings",
-      "occurrenceId": "exec-4457b83b795bcac91fb2145f"
+      "occurrenceId": "exec-28ccb2f989a20e1244ac3cb6"
     },
     {
       "sourcePath": "public/renderer.js",
       "family": "network",
       "api": "fetch",
       "container": "saveProvider",
-      "occurrenceId": "exec-68b6e845a14d3aecd3ac5270"
+      "occurrenceId": "exec-14a5d902166620b7b5783629"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "saveSelectedFile",
+      "occurrenceId": "exec-f6a706f99a5edd10f4756352"
+    },
+    {
+      "sourcePath": "public/renderer.js",
+      "family": "network",
+      "api": "fetch",
+      "container": "saveSettingsDomain",
+      "occurrenceId": "exec-3c0e0cc13b80509ae3e20180"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -408,7 +457,7 @@
       "family": "network",
       "api": "fetch",
       "container": "switchCurrentProvider",
-      "occurrenceId": "exec-4b483aeeeb70d00b17a1bd2e"
+      "occurrenceId": "exec-19deec70a1f641169a52396c"
     },
     {
       "sourcePath": "public/renderer.js",
@@ -425,32 +474,11 @@
       "occurrenceId": "exec-08ed20709e6475b25d1acc03"
     },
     {
-      "sourcePath": "public/renderer.js",
-      "family": "network",
-      "api": "fetch",
-      "container": "loadAttachmentDrafts",
-      "occurrenceId": "exec-24558ad5af80a2f4dc0575a7"
-    },
-    {
-      "sourcePath": "public/renderer.js",
-      "family": "network",
-      "api": "fetch",
-      "container": "queueAttachmentFile",
-      "occurrenceId": "exec-f6c3f806c6ef9737165bed1f"
-    },
-    {
-      "sourcePath": "public/renderer.js",
-      "family": "network",
-      "api": "fetch",
-      "container": "cancelOrRemoveAttachment",
-      "occurrenceId": "exec-1557f8213f4f0cdf2a4922fa"
-    },
-    {
-      "sourcePath": "public/renderer.js",
-      "family": "network",
-      "api": "fetch",
-      "container": "cancelOrRemoveAttachment",
-      "occurrenceId": "exec-568e583ab7699ebbd24d0bcc"
+      "sourcePath": "src/daemon.ts",
+      "family": "child-process",
+      "api": "spawn",
+      "container": "startServer",
+      "occurrenceId": "exec-179d78cc996456c492aaee1f"
     },
     {
       "sourcePath": "src/daemon.ts",
@@ -458,13 +486,6 @@
       "api": "fetch",
       "container": "<top-level>",
       "occurrenceId": "exec-45e92bf5a6d6ea1f346108d9"
-    },
-    {
-      "sourcePath": "src/daemon.ts",
-      "family": "child-process",
-      "api": "spawn",
-      "container": "startServer",
-      "occurrenceId": "exec-179d78cc996456c492aaee1f"
     },
     {
       "sourcePath": "src/daemon.ts",
@@ -876,5 +897,5 @@
       "occurrenceId": "exec-c52f91fdd68fcd90774471b7"
     }
   ],
-  "canonicalPayloadSha256": "8a66a84cf3fa4573c840e86cb7b78bad90171594f81bd0233c188af504efbf30"
+  "canonicalPayloadSha256": "81570f7df8707433091322c914e1efc14adacf7526f2c164785ccfbe29629423"
 }

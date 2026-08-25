@@ -1530,6 +1530,9 @@
     // ========== Settings ==========
     let settingsState = null;
     let editingProviderName = null;
+    let activeSettingsDomain = "common";
+    let settingsRequestGeneration = 0;
+    const settingsDirtyDomains = new Set();
 
     function showSettingsMessage(message, type = "") {
       const el = document.getElementById("settings-message");
@@ -1537,14 +1540,53 @@
       el.className = type;
     }
 
+    function settingsControlDomain(control) {
+      return control?.closest?.("[data-settings-domain]")?.dataset.settingsDomain || null;
+    }
+
+    function captureDirtySettingsControls() {
+      const snapshot = new Map();
+      document.querySelectorAll("#settings-modal input[id], #settings-modal select[id], #settings-modal textarea[id]").forEach(control => {
+        const domainId = settingsControlDomain(control);
+        if (!domainId || !settingsDirtyDomains.has(domainId)) return;
+        snapshot.set(control.id, { value: control.value, checked: control.checked });
+      });
+      return snapshot;
+    }
+
+    function restoreDirtySettingsControls(snapshot) {
+      for (const [id, value] of snapshot) {
+        const control = document.getElementById(id);
+        if (!control) continue;
+        control.value = value.value;
+        if (typeof value.checked === "boolean") control.checked = value.checked;
+      }
+    }
+
+    function renderSettingsPreservingDirty() {
+      const dirty = captureDirtySettingsControls();
+      renderSettings();
+      restoreDirtySettingsControls(dirty);
+    }
+
+    async function loadSettingsRuntimeState() {
+      const generation = ++settingsRequestGeneration;
+      const res = await fetch("/api/settings");
+      const state = await res.json();
+      if (!res.ok) throw new Error(state.error || "加载设置失败");
+      if (generation !== settingsRequestGeneration) return null;
+      settingsState = state;
+      applyImmediateSettings(state.domains);
+      return state;
+    }
+
     async function openSettings() {
       document.getElementById("settings-modal").classList.add("visible");
       showSettingsMessage("正在加载设置...");
       try {
-        const res = await fetch("/api/settings");
-        settingsState = await res.json();
-        if (!res.ok) throw new Error(settingsState.error || "加载设置失败");
-        renderSettings();
+        const state = await loadSettingsRuntimeState();
+        if (!state) return;
+        renderSettingsPreservingDirty();
         showSettingsMessage(`配置文件: ${settingsState.configPath}`);
       } catch (err) {
         showSettingsMessage(err.message, "error");
@@ -1555,8 +1597,67 @@
       document.getElementById("settings-modal").classList.remove("visible");
     }
 
+    function switchSettingsDomain(domainId) {
+      if (!settingsState?.domainManifest?.some(domain => domain.id === domainId)) return;
+      activeSettingsDomain = domainId;
+      document.querySelectorAll("[data-settings-domain]").forEach(panel => { panel.hidden = panel.dataset.settingsDomain !== domainId; });
+      document.querySelectorAll(".settings-domain-tab").forEach(button => button.classList.toggle("active", button.dataset.domainId === domainId));
+      const profilesVisible = domainId === "profiles";
+      document.getElementById("settings-provider-list").hidden = !profilesVisible;
+      document.querySelector(".settings-new-provider").hidden = !profilesVisible;
+    }
+
+    function renderSettingsDomainNavigation() {
+      const nav = document.getElementById("settings-domain-nav");
+      nav.replaceChildren();
+      for (const domain of settingsState.domainManifest || []) {
+        const button = document.createElement("button");
+        button.className = "settings-domain-tab";
+        button.dataset.action = "select-settings-domain";
+        button.dataset.domainId = domain.id;
+        const label = document.createElement("span"); label.textContent = domain.label;
+        const state = document.createElement("span"); state.className = "domain-state";
+        state.textContent = domain.available ? (domain.applyMode === "immediate" ? "即时" : "重启") : "待接入";
+        button.append(label, state); nav.appendChild(button);
+        const status = document.querySelector(`[data-domain-status="${domain.id}"]`);
+        if (status) {
+          status.className = `settings-domain-status ${domain.available ? domain.applyMode : "unavailable"}`;
+          const partial = domain.fields?.some(field => field.applyMode === "unavailable");
+          status.textContent = `${domain.description} · ${domain.available ? (partial ? "仅标记为即时的字段生效；其余待接入" : domain.applyMode === "immediate" ? "保存后即时生效" : "保存后重启生效") : "配置可保存，adapter 尚未启用"}`;
+        }
+      }
+      switchSettingsDomain(activeSettingsDomain);
+    }
+
+    function setSettingsControl(id, value, checkbox = false) {
+      const control = document.getElementById(id);
+      if (!control) return;
+      if (checkbox) control.checked = Boolean(value);
+      else control.value = value ?? "";
+    }
+
+    function renderSettingsDomains() {
+      const domains = settingsState.domains || {};
+      const common = domains.common || {};
+      for (const [id, key] of [["setting-max-iterations", "maxIterations"], ["setting-max-canvas-tokens", "maxCanvasTokens"], ["setting-supervisor-rules", "defaultSupervisorRules"], ["setting-pin-render-mode", "pinRenderMode"], ["setting-pin-render-interval", "pinRenderInterval"], ["setting-supervisor-profile", "supervisorProfile"], ["setting-curator-profile", "curatorProfile"], ["setting-consolidation-profile", "consolidationProfile"], ["setting-oracle-profile", "oracleProfile"], ["setting-image-profile", "imageProfile"], ["setting-video-profile", "videoProfile"], ["setting-rename-profile", "renameProfile"]]) setSettingsControl(id, common[key]);
+      for (const [id, key] of [["setting-org-mode", "orgMode"], ["setting-yolo-mode", "yoloMode"], ["setting-supervisor-enabled", "supervisorEnabled"], ["setting-auto-rename", "autoRename"]]) setSettingsControl(id, common[key], true);
+      setSettingsControl("setting-worker-enabled", common.worker?.enabled, true); setSettingsControl("setting-worker-target", common.worker?.target);
+      setSettingsControl("setting-mcp-servers", JSON.stringify(domains.mcp?.servers || [], null, 2));
+      setSettingsControl("setting-wire-sources", JSON.stringify(domains.wire?.sources || [], null, 2));
+      setSettingsControl("setting-anima-default", domains.animas?.defaultAnima);
+      setSettingsControl("setting-nous-enabled", domains.nous?.enabled, true); setSettingsControl("setting-nous-threshold", domains.nous?.autoTriggerThreshold); setSettingsControl("setting-nous-cooldown", domains.nous?.cooldownMinutes); setSettingsControl("setting-nous-profile", domains.nous?.profile);
+      setSettingsControl("setting-tts-enabled", domains.tts?.enabled, true); setSettingsControl("setting-tts-voice", domains.tts?.voice); setSettingsControl("setting-tts-language", domains.tts?.language); setSettingsControl("setting-tts-rate", domains.tts?.rate);
+      setSettingsControl("setting-asr-provider", domains.asr?.provider); setSettingsControl("setting-asr-language", domains.asr?.language); setSettingsControl("setting-asr-endpoint", domains.asr?.endpoint); setSettingsControl("setting-asr-api-key", ""); setSettingsControl("setting-asr-clear-key", false, true);
+      setSettingsControl("setting-shell-default", domains.shell?.defaultShell); setSettingsControl("setting-shell-init", domains.shell?.initializationScript);
+      setSettingsControl("setting-relay-enabled", domains.relay?.enabled, true); setSettingsControl("setting-relay-url", domains.relay?.url); setSettingsControl("setting-relay-token", ""); setSettingsControl("setting-relay-clear-token", false, true);
+      setSettingsControl("setting-update-channel", domains.update?.channel); setSettingsControl("setting-update-check", domains.update?.autoCheck, true); setSettingsControl("setting-update-download", domains.update?.autoDownload, true);
+      applyImmediateSettings(domains);
+    }
+
     function renderSettings() {
       if (!settingsState) return;
+      renderSettingsDomainNavigation();
+      renderSettingsDomains();
       const profiles = settingsState.profiles || [];
       const providerList = document.getElementById("settings-provider-list");
       providerList.replaceChildren();
@@ -1598,9 +1699,14 @@
       document.getElementById("provider-model").value = profile.model || "";
       document.getElementById("provider-base-url").value = profile.baseURL || "";
       document.getElementById("provider-type").value = profile.providerType || "openai-compatible";
+      document.getElementById("provider-codex-transport").value = profile.codexTransport || "auto";
+      document.getElementById("provider-proxy").value = profile.proxy || "";
+      document.getElementById("provider-strip-images").checked = Boolean(profile.stripImages);
+      document.getElementById("provider-knowledge-max").value = profile.knowledgeMaxCount ?? 20;
+      document.getElementById("provider-persona-bindings").value = JSON.stringify(profile.personaProfileBindings || {}, null, 2);
       document.getElementById("provider-api-key").value = "";
       document.getElementById("provider-key-hint").textContent = profile.hasApiKey
-        ? `已配置密钥：${profile.apiKeyHint}。留空将保留。`
+        ? "已配置密钥；值不会回显，留空将保留。"
         : "尚未配置 API Key。";
       document.getElementById("provider-delete-btn").disabled = (settingsState.profiles || []).length <= 1 || profile.isDefault || profile.isCurrent;
       document.getElementById("provider-switch-btn").disabled = profile.isCurrent;
@@ -1626,6 +1732,11 @@
       document.getElementById("provider-model").value = "";
       document.getElementById("provider-base-url").value = "";
       document.getElementById("provider-type").value = "openai-compatible";
+      document.getElementById("provider-codex-transport").value = "auto";
+      document.getElementById("provider-proxy").value = "";
+      document.getElementById("provider-strip-images").checked = false;
+      document.getElementById("provider-knowledge-max").value = "20";
+      document.getElementById("provider-persona-bindings").value = "{}";
       document.getElementById("provider-api-key").value = "";
       document.getElementById("provider-key-hint").textContent = "新 Provider 需要填写 API Key 才能对话。";
       document.getElementById("provider-delete-btn").disabled = true;
@@ -1635,11 +1746,13 @@
     }
 
     async function refreshSettingsState() {
+      const generation = ++settingsRequestGeneration;
       const res = await fetch("/api/settings");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "刷新设置失败");
+      if (generation !== settingsRequestGeneration) return false;
       settingsState = data;
-      renderSettings();
+      renderSettingsPreservingDirty();
       fileRoots = [];
       resolvedPathCache.clear();
       currentFilePath = "";
@@ -1647,65 +1760,190 @@
       if (document.getElementById("file-viewer").classList.contains("visible")) await openFileDirectory("", false);
       await loadPersonas();
       await updateStatus();
+      return true;
+    }
+
+    function settingsText(id) { return document.getElementById(id).value.trim(); }
+    function settingsNumber(id) { return Number(document.getElementById(id).value); }
+    function settingsChecked(id) { return document.getElementById(id).checked; }
+    function readSettingsDomain(domainId) {
+      if (domainId === "common") return {
+        maxIterations: settingsNumber("setting-max-iterations"), maxCanvasTokens: settingsNumber("setting-max-canvas-tokens"), defaultSupervisorRules: document.getElementById("setting-supervisor-rules").value, worker: { enabled: settingsChecked("setting-worker-enabled"), target: settingsText("setting-worker-target") },
+        orgMode: settingsChecked("setting-org-mode"), yoloMode: settingsChecked("setting-yolo-mode"), supervisorEnabled: settingsChecked("setting-supervisor-enabled"),
+        supervisorProfile: settingsText("setting-supervisor-profile"), curatorProfile: settingsText("setting-curator-profile"), consolidationProfile: settingsText("setting-consolidation-profile"),
+        oracleProfile: settingsText("setting-oracle-profile"), imageProfile: settingsText("setting-image-profile"), videoProfile: settingsText("setting-video-profile"),
+        autoRename: settingsChecked("setting-auto-rename"), renameProfile: settingsText("setting-rename-profile"), pinRenderMode: settingsText("setting-pin-render-mode"), pinRenderInterval: settingsNumber("setting-pin-render-interval"),
+      };
+      if (domainId === "mcp") return { servers: JSON.parse(document.getElementById("setting-mcp-servers").value) };
+      if (domainId === "wire") return { sources: JSON.parse(document.getElementById("setting-wire-sources").value) };
+      if (domainId === "animas") return { defaultAnima: settingsText("setting-anima-default") };
+      if (domainId === "nous") return { enabled: settingsChecked("setting-nous-enabled"), autoTriggerThreshold: settingsNumber("setting-nous-threshold"), cooldownMinutes: settingsNumber("setting-nous-cooldown"), profile: settingsText("setting-nous-profile") };
+      if (domainId === "tts") return { enabled: settingsChecked("setting-tts-enabled"), voice: settingsText("setting-tts-voice"), language: settingsText("setting-tts-language"), rate: settingsNumber("setting-tts-rate") };
+      if (domainId === "asr") return { provider: settingsText("setting-asr-provider"), language: settingsText("setting-asr-language"), endpoint: settingsText("setting-asr-endpoint"), apiKey: document.getElementById("setting-asr-api-key").value.trim(), clearCredential: settingsChecked("setting-asr-clear-key") };
+      if (domainId === "shell") return { defaultShell: settingsText("setting-shell-default"), initializationScript: document.getElementById("setting-shell-init").value };
+      if (domainId === "relay") return { enabled: settingsChecked("setting-relay-enabled"), url: settingsText("setting-relay-url"), accessToken: document.getElementById("setting-relay-token").value.trim(), clearCredential: settingsChecked("setting-relay-clear-token") };
+      if (domainId === "update") return { channel: settingsText("setting-update-channel"), autoCheck: settingsChecked("setting-update-check"), autoDownload: settingsChecked("setting-update-download") };
+      throw new Error(`未知 Settings domain: ${domainId}`);
+    }
+
+    async function saveSettingsDomain(domainId) {
+      const generation = ++settingsRequestGeneration;
+      const expectedRevision = settingsState.revision;
+      try {
+        const res = await fetch(`/api/settings/domains/${encodeURIComponent(domainId)}`, {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ expectedRevision, value: readSettingsDomain(domainId) }),
+        });
+        const data = await res.json();
+        if (generation !== settingsRequestGeneration) return;
+        if (!res.ok) {
+          if (res.status === 409 && data.settings) settingsState = data.settings;
+          throw new Error(data.error || "保存失败");
+        }
+        settingsState = data.settings;
+        settingsDirtyDomains.delete(domainId);
+        renderSettingsPreservingDirty();
+        showSettingsMessage(`${domainId} 设置已保存。`, "success");
+      } catch (error) {
+        if (generation === settingsRequestGeneration) showSettingsMessage(error.message, "error");
+      }
+    }
+
+    async function chooseSettingsDirectory(targetId) {
+      if (typeof window.electronAPI?.selectDirectory !== "function") throw new Error("原生目录选择仅在桌面应用可用");
+      const result = await window.electronAPI.selectDirectory({ title: "选择 RainyDays 设置目录" });
+      if (!result?.canceled && result?.path) document.getElementById(targetId).value = result.path;
+    }
+
+    async function exportSettingsBundle() {
+      const response = await fetch("/api/settings/export");
+      if (!response.ok) throw new Error("设置导出失败");
+      const blob = await response.blob();
+      const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "rainydays-settings.json"; link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+
+    async function importSettingsBundle(event) {
+      const file = event.target.files?.[0]; event.target.value = "";
+      if (!file) return;
+      try {
+        if (file.size > 1024 * 1024) throw new Error("设置文件超过 1MB");
+        const bundle = JSON.parse(await file.text());
+        const generation = ++settingsRequestGeneration;
+        const response = await fetch("/api/settings/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expectedRevision: settingsState.revision, bundle }) });
+        const data = await response.json();
+        if (generation !== settingsRequestGeneration) return;
+        if (!response.ok) throw new Error(data.error || "设置导入失败");
+        settingsState = data.settings;
+        settingsDirtyDomains.clear();
+        renderSettings();
+        showSettingsMessage("设置已导入；敏感凭据保持本机原值。", "success");
+      } catch (error) { showSettingsMessage(error.message, "error"); }
     }
 
     async function saveGeneralSettings() {
+      const generation = ++settingsRequestGeneration;
       try {
         const body = {
+          expectedRevision: settingsState.revision,
           defaultProfile: document.getElementById("setting-default-profile").value,
           defaultPersona: document.getElementById("setting-default-persona").value,
           workspaceRoot: document.getElementById("setting-workspace-root").value.trim(),
           departmentDataRoot: document.getElementById("setting-department-root").value.trim(),
           outputDir: document.getElementById("setting-output-dir").value.trim(),
+          common: readSettingsDomain("common"),
         };
         const res = await fetch("/api/settings/general", { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "保存失败");
-        await refreshSettingsState();
-        showSettingsMessage("通用设置已保存并热生效。", "success");
-      } catch (err) { showSettingsMessage(err.message, "error"); }
+        if (generation !== settingsRequestGeneration) return;
+        if (!res.ok) {
+          if (res.status === 409 && data.settings) settingsState = data.settings;
+          throw new Error(data.error || "保存失败");
+        }
+        settingsState = data.settings;
+        settingsDirtyDomains.delete("common");
+        renderSettingsPreservingDirty();
+        fileRoots = [];
+        resolvedPathCache.clear();
+        currentFilePath = "";
+        await ensureFileRoots(true);
+        await loadPersonas();
+        await updateStatus();
+        showSettingsMessage("Common 设置已原子保存；标记为重启生效。", "success");
+      } catch (err) {
+        if (generation === settingsRequestGeneration) showSettingsMessage(err.message, "error");
+      }
     }
 
     async function saveProvider() {
+      const generation = ++settingsRequestGeneration;
       try {
         const name = document.getElementById("provider-name").value.trim();
         if (!name) throw new Error("请填写 Profile 名称");
         const body = {
+          expectedRevision: settingsState.revision,
           model: document.getElementById("provider-model").value.trim(),
           baseURL: document.getElementById("provider-base-url").value.trim(),
-          providerType: document.getElementById("provider-type").value.trim(),
+          providerType: document.getElementById("provider-type").value,
+          codexTransport: document.getElementById("provider-codex-transport").value,
+          proxy: document.getElementById("provider-proxy").value.trim(),
+          stripImages: document.getElementById("provider-strip-images").checked,
+          knowledgeMaxCount: Number(document.getElementById("provider-knowledge-max").value),
+          personaProfileBindings: JSON.parse(document.getElementById("provider-persona-bindings").value || "{}"),
           apiKey: document.getElementById("provider-api-key").value.trim(),
         };
         const res = await fetch(`/api/settings/providers/${encodeURIComponent(name)}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "保存失败");
+        if (generation !== settingsRequestGeneration) return;
+        if (!res.ok) {
+          if (res.status === 409 && data.settings) settingsState = data.settings;
+          throw new Error(data.error || "保存失败");
+        }
         editingProviderName = name;
-        await refreshSettingsState();
+        settingsState = data.settings;
+        settingsDirtyDomains.delete("profiles");
+        renderSettingsPreservingDirty();
+        await updateStatus();
         showSettingsMessage(`Provider ${name} 已保存。`, "success");
-      } catch (err) { showSettingsMessage(err.message, "error"); }
+      } catch (err) {
+        if (generation === settingsRequestGeneration) showSettingsMessage(err.message, "error");
+      }
     }
 
     async function switchCurrentProvider() {
       if (!editingProviderName) return;
+      const generation = ++settingsRequestGeneration;
       try {
         const res = await fetch("/api/providers/switch", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name:editingProviderName}) });
         const data = await res.json();
+        if (generation !== settingsRequestGeneration) return;
         if (!res.ok) throw new Error(data.error || "切换失败");
         await refreshSettingsState();
         showSettingsMessage(`已切换到 ${editingProviderName}。`, "success");
-      } catch (err) { showSettingsMessage(err.message, "error"); }
+      } catch (err) {
+        if (generation === settingsRequestGeneration) showSettingsMessage(err.message, "error");
+      }
     }
 
     async function deleteCurrentProvider() {
       if (!editingProviderName || !confirm(`确认删除 Provider ${editingProviderName}？`)) return;
+      const generation = ++settingsRequestGeneration;
       try {
-        const res = await fetch(`/api/settings/providers/${encodeURIComponent(editingProviderName)}`, { method:"DELETE" });
+        const res = await fetch(`/api/settings/providers/${encodeURIComponent(editingProviderName)}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ expectedRevision: settingsState.revision }),
+        });
         const data = await res.json();
+        if (generation !== settingsRequestGeneration) return;
         if (!res.ok) throw new Error(data.error || "删除失败");
         editingProviderName = null;
+        settingsDirtyDomains.delete("profiles");
         await refreshSettingsState();
         showSettingsMessage("Provider 已删除。", "success");
-      } catch (err) { showSettingsMessage(err.message, "error"); }
+      } catch (err) {
+        if (generation === settingsRequestGeneration) showSettingsMessage(err.message, "error");
+      }
     }
 
     function desktopSessionState(sessionId) {
@@ -1818,6 +2056,8 @@
         removeDesktopNotificationClick = window.electronAPI.onNotificationClicked(queueDesktopNavigation);
       }
       await loadPersonas();
+      try { await loadSettingsRuntimeState(); }
+      catch (error) { console.warn("Settings runtime state unavailable:", error); }
       await loadSessions();
       try { await loadDesktopState(); }
       catch (error) { console.warn("Desktop notification state unavailable:", error); }
@@ -2511,9 +2751,28 @@
         statusText.textContent = `诊断下载失败: ${error.message}`;
       }
     }
-    // ========== TTS 语音输出 ==========
+    // ========== TTS / ASR 即时 Settings adapters ==========
     let ttsEnabled = false;
     let ttsUtterance = null;
+    let ttsPreferences = { voice: "", language: "zh-CN", rate: 1 };
+    let asrPreferences = { provider: "browser", language: "zh-CN", endpoint: "" };
+
+    function applyImmediateSettings(domains) {
+      if (!domains) return;
+      const nextTtsEnabled = Boolean(domains.tts?.enabled);
+      if (ttsEnabled && !nextTtsEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
+      ttsEnabled = nextTtsEnabled;
+      ttsPreferences = { voice: domains.tts?.voice || "", language: domains.tts?.language || "zh-CN", rate: Number(domains.tts?.rate) || 1 };
+      const nextAsr = { provider: domains.asr?.provider || "browser", language: domains.asr?.language || "zh-CN", endpoint: domains.asr?.endpoint || "" };
+      if (asrActive && JSON.stringify(nextAsr) !== JSON.stringify(asrPreferences)) {
+        asrRecognition?.stop();
+        asrActive = false;
+        document.getElementById("mic-btn")?.classList.remove("recording");
+      }
+      asrPreferences = nextAsr;
+      const ttsButton = document.getElementById("tts-toggle");
+      if (ttsButton) { ttsButton.textContent = ttsEnabled ? "🔊" : "🔇"; ttsButton.title = ttsEnabled ? "语音播报已开启" : "语音播报已关闭"; }
+    }
 
     function toggleTTS() {
       ttsEnabled = !ttsEnabled;
@@ -2527,8 +2786,9 @@
       if (!ttsEnabled || !window.speechSynthesis) return;
       window.speechSynthesis.cancel();
       ttsUtterance = new SpeechSynthesisUtterance(text);
-      ttsUtterance.lang = "zh-CN";
-      ttsUtterance.rate = 1.0;
+      ttsUtterance.lang = ttsPreferences.language;
+      ttsUtterance.rate = ttsPreferences.rate;
+      if (ttsPreferences.voice) ttsUtterance.voice = Array.from(window.speechSynthesis.getVoices()).find(voice => voice.name === ttsPreferences.voice) || null;
       window.speechSynthesis.speak(ttsUtterance);
     }
 
@@ -2546,6 +2806,10 @@
         return;
       }
 
+      if (asrPreferences.provider !== "browser") {
+        addSystemMessage("⚠️ 当前 ASR provider 需要后续 adapter，Settings 已保留配置");
+        return;
+      }
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         addSystemMessage("⚠️ 当前浏览器不支持语音输入");
@@ -2553,7 +2817,7 @@
       }
 
       asrRecognition = new SpeechRecognition();
-      asrRecognition.lang = "zh-CN";
+      asrRecognition.lang = asrPreferences.language;
       asrRecognition.continuous = false;
       asrRecognition.interimResults = true;
 
@@ -2657,6 +2921,12 @@
         ? restoreWorkbenchTab(target.dataset.paneId) : undefined,
       "open-settings": () => openSettings(),
       "close-settings": () => closeSettings(),
+      "select-settings-domain": (_event, target) => target.dataset.domainId ? switchSettingsDomain(target.dataset.domainId) : undefined,
+      "save-settings-domain": (_event, target) => target.dataset.domainId ? saveSettingsDomain(target.dataset.domainId) : undefined,
+      "choose-settings-directory": (_event, target) => target.dataset.pathTarget ? chooseSettingsDirectory(target.dataset.pathTarget) : undefined,
+      "export-settings": () => exportSettingsBundle(),
+      "choose-settings-import": () => document.getElementById("settings-import-file").click(),
+      "import-settings": event => importSettingsBundle(event),
       "export-session": () => exportCurrentSession(),
       "choose-import": () => document.getElementById("import-file").click(),
       "choose-attachments": () => attachmentFileInputEl.click(),
@@ -2764,7 +3034,14 @@
         Promise.resolve(moveWorkbenchTabFromDrop(payload, paneId, targetIndex)).catch(error => addSystemMessage(`⚠️ ${error.message}`));
       } catch (error) { addSystemMessage(`⚠️ ${error instanceof Error ? error.message : String(error)}`); }
     });
-    document.getElementById("settings-modal").addEventListener("click", event => { if (event.target === event.currentTarget) closeSettings(); });
+    const settingsModal = document.getElementById("settings-modal");
+    settingsModal.addEventListener("click", event => { if (event.target === event.currentTarget) closeSettings(); });
+    const markSettingsDirty = event => {
+      const domainId = settingsControlDomain(event.target);
+      if (domainId) settingsDirtyDomains.add(domainId);
+    };
+    settingsModal.addEventListener("input", markSettingsDirty);
+    settingsModal.addEventListener("change", markSettingsDirty);
     document.getElementById("ask-input").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); submitAskAnswer(); } });
 
     const keyboardManager = window.RainyDaysKeyboard;

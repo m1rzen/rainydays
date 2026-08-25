@@ -138,31 +138,45 @@
       <div class="settings-header"><h2>⚙️ RainyDays Settings</h2><button class="settings-close" data-action="close-settings">✕</button></div>
       <div class="settings-body">
         <div class="settings-nav">
-          <div class="settings-nav-title">Provider Profiles</div>
+          <div class="settings-nav-title">Settings</div>
+          <div id="settings-domain-nav"></div>
           <div id="settings-provider-list"></div>
           <button class="settings-btn settings-new-provider" data-action="new-provider">＋ 新建 Provider</button>
         </div>
         <div class="settings-content">
-          <div class="settings-section">
-            <h3>通用设置</h3>
+          <div class="settings-section" data-settings-domain="common">
+            <h3>Common</h3><div class="settings-domain-status" data-domain-status="common"></div>
             <div class="settings-grid">
               <label>默认 Provider</label><select id="setting-default-profile" class="settings-select"></select>
               <label>默认 Persona</label><select id="setting-default-persona" class="settings-select"></select>
-              <label>通用工作目录</label><input id="setting-workspace-root" class="settings-input" />
+              <label>通用工作目录</label><div class="settings-path-row"><input id="setting-workspace-root" class="settings-input" /><button class="settings-btn" data-action="choose-settings-directory" data-path-target="setting-workspace-root">选择</button></div>
               <div class="settings-help">非部门专属 persona 的默认 DATA_ROOT。</div>
-              <label>部门资料根目录</label><input id="setting-department-root" class="settings-input" />
+              <label>部门资料根目录</label><div class="settings-path-row"><input id="setting-department-root" class="settings-input" /><button class="settings-btn" data-action="choose-settings-directory" data-path-target="setting-department-root">选择</button></div>
               <div class="settings-help">产品研发室 persona 的 DATA_ROOT，例如 Z:\\产品研发室。</div>
-              <label>默认输出目录</label><input id="setting-output-dir" class="settings-input" />
+              <label>默认输出目录</label><div class="settings-path-row"><input id="setting-output-dir" class="settings-input" /><button class="settings-btn" data-action="choose-settings-directory" data-path-target="setting-output-dir">选择</button></div>
+              <label>最大工具轮次</label><input id="setting-max-iterations" type="number" min="1" max="1000" class="settings-input" />
+              <label>Canvas token 上限</label><input id="setting-max-canvas-tokens" type="number" min="4096" max="1000000" class="settings-input" />
+              <label>Supervisor 默认规则</label><textarea id="setting-supervisor-rules" class="settings-code-input settings-code-compact"></textarea>
+              <label>Worker</label><div class="settings-check-row"><label><input id="setting-worker-enabled" type="checkbox" /> 启用</label><select id="setting-worker-target" class="settings-select"><option value="local">local</option><option value="remote">remote</option></select></div>
+              <label>Pin 渲染位置</label><select id="setting-pin-render-mode" class="settings-select"><option value="system">system</option><option value="user-tail">user-tail</option></select>
+              <label>Pin 重注入间隔</label><input id="setting-pin-render-interval" type="number" min="0" max="1000" class="settings-input" />
+              <label>行为开关</label><div class="settings-check-row"><label><input id="setting-org-mode" type="checkbox" /> org-mode</label><label title="Mini-Lux 永不允许绕过 SEC-02 PathGuard"><input id="setting-yolo-mode" type="checkbox" /> YOLO（不可用）</label><label><input id="setting-supervisor-enabled" type="checkbox" /> Supervisor</label><label><input id="setting-auto-rename" type="checkbox" /> 自动命名</label></div>
+              <label>子系统 Profiles</label><div class="settings-profile-grid"><input id="setting-supervisor-profile" placeholder="Supervisor" /><input id="setting-curator-profile" placeholder="Curator" /><input id="setting-consolidation-profile" placeholder="Consolidation" /><input id="setting-oracle-profile" placeholder="Oracle" /><input id="setting-image-profile" placeholder="Image" /><input id="setting-video-profile" placeholder="Video" /><input id="setting-rename-profile" placeholder="Rename" /></div>
             </div>
             <div class="settings-actions"><button class="settings-btn primary" data-action="save-general-settings">保存通用设置</button></div>
           </div>
-          <div class="settings-section">
-            <h3>Provider 编辑</h3>
+          <div class="settings-section" data-settings-domain="profiles" hidden>
+            <h3>Profiles</h3><div class="settings-domain-status" data-domain-status="profiles"></div>
             <div class="settings-grid">
               <label>Profile 名称</label><input id="provider-name" class="settings-input" placeholder="例如 deepseek" />
               <label>模型</label><input id="provider-model" class="settings-input" placeholder="例如 deepseek-chat" />
               <label>Base URL</label><input id="provider-base-url" class="settings-input" placeholder="https://api.deepseek.com" />
-              <label>Provider 类型</label><input id="provider-type" class="settings-input" value="openai-compatible" />
+              <label>Provider 类型</label><select id="provider-type" class="settings-select"><option value="openai-compatible">OpenAI compatible</option><option value="openai-compatible-vision">OpenAI compatible vision</option><option value="anthropic" disabled>Anthropic（待接入）</option><option value="gemini" disabled>Gemini（待接入）</option><option value="codex" disabled>Codex（待接入）</option></select>
+              <label>Codex transport</label><select id="provider-codex-transport" class="settings-select"><option value="auto">auto</option><option value="websocket">websocket</option><option value="http">http</option></select>
+              <label>Proxy</label><input id="provider-proxy" class="settings-input" placeholder="可选 http(s)/socks5 URL" />
+              <label>图片内容</label><label class="settings-inline-check"><input id="provider-strip-images" type="checkbox" /> 剥离图片</label>
+              <label>知识注入上限</label><input id="provider-knowledge-max" type="number" min="0" max="1000" class="settings-input" />
+              <label>Persona bindings</label><textarea id="provider-persona-bindings" class="settings-code-input settings-code-compact" placeholder='{"developer":"default"}'></textarea>
               <label>API Key</label><input id="provider-api-key" type="password" class="settings-input" autocomplete="new-password" placeholder="留空则保留现有密钥" />
               <div id="provider-key-hint" class="settings-help"></div>
             </div>
@@ -172,8 +186,18 @@
               <button class="settings-btn primary" data-action="save-provider">保存 Provider</button>
             </div>
           </div>
+          <div class="settings-section" data-settings-domain="mcp" hidden><h3>MCP</h3><div class="settings-domain-status" data-domain-status="mcp"></div><label class="settings-block-label">Servers JSON</label><textarea id="setting-mcp-servers" class="settings-code-input"></textarea><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="mcp">保存 MCP</button></div></div>
+          <div class="settings-section" data-settings-domain="wire" hidden><h3>Wire</h3><div class="settings-domain-status" data-domain-status="wire"></div><label class="settings-block-label">Sources JSON</label><textarea id="setting-wire-sources" class="settings-code-input"></textarea><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="wire">保存 Wire</button></div></div>
+          <div class="settings-section" data-settings-domain="animas" hidden><h3>Animas</h3><div class="settings-domain-status" data-domain-status="animas"></div><div class="settings-grid"><label>默认 Anima</label><input id="setting-anima-default" class="settings-input" /></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="animas">保存 Animas</button></div></div>
+          <div class="settings-section" data-settings-domain="nous" hidden><h3>Nous</h3><div class="settings-domain-status" data-domain-status="nous"></div><div class="settings-grid"><label>启用</label><input id="setting-nous-enabled" type="checkbox" /><label>自动触发阈值</label><input id="setting-nous-threshold" type="number" min="1" max="100" class="settings-input" /><label>冷却（分钟）</label><input id="setting-nous-cooldown" type="number" min="1" max="1440" class="settings-input" /><label>独立 Profile</label><input id="setting-nous-profile" class="settings-input" /></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="nous">保存 Nous</button></div></div>
+          <div class="settings-section" data-settings-domain="tts" hidden><h3>TTS</h3><div class="settings-domain-status" data-domain-status="tts"></div><div class="settings-grid"><label>默认启用</label><input id="setting-tts-enabled" type="checkbox" /><label>Voice</label><input id="setting-tts-voice" class="settings-input" /><label>语言</label><input id="setting-tts-language" class="settings-input" /><label>语速</label><input id="setting-tts-rate" type="number" min="0.5" max="2" step="0.1" class="settings-input" /></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="tts">保存 TTS</button></div></div>
+          <div class="settings-section" data-settings-domain="asr" hidden><h3>ASR</h3><div class="settings-domain-status" data-domain-status="asr"></div><div class="settings-grid"><label>Provider</label><select id="setting-asr-provider" class="settings-select" disabled title="当前仅接通 browser ASR"><option value="browser">browser</option><option value="volcengine" disabled>volcengine（待接入）</option></select><label>语言</label><input id="setting-asr-language" class="settings-input" /><label>Endpoint</label><input id="setting-asr-endpoint" class="settings-input" disabled title="远程 ASR adapter 尚未接入" /><label>API Key</label><input id="setting-asr-api-key" type="password" autocomplete="new-password" class="settings-input" placeholder="远程 adapter 尚未接入" disabled /><label>清除密钥</label><input id="setting-asr-clear-key" type="checkbox" disabled /></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="asr">保存 ASR</button></div></div>
+          <div class="settings-section" data-settings-domain="shell" hidden><h3>Shell</h3><div class="settings-domain-status" data-domain-status="shell"></div><div class="settings-grid"><label>默认 Shell</label><select id="setting-shell-default" class="settings-select"><option value="auto">auto</option><option value="powershell">powershell</option><option value="cmd">cmd</option></select><label>初始化脚本</label><textarea id="setting-shell-init" class="settings-code-input"></textarea></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="shell">保存 Shell</button></div></div>
+          <div class="settings-section" data-settings-domain="relay" hidden><h3>Relay</h3><div class="settings-domain-status" data-domain-status="relay"></div><div class="settings-grid"><label>启用</label><input id="setting-relay-enabled" type="checkbox" /><label>WSS URL</label><input id="setting-relay-url" class="settings-input" /><label>Access Token</label><input id="setting-relay-token" type="password" autocomplete="new-password" class="settings-input" placeholder="留空则保留" /><label>清除 Token</label><input id="setting-relay-clear-token" type="checkbox" /></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="relay">保存 Relay</button></div></div>
+          <div class="settings-section" data-settings-domain="update" hidden><h3>Update</h3><div class="settings-domain-status" data-domain-status="update"></div><div class="settings-grid"><label>通道</label><select id="setting-update-channel" class="settings-select"><option value="stable">stable</option><option value="beta">beta</option></select><label>策略</label><div class="settings-check-row"><label><input id="setting-update-check" type="checkbox" /> 自动检查</label><label><input id="setting-update-download" type="checkbox" /> 自动下载</label></div></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="update">保存 Update</button></div></div>
         </div>
       </div>
+      <div class="settings-footer"><button class="settings-btn" data-action="export-settings">导出设置</button><button class="settings-btn" data-action="choose-settings-import">导入设置</button><input id="settings-import-file" type="file" accept="application/json,.json" hidden data-action="import-settings" data-event="change" /></div>
       <div id="settings-message"></div>
     </div>
   </div>

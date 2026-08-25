@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "b41ca1baee533fe3ce78923272f28c4e813c02b5e16f8e8f5c2378bee2776eaa",
+      "sha256": "f76526b8cd86ccf937bea39c5abb5f6e71c541f0dbab133543aaefe01ed9cbad",
       "owner": "DS-04"
     },
     {
@@ -73,22 +73,22 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "84ae1ec1d2e68ece58c5e30a7ab95b671745edaaaaac7745eb37a3a9cfe97311",
+      "sha256": "b964fa1ee649da0d8637f0ccb314cbac6ae4589559c4f68524c97781d67ff3fc",
       "owner": "DS-04"
     },
     {
       "exactCasePath": "public/index.html",
-      "sha256": "9d8f202d10938d71f479a9a44ecb32b5e951541cdbc6b8e248f3f3e3d279c648",
+      "sha256": "a53dd3bf131db1fce14eaf31d906b147e7b3491e100821a447fcb0612fc097f6",
       "owner": "DS-04"
     },
     {
       "exactCasePath": "public/renderer.css",
-      "sha256": "6ca62234c643615db329f77f7dc535ca6756a333a40304f6b75df38f0789e55e",
+      "sha256": "93d8338e8ae57f2267660899dcca0a630b0546c85448eb4331daffabe4d4b656",
       "owner": "DS-04"
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "fbf50bd32713b4004d1f813e26f614a5a0a5dfc467599bc44c4e58b19ddb7edd",
+      "sha256": "441bae01f07bddc9085bfcfbe4a72c06c05671519ab7885216ba52c005cae11c",
       "owner": "DS-04"
     },
     {
@@ -128,7 +128,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "9bf451410fefd2ea4cf2f8042f7903db440c6e5baea49c079b0e5a74bda94efa",
+      "sha256": "929d31439e4fa74b08e14e004ac74ce179ad51899bd88be4c1c88ae45089c0f2",
       "owner": "DS-04"
     },
     {
@@ -211,7 +211,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "d2c37e36c31b5007213449967e0abbeafa623151820c77321ea4ccf8cf560bc1",
+      "sha256": "1813281f24b711b90d74ce588c76e243a57ef15bcd73402be73345b7d3695529",
       "kind": "test",
       "layer": "electron",
       "owner": "DS-04"
@@ -224,5 +224,5 @@
       "owner": "DS-04"
     }
   ],
-  "canonicalPayloadSha256": "ed2ab8561368a4a547f9f19bfc4c0dcc283f288ffd4e5e1edce58c3026e5cf8f"
+  "canonicalPayloadSha256": "8efdf64dd65ae33f70d8e5cca28cbc094296c6203eee5094514d59a496a36b2f"
 }

@@ -21,9 +21,15 @@ export interface SecurityAuditKeyWrapper {
 }
 
 type CredentialVault = Readonly<{
-  schemaVersion: 1;
+  schemaVersion: 2;
   entries: Readonly<Record<string, string>>;
+  pendingDeletes: readonly string[];
 }>;
+
+type CredentialVaultState = {
+  entries: Record<string, string>;
+  pendingDeletes: Set<string>;
+};
 
 const referencePattern = /^cred_[a-f0-9]{32}$/u;
 const canonicalBase64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/u;
@@ -133,7 +139,7 @@ export function validateCredentialReference(reference: unknown): string {
 
 export function listCredentialVaultReferences(bytes: Buffer): readonly string[] {
   if (!Buffer.isBuffer(bytes)) throw new TypeError("Credential vault bytes are invalid");
-  return Object.freeze(Object.keys(parseVault(bytes)).sort());
+  return Object.freeze(Object.keys(parseVault(bytes).entries).sort());
 }
 
 export function validateCredentialVaultCiphertext(bytes: Buffer): void {
@@ -143,7 +149,7 @@ export function validateCredentialVaultCiphertext(bytes: Buffer): void {
 export async function validateCredentialVaultDecryptable(bytes: Buffer): Promise<void> {
   if (!Buffer.isBuffer(bytes)) throw new TypeError("Credential vault bytes are invalid");
   const protector = requireProtector();
-  for (const encoded of Object.values(parseVault(bytes))) {
+  for (const encoded of Object.values(parseVault(bytes).entries)) {
     const ciphertext = decodeCanonicalBase64(encoded, "Credential vault entry", MAX_VAULT_CIPHERTEXT_BYTES);
     try { await protector.unprotect(ciphertext); }
     catch { throw new Error("Credential vault is not decryptable by the current Windows user"); }
@@ -151,35 +157,50 @@ export async function validateCredentialVaultDecryptable(bytes: Buffer): Promise
   }
 }
 
-function parseVault(bytes: Buffer | null): Record<string, string> {
-  if (bytes === null) return {};
+function parseVault(bytes: Buffer | null): CredentialVaultState {
+  if (bytes === null) return { entries: {}, pendingDeletes: new Set() };
   let parsed: unknown;
   try { parsed = JSON.parse(bytes.toString("utf8")); }
   catch { throw new Error("Credential vault is not valid JSON"); }
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)
-    || JSON.stringify(Object.keys(parsed).sort()) !== JSON.stringify(["entries", "schemaVersion"])
-    || (parsed as { schemaVersion?: unknown }).schemaVersion !== 1
-    || !(parsed as { entries?: unknown }).entries || typeof (parsed as { entries: unknown }).entries !== "object"
-    || Array.isArray((parsed as { entries: unknown }).entries)) {
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Credential vault schema is invalid");
+  const root = parsed as { schemaVersion?: unknown; entries?: unknown; pendingDeletes?: unknown };
+  const legacy = root.schemaVersion === 1;
+  const expectedKeys = legacy ? ["entries", "schemaVersion"] : ["entries", "pendingDeletes", "schemaVersion"];
+  if (JSON.stringify(Object.keys(root).sort()) !== JSON.stringify(expectedKeys.sort())
+    || (!legacy && root.schemaVersion !== 2)
+    || !root.entries || typeof root.entries !== "object" || Array.isArray(root.entries)
+    || (!legacy && !Array.isArray(root.pendingDeletes))) {
     throw new Error("Credential vault schema is invalid");
   }
-  const entries = Object.entries((parsed as { entries: Record<string, unknown> }).entries);
-  if (entries.length > MAX_VAULT_ENTRIES) throw new Error("Credential vault schema is invalid");
-  const result: Record<string, string> = {};
-  for (const [reference, ciphertext] of entries) {
+  const rawEntries = Object.entries(root.entries as Record<string, unknown>);
+  if (rawEntries.length > MAX_VAULT_ENTRIES) throw new Error("Credential vault schema is invalid");
+  const entries: Record<string, string> = {};
+  for (const [reference, ciphertext] of rawEntries) {
     if (!referencePattern.test(reference) || typeof ciphertext !== "string") throw new Error("Credential vault entry is invalid");
     decodeCanonicalBase64(ciphertext, "Credential vault entry", MAX_VAULT_CIPHERTEXT_BYTES);
-    result[reference] = ciphertext;
+    entries[reference] = ciphertext;
   }
-  return result;
+  const rawPending = legacy ? [] : root.pendingDeletes as unknown[];
+  if (rawPending.length > MAX_VAULT_ENTRIES || rawPending.some(reference => typeof reference !== "string" || !referencePattern.test(reference))) {
+    throw new Error("Credential vault cleanup ledger is invalid");
+  }
+  const pendingDeletes = new Set(rawPending as string[]);
+  if (pendingDeletes.size !== rawPending.length || [...pendingDeletes].some(reference => !Object.hasOwn(entries, reference))) {
+    throw new Error("Credential vault cleanup ledger is invalid");
+  }
+  return { entries, pendingDeletes };
 }
 
-async function loadEntries(): Promise<Record<string, string>> {
+async function loadVault(): Promise<CredentialVaultState> {
   return parseVault(await (await getManagedPathStore()).readCredentialVault());
 }
 
-async function persistEntries(entries: Record<string, string>): Promise<void> {
-  const vault: CredentialVault = { schemaVersion: 1, entries: Object.fromEntries(Object.entries(entries).sort(([left], [right]) => left.localeCompare(right))) };
+async function persistVault(state: CredentialVaultState): Promise<void> {
+  const vault: CredentialVault = {
+    schemaVersion: 2,
+    entries: Object.fromEntries(Object.entries(state.entries).sort(([left], [right]) => left.localeCompare(right))),
+    pendingDeletes: Object.freeze([...state.pendingDeletes].sort()),
+  };
   await (await getManagedPathStore()).writeCredentialVault(Buffer.from(JSON.stringify(vault, null, 2), "utf8"));
 }
 
@@ -246,30 +267,73 @@ export function createBackupDataKeyWrapper(): BackupDataKeyWrapper {
 
 export async function readCredential(reference: string): Promise<string> {
   if (!referencePattern.test(reference)) throw new Error("Credential reference is invalid");
-  const encoded = (await loadEntries())[reference];
+  const encoded = (await loadVault()).entries[reference];
   if (!encoded) throw new Error("Credential reference is unresolved");
   try { return await requireProtector().unprotect(Buffer.from(encoded, "base64")); }
   catch { throw new Error("Credential decryption failed"); }
 }
 
+/** New entries begin pending so a crash before Config publication cannot orphan them. */
 export async function storeCredential(plaintext: string): Promise<string> {
   if (typeof plaintext !== "string" || !plaintext) throw new Error("Credential plaintext is empty");
+  const vault = await loadVault();
+  if (Object.keys(vault.entries).length >= MAX_VAULT_ENTRIES) throw new Error("Credential vault capacity exceeded");
   const reference = `cred_${randomBytes(16).toString("hex")}`;
-  const entries = await loadEntries();
   let ciphertext: Buffer;
   try { ciphertext = await requireProtector().protect(plaintext); }
   catch { throw new Error("Credential encryption failed"); }
-  if (!Buffer.isBuffer(ciphertext) || ciphertext.length === 0) throw new Error("Credential encryption returned invalid bytes");
-  entries[reference] = ciphertext.toString("base64");
-  await persistEntries(entries);
+  if (!Buffer.isBuffer(ciphertext) || ciphertext.length === 0 || ciphertext.length > MAX_VAULT_CIPHERTEXT_BYTES) {
+    ciphertext?.fill(0);
+    throw new Error("Credential encryption returned invalid bytes");
+  }
+  try {
+    vault.entries[reference] = ciphertext.toString("base64");
+    vault.pendingDeletes.add(reference);
+    await persistVault(vault);
+  } finally { ciphertext.fill(0); }
   return reference;
+}
+
+/** Stage superseded references before Config publication; cleanup happens only after live-reference reconciliation. */
+export async function stageCredentialRetirements(references: readonly string[]): Promise<void> {
+  const unique = [...new Set(references.filter(reference => referencePattern.test(reference)))];
+  if (unique.length === 0) return;
+  const vault = await loadVault();
+  let changed = false;
+  for (const reference of unique) {
+    if (Object.hasOwn(vault.entries, reference) && !vault.pendingDeletes.has(reference)) {
+      vault.pendingDeletes.add(reference);
+      changed = true;
+    }
+  }
+  if (changed) await persistVault(vault);
+}
+
+/** Atomically keep live credentials and delete only staged references no longer reachable from Config. */
+export async function reconcileCredentialRetirements(liveReferences: readonly string[]): Promise<void> {
+  const live = new Set(liveReferences.map(validateCredentialReference));
+  const vault = await loadVault();
+  let changed = false;
+  for (const reference of [...vault.pendingDeletes]) {
+    if (live.has(reference)) {
+      vault.pendingDeletes.delete(reference);
+      changed = true;
+      continue;
+    }
+    delete vault.entries[reference];
+    vault.pendingDeletes.delete(reference);
+    changed = true;
+  }
+  if (changed) await persistVault(vault);
 }
 
 export async function deleteCredentials(references: readonly string[]): Promise<void> {
   const unique = [...new Set(references.filter(reference => referencePattern.test(reference)))];
   if (unique.length === 0) return;
-  const entries = await loadEntries();
+  const vault = await loadVault();
   let changed = false;
-  for (const reference of unique) changed = delete entries[reference] || changed;
-  if (changed) await persistEntries(entries);
+  for (const reference of unique) {
+    changed = delete vault.entries[reference] || vault.pendingDeletes.delete(reference) || changed;
+  }
+  if (changed) await persistVault(vault);
 }

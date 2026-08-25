@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "fbf50bd32713b4004d1f813e26f614a5a0a5dfc467599bc44c4e58b19ddb7edd",
+      "sha256": "441bae01f07bddc9085bfcfbe4a72c06c05671519ab7885216ba52c005cae11c",
       "owner": "RT-04"
     },
     {
@@ -38,7 +38,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "9bf451410fefd2ea4cf2f8042f7903db440c6e5baea49c079b0e5a74bda94efa",
+      "sha256": "929d31439e4fa74b08e14e004ac74ce179ad51899bd88be4c1c88ae45089c0f2",
       "owner": "RT-04"
     },
     {
@@ -203,7 +203,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "b41ca1baee533fe3ce78923272f28c4e813c02b5e16f8e8f5c2378bee2776eaa",
+      "sha256": "f76526b8cd86ccf937bea39c5abb5f6e71c541f0dbab133543aaefe01ed9cbad",
       "owner": "RT-04"
     },
     {
@@ -436,7 +436,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "d2c37e36c31b5007213449967e0abbeafa623151820c77321ea4ccf8cf560bc1",
+      "sha256": "1813281f24b711b90d74ce588c76e243a57ef15bcd73402be73345b7d3695529",
       "kind": "test",
       "layer": "electron",
       "owner": "RT-04"
@@ -449,5 +449,5 @@
       "owner": "RT-04"
     }
   ],
-  "canonicalPayloadSha256": "45bcdc17eb5faf91953bbec28f4b99ffc84c87282f8301ad2ff3febd0e71a870"
+  "canonicalPayloadSha256": "474715ebe1bed544ccac8d984cf0e32829c6d4426a5228298d188b63bb9db4e9"
 }

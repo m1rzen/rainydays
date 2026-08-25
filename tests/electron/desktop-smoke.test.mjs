@@ -998,6 +998,67 @@ test("DS-07 real Electron prioritizes editing, history, Escape and Workbench sho
   assert.equal(await pathExists(fixture), false);
 });
 
+test("DS-09 real Electron renders typed Settings and hot-applies TTS without secret disclosure", { timeout: 90_000 }, async (context) => {
+  const fixture = await makeTempDir("mini-lux-ds09-electron-");
+  const userData = path.join(fixture, "user-data");
+  const buildInfo = JSON.parse(await readFile(path.join(projectRoot, "build-info.json"), "utf8"));
+  let instance;
+  let client;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal);
+    client = await connectCdp(cdpPort);
+    await probeIdentity(client, buildInfo, httpPort);
+    await client.evaluate("openSettings()");
+    await waitFor(async () => client.evaluate("document.querySelectorAll('.settings-domain-tab').length===11"), { timeoutMs: 10_000, label: "DS-09 Settings tabs" });
+    const initial = await client.evaluate(`({
+      labels:[...document.querySelectorAll('.settings-domain-tab')].map(button=>button.querySelector('span')?.textContent),
+      sections:[...document.querySelectorAll('[data-settings-domain]')].map(section=>section.dataset.settingsDomain),
+      providerSecret:document.getElementById('provider-api-key').value,
+      asrSecret:document.getElementById('setting-asr-api-key').value,
+      relaySecret:document.getElementById('setting-relay-token').value,
+      nativeDirectory:typeof window.electronAPI.selectDirectory,
+    })`);
+    assert.deepEqual(initial, {
+      labels: ["Common", "Profiles", "MCP", "Wire", "Animas", "Nous", "TTS", "ASR", "Shell", "Relay", "Update"],
+      sections: ["common", "profiles", "mcp", "wire", "animas", "nous", "tts", "asr", "shell", "relay", "update"],
+      providerSecret: "", asrSecret: "", relaySecret: "", nativeDirectory: "function",
+    });
+    await client.evaluate(`(async()=>{
+      switchSettingsDomain('tts');
+      document.getElementById('setting-tts-enabled').checked=true;
+      document.getElementById('setting-tts-voice').value='Electron Fixture Voice';
+      document.getElementById('setting-tts-language').value='en-US';
+      document.getElementById('setting-tts-rate').value='1.2';
+      await saveSettingsDomain('tts');
+      return true;
+    })()`);
+    await waitFor(async () => client.evaluate("settingsState?.domains?.tts?.enabled===true && ttsEnabled===true"), { timeoutMs: 10_000, label: "DS-09 TTS hot apply" });
+    const applied = await client.evaluate(`({
+      active:activeSettingsDomain,
+      tts:settingsState.domains.tts,
+      runtime:{enabled:ttsEnabled,language:ttsPreferences.language,rate:ttsPreferences.rate},
+      message:document.getElementById('settings-message').textContent,
+    })`);
+    assert.deepEqual(applied, {
+      active: "tts",
+      tts: { enabled: true, voice: "Electron Fixture Voice", language: "en-US", rate: 1.2 },
+      runtime: { enabled: true, language: "en-US", rate: 1.2 },
+      message: "tts 设置已保存。",
+    });
+    await client.evaluate("closeSettings(); openSettings()");
+    await waitFor(async () => client.evaluate("settingsState?.domains?.tts?.voice==='Electron Fixture Voice'"), { timeoutMs: 10_000, label: "DS-09 Settings reopen" });
+    assert.equal(await client.evaluate("document.getElementById('setting-tts-voice').value"), "Electron Fixture Voice");
+    client.close(); client = null;
+    await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    client?.close();
+    if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture);
+  }
+  assert.equal(await pathExists(fixture), false);
+});
+
 test("SEC-03 Electron stage emits all 48 authenticated projection receipts", { timeout: 120_000 }, async () => {
   const result = await emitSec03ProjectionReceipts({
     layer: "electron",
