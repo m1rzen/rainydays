@@ -12,8 +12,10 @@ import type { CapabilityContext, InspectedToolCall, RuntimeAuthority, ToolPolicy
 import { CapabilityDeniedError } from "./capability-broker.js";
 import { PathDeniedError } from "./path-policy.js";
 import { NetworkPolicyDeniedError } from "./network-policy.js";
-import { capabilityBroker, getToolDefinitions, inspectToolCall, prepareInspectedToolExecution, type PreparedToolExecution } from "./tools/index.js";
-import { createToolOutcome, isValidToolCallId, parseToolArguments, serializeToolOutcome, ToolArgumentsError, ToolExecutionError, ToolLoopDetector, ToolLoopError, ToolStageTrace } from "./tool-pipeline.js";
+import { capabilityBroker, getToolProtocolDescriptors, inspectToolCall, prepareInspectedToolExecution, type PreparedToolExecution } from "./tools/index.js";
+import { createToolOutcome, isValidToolCallId, serializeToolOutcome, ToolArgumentsError, ToolExecutionError, ToolLoopDetector, ToolLoopError, ToolStageTrace } from "./tool-pipeline.js";
+import { extractBodyToolCalls, parseToolInvocationArguments, renderBodyToolInstructions } from "./tool-protocol.js";
+import { getConfigSnapshot } from "./config.js";
 import { touch, autoGenerateTitle, generateSemanticSessionTitle } from "./session.js";
 import { getTasksBySession, getNextPendingTask, allTasksCompleted } from "./task.js";
 import { getRecentMemories, getPinsBySession } from "./db.js";
@@ -47,6 +49,7 @@ interface ParsedAgentToolCall {
   readonly toolName: string;
   readonly rawArguments: string;
   readonly toolArgs: Readonly<Record<string, unknown>> | null;
+  readonly invocationMode: "json" | "body" | null;
   readonly parseError: string | null;
 }
 
@@ -253,10 +256,11 @@ export class Agent {
   }
 
   /** 每次 run 都从当前 persona、跨会话记忆和 Pin 重建唯一主 system prompt。 */
-  private refreshSystemPrompt(sessionId: string): void {
+  private refreshSystemPrompt(sessionId: string, bodyToolInstructions = ""): void {
     const memories = getRecentMemories(10);
     const pins = getPinsBySession(sessionId);
     const blocks = [this.persona.systemPrompt];
+    if (bodyToolInstructions) blocks.push(bodyToolInstructions);
 
     if (memories.length > 0) {
       const lines = memories.map((memory) => {
@@ -283,8 +287,9 @@ export class Agent {
     runSessionId: string;
     signal: AbortSignal;
     loopDetector: ToolLoopDetector;
+    bodyToolsEnabled: boolean;
   }>): Promise<SettledAgentToolCall> {
-    const { planned, capabilityContext, runAuthority, runSessionId, signal, loopDetector } = input;
+    const { planned, capabilityContext, runAuthority, runSessionId, signal, loopDetector, bodyToolsEnabled } = input;
     const { toolCall, toolName, rawArguments, toolArgs, inspected, planningError, trace } = planned;
     const toolStart = Date.now();
     const audit = this.auditJournal
@@ -390,6 +395,7 @@ export class Agent {
         audit && this.auditJournal ? Object.freeze({ journal: this.auditJournal, parentRequestId: audit.requestId }) : null,
         signal,
         loopDetector,
+        bodyToolsEnabled,
       );
       trace.record("policy", "passed");
       await audit?.execution(true);
@@ -515,9 +521,11 @@ export class Agent {
         void generateSemanticSessionTitle(this.llm, runSessionId, titleInput, fallbackTitle).catch(() => undefined);
       }
 
-      this.refreshSystemPrompt(runSessionId);
-
-      const tools = getToolDefinitions(capabilityContext);
+      const toolProtocols = getToolProtocolDescriptors(capabilityContext);
+      const tools = toolProtocols.map(descriptor => descriptor.schema);
+      let orgModeEnabled = false;
+      try { orgModeEnabled = getConfigSnapshot().domains.common.orgMode; } catch { /* isolated Agent fixtures have no global config */ }
+      this.refreshSystemPrompt(runSessionId, orgModeEnabled ? renderBodyToolInstructions(toolProtocols) : "");
 
       // 任务驱动模式：新建 DAG 或重启后已有未完成 DAG 都会选择未阻塞任务。
       let taskMode = getTasksBySession(runSessionId).some(task => task.status !== "completed");
@@ -570,12 +578,14 @@ export class Agent {
       try {
         for await (const event of this.llm.chatStream(this.memory.getAll(), tools, signal, runSessionId, readMessageAttachmentForSession)) {
           if (event.type === "delta") {
-            hasStreamedContent = true;
-            yield {
-              type: "answer_chunk",
-              content: event.content,
-              timestamp: Date.now(),
-            };
+            if (!orgModeEnabled) {
+              hasStreamedContent = true;
+              yield {
+                type: "answer_chunk",
+                content: event.content,
+                timestamp: Date.now(),
+              };
+            }
           } else {
             finalMessage = event.message;
           }
@@ -598,6 +608,28 @@ export class Agent {
       if (!finalMessage) {
         yield { type: "error", content: "LLM 返回为空", timestamp: Date.now() };
         return;
+      }
+
+      if (orgModeEnabled) {
+        const extracted = extractBodyToolCalls(finalMessage.content, toolProtocols);
+        if (extracted.calls.length > 0) {
+          finalMessage = {
+            ...finalMessage,
+            content: extracted.content,
+            tool_calls: [
+              ...(finalMessage.tool_calls ?? []),
+              ...extracted.calls.map((call, index) => ({
+                id: `body-${i}-${index}-${randomUUID()}`,
+                type: "function" as const,
+                function: { name: call.toolName, arguments: call.rawArguments },
+              })),
+            ],
+          };
+        }
+        if (finalMessage.content) {
+          hasStreamedContent = true;
+          yield { type: "answer_chunk", content: finalMessage.content, timestamp: Date.now() };
+        }
       }
 
       // 情况 A：LLM 决定调用工具
@@ -637,17 +669,24 @@ export class Agent {
           const toolName = toolCall.function.name;
           const rawArguments = toolCall.function.arguments;
           try {
-            return { toolCall, toolName, rawArguments, toolArgs: parseToolArguments(rawArguments), parseError: null };
+            const descriptor = toolProtocols.find(entry => entry.name === toolName) ?? null;
+            const parsed = parseToolInvocationArguments(rawArguments, descriptor, { allowBody: orgModeEnabled });
+            const normalizedToolCall = parsed.mode === "body"
+              ? { ...toolCall, function: { ...toolCall.function, arguments: JSON.stringify(parsed.args) } }
+              : toolCall;
+            return { toolCall: normalizedToolCall, toolName, rawArguments, toolArgs: parsed.args, invocationMode: parsed.mode, parseError: null };
           } catch (error) {
             return {
               toolCall,
               toolName,
               rawArguments,
               toolArgs: null,
-              parseError: error instanceof ToolArgumentsError ? error.message : "工具参数不是合法 JSON",
+              invocationMode: null,
+              parseError: error instanceof ToolArgumentsError ? error.message : "工具参数不是合法 JSON 或 Body block",
             };
           }
         });
+        finalMessage = { ...finalMessage, tool_calls: toolCallsParsed.map(parsed => parsed.toolCall) };
 
         for (const { toolName, toolArgs } of toolCallsParsed) {
           yield {
@@ -695,6 +734,7 @@ export class Agent {
           runSessionId,
           signal,
           loopDetector: toolLoopDetector,
+          bodyToolsEnabled: orgModeEnabled,
         });
 
         try {

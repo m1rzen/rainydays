@@ -38,6 +38,13 @@ export interface CapabilityToolRegistration {
   readonly policy: ToolPolicy;
 }
 
+/** Immutable context projection; executors and registration identities never leave the Broker. */
+export interface CapabilityToolDescriptor {
+  readonly name: string;
+  readonly definition: ToolDefinition;
+  readonly policy: ToolPolicy;
+}
+
 export interface EffectivePersonaInput {
   readonly name: string;
   readonly tools: readonly string[];
@@ -509,10 +516,18 @@ export class CapabilityBroker {
     return context;
   }
 
-  getToolDefinitions(context: CapabilityContext): ToolDefinition[] {
+  getToolDescriptors(context: CapabilityContext): CapabilityToolDescriptor[] {
     const record = this.requireActiveContext(context);
     if (record.context.principal === "local-user-api") denied("CAPABILITY_TOOL_DENIED", "direct API context has no model tools");
-    return [...record.bindings.values()].map((binding) => binding.definition);
+    return [...record.bindings.values()].map(binding => Object.freeze({
+      name: binding.name,
+      definition: binding.definition,
+      policy: binding.policy,
+    }));
+  }
+
+  getToolDefinitions(context: CapabilityContext): ToolDefinition[] {
+    return this.getToolDescriptors(context).map(descriptor => descriptor.definition);
   }
 
   getUnattendedChildToolNames(context: CapabilityContext): readonly string[] {

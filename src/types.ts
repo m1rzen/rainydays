@@ -55,6 +55,44 @@ export interface ToolDefinition {
   };
 }
 
+export interface ToolBodyHeader {
+  readonly name: string;
+  readonly parameter: string;
+  readonly required: boolean;
+}
+
+export interface RawToolBodyMode {
+  readonly kind: "raw";
+  readonly blockName: string;
+  readonly bodyParameter: string;
+  readonly headers: readonly ToolBodyHeader[];
+}
+
+export interface SectionedToolBodyMode {
+  readonly kind: "sections";
+  readonly blockName: string;
+  readonly sections: readonly Readonly<{ blockName: string; parameter: string }>[];
+  readonly headers: readonly ToolBodyHeader[];
+}
+
+export type ToolBodyMode = RawToolBodyMode | SectionedToolBodyMode;
+
+/** Context-scoped unified descriptor. OpenAI receives only `schema`; other fields remain host-side. */
+export interface ToolProtocolDescriptor {
+  readonly schemaVersion: 1;
+  readonly name: string;
+  readonly schema: ToolDefinition;
+  readonly invocation: Readonly<{
+    json: true;
+    body: ToolBodyMode | null;
+  }>;
+  readonly permissions: ToolPolicy;
+  readonly sideEffects: ToolPolicy["effects"];
+  readonly hostBound: boolean;
+  readonly concurrency: "parallel-read" | "serial";
+  readonly timeoutMs: number;
+}
+
 export interface ScopedOutputReservation {
   readonly commit: (bytes: Uint8Array) => Promise<PathCreateResult | PathReplaceResult<null>>;
 }
@@ -127,6 +165,8 @@ export interface ScopedNetworkGateway {
 export interface ToolInvocationServices {
   /** Authentic Broker context from which detached children may attenuate. */
   readonly capabilityContext: CapabilityContext;
+  /** Frozen at the parent run boundary; nested and detached invocations inherit it unchanged. */
+  readonly bodyToolsEnabled: boolean;
   /** Exact parent run cancellation scope. Nested tools inherit this signal unchanged. */
   readonly signal: AbortSignal;
   readonly path: ScopedPathGateway;
@@ -148,6 +188,8 @@ export interface ToolInvocationServices {
   readonly getUnattendedChildToolNames: () => readonly string[];
   readonly listCurrentToolDefinitions: () => ToolDefinition[];
   readonly getToolDefinitions: (context: CapabilityContext) => ToolDefinition[];
+  readonly listCurrentToolProtocols: () => ToolProtocolDescriptor[];
+  readonly getToolProtocols: (context: CapabilityContext) => ToolProtocolDescriptor[];
   readonly auditContext: Readonly<{ journal: SecurityAuditJournal; parentRequestId: string }> | null;
   readonly executeTool: (context: CapabilityContext, name: string, args: Record<string, unknown> | string, toolCallId: string) => Promise<string>;
 }

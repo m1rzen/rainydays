@@ -9,8 +9,8 @@
   "runtimeSinkSetSha256": "a65874c8652ee35ff55e87f9c8bcd8093b1d3094a6e164a00fff1b257a8da7f4",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
-    "executableFileCount": 92,
-    "executableManifestSha256": "486ee4eb1e9fb0f4e45021a8ad902fb2684f533a7dd95827b2c64bb1310b9731",
+    "executableFileCount": 93,
+    "executableManifestSha256": "9d9ab1951500ed4689314e70738039d4b0ca174132be5af565390be4e704ac6e",
     "dialectImportCount": 38,
     "dialectExceptionCount": 2
   },
@@ -52,8 +52,8 @@
     },
     {
       "sourcePath": "src/agent.ts",
-      "bytes": 37634,
-      "sha256": "40677ac4b9c09dcf80d7a4605720a50cbd82b89ca6a8541fea25114b78a136a7",
+      "bytes": 39831,
+      "sha256": "54ef958e1a4c451b7e81194a44301b50918c17b1bf35519ce9856bf240f070ed",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -94,8 +94,8 @@
     },
     {
       "sourcePath": "src/capability-broker.ts",
-      "bytes": 63972,
-      "sha256": "1241eba8375eb65e7f0d67b8ea835d6cdd6c34c5d7f87467351a13fe2531ca49",
+      "bytes": 64479,
+      "sha256": "abfcb3edae77371371ffcb00812b8a8580cf3b8fd88fd25cfb2685edc1a07194",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -457,6 +457,13 @@
       "packageExpectation": "compiled-to-asar"
     },
     {
+      "sourcePath": "src/tool-protocol.ts",
+      "bytes": 14089,
+      "sha256": "d02b28d855b54be6dc3bac45f4734a30217ab07ef052b2768167e360ded5f0c1",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
       "sourcePath": "src/tool-scheduler.ts",
       "bytes": 3680,
       "sha256": "a1729c9350fa0d4321be86268b14e6d7f6d67764b8f237203e4bf8c12c3966b8",
@@ -514,8 +521,8 @@
     },
     {
       "sourcePath": "src/tools/index.ts",
-      "bytes": 29821,
-      "sha256": "ef4feb8ae3e804648be96609d475822443c3f59c88df8e7a68f846bfaf78a9bb",
+      "bytes": 31044,
+      "sha256": "d3d2e7e117ef969569812bd47c76af3664d8fad267ca76664d4dc22a59b2f2a4",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -633,8 +640,8 @@
     },
     {
       "sourcePath": "src/types.ts",
-      "bytes": 9748,
-      "sha256": "f8be4bdb738c391417cf5bfb6ea1c57b51c37adc7886eceb702b03bee7dd36b2",
+      "bytes": 11159,
+      "sha256": "395945d7c37fadf3d3890ff6663ab8678ff4223647a295ec1139ae88b3b1c1e0",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -5537,5 +5544,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "12085c6764d1af746e2671e7a0877289496c1a3399c2300482ec442e6885a7f7"
+  "canonicalPayloadSha256": "4997f56534a1d94cdb3710531a5eebb4a3728d30c83031f5011032cea3ab4697"
 }

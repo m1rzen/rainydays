@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "taskId": "TOOL-01",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/tool-01.json",
+    "sha256": "7f54c70c0258dce4b9e6d86d2a0365282d240311467904dc9d85a83a0f31a918"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "31ca7f8dfd5c8cf50185ba7204458edd1622a94993ea8a1a866eb600869d1461",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "scripts/tool01-governance.mjs",
+      "sha256": "6af18e12405a0c579c0f4b45b4ffe7dddfb4acc12ffe735544b065bd944187eb",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "scripts/generate-tool01-resolved-manifest.mjs",
+      "sha256": "66bd4e8a3b83ed88f92087e9798816cf182273d4ad7d2db0958955eee4d0c589",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "c0b005142ddd12f1789f64619a36349f8efff67658cf79ae94bdfefcbf9f0969",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "src/agent.ts",
+      "sha256": "54ef958e1a4c451b7e81194a44301b50918c17b1bf35519ce9856bf240f070ed",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "src/capability-broker.ts",
+      "sha256": "abfcb3edae77371371ffcb00812b8a8580cf3b8fd88fd25cfb2685edc1a07194",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "src/tool-protocol.ts",
+      "sha256": "d02b28d855b54be6dc3bac45f4734a30217ab07ef052b2768167e360ded5f0c1",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "d3d2e7e117ef969569812bd47c76af3664d8fad267ca76664d4dc22a59b2f2a4",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "src/types.ts",
+      "sha256": "395945d7c37fadf3d3890ff6663ab8678ff4223647a295ec1139ae88b3b1c1e0",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "790c78e5b99ecdcc371e3e295314aaf942b02cfea9511f8a8aea54869a7b2843",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "09d3264717aff73d702c45619fbdf28d764e9600cd79f7fab8a02a9aa620814c",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "837baa6a3bdbc4f6bc6b9589067900c13e46cd271f8bdd28f109e9ddd507f254",
+      "owner": "TOOL-01"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/tool01-governance.test.mjs",
+      "sha256": "920af68e41b91ebd8d61a356c3a49d70d42e64c48aae9bcbe1dae8682b97307a",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+      "sha256": "1543469832433b10487e5d13442ef1b2851f52d5b927c16a1f194aea40261990",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "tests/integration/tool01-body-agent.test.mjs",
+      "sha256": "b0750abfa2a85315b982b7ef5d9b0a8db71aaec11025f152f3718920bd6f4403",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "TOOL-01"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "837baa6a3bdbc4f6bc6b9589067900c13e46cd271f8bdd28f109e9ddd507f254",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-01"
+    }
+  ],
+  "canonicalPayloadSha256": "7b1f6f2c36320d5230882adb040f3e7eb6e8f1a4dee683801f7f8a1b14a930f0"
+}

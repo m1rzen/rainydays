@@ -4,7 +4,7 @@
 // ===========================================
 
 import Ajv, { type ValidateFunction } from "ajv";
-import type { RegisteredTool, ToolDefinition, ToolExecutionOutcome, ToolExecutor, ToolInvocationServices } from "../types.js";
+import type { RegisteredTool, ToolDefinition, ToolExecutionOutcome, ToolExecutor, ToolInvocationServices, ToolProtocolDescriptor } from "../types.js";
 import { CapabilityBroker, CapabilityDeniedError, type CapabilityContext, type InspectedToolCall, type RuntimeAuthority } from "../capability-broker.js";
 import { DIRECT_OPERATION_POLICIES, RUNTIME_TOOL_POLICIES, STATIC_TOOL_POLICIES } from "../tool-policies.js";
 import { getSessionInfo } from "../session.js";
@@ -107,6 +107,7 @@ import {
 import { randomUUID } from "node:crypto";
 import { cancellationError, cancellationFailure, isRunCancellation, isRunSettlementFailure, NEVER_ABORT_SIGNAL, RunSettlementError, throwIfCancelled, timeoutSignal } from "../run-cancellation.js";
 import { createToolOutcome, isValidToolCallId, parseToolArguments, ToolArgumentsError, ToolExecutionError, ToolLoopDetector, ToolLoopError } from "../tool-pipeline.js";
+import { createToolProtocolDescriptor, getToolTimeoutMs, parseToolInvocationArguments } from "../tool-protocol.js";
 export { createToolOutcome, isValidToolCallId, MAX_TOOL_OUTPUT_BYTES, parseToolArguments, serializeToolOutcome, truncateCodePoints, ToolArgumentsError, ToolExecutionError, ToolLoopDetector, ToolLoopError } from "../tool-pipeline.js";
 
 /** 全部已注册的工具（按名索引） */
@@ -342,8 +343,16 @@ export function registerDynamicTool(authority: RuntimeAuthority, tool: Omit<Regi
   capabilityBroker.registerRuntimeTool(authority, { ...tool, policy });
 }
 
+export function getToolProtocolDescriptors(context: CapabilityContext): ToolProtocolDescriptor[] {
+  return capabilityBroker.getToolDescriptors(context).map(({ name, definition, policy }) => {
+    const strict = strictToolDefinition(definition);
+    if (strict.function.name !== name) throw new Error(`Tool protocol binding identity differs: ${name}`);
+    return createToolProtocolDescriptor(strict, policy);
+  });
+}
+
 export function getToolDefinitions(context: CapabilityContext): ToolDefinition[] {
-  return capabilityBroker.getToolDefinitions(context).map(strictToolDefinition);
+  return getToolProtocolDescriptors(context).map(descriptor => descriptor.schema);
 }
 
 function closeObjectSchemas(value: unknown): unknown {
@@ -407,6 +416,7 @@ function invocationServices(
   auditContext: ToolAuditContext | null,
   signal: AbortSignal,
   loopDetector: ToolLoopDetector | null,
+  bodyToolsEnabled: boolean,
 ): {
   readonly services: ToolInvocationServices;
   readonly close: () => void;
@@ -416,6 +426,7 @@ function invocationServices(
   const detachedLoopDetectors = new WeakMap<CapabilityContext, ToolLoopDetector>();
   const services: ToolInvocationServices = {
     capabilityContext: capabilityBroker.getInvocationSourceContext(executionContext),
+    bodyToolsEnabled,
     signal,
     path: issuedPath.gateway,
     network: createScopedNetworkGateway({ context: executionContext, inspected, signal }),
@@ -435,7 +446,7 @@ function invocationServices(
     executeDetachedTool: (context, name, args, toolCallId, childSignal) => {
       const detector = detachedLoopDetectors.get(context);
       if (!detector) throw new Error("Detached child execution context is unavailable");
-      return executeTool(context, name, args, auditContext, toolCallId, childSignal, detector);
+      return executeTool(context, name, args, auditContext, toolCallId, childSignal, detector, bodyToolsEnabled);
     },
     createDetachedNetwork: (context, childSignal) => createScopedNetworkGateway({
       context,
@@ -448,8 +459,10 @@ function invocationServices(
     ),
     listCurrentToolDefinitions: () => getToolDefinitions(executionContext),
     getToolDefinitions: (context) => getToolDefinitions(context),
+    listCurrentToolProtocols: () => getToolProtocolDescriptors(executionContext),
+    getToolProtocols: (context) => getToolProtocolDescriptors(context),
     auditContext,
-    executeTool: (context, name, args, toolCallId) => executeTool(context, name, args, auditContext, toolCallId, signal, loopDetector),
+    executeTool: (context, name, args, toolCallId) => executeTool(context, name, args, auditContext, toolCallId, signal, loopDetector, bodyToolsEnabled),
   };
   return Object.freeze({ services: Object.freeze(services), close: issuedPath.close });
 }
@@ -515,14 +528,15 @@ export function prepareInspectedToolExecution(
   auditContext: ToolAuditContext | null = null,
   parentSignal: AbortSignal = NEVER_ABORT_SIGNAL,
   loopDetector: ToolLoopDetector | null = null,
+  bodyToolsEnabled = false,
 ): PreparedToolExecution {
   const name = inspected.name;
-  const timeoutMs = name === "execute_command" || name === "script" ? 60_000 : 30_000;
+  const timeoutMs = getToolTimeoutMs(name);
   throwIfCancelled(parentSignal);
   const cancellation = timeoutSignal(parentSignal, timeoutMs, `Tool ${name}`);
   let invocation: ReturnType<typeof invocationServices>;
   try {
-    invocation = invocationServices(context, inspected, auditContext, cancellation.signal, loopDetector);
+    invocation = invocationServices(context, inspected, auditContext, cancellation.signal, loopDetector, bodyToolsEnabled);
   } catch (error) {
     cancellation.dispose();
     throw error;
@@ -564,8 +578,9 @@ export async function executeInspectedTool(
   auditContext: ToolAuditContext | null = null,
   parentSignal: AbortSignal = NEVER_ABORT_SIGNAL,
   loopDetector: ToolLoopDetector | null = null,
+  bodyToolsEnabled = false,
 ): Promise<string> {
-  return (await prepareInspectedToolExecution(context, inspected, auditContext, parentSignal, loopDetector).execute()).content;
+  return (await prepareInspectedToolExecution(context, inspected, auditContext, parentSignal, loopDetector, bodyToolsEnabled).execute()).content;
 }
 
 /** 唯一工具 dispatcher：context 缺失、伪造、过期或越权时在 executor 前抛出。 */
@@ -577,10 +592,12 @@ export async function executeTool(
   toolCallId: string | null = null,
   signal: AbortSignal = NEVER_ABORT_SIGNAL,
   loopDetector: ToolLoopDetector | null = null,
+  bodyToolsEnabled = false,
 ): Promise<string> {
   throwIfCancelled(signal);
   if (!auditContext) {
-    const parsedArgs = typeof args === "string" ? parseToolArguments(args) : args;
+    const descriptor = getToolProtocolDescriptors(context).find(entry => entry.name === name) ?? null;
+    const parsedArgs = typeof args === "string" ? parseToolInvocationArguments(args, descriptor, { allowBody: bodyToolsEnabled }).args : args;
     const inspected = inspectToolCall(context, name, parsedArgs);
     loopDetector?.observe(inspected.name, inspected.argumentsDigest);
     return executeInspectedTool(context, inspected, null, signal, loopDetector);
@@ -592,12 +609,13 @@ export async function executeTool(
   let preparedExecution: PreparedToolExecution | null = null;
   await audit.request(args);
   try {
-    const parsedArgs = typeof args === "string" ? parseToolArguments(args) : args;
+    const descriptor = getToolProtocolDescriptors(context).find(entry => entry.name === name) ?? null;
+    const parsedArgs = typeof args === "string" ? parseToolInvocationArguments(args, descriptor, { allowBody: bodyToolsEnabled }).args : args;
     const inspected = inspectToolCall(context, name, parsedArgs);
     loopDetector?.observe(inspected.name, inspected.argumentsDigest);
     const policyDigest = auditContext.journal.commit(inspected.policy);
     await audit.authorize("allowed", policyDigest, null);
-    preparedExecution = prepareInspectedToolExecution(context, inspected, auditContext, signal, loopDetector);
+    preparedExecution = prepareInspectedToolExecution(context, inspected, auditContext, signal, loopDetector, bodyToolsEnabled);
     await audit.execution(true);
     const outcome = await preparedExecution.execute();
     await audit.result(outcome.content, "success", null, outcome.outputBytes, outcome.truncated);

@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "5efca8ac3aded948a6c8ae0b993a89e24f7fced7064cb2791ddc226ae102ccde",
+      "sha256": "1cad89aa57f486b74c58798d3761406de5a8f55902f2325d74311c7ba1bd3a30",
       "owner": "DS-05"
     },
     {
@@ -53,7 +53,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "52201ca9c849337eb04171b9bbaf8de93329d5536dc8cc8d88dbe182234b58d5",
+      "sha256": "31ca7f8dfd5c8cf50185ba7204458edd1622a94993ea8a1a866eb600869d1461",
       "owner": "DS-05"
     },
     {
@@ -98,7 +98,7 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "40677ac4b9c09dcf80d7a4605720a50cbd82b89ca6a8541fea25114b78a136a7",
+      "sha256": "54ef958e1a4c451b7e81194a44301b50918c17b1bf35519ce9856bf240f070ed",
       "owner": "DS-05"
     },
     {
@@ -138,7 +138,7 @@
     },
     {
       "exactCasePath": "src/types.ts",
-      "sha256": "f8be4bdb738c391417cf5bfb6ea1c57b51c37adc7886eceb702b03bee7dd36b2",
+      "sha256": "395945d7c37fadf3d3890ff6663ab8678ff4223647a295ec1139ae88b3b1c1e0",
       "owner": "DS-05"
     },
     {
@@ -148,17 +148,17 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "2f24dd214d40ddf698ee1da7b6b10454d3586676b225d5cf5caeb54a9b12e5f8",
+      "sha256": "790c78e5b99ecdcc371e3e295314aaf942b02cfea9511f8a8aea54869a7b2843",
       "owner": "DS-05"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "ed1e5dd288b5ada95a0f74f0052cb2581fa191acd0f3e00b3fa9f61e9e228d9b",
+      "sha256": "09d3264717aff73d702c45619fbdf28d764e9600cd79f7fab8a02a9aa620814c",
       "owner": "DS-05"
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "a21dbf2f7b1d1c6ff4a2ef2246aff38689f700f648d2f8d783cfbc40d967d593",
+      "sha256": "837baa6a3bdbc4f6bc6b9589067900c13e46cd271f8bdd28f109e9ddd507f254",
       "owner": "DS-05"
     }
   ],
@@ -186,7 +186,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "a21dbf2f7b1d1c6ff4a2ef2246aff38689f700f648d2f8d783cfbc40d967d593",
+      "sha256": "837baa6a3bdbc4f6bc6b9589067900c13e46cd271f8bdd28f109e9ddd507f254",
       "kind": "test",
       "layer": "unit",
       "owner": "DS-05"
@@ -220,5 +220,5 @@
       "owner": "DS-05"
     }
   ],
-  "canonicalPayloadSha256": "1c7487e0bd2d8b8673268df49d23eebf5036c9620570e94c21ed2ce08b4a80e2"
+  "canonicalPayloadSha256": "d90b3c135cb50ad7038ff85eff9cf0a0af38a85cbd3a3343f7978e86ba33c13a"
 }

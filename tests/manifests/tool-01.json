@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "taskId": "TOOL-01",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "reviewer"],
+  "runtimeFiles": [
+    "package.json",
+    "scripts/tool01-governance.mjs",
+    "scripts/generate-tool01-resolved-manifest.mjs",
+    "scripts/report-schema.mjs",
+    "src/agent.ts",
+    "src/capability-broker.ts",
+    "src/tool-protocol.ts",
+    "src/tools/index.ts",
+    "src/types.ts",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs"
+  ],
+  "coverageExemptions": {
+    "package.json": {
+      "reason": "Exact TOOL-01 governance and full-profile runner commands are exercised by framework and governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/tool01-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/tool01-governance.mjs": {
+      "reason": "Resolved unified protocol identity validation is exercised by substitution-resistant governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/tool01-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/generate-tool01-resolved-manifest.mjs": {
+      "reason": "Atomic resolved publication and parent identity pinning are exercised by governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/tool01-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/report-schema.mjs": {
+      "reason": "The unified runner validates the exact TOOL-01 persona chain and report identity during the full task profile.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "src/agent.ts": {
+      "reason": "Agent extraction, canonical memory projection and matching body versus JSON denial semantics are integration tested.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/tool01-body-agent.test.mjs", "layer": "integration" }]
+    },
+    "src/capability-broker.ts": {
+      "reason": "The authentic context binding projects immutable definition and policy together without exposing executors or registration identities.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/tool01-body-agent.test.mjs", "layer": "integration" }]
+    },
+    "src/tool-protocol.ts": {
+      "reason": "Descriptor projection, raw and sectioned parsers, extraction limits and prompt forms are directly unit tested.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/tool-protocol.test.mjs", "layer": "unit" }]
+    },
+    "src/tools/index.ts": {
+      "reason": "Context-scoped descriptor lookup and unified fail-closed dispatch are exercised by the real Agent integration.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/tool01-body-agent.test.mjs", "layer": "integration" }]
+    },
+    "src/types.ts": {
+      "reason": "The complete protocol descriptor surface is asserted from an authentic Broker context by integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/tool01-body-agent.test.mjs", "layer": "integration" }]
+    },
+    "tests/coverage-scope.json": {
+      "reason": "Exact TOOL-01 coverage ownership is checked by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/helpers.mjs": {
+      "reason": "The TOOL-01 resolved task view is loaded and validated by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/unit/framework.test.mjs": {
+      "reason": "The framework test owns exact TOOL-01 coverage registration and validates itself.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/tool01-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/unit/tool-protocol.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/tool01-body-agent.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }
+  ]
+}
