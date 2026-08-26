@@ -57,6 +57,7 @@ const TOOL_TIMEOUTS: Readonly<Record<string, number>> = Object.freeze({
   grep: 10_000,
   execute_command: 60_000,
   script: 60_000,
+  fetch_markdown: 125_000,
 });
 
 export function getToolTimeoutMs(name: string): number {

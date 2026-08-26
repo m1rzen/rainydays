@@ -17,6 +17,7 @@ tools:
   - shell_output
   - shell_list
   - shell_kill
+  - fetch_markdown
   - fetch_url
   - script
   - get_current_time

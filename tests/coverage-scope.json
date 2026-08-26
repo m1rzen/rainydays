@@ -329,6 +329,14 @@
       {
         "sourceTask": "TOOL-04",
         "exactCasePath": "tests/integration/tool04-script-native.test.mjs"
+      },
+      {
+        "sourceTask": "TOOL-05",
+        "exactCasePath": "tests/contract/tool05-governance.test.mjs"
+      },
+      {
+        "sourceTask": "TOOL-05",
+        "exactCasePath": "tests/unit/tool05-fetch-runtime.test.mjs"
       }
     ]
   },

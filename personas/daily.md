@@ -6,6 +6,7 @@ network_policy: unrestricted
 tools:
   - get_current_time
   - web_search
+  - fetch_markdown
   - fetch_url
   - remember
   - recall

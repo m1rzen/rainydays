@@ -132,9 +132,13 @@
     "test:tool02": "node scripts/run-tests.mjs --task TOOL-02 --profile full",
     "governance:tool04:generate": "node scripts/generate-tool04-resolved-manifest.mjs",
     "governance:tool04:check": "node scripts/generate-tool04-resolved-manifest.mjs --check",
-    "test:tool04": "node scripts/run-tests.mjs --task TOOL-04 --profile full"
+    "test:tool04": "node scripts/run-tests.mjs --task TOOL-04 --profile full",
+    "governance:tool05:generate": "node scripts/generate-tool05-resolved-manifest.mjs",
+    "governance:tool05:check": "node scripts/generate-tool05-resolved-manifest.mjs --check",
+    "test:tool05": "node scripts/run-tests.mjs --task TOOL-05 --profile full"
   },
   "dependencies": {
+    "@mozilla/readability": "^0.6.0",
     "@xenova/transformers": "^2.17.2",
     "@xterm/addon-fit": "0.10.0",
     "@xterm/xterm": "5.5.0",
@@ -146,6 +150,7 @@
     "express": "4.22.2",
     "gray-matter": "^4.0.3",
     "iconv-lite": "^0.6.3",
+    "linkedom": "^0.18.12",
     "mammoth": "^1.8.0",
     "openai": "^4.77.0",
     "pdf-parse": "^1.1.1",

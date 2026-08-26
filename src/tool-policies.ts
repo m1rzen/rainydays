@@ -48,6 +48,7 @@ export const STATIC_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Object
   shell_resize: policy(["process", "control"], "none", ["process", "control"]),
   shell_list: policy(["read", "process", "control"], "none", ["process", "control"]),
   shell_kill: policy(["process", "control"], "user", ["process", "control"]),
+  fetch_markdown: parallelReadPolicy(["read", "network"], ["network"]),
   fetch_url: parallelReadPolicy(["read", "network"], ["network"]),
   remember: policy(["read", "write"], "none", ["filesystem"]),
   recall: policy(["read"], "none", ["filesystem"]),

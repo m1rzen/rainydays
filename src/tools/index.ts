@@ -37,6 +37,7 @@ import {
   shellKillDef, shellKillExec,
 } from "./terminal-tools.js";
 import {
+  fetchMarkdownDef, fetchMarkdownExec,
   fetchUrlDef, fetchUrlExec,
 } from "./web.js";
 import {
@@ -133,6 +134,7 @@ const rawStaticTools: Omit<RegisteredTool, "policy">[] = [
   { name: "shell_resize",    definition: shellResizeDef,      executor: shellResizeExec },
   { name: "shell_list",      definition: shellListDef,        executor: shellListExec },
   { name: "shell_kill",      definition: shellKillDef,        executor: shellKillExec },
+  { name: "fetch_markdown",  definition: fetchMarkdownDef,   executor: fetchMarkdownExec },
   { name: "fetch_url",       definition: fetchUrlDef,        executor: fetchUrlExec },
   { name: "remember",        definition: rememberDef,        executor: rememberExec },
   { name: "recall",          definition: recallDef,          executor: recallExec },

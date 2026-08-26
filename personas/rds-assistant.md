@@ -11,6 +11,7 @@ tools:
   - replace
   - create_docx
   - create_xlsx
+  - fetch_markdown
   - fetch_url
   - grep
   - script

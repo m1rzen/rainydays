@@ -42,6 +42,7 @@ import { loadDs10ResolvedManifest } from "../scripts/ds10-governance.mjs";
 import { loadTool01ResolvedManifest } from "../scripts/tool01-governance.mjs";
 import { loadTool02ResolvedManifest } from "../scripts/tool02-governance.mjs";
 import { loadTool04ResolvedManifest } from "../scripts/tool04-governance.mjs";
+import { loadTool05ResolvedManifest } from "../scripts/tool05-governance.mjs";
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const processTemporaryRootRequest = path.resolve(os.tmpdir());
@@ -65,6 +66,7 @@ const expectedPersonaChains = Object.freeze({
   "TOOL-01": Object.freeze(["architect", "developer", "reviewer"]),
   "TOOL-02": Object.freeze(["developer", "debugger", "reviewer"]),
   "TOOL-04": Object.freeze(["architect", "developer", "sentinel", "debugger", "reviewer"]),
+  "TOOL-05": Object.freeze(["developer", "debugger", "reviewer"]),
 });
 const globMetaPattern = /[*?[\]{}!]/;
 
@@ -861,6 +863,29 @@ async function loadTool04TaskView(root = projectRoot) {
   };
 }
 
+async function loadTool05TaskView(root = projectRoot) {
+  const resolved = await loadTool05ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "tool-05.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "TOOL-05",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
 async function loadDs07TaskView(root = projectRoot) {
   const resolved = await loadDs07ResolvedManifest({ root });
   const sourcePath = path.join(root, "tests", "manifests", "ds-07.json");
@@ -1002,6 +1027,7 @@ export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
   if (taskId === "TOOL-01") return loadTool01TaskView(root);
   if (taskId === "TOOL-02") return loadTool02TaskView(root);
   if (taskId === "TOOL-04") return loadTool04TaskView(root);
+  if (taskId === "TOOL-05") return loadTool05TaskView(root);
   if (taskId === "SEC-03") return loadSec03ResolvedTaskView(root);
   if (taskId === "SEC-02" || taskId === "GOV-03") return loadResolvedTaskView(taskId, root);
   return loadSourceTaskManifest(taskId, root);
