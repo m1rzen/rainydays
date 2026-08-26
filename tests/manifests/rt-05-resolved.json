@@ -8,12 +8,12 @@
   "runtimeEntries": [
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "1cad89aa57f486b74c58798d3761406de5a8f55902f2325d74311c7ba1bd3a30",
+      "sha256": "dc3e07d30b9cc72516c606cc80b1445970e37e42ebf57b928846310feaa61e69",
       "owner": "RT-05"
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "f76526b8cd86ccf937bea39c5abb5f6e71c541f0dbab133543aaefe01ed9cbad",
+      "sha256": "fbea71b29b0e66299217777661bbade30161ac51b18b6c0cf989c57a627a74fa",
       "owner": "RT-05"
     },
     {
@@ -83,7 +83,7 @@
     },
     {
       "exactCasePath": "dist/tools/save-persona.js",
-      "sha256": "5a58c8545f7a5fb590039f8f201b52203705183c7fc2dc8dd7b223b95bef1d23",
+      "sha256": "210f6150616ce5e7241492f9a754c78f1cf3da85e3aadaebabaeb56fac1235af",
       "owner": "RT-05"
     },
     {
@@ -113,12 +113,12 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "54ef958e1a4c451b7e81194a44301b50918c17b1bf35519ce9856bf240f070ed",
+      "sha256": "6fd860e4940d2d3b1c6a8e4603e9fa409302fdfc735f76feb2cae5f608a497a7",
       "owner": "RT-05"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "929d31439e4fa74b08e14e004ac74ce179ad51899bd88be4c1c88ae45089c0f2",
+      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
       "owner": "RT-05"
     },
     {
@@ -188,7 +188,7 @@
     },
     {
       "exactCasePath": "src/tools/save-persona.ts",
-      "sha256": "657fa264fb1bb58f1dc0ad725ccf7fb2a1bfddbd860d6100ade39e8dc2c68726",
+      "sha256": "5f5d900429d75b0d9219a14bf198d0ab385b63516abb02f050fbe69c70a62e01",
       "owner": "RT-05"
     },
     {
@@ -213,7 +213,7 @@
     },
     {
       "exactCasePath": "src/types.ts",
-      "sha256": "395945d7c37fadf3d3890ff6663ab8678ff4223647a295ec1139ae88b3b1c1e0",
+      "sha256": "4a3287b18b97d6fd3e804d637ebde221a5a440ca3a0e0d9735a104006c41b39d",
       "owner": "RT-05"
     }
   ],
@@ -255,7 +255,7 @@
     },
     {
       "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
-      "sha256": "9277efc6821133a78c11abf8bbebb30a7aff890e6e01db4ece4cf869385821e7",
+      "sha256": "42ec792f137abbd39cf403a6515020cdb9a86c56473fe59a7dc63f5b3b05f066",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-05"
@@ -289,5 +289,5 @@
       "owner": "RT-05"
     }
   ],
-  "canonicalPayloadSha256": "421a6c173fea47485415b9a5bd63bc6f540ab467154d3eb4f9b41e4c5a6c60fe"
+  "canonicalPayloadSha256": "39f0f53b6a3b242b7dd04114b97059046fede257b7680dfbb859debf2a7a57a6"
 }

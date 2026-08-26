@@ -2,6 +2,7 @@
 name: rds-assistant
 display_name: 产品研发室助理
 description: 江门广电政企服务部产品研发室专属助理，预载部门资料库访问能力
+permission_level: guarded
 network_policy: unrestricted
 tools:
   - glob

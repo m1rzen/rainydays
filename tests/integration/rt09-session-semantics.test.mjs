@@ -31,7 +31,7 @@ const persona = Object.freeze({
   allowedRoots: Object.freeze([]),
   networkPolicy: Object.freeze({ mode: "deny" }),
   systemPrompt: "RT-09 fixture",
-  digest: "rt09-digest",
+  digest: "0".repeat(64),
 });
 
 after(async () => {

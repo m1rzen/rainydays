@@ -2,6 +2,7 @@
 name: developer
 display_name: 开发者
 description: 日常开发工作，完整的读写和执行能力
+permission_level: coding
 network_policy: unrestricted
 tools:
   - glob

@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { PathDeniedError, type ExecutionRootAccess, type PathAuthority, type PathOperation, type PathPolicy } from "./path-policy.js";
-import type { ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "./types.js";
+import type { PersonaPermissionLevel, ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "./types.js";
 import {
   assertResourceOwner,
   issueResourceOwner,
@@ -20,6 +20,8 @@ export type NetworkPolicy =
   | { mode: "unrestricted" };
 
 export interface ToolPolicy {
+  /** Lowest Persona level allowed to include this binding or direct operation. */
+  readonly minimumPermissionLevel?: PersonaPermissionLevel;
   readonly riskClasses: readonly RiskClass[];
   readonly approval: "none" | "user";
   readonly effects: readonly ToolEffect[];
@@ -47,7 +49,10 @@ export interface CapabilityToolDescriptor {
 
 export interface EffectivePersonaInput {
   readonly name: string;
+  readonly permissionLevel?: PersonaPermissionLevel;
   readonly tools: readonly string[];
+  readonly allowTools?: readonly string[];
+  readonly denyTools?: readonly string[];
   readonly env: Readonly<Record<string, string>>;
   readonly systemPrompt: string;
   /** Raw configured roots participate only in the pre-existing Persona identity, never authorization. */
@@ -73,7 +78,7 @@ export interface CapabilityContext {
   readonly runId: string;
   readonly parentContextId: string | null;
   readonly principal: PrincipalKind;
-  readonly persona: Readonly<{ name: string; digest: string }>;
+  readonly persona: Readonly<{ name: string; permissionLevel: PersonaPermissionLevel; digest: string }>;
   readonly authorityEpoch: number;
   readonly allowedTools: readonly string[];
   readonly allowedRoots: readonly string[];
@@ -183,6 +188,21 @@ export function canonicalDigest(value: unknown): string {
 
 const riskClasses = new Set<RiskClass>(["read", "write", "network", "process", "control"]);
 const effects = new Set<ToolEffect>(["filesystem", "network", "process", "control"]);
+const permissionLevels: readonly PersonaPermissionLevel[] = Object.freeze(["minimal", "read_only", "coding", "guarded", "full"]);
+
+function parsePermissionLevel(value: unknown): PersonaPermissionLevel {
+  const level = value === undefined ? "guarded" : value;
+  if (typeof level !== "string" || !permissionLevels.includes(level as PersonaPermissionLevel)) throw new TypeError("persona permission level is invalid");
+  return level as PersonaPermissionLevel;
+}
+
+function permissionRank(level: PersonaPermissionLevel): number {
+  return permissionLevels.indexOf(level);
+}
+
+function inferredMinimumLevel(risks: readonly RiskClass[]): PersonaPermissionLevel {
+  return risks.some(risk => risk === "write" || risk === "process") ? "coding" : "read_only";
+}
 const reservedEnv = new Set([
   "_SESSION_ID",
   "_CAPABILITY_CONTEXT_ID",
@@ -205,6 +225,9 @@ function copyNetworkPolicy(policy: NetworkPolicy): NetworkPolicy {
 
 function copyPolicy(policy: ToolPolicy): ToolPolicy {
   const risks = uniqueStrings(policy.riskClasses, "risk classes") as RiskClass[];
+  const minimumPermissionLevel = policy.minimumPermissionLevel === undefined
+    ? inferredMinimumLevel(risks)
+    : parsePermissionLevel(policy.minimumPermissionLevel);
   const toolEffects = uniqueStrings(policy.effects, "tool effects") as ToolEffect[];
   const pathOperations = uniqueStrings(policy.pathOperations ?? [], "path operations") as PathOperation[];
   const knownPathOperations = new Set<PathOperation>([
@@ -253,6 +276,7 @@ function copyPolicy(policy: ToolPolicy): ToolPolicy {
     }
   }
   return deepFreeze({
+    minimumPermissionLevel,
     riskClasses: deepFreeze(risks),
     approval: policy.approval,
     effects: deepFreeze(toolEffects),
@@ -276,6 +300,7 @@ interface BindingRecord {
 
 interface PersonaSnapshot {
   readonly name: string;
+  readonly permissionLevel: PersonaPermissionLevel;
   readonly tools: readonly string[];
   readonly env: Readonly<Record<string, string>>;
   readonly systemPrompt: string;
@@ -417,7 +442,10 @@ export class CapabilityBroker {
 
   createRuntimeAuthority(input: EffectivePersonaInput): RuntimeAuthority {
     if (!input.name || typeof input.name !== "string" || typeof input.systemPrompt !== "string") throw new TypeError("effective persona identity is invalid");
+    const permissionLevel = parsePermissionLevel(input.permissionLevel);
     const tools = deepFreeze(uniqueStrings(input.tools, "persona tools"));
+    const allowTools = deepFreeze(uniqueStrings(input.allowTools ?? [], "persona allowed tools"));
+    const denyTools = deepFreeze(uniqueStrings(input.denyTools ?? [], "persona denied tools"));
     const configuredRoots = deepFreeze(uniqueStrings(input.allowedRoots, "configured roots"));
     const env: Record<string, string> = {};
     for (const [key, value] of Object.entries(input.env)) {
@@ -443,12 +471,13 @@ export class CapabilityBroker {
       rootEnv[envKey] = rootId;
     }
     const networkPolicy = copyNetworkPolicy(input.networkPolicy);
-    const personaDigestInput = { name: input.name, tools, env, systemPrompt: input.systemPrompt, allowedRoots: configuredRoots, networkPolicy };
+    const personaDigestInput = { name: input.name, permissionLevel, tools, allowTools, denyTools, env, systemPrompt: input.systemPrompt, allowedRoots: configuredRoots, networkPolicy };
     const personaDigest = canonicalDigest(personaDigestInput);
     if (input.digest !== undefined && input.digest !== personaDigest) denied("CAPABILITY_REGISTRATION_INVALID", "effective persona digest differs");
     const digest = canonicalDigest({ personaDigest, pathAuthorityDigest: pathDescription.digest, rootIds, rootEnv });
     const persona: PersonaSnapshot = deepFreeze({
       name: input.name,
+      permissionLevel,
       tools,
       env,
       systemPrompt: input.systemPrompt,
@@ -495,6 +524,10 @@ export class CapabilityBroker {
     for (const name of record.persona.tools) {
       const binding = record.runtimeBindings.get(name) ?? this.staticBindings.get(name);
       if (!binding) denied("CAPABILITY_TOOL_DENIED", `persona references unavailable tool: ${name}`);
+      const minimum = binding.policy.minimumPermissionLevel ?? inferredMinimumLevel(binding.policy.riskClasses);
+      if (permissionRank(record.persona.permissionLevel) < permissionRank(minimum)) {
+        denied("CAPABILITY_TOOL_DENIED", `persona permission level cannot include tool: ${name}`);
+      }
       bindings.set(name, binding);
     }
     const risks = new Set<RiskClass>();
@@ -1028,6 +1061,10 @@ export class CapabilityBroker {
     this.assertSession(authority, input.sessionId);
     const policy = this.directPolicies.get(input.operation);
     if (!policy) denied("CAPABILITY_DIRECT_OPERATION_DENIED", `unknown direct operation: ${input.operation}`);
+    const minimum = policy.minimumPermissionLevel ?? inferredMinimumLevel(policy.riskClasses);
+    if (permissionRank(authority.persona.permissionLevel) < permissionRank(minimum)) {
+      denied("CAPABILITY_DIRECT_OPERATION_DENIED", "Persona permission level denies the direct operation");
+    }
     if (policy.approval === "user") denied("CAPABILITY_DIRECT_OPERATION_DENIED", "direct operation requires a separate explicit user grant");
     if (policy.riskClasses.includes("network") && authority.persona.networkPolicy.mode === "deny") {
       denied("CAPABILITY_RISK_DENIED", "network is denied by the direct-operation capability envelope");
@@ -1313,7 +1350,11 @@ export class CapabilityBroker {
       runId: input.runId,
       parentContextId: input.parent?.context.contextId ?? null,
       principal: input.principal,
-      persona: deepFreeze({ name: input.authority.persona.name, digest: input.authority.persona.digest }),
+      persona: deepFreeze({
+        name: input.authority.persona.name,
+        permissionLevel: input.authority.persona.permissionLevel,
+        digest: input.authority.persona.digest,
+      }),
       authorityEpoch: input.authority.epoch,
       allowedTools,
       allowedRoots,

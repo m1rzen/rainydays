@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "f5b2e12408845d2d0fbcdc39596d3d48493e8c3561f31a662c0459959a8a057f",
+      "sha256": "a353098a806411279593622f94d0a39852783c33e1bc34f318f602a28c4140ea",
       "owner": "TOOL-02"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "7e1c10ebdb44aae7c8af81a9d2588905f743c0bfd0c6d31db9f6497b387009cb",
+      "sha256": "1fb8a1b3c2af8d7b0b1f559b0c7759308a95dc634babd0c1dec581babd536b03",
       "owner": "TOOL-02"
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "fcb046d762e59f50fa9d1423c4909141ff296223756e5316d942c5df5f64f3f0",
+      "sha256": "13f2a8a15e9e845857be968337e46fdb0f64bc19f13d7ef02e298efec95d5eab",
       "owner": "TOOL-02"
     },
     {
@@ -83,57 +83,57 @@
     },
     {
       "exactCasePath": "personas/architect.md",
-      "sha256": "06d90851f7e4a86133fa333e92d2472fbdf252a24b5ec005e45341f50ea17ddc",
+      "sha256": "23ac3d6e59980ec645e3544cfc27e40b8e7dbc9464183e820c308337221662a6",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "personas/debugger.md",
-      "sha256": "e7a938a4a742dda14e1c0bbd4f62e6d4d861bc234849eb0cb966f8809ae0cc36",
+      "sha256": "e980ea60ff097df4615bcc5509b8ae8c1748a351febd3b374215614d5fe5119a",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "personas/developer.md",
-      "sha256": "d9771d57feb505722ea83f7ad4e7cb20098df9642a83ee759cb7840cea945fdb",
+      "sha256": "5d91a4f1561bd2879ff7fc2cbbfc55d6f960bba65c5454717b50688f9866db88",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "personas/explorer.md",
-      "sha256": "f7138c3bc0e2d602f02c53c69947064b0b4386c10834ce1f7fac739a6dc7ecbe",
+      "sha256": "2b3eb198cccb713750527fc812a2bda303952578060b6a2b10d3ec65fd8cebbd",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "personas/general.md",
-      "sha256": "4a31c4b88b0f2253695401bdc692f9d5caba2aaec5dd9a090c89a12fe58a343b",
+      "sha256": "7a548e884b9efb14e7e4947a07a38ee68f1789a3379dc0835214e38c756304b2",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "personas/planner.md",
-      "sha256": "c5e3cd653cdc3957dd25b2ab05926dec61d15c9e361f745214edd343bb4b2aa7",
+      "sha256": "53ef05b1390fab17056728ceccedb6f753a6e9378bd14d5f7824dc2656101754",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "personas/quick-fix.md",
-      "sha256": "3fb5ca626f95cd41e414e9c851a6d3592448d63ecf3b3e52dda1a105d4d3edc2",
+      "sha256": "b2d341533a8a4866e0e648435cc0b23283f330b7b5454051b5de4104339fcb09",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "personas/rds-assistant.md",
-      "sha256": "bae869cd62181b04aa90e2239b0c8d063daedc1004793d2291499d56525b4803",
+      "sha256": "24160accb1767774f3220e92f1628ad0a281a836c9244e42e3b2119da6e4aeee",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "personas/reviewer.md",
-      "sha256": "5019f653982bd3fdd9ca69172b7ee50b8018da572d4b1a08ab7bad7e85612b10",
+      "sha256": "cde8b01257a12a2622097a77188174d7be4dd518186615c08a3dc620b3e2d936",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "personas/sentinel.md",
-      "sha256": "6b9aac60acbbf97b9bdc4011ae5e21f732b859f7193713c8b382ecb0676bff5f",
+      "sha256": "2337f09a3d8772d602203cd0736375c6e23c49b653704c85ca4edcb6b9121c68",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "personas/writer.md",
-      "sha256": "150c22a42212f635e631b740a900cb3f7c41d98cae0199538048424692d0cee8",
+      "sha256": "2909266546709ce12784c9613e63d304cae24c2cec4109fe6325fbce5dd8cbe4",
       "owner": "TOOL-02"
     },
     {
@@ -143,27 +143,27 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "aff49de027de3275a12c03ef2c9c8d9476fdc95671948007381ade2cf3fda375",
+      "sha256": "decc03e49e89ba5ed6eb4e964da2e437c440935a1edcf23d864933e6f2e56a8a",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "cb7dd74f1403e07fd9c37665db6a253a6bfad60b2b73b018cc93662a13b0518b",
+      "sha256": "9b38539681fc09a8657c448cb6eaba3d9418b73d25af08e8ba0003e80da224d7",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "b2bd060ad2cf0eb3316a351441078b192e005af98a7bea3ff5b994102587d18e",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/manifests/sec-02-current.json",
-      "sha256": "8d16be7860c5d527c8b7691588edc35274f29668abef74e5ca694c741848d842",
+      "sha256": "e1193cadefb68f6405128503befe8aa96abd4a3f7da389c94a64f3b2abe085af",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "ed8d5d06a94c593397e655452c878f7762c8a100f7dd9c2d6d1ca72d44c42b59",
+      "sha256": "4c8e06433a8606c3fb5703c0a23f35e14c1dd67c492b313fe6c4ea7f3e362e8c",
       "owner": "TOOL-02"
     },
     {
@@ -173,12 +173,12 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "b2f2c062d248b4380d224704f5507d72daa49ed3f905f3208b50ed758725095e",
+      "sha256": "21e154a260f9fffa0c66ee017071b03d070f1c5c411139964d4263119100c933",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "8a3942c1ea6b8ce5323333e106944e7cbc8e8f3f404c7610176b030684b3ccf6",
+      "sha256": "b674b0aee9a7c667c08ee543ac90f7622f2f3f3d0dcee8a43f72ab6e8d98f84b",
       "owner": "TOOL-02"
     },
     {
@@ -218,7 +218,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "b2bd060ad2cf0eb3316a351441078b192e005af98a7bea3ff5b994102587d18e",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
       "kind": "test",
       "layer": "unit",
       "owner": "TOOL-02"
@@ -245,5 +245,5 @@
       "owner": "TOOL-02"
     }
   ],
-  "canonicalPayloadSha256": "969fba4fad2b6c58a2b322f36475d84e81289dd2de7e0f3217b735447d45ac83"
+  "canonicalPayloadSha256": "1f542cbb90a2dd6f5f676f7f6d96afb60855055780bbd57c8373efd0d9b842bb"
 }

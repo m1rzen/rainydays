@@ -345,6 +345,18 @@
       {
         "sourceTask": "TOOL-07",
         "exactCasePath": "tests/integration/repo-oracle-path.test.mjs"
+      },
+      {
+        "sourceTask": "PERS-01",
+        "exactCasePath": "tests/contract/pers01-governance.test.mjs"
+      },
+      {
+        "sourceTask": "PERS-01",
+        "exactCasePath": "tests/integration/pers01-session-persona.test.mjs"
+      },
+      {
+        "sourceTask": "PERS-01",
+        "exactCasePath": "tests/unit/persona-runtime.test.mjs"
       }
     ]
   },

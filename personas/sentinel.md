@@ -2,6 +2,7 @@
 name: sentinel
 display_name: 哨兵
 description: 后台监控模式，自动巡查和事件响应
+permission_level: guarded
 network_policy: unrestricted
 tools:
   - get_current_time

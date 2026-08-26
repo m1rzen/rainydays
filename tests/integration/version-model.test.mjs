@@ -43,11 +43,11 @@ test("GOV-02 version, persistence, Session and Link integration matrix is side-e
     assert.equal(result.code, 0, result.stderr);
     const payload = parseJsonOutput(result.stdout);
     assert.deepEqual({ passed: payload.passed, failed: payload.failed }, { passed: 31, failed: 0 });
-    assert(payload.scenarios.some((entry) => entry.name === "fresh database migrates 0 to 10"));
-    assert(payload.scenarios.some((entry) => entry.name === "Schema 1 migrates transactionally to 10"));
+    assert(payload.scenarios.some((entry) => entry.name === "fresh database migrates 0 to 11"));
+    assert(payload.scenarios.some((entry) => entry.name === "Schema 1 migrates transactionally to 11"));
     assert(payload.scenarios.some((entry) => entry.name === "Schema 1 SQLITE_FULL migration rolls back and releases bootstrap lifetime"));
     assert(payload.scenarios.some((entry) => entry.name === "hard termination before migration commit recovers complete prior schemas"));
-    assert(payload.scenarios.some((entry) => entry.name === "Schema 10 repeated startup is a migration no-op"));
+    assert(payload.scenarios.some((entry) => entry.name === "Schema 11 repeated startup is a migration no-op"));
     assert(payload.scenarios.some((entry) => entry.name === "future WAL database rejected byte-identically"));
     assert(payload.scenarios.some((entry) => entry.name === "Session Export current, legacy and rejection matrix"));
     assert(payload.scenarios.some((entry) => entry.name === "legitimate memo and session writes survive database restart"));

@@ -13,17 +13,17 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "f76526b8cd86ccf937bea39c5abb5f6e71c541f0dbab133543aaefe01ed9cbad",
+      "sha256": "fbea71b29b0e66299217777661bbade30161ac51b18b6c0cf989c57a627a74fa",
       "owner": "DS-06"
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "559261fdee80d5669fe0a532fd8cddfdfb61236abe82f344b305578b0c8301c6",
+      "sha256": "f6a95709eef123776891fb9bee7cb8b304b26793701a1582ef6c8ec4592ee393",
       "owner": "DS-06"
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "f5b2e12408845d2d0fbcdc39596d3d48493e8c3561f31a662c0459959a8a057f",
+      "sha256": "a353098a806411279593622f94d0a39852783c33e1bc34f318f602a28c4140ea",
       "owner": "DS-06"
     },
     {
@@ -53,7 +53,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "e44076d6a37896b9111e49ce84333078218d1666e2914d578ae8b2965e6bc4e4",
+      "sha256": "f610a92a3a825d93f0cdf96e3b7fffab3c591a1215e05f607163e5eef728b348",
       "owner": "DS-06"
     },
     {
@@ -63,27 +63,27 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "929d31439e4fa74b08e14e004ac74ce179ad51899bd88be4c1c88ae45089c0f2",
+      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
       "owner": "DS-06"
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "fcb046d762e59f50fa9d1423c4909141ff296223756e5316d942c5df5f64f3f0",
+      "sha256": "13f2a8a15e9e845857be968337e46fdb0f64bc19f13d7ef02e298efec95d5eab",
       "owner": "DS-06"
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "aff49de027de3275a12c03ef2c9c8d9476fdc95671948007381ade2cf3fda375",
+      "sha256": "decc03e49e89ba5ed6eb4e964da2e437c440935a1edcf23d864933e6f2e56a8a",
       "owner": "DS-06"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "cb7dd74f1403e07fd9c37665db6a253a6bfad60b2b73b018cc93662a13b0518b",
+      "sha256": "9b38539681fc09a8657c448cb6eaba3d9418b73d25af08e8ba0003e80da224d7",
       "owner": "DS-06"
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "b2bd060ad2cf0eb3316a351441078b192e005af98a7bea3ff5b994102587d18e",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
       "owner": "DS-06"
     }
   ],
@@ -111,7 +111,7 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "b2bd060ad2cf0eb3316a351441078b192e005af98a7bea3ff5b994102587d18e",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
       "kind": "test",
       "layer": "unit",
       "owner": "DS-06"
@@ -152,5 +152,5 @@
       "owner": "DS-06"
     }
   ],
-  "canonicalPayloadSha256": "5429a3028defee3f38def2b90290a7292b46ecb81d7e00dfc0ca4ba3d117b55a"
+  "canonicalPayloadSha256": "0922948e9f0f9538b8a9179be4c8644d3a3045f631b64e7c8e091b7bf1cdecb3"
 }

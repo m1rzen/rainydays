@@ -2,6 +2,7 @@
 name: architect
 display_name: 架构师
 description: 架构设计和文档编写，关注系统整体结构和长期可维护性
+permission_level: guarded
 tools:
   - glob
   - read

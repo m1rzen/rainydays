@@ -2,6 +2,7 @@
 name: general
 display_name: 通用助手
 description: 全能型 AI 助手，能读写文件、执行命令、访问网络、生成文档
+permission_level: full
 network_policy: unrestricted
 tools:
   - glob

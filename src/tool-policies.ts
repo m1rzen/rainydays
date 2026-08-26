@@ -1,5 +1,6 @@
 import type { RiskClass, ToolConcurrency, ToolEffect, ToolPolicy } from "./capability-broker.js";
 import type { ExecutionRootAccess, PathOperation } from "./path-policy.js";
+import type { PersonaPermissionLevel } from "./types.js";
 
 function policy(
   riskClasses: RiskClass[],
@@ -8,8 +9,10 @@ function policy(
   pathOperations: PathOperation[] = [],
   executionRootAccess?: ExecutionRootAccess,
   concurrency?: ToolConcurrency,
+  minimumPermissionLevel?: PersonaPermissionLevel,
 ): ToolPolicy {
   return Object.freeze({
+    minimumPermissionLevel,
     riskClasses: Object.freeze([...riskClasses]),
     approval,
     effects: Object.freeze([...effects]),
@@ -17,6 +20,14 @@ function policy(
     executionRootAccess,
     concurrency,
   });
+}
+
+function minimalPolicy(
+  riskClasses: RiskClass[],
+  approval: "none" | "user",
+  effects: ToolEffect[],
+): ToolPolicy {
+  return policy(riskClasses, approval, effects, [], undefined, undefined, "minimal");
 }
 
 function parallelReadPolicy(
@@ -59,13 +70,13 @@ export const STATIC_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Object
   task_get: policy(["read"], "none", ["filesystem"]),
   task_delete: policy(["write"], "none", ["filesystem"]),
   script: policy(["read", "write", "network", "process", "control"], "user", ["filesystem", "network", "process", "control"], ["initial-cwd"], "read-write"),
-  get_current_time: parallelReadPolicy(["read"]),
+  get_current_time: minimalPolicy(["read"], "none", []),
   cron_list: policy(["read", "control"], "none", ["filesystem", "control"]),
   inspect: policy(["read"], "none", ["filesystem"]),
   graph: policy(["read"], "none", ["filesystem"]),
   web_search: parallelReadPolicy(["read", "network"], ["network"]),
   download: policy(["write", "network"], "user", ["filesystem", "network"], ["create-file", "replace-file"]),
-  ask_user: policy(["control"], "none", ["control"]),
+  ask_user: minimalPolicy(["control"], "none", ["control"]),
   oracle_save: policy(["read", "write"], "user", ["filesystem"], ["search-tree"]),
   oracle_status: policy(["read", "control"], "none", ["filesystem", "control"]),
   playbook_list: policy(["read", "write"], "none", ["filesystem"]),
@@ -104,6 +115,10 @@ export const RUNTIME_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Objec
   playbook_execute: policy(["read", "write", "network", "process", "control"], "user", ["filesystem", "network", "process", "control"]),
   playbook_abort: policy(["control"], "user", ["control"]),
   save_persona: policy(["read", "write", "control"], "user", ["filesystem", "control"]),
+  list_personas: minimalPolicy(["read", "control"], "none", ["control"]),
+  current_persona: minimalPolicy(["read", "control"], "none", ["control"]),
+  find_personas: minimalPolicy(["read", "control"], "none", ["control"]),
+  switch_persona: minimalPolicy(["control"], "user", ["control"]),
 });
 
 export const DIRECT_OPERATION_POLICIES: Readonly<Record<string, ToolPolicy>> = Object.freeze({

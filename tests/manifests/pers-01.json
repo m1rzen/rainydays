@@ -1,0 +1,484 @@
+{
+  "schemaVersion": 1,
+  "taskId": "PERS-01",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "sentinel",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "package.json",
+    "personas/architect.md",
+    "personas/daily.md",
+    "personas/debugger.md",
+    "personas/developer.md",
+    "personas/explorer.md",
+    "personas/general.md",
+    "personas/planner.md",
+    "personas/quick-fix.md",
+    "personas/rds-assistant.md",
+    "personas/reviewer.md",
+    "personas/sentinel.md",
+    "personas/writer.md",
+    "personas/default.md",
+    "personas/analyst.md",
+    "personas/skill-crafter.md",
+    "personas/prompt-designer.md",
+    "personas/playbook.md",
+    "personas/routine.md",
+    "personas/overseer.md",
+    "scripts/generate-build-info.mjs",
+    "scripts/prepare-electron-app.mjs",
+    "scripts/test-version-model.mjs",
+    "scripts/version-test-child.mjs",
+    "scripts/report-schema.mjs",
+    "scripts/pers01-governance.mjs",
+    "scripts/generate-pers01-resolved-manifest.mjs",
+    "src/agent.ts",
+    "src/capability-broker.ts",
+    "src/db.ts",
+    "src/index.ts",
+    "src/persona.ts",
+    "src/session.ts",
+    "src/tool-policies.ts",
+    "src/tools/persona-tools.ts",
+    "src/tools/save-persona.ts",
+    "src/types.ts",
+    "src/version.ts",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs"
+  ],
+  "coverageExemptions": {
+    "package.json": {
+      "reason": "Exact PERS-01 behavior for package.json is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/pers01-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/architect.md": {
+      "reason": "Exact PERS-01 behavior for personas/architect.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/daily.md": {
+      "reason": "Exact PERS-01 behavior for personas/daily.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/debugger.md": {
+      "reason": "Exact PERS-01 behavior for personas/debugger.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/developer.md": {
+      "reason": "Exact PERS-01 behavior for personas/developer.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/explorer.md": {
+      "reason": "Exact PERS-01 behavior for personas/explorer.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/general.md": {
+      "reason": "Exact PERS-01 behavior for personas/general.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/planner.md": {
+      "reason": "Exact PERS-01 behavior for personas/planner.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/quick-fix.md": {
+      "reason": "Exact PERS-01 behavior for personas/quick-fix.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/rds-assistant.md": {
+      "reason": "Exact PERS-01 behavior for personas/rds-assistant.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/reviewer.md": {
+      "reason": "Exact PERS-01 behavior for personas/reviewer.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/sentinel.md": {
+      "reason": "Exact PERS-01 behavior for personas/sentinel.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/writer.md": {
+      "reason": "Exact PERS-01 behavior for personas/writer.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "scripts/generate-build-info.mjs": {
+      "reason": "Exact PERS-01 behavior for scripts/generate-build-info.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/pers01-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/prepare-electron-app.mjs": {
+      "reason": "Exact PERS-01 behavior for scripts/prepare-electron-app.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/pers01-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/test-version-model.mjs": {
+      "reason": "Exact PERS-01 behavior for scripts/test-version-model.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/pers01-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/version-test-child.mjs": {
+      "reason": "Exact PERS-01 behavior for scripts/version-test-child.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/pers01-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/pers01-governance.mjs": {
+      "reason": "Exact PERS-01 behavior for scripts/pers01-governance.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/pers01-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/generate-pers01-resolved-manifest.mjs": {
+      "reason": "Exact PERS-01 behavior for scripts/generate-pers01-resolved-manifest.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/pers01-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "src/agent.ts": {
+      "reason": "Exact PERS-01 behavior for src/agent.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/capability-broker.ts": {
+      "reason": "Exact PERS-01 behavior for src/capability-broker.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/db.ts": {
+      "reason": "Exact PERS-01 behavior for src/db.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/index.ts": {
+      "reason": "Exact PERS-01 behavior for src/index.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/persona.ts": {
+      "reason": "Exact PERS-01 behavior for src/persona.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/session.ts": {
+      "reason": "Exact PERS-01 behavior for src/session.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tool-policies.ts": {
+      "reason": "Exact PERS-01 behavior for src/tool-policies.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/persona-tools.ts": {
+      "reason": "Exact PERS-01 behavior for src/tools/persona-tools.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tools/save-persona.ts": {
+      "reason": "Exact PERS-01 behavior for src/tools/save-persona.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/types.ts": {
+      "reason": "Exact PERS-01 behavior for src/types.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/version.ts": {
+      "reason": "Exact PERS-01 behavior for src/version.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "tests/coverage-scope.json": {
+      "reason": "Exact PERS-01 behavior for tests/coverage-scope.json is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "tests/helpers.mjs": {
+      "reason": "Exact PERS-01 behavior for tests/helpers.mjs is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "tests/unit/framework.test.mjs": {
+      "reason": "Exact PERS-01 behavior for tests/unit/framework.test.mjs is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "scripts/report-schema.mjs": {
+      "reason": "Exact PERS-01 behavior for scripts/report-schema.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/pers01-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/default.md": {
+      "reason": "Exact PERS-01 behavior for personas/default.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/analyst.md": {
+      "reason": "Exact PERS-01 behavior for personas/analyst.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/skill-crafter.md": {
+      "reason": "Exact PERS-01 behavior for personas/skill-crafter.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/prompt-designer.md": {
+      "reason": "Exact PERS-01 behavior for personas/prompt-designer.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/playbook.md": {
+      "reason": "Exact PERS-01 behavior for personas/playbook.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/routine.md": {
+      "reason": "Exact PERS-01 behavior for personas/routine.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/overseer.md": {
+      "reason": "Exact PERS-01 behavior for personas/overseer.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/contract/pers01-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+      "layer": "unit"
+    }
+  ]
+}

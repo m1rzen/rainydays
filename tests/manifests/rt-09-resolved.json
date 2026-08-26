@@ -8,17 +8,17 @@
   "runtimeEntries": [
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "1cad89aa57f486b74c58798d3761406de5a8f55902f2325d74311c7ba1bd3a30",
+      "sha256": "dc3e07d30b9cc72516c606cc80b1445970e37e42ebf57b928846310feaa61e69",
       "owner": "RT-09"
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "f76526b8cd86ccf937bea39c5abb5f6e71c541f0dbab133543aaefe01ed9cbad",
+      "sha256": "fbea71b29b0e66299217777661bbade30161ac51b18b6c0cf989c57a627a74fa",
       "owner": "RT-09"
     },
     {
       "exactCasePath": "dist/session.js",
-      "sha256": "0f6015792fc6fe28347ee4ec42d5876ba7c2779865db202ec6074fab7c854d20",
+      "sha256": "3b961f620ff75a6d79bbf19aa30cb12ff9e502ebe2fb784ec35dd740d52c288c",
       "owner": "RT-09"
     },
     {
@@ -28,17 +28,17 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "54ef958e1a4c451b7e81194a44301b50918c17b1bf35519ce9856bf240f070ed",
+      "sha256": "6fd860e4940d2d3b1c6a8e4603e9fa409302fdfc735f76feb2cae5f608a497a7",
       "owner": "RT-09"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "929d31439e4fa74b08e14e004ac74ce179ad51899bd88be4c1c88ae45089c0f2",
+      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
       "owner": "RT-09"
     },
     {
       "exactCasePath": "src/session.ts",
-      "sha256": "e113b65255d5b450639b9ca9863cf11fb0516dcf09e3473bc8e4f40c222b810c",
+      "sha256": "ceffcc88c4133d9819d95ccd7558b370ac36af93f8bf1340c5dafaa4e29fa433",
       "owner": "RT-09"
     }
   ],
@@ -52,7 +52,7 @@
     },
     {
       "exactCasePath": "tests/integration/rt09-session-semantics.test.mjs",
-      "sha256": "b0c5b595ca49c50203fe02b596f9861cba84e8ecde4d11419722b562a3f3008f",
+      "sha256": "d93b16930a546220c8238c86a56c48259844ebd4c25d72d73b70c521e6851e19",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-09"
@@ -72,5 +72,5 @@
       "owner": "RT-09"
     }
   ],
-  "canonicalPayloadSha256": "443e4b8f54a938ee5834d644867ab69823518d4b2c86744bc9ab5cfd03220681"
+  "canonicalPayloadSha256": "499de808b1f5044db5233cd8cc63da9ce3e80d26e434750e32c792dc941e6b3b"
 }

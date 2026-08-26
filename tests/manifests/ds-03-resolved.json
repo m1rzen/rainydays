@@ -8,17 +8,17 @@
   "runtimeEntries": [
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "f16bff9e7f74a503487b81e48f3034a97a7d2fc59b42c5871a55b20f8b7d3666",
+      "sha256": "043ee61110fbf015bff706ae3bbef64d697c6340d6c256c91a39111d84c870ea",
       "owner": "DS-03"
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "f76526b8cd86ccf937bea39c5abb5f6e71c541f0dbab133543aaefe01ed9cbad",
+      "sha256": "fbea71b29b0e66299217777661bbade30161ac51b18b6c0cf989c57a627a74fa",
       "owner": "DS-03"
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "25eb86e05d4edb2b6c678d72076d529a18d56f96542b0b4400de952c9efabf45",
+      "sha256": "981683aeb9036331ec3aedd680a8e9695d8c07ac0fab3056fe43df9184a05c80",
       "owner": "DS-03"
     },
     {
@@ -43,32 +43,32 @@
     },
     {
       "exactCasePath": "scripts/generate-build-info.mjs",
-      "sha256": "90edededb8648bfa97826fffbca8374cd4d5502ef70b38e2c8a7161b66b3f95e",
+      "sha256": "e760c870cad60a5e6733bcab36b61cffae4b72c9b775189476872bfddc33eb76",
       "owner": "DS-03"
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "e44076d6a37896b9111e49ce84333078218d1666e2914d578ae8b2965e6bc4e4",
+      "sha256": "f610a92a3a825d93f0cdf96e3b7fffab3c591a1215e05f607163e5eef728b348",
       "owner": "DS-03"
     },
     {
       "exactCasePath": "scripts/test-version-model.mjs",
-      "sha256": "94b807ce1f05f73cd0ee8f626a3bc3857b4c527ed75aba458a9c99e9dc80f334",
+      "sha256": "49ed033a96f217ee0421476218a58894a7809c6c57358a295e59f45e3d8713e8",
       "owner": "DS-03"
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "3f713792d1be6150dc2161427463f2b123d7ec11c58fb72842cb3a4b723d3e91",
+      "sha256": "d3b7f1071cd24b326fb619880344cb15272e968237ab9a77909519f5584be79e",
       "owner": "DS-03"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "929d31439e4fa74b08e14e004ac74ce179ad51899bd88be4c1c88ae45089c0f2",
+      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
       "owner": "DS-03"
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "e6d96ec852206d9173f54e30902efa4d6d391d25d57f63f12899b0cdca56243e",
+      "sha256": "88d58ae37f27f624eee647775c6f54ff792d1097ed52cf9ab81898f52fb06655",
       "owner": "DS-03"
     },
     {
@@ -108,7 +108,7 @@
     },
     {
       "exactCasePath": "tests/integration/version-model.test.mjs",
-      "sha256": "92bbe06cbeee29ecbcdcf939e39d4bce7e7900f5646dd6b7ff4b798b2b926680",
+      "sha256": "5021ee42362d7c2e12ea1080ba57248fa8293309139361c1ea86d7668b4d3ca1",
       "kind": "test",
       "layer": "integration",
       "owner": "DS-03"
@@ -121,5 +121,5 @@
       "owner": "DS-03"
     }
   ],
-  "canonicalPayloadSha256": "c38323943fd5af9f575038c739b850d3f8d9937a3b16473bf6009831566a0c8b"
+  "canonicalPayloadSha256": "020035fb545c7a2c60b8f192df64415251b54bd6ad4530ef589d72f5316d9540"
 }

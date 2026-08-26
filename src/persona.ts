@@ -4,13 +4,18 @@
 // ===========================================
 
 import matter from "gray-matter";
-import type { PersonaDefinition, PersonaNetworkPolicy } from "./types.js";
+import type { PersonaDefinition, PersonaNetworkPolicy, PersonaPermissionLevel } from "./types.js";
 import { canonicalDigest } from "./capability-broker.js";
+import { RUNTIME_TOOL_POLICIES, STATIC_TOOL_POLICIES } from "./tool-policies.js";
 import { getManagedPathStore, validateManagedIdentifier, type ManagedStoreRole } from "./managed-path-store.js";
 import { PathDeniedError } from "./path-policy.js";
 
 const PERSONA_ROLES: readonly ManagedStoreRole[] = Object.freeze(["builtin-personas", "user-personas"]);
 const SKILL_ROLES: readonly ManagedStoreRole[] = Object.freeze(["user-skills", "builtin-skills"]);
+const PERMISSION_LEVELS: readonly PersonaPermissionLevel[] = Object.freeze(["minimal", "read_only", "coding", "guarded", "full"]);
+export const PERSONA_MANAGEMENT_TOOLS = Object.freeze(["list_personas", "current_persona", "find_personas", "switch_persona"] as const);
+const MINIMAL_TOOLS = new Set<string>([...PERSONA_MANAGEMENT_TOOLS, "get_current_time", "ask_user"]);
+
 const RESERVED_ENV_KEYS = new Set([
   "_SESSION_ID",
   "_CAPABILITY_CONTEXT_ID",
@@ -30,10 +35,46 @@ function freezeNetworkPolicy(value: unknown, originsValue: unknown): PersonaNetw
   throw new Error("network_policy 必须是 deny、loopback、allowlist 或 unrestricted");
 }
 
+function permissionLevel(value: unknown): PersonaPermissionLevel {
+  const level = value === undefined ? "guarded" : value;
+  if (typeof level !== "string" || !PERMISSION_LEVELS.includes(level as PersonaPermissionLevel)) {
+    throw new Error(`permission_level 必须是 ${PERMISSION_LEVELS.join("、")}`);
+  }
+  return level as PersonaPermissionLevel;
+}
+
+function toolList(value: unknown, field: string): string[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.some(tool => typeof tool !== "string" || !tool)) throw new Error(`${field} 必须是非空字符串数组`);
+  if (new Set(value).size !== value.length) throw new Error(`${field} 不能重复`);
+  return [...value];
+}
+
+function assertPermissionEnvelope(level: PersonaPermissionLevel, tools: readonly string[]): void {
+  for (const tool of tools) {
+    if (level === "minimal" && !MINIMAL_TOOLS.has(tool)) throw new Error(`minimal Persona 不允许工具: ${tool}`);
+    const policy = STATIC_TOOL_POLICIES[tool] ?? RUNTIME_TOOL_POLICIES[tool];
+    if (level === "read_only" && policy?.riskClasses.some(risk => risk === "write" || risk === "process")) {
+      throw new Error(`read_only Persona 不允许写入或进程工具: ${tool}`);
+    }
+  }
+}
+
+export function personaPermissionLevel(persona: PersonaDefinition): PersonaPermissionLevel {
+  return permissionLevel(persona.permissionLevel);
+}
+
+export function personaPermissionRank(level: PersonaPermissionLevel): number {
+  return PERMISSION_LEVELS.indexOf(level);
+}
+
 function securityDigest(input: Omit<PersonaDefinition, "digest" | "displayName" | "description">): string {
   return canonicalDigest({
     name: input.name,
+    permissionLevel: personaPermissionLevel(input as PersonaDefinition),
     tools: input.tools,
+    allowTools: input.allowTools ?? [],
+    denyTools: input.denyTools ?? [],
     env: input.env,
     allowedRoots: input.allowedRoots,
     networkPolicy: input.networkPolicy,
@@ -45,6 +86,11 @@ export function createEffectivePersona(input: Omit<PersonaDefinition, "digest">)
   if (!input.name || typeof input.name !== "string" || typeof input.systemPrompt !== "string") throw new Error("Persona 名称或 system prompt 无效");
   if (!Array.isArray(input.tools) || input.tools.some((tool) => typeof tool !== "string" || !tool)) throw new Error(`Persona ${input.name} 的 tools 无效`);
   if (new Set(input.tools).size !== input.tools.length) throw new Error(`Persona ${input.name} 的 tools 存在重复项`);
+  const level = permissionLevel(input.permissionLevel);
+  const allowTools = toolList(input.allowTools, `Persona ${input.name} allowTools`);
+  const denyTools = toolList(input.denyTools, `Persona ${input.name} denyTools`);
+  if (allowTools.some(tool => denyTools.includes(tool))) throw new Error(`Persona ${input.name} 的 allow/deny 工具重叠`);
+  assertPermissionEnvelope(level, input.tools);
   const env: Record<string, string> = {};
   for (const [key, value] of Object.entries(input.env)) {
     if (!key || typeof value !== "string" || RESERVED_ENV_KEYS.has(key)) throw new Error(`Persona ${input.name} 的 env 字段无效: ${key}`);
@@ -56,13 +102,17 @@ export function createEffectivePersona(input: Omit<PersonaDefinition, "digest">)
     name: input.name,
     displayName: input.displayName,
     description: input.description,
+    permissionLevel: level,
     tools: Object.freeze([...input.tools]),
+    allowTools: Object.freeze(allowTools),
+    denyTools: Object.freeze(denyTools),
     env: Object.freeze(env),
     allowedRoots: Object.freeze(roots),
     networkPolicy: input.networkPolicy,
     systemPrompt: input.systemPrompt,
   };
-  return Object.freeze({ ...base, digest: securityDigest(base) });
+  const digest = securityDigest(base);
+  return Object.freeze({ ...base, sourceDigest: input.sourceDigest ?? digest, digest });
 }
 
 /** persona 文件缓存 */
@@ -101,6 +151,15 @@ export async function validatePersonaSource(
   if (declaredName !== safeFileName) throw new Error(`Persona 文件名与 name 不一致: ${safeFileName}`);
   const name = safeFileName;
   const skillsList: string[] = Array.isArray(data.skills) ? data.skills.map(validateManagedIdentifier) : [];
+  const level = permissionLevel(data.permission_level);
+  const baseTools = toolList(data.tools, `Persona ${name} tools`);
+  const allowTools = toolList(data.allow_tools, `Persona ${name} allow_tools`);
+  const denyTools = toolList(data.deny_tools, `Persona ${name} deny_tools`);
+  if (allowTools.some(tool => denyTools.includes(tool))) throw new Error(`Persona ${name} 的 allow_tools/deny_tools 重叠`);
+  const protectedManagement = new Set<string>(PERSONA_MANAGEMENT_TOOLS);
+  if (denyTools.some(tool => protectedManagement.has(tool))) throw new Error(`Persona ${name} 不能 deny Persona 管理工具`);
+  const tools = [...new Set([...baseTools, ...allowTools, ...PERSONA_MANAGEMENT_TOOLS])].filter(tool => !denyTools.includes(tool));
+  assertPermissionEnvelope(level, tools);
 
   // 加载 skill 文件内容
   const skillContents: string[] = [];
@@ -122,7 +181,10 @@ export async function validatePersonaSource(
     name,
     displayName: data.display_name || data.displayName || name,
     description: data.description || "",
-    tools: Array.isArray(data.tools) ? data.tools : [],
+    permissionLevel: level,
+    tools,
+    allowTools,
+    denyTools,
     env,
     allowedRoots: Object.values(env),
     networkPolicy: freezeNetworkPolicy(data.network_policy, data.network_origins),

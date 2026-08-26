@@ -86,7 +86,18 @@ async function sessionFormats() {
   const session = await import("../dist/session.js");
   const link = await import("../dist/link.js");
   const db = await import("../dist/db.js");
-  const persona = { name: "general" };
+  const persona = {
+    name: "general",
+    displayName: "General",
+    description: "version fixture",
+    permissionLevel: "guarded",
+    tools: Object.freeze([]),
+    env: Object.freeze({}),
+    allowedRoots: Object.freeze([]),
+    networkPolicy: Object.freeze({ mode: "deny" }),
+    systemPrompt: "version fixture",
+    digest: "f".repeat(64),
+  };
   const source = session.createSession(persona, "Version test");
   db.insertMessage({
     session_id: source.id,

@@ -8,12 +8,12 @@
   "runtimeEntries": [
     {
       "exactCasePath": "dist/capability-broker.js",
-      "sha256": "9d91937b12698d4429a24095a37e32b4dcd81a4df9abb41c3be4cb9df4adaac0",
+      "sha256": "66849de3c12f37ace913f3285d6782a27feb6c82ea55061f2e65fa4a4e620840",
       "owner": "RT-08"
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "f76526b8cd86ccf937bea39c5abb5f6e71c541f0dbab133543aaefe01ed9cbad",
+      "sha256": "fbea71b29b0e66299217777661bbade30161ac51b18b6c0cf989c57a627a74fa",
       "owner": "RT-08"
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "559261fdee80d5669fe0a532fd8cddfdfb61236abe82f344b305578b0c8301c6",
+      "sha256": "f6a95709eef123776891fb9bee7cb8b304b26793701a1582ef6c8ec4592ee393",
       "owner": "RT-08"
     },
     {
@@ -53,12 +53,12 @@
     },
     {
       "exactCasePath": "personas/developer.md",
-      "sha256": "d9771d57feb505722ea83f7ad4e7cb20098df9642a83ee759cb7840cea945fdb",
+      "sha256": "5d91a4f1561bd2879ff7fc2cbbfc55d6f960bba65c5454717b50688f9866db88",
       "owner": "RT-08"
     },
     {
       "exactCasePath": "personas/general.md",
-      "sha256": "4a31c4b88b0f2253695401bdc692f9d5caba2aaec5dd9a090c89a12fe58a343b",
+      "sha256": "7a548e884b9efb14e7e4947a07a38ee68f1789a3379dc0835214e38c756304b2",
       "owner": "RT-08"
     },
     {
@@ -78,12 +78,12 @@
     },
     {
       "exactCasePath": "src/capability-broker.ts",
-      "sha256": "abfcb3edae77371371ffcb00812b8a8580cf3b8fd88fd25cfb2685edc1a07194",
+      "sha256": "66d602a81e9320b5580c6b6ddc21674cbe224a22271f1143daafda375b10240c",
       "owner": "RT-08"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "929d31439e4fa74b08e14e004ac74ce179ad51899bd88be4c1c88ae45089c0f2",
+      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
       "owner": "RT-08"
     },
     {
@@ -103,7 +103,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "fcb046d762e59f50fa9d1423c4909141ff296223756e5316d942c5df5f64f3f0",
+      "sha256": "13f2a8a15e9e845857be968337e46fdb0f64bc19f13d7ef02e298efec95d5eab",
       "owner": "RT-08"
     },
     {
@@ -118,7 +118,7 @@
     },
     {
       "exactCasePath": "src/types.ts",
-      "sha256": "395945d7c37fadf3d3890ff6663ab8678ff4223647a295ec1139ae88b3b1c1e0",
+      "sha256": "4a3287b18b97d6fd3e804d637ebde221a5a440ca3a0e0d9735a104006c41b39d",
       "owner": "RT-08"
     }
   ],
@@ -174,11 +174,11 @@
     },
     {
       "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
-      "sha256": "9277efc6821133a78c11abf8bbebb30a7aff890e6e01db4ece4cf869385821e7",
+      "sha256": "42ec792f137abbd39cf403a6515020cdb9a86c56473fe59a7dc63f5b3b05f066",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-08"
     }
   ],
-  "canonicalPayloadSha256": "c780b5a46658e5f7e51f064eed823fa9e8906fddce4f4da3d1d4890028537b1b"
+  "canonicalPayloadSha256": "785233125fbdc7e29050db115303da8d72c46415a0bda041f3c0ca513f034a2e"
 }

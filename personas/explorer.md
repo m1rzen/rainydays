@@ -2,12 +2,12 @@
 name: explorer
 display_name: 探索者
 description: 只读探索模式，了解代码和文件结构
+permission_level: read_only
 tools:
   - glob
   - read
   - grep
   - get_current_time
-  - remember
   - recall
 env:
   DATA_ROOT: "C:\\Users\\raidriar"

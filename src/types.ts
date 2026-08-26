@@ -299,6 +299,8 @@ export type PersonaNetworkPolicy =
   | { readonly mode: "allowlist"; readonly origins: readonly string[] }
   | { readonly mode: "unrestricted" };
 
+export type PersonaPermissionLevel = "minimal" | "read_only" | "coding" | "guarded" | "full";
+
 export interface PersonaDefinition {
   /** 内部名称 */
   readonly name: string;
@@ -306,15 +308,22 @@ export interface PersonaDefinition {
   readonly displayName: string;
   /** 描述 */
   readonly description: string;
-  /** 该 persona 可用的工具名列表 */
+  /** 权限等级；旧的内存 fixture 可省略，运行时按 guarded 处理。 */
+  readonly permissionLevel?: PersonaPermissionLevel;
+  /** 该 persona 最终可用的工具名列表。 */
   readonly tools: readonly string[];
+  /** Persona 源中的显式 allow/deny overlay，最终工具集已应用这些规则。 */
+  readonly allowTools?: readonly string[];
+  readonly denyTools?: readonly string[];
   /** 该 persona 的环境变量（如 DATA_ROOT, OUTPUT_DIR 等） */
   readonly env: Readonly<Record<string, string>>;
   /** SEC-01 绑定但由 SEC-02 完整规范化的允许根目录 */
   readonly allowedRoots: readonly string[];
   /** SEC-01 网络能力包络；实际 socket 隔离由 SEC-03 完成 */
   readonly networkPolicy: PersonaNetworkPolicy;
-  /** 安全相关有效快照的 SHA-256 */
+  /** 受管 Persona 源定义 digest；运行时 Settings 注入不会改变它。 */
+  readonly sourceDigest?: string;
+  /** 安全相关有效运行时快照的 SHA-256 */
   readonly digest: string;
   /** system prompt（markdown body 部分） */
   readonly systemPrompt: string;

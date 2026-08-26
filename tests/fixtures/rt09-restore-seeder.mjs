@@ -12,18 +12,10 @@ Object.assign(process.env, {
 });
 const { createSession } = await import("../../dist/session.js");
 const { insertMessage, closeDb } = await import("../../dist/db.js");
+const { getPersona } = await import("../../dist/persona.js");
 
-const persona = Object.freeze({
-  name: "general",
-  displayName: "通用助手",
-  description: "fixture",
-  tools: Object.freeze([]),
-  env: Object.freeze({}),
-  allowedRoots: Object.freeze([]),
-  networkPolicy: Object.freeze({ mode: "deny" }),
-  systemPrompt: "RT-09 restore fixture",
-  digest: "rt09-restore-digest",
-});
+const persona = await getPersona("general");
+if (!persona) throw new Error("general Persona fixture is unavailable");
 
 const now = new Date().toISOString();
 const older = createSession(persona, "RT-09 older");

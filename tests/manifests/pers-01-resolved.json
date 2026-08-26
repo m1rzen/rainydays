@@ -1,0 +1,239 @@
+{
+  "schemaVersion": 1,
+  "taskId": "PERS-01",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/pers-01.json",
+    "sha256": "f87dc6109a938d2b270efa2eb881ae9d96894b15de7efc385063757a924552eb"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "a353098a806411279593622f94d0a39852783c33e1bc34f318f602a28c4140ea",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/architect.md",
+      "sha256": "23ac3d6e59980ec645e3544cfc27e40b8e7dbc9464183e820c308337221662a6",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/daily.md",
+      "sha256": "2314f38eb9e04e1e2d332dd042dccb13d6d4aadf4fc15d187d33d1422783ea6b",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/debugger.md",
+      "sha256": "e980ea60ff097df4615bcc5509b8ae8c1748a351febd3b374215614d5fe5119a",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/developer.md",
+      "sha256": "5d91a4f1561bd2879ff7fc2cbbfc55d6f960bba65c5454717b50688f9866db88",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/explorer.md",
+      "sha256": "2b3eb198cccb713750527fc812a2bda303952578060b6a2b10d3ec65fd8cebbd",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/general.md",
+      "sha256": "7a548e884b9efb14e7e4947a07a38ee68f1789a3379dc0835214e38c756304b2",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/planner.md",
+      "sha256": "53ef05b1390fab17056728ceccedb6f753a6e9378bd14d5f7824dc2656101754",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/quick-fix.md",
+      "sha256": "b2d341533a8a4866e0e648435cc0b23283f330b7b5454051b5de4104339fcb09",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/rds-assistant.md",
+      "sha256": "24160accb1767774f3220e92f1628ad0a281a836c9244e42e3b2119da6e4aeee",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/reviewer.md",
+      "sha256": "cde8b01257a12a2622097a77188174d7be4dd518186615c08a3dc620b3e2d936",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/sentinel.md",
+      "sha256": "2337f09a3d8772d602203cd0736375c6e23c49b653704c85ca4edcb6b9121c68",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/writer.md",
+      "sha256": "2909266546709ce12784c9613e63d304cae24c2cec4109fe6325fbce5dd8cbe4",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/default.md",
+      "sha256": "f61ce41396b20857d296e89a72285a1ab9726e9c0cbdcd52164c87f9031964e1",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/analyst.md",
+      "sha256": "204ee269387d775ca96589b1c5ea74d7dfe812c545ea32b8078ddada15df929c",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/skill-crafter.md",
+      "sha256": "411d5145eb04af9bbca793f37cefe74058b8ccf09382e44129d2e9fa9cedf83b",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/prompt-designer.md",
+      "sha256": "157f050cf260f223bd3c59821a159a67e9ecfc2fb5cd033c36b751c206d55aac",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/playbook.md",
+      "sha256": "9101d1bdf85f6327a0973f669571efb86f99d7315de62bee33bc90bf2a47280d",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/routine.md",
+      "sha256": "9e1af04eb1a56a429af54e49508035f2aa4d21435e082211a6fa360e1453587e",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "personas/overseer.md",
+      "sha256": "1e7f8e04b1a129cf034351b436cec599269bfe99450490a374fcc0b05ba49bd1",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "scripts/generate-build-info.mjs",
+      "sha256": "e760c870cad60a5e6733bcab36b61cffae4b72c9b775189476872bfddc33eb76",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "scripts/prepare-electron-app.mjs",
+      "sha256": "f610a92a3a825d93f0cdf96e3b7fffab3c591a1215e05f607163e5eef728b348",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "scripts/test-version-model.mjs",
+      "sha256": "49ed033a96f217ee0421476218a58894a7809c6c57358a295e59f45e3d8713e8",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "scripts/version-test-child.mjs",
+      "sha256": "9a484c073cc2f70976495d300e80411c9e411528a4adec1e758db8230d179d02",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "1fb8a1b3c2af8d7b0b1f559b0c7759308a95dc634babd0c1dec581babd536b03",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "scripts/pers01-governance.mjs",
+      "sha256": "bad7a81e37cb71323b346d2f9ae05360bc844f4678bcfe2f815d2a3d67942bb2",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "scripts/generate-pers01-resolved-manifest.mjs",
+      "sha256": "eb90924def682b0092acf746009557d191274d74bdd1c014ef50322cfece9344",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "src/agent.ts",
+      "sha256": "6fd860e4940d2d3b1c6a8e4603e9fa409302fdfc735f76feb2cae5f608a497a7",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "src/capability-broker.ts",
+      "sha256": "66d602a81e9320b5580c6b6ddc21674cbe224a22271f1143daafda375b10240c",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "d3b7f1071cd24b326fb619880344cb15272e968237ab9a77909519f5584be79e",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "src/persona.ts",
+      "sha256": "5bfa3d2b40eedc6be4c5ecc50117d073d9cdb8ef45ff5e0da827ee5661f786eb",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "src/session.ts",
+      "sha256": "ceffcc88c4133d9819d95ccd7558b370ac36af93f8bf1340c5dafaa4e29fa433",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "13f2a8a15e9e845857be968337e46fdb0f64bc19f13d7ef02e298efec95d5eab",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "src/tools/persona-tools.ts",
+      "sha256": "7993b067cfc499228427e4e5b92510ed956ae505add45c5dbd0088794a0eb8f9",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "src/tools/save-persona.ts",
+      "sha256": "5f5d900429d75b0d9219a14bf198d0ab385b63516abb02f050fbe69c70a62e01",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "src/types.ts",
+      "sha256": "4a3287b18b97d6fd3e804d637ebde221a5a440ca3a0e0d9735a104006c41b39d",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "src/version.ts",
+      "sha256": "88d58ae37f27f624eee647775c6f54ff792d1097ed52cf9ab81898f52fb06655",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "decc03e49e89ba5ed6eb4e964da2e437c440935a1edcf23d864933e6f2e56a8a",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "9b38539681fc09a8657c448cb6eaba3d9418b73d25af08e8ba0003e80da224d7",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
+      "owner": "PERS-01"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/pers01-governance.test.mjs",
+      "sha256": "6002b91a99085318316d63bbcbbeebcda3a315e7959235ff024e9b90476d1578",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "tests/integration/pers01-session-persona.test.mjs",
+      "sha256": "6eb2893e0b0be3dd063873ee6c495a40102b7a0cc5d437ce5e167e0db0372417",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "PERS-01"
+    },
+    {
+      "exactCasePath": "tests/unit/persona-runtime.test.mjs",
+      "sha256": "eafa9ffc326197988ba09c47c21498016629474af0b6d271fea9f84208094b65",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "PERS-01"
+    }
+  ],
+  "canonicalPayloadSha256": "92b3149a12b9503754f14ba030764003e4ebe38d9a051b596c30de0f1e7a3725"
+}

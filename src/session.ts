@@ -11,6 +11,10 @@ import {
   listSessions,
   deleteSession,
   touchSession,
+  getSessionPersonaBinding,
+  insertSessionPersonaBinding,
+  insertSessionPersonaBindingIfMissing,
+  updateSessionPersonaBinding,
   updateSessionTitle,
   getMessagesBySession,
   getMessagesUpTo,
@@ -33,6 +37,7 @@ import { copyTasksForFork, exportTaskTransfer, normalizeTaskTransfer, restoreTas
 import { registerSession, unregisterSession, postFromSession, type LinkIdentity } from "./link.js";
 import { MAX_ATTACHMENTS_PER_MESSAGE, validateAttachmentContent, validateAttachmentId, validateAttachmentUploadMetadata } from "./attachment.js";
 import { assertAttachmentCapacity } from "./attachment-store.js";
+import { personaPermissionLevel } from "./persona.js";
 
 const linkIdentities = new Map<string, LinkIdentity>();
 
@@ -61,7 +66,16 @@ export function createSession(persona: PersonaDefinition, title?: string): Sessi
     created_at: now,
     updated_at: now,
   };
-  insertSession(session);
+  withTransaction(() => {
+    insertSession(session);
+    insertSessionPersonaBinding({
+      session_id: session.id,
+      persona_name: persona.name,
+      persona_digest: persona.sourceDigest ?? persona.digest,
+      permission_level: personaPermissionLevel(persona),
+      bound_at: now,
+    });
+  });
   ensureSessionLinkRegistration(session.id, session.title);
   return session;
 }
@@ -81,6 +95,32 @@ export function removeSession(id: string): void {
   deleteSession(id);
   linkIdentities.delete(id);
   unregisterSession(id);
+}
+
+/** 为 schema 10 迁移来的 Session 建立一次初始定义绑定；已有绑定绝不覆盖。 */
+export function initializeSessionPersonaBinding(id: string, persona: PersonaDefinition): boolean {
+  const session = getSessionInfo(id);
+  if (!session || session.persona_name !== persona.name) return false;
+  return insertSessionPersonaBindingIfMissing({
+    session_id: id,
+    persona_name: persona.name,
+    persona_digest: persona.sourceDigest ?? persona.digest,
+    permission_level: personaPermissionLevel(persona),
+    bound_at: new Date().toISOString(),
+  });
+}
+
+export function sessionPersonaBinding(id: string) {
+  return getSessionPersonaBinding(id);
+}
+
+/** CAS 切换一个持久 Session 的 Persona；调用方负责安全替换该 Session runtime。 */
+export function rebindSessionPersona(id: string, current: PersonaDefinition, target: PersonaDefinition): boolean {
+  return updateSessionPersonaBinding(id, current.name, current.sourceDigest ?? current.digest, {
+    name: target.name,
+    digest: target.sourceDigest ?? target.digest,
+    permissionLevel: personaPermissionLevel(target),
+  });
 }
 
 /** 更新会话标题 */

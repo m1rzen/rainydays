@@ -2,6 +2,7 @@
 name: writer
 display_name: 文档撰写者
 description: 技术文档撰写，关注清晰度和完整性
+permission_level: guarded
 network_policy: unrestricted
 tools:
   - glob

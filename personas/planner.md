@@ -2,6 +2,7 @@
 name: planner
 display_name: 规划师
 description: 需求分析与方案规划，输出结构化计划
+permission_level: guarded
 tools:
   - glob
   - read

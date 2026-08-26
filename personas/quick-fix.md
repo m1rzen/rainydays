@@ -2,6 +2,7 @@
 name: quick-fix
 display_name: 快速修复
 description: 快速修复小问题，简洁回复，最少确认
+permission_level: coding
 network_policy: unrestricted
 tools:
   - glob

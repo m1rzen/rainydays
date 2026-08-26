@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "f5b2e12408845d2d0fbcdc39596d3d48493e8c3561f31a662c0459959a8a057f",
+      "sha256": "a353098a806411279593622f94d0a39852783c33e1bc34f318f602a28c4140ea",
       "owner": "TOOL-05"
     },
     {
@@ -28,17 +28,17 @@
     },
     {
       "exactCasePath": "personas/daily.md",
-      "sha256": "5f942333473d8432b73ad058d33bdaffdacb9cd869accdbb7a15d8e4c56e8898",
+      "sha256": "2314f38eb9e04e1e2d332dd042dccb13d6d4aadf4fc15d187d33d1422783ea6b",
       "owner": "TOOL-05"
     },
     {
       "exactCasePath": "personas/general.md",
-      "sha256": "4a31c4b88b0f2253695401bdc692f9d5caba2aaec5dd9a090c89a12fe58a343b",
+      "sha256": "7a548e884b9efb14e7e4947a07a38ee68f1789a3379dc0835214e38c756304b2",
       "owner": "TOOL-05"
     },
     {
       "exactCasePath": "personas/rds-assistant.md",
-      "sha256": "bae869cd62181b04aa90e2239b0c8d063daedc1004793d2291499d56525b4803",
+      "sha256": "24160accb1767774f3220e92f1628ad0a281a836c9244e42e3b2119da6e4aeee",
       "owner": "TOOL-05"
     },
     {
@@ -58,7 +58,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "fcb046d762e59f50fa9d1423c4909141ff296223756e5316d942c5df5f64f3f0",
+      "sha256": "13f2a8a15e9e845857be968337e46fdb0f64bc19f13d7ef02e298efec95d5eab",
       "owner": "TOOL-05"
     },
     {
@@ -78,17 +78,17 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "aff49de027de3275a12c03ef2c9c8d9476fdc95671948007381ade2cf3fda375",
+      "sha256": "decc03e49e89ba5ed6eb4e964da2e437c440935a1edcf23d864933e6f2e56a8a",
       "owner": "TOOL-05"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "cb7dd74f1403e07fd9c37665db6a253a6bfad60b2b73b018cc93662a13b0518b",
+      "sha256": "9b38539681fc09a8657c448cb6eaba3d9418b73d25af08e8ba0003e80da224d7",
       "owner": "TOOL-05"
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "b2bd060ad2cf0eb3316a351441078b192e005af98a7bea3ff5b994102587d18e",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
       "owner": "TOOL-05"
     }
   ],
@@ -130,11 +130,11 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "b2bd060ad2cf0eb3316a351441078b192e005af98a7bea3ff5b994102587d18e",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
       "kind": "test",
       "layer": "unit",
       "owner": "TOOL-05"
     }
   ],
-  "canonicalPayloadSha256": "0ecdfa39ae2f124bb2323dcf84833e70c469e7e9ff725daa478324bd6167420f"
+  "canonicalPayloadSha256": "53edb80204d72567fd03873c78aa2ab761ea5e199a0536808b752c1b0e826610"
 }

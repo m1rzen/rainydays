@@ -949,6 +949,58 @@ function assertSchemaV10(database: typeof db = db): void {
   if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 10 不兼容: 完整性检查失败");
 }
 
+const SCHEMA_V11_SQL = `
+    CREATE TABLE session_persona_bindings (
+      session_id        TEXT PRIMARY KEY,
+      persona_name      TEXT NOT NULL,
+      persona_digest    TEXT NOT NULL CHECK (length(persona_digest) = 64 AND persona_digest NOT GLOB '*[^a-f0-9]*'),
+      permission_level  TEXT NOT NULL CHECK (permission_level IN ('minimal', 'read_only', 'coding', 'guarded', 'full')),
+      bound_at          TEXT NOT NULL,
+      FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+    );
+  `;
+
+function assertSchemaV11(database: typeof db = db): void {
+  const reference = createInMemoryBootstrapDatabase();
+  try {
+    reference.pragma("foreign_keys = ON");
+    reference.exec(SCHEMA_V1_SQL);
+    reference.exec(SCHEMA_V2_SQL);
+    applySchemaV3(reference);
+    reference.exec(SCHEMA_V4_SQL);
+    reference.exec(SCHEMA_V5_SQL);
+    reference.exec(SCHEMA_V6_SQL);
+    reference.exec(SCHEMA_V7_SQL);
+    reference.exec(SCHEMA_V8_SQL);
+    reference.exec(SCHEMA_V9_SQL);
+    reference.exec(SCHEMA_V10_SQL);
+    reference.exec(SCHEMA_V11_SQL);
+    const objectRows = (target: typeof db): Array<{ type: string; name: string; tbl_name: string; sql: string | null }> => target.prepare(
+      "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
+    ).all() as Array<{ type: string; name: string; tbl_name: string; sql: string | null }>;
+    const actual = objectRows(database);
+    const expected = objectRows(reference);
+    const signatures = (rows: typeof actual): string[] => rows.map(entry => `${entry.type}|${entry.name}|${entry.tbl_name}`);
+    if (JSON.stringify(signatures(actual)) !== JSON.stringify(signatures(expected))) {
+      throw new Error("数据库 Schema 11 不兼容: 存在未知或缺失的 Schema 对象");
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const found = actual[index];
+      const wanted = expected[index];
+      if ((found.sql === null) !== (wanted.sql === null)
+        || (found.sql !== null && wanted.sql !== null && normalizeSchemaSql(found.sql) !== normalizeSchemaSql(wanted.sql))) {
+        throw new Error(`数据库 Schema 11 不兼容: ${wanted.type} ${wanted.name} SQL 定义错误`);
+      }
+    }
+  } finally {
+    reference.close();
+  }
+  const foreignKeyViolations = database.prepare("PRAGMA foreign_key_check").all();
+  if (foreignKeyViolations.length > 0) throw new Error("数据库 Schema 11 不兼容: 存在外键完整性错误");
+  const integrity = database.prepare("PRAGMA integrity_check").all() as Array<{ integrity_check?: string }>;
+  if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("数据库 Schema 11 不兼容: 完整性检查失败");
+}
+
 interface DatabaseMigration {
   readonly from: number;
   readonly to: number;
@@ -1046,6 +1098,15 @@ const DATABASE_MIGRATIONS: readonly DatabaseMigration[] = Object.freeze([
       assertSchemaV10(database);
     },
   }),
+  Object.freeze({
+    from: 10,
+    to: 11,
+    apply: (database: typeof db): void => {
+      assertSchemaV10(database);
+      database.exec(SCHEMA_V11_SQL);
+      assertSchemaV11(database);
+    },
+  }),
 ]);
 
 function assertMigrationRegistry(): void {
@@ -1086,7 +1147,7 @@ function migrateDatabase(): void {
   if (version !== DATABASE_SCHEMA_VERSION) {
     throw new Error(`数据库 Schema 迁移未达到目标版本: 当前 ${version}，目标 ${DATABASE_SCHEMA_VERSION}`);
   }
-  assertSchemaV10(db);
+  assertSchemaV11(db);
 }
 
 try {
@@ -1332,6 +1393,14 @@ export interface SessionRow {
   updated_at: string;
 }
 
+export interface SessionPersonaBindingRow {
+  session_id: string;
+  persona_name: string;
+  persona_digest: string;
+  permission_level: "minimal" | "read_only" | "coding" | "guarded" | "full";
+  bound_at: string;
+}
+
 export interface MessageRow {
   id: number;
   session_id: string;
@@ -1379,6 +1448,42 @@ export function listSessions(): SessionRow[] {
 /** 获取单个会话 */
 export function getSession(id: string): SessionRow | undefined {
   return db.prepare(`SELECT * FROM sessions WHERE id = ?`).get(id) as SessionRow | undefined;
+}
+
+export function insertSessionPersonaBinding(binding: SessionPersonaBindingRow): void {
+  db.prepare(`INSERT INTO session_persona_bindings(session_id, persona_name, persona_digest, permission_level, bound_at) VALUES (?, ?, ?, ?, ?)`)
+    .run(binding.session_id, binding.persona_name, binding.persona_digest, binding.permission_level, binding.bound_at);
+}
+
+export function getSessionPersonaBinding(sessionId: string): SessionPersonaBindingRow | undefined {
+  return db.prepare(`SELECT session_id, persona_name, persona_digest, permission_level, bound_at FROM session_persona_bindings WHERE session_id = ?`)
+    .get(sessionId) as SessionPersonaBindingRow | undefined;
+}
+
+export function insertSessionPersonaBindingIfMissing(binding: SessionPersonaBindingRow): boolean {
+  return db.prepare(`INSERT OR IGNORE INTO session_persona_bindings(session_id, persona_name, persona_digest, permission_level, bound_at) VALUES (?, ?, ?, ?, ?)`)
+    .run(binding.session_id, binding.persona_name, binding.persona_digest, binding.permission_level, binding.bound_at).changes === 1;
+}
+
+/** CAS 更新单个 Session 的 Persona 名称和不可变定义绑定。 */
+export function updateSessionPersonaBinding(
+  id: string,
+  expectedName: string,
+  expectedDigest: string,
+  target: Readonly<{ name: string; digest: string; permissionLevel: SessionPersonaBindingRow["permission_level"] }>,
+): boolean {
+  return db.transaction(() => {
+    const binding = getSessionPersonaBinding(id);
+    if (!binding || binding.persona_name !== expectedName || binding.persona_digest !== expectedDigest) return false;
+    const now = new Date().toISOString();
+    const sessionChange = db.prepare(`UPDATE sessions SET persona_name = ?, updated_at = ? WHERE id = ? AND persona_name = ?`)
+      .run(target.name, now, id, expectedName).changes;
+    if (sessionChange !== 1) return false;
+    const bindingChange = db.prepare(`UPDATE session_persona_bindings SET persona_name = ?, persona_digest = ?, permission_level = ?, bound_at = ? WHERE session_id = ? AND persona_name = ? AND persona_digest = ?`)
+      .run(target.name, target.digest, target.permissionLevel, now, id, expectedName, expectedDigest).changes;
+    if (bindingChange !== 1) throw new Error("Session Persona binding changed during CAS update");
+    return true;
+  })();
 }
 
 /** 更新会话标题 */

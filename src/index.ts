@@ -13,13 +13,16 @@ import { fileURLToPath } from "url";
 import { LLMClient } from "./llm.js";
 import { ConversationMemory } from "./memory.js";
 import { Agent } from "./agent.js";
-import { createEffectivePersona, listPersonas, reloadPersonas, getPersona, listAvailableSkills, loadSkillContent } from "./persona.js";
+import { createEffectivePersona, listPersonas, reloadPersonas, getPersona, listAvailableSkills, loadSkillContent, personaPermissionLevel } from "./persona.js";
 import {
   createSession,
   getAllSessions,
   getSessionInfo,
   removeSession,
   renameSession,
+  rebindSessionPersona,
+  initializeSessionPersonaBinding,
+  sessionPersonaBinding,
   touch,
   loadSessionMessages,
   forkSession,
@@ -97,6 +100,13 @@ import { PathDeniedError, type PathAuditIdentity, type PathAuthority, type PathD
 import { pathPolicy } from "./path-runtime.js";
 import { playbookExecuteDef, createPlaybookExecuteExec, playbookAbortDef, playbookAbortExec } from "./playbook.js";
 import { savePersonaDef, createSavePersonaExec } from "./tools/save-persona.js";
+import {
+  createPersonaManagementExecutors,
+  currentPersonaDef,
+  findPersonasDef,
+  listPersonasDef,
+  switchPersonaDef,
+} from "./tools/persona-tools.js";
 import { cronScheduleDef, cronCancelDef, createCronScheduleExec, createCronCancelExec } from "./tools/cron-tools.js";
 import type { CronJobRow } from "./db.js";
 import type { PersonaDefinition } from "./types.js";
@@ -185,6 +195,7 @@ let isShuttingDown = false;
 const localApiPrincipal = capabilityBroker.createLocalApiPrincipal();
 const manualExecutionConsent = new ManualExecutionConsentLedger({ observeDenial: observeManualConsentDenial });
 const runtimeSubscriptionClosers = new Map<RuntimeAuthority, Set<() => void>>();
+const pendingPersonaSwitches = new Map<string, Readonly<{ from: PersonaDefinition; to: PersonaDefinition }>>();
 const directRequestSession = new AsyncLocalStorage<string | null>();
 
 function exactSessionRuntimeIdentity(value: unknown): string {
@@ -1064,10 +1075,17 @@ function applyRuntimeSettings(persona: PersonaDefinition, settings: AppSettings 
   });
 }
 
-const runtimeRootPermissions: readonly PathOperation[] = Object.freeze([
-  "read-file", "read-directory", "search-tree", "create-file", "replace-file",
-  "create-directory", "watch-directory", "initial-cwd", "reveal",
+const readOnlyRuntimeRootPermissions: readonly PathOperation[] = Object.freeze([
+  "read-file", "read-directory", "search-tree", "watch-directory",
 ]);
+const codingRuntimeRootPermissions: readonly PathOperation[] = Object.freeze([
+  ...readOnlyRuntimeRootPermissions, "create-file", "replace-file", "create-directory", "initial-cwd", "reveal",
+]);
+
+function runtimeRootPermissions(persona: PersonaDefinition): readonly PathOperation[] {
+  const level = personaPermissionLevel(persona);
+  return level === "minimal" || level === "read_only" ? readOnlyRuntimeRootPermissions : codingRuntimeRootPermissions;
+}
 
 async function prepareRuntimePathAuthority(persona: PersonaDefinition, settings: AppSettings): Promise<{
   pathAuthority: PathAuthority;
@@ -1078,10 +1096,11 @@ async function prepareRuntimePathAuthority(persona: PersonaDefinition, settings:
   const bootstrapStore = getBootstrapPathStore();
   await bootstrapStore.ensureUserDataDescendantDirectory(settings.workspaceRoot);
   await bootstrapStore.ensureUserDataDescendantDirectory(settings.outputDir);
+  const permissions = runtimeRootPermissions(persona);
   const candidates: Array<{ input: PathRootInput; optional: boolean }> = [
-    { input: { rootId: "workspace", role: "workspace", configuredPath: settings.workspaceRoot, permissions: runtimeRootPermissions }, optional: true },
-    { input: { rootId: "department", role: "department", configuredPath: settings.departmentDataRoot, permissions: runtimeRootPermissions }, optional: true },
-    { input: { rootId: "output", role: "output", configuredPath: settings.outputDir, permissions: runtimeRootPermissions }, optional: false },
+    { input: { rootId: "workspace", role: "workspace", configuredPath: settings.workspaceRoot, permissions }, optional: true },
+    { input: { rootId: "department", role: "department", configuredPath: settings.departmentDataRoot, permissions }, optional: true },
+    { input: { rootId: "output", role: "output", configuredPath: settings.outputDir, permissions }, optional: false },
   ];
   const available: PathRootInput[] = [];
   for (const candidate of candidates) {
@@ -1119,7 +1138,10 @@ async function issueRuntimeAuthority(persona: PersonaDefinition, settings: AppSe
   try {
     authority = capabilityBroker.createRuntimeAuthority({
       name: persona.name,
+      permissionLevel: persona.permissionLevel,
       tools: persona.tools,
+      allowTools: persona.allowTools,
+      denyTools: persona.denyTools,
       env: persona.env,
       systemPrompt: persona.systemPrompt,
       allowedRoots: persona.allowedRoots,
@@ -1163,6 +1185,12 @@ async function prepareRuntimeInstance(
   const rawPersona = personas.find(candidate => candidate.name === session.persona_name);
   if (!rawPersona) throw new Error(`Session 绑定的 Persona 不可用: ${session.persona_name}`);
   const persona = applyRuntimeSettings(rawPersona, settings);
+  initializeSessionPersonaBinding(identity.sessionId, persona);
+  const binding = sessionPersonaBinding(identity.sessionId);
+  if (!binding || binding.persona_name !== persona.name || binding.persona_digest !== (persona.sourceDigest ?? persona.digest)
+    || binding.permission_level !== personaPermissionLevel(persona)) {
+    throw new Error(`Session Persona 定义已变化，需要显式重新确认: ${persona.name}`);
+  }
   const memory = new ConversationMemory(80);
   const authority = await issueRuntimeAuthority(persona, settings);
   const subagents = new SubagentRegistry(identity.sessionId);
@@ -1207,6 +1235,24 @@ async function retireRuntimeInstance(runtime: AppSessionRuntime): Promise<void> 
   catch (error) { failures.push(error); }
   if (failures.length === 1) throw failures[0];
   if (failures.length > 1) throw new AggregateError(failures, "Session runtime retirement failed");
+}
+
+async function completePendingPersonaSwitch(registry: SessionRuntimeRegistry<AppSessionRuntime>, sessionId: string): Promise<void> {
+  const pending = pendingPersonaSwitches.get(sessionId);
+  if (!pending) return;
+  try {
+    await registry.replace(sessionId);
+    if (pendingPersonaSwitches.get(sessionId) === pending) pendingPersonaSwitches.delete(sessionId);
+  } catch (error) {
+    rebindSessionPersona(sessionId, pending.to, pending.from);
+    if (pendingPersonaSwitches.get(sessionId) === pending) pendingPersonaSwitches.delete(sessionId);
+    try {
+      await registry.replace(sessionId);
+    } catch (recoveryError) {
+      throw new AggregateError([error, recoveryError], "Persona switch failed and previous Session runtime could not be restored");
+    }
+    throw error;
+  }
 }
 
 function createRuntimeRegistry(
@@ -1300,7 +1346,7 @@ async function prepareOutputEnrollmentLease(
     rootId: "candidate-output",
     role: "output-enrollment-probe",
     configuredPath: candidateConfig.settings.outputDir,
-    permissions: runtimeRootPermissions,
+    permissions: codingRuntimeRootPermissions,
   };
   try {
     const probe = await pathPolicy.createAuthority([outputRoot]);
@@ -1602,7 +1648,9 @@ app.get("/api/personas", async (_req, res) => {
   if (personas.length === 0) personas = await listPersonas();
   res.json({
     personas: personas.map((p) => ({
-      name: p.name, displayName: p.displayName, description: p.description, tools: p.tools,
+      name: p.name, displayName: p.displayName, description: p.description,
+      permissionLevel: p.permissionLevel ?? "guarded", tools: p.tools,
+      allowTools: p.allowTools ?? [], denyTools: p.denyTools ?? [],
     })),
     current: selectedPersona()?.name ?? draftPersonaName,
   });
@@ -1614,13 +1662,48 @@ app.post("/api/switch-persona", async (req, res) => {
   const rawPersona = await getPersona(name);
   if (!rawPersona) { res.status(404).json({ error: `Persona 不存在: ${name}` }); return; }
   const persona = applyRuntimeSettings(rawPersona);
+  if (req.body?.sessionId !== undefined) {
+    let sessionId: string;
+    try { sessionId = exactSessionRuntimeIdentity(req.body.sessionId); }
+    catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : String(error) }); return; }
+    const session = getSessionInfo(sessionId);
+    if (!session) { res.status(404).json({ error: "Session 不存在" }); return; }
+    const registry = requireRuntimeRegistry();
+    if (registry.isRunning(sessionId)) { res.status(409).json({ error: "Session 正在运行，不能切换 Persona" }); return; }
+    const currentRaw = personas.find(candidate => candidate.name === session.persona_name);
+    if (!currentRaw) { res.status(409).json({ error: `Session 绑定的 Persona 不可用: ${session.persona_name}` }); return; }
+    const current = applyRuntimeSettings(currentRaw);
+    initializeSessionPersonaBinding(sessionId, current);
+    if (current.name !== persona.name || current.sourceDigest !== persona.sourceDigest) {
+      if (!rebindSessionPersona(sessionId, current, persona)) { res.status(409).json({ error: "Session Persona binding changed" }); return; }
+      try {
+        await registry.replace(sessionId);
+      } catch (error) {
+        rebindSessionPersona(sessionId, persona, current);
+        await registry.replace(sessionId).catch(() => undefined);
+        res.status(409).json({ error: `Persona 切换失败: ${error instanceof Error ? error.message : String(error)}` });
+        return;
+      }
+    }
+    res.json({
+      success: true,
+      sessionId,
+      persona: {
+        name: persona.name, displayName: persona.displayName, description: persona.description,
+        permissionLevel: persona.permissionLevel ?? "guarded", tools: persona.tools,
+      },
+    });
+    return;
+  }
   draftPersonaName = persona.name;
   selectSessionIdentity(null);
-
   console.log(`✅ Persona draft: ${persona.displayName} (${persona.name})`);
   res.json({
     success: true,
-    persona: { name: persona.name, displayName: persona.displayName, description: persona.description, tools: persona.tools },
+    persona: {
+      name: persona.name, displayName: persona.displayName, description: persona.description,
+      permissionLevel: persona.permissionLevel ?? "guarded", tools: persona.tools,
+    },
   });
 });
 
@@ -2832,7 +2915,7 @@ app.post("/api/chat", async (req, res) => {
       while (input !== null) {
         for await (const step of runtime.agent.run(input, runId, claim.signal, attachments)) emit(step);
         attachments = Object.freeze([]);
-        input = takeActiveRunInjection(chatSessionId, claim.signal);
+        input = pendingPersonaSwitches.has(chatSessionId) ? null : takeActiveRunInjection(chatSessionId, claim.signal);
       }
     });
   } catch (error) {
@@ -2869,6 +2952,12 @@ app.post("/api/chat", async (req, res) => {
     try { registry.releaseRun(claim, cancellationCleanupFailure); }
     catch (error) {
       if (!(error instanceof SessionRuntimeLifecycleError) || error.code !== "SESSION_RUNTIME_CLAIM_STALE") throw error;
+    }
+    try {
+      await completePendingPersonaSwitch(registry, chatSessionId);
+    } catch (error) {
+      status = "error";
+      emit({ type: "error", sessionId: chatSessionId, runId, content: `Persona 切换失败: ${error instanceof Error ? error.message : String(error)}`, timestamp: Date.now() });
     }
     if (streamOpen && !res.writableEnded) res.end();
   }
@@ -2998,7 +3087,7 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
             for await (const step of runtime.agent.run(input, runId, claim.signal)) {
               if (step?.type === "error") status = "error";
             }
-            input = takeActiveRunInjection(sessionId, claim.signal);
+            input = pendingPersonaSwitches.has(sessionId) ? null : takeActiveRunInjection(sessionId, claim.signal);
           }
         });
       } catch (error) {
@@ -3012,6 +3101,7 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
         updateDesktopSessionStatus(sessionId, status);
         try {
           registry.releaseRun(claim, settlementFailure);
+          await completePendingPersonaSwitch(registry, sessionId);
         } catch (error) {
           if (!(error instanceof SessionRuntimeLifecycleError) || error.code !== "SESSION_RUNTIME_CLAIM_STALE") {
             console.error("⚠️ 事件唤醒 run 结算失败:", error instanceof Error ? error.message : String(error));
@@ -3354,13 +3444,38 @@ function registerDynamicTools(
     executor: playbookAbortExec,
   });
 
+  const personaExecutors = createPersonaManagementExecutors({
+    list: () => personas.map(candidate => applyRuntimeSettings(candidate, settings)),
+    current: () => persona,
+    switchCurrentSession: async (sessionId, targetName, expectedDigest) => {
+      const session = getSessionInfo(sessionId);
+      if (!session || session.persona_name !== persona.name) throw new Error("Session Persona identity is stale");
+      if (pendingPersonaSwitches.has(sessionId)) throw new Error("Session already has a pending Persona switch");
+      const rawTarget = personas.find(candidate => candidate.name === targetName);
+      if (!rawTarget) throw new Error(`Persona 不存在: ${targetName}`);
+      const target = applyRuntimeSettings(rawTarget, settings);
+      if (target.digest !== expectedDigest) throw new Error("Persona definition changed after selection; list Personas again before switching");
+      if (target.name === persona.name && target.sourceDigest === persona.sourceDigest) return target;
+      if (!rebindSessionPersona(sessionId, persona, target)) throw new Error("Session Persona binding changed; list Personas again before switching");
+      pendingPersonaSwitches.set(sessionId, Object.freeze({ from: persona, to: target }));
+      return target;
+    },
+  });
+  registerDynamicTool(authority, { name: "list_personas", definition: listPersonasDef, executor: personaExecutors.list_personas });
+  registerDynamicTool(authority, { name: "current_persona", definition: currentPersonaDef, executor: personaExecutors.current_persona });
+  registerDynamicTool(authority, { name: "find_personas", definition: findPersonasDef, executor: personaExecutors.find_personas });
+  registerDynamicTool(authority, { name: "switch_persona", definition: switchPersonaDef, executor: personaExecutors.switch_persona });
+
   // save_persona —— 需要获取当前 persona 配置
   registerDynamicTool(authority, {
     name: "save_persona",
     definition: savePersonaDef,
     executor: createSavePersonaExec(
       () => ({
+        permissionLevel: persona.permissionLevel ?? "guarded",
         tools: persona.tools,
+        allowTools: persona.allowTools ?? [],
+        denyTools: persona.denyTools ?? [],
         env: persona.env,
         networkPolicy: persona.networkPolicy,
         systemPrompt: persona.systemPrompt,
@@ -3406,6 +3521,7 @@ export async function shutdown(exitProcess = true): Promise<void> {
 
   if (runtimeRegistry === retiringRegistry) runtimeRegistry = null;
   activeRunInteractions.clear();
+  pendingPersonaSwitches.clear();
   for (const sessionId of [...activeRunInjections.keys()]) clearActiveRunInjections(sessionId);
 
   await terminalFacade.disposeAllForShutdown();

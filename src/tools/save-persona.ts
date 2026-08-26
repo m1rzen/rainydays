@@ -3,7 +3,7 @@
 // ===========================================
 
 import matter from "gray-matter";
-import type { PersonaNetworkPolicy, ToolDefinition, ToolExecutor } from "../types.js";
+import type { PersonaNetworkPolicy, PersonaPermissionLevel, ToolDefinition, ToolExecutor } from "../types.js";
 import { getManagedPathStore, validateManagedIdentifier } from "../managed-path-store.js";
 import { PathDeniedError } from "../path-policy.js";
 
@@ -27,7 +27,10 @@ export const savePersonaDef: ToolDefinition = {
 
 export function createSavePersonaExec(
   getCurrentPersona: () => {
+    permissionLevel: PersonaPermissionLevel;
     tools: readonly string[];
+    allowTools: readonly string[];
+    denyTools: readonly string[];
     env: Readonly<Record<string, string>>;
     networkPolicy: PersonaNetworkPolicy;
     systemPrompt: string;
@@ -52,7 +55,10 @@ export function createSavePersonaExec(
       name,
       display_name: displayName,
       description,
+      permission_level: current.permissionLevel ?? "guarded",
       tools: current.tools,
+      allow_tools: current.allowTools ?? [],
+      deny_tools: current.denyTools ?? [],
       env: current.env,
       network_policy: current.networkPolicy.mode,
       ...(current.networkPolicy.mode === "allowlist" ? { network_origins: current.networkPolicy.origins } : {}),

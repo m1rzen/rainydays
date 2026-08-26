@@ -2,6 +2,7 @@
 name: daily
 display_name: 日常助理
 description: 日常闲聊、生活助手、信息查询、翻译、头脑风暴
+permission_level: guarded
 network_policy: unrestricted
 tools:
   - get_current_time

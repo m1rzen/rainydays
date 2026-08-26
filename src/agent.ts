@@ -698,12 +698,15 @@ export class Agent {
           };
         }
 
+        const personaSwitchExclusiveError = toolCallsParsed.some(parsed => parsed.toolName === "switch_persona") && toolCallsParsed.length !== 1
+          ? new ToolArgumentsError("switch_persona must be the only tool call at its run boundary")
+          : null;
         const plannedCalls: PlannedAgentToolCall[] = toolCallsParsed.map((parsed, originalIndex) => {
           const trace = new ToolStageTrace();
           let inspected: InspectedToolCall | null = null;
-          let planningError: unknown = parsed.toolArgs
+          let planningError: unknown = personaSwitchExclusiveError ?? (parsed.toolArgs
             ? null
-            : new ToolArgumentsError(parsed.parseError ?? "工具参数不是合法 JSON");
+            : new ToolArgumentsError(parsed.parseError ?? "工具参数不是合法 JSON"));
           if (parsed.toolArgs) {
             try {
               inspected = inspectToolCall(capabilityContext, parsed.toolName, parsed.toolArgs);
@@ -852,6 +855,7 @@ export class Agent {
           console.log(`   └ ${toolName} (${toolMs}ms)`);
         }
 
+        if (results.some(result => result.toolName === "switch_persona" && result.outcome.status === "success")) return;
         continue;
       }
 

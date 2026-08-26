@@ -6,9 +6,10 @@ import { makeTempDir, projectRoot, removeFixture } from "../helpers.mjs";
 
 test("RT-05 production runtime wires every dynamic adapter through the unified registrar", async () => {
   const expected = [
-    "consolidate", "cron_cancel", "cron_schedule", "curate", "muse", "oracle_query",
-    "playbook_abort", "playbook_execute", "save_persona", "subagent", "subagent_list",
-    "subagent_output", "subagent_peek", "subagent_post", "subagent_stop", "subagent_wait",
+    "consolidate", "cron_cancel", "cron_schedule", "curate", "current_persona", "find_personas",
+    "list_personas", "muse", "oracle_query", "playbook_abort", "playbook_execute", "save_persona",
+    "subagent", "subagent_list", "subagent_output", "subagent_peek", "subagent_post", "subagent_stop",
+    "subagent_wait", "switch_persona",
   ];
   for (const exactCasePath of ["src/index.ts", "dist/index.js"]) {
     const source = await readFile(path.join(projectRoot, exactCasePath), "utf8");
