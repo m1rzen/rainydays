@@ -88,7 +88,7 @@
     },
     {
       "exactCasePath": "dist/tools/script.js",
-      "sha256": "554269f3025a7d482455e3adbc51cbdef0a144e972bc8d54c7e42ae73e10b774",
+      "sha256": "fc252f7e2f1e2e279012fa679be23d581d1b0d2acfa667c298a056a0dc150307",
       "owner": "RT-05"
     },
     {
@@ -193,7 +193,7 @@
     },
     {
       "exactCasePath": "src/tools/script.ts",
-      "sha256": "469905578bc470620d9ae6abc49c8bfd507601004898f14d4a8e06cce3ecded4",
+      "sha256": "210f9d549c62a13345f6b10450a1faa303bcbf684477c9a9dafa65aa79d3973e",
       "owner": "RT-05"
     },
     {
@@ -289,5 +289,5 @@
       "owner": "RT-05"
     }
   ],
-  "canonicalPayloadSha256": "6d306d9497dfd924ed3b0d9ada7029fa869362b8ba0936b0089b66be0eeaa09c"
+  "canonicalPayloadSha256": "6d76fe3fcdf1a7001eaca086c9cef1751d6b1315e1b33a0dc74855197d73f154"
 }

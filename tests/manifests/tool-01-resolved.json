@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "e54b9c71091575084839e6582397d749bf3aa5ed861433b0ba55f5c5adf12528",
+      "sha256": "9a23415f94964b6b9da9acdd6c13a9627f6ff76b4255e0befe6f533a32b9f6b9",
       "owner": "TOOL-01"
     },
     {
@@ -38,7 +38,7 @@
     },
     {
       "exactCasePath": "src/tool-protocol.ts",
-      "sha256": "b4619568460adc6202c991b6c4702d48754c81a51feff2b4482f27353fb6df21",
+      "sha256": "7f7df282d91cbb440ba7d3fe75eee080c655970efe5d79a58055d9e50956c03f",
       "owner": "TOOL-01"
     },
     {
@@ -53,17 +53,17 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "9614cdb513f3989a26498f5975dd8d1110b33bcd7241b713f8f931c22f4be45b",
+      "sha256": "05007ca981d7b04ff5bb9a2def32c341658363860a945bfa2316c37f5426d48f",
       "owner": "TOOL-01"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "f21be156821bce9508ada6e685a2540ade62aa2e35c15c84d528ab015b770c67",
+      "sha256": "51c30860aeee28ebccb4c34ff26e525adc0d649944d5fc700e6bc5f757b68b08",
       "owner": "TOOL-01"
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "0d96abe68d1ae50cce4e533768446a17bb201dd44e17bbfb2411a40be1afaf82",
+      "sha256": "e25e460684c326a1ae86bf567e86fc978e2777fa591c650c4399c0b1164bd86f",
       "owner": "TOOL-01"
     }
   ],
@@ -77,7 +77,7 @@
     },
     {
       "exactCasePath": "tests/unit/tool-protocol.test.mjs",
-      "sha256": "2d558e20022f7ff1a3f8f64ab5c21cd088806b9dec023aaa1bfe8bb4430346d4",
+      "sha256": "d4beca652dcefcc64fe1dea5398d21366f2eeb967c5ade30fed5e85dd7b0959c",
       "kind": "test",
       "layer": "unit",
       "owner": "TOOL-01"
@@ -91,11 +91,11 @@
     },
     {
       "exactCasePath": "tests/unit/framework.test.mjs",
-      "sha256": "0d96abe68d1ae50cce4e533768446a17bb201dd44e17bbfb2411a40be1afaf82",
+      "sha256": "e25e460684c326a1ae86bf567e86fc978e2777fa591c650c4399c0b1164bd86f",
       "kind": "test",
       "layer": "unit",
       "owner": "TOOL-01"
     }
   ],
-  "canonicalPayloadSha256": "2961046a0c722fffa2e6208f3662cfe56812c1a779be5002346d6bcec59b7839"
+  "canonicalPayloadSha256": "b1970a456fe22dbba2299626bfa28afebfd3a5ef87038d4012748d0a527006b4"
 }

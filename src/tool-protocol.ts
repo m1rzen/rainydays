@@ -43,7 +43,7 @@ const BODY_MODES: Readonly<Record<string, ToolBodyMode>> = Object.freeze({
     { blockName: "NEW_STRING", parameter: "new_string" },
   ], [header("path", "path", true), header("replace_all", "replace_all")]),
   execute_command: rawBody("BASH", "command", [header("cwd", "cwd")]),
-  script: rawBody("SCRIPT", "code", []),
+  script: rawBody("SCRIPT", "code", [header("lang", "lang"), header("cwd", "cwd"), header("timeout", "timeout")]),
 });
 
 const HOST_BOUND_TOOLS = new Set([

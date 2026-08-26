@@ -163,6 +163,9 @@ struct Execution {
   std::string fixed_acl_variant;
   std::string expected_root_identity_digest;
   bool proof_seen = false;
+  bool host_evidence_seen = false;
+  DWORD host_evidence_child_exit = 0;
+  std::string host_evidence_reason;
   bool launcher_observation = false;
   bool protocol_failed = false;
   std::uint64_t lifecycle_process_starts = 0;
@@ -177,6 +180,7 @@ struct Dispatch {
   std::vector<uint8_t> frame;
   bool completion;
   DWORD exit_code;
+  bool child_failed = false;
 };
 
 void Throw(napi_env env, const char* code, const char* message) { napi_throw_error(env, code, message); }
@@ -480,24 +484,57 @@ std::string ExtractExecutionId(const std::string& json) {
 }
 
 enum class ProofFrame { ordinary, valid, invalid };
-bool CanonicalOutputFrame(const Json& parsed, size_t* decoded_size) {
+bool CanonicalOutputFrame(const Json& parsed, std::string* stream_value, std::vector<unsigned char>* decoded_value) {
   if (!ExactKeys(parsed, {"data", "stream", "version"})) return false; const Json* version = Field(parsed, "version", Json::Kind::number); const Json* stream = Field(parsed, "stream", Json::Kind::string); const Json* data = Field(parsed, "data", Json::Kind::string); std::vector<unsigned char> decoded;
   const bool valid = version && version->scalar == "1" && stream && (stream->scalar == "stdout" || stream->scalar == "stderr") && data && data->scalar.size() <= ((kMaxFrame + 2) / 3) * 4 && DecodeCanonicalBase64(data->scalar, &decoded) && decoded.size() <= kMaxFrame;
-  if (valid && decoded_size) *decoded_size = decoded.size(); return valid;
+  if (valid && stream_value) *stream_value = stream->scalar; if (valid && decoded_value) *decoded_value = std::move(decoded); return valid;
 }
 ProofFrame CaptureProofFrame(Execution* execution, const std::vector<uint8_t>& frame) {
   if (frame.size() < 5) return ProofFrame::invalid; std::string json(reinterpret_cast<const char*>(frame.data() + 4), frame.size() - 4); Json parsed;
   if (!Parser(json).Parse(&parsed) || parsed.kind != Json::Kind::object) return ProofFrame::invalid;
-  const Json* kind = Field(parsed, "kind", Json::Kind::string); if (!kind) { size_t output_bytes = 0; if (!CanonicalOutputFrame(parsed, &output_bytes)) return ProofFrame::invalid; execution->aggregate_output_bytes.fetch_add(output_bytes); return ProofFrame::ordinary; }
+  const Json* kind = Field(parsed, "kind", Json::Kind::string); if (!kind) {
+    std::string stream; std::vector<unsigned char> decoded; if (!CanonicalOutputFrame(parsed, &stream, &decoded)) return ProofFrame::invalid; execution->aggregate_output_bytes.fetch_add(decoded.size());
+    const std::string text(decoded.begin(), decoded.end()); const std::string prefix = "SEC03_EVIDENCE "; const std::string exit_marker = " childExit="; const std::string reason_marker = " completionReason=";
+    if (stream == "stderr" && text.rfind(prefix, 0) == 0) {
+      const auto exit_start = text.find(exit_marker); const auto reason_start = text.find(reason_marker);
+      if (exit_start != std::string::npos && reason_start != std::string::npos && reason_start > exit_start + exit_marker.size() && text.back() == '\n') {
+        std::uint64_t child_exit = 0; const std::string exit_text = text.substr(exit_start + exit_marker.size(), reason_start - exit_start - exit_marker.size()); const std::string reason = text.substr(reason_start + reason_marker.size(), text.size() - reason_start - reason_marker.size() - 1);
+        if (execution->host_evidence_seen || !mini_lux::sec03::Decimal(exit_text, &child_exit) || child_exit > MAXDWORD || reason.empty() || reason.size() > 64) return ProofFrame::invalid;
+        execution->host_evidence_seen = true; execution->host_evidence_child_exit = static_cast<DWORD>(child_exit); execution->host_evidence_reason = reason;
+      }
+    }
+    return ProofFrame::ordinary;
+  }
   const Json* version = Field(parsed, "version", Json::Kind::number); const Json* proof_hex = Field(parsed, "proofHex", Json::Kind::string); const Json* mac = Field(parsed, "mac", Json::Kind::string); const Json* key_id = Field(parsed, "keyId", Json::Kind::string);
   if (execution->proof_seen || !ExactKeys(parsed, {"keyId", "kind", "mac", "proofHex", "version"}) || kind->scalar != "native-proof" || !version || version->scalar != "1" || !proof_hex || !mac || !key_id || !mini_lux::sec03::CanonicalHex(proof_hex->scalar, 1, mini_lux::sec03::kMaxProofBytes) || !mini_lux::sec03::CanonicalHex(mac->scalar, 32, 32) || !mini_lux::sec03::CanonicalHex(key_id->scalar, 32, 32)) return ProofFrame::invalid;
   std::vector<unsigned char> proof; std::map<std::string, std::string> fields; if (!mini_lux::sec03::Unhex(proof_hex->scalar, &proof) || proof.size() > mini_lux::sec03::kMaxProofBytes || !mini_lux::sec03::ParseCanonicalProof(std::string(proof.begin(), proof.end()), execution->candidate_sha256, execution->build_sha256, execution->source_sha256, execution->host_sha256, execution->launcher_sha256, key_id->scalar, &fields) || fields.at("execution") != execution->execution_id) return ProofFrame::invalid;
   execution->native_proof.assign(proof.begin(), proof.end()); execution->native_proof_mac = mac->scalar; execution->native_proof_key_id = key_id->scalar; execution->proof_seen = true; return ProofFrame::valid;
 }
 
+bool AuthenticatedProofChildExit(const Execution& execution, DWORD* output) {
+  if (!output || !execution.proof_seen || execution.native_proof.empty()) return false;
+  const std::string proof(execution.native_proof.begin(), execution.native_proof.end());
+  const std::string marker = "\nchildExit="; const auto start = proof.find(marker);
+  if (start == std::string::npos || proof.find(marker, start + marker.size()) != std::string::npos) return false;
+  const auto value_start = start + marker.size(); const auto end = proof.find('\n', value_start);
+  if (end == std::string::npos || end == value_start) return false;
+  std::uint64_t value = 0; if (!mini_lux::sec03::Decimal(proof.substr(value_start, end - value_start), &value) || value > MAXDWORD) return false;
+  *output = static_cast<DWORD>(value); return true;
+}
+
+bool AuthenticatedProofCompletionReason(const Execution& execution, std::string* output) {
+  if (!output || !execution.proof_seen || execution.native_proof.empty()) return false;
+  const std::string proof(execution.native_proof.begin(), execution.native_proof.end());
+  const std::string marker = "\ncompletionReason="; const auto start = proof.find(marker);
+  if (start == std::string::npos || proof.find(marker, start + marker.size()) != std::string::npos) return false;
+  const auto value_start = start + marker.size(); const auto end = proof.find('\n', value_start);
+  if (end == std::string::npos || end == value_start || end - value_start > 64) return false;
+  *output = proof.substr(value_start, end - value_start); return true;
+}
+
 DWORD ProofHostExitCode(const std::map<std::string, std::string>& fields) {
   const auto reason = fields.find("completionReason"); if (reason == fields.end()) return 1;
-  if (reason->second == "completed") return 0; if (reason->second == "protocol-invalid") return 71; if (reason->second == "acl-sharing-failed" || reason->second == "acl-propagation-failed" || reason->second == "acl-conflict") return 74; if (reason->second == "limit-wall") return 80; if (reason->second == "limit-idle") return 81; if (reason->second == "limit-output") return 82; if (reason->second == "cancelled") return 83; if (reason->second == "limit-cpu") return 84; if (reason->second == "limit-active-process") return 85; if (reason->second == "limit-process-memory") return 86; if (reason->second == "limit-job-memory") return 87; if (reason->second == "owner-retired") return 88; if (reason->second == "session-retired") return 89; if (reason->second == "service-shutdown") return 90; if (reason->second == "channel-lost") return 92; if (reason->second == "cleanup-failed") return 75; return 1;
+  if (reason->second == "completed") return 0; if (reason->second == "child-failed") { const auto child = fields.find("childExit"); std::uint64_t value = 0; return child != fields.end() && mini_lux::sec03::Decimal(child->second, &value) && value <= MAXDWORD ? static_cast<DWORD>(value) : 1; } if (reason->second == "protocol-invalid") return 71; if (reason->second == "acl-sharing-failed" || reason->second == "acl-propagation-failed" || reason->second == "acl-conflict") return 74; if (reason->second == "limit-wall") return 80; if (reason->second == "limit-idle") return 81; if (reason->second == "limit-output") return 82; if (reason->second == "cancelled") return 83; if (reason->second == "limit-cpu") return 84; if (reason->second == "limit-active-process") return 85; if (reason->second == "limit-process-memory") return 86; if (reason->second == "limit-job-memory") return 87; if (reason->second == "owner-retired") return 88; if (reason->second == "session-retired") return 89; if (reason->second == "service-shutdown") return 90; if (reason->second == "channel-lost") return 92; if (reason->second == "cleanup-failed") return 75; return 1;
 }
 
 std::string LauncherMarkerPayload(const Execution& execution, DWORD exit_code) {
@@ -520,8 +557,12 @@ void CallJs(napi_env env, napi_value callback, void*, void* data) {
     napi_value result, value;
     napi_create_object(env, &result);
     napi_create_uint32(env, dispatch->exit_code, &value); napi_set_named_property(env, result, "exitCode", value);
-    const char* reason = "host-failed";
-    switch (dispatch->exit_code) {
+    DWORD proof_child_exit = 0;
+    if (AuthenticatedProofChildExit(*execution, &proof_child_exit)) napi_create_uint32(env, proof_child_exit, &value); else napi_get_null(env, &value);
+    napi_set_named_property(env, result, "childExit", value);
+    const char* reason = "host-failed"; std::string proof_reason;
+    if (dispatch->child_failed || (AuthenticatedProofCompletionReason(*execution, &proof_reason) && proof_reason == "child-failed")) reason = "child-failed";
+    else switch (dispatch->exit_code) {
       case 0: reason = "completed"; break;
       case 71: reason = "EXEC_PROTOCOL_INVALID"; break;
       case 72: reason = "EXEC_NATIVE_PRIMITIVE_UNAVAILABLE"; break;
@@ -570,7 +611,15 @@ void ReaderMain(Execution* execution) {
   if (!execution->fixed_acl_variant.empty()) {
     if (execution->proof_seen || !RecoverFixedAclReceipt(execution, code) || !execution->launcher_observation) execution->protocol_failed = true;
   } else if (execution->proof_seen && (execution->launcher_observation || !CreateLauncherChannelMarker(execution, code))) execution->protocol_failed = true;
-  auto completion = std::make_unique<Dispatch>(); completion->execution = execution; completion->completion = true; completion->exit_code = code;
+  DWORD authenticated_child_exit = 0; std::string authenticated_reason;
+  const bool child_exit_available = AuthenticatedProofChildExit(*execution, &authenticated_child_exit);
+  const bool reason_available = AuthenticatedProofCompletionReason(*execution, &authenticated_reason);
+  if (!execution->host_evidence_seen || execution->host_evidence_reason.empty()) execution->protocol_failed = true;
+  if (execution->proof_seen && (!child_exit_available || !reason_available
+    || authenticated_child_exit != execution->host_evidence_child_exit || authenticated_reason != execution->host_evidence_reason)) execution->protocol_failed = true;
+  const bool child_failed = execution->host_evidence_seen && execution->host_evidence_reason == "child-failed";
+  if (child_failed && code != execution->host_evidence_child_exit) execution->protocol_failed = true;
+  auto completion = std::make_unique<Dispatch>(); completion->execution = execution; completion->completion = true; completion->exit_code = child_failed ? execution->host_evidence_child_exit : code; completion->child_failed = child_failed;
   napi_call_threadsafe_function(execution->tsfn, completion.release(), napi_tsfn_blocking);
   napi_release_threadsafe_function(execution->tsfn, napi_tsfn_release);
 }

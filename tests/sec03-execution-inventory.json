@@ -4,8 +4,8 @@
   "architectureSha256": "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe",
   "scannerSha256": "d81dfe30bf6f7df1ce3221861923b011c495fb6be0af1efb026f8203f69d8cb1",
   "crosscheckSha256": "a2c62c23669d2924472d4c80761122a5c4446d12e6a27f8595221f55a0290093",
-  "policySha256": "42e1b95aacae4d80d13514d047ec14f40f29c46725866039aee52cd5ec8b77f1",
-  "sourceSetSha256": "187e3c0b689dfbe1a256dc1334de2c0612a7a5b3ea5ae1deb90961bfe37b0a1f",
+  "policySha256": "935a3cbc3d63d6dff1ba501340cb1e721151442039e0b6f3ef3a858eb6178474",
+  "sourceSetSha256": "b96e9c9ab2d27112ce38ce91826c530d9899559ef228fd511d3a903d42c9e832",
   "files": [
     {
       "sourcePath": "electron/ipc-contract.cjs",
@@ -57,14 +57,14 @@
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
-      "bytes": 150647,
-      "sha256": "bd26c9f6e339b00cc8544189a741676c5f09b36dd037997e67e8e814b53e896b",
+      "bytes": 151023,
+      "sha256": "7aae6f025aa45c433936d96abf3fb68c1e0e3612fea0079aee50cb7ae3a15079",
       "executionClass": "native-host"
     },
     {
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "bytes": 354931,
-      "sha256": "812b4605305a6c6e0c6deb9bc4c13aa34751e16b27a8e6b4ec3e144d50664a62",
+      "bytes": 359599,
+      "sha256": "89aa4c6c63a1dda3fc469fcd96f571a83fa2563753aee6aadccb5ed64f2d9716",
       "executionClass": "native-host"
     },
     {
@@ -386,6 +386,12 @@
       "executionClass": "build-test"
     },
     {
+      "sourcePath": "scripts/generate-tool04-resolved-manifest.mjs",
+      "bytes": 5922,
+      "sha256": "e91d8db92f561a5f609bbd69541c81e5129e6ae89fdbf0b2dfeaaa380218a8d6",
+      "executionClass": "build-test"
+    },
+    {
       "sourcePath": "scripts/gov04/bootstrap-electron-headers.mjs",
       "bytes": 8165,
       "sha256": "9b11329e45c929027b6c1c6958ce544493d45bd82989268e484707b20c0f9754",
@@ -656,6 +662,12 @@
       "executionClass": "build-test"
     },
     {
+      "sourcePath": "scripts/tool04-governance.mjs",
+      "bytes": 11572,
+      "sha256": "1c6a0194635b5abbed1707d2b6c7bdafef515b09ab43b8f157aaa484c9a66bfe",
+      "executionClass": "build-test"
+    },
+    {
       "sourcePath": "scripts/version-test-child.mjs",
       "bytes": 21286,
       "sha256": "46114fe2d8ee5d607d33804e1832efd83c99d59be0a15b907ac4ce82b251eb54",
@@ -777,8 +789,8 @@
     },
     {
       "sourcePath": "src/execution-native.ts",
-      "bytes": 23722,
-      "sha256": "d4a054185f239b1ff562012ebe0614e4128b1ceacd00c1ab652072c8f0bbd9d4",
+      "bytes": 25412,
+      "sha256": "4fa8d7600bb79b86e4741aa8952ea4231ce9b6251a553d00c318ea6b97bfcf33",
       "executionClass": "product-runtime"
     },
     {
@@ -789,8 +801,8 @@
     },
     {
       "sourcePath": "src/execution-runtime.ts",
-      "bytes": 37359,
-      "sha256": "80cf8eea23fea6711bd5ea36ba46fdfe2ad028ccd89b40bef16ee1785d22631d",
+      "bytes": 38195,
+      "sha256": "0264db73364b929b7a3e9de95093798b303cdb6bc81d301b8bfd327f6944e676",
       "executionClass": "product-runtime"
     },
     {
@@ -932,6 +944,12 @@
       "executionClass": "product-runtime"
     },
     {
+      "sourcePath": "src/script-runtime.ts",
+      "bytes": 6129,
+      "sha256": "e9ff0fcc8bf3a5c9b3c947309716a7e17987032e0f5d1a814c1e5f0fbd6e4976",
+      "executionClass": "product-runtime"
+    },
+    {
       "sourcePath": "src/security-audit-journal.ts",
       "bytes": 10273,
       "sha256": "75130d7aa7b1845f77db7abbc8ca5b4a9675327d97de8b47b1dee838bbfd993c",
@@ -1017,8 +1035,8 @@
     },
     {
       "sourcePath": "src/tool-protocol.ts",
-      "bytes": 14721,
-      "sha256": "b4619568460adc6202c991b6c4702d48754c81a51feff2b4482f27353fb6df21",
+      "bytes": 14795,
+      "sha256": "7f7df282d91cbb440ba7d3fe75eee080c655970efe5d79a58055d9e50956c03f",
       "executionClass": "product-runtime"
     },
     {
@@ -1131,8 +1149,8 @@
     },
     {
       "sourcePath": "src/tools/script.ts",
-      "bytes": 2621,
-      "sha256": "469905578bc470620d9ae6abc49c8bfd507601004898f14d4a8e06cce3ecded4",
+      "bytes": 4184,
+      "sha256": "210f9d549c62a13345f6b10450a1faa303bcbf684477c9a9dafa65aa79d3973e",
       "executionClass": "product-runtime"
     },
     {
@@ -1430,6 +1448,12 @@
       "executionClass": "build-test"
     },
     {
+      "sourcePath": "tests/contract/tool04-governance.test.mjs",
+      "bytes": 5093,
+      "sha256": "e70a9158d8f21c72d2959d69af12450c4231f49cbb515a0371737ee24ab37596",
+      "executionClass": "build-test"
+    },
+    {
       "sourcePath": "tests/electron/desktop-smoke.test.mjs",
       "bytes": 73831,
       "sha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3",
@@ -1539,8 +1563,8 @@
     },
     {
       "sourcePath": "tests/helpers.mjs",
-      "bytes": 79418,
-      "sha256": "f21be156821bce9508ada6e685a2540ade62aa2e35c15c84d528ab015b770c67",
+      "bytes": 80567,
+      "sha256": "51c30860aeee28ebccb4c34ff26e525adc0d649944d5fc700e6bc5f757b68b08",
       "executionClass": "build-test"
     },
     {
@@ -1778,6 +1802,12 @@
       "executionClass": "build-test"
     },
     {
+      "sourcePath": "tests/integration/tool04-script-native.test.mjs",
+      "bytes": 8404,
+      "sha256": "e1b136923efa03be3a597da3b1eec9ff80a071ba4c8ec61aa93f6e1b403051a2",
+      "executionClass": "build-test"
+    },
+    {
       "sourcePath": "tests/integration/version-model.test.mjs",
       "bytes": 3069,
       "sha256": "92bbe06cbeee29ecbcdcf939e39d4bce7e7900f5646dd6b7ff4b798b2b926680",
@@ -1929,8 +1959,8 @@
     },
     {
       "sourcePath": "tests/unit/framework.test.mjs",
-      "bytes": 56093,
-      "sha256": "0d96abe68d1ae50cce4e533768446a17bb201dd44e17bbfb2411a40be1afaf82",
+      "bytes": 56372,
+      "sha256": "e25e460684c326a1ae86bf567e86fc978e2777fa591c650c4399c0b1164bd86f",
       "executionClass": "build-test"
     },
     {
@@ -2049,14 +2079,20 @@
     },
     {
       "sourcePath": "tests/unit/tool-protocol.test.mjs",
-      "bytes": 10321,
-      "sha256": "2d558e20022f7ff1a3f8f64ab5c21cd088806b9dec023aaa1bfe8bb4430346d4",
+      "bytes": 10970,
+      "sha256": "d4beca652dcefcc64fe1dea5398d21366f2eeb967c5ade30fed5e85dd7b0959c",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/unit/tool-scheduler.test.mjs",
       "bytes": 3236,
       "sha256": "97c9055054b83a25b5e9fa409089573ed3cb9319f81a68aa2d7d9943581f1b18",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/unit/tool04-script-runtime.test.mjs",
+      "bytes": 2889,
+      "sha256": "5d8007c6f4e12e80c8e3d940423f505504faad99e9f02c21a33d6dea5227ed0e",
       "executionClass": "build-test"
     },
     {
@@ -2390,7 +2426,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-bca77f9be96a26e24c6d9257",
+      "id": "exec-c9d35575ff853bda23e37e70",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 870,
@@ -2408,7 +2444,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-e114379242a459cf8b411503",
+      "id": "exec-060e2fcac83011efb6e16c36",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 871,
@@ -2426,7 +2462,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-58bd5ba2007a05bca8d32703",
+      "id": "exec-78475e0910417c02f0285f65",
       "occurrence": 2,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 872,
@@ -2444,7 +2480,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-a39e11087c750f6db5dabe96",
+      "id": "exec-b64380d1e80098ed64c97e65",
       "occurrence": 3,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 876,
@@ -2462,7 +2498,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-a7995b04b15297957925eee3",
+      "id": "exec-dff88c8d3a9c2c74cbe86e59",
       "occurrence": 4,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 887,
@@ -2480,7 +2516,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-e29836963e1a68d78b2d0f34",
+      "id": "exec-d2ec7e5968b99408b2a0a952",
       "occurrence": 5,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 903,
@@ -2498,7 +2534,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-526285050c7e504408a98dc2",
+      "id": "exec-4f390d4acb11b2294b5f3da1",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 905,
@@ -2516,7 +2552,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-56d088e8d623a7968128823b",
+      "id": "exec-d65707802afb4017c2a40745",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 906,
@@ -2534,7 +2570,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-8109a167fb9b129a59812446",
+      "id": "exec-582790794cda8b80a6f7ea8f",
       "occurrence": 6,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 907,
@@ -2552,7 +2588,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-4eb2bac52e902408ef7f4915",
+      "id": "exec-a86d63733d05ef83c69f568f",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 912,
@@ -2571,7 +2607,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-f8f24c6ca45e0f4ce0fc3430",
+      "id": "exec-161f2e1216e2257c60212545",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 919,
@@ -2590,7 +2626,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-97e3b28af74ae13c796d083a",
+      "id": "exec-d2eb7957e708d8a1cc63cc35",
       "occurrence": 7,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 919,
@@ -2608,7 +2644,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-df0af2bbf8f12535778431ae",
+      "id": "exec-07db68dbcb61c3f1f87ad0a3",
       "occurrence": 2,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 924,
@@ -2627,7 +2663,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-e4f1b1adc6b2f4cd8574d9e7",
+      "id": "exec-87673dedc8b7d70d46f3b4e0",
       "occurrence": 8,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 924,
@@ -2645,7 +2681,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-3211397665ee0be42576e6bc",
+      "id": "exec-944ca70ed26a7ee736908279",
       "occurrence": 3,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 930,
@@ -2664,7 +2700,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-03b190ad5d2fce18ebce2269",
+      "id": "exec-6dd222afa0e3b19bf78f3df8",
       "occurrence": 9,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 930,
@@ -2682,7 +2718,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-15e000cae22c1c34615d5a43",
+      "id": "exec-d7950f40f38f9b871b286019",
       "occurrence": 4,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 933,
@@ -2701,7 +2737,7 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-cf314bf52678afb8bae5c4e8",
+      "id": "exec-6fdc91901f4f05ac6e307f2f",
       "occurrence": 10,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
       "line": 933,
@@ -2719,10 +2755,10 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-021c50bf44a5bca2e4dccbc5",
+      "id": "exec-cb1e11bb8b8770de9e85ad02",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
-      "line": 957,
+      "line": 959,
       "column": 150,
       "nodeKind": "NativeCallExpression",
       "container": "Run",
@@ -2742,10 +2778,10 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-ed395120ad6caa62a765c91c",
+      "id": "exec-4ec571a1d78e5ad2a1f7e657",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
-      "line": 961,
+      "line": 963,
       "column": 65,
       "nodeKind": "NativeCallExpression",
       "container": "Run",
@@ -2760,10 +2796,10 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-078fea0949f7763bdd92abeb",
+      "id": "exec-60fca6bf3b12838d20afa7db",
       "occurrence": 5,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
-      "line": 981,
+      "line": 983,
       "column": 235,
       "nodeKind": "NativeCallExpression",
       "container": "Run",
@@ -2779,10 +2815,10 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-bf4bdbb7694216871cf0c6bd",
+      "id": "exec-9de82e0a780a1abd7c2b8fd7",
       "occurrence": 11,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
-      "line": 981,
+      "line": 983,
       "column": 516,
       "nodeKind": "NativeCallExpression",
       "container": "Run",
@@ -2797,10 +2833,10 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-349209e850751f1fd02da7d7",
+      "id": "exec-9a80516b3589a7b7b9f0cbeb",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
-      "line": 982,
+      "line": 984,
       "column": 212,
       "nodeKind": "NativeCallExpression",
       "container": "Run",
@@ -2815,10 +2851,10 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-bee38d3db9eb139145f3b072",
+      "id": "exec-630a9b22d1d1be435569b1b8",
       "occurrence": 2,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
-      "line": 1008,
+      "line": 1010,
       "column": 106,
       "nodeKind": "NativeCallExpression",
       "container": "Run",
@@ -2833,10 +2869,10 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-46459ba98b3bf4f1d0bc35c6",
+      "id": "exec-f3b5dac869c3a9d831956ef0",
       "occurrence": 3,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
-      "line": 1015,
+      "line": 1017,
       "column": 69,
       "nodeKind": "NativeCallExpression",
       "container": "Run",
@@ -2851,10 +2887,10 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-b2c075f50253d5df8ad5c289",
+      "id": "exec-fd4f5c05610194a3a2327cc0",
       "occurrence": 4,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
-      "line": 1016,
+      "line": 1018,
       "column": 268,
       "nodeKind": "NativeCallExpression",
       "container": "Run",
@@ -2869,10 +2905,10 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-a4062360101c4877e28050e6",
+      "id": "exec-6d5ed93dcf1c828ee3fffa1e",
       "occurrence": 6,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
-      "line": 1018,
+      "line": 1020,
       "column": 17,
       "nodeKind": "NativeCallExpression",
       "container": "Run",
@@ -2888,10 +2924,10 @@
       "classification": "native-host-adapter"
     },
     {
-      "id": "exec-3cb6645a60416b31e13414b1",
+      "id": "exec-c73d15a6d6913bbe450aaf1d",
       "occurrence": 12,
       "sourcePath": "native/sandbox-host/sandbox-host.cpp",
-      "line": 1027,
+      "line": 1028,
       "column": 48,
       "nodeKind": "NativeCallExpression",
       "container": "Run",
@@ -2909,7 +2945,7 @@
       "id": "exec-64790978bfb03de86b5ddb6d",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 417,
+      "line": 421,
       "column": 20,
       "nodeKind": "NativeCallExpression",
       "container": "LoadValidatedTestProjection",
@@ -2927,7 +2963,7 @@
       "id": "exec-630302637c7988c485579ae7",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 419,
+      "line": 423,
       "column": 35,
       "nodeKind": "NativeCallExpression",
       "container": "LoadValidatedTestProjection",
@@ -2945,7 +2981,7 @@
       "id": "exec-887788bf1ee47ba13d9eaf71",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 689,
+      "line": 738,
       "column": 70,
       "nodeKind": "NativeCallExpression",
       "container": "TriggerLifecycleCrashForReceipt",
@@ -2963,7 +2999,7 @@
       "id": "exec-133b0689e5afcbccad3666fc",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 1153,
+      "line": 1202,
       "column": 31,
       "nodeKind": "NativeCallExpression",
       "container": "ResolveTestFileHolderQuery",
@@ -2981,7 +3017,7 @@
       "id": "exec-9122300251b1977d15f6d502",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 1635,
+      "line": 1684,
       "column": 31,
       "nodeKind": "NativeCallExpression",
       "container": "ResolveTestProcessQuery",
@@ -2999,7 +3035,7 @@
       "id": "exec-5532a13bd07fd49129701891",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 1644,
+      "line": 1693,
       "column": 31,
       "nodeKind": "NativeCallExpression",
       "container": "ResolveTestSystemProcessQuery",
@@ -3017,7 +3053,7 @@
       "id": "exec-6bbd17d0f9e4c0786f31890b",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 2647,
+      "line": 2696,
       "column": 50,
       "nodeKind": "NativeCallExpression",
       "container": "JournalProfileSid",
@@ -3035,7 +3071,7 @@
       "id": "exec-32d05a68193e0238fdadbeda",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 2786,
+      "line": 2835,
       "column": 49,
       "nodeKind": "NativeCallExpression",
       "container": "RecoverJournals",
@@ -3053,7 +3089,7 @@
       "id": "exec-0242c6d900c27d01725105de",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 2978,
+      "line": 3027,
       "column": 24,
       "nodeKind": "NativeCallExpression",
       "container": "LaunchHostMode",
@@ -3076,7 +3112,7 @@
       "id": "exec-7ea259ff9e9d9bc97bd40cb2",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 2989,
+      "line": 3038,
       "column": 21,
       "nodeKind": "NativeCallExpression",
       "container": "LaunchHostMode",
@@ -3094,7 +3130,7 @@
       "id": "exec-edc1548982698f0e76fd30b5",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 2990,
+      "line": 3039,
       "column": 28,
       "nodeKind": "NativeCallExpression",
       "container": "LaunchHostMode",
@@ -3112,7 +3148,7 @@
       "id": "exec-c52f91fdd68fcd90774471b7",
       "occurrence": 1,
       "sourcePath": "native/sandbox-host/sandbox-launcher.cpp",
-      "line": 2990,
+      "line": 3039,
       "column": 135,
       "nodeKind": "NativeCallExpression",
       "container": "LaunchHostMode",
@@ -5285,7 +5321,7 @@
       "id": "exec-307a4fdaec30ae4d0cb900e2",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "line": 318,
+      "line": 335,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "loadAddon",
@@ -5302,7 +5338,7 @@
       "id": "exec-122a0f9ad711fe7ed61727c8",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "line": 319,
+      "line": 336,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "loadAddon",
@@ -5666,7 +5702,7 @@
       "id": "exec-bcbbaefc6ec031a60417f9af",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1079,
+      "line": 1105,
       "column": 22,
       "nodeKind": "CallExpression",
       "container": "freeDistinctPorts",
@@ -5684,7 +5720,7 @@
       "id": "exec-4d72e263650070e4f46172c4",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1114,
+      "line": 1140,
       "column": 20,
       "nodeKind": "CallExpression",
       "container": "terminateProcessTree",
@@ -5708,7 +5744,7 @@
       "id": "exec-5ca156ed0e47fcaccab0e746",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1138,
+      "line": 1164,
       "column": 18,
       "nodeKind": "CallExpression",
       "container": "terminateProcessTreeAsync",
@@ -5732,7 +5768,7 @@
       "id": "exec-d8b5f9dbd1e5660dbb490600",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1151,
+      "line": 1177,
       "column": 10,
       "nodeKind": "CallExpression",
       "container": "spawnManaged",
@@ -5756,7 +5792,7 @@
       "id": "exec-452344dda55a36f3167a6821",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1153,
+      "line": 1179,
       "column": 25,
       "nodeKind": "PropertyAccessExpression",
       "container": "spawnManaged",
@@ -5773,7 +5809,7 @@
       "id": "exec-d0ae00d0c66a51dda746205c",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1162,
+      "line": 1188,
       "column": 76,
       "nodeKind": "PropertyAccessExpression",
       "container": "runProcess",
@@ -5790,7 +5826,7 @@
       "id": "exec-b987544437f2b411bf1b006e",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1237,
+      "line": 1263,
       "column": 34,
       "nodeKind": "CallExpression",
       "container": "validateAndLoadWindowsHandleObserverProjection",
@@ -5808,7 +5844,7 @@
       "id": "exec-9711044fc8f9132a2cdd4c38",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1241,
+      "line": 1267,
       "column": 18,
       "nodeKind": "CallExpression",
       "container": "validateAndLoadWindowsHandleObserverProjection",
@@ -5826,7 +5862,7 @@
       "id": "exec-ff5cf8422c89ad94f21de9e0",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1310,
+      "line": 1336,
       "column": 9,
       "nodeKind": "PropertyAccessExpression",
       "container": "runVerifiedWindowsExecutableCopy",
@@ -5843,7 +5879,7 @@
       "id": "exec-ce5fbce477083f7b7ebcaab4",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1561,
+      "line": 1587,
       "column": 10,
       "nodeKind": "CallExpression",
       "container": "boundedFetch",
@@ -5861,7 +5897,7 @@
       "id": "exec-fbfde060896b05d25c1d123f",
       "occurrence": 1,
       "sourcePath": "tests/helpers.mjs",
-      "line": 1586,
+      "line": 1612,
       "column": 19,
       "nodeKind": "NewExpression",
       "container": "CdpClient.constructor",
@@ -9616,6 +9652,23 @@
       "classification": "build-test"
     },
     {
+      "id": "exec-3d5bd7feafee4379b499fb22",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/tool04-script-native.test.mjs",
+      "line": 24,
+      "column": 15,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
       "id": "exec-70d2401fd7c1425006c73bbc",
       "occurrence": 1,
       "sourcePath": "tests/integration/version-model.test.mjs",
@@ -9825,7 +9878,7 @@
       "id": "exec-693086a31ebb12fadaeb0f4a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 623,
+      "line": 626,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -9842,7 +9895,7 @@
       "id": "exec-24100569dee2dd14234e340c",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 722,
+      "line": 725,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -9859,7 +9912,7 @@
       "id": "exec-4b7f1f53bc07e63b8b5cbfc3",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 785,
+      "line": 788,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -9876,7 +9929,7 @@
       "id": "exec-387dfc51837d56e5b8a74941",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 842,
+      "line": 845,
       "column": 20,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -9893,7 +9946,7 @@
       "id": "exec-f329446239415582c8492047",
       "occurrence": 2,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 859,
+      "line": 862,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -9910,7 +9963,7 @@
       "id": "exec-72508e1a9a55a21b5002012a",
       "occurrence": 1,
       "sourcePath": "tests/unit/framework.test.mjs",
-      "line": 885,
+      "line": 888,
       "column": 12,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -10001,5 +10054,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "f0bcc4cb9d022ddd554ec451c01a9d3e216c9ed84335e54997fb025ad15b3e96"
+  "canonicalPayloadSha256": "95548ce24e30955ba3a83140c50cee248a45154d5733cdcef3a3eeaec383f1c0"
 }

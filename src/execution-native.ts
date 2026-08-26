@@ -152,7 +152,7 @@ export class NativeBridgeError extends Error {
   }
 }
 
-interface AddonCompletion { readonly exitCode: unknown; readonly reason: unknown; readonly nativeProof: unknown }
+interface AddonCompletion { readonly exitCode: unknown; readonly childExit: unknown; readonly reason: unknown; readonly nativeProof: unknown }
 interface AddonHandle {
   readonly executionId: unknown;
   readonly completed: unknown;
@@ -246,6 +246,23 @@ function decodeOutputFrame(frame: unknown): NativeOutputFrame {
   const bytes = Buffer.from(value.data, "base64");
   if (bytes.toString("base64") !== value.data || bytes.length > MAX_OUTPUT_FRAME_BYTES) throw failure("EXEC_NATIVE_PROTOCOL", "Native output bytes are invalid");
   return Object.freeze({ stream: value.stream, bytes });
+}
+
+function authenticatedCompletion(proof: NativeExecutionProof | null): Readonly<{ childExit: number; reason: string }> | null {
+  if (!proof) return null;
+  const text = Buffer.from(proof.proof).toString("utf8");
+  const kinds = [...text.matchAll(/^kind=([^\r\n]+)$/gmu)];
+  if (kinds.length !== 1 || kinds[0][1] !== "execution-proof") return null;
+  const exits = [...text.matchAll(/^childExit=(\d+)$/gmu)];
+  const reasons = [...text.matchAll(/^completionReason=([^\r\n]+)$/gmu)];
+  if (exits.length !== 1 || reasons.length !== 1 || reasons[0][1].length < 1 || reasons[0][1].length > 64) {
+    throw failure("EXEC_NATIVE_PROTOCOL", "Native execution proof completion is invalid");
+  }
+  const childExit = Number(exits[0][1]);
+  if (!Number.isSafeInteger(childExit) || childExit < 0 || childExit > 0xffff_ffff) {
+    throw failure("EXEC_NATIVE_PROTOCOL", "Native execution proof child exit is invalid");
+  }
+  return Object.freeze({ childExit, reason: reasons[0][1] });
 }
 
 function decodeNativeProof(value: unknown): NativeExecutionProof {
@@ -421,10 +438,23 @@ export function createProductionNativeExecutionBridge(identity: NativeArtifactId
       }
 
       const completed = (addonHandle.completed as Promise<AddonCompletion>).then(value => {
-        if (protocolFailed || !value || (value.exitCode !== null && !Number.isInteger(value.exitCode)) || typeof value.reason !== "string" || value.reason.length < 1 || value.reason.length > 128) throw failure("EXEC_NATIVE_PROTOCOL", "Native completion is invalid");
+        if (protocolFailed || !value || (value.exitCode !== null && !Number.isInteger(value.exitCode))
+          || (value.childExit !== null && (!Number.isInteger(value.childExit) || Number(value.childExit) < 0 || Number(value.childExit) > 0xffff_ffff))
+          || typeof value.reason !== "string" || value.reason.length < 1 || value.reason.length > 128) {
+          throw failure("EXEC_NATIVE_PROTOCOL", "Native completion is invalid");
+        }
         let nativeProof: NativeExecutionProof | null = null;
         if (value.nativeProof !== null) nativeProof = decodeNativeProof(value.nativeProof);
-        return Object.freeze({ exitCode: value.exitCode as number | null, reason: value.reason, nativeProof });
+        const authenticated = authenticatedCompletion(nativeProof);
+        if ((value.childExit === null) !== (authenticated === null) || (authenticated && value.childExit !== authenticated.childExit)) {
+          throw failure("EXEC_NATIVE_PROTOCOL", "Native child completion differs from authenticated proof");
+        }
+        const childFailed = authenticated?.reason === "child-failed";
+        return Object.freeze({
+          exitCode: childFailed ? authenticated.childExit : value.exitCode as number | null,
+          reason: childFailed ? "child-failed" : value.reason,
+          nativeProof,
+        });
       });
       const handle: NativeExecutionHandle = Object.freeze({
         executionId: request.executionId,

@@ -47,7 +47,16 @@ test("TOOL-01 unified descriptors bind schema, body, policy, effects, routing, c
   assert.equal(getToolTimeoutMs("glob"), 10_000);
   assert.equal(getToolTimeoutMs("grep"), 10_000);
   assert.equal(byName.get("execute_command").timeoutMs, 60_000);
-  assert.equal(byName.get("script").timeoutMs, 60_000);
+  const script = byName.get("script");
+  assert.equal(script.timeoutMs, 60_000);
+  assert.deepEqual(script.invocation.body.headers, [
+    { name: "lang", parameter: "lang", required: false },
+    { name: "cwd", parameter: "cwd", required: false },
+    { name: "timeout", parameter: "timeout", required: false },
+  ]);
+  assert.deepEqual(script.schema.function.parameters.properties.lang.enum, ["node", "node-cjs", "python"]);
+  assert.equal(script.schema.function.parameters.properties.timeout.minimum, 100);
+  assert.equal(script.schema.function.parameters.properties.timeout.maximum, 10_000);
   assert.equal(getToolTimeoutMs("unknown_fixture"), 30_000);
   assert(Object.isFrozen(write));
   assert(Object.isFrozen(write.invocation));
@@ -80,8 +89,10 @@ printf '%s\n' '"quoted"' "$HOME"
   });
 
   const scriptCode = `const value = { quote: "'\\\\slash" };\nconsole.log(JSON.stringify(value));`;
-  const scriptBody = `#+BEGIN_SCRIPT\n${scriptCode}\n#+END_SCRIPT`;
-  assert.equal(parseBodyToolArguments(scriptBody, byName.get("script")).code, scriptCode);
+  const scriptBody = `#+BEGIN_SCRIPT :lang node-cjs :cwd nested :timeout 750\n${scriptCode}\n#+END_SCRIPT`;
+  assert.deepEqual({ ...parseBodyToolArguments(scriptBody, byName.get("script")) }, {
+    lang: "node-cjs", cwd: "nested", timeout: 750, code: scriptCode,
+  });
 });
 
 test("TOOL-01 protected org lines preserve raw terminators and existing comma prefixes", () => {

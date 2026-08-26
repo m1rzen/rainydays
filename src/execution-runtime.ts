@@ -31,6 +31,7 @@ import { consumeExecutionRootLease, type ExecutionRootLease } from "./path-polic
 import { assertResourceOwner, assertResourceOwnerForCleanup, type ResourceOwner } from "./resource-owner.js";
 import type { ManualConsentEvidenceBinding, ManualConsentOperation } from "./manual-execution-consent.js";
 import { NEVER_ABORT_SIGNAL, throwIfCancelled } from "./run-cancellation.js";
+import { createScriptPayload, parseScriptTimeout, scriptLimits, type ScriptLanguage } from "./script-runtime.js";
 
 export interface IsolatedTerminalLease { readonly leaseId: string }
 
@@ -41,7 +42,12 @@ export interface ObservedFiniteHttpsOperation {
 
 export interface ScopedExecutionGateway {
   readonly executeCommand: (input: Readonly<{ command: string; rootLease: ExecutionRootLease }>) => Promise<ExecutionResult>;
-  readonly executeScript: (input: Readonly<{ code: string; rootLease: ExecutionRootLease }>) => Promise<ExecutionResult>;
+  readonly executeScript: (input: Readonly<{
+    code: string;
+    lang: ScriptLanguage;
+    timeoutMs: number;
+    rootLease: ExecutionRootLease;
+  }>) => Promise<ExecutionResult>;
   readonly executeHttps: (input: Readonly<{
     entryPoint: "E1" | "E2" | "E3";
     operations: readonly FiniteHttpsOperationDefinition[];
@@ -337,7 +343,7 @@ function trustedWindowsEnvironment(entryPoint: "E1" | "E2" | "E3" | "E4", canoni
   return Object.freeze(common);
 }
 
-function consumeNativeRoot(rootLease: ExecutionRootLease, authorityEpoch: number): Readonly<{
+function consumeNativeRoot(rootLease: ExecutionRootLease, authorityEpoch: number, scopeToCwd = false): Readonly<{
   rootId: string;
   access: "read-write";
   identity: Readonly<{ volumeSerial: string; fileId: string; type: "directory"; nativeAuthorityId: string }>;
@@ -346,11 +352,12 @@ function consumeNativeRoot(rootLease: ExecutionRootLease, authorityEpoch: number
   revoke: () => void;
 }> {
   return consumeExecutionRootLease(rootLease, { authorityEpoch, access: "read-write" }, snapshot => {
+    const rootIdentity = scopeToCwd ? snapshot.cwdIdentity : snapshot.identity;
     const authority = Object.freeze({
       rootId: snapshot.rootId,
       access: "read-write" as const,
-      canonicalPath: snapshot.canonicalPath,
-      identity: Object.freeze({ volumeSerial: snapshot.identity.deviceId, fileId: snapshot.identity.objectId, type: "directory" as const }),
+      canonicalPath: scopeToCwd ? snapshot.canonicalCwd : snapshot.canonicalPath,
+      identity: Object.freeze({ volumeSerial: rootIdentity.deviceId, fileId: rootIdentity.objectId, type: "directory" as const }),
       canonicalCwd: snapshot.canonicalCwd,
       cwdIdentity: Object.freeze({ volumeSerial: snapshot.cwdIdentity.deviceId, fileId: snapshot.cwdIdentity.objectId, type: "directory" as const }),
     });
@@ -390,18 +397,23 @@ export function createScopedExecutionGateway(input: Readonly<{
     && inspected.argumentsDigest === context.approvalGrant?.argumentsDigest
     && inspected.name === context.approvalGrant?.toolOrOperation;
   let consumed = false;
-  const launch = async (entryPoint: "E1" | "E3", payloadText: string, rootLease: ExecutionRootLease): Promise<ExecutionResult> => {
+  const launch = async (
+    entryPoint: "E1" | "E3",
+    payloadText: string,
+    rootLease: ExecutionRootLease,
+    requestedLimits: ExecutionLimits = PROFILE_LIMITS[entryPoint],
+  ): Promise<ExecutionResult> => {
     throwIfCancelled(signal);
     if (!bindingValid) throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Execution invocation binding is invalid");
     if (consumed) throw new ExecutionDeniedError("EXEC_GRANT_REPLAYED", "Execution invocation was already consumed");
     consumed = true;
-    const root = consumeNativeRoot(rootLease, context.authorityEpoch);
+    const root = consumeNativeRoot(rootLease, context.authorityEpoch, entryPoint === "E3");
     try {
       if (!context.allowedRoots.includes(root.rootId) || !ownerMetadata.rootIds.includes(root.rootId)) {
         throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Execution root differs from the approved invocation");
       }
       const payload = Buffer.from(payloadText, "utf8");
-    const limits = PROFILE_LIMITS[entryPoint];
+    const limits = requestedLimits;
     if (payload.length > limits.inputBytes) throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Execution payload exceeds its limit");
     const request: ExecutionGrantRequest = {
       contextId: context.executionDomainId,
@@ -489,11 +501,19 @@ export function createScopedExecutionGateway(input: Readonly<{
       }
       return launch("E1", exactString(command, 128 * 2 ** 10, "Command"), rootLease);
     },
-    executeScript: async ({ code, rootLease }: Readonly<{ code: string; rootLease: ExecutionRootLease }>) => {
-      if (inspected.name !== "script" || code !== inspected.args.code) {
-        throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Script differs from the approved invocation");
+    executeScript: async ({ code, lang, timeoutMs, rootLease }: Readonly<{
+      code: string;
+      lang: ScriptLanguage;
+      timeoutMs: number;
+      rootLease: ExecutionRootLease;
+    }>) => {
+      const approvedLang = inspected.args.lang === undefined ? "node" : inspected.args.lang;
+      const approvedTimeout = parseScriptTimeout(inspected.args.timeout);
+      if (inspected.name !== "script" || code !== inspected.args.code || lang !== approvedLang || timeoutMs !== approvedTimeout) {
+        throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Script invocation differs from the approved invocation");
       }
-      return launch("E3", exactString(code, 128 * 2 ** 10, "Script"), rootLease);
+      const script = createScriptPayload({ code: exactString(code, 128 * 2 ** 10, "Script"), lang });
+      return launch("E3", script.payload, rootLease, scriptLimits(PROFILE_LIMITS.E3, timeoutMs));
     },
     startShell: async ({ terminalId, shell, rootLease }: Readonly<{ terminalId: string; shell: "cmd" | "powershell"; rootLease: ExecutionRootLease }>) =>
       startPersistent(terminalId, shell, rootLease),

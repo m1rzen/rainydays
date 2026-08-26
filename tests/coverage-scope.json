@@ -317,6 +317,18 @@
       {
         "sourceTask": "SEC-06",
         "exactCasePath": "tests/unit/security-audit.test.mjs"
+      },
+      {
+        "sourceTask": "TOOL-04",
+        "exactCasePath": "tests/contract/tool04-governance.test.mjs"
+      },
+      {
+        "sourceTask": "TOOL-04",
+        "exactCasePath": "tests/unit/tool04-script-runtime.test.mjs"
+      },
+      {
+        "sourceTask": "TOOL-04",
+        "exactCasePath": "tests/integration/tool04-script-native.test.mjs"
       }
     ]
   },
