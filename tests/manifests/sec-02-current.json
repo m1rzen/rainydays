@@ -464,7 +464,7 @@
         },
         {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "d0b5a83e3e0f4b7119e9d77be186f2bff8ff903580675b0f36ba621326e9ff68",
+          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1156,7 +1156,7 @@
         },
         {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "d0b5a83e3e0f4b7119e9d77be186f2bff8ff903580675b0f36ba621326e9ff68",
+          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1168,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/unit/framework.test.mjs",
-          "sha256": "f1d9d10f85f42d8041810deb57c939b9422a5f07301a8e3f085077b68bb7d4cd",
+          "sha256": "b2bd060ad2cf0eb3316a351441078b192e005af98a7bea3ff5b994102587d18e",
           "layer": "unit",
           "sourceTask": "GOV-03"
         }
@@ -1691,7 +1691,7 @@
   "coverageScope": {
     "source": {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "d1eb28725527c276a8b2707413ad30d5b709dd7a9f77634cfcf93d8603265d05"
+      "sha256": "aff49de027de3275a12c03ef2c9c8d9476fdc95671948007381ade2cf3fda375"
     },
     "overallFiles": [
       "dist/agent.js",
@@ -5838,7 +5838,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "d0b5a83e3e0f4b7119e9d77be186f2bff8ff903580675b0f36ba621326e9ff68"
+          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5850,7 +5850,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "d0b5a83e3e0f4b7119e9d77be186f2bff8ff903580675b0f36ba621326e9ff68"
+          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5862,7 +5862,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "d0b5a83e3e0f4b7119e9d77be186f2bff8ff903580675b0f36ba621326e9ff68"
+          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5874,7 +5874,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "d0b5a83e3e0f4b7119e9d77be186f2bff8ff903580675b0f36ba621326e9ff68"
+          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5886,7 +5886,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "d0b5a83e3e0f4b7119e9d77be186f2bff8ff903580675b0f36ba621326e9ff68"
+          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -6972,7 +6972,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "d0b5a83e3e0f4b7119e9d77be186f2bff8ff903580675b0f36ba621326e9ff68"
+          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
         },
         "testCaseId": "SEC-02 Oracle project read and managed snapshot write use disjoint governed paths",
         "producer": "node-test"
@@ -7074,11 +7074,11 @@
     },
     {
       "exactCasePath": "tests/coverage-scope.json",
-      "sha256": "d1eb28725527c276a8b2707413ad30d5b709dd7a9f77634cfcf93d8603265d05"
+      "sha256": "aff49de027de3275a12c03ef2c9c8d9476fdc95671948007381ade2cf3fda375"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "3f7a155281752853a421df7a11b7ec5c093f1959f01511b6df4815d5d10f6cfd"
+      "sha256": "cb7dd74f1403e07fd9c37665db6a253a6bfad60b2b73b018cc93662a13b0518b"
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
@@ -7138,11 +7138,11 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "ef36abde11a4aa82e835cd69ef8a45d785175e131d3e7725873cb303a36f684d"
+      "sha256": "ed8d5d06a94c593397e655452c878f7762c8a100f7dd9c2d6d1ca72d44c42b59"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "28d99434d553f88e56fdfbed17e09854703e3c1ec66ed0ca7ea2ea640fa0eb3b"
+      "sha256": "8f6f2452e0b17404bb7a92b1a855462fdd373ef980831880d8a368e738542a1c"
     },
     {
       "exactCasePath": "tests/sec02-sink-crosscheck-policy.json",
@@ -7194,7 +7194,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "ced0eb4735b49179031325a9be4dcc67d656c3c916ffd68e6d37f46e33a80977"
+      "sha256": "f5b2e12408845d2d0fbcdc39596d3d48493e8c3561f31a662c0459959a8a057f"
     },
     {
       "exactCasePath": "package-lock.json",
@@ -7202,5 +7202,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "941eb566f45ae54ed7e2d55b0416f323a5d1695db1c8dcd618d8ace7fc6af960"
+  "canonicalPayloadSha256": "41afcfd7df8113084156dd91c84d834cc497942f875aef0319fa29401409df51"
 }

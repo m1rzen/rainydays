@@ -292,6 +292,8 @@ test("coverage scope is explicit and changed runtime files are governed", async 
     { sourceTask: "TOOL-04", exactCasePath: "tests/integration/tool04-script-native.test.mjs" },
     { sourceTask: "TOOL-05", exactCasePath: "tests/contract/tool05-governance.test.mjs" },
     { sourceTask: "TOOL-05", exactCasePath: "tests/unit/tool05-fetch-runtime.test.mjs" },
+    { sourceTask: "TOOL-07", exactCasePath: "tests/contract/tool07-governance.test.mjs" },
+    { sourceTask: "TOOL-07", exactCasePath: "tests/integration/repo-oracle-path.test.mjs" },
   ]);
   assert(scope.thresholds.overallLines >= 80);
   assert(scope.thresholds.securityBranches >= 90);

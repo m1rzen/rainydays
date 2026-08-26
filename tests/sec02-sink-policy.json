@@ -3981,9 +3981,9 @@
       }
     },
     {
-      "siteId": "sink-4cd3344ac794a214d1e441d1",
+      "siteId": "sink-fbebe1312d594532f0d822df",
       "sourcePath": "src/tools/read-repo.ts",
-      "normalizedNodeSha256": "8134235ebf003932e9661aeb0d1a6f2b4115301438964c0f90a8dc980d701423",
+      "normalizedNodeSha256": "9ff512892597771dcbfb07f6a34ddf321cbfe666afb565af40abd4189b18e5a5",
       "container": "runGitLsFiles",
       "family": "child-process",
       "api": "execFile",
@@ -4081,5 +4081,5 @@
       }
     }
   ],
-  "canonicalPayloadSha256": "86b952e5e379c1771d043ebfcec2f45e75832995a7d45fe16cf3109a0cfb3000"
+  "canonicalPayloadSha256": "71da4a65e7bc19925bdbc43b36f0e453bfe87e8de32a22e82485fa7d1ad3ea67"
 }

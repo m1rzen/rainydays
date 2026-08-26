@@ -787,15 +787,15 @@ export class PathPolicy {
   }
 
   async readFile(authority: PathAuthority, request: PathRequest, maxBytes: number): Promise<PathReadResult> {
-    return this.#readExistingFile(authority, request, maxBytes, "read-file", false) as Promise<PathReadResult>;
+    return this.#readExistingFile(authority, request, maxBytes, "read-file", false, false) as Promise<PathReadResult>;
   }
 
   async readFileDirect(authority: PathAuthority, request: PathRequest, maxBytes: number): Promise<PathDirectReadResult> {
-    return this.#readExistingFile(authority, request, maxBytes, "read-file", true) as Promise<PathDirectReadResult>;
+    return this.#readExistingFile(authority, request, maxBytes, "read-file", true, false) as Promise<PathDirectReadResult>;
   }
 
   async searchFile(authority: PathAuthority, request: PathRequest, maxBytes: number): Promise<PathReadResult> {
-    return this.#readExistingFile(authority, request, maxBytes, "search-tree", false) as Promise<PathReadResult>;
+    return this.#readExistingFile(authority, request, maxBytes, "search-tree", false, true) as Promise<PathReadResult>;
   }
 
   async #readExistingFile(
@@ -803,7 +803,8 @@ export class PathPolicy {
     request: PathRequest,
     maxBytes: number,
     requiredOperation: "read-file" | "search-tree",
-    includeCanonicalPath: boolean
+    includeCanonicalPath: boolean,
+    rejectHardlinks: boolean,
   ): Promise<PathReadResult | PathDirectReadResult> {
     if (!Number.isSafeInteger(maxBytes) || maxBytes < 1) throw new TypeError("maxBytes must be a positive safe integer");
     return this.#run(authority, request, async (record, state) => {
@@ -830,6 +831,7 @@ export class PathPolicy {
         const openedInfo = await handle.stat({ bigint: true });
         const opened = identityFromStat(openedInfo);
         if (!sameIdentity(before.identity, opened)) deny("PATH_IDENTITY_CHANGED");
+        if (rejectHardlinks && openedInfo.nlink !== 1n) deny("PATH_REDIRECT_DENIED");
         await this.#barrier("afterHandleOpen", state.operationId);
         const chunks: Buffer[] = [];
         let total = 0;

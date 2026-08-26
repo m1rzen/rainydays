@@ -94,13 +94,16 @@ await fs.mkdir(outside, { recursive: true });
 await fs.mkdir(data, { recursive: true });
 await fs.writeFile(path.join(repository, "package.json"), JSON.stringify({ name: "governed-repository" }));
 await fs.writeFile(path.join(repository, "src", "main.ts"), "export const governed = true;\n");
+await fs.writeFile(path.join(repository, "root.ts"), "export function rootLevel() { return true; }\n");
 await fs.writeFile(path.join(repository, "README.md"), "# Governed Repository\n");
+await fs.writeFile(path.join(repository, "# `FORGED`.md"), "safe filename content\n");
 await fs.writeFile(path.join(repository, "LICENSE"), "fixture license\n");
 await fs.writeFile(path.join(repository, "binary.bin"), Buffer.from([0, 1, 2, 3]));
+await fs.writeFile(path.join(repository, "invalid-utf8.bin"), Buffer.from([0xff, 0xfe, 0x41]));
 await fs.writeFile(path.join(repository, "long.txt"), "l".repeat(2_100));
 await fs.writeFile(externalSecretPath, externalSecret);
 await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["init", "--quiet"], { cwd: repository, windowsHide: true });
-await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "package.json", "README.md", "LICENSE", "binary.bin", "long.txt", "src/main.ts"], { cwd: repository, windowsHide: true });
+await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "package.json", "README.md", "# `FORGED`.md", "LICENSE", "binary.bin", "invalid-utf8.bin", "long.txt", "root.ts", "src/main.ts"], { cwd: repository, windowsHide: true });
 
 process.env.RAINYDAYS_USER_DATA_DIR = fixture;
 process.env.RAINYDAYS_DATA_DIR = data;
@@ -175,21 +178,63 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
   const root = toolsModule.capabilityBroker.beginAgentRun(authority, session.id);
   try {
     const tree = await toolsModule.executeTool(root, "read_repo", { path: "", level: "tree" });
-    assert.match(tree, /package\.json/);
-    assert.match(tree, /src\/main\.ts/);
+    assert.match(tree, /package%2Ejson/u);
+    assert.match(tree, /src\/main%2Ets/u);
+    assert.match(tree, /- %23%20%60FORGED%60%2Emd/u);
+    assert.doesNotMatch(tree, /`FORGED`/u);
     const headers = await toolsModule.executeTool(root, "read_repo", { path: "", level: "headers" });
     assert.match(headers, /governed-repository/);
     assert.match(headers, /Governed Repository/);
     const summary = await toolsModule.executeTool(root, "read_repo", { path: "", level: "summary", include: "*.ts" });
-    assert.match(summary, /文件数: 1/u);
-    assert.match(summary, /\.ts: 1/u);
+    assert.match(summary, /Selected all 2 matched/u);
+    assert.match(summary, /- %2Ets: 2/u);
     const full = await toolsModule.executeTool(root, "read_repo", { path: "", level: "full", exclude: "*.md" });
     assert.match(full, /governed-repository/u);
     assert.doesNotMatch(full, /Governed Repository/u);
-    assert.match(full, /\(截断\)/u);
+    assert.match(full, /Budgeted full-file view/u);
+    assert.doesNotMatch(full, /\(截断\)/u);
     assert.equal(full.includes("\0"), false);
+    const signatures = await toolsModule.executeTool(root, "read_repo", { path: "", level: "signatures", include: "src/*.ts" });
+    assert.match(signatures, /export const governed =/u);
+    const all = await toolsModule.executeTool(root, "read_repo", { path: "", level: "all", include: "*.ts" });
+    assert.match(all, /Complete content for every selected text file/u);
+    assert.match(all, /export const governed = true/u);
+    const globstar = await toolsModule.executeTool(root, "read_repo", { path: "", level: "tree", include: "**/*.ts" });
+    assert.match(globstar, /- root%2Ets/u);
+    assert.match(globstar, /- src\/main%2Ets/u);
+    await assert.rejects(() => toolsModule.executeTool(root, "read_repo", { path: "", level: "all" }), /binary tracked file/u);
+    await assert.rejects(() => toolsModule.executeTool(root, "read_repo", { path: "", level: "all", include: "invalid-utf8.bin" }), /binary tracked file/u);
+
+    const hardlink = path.join(repository, "tracked-hardlink.txt");
+    await fs.link(externalSecretPath, hardlink);
+    await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "tracked-hardlink.txt"], { cwd: repository, windowsHide: true });
+    try {
+      await assert.rejects(
+        () => toolsModule.executeTool(root, "read_repo", { path: "", level: "all", include: "tracked-hardlink.txt" }),
+        /PATH_REDIRECT_DENIED|Path operation denied/u,
+      );
+    } finally {
+      await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["rm", "--cached", "--quiet", "--", "tracked-hardlink.txt"], { cwd: repository, windowsHide: true });
+      await fs.rm(hardlink, { force: true });
+    }
+
+    const multibyte = path.join(repository, "multibyte.txt");
+    await fs.writeFile(multibyte, "界".repeat(60_000));
+    await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "multibyte.txt"], { cwd: repository, windowsHide: true });
+    try {
+      await assert.rejects(
+        () => toolsModule.executeTool(root, "read_repo", { path: "", level: "all", include: "multibyte.txt" }),
+        /tool transport budget/u,
+      );
+      const budgeted = await toolsModule.executeTool(root, "read_repo", { path: "", level: "full", include: "multibyte.txt" });
+      assert.match(budgeted, /1 file\(s\) explicitly omitted by transport budget/u);
+      assert.doesNotMatch(budgeted, /tool output truncated/u);
+    } finally {
+      await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["rm", "--cached", "--quiet", "--", "multibyte.txt"], { cwd: repository, windowsHide: true });
+      await fs.rm(multibyte, { force: true });
+    }
     const unfilteredSummary = await toolsModule.executeTool(root, "read_repo", { path: "", level: "summary", exclude: "?.md" });
-    assert.match(unfilteredSummary, /\(no ext\): 1/u);
+    assert.match(unfilteredSummary, /%28no%20ext%29: 1/u);
 
     const cwdBefore = await externalState();
     const cwdAttempt = await captureDenial(() => toolsModule.executeTool(root, "read_repo", { path: outside, level: "tree" }));

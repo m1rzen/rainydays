@@ -135,7 +135,10 @@
     "test:tool04": "node scripts/run-tests.mjs --task TOOL-04 --profile full",
     "governance:tool05:generate": "node scripts/generate-tool05-resolved-manifest.mjs",
     "governance:tool05:check": "node scripts/generate-tool05-resolved-manifest.mjs --check",
-    "test:tool05": "node scripts/run-tests.mjs --task TOOL-05 --profile full"
+    "test:tool05": "node scripts/run-tests.mjs --task TOOL-05 --profile full",
+    "governance:tool07:generate": "node scripts/generate-tool07-resolved-manifest.mjs",
+    "governance:tool07:check": "node scripts/generate-tool07-resolved-manifest.mjs --check",
+    "test:tool07": "node scripts/run-tests.mjs --task TOOL-07 --profile full"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",

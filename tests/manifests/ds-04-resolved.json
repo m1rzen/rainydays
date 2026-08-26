@@ -73,7 +73,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "ced0eb4735b49179031325a9be4dcc67d656c3c916ffd68e6d37f46e33a80977",
+      "sha256": "f5b2e12408845d2d0fbcdc39596d3d48493e8c3561f31a662c0459959a8a057f",
       "owner": "DS-04"
     },
     {
@@ -224,5 +224,5 @@
       "owner": "DS-04"
     }
   ],
-  "canonicalPayloadSha256": "429d8843436163513b7368e25572efafaf42dd13022e8402ac96a136d9051851"
+  "canonicalPayloadSha256": "66743e605d6f666b46afa3970c97452629cff56a8310200501aa5914b430167f"
 }
