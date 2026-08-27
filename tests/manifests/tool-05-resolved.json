@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "taskId": "TOOL-05",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/tool-05.json",
+    "sha256": "2035f9efa3c6fd9ac46510179c018b1531afcc68080972763e38b86deaed4757"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "c4104e93af680e6a76288d2205ce0a5845f586d90c3e191b1cbe821aa7f123d2",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "package-lock.json",
+      "sha256": "2ec921899f4cff90f2334b66f4d8df310e3be74d1ef45bae0a5e01c9c70802b3",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "scripts/tool05-governance.mjs",
+      "sha256": "d018a765e7b455705987d9d2bdae685a7f88f0f4cbc65ad59373eea3680875a8",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "scripts/generate-tool05-resolved-manifest.mjs",
+      "sha256": "0dfbe2517aa2d7c41125028c6e88cda77af5c3284fe2e45037a5c240fb9074de",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "personas/daily.md",
+      "sha256": "2314f38eb9e04e1e2d332dd042dccb13d6d4aadf4fc15d187d33d1422783ea6b",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "personas/general.md",
+      "sha256": "7a548e884b9efb14e7e4947a07a38ee68f1789a3379dc0835214e38c756304b2",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "personas/rds-assistant.md",
+      "sha256": "24160accb1767774f3220e92f1628ad0a281a836c9244e42e3b2119da6e4aeee",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "src/fetch-runtime.ts",
+      "sha256": "dd48e262c6cbe2cf395cde2f2278728ebb90a798285bed3b84191732b1143aa9",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "src/network-policy.ts",
+      "sha256": "d3c8ac442364436c77e0c455d462ea2092c7559fa623fb0be56fa891ddf75ca4",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "src/run-cancellation.ts",
+      "sha256": "6c267f1d557a8b93724c0f49632e8f109382b4698296eaa738f89f59be759694",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "f7cec1d0f2daf8f46073bc254d22e4ab8c90c4f2f255c924dd5c2f66dc9549a3",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "src/tools/search-tool.ts",
+      "sha256": "7d3a11a2c25802cfdb0358aeb04b543ce3faa70596614235ea9856b3ac69ee54",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "src/tools/web.ts",
+      "sha256": "8ab37b363e07954eb9703401f019a438a1ebf8b7e1e0797f1e27905a132508ba",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "decc03e49e89ba5ed6eb4e964da2e437c440935a1edcf23d864933e6f2e56a8a",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "270e0008a939b43558be7160812d9ec7c89ac4ec0c78537b4aa4434d2bc78682",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
+      "owner": "TOOL-05"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/tool05-governance.test.mjs",
+      "sha256": "fe471c6b157721685e123a18ba3a49fba510bcb4a151f6f748840d719ad0f92f",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "tests/unit/tool05-fetch-runtime.test.mjs",
+      "sha256": "44ac1689ce1f7b55d4429a899fa2e0dcd15a34048f5854dead3988d5a824f0eb",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+      "sha256": "d4beca652dcefcc64fe1dea5398d21366f2eeb967c5ade30fed5e85dd7b0959c",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "tests/unit/network-policy.test.mjs",
+      "sha256": "114dcd4adb81ded95d8c9132c4c542288ed2cda4bc2276482a27ec52b4570f8d",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+      "sha256": "b8c794941b2b198e895d543003a883350129e075d240073e46a002f7879926f4",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "TOOL-05"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-05"
+    }
+  ],
+  "canonicalPayloadSha256": "bf25282cbbea05d1f6f5bda65607c75d6aa84c19d42423b0b1a7b1be6b7d0b6c"
+}

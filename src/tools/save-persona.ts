@@ -3,7 +3,7 @@
 // ===========================================
 
 import matter from "gray-matter";
-import type { PersonaNetworkPolicy, ToolDefinition, ToolExecutor } from "../types.js";
+import type { PersonaNetworkPolicy, PersonaPermissionLevel, ToolDefinition, ToolExecutor } from "../types.js";
 import { getManagedPathStore, validateManagedIdentifier } from "../managed-path-store.js";
 import { PathDeniedError } from "../path-policy.js";
 
@@ -16,8 +16,8 @@ export const savePersonaDef: ToolDefinition = {
     parameters: {
       type: "object",
       properties: {
-        name: { type: "string", description: "Persona 内部名称（英文，如 'data-analyst'）" },
-        displayName: { type: "string", description: "显示名称（中文，如 '数据分析师'）" },
+        name: { type: "string", pattern: "^[a-z0-9][a-z0-9-]{0,63}$", description: "Persona 内部名称（英文，如 'data-analyst'）" },
+        displayName: { type: "string", minLength: 1, description: "显示名称（中文，如 '数据分析师'）" },
         description: { type: "string", description: "Persona 描述" },
       },
       required: ["name", "displayName"],
@@ -27,7 +27,10 @@ export const savePersonaDef: ToolDefinition = {
 
 export function createSavePersonaExec(
   getCurrentPersona: () => {
+    permissionLevel: PersonaPermissionLevel;
     tools: readonly string[];
+    allowTools: readonly string[];
+    denyTools: readonly string[];
     env: Readonly<Record<string, string>>;
     networkPolicy: PersonaNetworkPolicy;
     systemPrompt: string;
@@ -41,8 +44,8 @@ export function createSavePersonaExec(
 
     try {
       validateManagedIdentifier(name);
-    } catch {
-      return `❌ Persona 名称必须以小写字母或数字开头，只能包含小写字母、数字和连字符，且不超过64字符`;
+    } catch (error) {
+      throw new Error("Persona 名称必须以小写字母或数字开头，只能包含小写字母、数字和连字符，且不超过64字符", { cause: error });
     }
 
     const current = getCurrentPersona();
@@ -52,7 +55,10 @@ export function createSavePersonaExec(
       name,
       display_name: displayName,
       description,
+      permission_level: current.permissionLevel ?? "guarded",
       tools: current.tools,
+      allow_tools: current.allowTools ?? [],
+      deny_tools: current.denyTools ?? [],
       env: current.env,
       network_policy: current.networkPolicy.mode,
       ...(current.networkPolicy.mode === "allowlist" ? { network_origins: current.networkPolicy.origins } : {}),
@@ -65,7 +71,7 @@ export function createSavePersonaExec(
     } catch (error) {
       if (error instanceof PathDeniedError && error.code === "PATH_OPERATION_DENIED") {
         const names = await store.listNames("user-personas", ".md");
-        if (names.includes(name)) return `❌ Persona "${name}" 已存在。请用不同的名称。`;
+        if (names.includes(name)) throw new Error(`Persona "${name}" 已存在。请用不同的名称。`, { cause: error });
       }
       throw error;
     }

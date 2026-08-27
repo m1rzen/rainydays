@@ -172,6 +172,62 @@
       }
     },
     {
+      "siteId": "sink-774a674e93013028ec22aa14",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "804cae67bd04bbaad624a454a1f0ebf7e27cc5daad0d1cc11dca296a6d6175cf",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-527573473ea8ec3c6bbf95ba",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "a30c1553e3f98977287e4bcca63f1b9e6a507eb817488285d971bc8759a1e291",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "siteId": "sink-47a0c025b69dfcbb8f9eec0b",
       "sourcePath": "electron/main.cjs",
       "normalizedNodeSha256": "cfcda07f2709b146c3f75d9ac37e75b245d3e1cd84cf68e9ee4e213eda4aecea",
@@ -195,6 +251,34 @@
             "selector": "argument:0",
             "classification": "reviewed-static-module-specifier",
             "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-98b57a2e4a6cdc53fad419d6",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "becf68cc17b7b6506dad50a5814d87290da5db3f6238fd773fc00a3b2f83eb1a",
+      "container": "startPackagedServer",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#startPackagedServer:credential-store.import",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#startPackagedServer:credential-store.argument:0"
           }
         ]
       }
@@ -256,9 +340,9 @@
       }
     },
     {
-      "siteId": "sink-ddc6d98368d8f613fa7cde04",
+      "siteId": "sink-c83e73b470e1688c7a07d1a7",
       "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "aec1a2cd48d8740203cc435a4a0bf3b907fab7bf603c38b9a612d337344611e1",
+      "normalizedNodeSha256": "41b55db2374f75d35fa94a868f8c7b796eeaa542061d2ed549c89204e44364c1",
       "container": "startServerProcess",
       "family": "child-process",
       "api": "spawn",
@@ -302,9 +386,37 @@
       }
     },
     {
-      "siteId": "sink-efbedcd0f0d39c6f4af76d06",
+      "siteId": "sink-c1018956fa31e4d12dea2c60",
       "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "70073fb32ef99c31508be1c966ed2fe4b5b1bc4419855b82ffca4c8269061106",
+      "normalizedNodeSha256": "489bef419eb2e93199522ccfd4df5106c387acffb24b8a141a095aef447158d3",
+      "container": "chooseNativePath",
+      "family": "electron-path-api",
+      "api": "showSaveDialog",
+      "pathOperands": [
+        "argument:1.defaultPath"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "electron/main.cjs#chooseNativePath:electron-path-api.showSaveDialog",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:1.defaultPath",
+            "classification": "focused-native-save-dialog-default-file-name-only",
+            "anchor": "electron/main.cjs#chooseNativePath:argument:1.defaultPath"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-e95848d92f6ef5635bef757a",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "541404f5113c394d558b0b2bf19c646b927506d4fb6dc8d6256d61fadeb42647",
       "container": "createWindow",
       "family": "electron-path-property",
       "api": "BrowserWindow",
@@ -656,9 +768,9 @@
       }
     },
     {
-      "siteId": "sink-f2402500e1f800cd7f0d1960",
+      "siteId": "sink-c2ba6df8934901fabc16e582",
       "sourcePath": "electron/path-bootstrap.cjs",
-      "normalizedNodeSha256": "8543bcb0095c0d69d5cca27ba4b7861724a7cd9b414c9ae0409e9c36e445d7e3",
+      "normalizedNodeSha256": "8303d5f1f28b4c3202248afd1e66385970febcc08590fbbbd4dedec779ae9081",
       "container": "openFileAt",
       "family": "node-fs",
       "api": "openSync",
@@ -936,6 +1048,152 @@
       }
     },
     {
+      "siteId": "sink-802a6df7dac2b0fdd4b6fa1d",
+      "sourcePath": "electron/user-data-migration.cjs",
+      "normalizedNodeSha256": "dbcd262637c39e2327bd2c548607f9e082b2ef933fb7dbae2205c182c5bd2d3c",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/user-data-migration.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/user-data-migration.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-acadf05b56acfe8757106622",
+      "sourcePath": "electron/user-data-migration.cjs",
+      "normalizedNodeSha256": "827a8156f2efb8f20f591705bfc5119b5d306fce04052a0afa430ec7b2d0b405",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/user-data-migration.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/user-data-migration.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-7bbeac2138fcaa3b750b2ed9",
+      "sourcePath": "electron/user-data-migration.cjs",
+      "normalizedNodeSha256": "748f3a53a74c496960b7a58a94f41a83cf16e1a344ac51c01598fda6be0791d3",
+      "container": "pathExists",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/user-data-migration.cjs#pathExists:node-fs.lstatSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#pathExists:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-5f0e05280d6e836a74b37400",
+      "sourcePath": "electron/user-data-migration.cjs",
+      "normalizedNodeSha256": "40c19bc96f569f76b26881dc5e6dd3bef6c9b87b7070e93f656146bcb16ea946",
+      "container": "migrateLegacyUserData",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:node-fs.lstatSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-1be97d6ffcbda9bc59706d4f",
+      "sourcePath": "electron/user-data-migration.cjs",
+      "normalizedNodeSha256": "80f07e38a41fe4031b2b1d5440adab00b87cbeca52ea5bea106d6adedfd9da6a",
+      "container": "migrateLegacyUserData",
+      "family": "node-fs",
+      "api": "renameSync",
+      "pathOperands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:node-fs.renameSync",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "electron-derived-user-data-path",
+            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:1"
+          }
+        ]
+      }
+    },
+    {
       "siteId": "sink-abbacd4d8d64d77378cd0d3f",
       "sourcePath": "src/bootstrap-database.ts",
       "normalizedNodeSha256": "4506161869017b711ca726ab9062e3926fac759a584ad0e460e825635a24fb53",
@@ -1127,6 +1385,62 @@
             "selector": "argument:0",
             "classification": "bootstrap-database-path",
             "anchor": "src/bootstrap-database.ts#SqlitePathGuard.assertCurrent:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-7326f5921f29b98a0ace90c6",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "61413aaada061696f69c9512f496944dd3d9f3c59e91c4f8ca5d80557bc1f4ae",
+      "container": "validateWalFile",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#validateWalFile:node-fs.lstatSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#validateWalFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-259ee8df7c37d658652fa2fd",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "0303878fadcb683a031f44ee53dce4beb6f49dee4d84bb04dce99683ba868d82",
+      "container": "validateWalFile",
+      "family": "node-fs",
+      "api": "openSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#validateWalFile:node-fs.openSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#validateWalFile:argument:0"
           }
         ]
       }
@@ -1368,9 +1682,37 @@
       }
     },
     {
-      "siteId": "sink-b8d89ab628dee2505fd562a1",
+      "siteId": "sink-a13c812e9db414b479057b36",
       "sourcePath": "src/bootstrap-database.ts",
-      "normalizedNodeSha256": "4d51eafbdd9a68ef86508e63d314fe784030bbe9425d1d077cb6e0d49762a7ed",
+      "normalizedNodeSha256": "90a10409f6ecaa0bef55541a5fc62b7493f2c863188ff0f8fe33d88281fc1ebb",
+      "container": "ensureManagedRestoreRecovered",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/bootstrap-database.ts#ensureManagedRestoreRecovered:module-loader.import",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/bootstrap-database.ts#ensureManagedRestoreRecovered:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-e7cf18d16344ed7707b3b479",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "e336fd32bcdf9ddcd6c20ffca9fa50db5d4dab0997a7ea4ee058ce63b0d2e9df",
       "container": "openBootstrapDatabase",
       "family": "third-party-path-api",
       "api": "better-sqlite3.Database",
@@ -1391,6 +1733,174 @@
             "selector": "argument:0",
             "classification": "bootstrap-database-path",
             "anchor": "src/bootstrap-database.ts#openBootstrapDatabase:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-48cf20304c7045e48ef0b93d",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "1a5d8e34fabcd1639a7dde955be82a30d1040e9a6c201d988c71bdc5869bd968",
+      "container": "writeConsistentDatabaseSnapshot",
+      "family": "node-fs",
+      "api": "statSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:node-fs.statSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-04764806fc44fcf237feaee6",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "97695c560b6c3c9e0931fb1bfab3cbc3f4de217c67642d898982c4b2b3f1c7e4",
+      "container": "writeConsistentDatabaseSnapshot",
+      "family": "node-fs",
+      "api": "existsSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:node-fs.existsSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-2b99e6ae6cb931655f6c45c1",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "a03cf644eca827e1fb5282f0b26c9f83b3ef7cc0c98cca05605af37290793522",
+      "container": "writeConsistentDatabaseSnapshot",
+      "family": "third-party-path-api",
+      "api": "better-sqlite3.Database",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:third-party-path-api.better-sqlite3.Database",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-394d2ece7f6941107601c975",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "97695c560b6c3c9e0931fb1bfab3cbc3f4de217c67642d898982c4b2b3f1c7e4",
+      "container": "writeConsistentDatabaseSnapshot",
+      "family": "node-fs",
+      "api": "existsSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:node-fs.existsSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-c46fd5c90160c6ae15cfb8a2",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "d8d3711a4b4078884dd407bb0b4fe7dc0ff7aef1ba5a46aa66bac259b57c10f4",
+      "container": "validateDatabaseSnapshotFile",
+      "family": "node-fs",
+      "api": "existsSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#validateDatabaseSnapshotFile:node-fs.existsSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "managed-database-snapshot-sidecar-path",
+            "anchor": "src/bootstrap-database.ts#validateDatabaseSnapshotFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-1c4f513027093c47e8386fec",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "fca0bc6757b4e2d85e2a7694312f57e4d48bb669174a817678abcc9560429a80",
+      "container": "validateDatabaseSnapshotFile",
+      "family": "third-party-path-api",
+      "api": "better-sqlite3.Database",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#validateDatabaseSnapshotFile:third-party-path-api.better-sqlite3.Database",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "managed-database-snapshot-path",
+            "anchor": "src/bootstrap-database.ts#validateDatabaseSnapshotFile:argument:0"
           }
         ]
       }
@@ -1419,6 +1929,202 @@
             "selector": "argument:0",
             "classification": "sqlite-memory-identifier",
             "anchor": "src/bootstrap-database.ts#createInMemoryBootstrapDatabase:literal-:memory:"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-acb2af76df020e7f693a75dc",
+      "sourcePath": "src/bootstrap-database.ts",
+      "normalizedNodeSha256": "7996d623e5e001ffb0942a01fa7915b0396fec83904d79f22c968d4ade5442dc",
+      "container": "createInMemoryBootstrapDatabase",
+      "family": "third-party-path-api",
+      "api": "better-sqlite3.Database",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#createInMemoryBootstrapDatabase:third-party-path-api.better-sqlite3.Database.snapshot",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "sqlite-serialized-snapshot-buffer",
+            "anchor": "src/bootstrap-database.ts#createInMemoryBootstrapDatabase:argument:0.snapshot-bytes"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-04872d35ab6cf777cc9bb8a0",
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "normalizedNodeSha256": "8deec719586786e871ab3a482758ad897a71d1a4ea45548d859ec6a9c1b968c9",
+      "container": "BootstrapPathStore.publishManagedRestore",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#publish:node-fs.lstat",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-live-database-sidecar-path",
+            "anchor": "src/bootstrap-path-store.ts#publish:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-5736faedd3035fb5750e0cde",
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "normalizedNodeSha256": "6804726b04638b547d8091b200e3d4a927949f6de2bca71332c5f3f3142194f7",
+      "container": "cleanup",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#cleanup:node-fs.lstat",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-path-store.ts#cleanup:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-5bbb727aa2fbd90021bf39c5",
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "normalizedNodeSha256": "028582804e2049fab35a62a470f67f703a3c9734a1c537b57bac90bb0fc4d4f1",
+      "container": "cleanup",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#cleanup:node-fs.unlink",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-path-store.ts#cleanup:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-cdbfc4eadda41bc7d72a2a22",
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "normalizedNodeSha256": "8deec719586786e871ab3a482758ad897a71d1a4ea45548d859ec6a9c1b968c9",
+      "container": "publish",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#publish:node-fs.lstat",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-live-database-sidecar-path",
+            "anchor": "src/bootstrap-path-store.ts#publish:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-5254a4262256de0df4ce2ed2",
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "normalizedNodeSha256": "6804726b04638b547d8091b200e3d4a927949f6de2bca71332c5f3f3142194f7",
+      "container": "BootstrapPathStore.withDatabaseSnapshotFile",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#BootstrapPathStore.withDatabaseSnapshotFile:node-fs.lstat",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-path-store.ts#BootstrapPathStore.withDatabaseSnapshotFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-106c5381b8b26739ecd460ae",
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "normalizedNodeSha256": "028582804e2049fab35a62a470f67f703a3c9734a1c537b57bac90bb0fc4d4f1",
+      "container": "BootstrapPathStore.withDatabaseSnapshotFile",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#BootstrapPathStore.withDatabaseSnapshotFile:node-fs.unlink",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-path-store.ts#BootstrapPathStore.withDatabaseSnapshotFile:argument:0"
           }
         ]
       }
@@ -1465,6 +2171,62 @@
             "selector": "argument:2.shell",
             "classification": "fixed-shell-false",
             "anchor": "src/daemon.ts#startServer:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-8ecfb8f883d2ef88a920bb61",
+      "sourcePath": "src/db.ts",
+      "normalizedNodeSha256": "ee2890419ae0b369d20caf39fde575a6c31288bab27ea133209b68241a3c2f2b",
+      "container": "validateDatabaseRestoreCandidate",
+      "family": "node-fs",
+      "api": "readFileSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/db.ts#validateDatabaseRestoreCandidate:node-fs.readFileSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/db.ts#validateDatabaseRestoreCandidate:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-8de00407646059c0723b3b01",
+      "sourcePath": "src/db.ts",
+      "normalizedNodeSha256": "3c500f75783dc9eb7ca8d4fb9d166529dd28b66ddbcaaf66e493b8004b9f3f7b",
+      "container": "createConsistentDatabaseSnapshot",
+      "family": "node-fs",
+      "api": "readFileSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/db.ts#createConsistentDatabaseSnapshot:node-fs.readFileSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/db.ts#createConsistentDatabaseSnapshot:argument:0"
           }
         ]
       }
@@ -1750,22 +2512,23 @@
       }
     },
     {
-      "siteId": "sink-299f0d2d0fec82b4102316af",
-      "sourcePath": "src/file-viewer.ts",
-      "normalizedNodeSha256": "b1794b24dd3772da6bf5f141dba074a3dd38662bf1888ed7ed354bd7b085bcf8",
+      "siteId": "sink-7107aeeabde6a8690ae8ac8d",
+      "sourcePath": "src/document-parser.ts",
+      "normalizedNodeSha256": "5867a08692a8c06c5af781602de42aca9923f4cf2cf0227e274a3022ec3b733e",
       "container": "parseDocumentIsolated",
       "family": "worker",
       "api": "Worker",
       "pathOperands": [
         "argument:0",
         "argument:1.workerData.bytes",
-        "argument:1.workerData.fileName"
+        "argument:1.workerData.fileName",
+        "argument:1.workerData.options"
       ],
       "executionClass": "product-runtime",
       "packageExpectation": "compiled-to-asar",
       "binding": {
         "kind": "worker-byte-only",
-        "anchor": "src/file-viewer.ts#parseDocumentIsolated:worker.Worker",
+        "anchor": "src/document-parser.ts#parseDocumentIsolated:worker.Worker",
         "evidenceIds": [
           "file-viewer",
           "packaged-asar"
@@ -1774,17 +2537,22 @@
           {
             "selector": "argument:0",
             "classification": "bootstrap-file-lease",
-            "anchor": "src/file-viewer.ts#parseDocumentIsolated:argument:0"
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:0"
           },
           {
             "selector": "argument:1.workerData.bytes",
             "classification": "bounded-bytes",
-            "anchor": "src/file-viewer.ts#parseDocumentIsolated:argument:1.workerData.bytes"
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.bytes"
           },
           {
             "selector": "argument:1.workerData.fileName",
             "classification": "basename-metadata",
-            "anchor": "src/file-viewer.ts#parseDocumentIsolated:argument:1.workerData.fileName"
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.fileName"
+          },
+          {
+            "selector": "argument:1.workerData.options",
+            "classification": "validated-parser-options",
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.options"
           }
         ]
       }
@@ -1825,6 +2593,34 @@
             "selector": "argument:2.shell",
             "classification": "fixed-shell-false",
             "anchor": "src/file-viewer.ts#FileViewerService.reveal:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-bebf76b947960e88f337f371",
+      "sourcePath": "src/managed-restore.ts",
+      "normalizedNodeSha256": "d7e7de07932bebdfc3c4731807db40c12e34e2bc5683b0bf9059725c52ba0e1e",
+      "container": "syncDirectory",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/managed-restore.ts#syncDirectory:node-fs.open",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "path-policy-qualified-directory",
+            "anchor": "src/managed-restore.ts#syncDirectory:argument:0"
           }
         ]
       }
@@ -2480,6 +3276,174 @@
       }
     },
     {
+      "siteId": "sink-912df4104abb57a812ffda61",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "5d1824cdf5f0568e0c6f724e23e932706bd841658bb0a78a9ed3d5478fe4dccc",
+      "container": "PathPolicy.removeDirectory",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-be81a48199e331f59cc3d5f7",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "7ee9e4aba3eb6154ef2ad4e46fa6853468fed380dbf22c9addccb576b7921067",
+      "container": "PathPolicy.removeDirectory",
+      "family": "node-fs",
+      "api": "rmdir",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:node-fs.rmdir",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-03005ef383e11ebfab9e932d",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "d4ebe50fae394b8ac38d24b8ad229be469b57fd4cefd38d70bfe1bf6fd6fe0d1",
+      "container": "PathPolicy.removeDirectory",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-a372b0061be747348b21f244",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "5d1824cdf5f0568e0c6f724e23e932706bd841658bb0a78a9ed3d5478fe4dccc",
+      "container": "PathPolicy.removeFile",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeFile:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-0824ff9ad052f4bf02999c5e",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "38a045fb1c6443b90f41466d7b7ef7b28280d260edc57bbd17a849994cf8e319",
+      "container": "PathPolicy.removeFile",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeFile:node-fs.unlink",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-cf72afa73f2160d61836a297",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "d4ebe50fae394b8ac38d24b8ad229be469b57fd4cefd38d70bfe1bf6fd6fe0d1",
+      "container": "PathPolicy.removeFile",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeFile:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "siteId": "sink-62f6be76773c81c611392cc6",
       "sourcePath": "src/path-policy.ts",
       "normalizedNodeSha256": "ad09d1ff0f02e3fdfd1e29be21b329208b677c7c52b2f6b540e6738d348193ef",
@@ -3017,9 +3981,9 @@
       }
     },
     {
-      "siteId": "sink-d8f90ebc8884ad1c74ff3ef8",
+      "siteId": "sink-fbebe1312d594532f0d822df",
       "sourcePath": "src/tools/read-repo.ts",
-      "normalizedNodeSha256": "bc8b5f83eef847e4454baaee8fa1e86936a368ecc75c6607640b1efd32095bdb",
+      "normalizedNodeSha256": "9ff512892597771dcbfb07f6a34ddf321cbfe666afb565af40abd4189b18e5a5",
       "container": "runGitLsFiles",
       "family": "child-process",
       "api": "execFile",
@@ -3115,181 +4079,7 @@
           }
         ]
       }
-    },
-    {
-      "siteId": "sink-774a674e93013028ec22aa14",
-      "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "804cae67bd04bbaad624a454a1f0ebf7e27cc5daad0d1cc11dca296a6d6175cf",
-      "container": "<top-level>",
-      "family": "module-loader",
-      "api": "require",
-      "pathOperands": [
-        "argument:0"
-      ],
-      "executionClass": "electron-runtime",
-      "packageExpectation": "included-in-asar",
-      "binding": {
-        "kind": "static-module-loader",
-        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
-        "evidenceIds": [
-          "electron-source",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "reviewed-static-module-specifier",
-            "anchor": "electron/main.cjs#<top-level>:argument:0"
-          }
-        ]
-      }
-    },
-    {
-      "siteId": "sink-802a6df7dac2b0fdd4b6fa1d",
-      "sourcePath": "electron/user-data-migration.cjs",
-      "normalizedNodeSha256": "dbcd262637c39e2327bd2c548607f9e082b2ef933fb7dbae2205c182c5bd2d3c",
-      "container": "<top-level>",
-      "family": "module-loader",
-      "api": "require",
-      "pathOperands": [
-        "argument:0"
-      ],
-      "executionClass": "electron-runtime",
-      "packageExpectation": "included-in-asar",
-      "binding": {
-        "kind": "static-module-loader",
-        "anchor": "electron/user-data-migration.cjs#<top-level>:module-loader.require",
-        "evidenceIds": [
-          "electron-source",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "reviewed-static-module-specifier",
-            "anchor": "electron/user-data-migration.cjs#<top-level>:argument:0"
-          }
-        ]
-      }
-    },
-    {
-      "siteId": "sink-acadf05b56acfe8757106622",
-      "sourcePath": "electron/user-data-migration.cjs",
-      "normalizedNodeSha256": "827a8156f2efb8f20f591705bfc5119b5d306fce04052a0afa430ec7b2d0b405",
-      "container": "<top-level>",
-      "family": "module-loader",
-      "api": "require",
-      "pathOperands": [
-        "argument:0"
-      ],
-      "executionClass": "electron-runtime",
-      "packageExpectation": "included-in-asar",
-      "binding": {
-        "kind": "static-module-loader",
-        "anchor": "electron/user-data-migration.cjs#<top-level>:module-loader.require",
-        "evidenceIds": [
-          "electron-source",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "reviewed-static-module-specifier",
-            "anchor": "electron/user-data-migration.cjs#<top-level>:argument:0"
-          }
-        ]
-      }
-    },
-    {
-      "siteId": "sink-7bbeac2138fcaa3b750b2ed9",
-      "sourcePath": "electron/user-data-migration.cjs",
-      "normalizedNodeSha256": "748f3a53a74c496960b7a58a94f41a83cf16e1a344ac51c01598fda6be0791d3",
-      "container": "pathExists",
-      "family": "node-fs",
-      "api": "lstatSync",
-      "pathOperands": [
-        "argument:0"
-      ],
-      "executionClass": "electron-runtime",
-      "packageExpectation": "included-in-asar",
-      "binding": {
-        "kind": "bootstrap-adapter",
-        "anchor": "electron/user-data-migration.cjs#pathExists:node-fs.lstatSync",
-        "evidenceIds": [
-          "electron-source",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "electron-derived-user-data-path",
-            "anchor": "electron/user-data-migration.cjs#pathExists:argument:0"
-          }
-        ]
-      }
-    },
-    {
-      "siteId": "sink-5f0e05280d6e836a74b37400",
-      "sourcePath": "electron/user-data-migration.cjs",
-      "normalizedNodeSha256": "40c19bc96f569f76b26881dc5e6dd3bef6c9b87b7070e93f656146bcb16ea946",
-      "container": "migrateLegacyUserData",
-      "family": "node-fs",
-      "api": "lstatSync",
-      "pathOperands": [
-        "argument:0"
-      ],
-      "executionClass": "electron-runtime",
-      "packageExpectation": "included-in-asar",
-      "binding": {
-        "kind": "bootstrap-adapter",
-        "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:node-fs.lstatSync",
-        "evidenceIds": [
-          "electron-source",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "electron-derived-user-data-path",
-            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:0"
-          }
-        ]
-      }
-    },
-    {
-      "siteId": "sink-1be97d6ffcbda9bc59706d4f",
-      "sourcePath": "electron/user-data-migration.cjs",
-      "normalizedNodeSha256": "80f07e38a41fe4031b2b1d5440adab00b87cbeca52ea5bea106d6adedfd9da6a",
-      "container": "migrateLegacyUserData",
-      "family": "node-fs",
-      "api": "renameSync",
-      "pathOperands": [
-        "argument:0",
-        "argument:1"
-      ],
-      "executionClass": "electron-runtime",
-      "packageExpectation": "included-in-asar",
-      "binding": {
-        "kind": "bootstrap-adapter",
-        "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:node-fs.renameSync",
-        "evidenceIds": [
-          "electron-source",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "electron-derived-user-data-path",
-            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:0"
-          },
-          {
-            "selector": "argument:1",
-            "classification": "electron-derived-user-data-path",
-            "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:1"
-          }
-        ]
-      }
     }
   ],
-  "canonicalPayloadSha256": "179b7b8e25974108738aea42f11b14540784b6dbdc60e954bc6dd2fe9a7851b5"
+  "canonicalPayloadSha256": "71da4a65e7bc19925bdbc43b36f0e453bfe87e8de32a22e82485fa7d1ad3ea67"
 }

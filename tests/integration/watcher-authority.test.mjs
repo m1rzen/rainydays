@@ -65,7 +65,7 @@ await fs.writeFile(path.join(outside, "secret.txt"), externalSecret);
 process.env.RAINYDAYS_USER_DATA_DIR = fixture;
 process.env.RAINYDAYS_DATA_DIR = data;
 
-const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule, pathPolicyModule, wireModule] = await Promise.all([
+const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule, pathPolicyModule, wireModule, pollModule, eventBusModule] = await Promise.all([
   import("../../dist/persona.js"),
   import("../../dist/session.js"),
   import("../../dist/db.js"),
@@ -73,6 +73,8 @@ const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule, p
   import("../../dist/path-runtime.js"),
   import("../../dist/path-policy.js"),
   import("../../dist/wire.js"),
+  import("../../dist/poll.js"),
+  import("../../dist/event-bus.js"),
 ]);
 
 const persona = personaModule.createEffectivePersona({
@@ -87,6 +89,8 @@ const persona = personaModule.createEffectivePersona({
 });
 const session = sessionModule.createSession(persona, "SEC-02 watcher authority");
 
+const wireGateways = new WeakMap();
+
 async function makeAuthority() {
   const pathAuthority = await pathRuntimeModule.pathPolicy.createAuthority([{
     rootId: "workspace",
@@ -94,7 +98,7 @@ async function makeAuthority() {
     configuredPath: workspace,
     permissions: ["watch-directory"],
   }]);
-  return toolsModule.capabilityBroker.createRuntimeAuthority({
+  const authority = toolsModule.capabilityBroker.createRuntimeAuthority({
     name: persona.name,
     tools: persona.tools,
     env: persona.env,
@@ -105,22 +109,21 @@ async function makeAuthority() {
     networkPolicy: persona.networkPolicy,
     digest: persona.digest,
   });
+  wireGateways.set(authority, {
+    rootIdForEnv: key => key === "DATA_ROOT" || key === "WORKSPACE_ROOT" ? "workspace" : null,
+    watchDirectory: (input, options, publish) => pathRuntimeModule.pathPolicy.watchDirectory(
+      pathAuthority,
+      { input, operation: "watch-directory", defaultRootId: options.defaultRootId },
+      publish
+    ),
+  });
+  return authority;
 }
 
-async function approved(context, name, args) {
-  const inspected = toolsModule.inspectToolCall(context, name, args);
-  const challenge = toolsModule.capabilityBroker.createApprovalChallenge(context, inspected);
-  const grant = toolsModule.capabilityBroker.resolveApprovalChallenge({
-    challengeId: challenge.challengeId,
-    choice: "approve",
-    sessionId: context.sessionId,
-    runId: context.runId,
-    responsePrincipal: "local-user-api",
-    responseChannel: "ask-user",
-  });
-  assert(grant);
-  try { return await toolsModule.executeInspectedTool(grant, inspected); }
-  finally { toolsModule.capabilityBroker.finishContext(grant); }
+function subscribeWire(authority, owner, watchPath, source) {
+  const gateway = wireGateways.get(authority);
+  assert(gateway, "wire gateway missing");
+  return wireModule.subscribe(owner, gateway, watchPath, source);
 }
 
 async function observeExternalTarget() {
@@ -196,9 +199,9 @@ async function observeRejectedEvent(observationId, nested) {
   const authority = await makeAuthority();
   const root = toolsModule.capabilityBroker.beginAgentRun(authority, session.id);
   const owner = toolsModule.capabilityBroker.getResourceOwner(root);
-  const subscribed = await approved(root, "poll_subscribe", { path: watchName, source: observationId });
-  const subscriptionId = /ID:\s*(sub_[a-z0-9]+)/i.exec(subscribed)?.[1];
-  assert(subscriptionId, subscribed);
+  const subscribed = await subscribeWire(authority, owner, watchName, observationId);
+  assert.equal(subscribed.error, undefined);
+  const subscriptionId = subscribed.id;
   const events = [];
   const stopEvents = wireModule.onEvent(owner, subscriptionId, event => events.push(event));
   const linkName = "external-link";
@@ -208,14 +211,14 @@ async function observeRejectedEvent(observationId, nested) {
   try {
     await fs.symlink(outside, linkedEntry, "junction");
     await waitFor(
-      async () => (await toolsModule.executeTool(root, "poll_list", {})) === "没有活跃的订阅。",
+      async () => wireModule.listSubscriptions(owner).length === 0,
       `${observationId} did not close its denied watcher`
     );
     const audits = pathAuditEvents.slice(auditStart);
     const common = {
       escapedWatcherPublished: events.some(event => event.path.toLowerCase() === canonicalLinkedEntry.toLowerCase())
         || outsideEventCount(events, canonicalOutside) > 0,
-      revokedWatcherClosed: (await toolsModule.executeTool(root, "poll_list", {})) === "没有活跃的订阅。",
+      revokedWatcherClosed: wireModule.listSubscriptions(owner).length === 0,
       auditAttempts: audits.length,
       externalAccesses: outsideEventCount(events, canonicalOutside),
       eventRejected: events.every(event => event.path.toLowerCase() !== canonicalLinkedEntry.toLowerCase()),
@@ -337,9 +340,19 @@ test("SEC-02 watcher events and controls remain bound to one runtime authority",
   const firstAuthority = await makeAuthority();
   const firstRoot = toolsModule.capabilityBroker.beginAgentRun(firstAuthority, session.id);
   const firstOwner = toolsModule.capabilityBroker.getResourceOwner(firstRoot);
-  const subscribed = await approved(firstRoot, "poll_subscribe", { path: "", source: "authority-one" });
-  const subscriptionId = /ID:\s*(sub_[a-z0-9]+)/i.exec(subscribed)?.[1];
-  assert(subscriptionId, subscribed);
+  const eventBus = eventBusModule.getDefaultEventBus();
+  eventBus.attachStore(dbModule.createEventStore());
+  const pollManager = pollModule.getDefaultPollManager();
+  pollManager.attachStore(dbModule.createPollStore());
+  pollManager.subscribe(firstOwner, { source: "wire:file", tagFilters: { adapter: "file", source: "authority-one" }, debounceMs: 0 });
+  const pollDeliveries = [];
+  eventBus.setSessionDelivery(event => {
+    if (event.type === "poll.external_event") pollDeliveries.push(event);
+    return { outcome: "acked" };
+  });
+  const subscribed = await subscribeWire(firstAuthority, firstOwner, "", "authority-one");
+  assert.equal(subscribed.error, undefined);
+  const subscriptionId = subscribed.id;
   const events = [];
   const stopEvents = wireModule.onEvent(firstOwner, subscriptionId, event => events.push(event));
 
@@ -350,16 +363,23 @@ test("SEC-02 watcher events and controls remain bound to one runtime authority",
     () => events.find(event => event.path.toLowerCase() === canonicalValidFile.toLowerCase()),
     "authorized watcher event was not published"
   );
+  await waitFor(async () => (await pollManager.dispatchDueBatches()).delivered === 1, "Wire adapter event did not enter Poll batch");
+  await eventBus.dispatchDueEvents();
+  assert.equal(pollDeliveries.length, 1);
+  assert.equal(pollDeliveries[0].targetSessionId, session.id);
+  assert.equal(pollDeliveries[0].payload.events[0].source, "wire:file");
+  assert.equal(pollDeliveries[0].payload.events[0].tags.source, "authority-one");
 
   const secondAuthority = await makeAuthority();
   const secondRoot = toolsModule.capabilityBroker.beginAgentRun(secondAuthority, session.id);
+  const secondOwner = toolsModule.capabilityBroker.getResourceOwner(secondRoot);
   let secondList;
   let secondUnsubscribe;
   try {
-    secondList = await toolsModule.executeTool(secondRoot, "poll_list", {});
-    secondUnsubscribe = await toolsModule.executeTool(secondRoot, "poll_unsubscribe", { id: subscriptionId });
-    assert.equal(secondList, "没有活跃的订阅。");
-    assert.match(secondUnsubscribe, /不存在/);
+    secondList = wireModule.listSubscriptions(secondOwner);
+    secondUnsubscribe = await wireModule.unsubscribe(secondOwner, subscriptionId);
+    assert.deepEqual(secondList, []);
+    assert.equal(secondUnsubscribe, false);
   } finally {
     toolsModule.capabilityBroker.finishContext(secondRoot);
     await toolsModule.capabilityBroker.retireAuthority(secondAuthority);
@@ -375,7 +395,7 @@ test("SEC-02 watcher events and controls remain bound to one runtime authority",
   await new Promise(resolve => setTimeout(resolve, 250));
   const sessionActual = {
     oldResourceClosedOrIsolated: oldOwnerStale && events.length === eventCountBeforeSessionRetirement,
-    newAuthorityControlDenied: secondList === "没有活跃的订阅。" && /不存在/.test(secondUnsubscribe),
+    newAuthorityControlDenied: secondList.length === 0 && secondUnsubscribe === false,
     auditAttempts: pathAuditEvents.length - sessionAuditStart,
     externalAccesses: outsideEventCount(events, canonicalOutside),
   };
@@ -396,9 +416,9 @@ test("SEC-02 watcher events and controls remain bound to one runtime authority",
   const revokeAuthority = await makeAuthority();
   const revokeRoot = toolsModule.capabilityBroker.beginAgentRun(revokeAuthority, session.id);
   const revokeOwner = toolsModule.capabilityBroker.getResourceOwner(revokeRoot);
-  const revokeSubscribed = await approved(revokeRoot, "poll_subscribe", { path: "", source: "revoke-close" });
-  const revokeSubscriptionId = /ID:\s*(sub_[a-z0-9]+)/i.exec(revokeSubscribed)?.[1];
-  assert(revokeSubscriptionId, revokeSubscribed);
+  const revokeSubscribed = await subscribeWire(revokeAuthority, revokeOwner, "", "revoke-close");
+  assert.equal(revokeSubscribed.error, undefined);
+  const revokeSubscriptionId = revokeSubscribed.id;
   const revokeEvents = [];
   const stopRevokeEvents = wireModule.onEvent(revokeOwner, revokeSubscriptionId, event => revokeEvents.push(event));
   const revokeAuditStart = pathAuditEvents.length;
@@ -431,10 +451,12 @@ test("SEC-02 watcher target junction is denied before a subscription is publishe
   await fs.symlink(outside, linkedTarget, "junction");
   const authority = await makeAuthority();
   const root = toolsModule.capabilityBroker.beginAgentRun(authority, session.id);
+  const owner = toolsModule.capabilityBroker.getResourceOwner(root);
   try {
-    const result = await approved(root, "poll_subscribe", { path: "linked-target" });
-    assert.match(result, /订阅失败/);
-    assert.equal(await toolsModule.executeTool(root, "poll_list", {}), "没有活跃的订阅。");
+    const result = await subscribeWire(authority, owner, "linked-target", "junction-test");
+    assert.equal(typeof result.error, "string");
+    assert(result.error.length > 0);
+    assert.deepEqual(wireModule.listSubscriptions(owner), []);
   } finally {
     toolsModule.capabilityBroker.finishContext(root);
     await toolsModule.capabilityBroker.retireAuthority(authority);

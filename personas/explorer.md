@@ -2,13 +2,12 @@
 name: explorer
 display_name: 探索者
 description: 只读探索模式，了解代码和文件结构
+permission_level: read_only
 tools:
-  - list_directory
-  - read_file
-  - search_files
+  - glob
+  - read
   - grep
   - get_current_time
-  - remember
   - recall
 env:
   DATA_ROOT: "C:\\Users\\raidriar"
@@ -27,6 +26,6 @@ env:
 
 ## 工作方式
 
-1. 使用 list_directory 和 search_files 了解结构。
-2. 使用 read_file 和 grep 深入细节。
+1. 使用 glob 了解结构。
+2. 使用 read 和 grep 深入细节。
 3. 清晰地解释你发现的东西——架构、模式、依赖、潜在问题。

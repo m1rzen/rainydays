@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-08",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "package.json",
+    "electron/ipc-contract.cjs",
+    "electron/main.cjs",
+    "electron/preload.cjs",
+    "public/renderer.css",
+    "public/renderer.js",
+    "scripts/ds08-governance.mjs",
+    "scripts/generate-build-info.mjs",
+    "scripts/generate-ds08-resolved-manifest.mjs",
+    "scripts/prepare-electron-app.mjs",
+    "scripts/test-version-model.mjs",
+    "src/db.ts",
+    "src/index.ts",
+    "src/version.ts",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs"
+  ],
+  "coverageExemptions": {
+    "package.json": {
+      "reason": "DS-08 governance and finite task runner registration are bound by the resolved governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds08-governance.test.mjs", "layer": "contract" }]
+    },
+    "electron/ipc-contract.cjs": {
+      "reason": "Notification navigation and Tray summary schemas are exercised by exact IPC contract tests.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" }]
+    },
+    "electron/main.cjs": {
+      "reason": "Notification click routing, trusted IPC binding and Tray projection are exercised in Electron and IPC contracts.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "electron/preload.cjs": {
+      "reason": "The frozen preload notification and Tray bridge surface is exercised by Electron smoke identity probes.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "public/renderer.css": {
+      "reason": "Session unread and runtime status projections are exercised with the real renderer in Electron.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "public/renderer.js": {
+      "reason": "Persistent desktop state, foreground acknowledgement and Session Tab navigation use the real Electron renderer.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "scripts/ds08-governance.mjs": {
+      "reason": "Resolved identity validation is exercised by substitution-resistant DS-08 governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds08-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/generate-build-info.mjs": {
+      "reason": "Database Schema 10 build metadata is exercised by the complete version model matrix.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/version-model.test.mjs", "layer": "integration" }]
+    },
+    "scripts/generate-ds08-resolved-manifest.mjs": {
+      "reason": "Atomic resolved manifest publication and parent pinning are exercised by governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds08-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/prepare-electron-app.mjs": {
+      "reason": "Electron staging rejects database schema drift through the complete version model matrix.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/version-model.test.mjs", "layer": "integration" }]
+    },
+    "scripts/test-version-model.mjs": {
+      "reason": "Schema migration, restart, rollback, restore and future-version rejection are self-checked by the version model test.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/version-model.test.mjs", "layer": "integration" }]
+    },
+    "src/db.ts": {
+      "reason": "Schema 10 notification persistence, dedupe, backfill, acknowledgement and restart are covered by real SQLite integration.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/ds08-notifications.test.mjs", "layer": "integration" }]
+    },
+    "src/index.ts": {
+      "reason": "Desktop state API, EventBus consumption, SSE and run settlement notification are covered by real server integration.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/ds08-notifications.test.mjs", "layer": "integration" }]
+    },
+    "src/version.ts": {
+      "reason": "Schema 10 support and strict future-version refusal are covered by the complete version model matrix.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/version-model.test.mjs", "layer": "integration" }]
+    },
+    "tests/coverage-scope.json": {
+      "reason": "DS-08 exact coverage ownership is checked by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/helpers.mjs": {
+      "reason": "The DS-08 resolved task view is loaded and validated by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/unit/framework.test.mjs": {
+      "reason": "The framework test owns exact DS-08 additional coverage registration and validates itself.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/ds08-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/ds08-renderer-contract.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/ds08-notifications.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/ds03-workbench-layout.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/rt07-task-dag.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/version-model.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+  ]
+}

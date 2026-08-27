@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { assertResourceOwner, assertResourceOwnerForCleanup, registerOwnedResource, type ResourceOwner } from "./resource-owner.js";
-import { NativeBridgeError, type NativeExecutionBridge, type NativeExecutionHandle, type NativeExecutionProof, type NativeServiceDenialRequest, type NativeServiceDenialState } from "./execution-native.js";
+import { NativeBridgeError, type NativeBrokerObservationRequest, type NativeExecutionBridge, type NativeExecutionHandle, type NativeExecutionProof, type NativeServiceDenialRequest, type NativeServiceDenialState } from "./execution-native.js";
+import { cancellationError, isRunCancellation, NEVER_ABORT_SIGNAL, RunSettlementError, throwIfCancelled } from "./run-cancellation.js";
 
 export type ExecutionEntryPoint = "E1" | "E2" | "E3" | "E4";
 export type ExecutionProfile = "one-shot-shell" | "agent-shell" | "script" | "manual-terminal";
@@ -86,6 +87,12 @@ export interface ExecutionResult {
 export interface SessionOutput {
   readonly stdout: string;
   readonly stderr: string;
+  readonly stdoutBytes: Uint8Array;
+  readonly stderrBytes: Uint8Array;
+  readonly stdoutStart: number;
+  readonly stdoutEnd: number;
+  readonly stderrStart: number;
+  readonly stderrEnd: number;
   readonly outputTruncated: boolean;
   readonly running: boolean;
 }
@@ -149,11 +156,19 @@ interface InputRecord {
   state: "fresh" | "consuming" | "consumed";
 }
 
+interface OutputFrame {
+  readonly stream: "stdout" | "stderr";
+  bytes: Buffer;
+}
+
 interface OutputRecord {
-  stdout: Buffer[];
-  stderr: Buffer[];
+  frames: OutputFrame[];
   retainedBytes: number;
   aggregateBytes: number;
+  stdoutStart: number;
+  stdoutEnd: number;
+  stderrStart: number;
+  stderrEnd: number;
   truncated: boolean;
 }
 
@@ -198,6 +213,19 @@ function nativeFailure(error: unknown, message: string): ExecutionDeniedError {
   return code === "EXEC_NATIVE_IDENTITY_INVALID"
     ? new ExecutionDeniedError("EXEC_NATIVE_IDENTITY_INVALID", "Native artifact identity is invalid")
     : new ExecutionDeniedError("EXEC_NATIVE_FAILED", message);
+}
+
+async function settleNativeHandle(handle: NativeExecutionHandle, reason: string): Promise<readonly unknown[]> {
+  const failures: unknown[] = [];
+  try { await handle.terminate(reason); }
+  catch (error) { failures.push(error); }
+  try { await handle.completed; }
+  catch (error) { failures.push(error); }
+  return failures;
+}
+
+function throwSettlementFailure(primary: unknown, failures: readonly unknown[], message: string): void {
+  if (failures.length > 0) throw new RunSettlementError(primary, failures, message);
 }
 function digest(bytes: Uint8Array): string { return createHash("sha256").update(bytes).digest("hex"); }
 function canonicalDigest(value: unknown): string {
@@ -282,8 +310,8 @@ function validateRoots(roots: readonly ExecutionRootLeaseSnapshot[]): readonly E
 
 function validateNetwork(entry: ExecutionEntryPoint, network: ExecutionNetworkPolicy): ExecutionNetworkPolicy {
   if (!network || (network.mode !== "deny" && network.mode !== "brokered")) deny("EXEC_REQUEST_INVALID", "Execution network policy is invalid");
-  if ((entry === "E2" || entry === "E4") && network.mode !== "deny") deny("EXEC_NETWORK_PROFILE_UNSUPPORTED", "Persistent profiles do not support direct or brokered network access");
-  if (entry === "E3" && network.mode !== "deny" && !HEX_64.test(network.operationsDigest)) deny("EXEC_REQUEST_INVALID", "Broker operations digest is invalid");
+  if (entry === "E4" && network.mode !== "deny") deny("EXEC_NETWORK_PROFILE_UNSUPPORTED", "Manual Terminal does not support brokered network access");
+  if (network.mode === "brokered" && !HEX_64.test(network.operationsDigest)) deny("EXEC_REQUEST_INVALID", "Broker operations digest is invalid");
   return Object.freeze(network.mode === "deny" ? { mode: "deny" } : { mode: "brokered", operationsDigest: network.operationsDigest });
 }
 
@@ -298,7 +326,17 @@ function assertOwner(recordOwner: ResourceOwner, supplied: ResourceOwner): void 
   assertResourceOwner(supplied);
 }
 
-function newOutput(): OutputRecord { return { stdout: [], stderr: [], retainedBytes: 0, aggregateBytes: 0, truncated: false }; }
+function newOutput(): OutputRecord {
+  return {
+    frames: [], retainedBytes: 0, aggregateBytes: 0,
+    stdoutStart: 0, stdoutEnd: 0, stderrStart: 0, stderrEnd: 0,
+    truncated: false,
+  };
+}
+
+function retainedStream(output: OutputRecord, stream: "stdout" | "stderr"): Buffer {
+  return Buffer.concat(output.frames.filter(frame => frame.stream === stream).map(frame => frame.bytes));
+}
 
 export class ExecutionIsolationService {
   readonly #bridge: NativeExecutionBridge;
@@ -315,6 +353,42 @@ export class ExecutionIsolationService {
     if (!bridge || typeof bridge.launch !== "function" || typeof bridge.shutdown !== "function") throw new TypeError("Native execution bridge is invalid");
     this.#bridge = bridge;
     this.#now = options.now ?? Date.now;
+  }
+
+  async observeTerminalBoundaryDenial(request: NativeServiceDenialRequest): Promise<NativeExecutionProof> {
+    if (this.#shutdown) deny("EXEC_SERVICE_SHUTDOWN", "Execution service is shut down");
+    const validPair = request?.entryPoint === "E4" && request.profile === "manual-terminal"
+      && ((request.operation === "launch" && request.decisionState === "terminal-direct-start")
+        || (request.operation === "input" && request.decisionState === "terminal-direct-input")
+        || (request.operation === "kill" && request.decisionState === "terminal-owner-kill")
+        || (request.operation === "close" && request.decisionState === "terminal-owner-close"));
+    if (!validPair || ![request.executionId, request.contextId, request.sessionId, request.runId].every(validId)
+      || !Number.isSafeInteger(request.authorityEpoch) || request.authorityEpoch < 1
+      || !HEX_64.test(request.personaDigest) || !HEX_64.test(request.policyDigest)
+      || !HEX_64.test(request.payloadDigest) || !HEX_64.test(request.requestDigest)
+      || typeof this.#bridge.observeServiceDenial !== "function") {
+      deny("EXEC_REQUEST_INVALID", "Terminal boundary denial evidence request is invalid");
+    }
+    return await this.#bridge.observeServiceDenial(request);
+  }
+
+  async observeBrokerOperation(request: NativeBrokerObservationRequest): Promise<NativeExecutionProof> {
+    if (this.#shutdown) deny("EXEC_SERVICE_SHUTDOWN", "Execution service is shut down");
+    const profile = request?.entryPoint === "E1" ? "one-shot-shell" : request?.entryPoint === "E2" ? "agent-shell" : request?.entryPoint === "E3" ? "script" : null;
+    const observation = request?.observation;
+    const brokerCodes = new Set(["OBS_BROKER_ALLOWED", "EXEC_BROKER_SCHEME_DENIED", "EXEC_BROKER_HOST_DENIED", "EXEC_BROKER_PORT_DENIED", "EXEC_BROKER_PRIVATE_ADDRESS_DENIED", "EXEC_BROKER_DNS_REBIND_DENIED", "EXEC_BROKER_REDIRECT_DENIED", "EXEC_BROKER_REQUEST_LIMIT", "EXEC_BROKER_RESPONSE_LIMIT", "EXEC_BROKER_TIMEOUT"]);
+    const counts = observation ? [observation.attemptCount, observation.dnsResolutionCount, observation.redirectCount, observation.requestBytes, observation.responseBytes] : [];
+    if (!profile || request.profile !== profile || ![request.executionId, request.contextId, request.sessionId, request.runId].every(validId)
+      || !Number.isSafeInteger(request.authorityEpoch) || request.authorityEpoch < 1
+      || !HEX_64.test(request.personaDigest) || !HEX_64.test(request.policyDigest)
+      || !observation || !brokerCodes.has(observation.code)
+      || ![observation.authorityDigest, observation.operationsDigest, observation.operationIdDigest, observation.operationDigest, observation.destinationSetDigest, observation.responseHeadersDigest, observation.responseBodySha256].every(value => HEX_64.test(value))
+      || counts.some(value => !Number.isSafeInteger(value) || value < 0)
+      || (observation.statusCode !== null && (!Number.isSafeInteger(observation.statusCode) || observation.statusCode < 100 || observation.statusCode > 599))
+      || typeof this.#bridge.observeBrokerOperation !== "function") {
+      deny("EXEC_REQUEST_INVALID", "Broker observation evidence request is invalid");
+    }
+    return await this.#bridge.observeBrokerOperation(request);
   }
 
   issueExecutionGrant(input: ExecutionGrantRequest): ExecutionGrant {
@@ -362,36 +436,63 @@ export class ExecutionIsolationService {
   async launchOneShot(
     grant: ExecutionGrant | null | undefined,
     owner: ResourceOwner,
-    invocation: ExecutionGrantInvocation
+    invocation: ExecutionGrantInvocation,
+    signal: AbortSignal = NEVER_ABORT_SIGNAL
   ): Promise<ExecutionResult> {
     const output = newOutput();
     let record: GrantRecord | null = null;
     let handle: NativeExecutionHandle | null = null;
     let unregister: () => void = () => undefined;
+    let abortTermination: Promise<void> | null = null;
+    const currentAbortTermination = (): Promise<void> | null => abortTermination;
+    const onAbort = (): void => {
+      if (handle && !abortTermination) abortTermination = handle.terminate("run-cancelled");
+    };
     try {
+      throwIfCancelled(signal);
       record = this.#beginGrantConsumption(grant);
       this.#validateGrantInvocation(record, owner, invocation, new Set<ExecutionEntryPoint>(["E1", "E3"]));
       handle = await this.#launchNative(record, output);
       this.#activeHandles.add(handle);
       unregister = registerOwnedResource(owner, () => handle!.terminate("owner-retired"));
+      signal.addEventListener("abort", onAbort, { once: true });
+      if (signal.aborted) onAbort();
       const completion = await handle.completed;
+      if (abortTermination) await abortTermination;
+      throwIfCancelled(signal);
       if (output.aggregateBytes > record.limits.aggregateOutputBytes) deny("EXEC_OUTPUT_LIMIT", "Execution output limit exceeded");
       return Object.freeze({
         executionId: handle.executionId,
         exitCode: completion.exitCode,
         reason: completion.reason,
-        stdout: Buffer.concat(output.stdout).toString("utf8"),
-        stderr: Buffer.concat(output.stderr).toString("utf8"),
+        stdout: retainedStream(output, "stdout").toString("utf8"),
+        stderr: retainedStream(output, "stderr").toString("utf8"),
         outputTruncated: output.truncated,
       });
     } catch (error) {
       if (handle) {
-        await handle.terminate("launch-failed").catch(() => undefined);
-        await handle.completed.catch(() => undefined);
+        const pendingTermination = currentAbortTermination();
+        const failures: unknown[] = [];
+        if (pendingTermination) {
+          try { await pendingTermination; }
+          catch (cleanupError) { failures.push(cleanupError); }
+          try { await handle.completed; }
+          catch (cleanupError) { if (!failures.includes(cleanupError)) failures.push(cleanupError); }
+        } else {
+          failures.push(...await settleNativeHandle(handle, signal.aborted ? "run-cancelled" : "launch-failed"));
+        }
+        const primary = signal.aborted && !isRunCancellation(error)
+          ? cancellationError(signal, "Native execution was cancelled")
+          : error;
+        if (primary !== error && !failures.includes(error)) failures.push(error);
+        throwSettlementFailure(primary, failures, "Native execution cancellation cleanup failed");
       }
+      if (isRunCancellation(error)) throw error;
+      if (signal.aborted) throw cancellationError(signal, "Native execution was cancelled");
       if (error instanceof ExecutionDeniedError) throw await this.#observeLaunchDenial(error, invocation, grant);
       throw nativeFailure(error, "Native execution failed closed");
     } finally {
+      signal.removeEventListener("abort", onAbort);
       if (record) record.state = "consumed";
       unregister();
       if (handle) this.#activeHandles.delete(handle);
@@ -401,8 +502,10 @@ export class ExecutionIsolationService {
   async launchPersistent(
     grant: ExecutionGrant | null | undefined,
     owner: ResourceOwner,
-    invocation: ExecutionGrantInvocation
+    invocation: ExecutionGrantInvocation,
+    signal: AbortSignal = NEVER_ABORT_SIGNAL
   ): Promise<SessionLease> {
+    throwIfCancelled(signal);
     const record = this.#beginGrantConsumption(grant);
     const output = newOutput();
     let handle: NativeExecutionHandle | null = null;
@@ -410,6 +513,12 @@ export class ExecutionIsolationService {
       this.#validateGrantInvocation(record, owner, invocation, new Set<ExecutionEntryPoint>(["E2", "E4"]));
       handle = await this.#launchNative(record, output);
       this.#activeHandles.add(handle);
+      if (signal.aborted) {
+        const cancelled = cancellationError(signal, "Persistent execution launch was cancelled");
+        const failures = await settleNativeHandle(handle, "run-cancelled");
+        throwSettlementFailure(cancelled, failures, "Persistent execution cancellation cleanup failed");
+        throw cancelled;
+      }
       const token = Object.freeze({ leaseId: randomUUID(), sessionId: record.request.sessionId });
       const session: SessionRecord = {
         token,
@@ -435,13 +544,22 @@ export class ExecutionIsolationService {
         () => this.#closeSession(session),
         () => this.#closeSession(session)
       );
+      if (signal.aborted) {
+        const cancelled = cancellationError(signal, "Persistent execution launch was cancelled");
+        try { await this.#terminateSession(session, "run-cancelled"); }
+        catch (cleanupError) { throw new RunSettlementError(cancelled, [cleanupError], "Persistent execution cancellation cleanup failed"); }
+        throw cancelled;
+      }
       return token;
     } catch (error) {
+      if (error instanceof RunSettlementError) throw error;
       if (handle) {
-        await handle.terminate("launch-failed").catch(() => undefined);
-        await handle.completed.catch(() => undefined);
+        const failures = await settleNativeHandle(handle, signal.aborted ? "run-cancelled" : "launch-failed");
         this.#activeHandles.delete(handle);
+        throwSettlementFailure(error, failures, "Persistent execution cancellation cleanup failed");
       }
+      if (isRunCancellation(error)) throw error;
+      if (signal.aborted) throw cancellationError(signal, "Persistent execution launch was cancelled");
       if (error instanceof ExecutionDeniedError) throw error;
       throw nativeFailure(error, "Native persistent execution failed closed");
     } finally {
@@ -490,10 +608,12 @@ export class ExecutionIsolationService {
     lease: SessionLease,
     grant: InputGrant | null | undefined,
     owner: ResourceOwner,
-    invocation: InputGrantInvocation
+    invocation: InputGrantInvocation,
+    signal: AbortSignal = NEVER_ABORT_SIGNAL
   ): Promise<void> {
     let record: InputRecord | null = null;
     try {
+      throwIfCancelled(signal);
       if (this.#shutdown) deny("EXEC_SERVICE_SHUTDOWN", "Execution service is shut down");
       record = this.#beginInputGrantConsumption(grant);
       if (record.expiresAtMs <= this.#now()) deny("EXEC_GRANT_EXPIRED", "Input grant expired");
@@ -515,11 +635,39 @@ export class ExecutionIsolationService {
         || record.authorityEpoch !== session.authority.authorityEpoch) {
         deny("EXEC_BINDING_MISMATCH", "Input grant binding mismatch");
       }
+      let acknowledged = false;
+      let abortTermination: Promise<void> | null = null;
+      const onAbort = (): void => {
+        if (!acknowledged && !abortTermination) abortTermination = this.#terminateSession(session, "run-cancelled");
+      };
+      signal.addEventListener("abort", onAbort, { once: true });
+      if (signal.aborted) onAbort();
       try {
         await session.native.write(Object.freeze({ bytes: Buffer.from(record.payload), digest: record.payloadDigest, appendNewline: record.appendNewline }));
+        acknowledged = true;
+        if (abortTermination) {
+          const cancelled = cancellationError(signal, "Terminal input was cancelled");
+          try { await abortTermination; }
+          catch (cleanupError) { throw new RunSettlementError(cancelled, [cleanupError], "Terminal input cancellation cleanup failed"); }
+          throw cancelled;
+        }
       } catch (error) {
-        await this.#terminateSession(session, "input-failed").catch(() => undefined);
+        if (error instanceof RunSettlementError) throw error;
+        if (abortTermination) {
+          const cancelled = cancellationError(signal, "Terminal input was cancelled");
+          const failures: unknown[] = [];
+          try { await abortTermination; }
+          catch (cleanupError) { failures.push(cleanupError); }
+          if (!isRunCancellation(error) && error !== signal.reason) failures.push(error);
+          if (failures.length > 0) throw new RunSettlementError(cancelled, failures, "Terminal input cancellation cleanup failed");
+          throw cancelled;
+        }
+        if (isRunCancellation(error)) throw error;
+        try { await this.#terminateSession(session, "input-failed"); }
+        catch (cleanupError) { throw new RunSettlementError(error, [cleanupError], "Native input failure cleanup failed"); }
         throw nativeFailure(error, "Native input failed closed");
+      } finally {
+        signal.removeEventListener("abort", onAbort);
       }
     } catch (error) {
       if (error instanceof ExecutionDeniedError) throw await this.#observeInputDenial(error, lease, owner, invocation);
@@ -531,12 +679,29 @@ export class ExecutionIsolationService {
 
   readOutput(lease: SessionLease, owner: ResourceOwner): SessionOutput {
     const session = this.#requireSession(lease, owner, true);
+    const stdoutBytes = retainedStream(session.output, "stdout");
+    const stderrBytes = retainedStream(session.output, "stderr");
     return Object.freeze({
-      stdout: Buffer.concat(session.output.stdout).toString("utf8"),
-      stderr: Buffer.concat(session.output.stderr).toString("utf8"),
+      stdout: stdoutBytes.toString("utf8"),
+      stderr: stderrBytes.toString("utf8"),
+      stdoutBytes,
+      stderrBytes,
+      stdoutStart: session.output.stdoutStart,
+      stdoutEnd: session.output.stdoutEnd,
+      stderrStart: session.output.stderrStart,
+      stderrEnd: session.output.stderrEnd,
       outputTruncated: session.output.truncated,
       running: session.state === "running",
     });
+  }
+
+  async resize(lease: SessionLease, owner: ResourceOwner, cols: number, rows: number): Promise<void> {
+    const session = this.#requireSession(lease, owner);
+    if (session.state !== "running") deny("EXEC_SESSION_STALE", "Execution session is stale");
+    if (!Number.isSafeInteger(cols) || cols < 2 || cols > 500 || !Number.isSafeInteger(rows) || rows < 1 || rows > 300) {
+      deny("EXEC_REQUEST_INVALID", "PTY size is invalid");
+    }
+    await session.native.resize(Object.freeze({ cols, rows }));
   }
 
   async terminate(lease: SessionLease, owner: ResourceOwner, reason = "requested"): Promise<void> {
@@ -553,14 +718,19 @@ export class ExecutionIsolationService {
     if (this.#shutdownPromise) return this.#shutdownPromise;
     this.#shutdown = true;
     this.#shutdownPromise = (async () => {
+      const failures: unknown[] = [];
       const sessions = [...this.#sessions];
-      await Promise.allSettled(sessions.map(session => this.#terminateSession(session, "service-shutdown")));
+      const sessionResults = await Promise.allSettled(sessions.map(session => this.#terminateSession(session, "service-shutdown")));
+      for (const result of sessionResults) if (result.status === "rejected") failures.push(result.reason);
       const handles = [...this.#activeHandles];
-      await Promise.allSettled(handles.map(async handle => {
-        await handle.terminate("service-shutdown");
-        await handle.completed;
+      const handleResults = await Promise.allSettled(handles.map(async handle => {
+        const cleanupFailures = await settleNativeHandle(handle, "service-shutdown");
+        if (cleanupFailures.length > 0) throw new RunSettlementError(null, cleanupFailures, "Native handle shutdown failed");
       }));
-      await this.#bridge.shutdown();
+      for (const result of handleResults) if (result.status === "rejected") failures.push(result.reason);
+      try { await this.#bridge.shutdown(); }
+      catch (error) { failures.push(error); }
+      if (failures.length > 0) throw new AggregateError(failures, "Execution isolation shutdown failed");
     })();
     return this.#shutdownPromise;
   }
@@ -732,13 +902,24 @@ export class ExecutionIsolationService {
       if (!(frame.bytes instanceof Uint8Array)) return;
       const bytes = Buffer.from(frame.bytes);
       output.aggregateBytes += bytes.length;
-      const remaining = Math.max(0, record.limits.retainedOutputBytes - output.retainedBytes);
-      if (remaining > 0) {
-        const retained = bytes.subarray(0, remaining);
-        output[frame.stream].push(retained);
-        output.retainedBytes += retained.length;
+      const previous = output.frames.at(-1);
+      if (previous?.stream === frame.stream && previous.bytes.length + bytes.length <= 64 * 1024) {
+        previous.bytes = Buffer.concat([previous.bytes, bytes]);
+      } else output.frames.push({ stream: frame.stream, bytes });
+      output.retainedBytes += bytes.length;
+      if (frame.stream === "stdout") output.stdoutEnd += bytes.length;
+      else output.stderrEnd += bytes.length;
+      while (output.retainedBytes > record.limits.retainedOutputBytes && output.frames.length > 0) {
+        const oldest = output.frames[0];
+        const excess = output.retainedBytes - record.limits.retainedOutputBytes;
+        const removed = Math.min(excess, oldest.bytes.length);
+        if (oldest.stream === "stdout") output.stdoutStart += removed;
+        else output.stderrStart += removed;
+        output.retainedBytes -= removed;
+        output.truncated = true;
+        if (removed === oldest.bytes.length) output.frames.shift();
+        else oldest.bytes = oldest.bytes.subarray(removed);
       }
-      if (remaining < bytes.length) output.truncated = true;
       if (output.aggregateBytes > record.limits.aggregateOutputBytes) {
         output.truncated = true;
         if (handle) void handle.terminate("output-limit").catch(() => undefined);

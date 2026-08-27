@@ -3,6 +3,8 @@
 // ===========================================
 
 import { randomUUID } from "node:crypto";
+import { getDefaultEventBus } from "./event-bus.js";
+import { getDefaultPollManager } from "./poll.js";
 import {
   assertResourceOwner,
   registerOwnedResource,
@@ -77,6 +79,21 @@ export async function subscribe(
         try { callback(wireEvent); }
         catch { /* One consumer cannot bypass or disrupt the governed watcher. */ }
       }
+      // EVT-03：Wire 是 external source adapter；匹配/持久/debounce/Session 路由由 PollManager 承担。
+      await getDefaultPollManager().ingest({
+        sourceEventId: `wire:${id}:${randomUUID()}`,
+        source: "wire:file",
+        tags: { adapter: "file", event_type: wireEvent.type, source: current.source },
+        payload: wireEvent,
+        createdAt: wireEvent.timestamp,
+      });
+      // EventBus listener 仍保留 best-effort UI projection，但 user-facing source 不进入 machine tags。
+      void getDefaultEventBus().publish({
+        type: "wire.file_event",
+        source: "wire",
+        tags: [],
+        payload: wireEvent,
+      }).catch(() => undefined);
     });
     subscription.lease = lease;
     void lease.closed.then(() => closeSubscription(subscription)).catch(() => undefined);

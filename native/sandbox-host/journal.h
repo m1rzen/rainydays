@@ -15,7 +15,18 @@
 
 namespace mini_lux::sec03 {
 
+struct JournalObject {
+  std::uint64_t file = 0;
+  bool directory = false;
+  bool eligible = false;
+  std::string acl_digest;
+  bool operator==(const JournalObject& other) const { return file == other.file && directory == other.directory && eligible == other.eligible && acl_digest == other.acl_digest; }
+};
+
+inline constexpr size_t kMaxJournalObjects = 4096;
+
 struct JournalRecord {
+  unsigned format_version = 0;
   std::string candidate_host_sha256;
   std::string launcher_sha256;
   std::string execution_id;
@@ -27,11 +38,13 @@ struct JournalRecord {
   std::wstring sid_string;
   std::vector<unsigned char> sid_bytes;
   std::wstring root_path;
+  std::string resource_kind = "directory";
   std::uint64_t volume = 0;
   std::uint64_t file = 0;
   std::uint32_t access_mask = 0;
   std::string acl_digest;
   std::vector<unsigned char> ace;
+  std::vector<JournalObject> objects;
   DWORD host_pid = 0;
   std::uint64_t host_created = 0;
   unsigned generation = 0;
@@ -78,6 +91,11 @@ inline bool Sha256(const unsigned char* bytes, size_t size, std::string* output)
   object.resize(object_bytes); digest.resize(hash_bytes); if (BCryptCreateHash(algorithm, &hash, object.data(), object_bytes, nullptr, 0, 0) < 0 || BCryptHashData(hash, const_cast<PUCHAR>(bytes), static_cast<ULONG>(size), 0) < 0 || BCryptFinishHash(hash, digest.data(), hash_bytes, 0) < 0) goto done;
   *output = HexBytes(digest.data(), digest.size()); ok = true;
 done: if (hash) BCryptDestroyHash(hash); if (algorithm) BCryptCloseAlgorithmProvider(algorithm, 0); return ok;
+}
+inline bool AclSequenceDigest(PACL acl, std::string* output) {
+  if (!acl || !IsValidAcl(acl) || acl->AceCount > MAXWORD) return false; std::vector<unsigned char> material; material.reserve(4 + acl->AclSize); material.push_back(acl->AclRevision); material.push_back(0); material.push_back(static_cast<unsigned char>(acl->AceCount)); material.push_back(static_cast<unsigned char>(acl->AceCount >> 8));
+  for (DWORD i = 0; i < acl->AceCount; ++i) { void* raw = nullptr; if (!GetAce(acl, i, &raw)) return false; const auto* header = static_cast<ACE_HEADER*>(raw); if (header->AceSize < sizeof(ACE_HEADER)) return false; material.push_back(static_cast<unsigned char>(header->AceSize)); material.push_back(static_cast<unsigned char>(header->AceSize >> 8)); const auto* bytes = static_cast<const unsigned char*>(raw); material.insert(material.end(), bytes, bytes + header->AceSize); }
+  return Sha256(material.data(), material.size(), output);
 }
 inline std::uint64_t FileTimeValue(const FILETIME& value) { return (static_cast<std::uint64_t>(value.dwHighDateTime) << 32) | value.dwLowDateTime; }
 inline bool CurrentProcessCreation(std::uint64_t* out) { FILETIME created{}, exited{}, kernel{}, user{}; return GetProcessTimes(GetCurrentProcess(), &created, &exited, &kernel, &user) && ((*out = FileTimeValue(created)), true); }
@@ -129,27 +147,44 @@ inline bool JournalDirectory(JournalDirectoryLease* output) {
   JournalDirectoryLease parent; if (!QualifyFixedNtfsDirectory(mini, &parent)) return false; if (!CreateDirectoryW(directory.c_str(), nullptr) && GetLastError() != ERROR_ALREADY_EXISTS) return false;
   return QualifyFixedNtfsDirectory(directory, output);
 }
+inline std::string SerializeJournalObjects(const std::vector<JournalObject>& objects) {
+  std::string wire; for (size_t i = 0; i < objects.size(); ++i) { if (i) wire.push_back(';'); const auto& object = objects[i]; wire += std::to_string(object.file) + "," + (object.directory ? "1" : "0") + "," + (object.eligible ? "1" : "0") + "," + object.acl_digest; } return wire;
+}
+inline bool ParseJournalObjects(const std::string& wire, std::vector<JournalObject>* objects) {
+  objects->clear(); if (wire.empty()) return true; if (wire.front() == ';' || wire.back() == ';' || wire.find(";;") != std::string::npos) return false; size_t start = 0; std::uint64_t previous = 0;
+  while (start < wire.size()) { if (objects->size() >= kMaxJournalObjects) return false; const size_t end = wire.find(';', start); const std::string token = wire.substr(start, end == std::string::npos ? std::string::npos : end - start); std::array<std::string, 4> parts; size_t part_start = 0;
+    for (size_t i = 0; i < parts.size(); ++i) { const size_t comma = token.find(',', part_start); if ((i + 1 < parts.size() && comma == std::string::npos) || (i + 1 == parts.size() && comma != std::string::npos)) return false; parts[i] = token.substr(part_start, comma == std::string::npos ? std::string::npos : comma - part_start); part_start = comma == std::string::npos ? token.size() : comma + 1; }
+    std::uint64_t file = 0; if (!Decimal(parts[0], &file) || !file || file <= previous || (parts[1] != "0" && parts[1] != "1") || (parts[2] != "0" && parts[2] != "1") || !CanonicalHex(parts[3], 32, 32)) return false; objects->push_back({file, parts[1] == "1", parts[2] == "1", parts[3]}); previous = file; if (end == std::string::npos) break; start = end + 1;
+  } return SerializeJournalObjects(*objects) == wire;
+}
 inline std::string SerializeJournal(const JournalRecord& value) {
-  return "MLSEC03J3\n" + std::string("candidateHostSha256=") + value.candidate_host_sha256 + "\nlauncherSha256=" + value.launcher_sha256 + "\nexecutionId=" + value.execution_id
+  const bool resource_journal = value.resource_kind != "directory"; const std::string header = resource_journal ? "MLSEC03J4\n" : "MLSEC03J5\n";
+  return header + "candidateHostSha256=" + value.candidate_host_sha256 + "\nlauncherSha256=" + value.launcher_sha256 + "\nexecutionId=" + value.execution_id
     + "\ncontextId=" + value.context_id + "\nsessionId=" + value.session_id + "\nrunId=" + value.run_id + "\nauthorityEpoch=" + std::to_string(value.authority_epoch)
     + "\nprofile=" + HexWide(value.profile) + "\nsidString=" + HexWide(value.sid_string) + "\nsidBytes=" + HexBytes(value.sid_bytes.data(), value.sid_bytes.size())
-    + "\nroot=" + HexWide(value.root_path) + "\nvolume=" + std::to_string(value.volume) + "\nfile=" + std::to_string(value.file) + "\naccessMask=" + std::to_string(value.access_mask)
-    + "\naclDigest=" + value.acl_digest + "\nace=" + HexBytes(value.ace.data(), value.ace.size()) + "\nhostPid=" + std::to_string(value.host_pid) + "\nhostCreated=" + std::to_string(value.host_created)
+    + "\nroot=" + HexWide(value.root_path) + (resource_journal ? "\nresourceKind=" + value.resource_kind : "") + "\nvolume=" + std::to_string(value.volume) + "\nfile=" + std::to_string(value.file) + "\naccessMask=" + std::to_string(value.access_mask)
+    + "\naclDigest=" + value.acl_digest + "\nace=" + HexBytes(value.ace.data(), value.ace.size()) + (resource_journal ? "" : "\ndescendants=" + SerializeJournalObjects(value.objects)) + "\nhostPid=" + std::to_string(value.host_pid) + "\nhostCreated=" + std::to_string(value.host_created)
     + "\ngeneration=" + std::to_string(value.generation) + "\nstate=" + value.state + "\n";
 }
 inline bool ParseJournal(const std::string& wire, JournalRecord* out) {
-  static constexpr std::array<const char*, 20> names = {"candidateHostSha256","launcherSha256","executionId","contextId","sessionId","runId","authorityEpoch","profile","sidString","sidBytes","root","volume","file","accessMask","aclDigest","ace","hostPid","hostCreated","generation","state"};
-  if (wire.size() < 64 || wire.size() > 1024 * 1024 || wire.rfind("MLSEC03J3\n", 0) != 0 || wire.back() != '\n' || wire.find('\r') != std::string::npos || wire.find('\0') != std::string::npos) return false;
-  std::array<std::string, 20> fields; size_t start = 10; for (size_t i = 0; i < names.size(); ++i) { const size_t end = wire.find('\n', start); if (end == std::string::npos) return false; const std::string prefix = std::string(names[i]) + "="; if (wire.compare(start, prefix.size(), prefix) != 0) return false; fields[i] = wire.substr(start + prefix.size(), end - start - prefix.size()); start = end + 1; } if (start != wire.size()) return false;
-  std::uint64_t epoch = 0, volume = 0, file = 0, mask = 0, pid = 0, created = 0, generation = 0; std::vector<unsigned char> sid, ace; std::wstring profile, sid_string, root;
+  static constexpr std::array<const char*, 20> j3_names = {"candidateHostSha256","launcherSha256","executionId","contextId","sessionId","runId","authorityEpoch","profile","sidString","sidBytes","root","volume","file","accessMask","aclDigest","ace","hostPid","hostCreated","generation","state"};
+  static constexpr std::array<const char*, 21> j4_names = {"candidateHostSha256","launcherSha256","executionId","contextId","sessionId","runId","authorityEpoch","profile","sidString","sidBytes","root","resourceKind","volume","file","accessMask","aclDigest","ace","hostPid","hostCreated","generation","state"};
+  static constexpr std::array<const char*, 21> j5_names = {"candidateHostSha256","launcherSha256","executionId","contextId","sessionId","runId","authorityEpoch","profile","sidString","sidBytes","root","volume","file","accessMask","aclDigest","ace","descendants","hostPid","hostCreated","generation","state"};
+  const bool j3 = wire.rfind("MLSEC03J3\n", 0) == 0, j4 = wire.rfind("MLSEC03J4\n", 0) == 0, j5 = wire.rfind("MLSEC03J5\n", 0) == 0;
+  if (wire.size() < 64 || wire.size() > 1024 * 1024 || (!j3 && !j4 && !j5) || wire.back() != '\n' || wire.find('\r') != std::string::npos || wire.find('\0') != std::string::npos) return false;
+  std::vector<std::string> fields; fields.reserve(j3 ? j3_names.size() : j4_names.size()); size_t start = 10;
+  const auto parse_fields = [&](const auto& names) { for (const char* name : names) { const size_t end = wire.find('\n', start); if (end == std::string::npos) return false; const std::string prefix = std::string(name) + "="; if (wire.compare(start, prefix.size(), prefix) != 0) return false; fields.push_back(wire.substr(start + prefix.size(), end - start - prefix.size())); start = end + 1; } return start == wire.size(); };
+  if (!(j3 ? parse_fields(j3_names) : (j4 ? parse_fields(j4_names) : parse_fields(j5_names)))) return false;
+  const size_t shift = j4 ? 1 : 0; const std::string resource_kind = j4 ? fields[11] : "directory"; const size_t ledger_shift = j5 ? 1 : 0;
+  std::uint64_t epoch = 0, volume = 0, file = 0, mask = 0, pid = 0, created = 0, generation = 0; std::vector<unsigned char> sid, ace; std::vector<JournalObject> objects; std::wstring profile, sid_string, root;
   if (!CanonicalHex(fields[0], 32, 32) || !CanonicalHex(fields[1], 32, 32) || !BoundedId(fields[2]) || !BoundedId(fields[3]) || !BoundedId(fields[4]) || !BoundedId(fields[5])
     || !Decimal(fields[6], &epoch) || !epoch || !UnhexWide(fields[7], &profile, 255) || !UnhexWide(fields[8], &sid_string, 184) || !Unhex(fields[9], &sid) || sid.empty() || sid.size() > SECURITY_MAX_SID_SIZE || !IsValidSid(sid.data())
-    || !UnhexWide(fields[10], &root) || !Decimal(fields[11], &volume) || !Decimal(fields[12], &file) || !Decimal(fields[13], &mask) || !mask || mask > MAXDWORD
-    || !CanonicalHex(fields[14], 32, 32) || !Unhex(fields[15], &ace) || ace.size() < sizeof(ACCESS_ALLOWED_ACE) || ace.size() > 65535 || !Decimal(fields[16], &pid) || !pid || pid > MAXDWORD
-    || !Decimal(fields[17], &created) || !created || !Decimal(fields[18], &generation) || generation < 1 || generation > 9999
-    || (fields[19] != "prepared" && fields[19] != "applied" && fields[19] != "job-zero" && fields[19] != "removed")) return false;
-  std::vector<unsigned char> sid_from_string; PSID parsed_sid = nullptr; if (!ConvertStringSidToSidW(sid_string.c_str(), &parsed_sid) || !parsed_sid) return false; const DWORD parsed_bytes = GetLengthSid(parsed_sid); const bool sid_equal = parsed_bytes == sid.size() && memcmp(parsed_sid, sid.data(), sid.size()) == 0; LocalFree(parsed_sid); if (!sid_equal) return false;
-  out->candidate_host_sha256 = fields[0]; out->launcher_sha256 = fields[1]; out->execution_id = fields[2]; out->context_id = fields[3]; out->session_id = fields[4]; out->run_id = fields[5]; out->authority_epoch = epoch; out->profile = std::move(profile); out->sid_string = std::move(sid_string); out->sid_bytes = std::move(sid); out->root_path = std::move(root); out->volume = volume; out->file = file; out->access_mask = static_cast<std::uint32_t>(mask); out->acl_digest = fields[14]; out->ace = std::move(ace); out->host_pid = static_cast<DWORD>(pid); out->host_created = created; out->generation = static_cast<unsigned>(generation); out->state = fields[19]; return true;
+    || !UnhexWide(fields[10], &root) || (j4 && resource_kind != "file") || !Decimal(fields[11 + shift], &volume) || !Decimal(fields[12 + shift], &file) || !Decimal(fields[13 + shift], &mask) || !mask || mask > MAXDWORD
+    || !CanonicalHex(fields[14 + shift], 32, 32) || !Unhex(fields[15 + shift], &ace) || ace.size() < sizeof(ACCESS_ALLOWED_ACE) || ace.size() > 65535 || (j5 && !ParseJournalObjects(fields[16], &objects))
+    || !Decimal(fields[16 + shift + ledger_shift], &pid) || !pid || pid > MAXDWORD || !Decimal(fields[17 + shift + ledger_shift], &created) || !created || !Decimal(fields[18 + shift + ledger_shift], &generation) || generation < 1 || generation > 9999
+    || (fields[19 + shift + ledger_shift] != "prepared" && fields[19 + shift + ledger_shift] != "applied" && fields[19 + shift + ledger_shift] != "job-zero" && fields[19 + shift + ledger_shift] != "removed")) return false;
+  PSID parsed_sid = nullptr; if (!ConvertStringSidToSidW(sid_string.c_str(), &parsed_sid) || !parsed_sid) return false; const DWORD parsed_bytes = GetLengthSid(parsed_sid); const bool sid_equal = parsed_bytes == sid.size() && memcmp(parsed_sid, sid.data(), sid.size()) == 0; LocalFree(parsed_sid); if (!sid_equal) return false;
+  out->format_version = j3 ? 3u : (j4 ? 4u : 5u); out->candidate_host_sha256 = fields[0]; out->launcher_sha256 = fields[1]; out->execution_id = fields[2]; out->context_id = fields[3]; out->session_id = fields[4]; out->run_id = fields[5]; out->authority_epoch = epoch; out->profile = std::move(profile); out->sid_string = std::move(sid_string); out->sid_bytes = std::move(sid); out->root_path = std::move(root); out->resource_kind = resource_kind; out->volume = volume; out->file = file; out->access_mask = static_cast<std::uint32_t>(mask); out->acl_digest = fields[14 + shift]; out->ace = std::move(ace); out->objects = std::move(objects); out->host_pid = static_cast<DWORD>(pid); out->host_created = created; out->generation = static_cast<unsigned>(generation); out->state = fields[19 + shift + ledger_shift]; return true;
 }
 inline bool AtomicJournalWrite(const JournalDirectoryLease& directory, const std::wstring& prefix, const JournalRecord& value) {
   wchar_t suffix[32]{}; swprintf_s(suffix, L".%04u", value.generation); const std::wstring temporary = prefix + suffix + L".tmp", published = prefix + suffix + L".jrn";

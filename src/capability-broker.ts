@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { PathDeniedError, type ExecutionRootAccess, type PathAuthority, type PathOperation, type PathPolicy } from "./path-policy.js";
-import type { ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "./types.js";
+import type { PersonaPermissionLevel, ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "./types.js";
 import {
   assertResourceOwner,
   issueResourceOwner,
@@ -12,6 +12,7 @@ import {
 export type PrincipalKind = "agent" | "subagent" | "playbook" | "local-user-api";
 export type RiskClass = "read" | "write" | "network" | "process" | "control";
 export type ToolEffect = "filesystem" | "network" | "process" | "control";
+export type ToolConcurrency = "parallel-read";
 export type NetworkPolicy =
   | { mode: "deny" }
   | { mode: "loopback" }
@@ -19,6 +20,8 @@ export type NetworkPolicy =
   | { mode: "unrestricted" };
 
 export interface ToolPolicy {
+  /** Lowest Persona level allowed to include this binding or direct operation. */
+  readonly minimumPermissionLevel?: PersonaPermissionLevel;
   readonly riskClasses: readonly RiskClass[];
   readonly approval: "none" | "user";
   readonly effects: readonly ToolEffect[];
@@ -26,6 +29,8 @@ export interface ToolPolicy {
   readonly pathOperations?: readonly PathOperation[];
   /** Fixed execution-root mask. Omitted means the binding cannot launch a payload. */
   readonly executionRootAccess?: ExecutionRootAccess;
+  /** Omitted means serial. Only an explicitly validated read envelope can opt in. */
+  readonly concurrency?: ToolConcurrency;
 }
 
 export interface CapabilityToolRegistration {
@@ -35,9 +40,19 @@ export interface CapabilityToolRegistration {
   readonly policy: ToolPolicy;
 }
 
+/** Immutable context projection; executors and registration identities never leave the Broker. */
+export interface CapabilityToolDescriptor {
+  readonly name: string;
+  readonly definition: ToolDefinition;
+  readonly policy: ToolPolicy;
+}
+
 export interface EffectivePersonaInput {
   readonly name: string;
+  readonly permissionLevel?: PersonaPermissionLevel;
   readonly tools: readonly string[];
+  readonly allowTools?: readonly string[];
+  readonly denyTools?: readonly string[];
   readonly env: Readonly<Record<string, string>>;
   readonly systemPrompt: string;
   /** Raw configured roots participate only in the pre-existing Persona identity, never authorization. */
@@ -63,7 +78,7 @@ export interface CapabilityContext {
   readonly runId: string;
   readonly parentContextId: string | null;
   readonly principal: PrincipalKind;
-  readonly persona: Readonly<{ name: string; digest: string }>;
+  readonly persona: Readonly<{ name: string; permissionLevel: PersonaPermissionLevel; digest: string }>;
   readonly authorityEpoch: number;
   readonly allowedTools: readonly string[];
   readonly allowedRoots: readonly string[];
@@ -133,7 +148,14 @@ function cloneJsonValue(value: unknown, label: string): unknown {
     const prototype = Object.getPrototypeOf(value);
     if (prototype !== Object.prototype && prototype !== null) throw new TypeError(`${label} must be plain JSON data`);
     const result: Record<string, unknown> = {};
-    for (const [key, entry] of Object.entries(value)) result[key] = cloneJsonValue(entry, `${label}.${key}`);
+    for (const [key, entry] of Object.entries(value)) {
+      Object.defineProperty(result, key, {
+        value: cloneJsonValue(entry, `${label}.${key}`),
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
+    }
     return result;
   }
   throw new TypeError(`${label} contains unsupported data`);
@@ -166,6 +188,21 @@ export function canonicalDigest(value: unknown): string {
 
 const riskClasses = new Set<RiskClass>(["read", "write", "network", "process", "control"]);
 const effects = new Set<ToolEffect>(["filesystem", "network", "process", "control"]);
+const permissionLevels: readonly PersonaPermissionLevel[] = Object.freeze(["minimal", "read_only", "coding", "guarded", "full"]);
+
+function parsePermissionLevel(value: unknown): PersonaPermissionLevel {
+  const level = value === undefined ? "guarded" : value;
+  if (typeof level !== "string" || !permissionLevels.includes(level as PersonaPermissionLevel)) throw new TypeError("persona permission level is invalid");
+  return level as PersonaPermissionLevel;
+}
+
+function permissionRank(level: PersonaPermissionLevel): number {
+  return permissionLevels.indexOf(level);
+}
+
+function inferredMinimumLevel(risks: readonly RiskClass[]): PersonaPermissionLevel {
+  return risks.some(risk => risk === "write" || risk === "process") ? "coding" : "read_only";
+}
 const reservedEnv = new Set([
   "_SESSION_ID",
   "_CAPABILITY_CONTEXT_ID",
@@ -188,6 +225,9 @@ function copyNetworkPolicy(policy: NetworkPolicy): NetworkPolicy {
 
 function copyPolicy(policy: ToolPolicy): ToolPolicy {
   const risks = uniqueStrings(policy.riskClasses, "risk classes") as RiskClass[];
+  const minimumPermissionLevel = policy.minimumPermissionLevel === undefined
+    ? inferredMinimumLevel(risks)
+    : parsePermissionLevel(policy.minimumPermissionLevel);
   const toolEffects = uniqueStrings(policy.effects, "tool effects") as ToolEffect[];
   const pathOperations = uniqueStrings(policy.pathOperations ?? [], "path operations") as PathOperation[];
   const knownPathOperations = new Set<PathOperation>([
@@ -217,12 +257,32 @@ function copyPolicy(policy: ToolPolicy): ToolPolicy {
     throw new TypeError("tool execution root access is outside its path and risk envelope");
   }
   if (policy.approval !== "none" && policy.approval !== "user") throw new TypeError("tool approval policy is invalid");
+  const concurrency = policy.concurrency;
+  if (concurrency !== undefined && concurrency !== "parallel-read") throw new TypeError("tool concurrency policy is invalid");
+  if (concurrency === "parallel-read") {
+    const allowedRisks = new Set<RiskClass>(["read", "network"]);
+    const allowedEffects = new Set<ToolEffect>(["filesystem", "network"]);
+    const allowedPathOperations = new Set<PathOperation>(["read-file", "read-directory", "search-tree"]);
+    if (policy.approval !== "none"
+      || risks.length === 0
+      || !risks.includes("read")
+      || risks.some(risk => !allowedRisks.has(risk))
+      || toolEffects.some(effect => !allowedEffects.has(effect))
+      || pathOperations.some(operation => !allowedPathOperations.has(operation))
+      || executionRootAccess !== undefined
+      || (toolEffects.includes("filesystem") && !risks.includes("read"))
+      || (toolEffects.includes("network") && !risks.includes("network"))) {
+      throw new TypeError("parallel-read tool policy is outside the read-only scheduling envelope");
+    }
+  }
   return deepFreeze({
+    minimumPermissionLevel,
     riskClasses: deepFreeze(risks),
     approval: policy.approval,
     effects: deepFreeze(toolEffects),
     pathOperations: deepFreeze(pathOperations),
     ...(executionRootAccess === undefined ? {} : { executionRootAccess }),
+    ...(concurrency === undefined ? {} : { concurrency }),
   });
 }
 
@@ -240,6 +300,7 @@ interface BindingRecord {
 
 interface PersonaSnapshot {
   readonly name: string;
+  readonly permissionLevel: PersonaPermissionLevel;
   readonly tools: readonly string[];
   readonly env: Readonly<Record<string, string>>;
   readonly systemPrompt: string;
@@ -335,6 +396,7 @@ export interface CapabilityBrokerOptions {
   readonly resolveSessionPersona: (sessionId: string) => string | null;
   readonly pathPolicy: PathPolicy;
   readonly now?: () => number;
+  readonly newRunId?: () => string;
 }
 
 function networkIsSubset(child: NetworkPolicy, parent: NetworkPolicy): boolean {
@@ -350,6 +412,7 @@ export class CapabilityBroker {
   private readonly resolveSessionPersona: (sessionId: string) => string | null;
   private readonly pathPolicy: PathPolicy;
   private readonly now: () => number;
+  private readonly newRunId: () => string;
   private readonly staticBindings = new Map<string, BindingRecord>();
   private readonly directPolicies = new Map<string, ToolPolicy>();
   private readonly authorityRecords = new WeakMap<RuntimeAuthority, AuthorityRecord>();
@@ -364,6 +427,7 @@ export class CapabilityBroker {
     this.resolveSessionPersona = options.resolveSessionPersona;
     this.pathPolicy = options.pathPolicy;
     this.now = options.now ?? Date.now;
+    this.newRunId = options.newRunId ?? randomUUID;
   }
 
   registerStaticTool(registration: CapabilityToolRegistration): void {
@@ -378,7 +442,10 @@ export class CapabilityBroker {
 
   createRuntimeAuthority(input: EffectivePersonaInput): RuntimeAuthority {
     if (!input.name || typeof input.name !== "string" || typeof input.systemPrompt !== "string") throw new TypeError("effective persona identity is invalid");
+    const permissionLevel = parsePermissionLevel(input.permissionLevel);
     const tools = deepFreeze(uniqueStrings(input.tools, "persona tools"));
+    const allowTools = deepFreeze(uniqueStrings(input.allowTools ?? [], "persona allowed tools"));
+    const denyTools = deepFreeze(uniqueStrings(input.denyTools ?? [], "persona denied tools"));
     const configuredRoots = deepFreeze(uniqueStrings(input.allowedRoots, "configured roots"));
     const env: Record<string, string> = {};
     for (const [key, value] of Object.entries(input.env)) {
@@ -404,12 +471,13 @@ export class CapabilityBroker {
       rootEnv[envKey] = rootId;
     }
     const networkPolicy = copyNetworkPolicy(input.networkPolicy);
-    const personaDigestInput = { name: input.name, tools, env, systemPrompt: input.systemPrompt, allowedRoots: configuredRoots, networkPolicy };
+    const personaDigestInput = { name: input.name, permissionLevel, tools, allowTools, denyTools, env, systemPrompt: input.systemPrompt, allowedRoots: configuredRoots, networkPolicy };
     const personaDigest = canonicalDigest(personaDigestInput);
     if (input.digest !== undefined && input.digest !== personaDigest) denied("CAPABILITY_REGISTRATION_INVALID", "effective persona digest differs");
     const digest = canonicalDigest({ personaDigest, pathAuthorityDigest: pathDescription.digest, rootIds, rootEnv });
     const persona: PersonaSnapshot = deepFreeze({
       name: input.name,
+      permissionLevel,
       tools,
       env,
       systemPrompt: input.systemPrompt,
@@ -444,14 +512,22 @@ export class CapabilityBroker {
     record.runtimeBindings.set(registration.name, this.makeBinding(authority.authorityId, record.epoch, registration));
   }
 
-  beginAgentRun(authority: RuntimeAuthority, sessionId: string): CapabilityContext {
+  beginAgentRun(authority: RuntimeAuthority, sessionId: string, requestedRunId?: string): CapabilityContext {
     const record = this.requireAuthority(authority);
     if (record.activeRoot) denied("CAPABILITY_RUN_BUSY", "runtime already has an active root run");
     this.assertSession(record, sessionId);
+    const runId = requestedRunId ?? this.newRunId();
+    if (typeof runId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/u.test(runId)) {
+      throw new TypeError("agent run identity is invalid");
+    }
     const bindings = new Map<string, BindingRecord>();
     for (const name of record.persona.tools) {
       const binding = record.runtimeBindings.get(name) ?? this.staticBindings.get(name);
       if (!binding) denied("CAPABILITY_TOOL_DENIED", `persona references unavailable tool: ${name}`);
+      const minimum = binding.policy.minimumPermissionLevel ?? inferredMinimumLevel(binding.policy.riskClasses);
+      if (permissionRank(record.persona.permissionLevel) < permissionRank(minimum)) {
+        denied("CAPABILITY_TOOL_DENIED", `persona permission level cannot include tool: ${name}`);
+      }
       bindings.set(name, binding);
     }
     const risks = new Set<RiskClass>();
@@ -461,7 +537,7 @@ export class CapabilityBroker {
       parent: null,
       principal: "agent",
       sessionId,
-      runId: randomUUID(),
+      runId,
       bindings,
       roots: new Set(record.persona.allowedRoots),
       risks,
@@ -473,10 +549,26 @@ export class CapabilityBroker {
     return context;
   }
 
-  getToolDefinitions(context: CapabilityContext): ToolDefinition[] {
+  getToolDescriptors(context: CapabilityContext): CapabilityToolDescriptor[] {
     const record = this.requireActiveContext(context);
     if (record.context.principal === "local-user-api") denied("CAPABILITY_TOOL_DENIED", "direct API context has no model tools");
-    return [...record.bindings.values()].map((binding) => binding.definition);
+    return [...record.bindings.values()].map(binding => Object.freeze({
+      name: binding.name,
+      definition: binding.definition,
+      policy: binding.policy,
+    }));
+  }
+
+  getToolDefinitions(context: CapabilityContext): ToolDefinition[] {
+    return this.getToolDescriptors(context).map(descriptor => descriptor.definition);
+  }
+
+  getUnattendedChildToolNames(context: CapabilityContext): readonly string[] {
+    const record = this.requireActiveContext(context);
+    if (record.context.principal === "local-user-api") denied("CAPABILITY_TOOL_DENIED", "direct API context cannot derive model children");
+    return deepFreeze([...record.bindings.values()]
+      .filter(binding => binding.policy.approval === "none")
+      .map(binding => binding.name));
   }
 
   getResourceOwner(context: CapabilityContext): ResourceOwner {
@@ -562,6 +654,21 @@ export class CapabilityBroker {
         const record = requireInvocation();
         const rootId = record.authority.persona.rootEnv[envKey];
         return typeof rootId === "string" && record.roots.has(rootId) ? rootId : null;
+      },
+      identifyDirectory: async (input, options = {}) => {
+        requireInvocation("read-directory");
+        const qualified = await this.pathPolicy.identifyDirectoryDirect(
+          invocationAuthority,
+          request(input, "read-directory", options.defaultRootId),
+        );
+        return Object.freeze({
+          rootId: qualified.rootId,
+          identityDigest: canonicalDigest({
+            rootId: qualified.rootId,
+            canonicalPath: qualified.canonicalPath,
+            identity: qualified.identity,
+          }),
+        });
       },
       withInitialCwd: (input, options, use) => {
         requireInvocation("initial-cwd");
@@ -700,10 +807,12 @@ export class CapabilityBroker {
     if (parent.principal === "local-user-api") denied("CAPABILITY_ATTENUATION_INVALID", "direct API context cannot derive agent children");
     const explicitTools = request.tools === undefined ? null : uniqueStrings(request.tools, "child tools");
     const requestedTools = explicitTools ?? [...parentRecord.bindings.keys()];
-    const forbiddenRecursion = request.principal === "subagent" ? "subagent" : "playbook_execute";
+    const forbiddenRecursion = request.principal === "subagent"
+      ? new Set(["subagent", "subagent_wait", "subagent_output", "subagent_peek", "subagent_post", "subagent_stop", "subagent_list"])
+      : new Set(["playbook_execute"]);
     const bindings = new Map<string, BindingRecord>();
     for (const name of requestedTools) {
-      if (name === forbiddenRecursion) continue;
+      if (forbiddenRecursion.has(name)) continue;
       const binding = parentRecord.bindings.get(name);
       if (!binding) denied("CAPABILITY_ATTENUATION_INVALID", `child requested forbidden binding: ${name}`);
       if (binding.policy.approval === "user") {
@@ -767,12 +876,69 @@ export class CapabilityBroker {
     return view;
   }
 
+  getInvocationSourceContext(executionContext: CapabilityContext): CapabilityContext {
+    const executionRecord = this.requireActiveContext(executionContext);
+    return executionRecord.grant && executionRecord.parent
+      ? executionRecord.parent.context
+      : executionContext;
+  }
+
   deriveInvocationChild(executionContext: CapabilityContext, request: ChildCapabilityRequest): CapabilityContext {
+    return this.deriveChild(this.getInvocationSourceContext(executionContext), request);
+  }
+
+  deriveDetachedInvocationChild(
+    executionContext: CapabilityContext,
+    request: ChildCapabilityRequest,
+    rawRunId: string,
+  ): CapabilityContext {
     const executionRecord = this.requireActiveContext(executionContext);
     const source = executionRecord.grant && executionRecord.parent
       ? executionRecord.parent.context
       : executionContext;
-    return this.deriveChild(source, request);
+    const runId = typeof rawRunId === "string" ? rawRunId : "";
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/u.test(runId)) throw new TypeError("detached child run identity is invalid");
+    const attached = this.deriveChild(source, request);
+    const attachedRecord = this.requireActiveContext(attached);
+    try {
+      return this.createContext({
+        authority: attachedRecord.authority,
+        parent: null,
+        principal: request.principal,
+        sessionId: attached.sessionId,
+        runId,
+        bindings: new Map(attachedRecord.bindings),
+        roots: new Set(attachedRecord.roots),
+        risks: new Set(attachedRecord.risks),
+        networkPolicy: attached.networkPolicy,
+        grant: null,
+        directOperation: null,
+      });
+    } finally {
+      this.revokeContext(attachedRecord);
+    }
+  }
+
+  async finishDetachedContext(context: CapabilityContext, timeoutMs = 5_000): Promise<void> {
+    const record = this.requireActiveContext(context);
+    if (record.parent !== null || context.principal !== "subagent") {
+      denied("CAPABILITY_CONTEXT_FORGED", "detached child context is invalid");
+    }
+    if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60_000) {
+      throw new TypeError("detached child retirement timeout is invalid");
+    }
+    const prefix = `${context.sessionId}\u0000${context.executionDomainId}\u0000${context.runId}\u0000${context.principal}\u0000`;
+    const owners = [...record.authority.resourceOwners.entries()].filter(([key]) => key.startsWith(prefix));
+    this.revokeContext(record);
+    try {
+      await Promise.all(owners.map(([, owner]) => retireResourceOwner(owner, timeoutMs)));
+    } catch (error) {
+      record.authority.blockedResourceSessions.add(context.sessionId);
+      throw error;
+    }
+    for (const [key, owner] of owners) {
+      if (record.authority.resourceOwners.get(key) === owner) record.authority.resourceOwners.delete(key);
+    }
   }
 
   createApprovalChallenge(parent: CapabilityContext, inspected: InspectedToolCall, ttlMs = 60_000): ApprovalChallenge {
@@ -910,6 +1076,10 @@ export class CapabilityBroker {
     this.assertSession(authority, input.sessionId);
     const policy = this.directPolicies.get(input.operation);
     if (!policy) denied("CAPABILITY_DIRECT_OPERATION_DENIED", `unknown direct operation: ${input.operation}`);
+    const minimum = policy.minimumPermissionLevel ?? inferredMinimumLevel(policy.riskClasses);
+    if (permissionRank(authority.persona.permissionLevel) < permissionRank(minimum)) {
+      denied("CAPABILITY_DIRECT_OPERATION_DENIED", "Persona permission level denies the direct operation");
+    }
     if (policy.approval === "user") denied("CAPABILITY_DIRECT_OPERATION_DENIED", "direct operation requires a separate explicit user grant");
     if (policy.riskClasses.includes("network") && authority.persona.networkPolicy.mode === "deny") {
       denied("CAPABILITY_RISK_DENIED", "network is denied by the direct-operation capability envelope");
@@ -918,12 +1088,14 @@ export class CapabilityBroker {
     if (!Number.isInteger(ttlMs) || ttlMs <= 0 || ttlMs > 60_000) throw new TypeError("direct operation lifetime is invalid");
     const snapshot = this.prepareArguments(input.args);
     const risks = new Set(policy.riskClasses);
+    const runId = this.newRunId();
+    if (typeof runId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/u.test(runId)) throw new TypeError("direct operation run identity is invalid");
     return this.createContext({
       authority,
       parent: null,
       principal: "local-user-api",
       sessionId: input.sessionId,
-      runId: randomUUID(),
+      runId,
       bindings: new Map(),
       roots: new Set(authority.persona.allowedRoots),
       risks,
@@ -993,6 +1165,21 @@ export class CapabilityBroker {
     const record = this.contextRecords.get(context);
     if (!record) denied(context ? "CAPABILITY_CONTEXT_FORGED" : "CAPABILITY_CONTEXT_REQUIRED", "cannot finish unknown context");
     this.revokeContext(record);
+  }
+
+  async poisonRunContext(context: CapabilityContext, timeoutMs = 5_000): Promise<void> {
+    const record = this.contextRecords.get(context);
+    if (!record || record.context !== context) denied(context ? "CAPABILITY_CONTEXT_FORGED" : "CAPABILITY_CONTEXT_REQUIRED", "cannot poison unknown context");
+    let root = record;
+    while (root.parent) root = root.parent;
+    const authority = root.authority;
+    const sessionId = root.context.sessionId;
+    this.revokeContext(root);
+    try {
+      await this.retireSessionResources(authority.authority, sessionId, timeoutMs);
+    } finally {
+      authority.blockedResourceSessions.add(sessionId);
+    }
   }
 
   revokeAuthority(authority: RuntimeAuthority): void {
@@ -1178,7 +1365,11 @@ export class CapabilityBroker {
       runId: input.runId,
       parentContextId: input.parent?.context.contextId ?? null,
       principal: input.principal,
-      persona: deepFreeze({ name: input.authority.persona.name, digest: input.authority.persona.digest }),
+      persona: deepFreeze({
+        name: input.authority.persona.name,
+        permissionLevel: input.authority.persona.permissionLevel,
+        digest: input.authority.persona.digest,
+      }),
       authorityEpoch: input.authority.epoch,
       allowedTools,
       allowedRoots,

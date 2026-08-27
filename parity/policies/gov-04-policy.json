@@ -31,9 +31,9 @@
     "signerAllowlistPath": "parity/policies/gov-04-signer-allowlist.json"
   },
   "trustedRelease": {
-    "state": "unconfigured",
+    "state": "configured",
     "provider": "github-actions",
-    "repository": null,
+    "repository": "m1rzen/rainydays",
     "workflow": ".github/workflows/gov-04-trusted-release.yml",
     "event": "workflow_dispatch",
     "environment": "mini-lux-trusted-release",

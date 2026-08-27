@@ -6,6 +6,7 @@
 import type { ToolDefinition, ToolExecutor } from "../types.js";
 import type { ConversationMemory } from "../memory.js";
 import type { LLMClient } from "../llm.js";
+import { throwIfCancelled } from "../run-cancellation.js";
 
 export const curateDef: ToolDefinition = {
   type: "function",
@@ -26,7 +27,9 @@ export const curateDef: ToolDefinition = {
 };
 
 export function createCurateExec(memory: ConversationMemory, llm: LLMClient): ToolExecutor {
-  return async (args) => {
+  return async (args, _env, invocation) => {
+    if (!invocation) throw new Error("Tool invocation services are required");
+    throwIfCancelled(invocation.signal);
     const hint = args.hint as string | undefined;
 
     // 如果有 hint，临时修改摘要器的指令
@@ -42,7 +45,7 @@ export function createCurateExec(memory: ConversationMemory, llm: LLMClient): To
 
     const beforeTokens = memory.getTokenEstimate();
     const beforeCount = memory.getMessageCount();
-    const compacted = await memory.compact(llm);
+    const compacted = await memory.compact(llm, invocation.signal, invocation.network.fetch);
     const afterTokens = memory.getTokenEstimate();
     const afterCount = memory.getMessageCount();
 

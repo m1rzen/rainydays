@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import process from "node:process";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -13,12 +14,62 @@ async function databaseVersion() {
   db.closeDb();
 }
 
+async function databaseMigrationCrash() {
+  const originalTransaction = Database.prototype.transaction;
+  Database.prototype.transaction = function transactionWithCrashBarrier(action) {
+    return Reflect.apply(originalTransaction, this, [function migrationCrashAction(...args) {
+      const result = Reflect.apply(action, this, args);
+      process.stdout.write("MIGRATION_READY\n");
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0);
+      return result;
+    }]);
+  };
+  await import("../dist/db.js");
+  throw new Error("Migration crash barrier unexpectedly returned");
+}
+
+async function databaseMigrationFull() {
+  const originalTransaction = Database.prototype.transaction;
+  Database.prototype.transaction = function transactionWithFullLimit(action) {
+    const transaction = Reflect.apply(originalTransaction, this, [action]);
+    const database = this;
+    return (...args) => {
+      const pageCount = Number(database.pragma("page_count", { simple: true }));
+      const maximum = Number(database.pragma(`max_page_count = ${pageCount}`, { simple: true }));
+      assert.equal(maximum, pageCount);
+      return Reflect.apply(transaction, database, args);
+    };
+  };
+
+  let failure = null;
+  try {
+    await import("../dist/db.js");
+  } catch (error) {
+    failure = Object.freeze({ code: error?.code ?? null, message: error instanceof Error ? error.message : String(error) });
+  } finally {
+    Database.prototype.transaction = originalTransaction;
+  }
+  assert.equal(failure?.code, "SQLITE_FULL", failure?.message ?? "migration unexpectedly succeeded");
+
+  const { getBootstrapPathStore } = await import("../dist/bootstrap-path-store.js");
+  await getBootstrapPathStore().close();
+  const databasePath = path.join(process.env.RAINYDAYS_DATA_DIR, "mini-lux.db");
+  const database = new Database(databasePath, { readonly: true, fileMustExist: true });
+  try {
+    const auditObjects = database.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE name LIKE 'security_audit_%' OR name LIKE 'idx_security_audit_%'").get().count;
+    const sentinel = database.prepare("SELECT title FROM sessions WHERE id='schema-one-sentinel'").get()?.title;
+    console.log(JSON.stringify({ code: failure.code, userVersion: database.pragma("user_version", { simple: true }), auditObjects, sentinel, bootstrapRetired: true }));
+  } finally {
+    database.close();
+  }
+}
+
 async function databaseLifecycleWrite() {
   const db = await import("../dist/db.js");
   const tools = await import("../dist/tools/phase1-tools.js");
   const now = new Date().toISOString();
   db.insertSession({ id: "restart-session", persona_name: "general", title: "Restart", created_at: now, updated_at: now });
-  await tools.memoAddExec({ content: "restart-memo" });
+  await tools.memoAddExec({ content: "restart-memo" }, { _SESSION_ID: "restart-session" });
   console.log(JSON.stringify({
     sessions: db.db.prepare("SELECT COUNT(*) AS count FROM sessions").get().count,
     memos: db.db.prepare("SELECT COUNT(*) AS count FROM memos").get().count,
@@ -35,7 +86,18 @@ async function sessionFormats() {
   const session = await import("../dist/session.js");
   const link = await import("../dist/link.js");
   const db = await import("../dist/db.js");
-  const persona = { name: "general" };
+  const persona = {
+    name: "general",
+    displayName: "General",
+    description: "version fixture",
+    permissionLevel: "guarded",
+    tools: Object.freeze([]),
+    env: Object.freeze({}),
+    allowedRoots: Object.freeze([]),
+    networkPolicy: Object.freeze({ mode: "deny" }),
+    systemPrompt: "version fixture",
+    digest: "f".repeat(64),
+  };
   const source = session.createSession(persona, "Version test");
   db.insertMessage({
     session_id: source.id,
@@ -85,7 +147,7 @@ async function sessionFormats() {
   delete missingNullableFields.tool_call_id;
   const failures = [];
   for (const input of [
-    { ...exported, formatVersion: 2 },
+    { ...exported, formatVersion: 99 },
     {
       ...exported,
       messages: [
@@ -389,6 +451,8 @@ async function linkProtocol() {
 }
 
 if (action === "db-version") await databaseVersion();
+else if (action === "db-migration-crash") await databaseMigrationCrash();
+else if (action === "db-migration-full") await databaseMigrationFull();
 else if (action === "db-lifecycle-write") await databaseLifecycleWrite();
 else if (action === "version-info") await versionInfo();
 else if (action === "session-formats") await sessionFormats();

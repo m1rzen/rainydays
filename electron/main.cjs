@@ -3,13 +3,14 @@
 // 开发态启动 tsx；正式包直接加载 dist，不依赖系统 Node/npm
 // ===========================================
 
-const { app, BrowserWindow, Tray, Menu, nativeImage, shell, dialog, ipcMain } = require("electron");
+const { app, BrowserWindow, Tray, Menu, Notification, nativeImage, dialog, ipcMain, safeStorage } = require("electron");
 const path = require("node:path");
 const net = require("node:net");
 const { spawn } = require("node:child_process");
 const { randomBytes } = require("node:crypto");
-const { ElectronBootstrapPathStore } = require("./path-bootstrap.cjs");
+const { ElectronBootstrapPathStore, ElectronPathError } = require("./path-bootstrap.cjs");
 const { migrateLegacyUserData } = require("./user-data-migration.cjs");
+const { assertTrustedJsonDownload, assertTrustedRendererBinding, parseDialogRequest, parseNotification, parseTrayState, parseWindowAction } = require("./ipc-contract.cjs");
 const originalFs = require("original-fs");
 
 let mainWindow = null;
@@ -26,11 +27,22 @@ let mainFrameGeneration = 0;
 let quitCleanupPromise = null;
 let finalQuit = false;
 let port = Number(process.env.PORT || 3111);
-const apiToken = process.env.RAINYDAYS_API_TOKEN || randomBytes(32).toString("hex");
-const terminalConsentChannels = Object.freeze([
-  "rainydays:terminal-start",
-  "rainydays:terminal-input",
+const apiToken = randomBytes(32).toString("hex");
+const terminalConsentOperations = Object.freeze(["start", "clear", "kill", "close"]);
+const terminalInteractionOperations = Object.freeze(["input", "resize"]);
+const terminalConsentChannels = Object.freeze([...terminalConsentOperations, ...terminalInteractionOperations].map(operation => `rainydays:terminal-${operation}`));
+const desktopIpcChannels = Object.freeze([
+  "rainydays:capabilities",
+  "rainydays:dialog-directory",
+  "rainydays:dialog-file",
+  "rainydays:dialog-save",
+  "rainydays:window-state",
+  "rainydays:window-action",
+  "rainydays:notify",
+  "rainydays:tray-state",
 ]);
+const notificationTimes = [];
+let trayState = Object.freeze({ unread: 0, running: 0, errors: 0, firstUnreadSessionId: null });
 
 let legacyUserDataMigrationError = null;
 if (app.isPackaged && !process.argv.some(argument => argument === "--user-data-dir" || argument.startsWith("--user-data-dir="))) {
@@ -104,7 +116,7 @@ function loadBuildInfo() {
 const inheritedEnvironmentKeys = Object.freeze([
   "SystemRoot", "WINDIR", "ComSpec", "PATHEXT", "PATH", "TEMP", "TMP",
   "APPDATA", "LOCALAPPDATA", "PROCESSOR_ARCHITECTURE",
-  "DEEPSEEK_API_KEY", "LLM_API_KEY", "DEEPSEEK_BASE_URL", "LLM_BASE_URL", "LLM_MODEL", "DEFAULT_PERSONA",
+  "DEEPSEEK_BASE_URL", "LLM_BASE_URL", "LLM_MODEL", "DEFAULT_PERSONA", "RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER",
 ]);
 
 function inheritedEnvironment() {
@@ -140,6 +152,60 @@ function runtimeEnvironment() {
   };
 }
 
+let safeStorageDurabilityPromise = null;
+
+function readSafeStorageKeyIdentity(flush = false) {
+  let lease = null;
+  try {
+    lease = electronPaths.openUserDataFile("Local State", "safe-storage-local-state");
+    const parsed = JSON.parse(lease.readBytes(256 * 1024).toString("utf8"));
+    if (flush) lease.flush();
+    lease.verify("safe-storage-state-read");
+    const encryptedKey = parsed?.os_crypt?.encrypted_key;
+    if (typeof encryptedKey !== "string" || encryptedKey.length < 4 || encryptedKey.length > 8 * 1024
+      || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encryptedKey)) return null;
+    const decoded = Buffer.from(encryptedKey, "base64");
+    if (decoded.length < 1 || decoded.length > 4 * 1024 || decoded.toString("base64") !== encryptedKey) return null;
+    return encryptedKey;
+  } catch (error) {
+    if (error instanceof ElectronPathError) throw error;
+    if (error?.code !== "ENOENT" && !(error instanceof SyntaxError)) throw error;
+    return null;
+  } finally {
+    lease?.close();
+  }
+}
+
+async function awaitSafeStorageDurability() {
+  if (!safeStorageDurabilityPromise) {
+    safeStorageDurabilityPromise = (async () => {
+      const deadline = Date.now() + 20_000;
+      let previous = null;
+      while (Date.now() < deadline) {
+        const current = readSafeStorageKeyIdentity();
+        if (current && current === previous) {
+          const flushed = readSafeStorageKeyIdentity(true);
+          if (flushed === current && readSafeStorageKeyIdentity() === current) return;
+        }
+        previous = current;
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      throw new Error("OS credential protection state did not become durable");
+    })().catch(error => {
+      safeStorageDurabilityPromise = null;
+      throw error;
+    });
+  }
+  await safeStorageDurabilityPromise;
+}
+
+async function protectCredential(plaintext) {
+  if (!safeStorage.isEncryptionAvailable()) throw new Error("OS credential protection is unavailable");
+  const ciphertext = safeStorage.encryptString(plaintext);
+  await awaitSafeStorageDurability();
+  return ciphertext;
+}
+
 async function startPackagedServer() {
   Object.assign(process.env, runtimeEnvironment());
   const lease = electronPaths.openAppFile(path.join("dist", "index.js"), "packaged-server-module");
@@ -149,6 +215,17 @@ async function startPackagedServer() {
     if (path.resolve(lease.canonicalPath).toLowerCase() !== literalServerPath.toLowerCase()) {
       throw new Error("Packaged server module differs from the verified literal import target");
     }
+    const credentialModule = await import("../dist/credential-store.js");
+    if (typeof credentialModule.configureCredentialProtector !== "function") {
+      throw new Error("Credential protector registration is unavailable");
+    }
+    credentialModule.configureCredentialProtector({
+      protect: plaintext => protectCredential(plaintext),
+      unprotect: ciphertext => {
+        if (!safeStorage.isEncryptionAvailable()) throw new Error("OS credential protection is unavailable");
+        return safeStorage.decryptString(ciphertext);
+      },
+    });
     serverModule = await import("../dist/index.js");
     lease.verify();
     if (typeof serverModule.registerNativeProcessConsentHandler !== "function") {
@@ -188,11 +265,43 @@ async function startServerProcess(commandLease, argumentLeases, extraEnvironment
       cwd: canonicalCwd,
       env: { ...runtimeEnvironment(), ...extraEnvironment },
       shell: false,
-      stdio: ["pipe", "pipe", "pipe", "pipe", "pipe"],
+      stdio: ["pipe", "pipe", "pipe", "pipe", "pipe", "ipc"],
       windowsHide: true,
     });
-    const requestPipe = serverProcess.stdio[3];
-    const responsePipe = serverProcess.stdio[4];
+    const child = serverProcess;
+    child.on("message", async message => {
+      if (!message || typeof message !== "object" || Array.isArray(message)) return;
+      const keys = Object.keys(message).sort();
+      if (keys.length !== 4 || keys[0] !== "operation" || keys[1] !== "requestId" || keys[2] !== "type" || keys[3] !== "value"
+        || message.type !== "rainydays-credential-request"
+        || typeof message.requestId !== "string" || !/^[a-f0-9]{32}$/.test(message.requestId)
+        || (message.operation !== "protect" && message.operation !== "unprotect")
+        || typeof message.value !== "string" || message.value.length < 1 || message.value.length > 128 * 1024) return;
+      let response;
+      try {
+        let value;
+        if (message.operation === "protect") {
+          value = (await protectCredential(message.value)).toString("base64");
+        } else {
+          if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(message.value)) {
+            throw new Error("Credential ciphertext encoding is invalid");
+          }
+          const ciphertext = Buffer.from(message.value, "base64");
+          if (ciphertext.length < 1 || ciphertext.length > 64 * 1024 || ciphertext.toString("base64") !== message.value) {
+            throw new Error("Credential ciphertext encoding is invalid");
+          }
+          if (!safeStorage.isEncryptionAvailable()) throw new Error("OS credential protection is unavailable");
+          value = safeStorage.decryptString(ciphertext);
+        }
+        response = { type: "rainydays-credential-result", requestId: message.requestId, ok: true, value };
+      } catch {
+        console.error(`[credential-service] ${message.operation} failed`);
+        response = { type: "rainydays-credential-result", requestId: message.requestId, ok: false };
+      }
+      if (child.connected) child.send(response);
+    });
+    const requestPipe = child.stdio[3];
+    const responsePipe = child.stdio[4];
     if (!requestPipe || !responsePipe) throw new Error("Native process consent pipes are unavailable");
     childNativeProcessConsentTransport = createNativeProcessConsentParentTransport({
       request: requestPipe,
@@ -312,20 +421,19 @@ function invalidateAllNativeConsent() {
 function requireManualTerminalConsentServer() {
   if (!serverModule
     || typeof serverModule.prepareManualTerminalConsent !== "function"
-    || typeof serverModule.decideManualTerminalConsent !== "function") {
+    || typeof serverModule.decideManualTerminalConsent !== "function"
+    || typeof serverModule.writeInteractiveTerminal !== "function"
+    || typeof serverModule.resizeInteractiveTerminal !== "function") {
     throw new Error("Manual terminal consent is unavailable");
   }
   return serverModule;
 }
 
 function manualTerminalPresence(event) {
-  const window = mainWindow;
-  if (!window || window.isDestroyed()
-    || event.sender !== window.webContents
-    || event.senderFrame !== window.webContents.mainFrame
-    || !window.isVisible() || !window.isFocused()) {
-    throw new Error("Manual terminal consent requires the focused visible main window");
-  }
+  const window = assertTrustedRendererBinding(event, mainWindow, `http://127.0.0.1:${port}`, {
+    label: "Manual terminal consent",
+    requireFocus: true,
+  });
   return Object.freeze({
     windowId: window.id,
     webContentsId: window.webContents.id,
@@ -371,14 +479,126 @@ async function handleManualTerminalConsent(event, operation, request) {
 }
 
 function registerManualTerminalConsentHandlers() {
-  ipcMain.handle("rainydays:terminal-start", (event, request) =>
-    handleManualTerminalConsent(event, "terminal-start", request));
-  ipcMain.handle("rainydays:terminal-input", (event, request) =>
-    handleManualTerminalConsent(event, "terminal-input", request));
+  for (const operation of terminalConsentOperations) {
+    ipcMain.handle(`rainydays:terminal-${operation}`, (event, request) =>
+      handleManualTerminalConsent(event, `terminal-${operation}`, request));
+  }
+  ipcMain.handle("rainydays:terminal-input", async (event, request) => {
+    const consentServer = requireManualTerminalConsentServer();
+    try { return await consentServer.writeInteractiveTerminal(request, manualTerminalPresence(event)); }
+    catch (error) {
+      if (error?.code !== "PTY_INTERACTION_GRANT_REQUIRED") throw error;
+      return handleManualTerminalConsent(event, "terminal-input", request);
+    }
+  });
+  ipcMain.handle("rainydays:terminal-resize", (event, request) => {
+    const consentServer = requireManualTerminalConsentServer();
+    return consentServer.resizeInteractiveTerminal(request, manualTerminalPresence(event));
+  });
 }
 
 function removeManualTerminalConsentHandlers() {
   for (const channel of terminalConsentChannels) ipcMain.removeHandler(channel);
+}
+
+function trustedRendererWindow(event, requireFocus = false) {
+  return assertTrustedRendererBinding(event, mainWindow, `http://127.0.0.1:${port}`, {
+    label: "Desktop IPC",
+    requireFocus,
+  });
+}
+
+function windowState(window) {
+  const bounds = window.getBounds();
+  return Object.freeze({
+    minimized: window.isMinimized(),
+    maximized: window.isMaximized(),
+    fullscreen: window.isFullScreen(),
+    visible: window.isVisible(),
+    focused: window.isFocused(),
+    bounds: Object.freeze({ x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }),
+  });
+}
+
+async function chooseNativePath(event, kind, request) {
+  const window = trustedRendererWindow(event, true);
+  const parsed = parseDialogRequest(request, kind);
+  if (kind === "directory") {
+    const result = await dialog.showOpenDialog(window, { title: parsed.title ?? undefined, properties: ["openDirectory", "createDirectory"] });
+    return Object.freeze({ canceled: result.canceled, path: result.canceled ? null : result.filePaths[0] ?? null });
+  }
+  if (kind === "file") {
+    const result = await dialog.showOpenDialog(window, { title: parsed.title ?? undefined, properties: ["openFile"] });
+    return Object.freeze({ canceled: result.canceled, path: result.canceled ? null : result.filePaths[0] ?? null });
+  }
+  const result = await dialog.showSaveDialog(window, {
+    title: parsed.title ?? undefined,
+    defaultPath: parsed.defaultName ?? undefined,
+  });
+  return Object.freeze({ canceled: result.canceled, path: result.canceled ? null : result.filePath ?? null });
+}
+
+function enforceNotificationRateLimit() {
+  const cutoff = Date.now() - 60_000;
+  while (notificationTimes.length > 0 && notificationTimes[0] < cutoff) notificationTimes.shift();
+  if (notificationTimes.length >= 5) throw new Error("Notification rate limit exceeded");
+  notificationTimes.push(Date.now());
+}
+
+function registerDesktopIpcHandlers() {
+  ipcMain.handle("rainydays:capabilities", event => {
+    trustedRendererWindow(event);
+    return Object.freeze({
+      platform: process.platform,
+      dialogs: true,
+      notifications: Notification.isSupported(),
+      windowControls: true,
+      updates: false,
+    });
+  });
+  ipcMain.handle("rainydays:dialog-directory", (event, request) => chooseNativePath(event, "directory", request));
+  ipcMain.handle("rainydays:dialog-file", (event, request) => chooseNativePath(event, "file", request));
+  ipcMain.handle("rainydays:dialog-save", (event, request) => chooseNativePath(event, "save", request));
+  ipcMain.handle("rainydays:window-state", event => windowState(trustedRendererWindow(event)));
+  ipcMain.handle("rainydays:window-action", (event, request) => {
+    const window = trustedRendererWindow(event, true);
+    const { action } = parseWindowAction(request);
+    if (action === "minimize") window.minimize();
+    else if (action === "maximize") window.maximize();
+    else if (action === "restore") window.restore();
+    else window.setFullScreen(!window.isFullScreen());
+    return windowState(window);
+  });
+  ipcMain.handle("rainydays:notify", (event, request) => {
+    const window = trustedRendererWindow(event);
+    const parsed = parseNotification(request);
+    if (!Notification.isSupported()) throw new Error("System notifications are unavailable");
+    enforceNotificationRateLimit();
+    const notification = new Notification({ title: parsed.title, body: parsed.body, silent: true });
+    notification.once("click", () => {
+      if (window.isDestroyed()) return;
+      window.show();
+      window.focus();
+      window.webContents.send("rainydays:notification-clicked", Object.freeze({
+        id: parsed.id,
+        sessionId: parsed.sessionId,
+        targetTab: parsed.targetTab,
+      }));
+    });
+    notification.show();
+    return Object.freeze({ shown: true, id: parsed.id });
+  });
+  ipcMain.handle("rainydays:tray-state", (event, request) => {
+    trustedRendererWindow(event);
+    trayState = parseTrayState(request);
+    updateTrayPresentation();
+    return trayState;
+  });
+}
+
+function removeDesktopIpcHandlers() {
+  for (const channel of desktopIpcChannels) ipcMain.removeHandler(channel);
+  notificationTimes.splice(0);
 }
 
 function invalidateManualTerminalConsent() {
@@ -412,7 +632,40 @@ function installApiHeaderInjection(window) {
 
 function removeApiHeaderInjection() {
   apiHeaderSession?.webRequest.onBeforeSendHeaders(null);
+  apiHeaderSession?.setPermissionCheckHandler(null);
+  apiHeaderSession?.setPermissionRequestHandler(null);
+  apiHeaderSession?.removeAllListeners("will-download");
   apiHeaderSession = null;
+}
+
+function installRendererSecurity(window) {
+  const origin = `http://127.0.0.1:${port}`;
+  const canonicalUrl = `${origin}/`;
+  const targetSession = window.webContents.session;
+  targetSession.setPermissionCheckHandler(() => false);
+  targetSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
+  targetSession.removeAllListeners("will-download");
+  targetSession.on("will-download", (event, item, webContents) => {
+    try {
+      if (webContents !== window.webContents || window.isDestroyed()
+        || window.webContents.mainFrame.url !== canonicalUrl) throw new Error("Download sender is denied");
+      assertTrustedJsonDownload({
+        url: item.getURL(),
+        mimeType: item.getMimeType(),
+        filename: item.getFilename(),
+      }, origin);
+    } catch {
+      event.preventDefault();
+    }
+  });
+  window.webContents.on("will-attach-webview", event => event.preventDefault());
+  window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  window.webContents.on("will-navigate", (event, url) => {
+    invalidateManualTerminalConsent();
+    invalidateAllNativeConsent();
+    if (url !== canonicalUrl) event.preventDefault();
+  });
+  window.webContents.on("will-redirect", event => event.preventDefault());
 }
 
 function createWindow() {
@@ -441,7 +694,12 @@ function createWindow() {
         preload: preloadLease.canonicalPath,
         contextIsolation: true,
         nodeIntegration: false,
-        sandbox: false,
+        sandbox: true,
+        webSecurity: true,
+        allowRunningInsecureContent: false,
+        webviewTag: false,
+        nodeIntegrationInSubFrames: false,
+        nodeIntegrationInWorker: false,
       },
     });
   } catch (error) {
@@ -450,6 +708,7 @@ function createWindow() {
   }
 
   installApiHeaderInjection(mainWindow);
+  installRendererSecurity(mainWindow);
   mainWindow.webContents.once("did-finish-load", () => {
     const lease = preloadLease;
     preloadLease = null;
@@ -465,23 +724,11 @@ function createWindow() {
     }
   });
   mainWindow.webContents.once("did-fail-load", releasePreloadLease);
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:/i.test(url)) void shell.openExternal(url);
-    return { action: "deny" };
-  });
   mainWindow.webContents.on("did-start-navigation", (_event, _url, _isInPlace, isMainFrame) => {
     if (!isMainFrame) return;
     mainFrameGeneration += 1;
     invalidateManualTerminalConsent();
     invalidateAllNativeConsent();
-  });
-  mainWindow.webContents.on("will-navigate", (event, url) => {
-    invalidateManualTerminalConsent();
-    invalidateAllNativeConsent();
-    try {
-      const target = new URL(url);
-      if (target.origin !== `http://127.0.0.1:${port}`) event.preventDefault();
-    } catch { event.preventDefault(); }
   });
   mainWindow.once("ready-to-show", () => mainWindow?.show());
   void mainWindow.loadURL(`http://127.0.0.1:${port}/`);
@@ -506,14 +753,33 @@ function createWindow() {
   createTray(icon);
 }
 
-function createTray(icon) {
-  tray = new Tray(icon);
-  tray.setToolTip(`RainyDays ${buildInfo.appVersion} (${buildInfo.buildId})`);
+function navigateFromTray(sessionId) {
+  if (!mainWindow || mainWindow.isDestroyed() || !sessionId) return;
+  mainWindow.show();
+  mainWindow.focus();
+  mainWindow.webContents.send("rainydays:notification-clicked", Object.freeze({
+    id: null,
+    sessionId,
+    targetTab: "session",
+  }));
+}
+
+function updateTrayPresentation() {
+  if (!tray || tray.isDestroyed()) return;
+  const counts = `${trayState.unread} 未读 · ${trayState.running} 运行 · ${trayState.errors} 错误`;
+  tray.setToolTip(`RainyDays ${buildInfo.appVersion} · ${counts}`);
   tray.setContextMenu(Menu.buildFromTemplate([
+    { label: counts, enabled: false },
+    { label: "打开首个未读会话", enabled: Boolean(trayState.firstUnreadSessionId), click: () => navigateFromTray(trayState.firstUnreadSessionId) },
     { label: "显示窗口", click: () => { mainWindow?.show(); mainWindow?.focus(); } },
     { type: "separator" },
     { label: "退出", click: () => { app.isQuitting = true; app.quit(); } },
   ]));
+}
+
+function createTray(icon) {
+  tray = new Tray(icon);
+  updateTrayPresentation();
   tray.on("click", () => {
     if (!mainWindow) return;
     if (mainWindow.isVisible()) mainWindow.hide();
@@ -574,6 +840,7 @@ app.whenReady().then(async () => {
     else if (serverMode.type === "compiled") await startCompiledTestServer(serverMode.executableLease);
     else await startDevelopmentServer();
     createWindow();
+    registerDesktopIpcHandlers();
     registerManualTerminalConsentHandlers();
   } catch (error) {
     const message = error instanceof Error ? error.stack || error.message : String(error);
@@ -584,6 +851,7 @@ app.whenReady().then(async () => {
 });
 
 async function cleanupBeforeFinalQuit() {
+  removeDesktopIpcHandlers();
   removeManualTerminalConsentHandlers();
   invalidateManualTerminalConsent();
   invalidateAllNativeConsent();

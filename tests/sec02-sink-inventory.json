@@ -2,37 +2,44 @@
   "schemaVersion": 2,
   "task": "SEC-02",
   "detectorPolicySha256": "56821eb657093c79b26f088c61458a0d6a20e5e3353d04556970b1f3ba11fe6a",
-  "reviewPolicySha256": "179b7b8e25974108738aea42f11b14540784b6dbdc60e954bc6dd2fe9a7851b5",
+  "reviewPolicySha256": "71da4a65e7bc19925bdbc43b36f0e453bfe87e8de32a22e82485fa7d1ad3ea67",
   "dialectCheckerSha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
-  "dialectPolicySha256": "75ea44ca15bc7092eca51957cb93f89580aa1a395cb1428c1f3e12baf7b17209",
-  "dialectImportSetSha256": "23efdb5dc6dd02d52c87ff54a03b1368f9e06afd4f37ef8595b0fc546acaef5b",
-  "runtimeSinkSetSha256": "c4d5c227fe4a25a07361393868564b5174a2bf185888882f8b8de4b9765813ef",
+  "dialectPolicySha256": "e71e8be1b0a4220a50275bb6e88ead58e82f610dade5bd5c53e6242df7c4d769",
+  "dialectImportSetSha256": "6be08a74b1d88ca23f666ffc2abaef359bd5b14b744bfb274d048a2843914980",
+  "runtimeSinkSetSha256": "e10ad453b941b70d2a8bd11eac6cc3d70ca15a690ec7283f0107dc2e4644bc50",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
-    "executableFileCount": 71,
-    "executableManifestSha256": "99fa0696c36b9249c68f7f3dcf4da5814187a16007a611829056528a77ce794c",
-    "dialectImportCount": 33,
+    "executableFileCount": 99,
+    "executableManifestSha256": "00495108a565810f5a7218374040eecd8b0d3eb296a523d50094471478477ffc",
+    "dialectImportCount": 38,
     "dialectExceptionCount": 2
   },
   "files": [
     {
+      "sourcePath": "electron/ipc-contract.cjs",
+      "bytes": 6394,
+      "sha256": "44ace7828e8eaf6de5b15822b3c991e696fb9576c3a04ebd5f3650c3f5c4ce9c",
+      "role": "electron-runtime",
+      "packageExpectation": "included-in-asar"
+    },
+    {
       "sourcePath": "electron/main.cjs",
-      "bytes": 23252,
-      "sha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "bytes": 35353,
+      "sha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
       "role": "electron-runtime",
       "packageExpectation": "included-in-asar"
     },
     {
       "sourcePath": "electron/path-bootstrap.cjs",
-      "bytes": 15240,
-      "sha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
+      "bytes": 15670,
+      "sha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
       "role": "electron-runtime",
       "packageExpectation": "included-in-asar"
     },
     {
       "sourcePath": "electron/preload.cjs",
-      "bytes": 503,
-      "sha256": "76c928cc1c01fd7efce37202352830bad73a739666715769d9860f178bea41e3",
+      "bytes": 2586,
+      "sha256": "e201976c91539242837cad4e7fd5e35c656258aca95643955ac8c58720944b14",
       "role": "electron-runtime",
       "packageExpectation": "included-in-asar"
     },
@@ -45,64 +52,106 @@
     },
     {
       "sourcePath": "src/agent.ts",
-      "bytes": 17376,
-      "sha256": "017832f696ffc2fb3ae892d7431e1d1863721f8d42aef31c623f2368189ffb25",
+      "bytes": 41229,
+      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/attachment-store.ts",
+      "bytes": 11056,
+      "sha256": "01e6d1997c3074dff6b69fe0c6c66e6caba4b8bc540cf25248b7ce9c4a9f3823",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/attachment.ts",
+      "bytes": 10647,
+      "sha256": "659d0b4f264267712b3abcc69d8835b6c0920653d8d19effe82d226996257f54",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/backup-container.ts",
+      "bytes": 14509,
+      "sha256": "819f1407a89a23d3172ddfd07c58b972c788027314a14dd39ebaeadb944bf518",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/bootstrap-database.ts",
-      "bytes": 10988,
-      "sha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
+      "bytes": 20195,
+      "sha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/bootstrap-path-store.ts",
-      "bytes": 25021,
-      "sha256": "cb8d0299780514e4791b52bb919e1932dba7bb658a9f11a38f5ad064f5bd896c",
+      "bytes": 34606,
+      "sha256": "79bb992d4ec5bab8b790337c920b28adebd59d82fe863f8c2f1a2c9327e805f4",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/capability-broker.ts",
-      "bytes": 58344,
-      "sha256": "919d448cd6705b5270328a7b435e84257b8c740a5f7aa60c0573139794e97ae0",
+      "bytes": 67412,
+      "sha256": "a36f7031be1aa04c0921a6d4766a1e4392fca68fb4bbf094b320553b186bb13b",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/config.ts",
-      "bytes": 10903,
-      "sha256": "aec182a130c719dd741d3c0397ee47ef4315128c53d3a1372c47645c513e5668",
+      "bytes": 36030,
+      "sha256": "26622a3035ad47531d8c2543f2621cc03a358caa82dc314e25a2a028b44134bf",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/credential-store.ts",
+      "bytes": 16092,
+      "sha256": "d58c86483e73f6b1b470b3caa16a62fb184e5506e5aaa2e74cbf439f225196b5",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/cron.ts",
-      "bytes": 3343,
-      "sha256": "0d1ce315c15f514e90e1ab6b16aa00cb41425012e39aa088d14276436d61b88c",
+      "bytes": 8290,
+      "sha256": "61d8f6d6732e7c6a4c31b10044193ebedc52b68404dd5b2d55bf869fcd42fd90",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/daemon.ts",
-      "bytes": 6056,
-      "sha256": "7a9789076610e8d5960527851ff51d8c2aa604b9cd29c2aa39f64cabff74c7aa",
+      "bytes": 10407,
+      "sha256": "ddf9d8d60660807f41757a3620b431f99573fda211591a9268c8844993a9ee48",
       "role": "source-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
+      "sourcePath": "src/data-backup.ts",
+      "bytes": 6764,
+      "sha256": "1e2efda9f06225ef0df3f9cb97a62e8bb158d07d0a6ea465d9d5e335fd153f17",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
       "sourcePath": "src/db.ts",
-      "bytes": 33442,
-      "sha256": "bc1a65ad9e74f7ea84df8c32e392e6a2de64611efa5c0a35c5a40f4f06f68378",
+      "bytes": 131431,
+      "sha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/document-parser-worker.ts",
-      "bytes": 695,
-      "sha256": "a7f1bad065e4639e57f647d75b55d9914f53968ed5ec67ce58add071fffc9e4e",
+      "bytes": 784,
+      "sha256": "90e6b362f0c354051219eaad36f3864832bcf07769113f5d52533f1780b5f4f5",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/document-parser.ts",
+      "bytes": 3617,
+      "sha256": "3d29c40948e839f67ba8252a41da09acbe791d07aeb6c7067e5dab4137ff806d",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -114,79 +163,107 @@
       "packageExpectation": "compiled-to-asar"
     },
     {
+      "sourcePath": "src/event-bus.ts",
+      "bytes": 15674,
+      "sha256": "840a044878a0324e05dc9ceaef14aad2da4b61eb956a9c6fe29f4a6f5d08d9f5",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
       "sourcePath": "src/execution-isolation.ts",
-      "bytes": 40571,
-      "sha256": "2e58c6e123eb9640921a91ed843a43a2ff8a1e1c385149e4ff0d4ff8a17e4fe5",
+      "bytes": 51387,
+      "sha256": "83dfdf6e98865acce425a66e8eb0bd4cded8425f2f7e2854334db4c730a28f00",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/execution-native.ts",
-      "bytes": 20630,
-      "sha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
+      "bytes": 25412,
+      "sha256": "4fa8d7600bb79b86e4741aa8952ea4231ce9b6251a553d00c318ea6b97bfcf33",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/execution-network-broker.ts",
+      "bytes": 44839,
+      "sha256": "cb582c35d0d9cecde47439a95d90f9ece2c28408f33ab3bb446c415183ff39c6",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/execution-runtime.ts",
-      "bytes": 28893,
-      "sha256": "b283c0f9a0272ac15ec84380aa234968b1949875d316516b4178272c9bcb6292",
+      "bytes": 38195,
+      "sha256": "0264db73364b929b7a3e9de95093798b303cdb6bc81d301b8bfd327f6944e676",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/fetch-runtime.ts",
+      "bytes": 10798,
+      "sha256": "dd48e262c6cbe2cf395cde2f2278728ebb90a798285bed3b84191732b1143aa9",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/file-viewer.ts",
-      "bytes": 19850,
-      "sha256": "00d8c415cd6308d8890069da7e727a44725a7a27bf89f64c91a1d705f7f9a0b7",
+      "bytes": 25356,
+      "sha256": "a9e5385ccf53aee18654fc9870afed1390b1601a6682d9d4dad2067fd4d67fc7",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/index.ts",
-      "bytes": 66719,
-      "sha256": "74fe2ea742c778a50f3f31ee3044e2828eff6035381279ae834593dcec431d1f",
+      "bytes": 153606,
+      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/link.ts",
-      "bytes": 4868,
-      "sha256": "624c93e7c3c9164b549c705cf9415cc19d94628df4df5a7a0f0ec1a4dcc381a8",
+      "bytes": 5360,
+      "sha256": "93fbb6765fb287c2ceb5565e56855eae8c6556780d45b60a4542a2d247ccad3c",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/llm.ts",
-      "bytes": 7779,
-      "sha256": "2001453648d49d2585200b9f8a740936054bbe1a84b9b0c05f145fdb02abca24",
+      "bytes": 13178,
+      "sha256": "95275ddc9d491d75486cc009a44f1a71fe9c5b4006a0bf8d99448088b1189014",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/logger.ts",
-      "bytes": 1240,
-      "sha256": "c4051b3a012a0c276c7cbde0596a4e4e4bef9d5f123c92e17e3d9919204ace94",
+      "bytes": 2480,
+      "sha256": "0f993ae4d425f5733b99b9e238c6105b52eb30df38b6f8ab152b315fc9274885",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/managed-path-store.ts",
-      "bytes": 9157,
-      "sha256": "de4986391dd9731ae3f230636d905317eea58dd8588e29438c191a3056a889c5",
+      "bytes": 10105,
+      "sha256": "cbf3bc90daeefd5e20e699c02652ae211f88819f1458a36bd9fa43c52156167e",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/managed-restore.ts",
+      "bytes": 42218,
+      "sha256": "46ac473542e4c73d288bf2438bd9c176bbc9ca641b5b5220c833ec6499610404",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/manual-execution-consent.ts",
-      "bytes": 18816,
-      "sha256": "d4fa6ea338b49b204e05d50b813c2a29d3fb334a5c5fea713fb2dab1b51d8c57",
+      "bytes": 18910,
+      "sha256": "b1e108580eeefcc4c14451f9965e7fbcb1d79c2348152fd44e024b8df992fa4a",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/memory.ts",
-      "bytes": 12072,
-      "sha256": "fcf69dc974275be636a3b984714acb01f41452520ac01f6c9df3481b97dc22f0",
+      "bytes": 13484,
+      "sha256": "315a651afba2de55f39c3af1ea9b7cf1967f8a1aa1cb1615aa79bdb3cd44da03",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -199,22 +276,36 @@
     },
     {
       "sourcePath": "src/native-process-consent.ts",
-      "bytes": 6497,
-      "sha256": "ceea309abe64ce506d3d7d217fa7c2f405dadacaffacf135faeaedb920eb8c52",
+      "bytes": 7313,
+      "sha256": "6a169d179baab400e8cc8719b5d700a97faef436e7f9cd0756a5e66bdec386d3",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/network-policy.ts",
+      "bytes": 4633,
+      "sha256": "d3c8ac442364436c77e0c455d462ea2092c7559fa623fb0be56fa891ddf75ca4",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/observability.ts",
+      "bytes": 7990,
+      "sha256": "a5a7e12fc960cdb5747336835e9af4cdd8fe4609e47282198bc1958306c2398e",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/oracle.ts",
-      "bytes": 7060,
-      "sha256": "308b8ed937d04985f5ad599d1ce657128ad2871e73591adba0bd2a7012ffde27",
+      "bytes": 16919,
+      "sha256": "c0a2989c637dcca11054c7d23fa6d3e4977d23318b1e341d5a69c7288c5b471e",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/path-policy.ts",
-      "bytes": 107815,
-      "sha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
+      "bytes": 116080,
+      "sha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -227,22 +318,29 @@
     },
     {
       "sourcePath": "src/pdf-parse.d.ts",
-      "bytes": 423,
-      "sha256": "16e9f786d20b1b826f5314f0e751b1b174cbf23e37bdd76b90acd4a5ae75c702",
+      "bytes": 591,
+      "sha256": "07138d12dedc7449b012afa4d9606c64391064cb2d9bc212c1f14cca4a367a02",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/persona.ts",
-      "bytes": 8113,
-      "sha256": "10c53944c511997ea0dae02d77c59ddc0c8d62b5daef78b1163c2bb4ea133574",
+      "bytes": 12066,
+      "sha256": "5bfa3d2b40eedc6be4c5ecc50117d073d9cdb8ef45ff5e0da827ee5661f786eb",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/playbook.ts",
-      "bytes": 10884,
-      "sha256": "8a74957a9a2d13d3c017a30f4b711ffbab8850da5faf5509eb04bf38bd9dc060",
+      "bytes": 11105,
+      "sha256": "a420fdd834db4c8279dc866223a35de37df1a585dde4a35afc4af3f2bc1b004d",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/poll.ts",
+      "bytes": 13138,
+      "sha256": "38b73ac5126f13e0a5da09c846fdf1c8a5ee3c62629b8f480478666e3eb728ea",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -261,6 +359,13 @@
       "packageExpectation": "compiled-to-asar"
     },
     {
+      "sourcePath": "src/run-cancellation.ts",
+      "bytes": 4790,
+      "sha256": "6c267f1d557a8b93724c0f49632e8f109382b4698296eaa738f89f59be759694",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
       "sourcePath": "src/runtime-paths.ts",
       "bytes": 2898,
       "sha256": "f036469b04c3dc475c79aab5d59009b201b86b6013f1a88e15f5d3b29710c3b6",
@@ -268,9 +373,37 @@
       "packageExpectation": "compiled-to-asar"
     },
     {
+      "sourcePath": "src/script-runtime.ts",
+      "bytes": 6129,
+      "sha256": "e9ff0fcc8bf3a5c9b3c947309716a7e17987032e0f5d1a814c1e5f0fbd6e4976",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/security-audit-journal.ts",
+      "bytes": 10273,
+      "sha256": "75130d7aa7b1845f77db7abbc8ca5b4a9675327d97de8b47b1dee838bbfd993c",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/security-audit.ts",
+      "bytes": 22269,
+      "sha256": "f824e72639593fc6e5dfe2f0220fcf93620333212c11fb90b6b41e6a992fd868",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/session-runtime.ts",
+      "bytes": 16507,
+      "sha256": "e31da2d0a009780ee3edfb81e269784956ab66cd90d55c8c239e75c32f21c8ef",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
       "sourcePath": "src/session.ts",
-      "bytes": 17521,
-      "sha256": "aff31c0efe162f2fb904bbf859b7fe703d8342d23fae084d4ecc42a79f5d8120",
+      "bytes": 33866,
+      "sha256": "ddee52bb93efe1c0a8ade1c5443d47f1d38e826ca3c269d232d7ed2f6f05924d",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -282,23 +415,37 @@
       "packageExpectation": "compiled-to-asar"
     },
     {
+      "sourcePath": "src/settings-schema.ts",
+      "bytes": 15704,
+      "sha256": "e43be5f82e51502a608181294ff0cd30e126777c3e39abba9b9d4dc130243194",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/subagent-registry.ts",
+      "bytes": 20544,
+      "sha256": "cb9426bfdab53c58a8e27d275dba15fa9de0070048cdd4c1e990044eebbbecc2",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
       "sourcePath": "src/subagent.ts",
-      "bytes": 3296,
-      "sha256": "f722cca7b44b922e535cd4877eb2682d4a2667e255439dbbd1089f1eed338dd2",
+      "bytes": 4505,
+      "sha256": "789f5a07b86c3100b90ac1707201b32c1be970a221631abad2b61afafa4464eb",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/supervisor.ts",
-      "bytes": 3095,
-      "sha256": "ad94fc0b4e247e3bac4c416df2598957b4ea0961ea44eb8ca649cbd55dabf446",
+      "bytes": 3299,
+      "sha256": "cf7dee6b7c60f291f23af78f3302c9abe3a2a98a3229acf4e84d822aa5904d14",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/task.ts",
-      "bytes": 2577,
-      "sha256": "cabac4b14b3dad3d3fdfbffb444cd9a56c74302facec7d8e506df6c582f8b876",
+      "bytes": 19022,
+      "sha256": "cf9ec58234504e2122be24f96a6c159e32a0e0ccc7ba6e6d807b28586ff09bbf",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -311,148 +458,190 @@
     },
     {
       "sourcePath": "src/terminal.ts",
-      "bytes": 14923,
-      "sha256": "442d9506ca2d2b1f1040f35bdbf5e6e3b6973ad810692c7cc79f1eb00a7b3c20",
+      "bytes": 20136,
+      "sha256": "080e0e9f8820fb1c704041fbf70ee59c93f44c860c50ab8d7fe2d68669ca6980",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/tool-pipeline.ts",
+      "bytes": 7056,
+      "sha256": "25edcee43877e5b96a53c23657d7cd7ec6add868a414c1efe608e256bf92ae20",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tool-policies.ts",
-      "bytes": 6929,
-      "sha256": "1557ce8af3247e55a283eacf573974d06b933772e70891e2f7893fa0acaee452",
+      "bytes": 9318,
+      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/tool-protocol.ts",
+      "bytes": 14822,
+      "sha256": "4f5b925988709fec3bbc61097e60f1ff6daef4c58a179c4c0e4752c55ad07d9d",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/tool-scheduler.ts",
+      "bytes": 3680,
+      "sha256": "a1729c9350fa0d4321be86268b14e6d7f6d67764b8f237203e4bf8c12c3966b8",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/advanced-tools.ts",
-      "bytes": 8809,
-      "sha256": "acc5b9464f1038c815a783eff5e8ee73bc64b2e0278fb081c5dcc3b7c116ba9c",
+      "bytes": 12194,
+      "sha256": "4c9e16cc5399e615beaf16e3de3f8899098f844bf2b7815fd66993c6af217def",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/ask-user-tool.ts",
-      "bytes": 3585,
-      "sha256": "438bead757241cc2338c7f199c4aefa24d05e713cc29f978d10afd3dc24f195a",
+      "bytes": 10589,
+      "sha256": "1566e6606325bf4ac926c735e11e06ee2936b931288d6d73eb8037653668801e",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/cron-tools.ts",
-      "bytes": 5051,
-      "sha256": "af05ed1f1fa2ba484d737382a84e442e8c9bca89fe3398e8dc4400c45e154f44",
+      "bytes": 7797,
+      "sha256": "24bd742bd88a5164ab1083e07cc7eefbf9ae43289731dab59f97daa94b48c0bd",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/curate-tool.ts",
-      "bytes": 2034,
-      "sha256": "61c0d46b83c4a0def5e681fcb7072055f9ff593daeed1dd3b344df520b2c30cf",
+      "bytes": 2276,
+      "sha256": "20571a216c4e6f08c6393d24c57d5d52382c82e76e53df6d4e07f4869b7679c6",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/download-tool.ts",
-      "bytes": 2935,
-      "sha256": "c57c6b42713ed7ca36e1c17bcf578d81ae5d1510849603434398e26bb149daee",
+      "bytes": 3869,
+      "sha256": "c6f84ea739b25c2a9a7dc3efb8f346fac70567a04d50b13957c88b9c5b039849",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/tools/filesystem-grep.ts",
+      "bytes": 14204,
+      "sha256": "172f409ceda33192764bf4c385509e09b1a51070e0ab6f30950ccb3138958538",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/tools/filesystem-lux.ts",
+      "bytes": 14591,
+      "sha256": "d236ee7a95d7a936abdf867f35d2091180b72eb6c657a71e6ee17f5961dd5063",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/filesystem.ts",
-      "bytes": 16820,
-      "sha256": "f9042cf71e142e8a78f0a34ad697777ab0f31a0fccc3e41e07ce28af0a72caf6",
+      "bytes": 9174,
+      "sha256": "c7a860c9b36682d6e294397a0b3508a322033449d13e088e15b64b6bb362705e",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/image-helper.ts",
-      "bytes": 2905,
-      "sha256": "90e5f73c1fc576b647d5db9114786001949884cc455c7c973509574f974c9414",
+      "bytes": 3600,
+      "sha256": "8eeb3603b5a02e05effd2ea77d833f005ac4dec56a625cf0eba71d4ca69448da",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/index.ts",
-      "bytes": 14268,
-      "sha256": "c4a1a6a07537a200fb81124300e20b7919c25dd305f5d65e42e404f1b33d9930",
+      "bytes": 32038,
+      "sha256": "f7cec1d0f2daf8f46073bc254d22e4ab8c90c4f2f255c924dd5c2f66dc9549a3",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/knowledge-tools.ts",
-      "bytes": 7998,
-      "sha256": "4f0b70d3e68a09f5b2ac970518c8f39f3fc26c96f8c027af8c905a18e5e392f0",
+      "bytes": 8268,
+      "sha256": "345e8d758b7e77ee8d119f64e7757b562a3f676cd8b2156669bbc755b04dab3b",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/memory-tools.ts",
-      "bytes": 7790,
-      "sha256": "5e044a2a839f032921fd6bda14e80ffa07e8949e37d63842a479591e85878a65",
+      "bytes": 7831,
+      "sha256": "aede8e3fb13e1271f5c9c8d66eeaf16902e42348dab59d393051dddc6a388c47",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/oracle-tool.ts",
-      "bytes": 1109,
-      "sha256": "16faa956f91505c75b005c40b35de2fee9942c8b00d80f53724c8885be66ce39",
+      "bytes": 159,
+      "sha256": "314797d9b570dda2c5c803b50e59a8814d1b218e71ce2641955a69ac9f6e427e",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/parsers.ts",
-      "bytes": 4181,
-      "sha256": "468b05155df227d783c7e8c5c53a5f17ac23f725166fa1b16dc8f8a54bdfea7d",
+      "bytes": 5780,
+      "sha256": "f68209e83dafca9bd329f7ae75d946a3a7788a6ff38bdaa20495e331ded9c94b",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/tools/persona-tools.ts",
+      "bytes": 5192,
+      "sha256": "7993b067cfc499228427e4e5b92510ed956ae505add45c5dbd0088794a0eb8f9",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/phase1-tools.ts",
-      "bytes": 7481,
-      "sha256": "0814062256f824f2c923c283f920756c33649a6020e81cc619eba35eabb8d48b",
+      "bytes": 11326,
+      "sha256": "578145c99073dde95d9ba380a514699651bc571a1a9ddbb332aa71cd9ae297b2",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/read-repo.ts",
-      "bytes": 8334,
-      "sha256": "5d54bfc355379961e6a2a1c1768d428522d56b474ed2293da42d74d81c453682",
+      "bytes": 14075,
+      "sha256": "6ee0b533209a88745e993de25b33ad18ff9febdb14fa51864183bb884a66cd48",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/save-persona.ts",
-      "bytes": 2955,
-      "sha256": "5bdda02d32d79faca1d306b30171317329975ee2957487f669558b3d39245450",
+      "bytes": 3351,
+      "sha256": "5f5d900429d75b0d9219a14bf198d0ab385b63516abb02f050fbe69c70a62e01",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/script.ts",
-      "bytes": 2539,
-      "sha256": "f8d03d1d0fdc5d9c41e2138004d571f07a4e3075c7e14a81cbc6cdefa149f3bd",
+      "bytes": 4184,
+      "sha256": "210f9d549c62a13345f6b10450a1faa303bcbf684477c9a9dafa65aa79d3973e",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/search-tool.ts",
-      "bytes": 3369,
-      "sha256": "1e0a80f0c002dca45994020b25436395b14460a4d5c640b460bc5ab7b23057e4",
+      "bytes": 2845,
+      "sha256": "7d3a11a2c25802cfdb0358aeb04b543ce3faa70596614235ea9856b3ac69ee54",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/shell.ts",
-      "bytes": 3365,
-      "sha256": "cf60a5d2f2fcfd7cb87be651bd8d771b4b1f7aac83a12d3c22d2b571ef098a6d",
+      "bytes": 3464,
+      "sha256": "504ee8594c58458734a15d3a412faba465aec3b40f61a3b7462956ac9044a417",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/subagent-tools.ts",
-      "bytes": 2545,
-      "sha256": "a254010beb6a258174984b14d751cb398f169f6e016933838a128f117dd750ab",
+      "bytes": 6049,
+      "sha256": "13ba8d8afefc1f8b227514f99d7ffa881c61dfa09f90072c8df5fe5a7e770f73",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -465,50 +654,57 @@
     },
     {
       "sourcePath": "src/tools/task-tools.ts",
-      "bytes": 5060,
-      "sha256": "e5931ca095505af37cce6039ca5d2ba5a13797716cb44d9399a86e57675f2568",
+      "bytes": 7113,
+      "sha256": "0b1cc51dc0d3367183b907f9a490a64b5d244372e35589b07c8d692e04bfabf8",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/terminal-tools.ts",
-      "bytes": 6008,
-      "sha256": "500b76dc818208a7573ea2caab48277006270feeac7b320038f8c25382015e06",
+      "bytes": 6870,
+      "sha256": "0da183cef975e88012dd98a56780cc382d80eb6d0580b2406eea955949f522e9",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/web.ts",
-      "bytes": 3260,
-      "sha256": "504563d1ce677238197891368a60eda071ae6af9595ed430722d999c3b7e6191",
+      "bytes": 6142,
+      "sha256": "8ab37b363e07954eb9703401f019a438a1ebf8b7e1e0797f1e27905a132508ba",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/tools/writer.ts",
-      "bytes": 4519,
-      "sha256": "5315722ab514c4ec1752863c3554ff07c0ede014cf4e28373f48e5f746a87799",
+      "bytes": 4966,
+      "sha256": "702c299efe8d998e81e48341a8ed5b05644af6de79261e2b4fd387f40be73ee3",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/types.ts",
-      "bytes": 6865,
-      "sha256": "4c6bdf4f10db1f6f9a10f70405ca5ab0a085329efe57ea82bd2a1c0cdc5a7494",
+      "bytes": 12067,
+      "sha256": "b8b3832dbcac45658a63bb020a86ac40fcaab42b010bd829ddd867f3c8fb3b4a",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/version.ts",
-      "bytes": 11246,
-      "sha256": "0b74a08c85fb10f6e75e386ed9bf68b2dcaebf972705daf9166de132ad530d34",
+      "bytes": 11377,
+      "sha256": "88d58ae37f27f624eee647775c6f54ff792d1097ed52cf9ab81898f52fb06655",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
     {
       "sourcePath": "src/wire.ts",
-      "bytes": 4878,
-      "sha256": "cd6fbccc8d7a46ad7f8b020fda423051a57c1ca012ed01079f61d6494e2ac355",
+      "bytes": 5682,
+      "sha256": "932746a969352a7bc230f55ed3861f17fda285288202eac2c89464f13e275ea0",
+      "role": "product-runtime",
+      "packageExpectation": "compiled-to-asar"
+    },
+    {
+      "sourcePath": "src/workbench-layout.ts",
+      "bytes": 18372,
+      "sha256": "26e514c576be7962ed5173c2d36d3dbda4a8ef1c130eb89a95df19fe61ed0c21",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     }
@@ -520,7 +716,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/bootstrap-database-lifetime.test.mjs",
       "testCaseId": "SEC-02 SQLite connection lifetime blocks bootstrap retirement until clean close",
-      "testFileSha256": "499fa3fc9399676089a47b930cae7b69ac44eea4a08aa1ccc22fb1e257667091"
+      "testFileSha256": "ddafc43dec89d904749962cbeb1ace661d63ac748baf04506a0fcbee01493d15"
     },
     {
       "id": "daemon-lifetime",
@@ -528,7 +724,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
       "testCaseId": "SEC-02 Daemon holds Node, loader and server leases until runtime ready and cleans the process tree",
-      "testFileSha256": "4d7a13b8013b07c63f548e68c067aa5108a6eb5abee1cd94d02ad76bc8acf988"
+      "testFileSha256": "631fbb788580ea3ad7875e46415da17c508701268fb3847be561a7059d0fce5b"
     },
     {
       "id": "dispatcher-gateway",
@@ -536,7 +732,7 @@
       "executionContract": "sec02-receipt",
       "testFile": "tests/integration/path-tool-gateway.test.mjs",
       "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
-      "testFileSha256": "4e9a16f8037a7ed23f64a46ff303a84ee719d3ef94cf7a395e76631be3735a3b"
+      "testFileSha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
     },
     {
       "id": "electron-source",
@@ -544,7 +740,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/electron/desktop-smoke.test.mjs",
       "testCaseId": "real Electron main, preload and renderer preserve identity and session across restart",
-      "testFileSha256": "7fd6140c7bf88fbbb844d8a95770da3d015098df484a7634b31fff7c9589a64a"
+      "testFileSha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0"
     },
     {
       "id": "file-viewer",
@@ -552,7 +748,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/file-viewer-direct.test.mjs",
       "testCaseId": "SEC-02 File Viewer uses one authority snapshot for list, preview, resolve and range handles",
-      "testFileSha256": "61f451d2b5eb2c978dcf36d3209b1f96008b4871de213592be8d1a458165af38"
+      "testFileSha256": "abc67f2463aca0af1ce8a0c4001e031203273bbddf043a44f06c8b02b6a8424e"
     },
     {
       "id": "model-lifetime",
@@ -568,7 +764,7 @@
       "executionContract": "installed-parent-scan",
       "testFile": "tests/packaged/installed-smoke.test.mjs",
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
-      "testFileSha256": "266217bf7ee09d9fbf1e888a71dc25b3a3c1f9b5e0956f673e0f8f4f0de2cfaf"
+      "testFileSha256": "1bcaa3c56877014cab58866af4b2f92b7b295fdb2749bfdf51f24e38c87295e0"
     },
     {
       "id": "process-cwd",
@@ -576,7 +772,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/process-cwd.test.mjs",
       "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
-      "testFileSha256": "bd19eba227366eed983d046f8568098e2bf45ac2d8918c3046e6ade0b987df62"
+      "testFileSha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
     },
     {
       "id": "process-tree",
@@ -592,7 +788,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/repo-oracle-path.test.mjs",
       "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
-      "testFileSha256": "5ac5788088a043398e9e844650c25a271616e08e2a89996bd71827bd7eeb5d86"
+      "testFileSha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
     },
     {
       "id": "watcher",
@@ -600,7 +796,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/watcher-authority.test.mjs",
       "testCaseId": "SEC-02 watcher events and controls remain bound to one runtime authority",
-      "testFileSha256": "992ad38b201990cb8bd5916dcd518f8c45ec206a420e5c23d26e037cfc1ec000"
+      "testFileSha256": "0630c7ab52b73d6035df8a724953d9664a0f79100645f64148b636cae00f5da8"
     }
   ],
   "sinks": [
@@ -608,9 +804,9 @@
       "id": "sink-737e8e7fed0c6358826cae25",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
       "line": 6,
-      "column": 81,
+      "column": 101,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
       "family": "module-loader",
@@ -641,7 +837,7 @@
       "id": "sink-1c1107880edae8240e50bb2b",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
       "line": 7,
       "column": 14,
       "nodeKind": "CallExpression",
@@ -674,7 +870,7 @@
       "id": "sink-96545976fb3945998517b6bd",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
       "line": 8,
       "column": 13,
       "nodeKind": "CallExpression",
@@ -707,7 +903,7 @@
       "id": "sink-92f3102e54ced2cd49a7b044",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
       "line": 9,
       "column": 19,
       "nodeKind": "CallExpression",
@@ -740,7 +936,7 @@
       "id": "sink-f657afa31b8a30b29f14f007",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
       "line": 10,
       "column": 25,
       "nodeKind": "CallExpression",
@@ -773,9 +969,9 @@
       "id": "sink-df1a645fb7d0bcb73bf5a6d0",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
       "line": 11,
-      "column": 40,
+      "column": 59,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
       "family": "module-loader",
@@ -806,7 +1002,7 @@
       "id": "sink-774a674e93013028ec22aa14",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
       "line": 12,
       "column": 35,
       "nodeKind": "CallExpression",
@@ -836,11 +1032,44 @@
       }
     },
     {
+      "id": "sink-527573473ea8ec3c6bbf95ba",
+      "occurrence": 1,
+      "sourcePath": "electron/main.cjs",
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "line": 13,
+      "column": 143,
+      "nodeKind": "CallExpression",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "a30c1553e3f98977287e4bcca63f1b9e6a507eb817488285d971bc8759a1e291",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "id": "sink-47a0c025b69dfcbb8f9eec0b",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 13,
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "line": 14,
       "column": 20,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -869,11 +1098,44 @@
       }
     },
     {
+      "id": "sink-98b57a2e4a6cdc53fad419d6",
+      "occurrence": 1,
+      "sourcePath": "electron/main.cjs",
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "line": 218,
+      "column": 36,
+      "nodeKind": "CallExpression",
+      "container": "startPackagedServer",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "becf68cc17b7b6506dad50a5814d87290da5db3f6238fd773fc00a3b2f83eb1a",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#startPackagedServer:credential-store.import",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#startPackagedServer:credential-store.argument:0"
+          }
+        ]
+      }
+    },
+    {
       "id": "sink-168eb1caa3924a31a4166843",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 152,
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "line": 229,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "startPackagedServer",
@@ -905,8 +1167,8 @@
       "id": "sink-e0ad60c2a06fed8386fa7e12",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 183,
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "line": 260,
       "column": 63,
       "nodeKind": "CallExpression",
       "container": "startServerProcess",
@@ -935,11 +1197,11 @@
       }
     },
     {
-      "id": "sink-ddc6d98368d8f613fa7cde04",
+      "id": "sink-c83e73b470e1688c7a07d1a7",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 187,
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "line": 264,
       "column": 21,
       "nodeKind": "CallExpression",
       "container": "startServerProcess",
@@ -951,7 +1213,7 @@
         "argument:2.cwd",
         "argument:2.shell"
       ],
-      "normalizedNodeSha256": "aec1a2cd48d8740203cc435a4a0bf3b907fab7bf603c38b9a612d337344611e1",
+      "normalizedNodeSha256": "41b55db2374f75d35fa94a868f8c7b796eeaa542061d2ed549c89204e44364c1",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -986,11 +1248,44 @@
       }
     },
     {
-      "id": "sink-efbedcd0f0d39c6f4af76d06",
+      "id": "sink-c1018956fa31e4d12dea2c60",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 432,
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "line": 534,
+      "column": 24,
+      "nodeKind": "CallExpression",
+      "container": "chooseNativePath",
+      "family": "electron-path-api",
+      "api": "showSaveDialog",
+      "pathOperands": [
+        "argument:1.defaultPath"
+      ],
+      "normalizedNodeSha256": "489bef419eb2e93199522ccfd4df5106c387acffb24b8a141a095aef447158d3",
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "electron/main.cjs#chooseNativePath:electron-path-api.showSaveDialog",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:1.defaultPath",
+            "classification": "focused-native-save-dialog-default-file-name-only",
+            "anchor": "electron/main.cjs#chooseNativePath:argument:1.defaultPath"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-e95848d92f6ef5635bef757a",
+      "occurrence": 1,
+      "sourcePath": "electron/main.cjs",
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "line": 685,
       "column": 18,
       "nodeKind": "NewExpression",
       "container": "createWindow",
@@ -1000,7 +1295,7 @@
         "argument:0.icon",
         "argument:0.webPreferences.preload"
       ],
-      "normalizedNodeSha256": "70073fb32ef99c31508be1c966ed2fe4b5b1bc4419855b82ffca4c8269061106",
+      "normalizedNodeSha256": "541404f5113c394d558b0b2bf19c646b927506d4fb6dc8d6256d61fadeb42647",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -1028,8 +1323,8 @@
       "id": "sink-0afcdaf217cac5705bbd68be",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 510,
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "line": 781,
       "column": 10,
       "nodeKind": "NewExpression",
       "container": "createTray",
@@ -1061,8 +1356,8 @@
       "id": "sink-d4de993c4220516df880bcc1",
       "occurrence": 1,
       "sourcePath": "electron/main.cjs",
-      "fileSha256": "63e2aeb58c844a71d1db5af474526509baec2548e3cbc906cb5adfdbffa847be",
-      "line": 538,
+      "fileSha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "line": 804,
       "column": 24,
       "nodeKind": "CallExpression",
       "container": "stopDevelopmentServer",
@@ -1106,7 +1401,7 @@
       "id": "sink-e4584198fe4a905359bb89df",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
       "line": 3,
       "column": 12,
       "nodeKind": "CallExpression",
@@ -1139,7 +1434,7 @@
       "id": "sink-78e90219dd3cc477d1e25e2e",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
       "line": 4,
       "column": 14,
       "nodeKind": "CallExpression",
@@ -1172,7 +1467,7 @@
       "id": "sink-ad4e7e012727667a8187ecbb",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
       "line": 5,
       "column": 24,
       "nodeKind": "CallExpression",
@@ -1205,7 +1500,7 @@
       "id": "sink-b426b927f82e700fe016fdd4",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
       "line": 112,
       "column": 18,
       "nodeKind": "CallExpression",
@@ -1238,7 +1533,7 @@
       "id": "sink-acb52f33723a544718710104",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
       "line": 120,
       "column": 21,
       "nodeKind": "CallExpression",
@@ -1271,7 +1566,7 @@
       "id": "sink-12d963fa74be6de3ac6d4e97",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
       "line": 121,
       "column": 16,
       "nodeKind": "CallExpression",
@@ -1304,7 +1599,7 @@
       "id": "sink-c722ca6366bcc66042092c83",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
       "line": 129,
       "column": 21,
       "nodeKind": "CallExpression",
@@ -1337,7 +1632,7 @@
       "id": "sink-68448c469361fd3bc492137a",
       "occurrence": 2,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
       "line": 130,
       "column": 16,
       "nodeKind": "CallExpression",
@@ -1370,7 +1665,7 @@
       "id": "sink-38071ff8d84c2245db47faa8",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
       "line": 143,
       "column": 21,
       "nodeKind": "CallExpression",
@@ -1400,11 +1695,11 @@
       }
     },
     {
-      "id": "sink-f2402500e1f800cd7f0d1960",
+      "id": "sink-c2ba6df8934901fabc16e582",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
-      "line": 145,
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
+      "line": 146,
       "column": 22,
       "nodeKind": "CallExpression",
       "container": "openFileAt",
@@ -1413,7 +1708,7 @@
       "pathOperands": [
         "argument:0"
       ],
-      "normalizedNodeSha256": "8543bcb0095c0d69d5cca27ba4b7861724a7cd9b414c9ae0409e9c36e445d7e3",
+      "normalizedNodeSha256": "8303d5f1f28b4c3202248afd1e66385970febcc08590fbbbd4dedec779ae9081",
       "executionClass": "electron-runtime",
       "packageExpectation": "included-in-asar",
       "binding": {
@@ -1436,8 +1731,8 @@
       "id": "sink-8a791145736d1061edc234c5",
       "occurrence": 3,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
-      "line": 148,
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
+      "line": 149,
       "column": 22,
       "nodeKind": "CallExpression",
       "container": "openFileAt",
@@ -1469,8 +1764,8 @@
       "id": "sink-fb3a8aa97bd46d8fa4064b3d",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
-      "line": 217,
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
+      "line": 225,
       "column": 23,
       "nodeKind": "CallExpression",
       "container": "ElectronFileLease.verify",
@@ -1502,8 +1797,8 @@
       "id": "sink-76e72f7981cd2f3de54588c9",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
-      "line": 218,
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
+      "line": 226,
       "column": 22,
       "nodeKind": "CallExpression",
       "container": "ElectronFileLease.verify",
@@ -1535,8 +1830,8 @@
       "id": "sink-7e8ae1024dd0191cdef54f0c",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
-      "line": 264,
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
+      "line": 272,
       "column": 18,
       "nodeKind": "CallExpression",
       "container": "ElectronArchiveFileLease.readBytes",
@@ -1568,8 +1863,8 @@
       "id": "sink-4065d58b44ff78c1eecd70a1",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
-      "line": 266,
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
+      "line": 274,
       "column": 19,
       "nodeKind": "CallExpression",
       "container": "ElectronArchiveFileLease.readBytes",
@@ -1601,8 +1896,8 @@
       "id": "sink-93c16d1c8d9160068852acfd",
       "occurrence": 2,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
-      "line": 275,
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
+      "line": 283,
       "column": 18,
       "nodeKind": "CallExpression",
       "container": "ElectronArchiveFileLease.verify",
@@ -1634,8 +1929,8 @@
       "id": "sink-2253ed101cacd5832e37c5a9",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
-      "line": 311,
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
+      "line": 319,
       "column": 21,
       "nodeKind": "CallExpression",
       "container": "ElectronBootstrapPathStore.constructor",
@@ -1667,8 +1962,8 @@
       "id": "sink-80508fcd9797e3a69260a4d6",
       "occurrence": 1,
       "sourcePath": "electron/path-bootstrap.cjs",
-      "fileSha256": "d32a537260239d52bda5fad5f9d951f1f67dd39f5774496acf6f603da8207ba1",
-      "line": 321,
+      "fileSha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
+      "line": 329,
       "column": 35,
       "nodeKind": "CallExpression",
       "container": "ElectronBootstrapPathStore.constructor",
@@ -1700,7 +1995,7 @@
       "id": "sink-bb241b0a5b5fc11232f6a343",
       "occurrence": 1,
       "sourcePath": "electron/preload.cjs",
-      "fileSha256": "76c928cc1c01fd7efce37202352830bad73a739666715769d9860f178bea41e3",
+      "fileSha256": "e201976c91539242837cad4e7fd5e35c656258aca95643955ac8c58720944b14",
       "line": 2,
       "column": 40,
       "nodeKind": "CallExpression",
@@ -1904,8 +2199,8 @@
       "id": "sink-abbacd4d8d64d77378cd0d3f",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 7,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 8,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -1937,8 +2232,8 @@
       "id": "sink-f067aa725d1ae70bfb400c93",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 8,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 9,
       "column": 18,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -1970,8 +2265,8 @@
       "id": "sink-8523b5a84491a1d0ccea60fc",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 48,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 56,
       "column": 19,
       "nodeKind": "CallExpression",
       "container": "inspectExactPath",
@@ -2003,8 +2298,8 @@
       "id": "sink-c5e4282b12b236e984470552",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 50,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 58,
       "column": 21,
       "nodeKind": "CallExpression",
       "container": "inspectExactPath",
@@ -2036,8 +2331,8 @@
       "id": "sink-9fed401913ed4510c4dad143",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 51,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 59,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "inspectExactPath",
@@ -2069,8 +2364,8 @@
       "id": "sink-65c08e48b4fc75c01898fadd",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 100,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 108,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "SqlitePathGuard.assertCurrent",
@@ -2102,8 +2397,8 @@
       "id": "sink-6fd9a8bf3d5836ef6190694d",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 108,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 116,
       "column": 14,
       "nodeKind": "CallExpression",
       "container": "SqlitePathGuard.assertCurrent",
@@ -2132,11 +2427,77 @@
       }
     },
     {
+      "id": "sink-7326f5921f29b98a0ace90c6",
+      "occurrence": 1,
+      "sourcePath": "src/bootstrap-database.ts",
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 213,
+      "column": 16,
+      "nodeKind": "CallExpression",
+      "container": "validateWalFile",
+      "family": "node-fs",
+      "api": "lstatSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "61413aaada061696f69c9512f496944dd3d9f3c59e91c4f8ca5d80557bc1f4ae",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#validateWalFile:node-fs.lstatSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#validateWalFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-259ee8df7c37d658652fa2fd",
+      "occurrence": 1,
+      "sourcePath": "src/bootstrap-database.ts",
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 219,
+      "column": 22,
+      "nodeKind": "CallExpression",
+      "container": "validateWalFile",
+      "family": "node-fs",
+      "api": "openSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "0303878fadcb683a031f44ee53dce4beb6f49dee4d84bb04dce99683ba868d82",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#validateWalFile:node-fs.openSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-database-path",
+            "anchor": "src/bootstrap-database.ts#validateWalFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "id": "sink-45a438c39cb12d21bd536c9c",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 175,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 261,
       "column": 22,
       "nodeKind": "CallExpression",
       "container": "readHeader",
@@ -2168,8 +2529,8 @@
       "id": "sink-3a7905c83933ae63cf2aa53e",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 190,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 276,
       "column": 19,
       "nodeKind": "CallExpression",
       "container": "removeProbeFiles",
@@ -2201,8 +2562,8 @@
       "id": "sink-5eb9f71374e8aff9c32d671f",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 194,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 280,
       "column": 18,
       "nodeKind": "CallExpression",
       "container": "removeProbeFiles",
@@ -2234,8 +2595,8 @@
       "id": "sink-d9172ad5a3a7d3e584822fcc",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 197,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 283,
       "column": 31,
       "nodeKind": "CallExpression",
       "container": "removeProbeFiles",
@@ -2267,8 +2628,8 @@
       "id": "sink-9ebe89ec7ddc4688114b0fd1",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 204,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 290,
       "column": 54,
       "nodeKind": "CallExpression",
       "container": "existingVersionWithoutMutation",
@@ -2300,8 +2661,8 @@
       "id": "sink-7c9a78e7d96d0af22f06c7db",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 213,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 300,
       "column": 7,
       "nodeKind": "CallExpression",
       "container": "existingVersionWithoutMutation",
@@ -2339,8 +2700,8 @@
       "id": "sink-10a3baaf40c371bf5ea53015",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 215,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 302,
       "column": 9,
       "nodeKind": "CallExpression",
       "container": "existingVersionWithoutMutation",
@@ -2378,8 +2739,8 @@
       "id": "sink-3f234368c8280f98ef9bf23d",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 217,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 304,
       "column": 21,
       "nodeKind": "NewExpression",
       "container": "existingVersionWithoutMutation",
@@ -2408,11 +2769,44 @@
       }
     },
     {
-      "id": "sink-b8d89ab628dee2505fd562a1",
+      "id": "sink-a13c812e9db414b479057b36",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 248,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 327,
+      "column": 52,
+      "nodeKind": "CallExpression",
+      "container": "ensureManagedRestoreRecovered",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "90a10409f6ecaa0bef55541a5fc62b7493f2c863188ff0f8fe33d88281fc1ebb",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/bootstrap-database.ts#ensureManagedRestoreRecovered:module-loader.import",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/bootstrap-database.ts#ensureManagedRestoreRecovered:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-e7cf18d16344ed7707b3b479",
+      "occurrence": 1,
+      "sourcePath": "src/bootstrap-database.ts",
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 357,
       "column": 16,
       "nodeKind": "NewExpression",
       "container": "openBootstrapDatabase",
@@ -2421,7 +2815,7 @@
       "pathOperands": [
         "argument:0"
       ],
-      "normalizedNodeSha256": "4d51eafbdd9a68ef86508e63d314fe784030bbe9425d1d077cb6e0d49762a7ed",
+      "normalizedNodeSha256": "e336fd32bcdf9ddcd6c20ffca9fa50db5d4dab0997a7ea4ee058ce63b0d2e9df",
       "executionClass": "product-runtime",
       "packageExpectation": "compiled-to-asar",
       "binding": {
@@ -2441,12 +2835,210 @@
       }
     },
     {
+      "id": "sink-48cf20304c7045e48ef0b93d",
+      "occurrence": 1,
+      "sourcePath": "src/bootstrap-database.ts",
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 409,
+      "column": 80,
+      "nodeKind": "CallExpression",
+      "container": "writeConsistentDatabaseSnapshot",
+      "family": "node-fs",
+      "api": "statSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "1a5d8e34fabcd1639a7dde955be82a30d1040e9a6c201d988c71bdc5869bd968",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:node-fs.statSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-04764806fc44fcf237feaee6",
+      "occurrence": 1,
+      "sourcePath": "src/bootstrap-database.ts",
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 412,
+      "column": 46,
+      "nodeKind": "CallExpression",
+      "container": "writeConsistentDatabaseSnapshot",
+      "family": "node-fs",
+      "api": "existsSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "97695c560b6c3c9e0931fb1bfab3cbc3f4de217c67642d898982c4b2b3f1c7e4",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:node-fs.existsSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-2b99e6ae6cb931655f6c45c1",
+      "occurrence": 1,
+      "sourcePath": "src/bootstrap-database.ts",
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 418,
+      "column": 22,
+      "nodeKind": "NewExpression",
+      "container": "writeConsistentDatabaseSnapshot",
+      "family": "third-party-path-api",
+      "api": "better-sqlite3.Database",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "a03cf644eca827e1fb5282f0b26c9f83b3ef7cc0c98cca05605af37290793522",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:third-party-path-api.better-sqlite3.Database",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-394d2ece7f6941107601c975",
+      "occurrence": 2,
+      "sourcePath": "src/bootstrap-database.ts",
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 427,
+      "column": 46,
+      "nodeKind": "CallExpression",
+      "container": "writeConsistentDatabaseSnapshot",
+      "family": "node-fs",
+      "api": "existsSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "97695c560b6c3c9e0931fb1bfab3cbc3f4de217c67642d898982c4b2b3f1c7e4",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:node-fs.existsSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-database.ts#writeConsistentDatabaseSnapshot:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-c46fd5c90160c6ae15cfb8a2",
+      "occurrence": 2,
+      "sourcePath": "src/bootstrap-database.ts",
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 442,
+      "column": 46,
+      "nodeKind": "CallExpression",
+      "container": "validateDatabaseSnapshotFile",
+      "family": "node-fs",
+      "api": "existsSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "d8d3711a4b4078884dd407bb0b4fe7dc0ff7aef1ba5a46aa66bac259b57c10f4",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#validateDatabaseSnapshotFile:node-fs.existsSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "managed-database-snapshot-sidecar-path",
+            "anchor": "src/bootstrap-database.ts#validateDatabaseSnapshotFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-1c4f513027093c47e8386fec",
+      "occurrence": 1,
+      "sourcePath": "src/bootstrap-database.ts",
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 443,
+      "column": 21,
+      "nodeKind": "NewExpression",
+      "container": "validateDatabaseSnapshotFile",
+      "family": "third-party-path-api",
+      "api": "better-sqlite3.Database",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "fca0bc6757b4e2d85e2a7694312f57e4d48bb669174a817678abcc9560429a80",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#validateDatabaseSnapshotFile:third-party-path-api.better-sqlite3.Database",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "managed-database-snapshot-path",
+            "anchor": "src/bootstrap-database.ts#validateDatabaseSnapshotFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "id": "sink-b5554c8c39b6e37c544763f1",
       "occurrence": 1,
       "sourcePath": "src/bootstrap-database.ts",
-      "fileSha256": "275945b990aa34de2ee08ba111b3e462de8942397fdfbb8fa64261c311c894a4",
-      "line": 288,
-      "column": 10,
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 461,
+      "column": 35,
       "nodeKind": "NewExpression",
       "container": "createInMemoryBootstrapDatabase",
       "family": "third-party-path-api",
@@ -2474,11 +3066,242 @@
       }
     },
     {
+      "id": "sink-acb2af76df020e7f693a75dc",
+      "occurrence": 1,
+      "sourcePath": "src/bootstrap-database.ts",
+      "fileSha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "line": 461,
+      "column": 62,
+      "nodeKind": "NewExpression",
+      "container": "createInMemoryBootstrapDatabase",
+      "family": "third-party-path-api",
+      "api": "better-sqlite3.Database",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "7996d623e5e001ffb0942a01fa7915b0396fec83904d79f22c968d4ade5442dc",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-database.ts#createInMemoryBootstrapDatabase:third-party-path-api.better-sqlite3.Database.snapshot",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "sqlite-serialized-snapshot-buffer",
+            "anchor": "src/bootstrap-database.ts#createInMemoryBootstrapDatabase:argument:0.snapshot-bytes"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-04872d35ab6cf777cc9bb8a0",
+      "occurrence": 1,
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "fileSha256": "79bb992d4ec5bab8b790337c920b28adebd59d82fe863f8c2f1a2c9327e805f4",
+      "line": 398,
+      "column": 31,
+      "nodeKind": "CallExpression",
+      "container": "BootstrapPathStore.publishManagedRestore",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "8deec719586786e871ab3a482758ad897a71d1a4ea45548d859ec6a9c1b968c9",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#publish:node-fs.lstat",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-live-database-sidecar-path",
+            "anchor": "src/bootstrap-path-store.ts#publish:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-5736faedd3035fb5750e0cde",
+      "occurrence": 1,
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "fileSha256": "79bb992d4ec5bab8b790337c920b28adebd59d82fe863f8c2f1a2c9327e805f4",
+      "line": 431,
+      "column": 26,
+      "nodeKind": "CallExpression",
+      "container": "cleanup",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "6804726b04638b547d8091b200e3d4a927949f6de2bca71332c5f3f3142194f7",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#cleanup:node-fs.lstat",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-path-store.ts#cleanup:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-5bbb727aa2fbd90021bf39c5",
+      "occurrence": 1,
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "fileSha256": "79bb992d4ec5bab8b790337c920b28adebd59d82fe863f8c2f1a2c9327e805f4",
+      "line": 441,
+      "column": 15,
+      "nodeKind": "CallExpression",
+      "container": "cleanup",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "028582804e2049fab35a62a470f67f703a3c9734a1c537b57bac90bb0fc4d4f1",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#cleanup:node-fs.unlink",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-path-store.ts#cleanup:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-cdbfc4eadda41bc7d72a2a22",
+      "occurrence": 2,
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "fileSha256": "79bb992d4ec5bab8b790337c920b28adebd59d82fe863f8c2f1a2c9327e805f4",
+      "line": 498,
+      "column": 33,
+      "nodeKind": "CallExpression",
+      "container": "publish",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "8deec719586786e871ab3a482758ad897a71d1a4ea45548d859ec6a9c1b968c9",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#publish:node-fs.lstat",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-live-database-sidecar-path",
+            "anchor": "src/bootstrap-path-store.ts#publish:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-5254a4262256de0df4ce2ed2",
+      "occurrence": 2,
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "fileSha256": "79bb992d4ec5bab8b790337c920b28adebd59d82fe863f8c2f1a2c9327e805f4",
+      "line": 560,
+      "column": 28,
+      "nodeKind": "CallExpression",
+      "container": "BootstrapPathStore.withDatabaseSnapshotFile",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "6804726b04638b547d8091b200e3d4a927949f6de2bca71332c5f3f3142194f7",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#BootstrapPathStore.withDatabaseSnapshotFile:node-fs.lstat",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-path-store.ts#BootstrapPathStore.withDatabaseSnapshotFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-106c5381b8b26739ecd460ae",
+      "occurrence": 2,
+      "sourcePath": "src/bootstrap-path-store.ts",
+      "fileSha256": "79bb992d4ec5bab8b790337c920b28adebd59d82fe863f8c2f1a2c9327e805f4",
+      "line": 566,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "BootstrapPathStore.withDatabaseSnapshotFile",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "028582804e2049fab35a62a470f67f703a3c9734a1c537b57bac90bb0fc4d4f1",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/bootstrap-path-store.ts#BootstrapPathStore.withDatabaseSnapshotFile:node-fs.unlink",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/bootstrap-path-store.ts#BootstrapPathStore.withDatabaseSnapshotFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "id": "sink-c6a5b83358de64fded85db21",
       "occurrence": 1,
       "sourcePath": "src/daemon.ts",
-      "fileSha256": "7a9789076610e8d5960527851ff51d8c2aa604b9cd29c2aa39f64cabff74c7aa",
-      "line": 67,
+      "fileSha256": "ddf9d8d60660807f41757a3620b431f99573fda211591a9268c8844993a9ee48",
+      "line": 136,
       "column": 21,
       "nodeKind": "CallExpression",
       "container": "startServer",
@@ -2520,6 +3343,123 @@
             "selector": "argument:2.shell",
             "classification": "fixed-shell-false",
             "anchor": "src/daemon.ts#startServer:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-8ecfb8f883d2ef88a920bb61",
+      "occurrence": 1,
+      "sourcePath": "src/db.ts",
+      "fileSha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
+      "line": 1202,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "validateDatabaseRestoreCandidate",
+      "family": "node-fs",
+      "api": "readFileSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "ee2890419ae0b369d20caf39fde575a6c31288bab27ea133209b68241a3c2f2b",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/db.ts#validateDatabaseRestoreCandidate:node-fs.readFileSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/db.ts#validateDatabaseRestoreCandidate:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-8de00407646059c0723b3b01",
+      "occurrence": 1,
+      "sourcePath": "src/db.ts",
+      "fileSha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
+      "line": 1213,
+      "column": 35,
+      "nodeKind": "CallExpression",
+      "container": "createConsistentDatabaseSnapshot",
+      "family": "node-fs",
+      "api": "readFileSync",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "3c500f75783dc9eb7ca8d4fb9d166529dd28b66ddbcaaf66e493b8004b9f3f7b",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/db.ts#createConsistentDatabaseSnapshot:node-fs.readFileSync",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "governed-database-staging-path",
+            "anchor": "src/db.ts#createConsistentDatabaseSnapshot:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-7107aeeabde6a8690ae8ac8d",
+      "occurrence": 1,
+      "sourcePath": "src/document-parser.ts",
+      "fileSha256": "3d29c40948e839f67ba8252a41da09acbe791d07aeb6c7067e5dab4137ff806d",
+      "line": 31,
+      "column": 16,
+      "nodeKind": "NewExpression",
+      "container": "parseDocumentIsolated",
+      "family": "worker",
+      "api": "Worker",
+      "pathOperands": [
+        "argument:0",
+        "argument:1.workerData.bytes",
+        "argument:1.workerData.fileName",
+        "argument:1.workerData.options"
+      ],
+      "normalizedNodeSha256": "5867a08692a8c06c5af781602de42aca9923f4cf2cf0227e274a3022ec3b733e",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "worker-byte-only",
+        "anchor": "src/document-parser.ts#parseDocumentIsolated:worker.Worker",
+        "evidenceIds": [
+          "file-viewer",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-file-lease",
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:0"
+          },
+          {
+            "selector": "argument:1.workerData.bytes",
+            "classification": "bounded-bytes",
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.bytes"
+          },
+          {
+            "selector": "argument:1.workerData.fileName",
+            "classification": "basename-metadata",
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.fileName"
+          },
+          {
+            "selector": "argument:1.workerData.options",
+            "classification": "validated-parser-options",
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.options"
           }
         ]
       }
@@ -2594,8 +3534,8 @@
       "id": "sink-243bfa6743a911daca9e8d11",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 154,
+      "fileSha256": "4fa8d7600bb79b86e4741aa8952ea4231ce9b6251a553d00c318ea6b97bfcf33",
+      "line": 178,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -2627,8 +3567,8 @@
       "id": "sink-357a7720adaf890c6b65dfa9",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 192,
+      "fileSha256": "4fa8d7600bb79b86e4741aa8952ea4231ce9b6251a553d00c318ea6b97bfcf33",
+      "line": 216,
       "column": 29,
       "nodeKind": "CallExpression",
       "container": "sha256",
@@ -2660,8 +3600,8 @@
       "id": "sink-61f50282e9c0d14346708830",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 197,
+      "fileSha256": "4fa8d7600bb79b86e4741aa8952ea4231ce9b6251a553d00c318ea6b97bfcf33",
+      "line": 221,
       "column": 61,
       "nodeKind": "CallExpression",
       "container": "assertFixedRegularFile",
@@ -2693,8 +3633,8 @@
       "id": "sink-1e542ebe0677eb880bcde1ab",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 197,
+      "fileSha256": "4fa8d7600bb79b86e4741aa8952ea4231ce9b6251a553d00c318ea6b97bfcf33",
+      "line": 221,
       "column": 74,
       "nodeKind": "CallExpression",
       "container": "assertFixedRegularFile",
@@ -2726,8 +3666,8 @@
       "id": "sink-4dfe0c29eb6267848c5f3ce7",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 294,
+      "fileSha256": "4fa8d7600bb79b86e4741aa8952ea4231ce9b6251a553d00c318ea6b97bfcf33",
+      "line": 335,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "loadAddon",
@@ -2759,8 +3699,8 @@
       "id": "sink-16b0f6cdadde539943bd7b64",
       "occurrence": 1,
       "sourcePath": "src/execution-native.ts",
-      "fileSha256": "befd7c7dcf61bac363a86a3ad0030b61fb268d9664b88d05dead7dc85f0d23e0",
-      "line": 295,
+      "fileSha256": "4fa8d7600bb79b86e4741aa8952ea4231ce9b6251a553d00c318ea6b97bfcf33",
+      "line": 336,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "loadAddon",
@@ -2792,8 +3732,8 @@
       "id": "sink-ea3e0efb1533dbf7c58965fc",
       "occurrence": 1,
       "sourcePath": "src/execution-runtime.ts",
-      "fileSha256": "b283c0f9a0272ac15ec84380aa234968b1949875d316516b4178272c9bcb6292",
-      "line": 183,
+      "fileSha256": "0264db73364b929b7a3e9de95093798b303cdb6bc81d301b8bfd327f6944e676",
+      "line": 207,
       "column": 7,
       "nodeKind": "CallExpression",
       "container": "loadNativeIdentity",
@@ -2825,8 +3765,8 @@
       "id": "sink-e147ac29ce8d7a5661ea611b",
       "occurrence": 1,
       "sourcePath": "src/execution-runtime.ts",
-      "fileSha256": "b283c0f9a0272ac15ec84380aa234968b1949875d316516b4178272c9bcb6292",
-      "line": 184,
+      "fileSha256": "0264db73364b929b7a3e9de95093798b303cdb6bc81d301b8bfd327f6944e676",
+      "line": 208,
       "column": 7,
       "nodeKind": "CallExpression",
       "container": "loadNativeIdentity",
@@ -2855,56 +3795,11 @@
       }
     },
     {
-      "id": "sink-299f0d2d0fec82b4102316af",
-      "occurrence": 1,
-      "sourcePath": "src/file-viewer.ts",
-      "fileSha256": "00d8c415cd6308d8890069da7e727a44725a7a27bf89f64c91a1d705f7f9a0b7",
-      "line": 104,
-      "column": 16,
-      "nodeKind": "NewExpression",
-      "container": "parseDocumentIsolated",
-      "family": "worker",
-      "api": "Worker",
-      "pathOperands": [
-        "argument:0",
-        "argument:1.workerData.bytes",
-        "argument:1.workerData.fileName"
-      ],
-      "normalizedNodeSha256": "b1794b24dd3772da6bf5f141dba074a3dd38662bf1888ed7ed354bd7b085bcf8",
-      "executionClass": "product-runtime",
-      "packageExpectation": "compiled-to-asar",
-      "binding": {
-        "kind": "worker-byte-only",
-        "anchor": "src/file-viewer.ts#parseDocumentIsolated:worker.Worker",
-        "evidenceIds": [
-          "file-viewer",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "bootstrap-file-lease",
-            "anchor": "src/file-viewer.ts#parseDocumentIsolated:argument:0"
-          },
-          {
-            "selector": "argument:1.workerData.bytes",
-            "classification": "bounded-bytes",
-            "anchor": "src/file-viewer.ts#parseDocumentIsolated:argument:1.workerData.bytes"
-          },
-          {
-            "selector": "argument:1.workerData.fileName",
-            "classification": "basename-metadata",
-            "anchor": "src/file-viewer.ts#parseDocumentIsolated:argument:1.workerData.fileName"
-          }
-        ]
-      }
-    },
-    {
       "id": "sink-3fc3b6e9373519534bddfe0a",
       "occurrence": 1,
       "sourcePath": "src/file-viewer.ts",
-      "fileSha256": "00d8c415cd6308d8890069da7e727a44725a7a27bf89f64c91a1d705f7f9a0b7",
-      "line": 392,
+      "fileSha256": "a9e5385ccf53aee18654fc9870afed1390b1601a6682d9d4dad2067fd4d67fc7",
+      "line": 473,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "FileViewerService.reveal",
@@ -2940,6 +3835,39 @@
             "selector": "argument:2.shell",
             "classification": "fixed-shell-false",
             "anchor": "src/file-viewer.ts#FileViewerService.reveal:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-bebf76b947960e88f337f371",
+      "occurrence": 1,
+      "sourcePath": "src/managed-restore.ts",
+      "fileSha256": "46ac473542e4c73d288bf2438bd9c176bbc9ca641b5b5220c833ec6499610404",
+      "line": 257,
+      "column": 24,
+      "nodeKind": "CallExpression",
+      "container": "syncDirectory",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "d7e7de07932bebdfc3c4731807db40c12e34e2bc5683b0bf9059725c52ba0e1e",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/managed-restore.ts#syncDirectory:node-fs.open",
+        "evidenceIds": [
+          "database-lifetime",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "path-policy-qualified-directory",
+            "anchor": "src/managed-restore.ts#syncDirectory:argument:0"
           }
         ]
       }
@@ -3014,7 +3942,7 @@
       "id": "sink-d07b4b2c8cf7ed613e3fd830",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
       "line": 528,
       "column": 7,
       "nodeKind": "CallExpression",
@@ -3047,7 +3975,7 @@
       "id": "sink-5b4b1a17f54d5de7a7588020",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
       "line": 671,
       "column": 55,
       "nodeKind": "CallExpression",
@@ -3080,8 +4008,8 @@
       "id": "sink-1325c487f00c8b00e5fd4197",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 827,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 828,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#readExistingFile",
@@ -3113,8 +4041,8 @@
       "id": "sink-f2d559c8c06d3799c3e6ff23",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 908,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 910,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.openReadLease",
@@ -3146,8 +4074,8 @@
       "id": "sink-a2b77b03c3ab9d929c4bee3a",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1067,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1095,
       "column": 31,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#listExistingDirectory",
@@ -3179,8 +4107,8 @@
       "id": "sink-78d1b7507b44007ca06340dd",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1078,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1106,
       "column": 35,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#listExistingDirectory",
@@ -3212,8 +4140,8 @@
       "id": "sink-ff4b9c576fb181b9541df431",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1118,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1146,
       "column": 34,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.preflightWrite",
@@ -3245,8 +4173,8 @@
       "id": "sink-de1767bbba819217e62bc36b",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1136,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1164,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.preflightWrite",
@@ -3278,8 +4206,8 @@
       "id": "sink-9b3f2a2f2b60f26b8d97367d",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1390,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1418,
       "column": 39,
       "nodeKind": "CallExpression",
       "container": "authorizeEvent",
@@ -3311,8 +4239,8 @@
       "id": "sink-80da13a0e97e59dbf5610599",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1406,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1434,
       "column": 44,
       "nodeKind": "CallExpression",
       "container": "authorizeEvent",
@@ -3344,8 +4272,8 @@
       "id": "sink-9fde321546e5855e056413c6",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1486,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1514,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.createDirectoryEnrollment",
@@ -3377,8 +4305,8 @@
       "id": "sink-cc26c9c6241404b868cb9ff5",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1505,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1533,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.createDirectoryEnrollment",
@@ -3410,8 +4338,8 @@
       "id": "sink-cde5e810d3ee12c466bbe598",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1541,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1569,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.createDirectoryEnrollment",
@@ -3443,8 +4371,8 @@
       "id": "sink-45aafbf06f3ba6b4b432ca21",
       "occurrence": 3,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1648,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1676,
       "column": 34,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -3476,8 +4404,8 @@
       "id": "sink-e8bd7a921e275c2d076200c9",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1670,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1698,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -3509,8 +4437,8 @@
       "id": "sink-65f60948655b4d38e0a20418",
       "occurrence": 4,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1691,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1719,
       "column": 39,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -3542,8 +4470,8 @@
       "id": "sink-7ef54cffaaf1a40302646bf7",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1698,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1726,
       "column": 15,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -3581,8 +4509,8 @@
       "id": "sink-b6fb1447a514cafa9c331606",
       "occurrence": 5,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1736,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1764,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -3614,8 +4542,8 @@
       "id": "sink-f8da28023c86bcc1887e8d50",
       "occurrence": 3,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1750,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1778,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -3647,8 +4575,8 @@
       "id": "sink-d2a49869e474b75263232be7",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1792,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1820,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -3680,8 +4608,8 @@
       "id": "sink-3a5aaa9e86d75cfa3cf56745",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1814,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1842,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -3710,11 +4638,209 @@
       }
     },
     {
+      "id": "sink-912df4104abb57a812ffda61",
+      "occurrence": 6,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1901,
+      "column": 32,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.removeDirectory",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "5d1824cdf5f0568e0c6f724e23e932706bd841658bb0a78a9ed3d5478fe4dccc",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-be81a48199e331f59cc3d5f7",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1925,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.removeDirectory",
+      "family": "node-fs",
+      "api": "rmdir",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "7ee9e4aba3eb6154ef2ad4e46fa6853468fed380dbf22c9addccb576b7921067",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:node-fs.rmdir",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-03005ef383e11ebfab9e932d",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1926,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.removeDirectory",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "d4ebe50fae394b8ac38d24b8ad229be469b57fd4cefd38d70bfe1bf6fd6fe0d1",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-a372b0061be747348b21f244",
+      "occurrence": 7,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1948,
+      "column": 32,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.removeFile",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "5d1824cdf5f0568e0c6f724e23e932706bd841658bb0a78a9ed3d5478fe4dccc",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeFile:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-0824ff9ad052f4bf02999c5e",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1972,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.removeFile",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "38a045fb1c6443b90f41466d7b7ef7b28280d260edc57bbd17a849994cf8e319",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeFile:node-fs.unlink",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-cf72afa73f2160d61836a297",
+      "occurrence": 2,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 1973,
+      "column": 13,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.removeFile",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "d4ebe50fae394b8ac38d24b8ad229be469b57fd4cefd38d70bfe1bf6fd6fe0d1",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeFile:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.removeFile:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "id": "sink-62f6be76773c81c611392cc6",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 1901,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 2023,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#replaceFileInternal",
@@ -3746,8 +4872,8 @@
       "id": "sink-d2b3bae251640d085de9f8fb",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 2132,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 2254,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#probeDirectoryIdentity",
@@ -3779,8 +4905,8 @@
       "id": "sink-bc622822b78e0fae61abf411",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 2152,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 2274,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#walkConfiguredRootNoRedirect",
@@ -3812,8 +4938,8 @@
       "id": "sink-b86b6e2c1b8be8f8ebde2a7e",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 2206,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 2328,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#walkNoRedirect",
@@ -3845,8 +4971,8 @@
       "id": "sink-50aa4bbe9ddb4d3050bd9030",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 2216,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 2338,
       "column": 24,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#statIdentity",
@@ -3878,8 +5004,8 @@
       "id": "sink-e980b687cfd4c6b4479cd08a",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 2226,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 2348,
       "column": 24,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#lstatIdentity",
@@ -3911,8 +5037,8 @@
       "id": "sink-d5c18a3016878722c5c3b799",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 2240,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 2362,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -3944,8 +5070,8 @@
       "id": "sink-81e504409c0c68f6a0cf38cd",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 2249,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 2371,
       "column": 56,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -3977,8 +5103,8 @@
       "id": "sink-e4b423b50f51232897635ec7",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 2250,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 2372,
       "column": 20,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -4010,8 +5136,8 @@
       "id": "sink-9ff1eb6f05ac2ab782130c15",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 2255,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 2377,
       "column": 15,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -4043,8 +5169,8 @@
       "id": "sink-d765d63e87811019a1eb8af1",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "7bbcb753848a1566d061bfea7640663dee60967f0b6edd1a49d51217c6b3ee57",
-      "line": 2265,
+      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "line": 2387,
       "column": 12,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#realpathOrDeny",
@@ -4121,8 +5247,8 @@
       "id": "sink-9bcf1e99e867cc31003dd4cf",
       "occurrence": 1,
       "sourcePath": "src/tools/image-helper.ts",
-      "fileSha256": "90e5f73c1fc576b647d5db9114786001949884cc455c7c973509574f974c9414",
-      "line": 48,
+      "fileSha256": "8eeb3603b5a02e05effd2ea77d833f005ac4dec56a625cf0eba71d4ca69448da",
+      "line": 52,
       "column": 41,
       "nodeKind": "CallExpression",
       "container": "imageHelperExec",
@@ -4153,9 +5279,9 @@
       "id": "sink-bd60572b2a17bf75235f3352",
       "occurrence": 1,
       "sourcePath": "src/tools/image-helper.ts",
-      "fileSha256": "90e5f73c1fc576b647d5db9114786001949884cc455c7c973509574f974c9414",
-      "line": 50,
-      "column": 27,
+      "fileSha256": "8eeb3603b5a02e05effd2ea77d833f005ac4dec56a625cf0eba71d4ca69448da",
+      "line": 54,
+      "column": 58,
       "nodeKind": "CallExpression",
       "container": "imageHelperExec",
       "family": "module-loader",
@@ -4185,8 +5311,8 @@
       "id": "sink-beba5e43960ca0542cd08230",
       "occurrence": 1,
       "sourcePath": "src/tools/parsers.ts",
-      "fileSha256": "468b05155df227d783c7e8c5c53a5f17ac23f725166fa1b16dc8f8a54bdfea7d",
-      "line": 85,
+      "fileSha256": "f68209e83dafca9bd329f7ae75d946a3a7788a6ff38bdaa20495e331ded9c94b",
+      "line": 91,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "parseText",
@@ -4217,8 +5343,8 @@
       "id": "sink-56a8793c3d1a757eaee21322",
       "occurrence": 1,
       "sourcePath": "src/tools/parsers.ts",
-      "fileSha256": "468b05155df227d783c7e8c5c53a5f17ac23f725166fa1b16dc8f8a54bdfea7d",
-      "line": 96,
+      "fileSha256": "f68209e83dafca9bd329f7ae75d946a3a7788a6ff38bdaa20495e331ded9c94b",
+      "line": 102,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "parseDocx",
@@ -4249,8 +5375,8 @@
       "id": "sink-0efb090ae67b90cc105b8128",
       "occurrence": 1,
       "sourcePath": "src/tools/parsers.ts",
-      "fileSha256": "468b05155df227d783c7e8c5c53a5f17ac23f725166fa1b16dc8f8a54bdfea7d",
-      "line": 106,
+      "fileSha256": "f68209e83dafca9bd329f7ae75d946a3a7788a6ff38bdaa20495e331ded9c94b",
+      "line": 112,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "parseXlsx",
@@ -4281,8 +5407,8 @@
       "id": "sink-a4df7c381ac7b78302114d1d",
       "occurrence": 1,
       "sourcePath": "src/tools/parsers.ts",
-      "fileSha256": "468b05155df227d783c7e8c5c53a5f17ac23f725166fa1b16dc8f8a54bdfea7d",
-      "line": 127,
+      "fileSha256": "f68209e83dafca9bd329f7ae75d946a3a7788a6ff38bdaa20495e331ded9c94b",
+      "line": 133,
       "column": 27,
       "nodeKind": "CallExpression",
       "container": "parsePdf",
@@ -4313,8 +5439,8 @@
       "id": "sink-a64279e39d868e3951568483",
       "occurrence": 1,
       "sourcePath": "src/tools/phase1-tools.ts",
-      "fileSha256": "0814062256f824f2c923c283f920756c33649a6020e81cc619eba35eabb8d48b",
-      "line": 85,
+      "fileSha256": "578145c99073dde95d9ba380a514699651bc571a1a9ddbb332aa71cd9ae297b2",
+      "line": 147,
       "column": 36,
       "nodeKind": "CallExpression",
       "container": "mascotNotifyExec",
@@ -4342,11 +5468,11 @@
       }
     },
     {
-      "id": "sink-d8f90ebc8884ad1c74ff3ef8",
+      "id": "sink-fbebe1312d594532f0d822df",
       "occurrence": 1,
       "sourcePath": "src/tools/read-repo.ts",
-      "fileSha256": "5d54bfc355379961e6a2a1c1768d428522d56b474ed2293da42d74d81c453682",
-      "line": 38,
+      "fileSha256": "6ee0b533209a88745e993de25b33ad18ff9febdb14fa51864183bb884a66cd48",
+      "line": 41,
       "column": 7,
       "nodeKind": "CallExpression",
       "container": "runGitLsFiles",
@@ -4358,7 +5484,7 @@
         "argument:2.cwd",
         "argument:2.shell"
       ],
-      "normalizedNodeSha256": "bc8b5f83eef847e4454baaee8fa1e86936a368ecc75c6607640b1efd32095bdb",
+      "normalizedNodeSha256": "9ff512892597771dcbfb07f6a34ddf321cbfe666afb565af40abd4189b18e5a5",
       "executionClass": "product-runtime",
       "packageExpectation": "compiled-to-asar",
       "binding": {
@@ -4396,8 +5522,8 @@
       "id": "sink-995eabc5492cb075b2e43430",
       "occurrence": 1,
       "sourcePath": "src/tools/writer.ts",
-      "fileSha256": "5315722ab514c4ec1752863c3554ff07c0ede014cf4e28373f48e5f746a87799",
-      "line": 50,
+      "fileSha256": "702c299efe8d998e81e48341a8ed5b05644af6de79261e2b4fd387f40be73ee3",
+      "line": 54,
       "column": 72,
       "nodeKind": "CallExpression",
       "container": "createDocxExec",
@@ -4428,8 +5554,8 @@
       "id": "sink-080d2031884afbf3e66f31ed",
       "occurrence": 1,
       "sourcePath": "src/tools/writer.ts",
-      "fileSha256": "5315722ab514c4ec1752863c3554ff07c0ede014cf4e28373f48e5f746a87799",
-      "line": 123,
+      "fileSha256": "702c299efe8d998e81e48341a8ed5b05644af6de79261e2b4fd387f40be73ee3",
+      "line": 131,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "createXlsxExec",
@@ -4466,5 +5592,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "9aed1bc3183ec518e19eb5f83b95e0efc45578402cd6d64f45bf247ebf098461"
+  "canonicalPayloadSha256": "345c462ab6ed44d0423c2f2c8539d8ea37c7610f1cc178c7e7135b5622586e20"
 }

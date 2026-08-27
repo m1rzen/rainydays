@@ -47,7 +47,7 @@ export const sourceFiles = Object.freeze([
   "tsconfig.json",
 ]);
 
-export const sec03ArchitectureSha256 = "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1";
+export const sec03ArchitectureSha256 = "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe";
 export const sec03NativeManifestRelative = "dist/native/sec03-native-manifest.json";
 export const sec03NativeBinaryRelatives = Object.freeze([
   "dist/native/sandbox-host.exe",
@@ -61,6 +61,7 @@ export const sec03NativeTestManifestRelative = ".sec03-native-test/sec03-native-
 export const sec03NativeTestBinaryRelatives = Object.freeze([
   ".sec03-native-test/sandbox-host.exe",
   ".sec03-native-test/sandbox-launcher.node",
+  ".sec03-native-test/sec03-a07-adversary.exe",
 ]);
 export const sec03NativeTestOutputRelatives = Object.freeze([
   ...sec03NativeTestBinaryRelatives,
@@ -202,6 +203,74 @@ export function parsePeMachine(bytes, field = "SEC-03 native output") {
   return bytes.readUInt16LE(peOffset + 4);
 }
 
+export function parsePeImportAllowlist(bytes, field = "SEC-03 native output") {
+  parsePeMachine(bytes, field);
+  const peOffset = bytes.readUInt32LE(0x3c);
+  const sectionCount = bytes.readUInt16LE(peOffset + 6);
+  const optionalSize = bytes.readUInt16LE(peOffset + 20);
+  const optional = peOffset + 24;
+  if (sectionCount < 1 || sectionCount > 96 || optional + optionalSize > bytes.length) throw new Error(`${field} has invalid PE sections`);
+  const magic = bytes.readUInt16LE(optional);
+  if (magic !== 0x20b || optionalSize < 120) throw new Error(`${field} is not a PE32+ image`);
+  const directoryCount = bytes.readUInt32LE(optional + 108);
+  if (directoryCount < 14 || optional + 112 + 14 * 8 > optional + optionalSize) throw new Error(`${field} lacks import directories`);
+  const sectionOffset = optional + optionalSize;
+  if (sectionOffset + sectionCount * 40 > bytes.length) throw new Error(`${field} has truncated PE sections`);
+  const sections = [];
+  for (let index = 0; index < sectionCount; index += 1) {
+    const offset = sectionOffset + index * 40;
+    sections.push({ virtualSize: bytes.readUInt32LE(offset + 8), virtualAddress: bytes.readUInt32LE(offset + 12), rawSize: bytes.readUInt32LE(offset + 16), rawOffset: bytes.readUInt32LE(offset + 20) });
+  }
+  const rvaOffset = (rva) => {
+    const section = sections.find((entry) => rva >= entry.virtualAddress && rva < entry.virtualAddress + Math.max(entry.virtualSize, entry.rawSize));
+    if (!section) throw new Error(`${field} import RVA is outside the image`);
+    const offset = section.rawOffset + rva - section.virtualAddress;
+    if (offset < 0 || offset >= bytes.length) throw new Error(`${field} import RVA is truncated`);
+    return offset;
+  };
+  const dllName = (rva) => {
+    const offset = rvaOffset(rva);
+    let end = offset;
+    while (end < bytes.length && end - offset <= 255 && bytes[end] !== 0) end += 1;
+    if (end === bytes.length || end - offset < 1 || end - offset > 255) throw new Error(`${field} import name is invalid`);
+    const name = bytes.toString("ascii", offset, end).toLowerCase();
+    if (!/^[a-z0-9._-]+$/u.test(name) || !name.endsWith(".dll") && !name.endsWith(".exe")) throw new Error(`${field} import name is unsafe`);
+    return name;
+  };
+  const values = [];
+  const importRva = bytes.readUInt32LE(optional + 112 + 8);
+  if (!importRva) throw new Error(`${field} has no normal import directory`);
+  for (let index = 0, offset = rvaOffset(importRva); index < 256; index += 1, offset += 20) {
+    if (offset + 20 > bytes.length) throw new Error(`${field} normal import directory is truncated`);
+    const nameRva = bytes.readUInt32LE(offset + 12);
+    if (!nameRva) break;
+    values.push(`normal:${dllName(nameRva)}`);
+    if (index === 255) throw new Error(`${field} normal import directory is unbounded`);
+  }
+  const delayRva = bytes.readUInt32LE(optional + 112 + 13 * 8);
+  if (delayRva) {
+    for (let index = 0, offset = rvaOffset(delayRva); index < 256; index += 1, offset += 32) {
+      if (offset + 32 > bytes.length) throw new Error(`${field} delay import directory is truncated`);
+      const attributes = bytes.readUInt32LE(offset);
+      const nameRva = bytes.readUInt32LE(offset + 4);
+      if (!nameRva) break;
+      if (attributes !== 1) throw new Error(`${field} delay import is not RVA based`);
+      values.push(`delay:${dllName(nameRva)}`);
+      if (index === 255) throw new Error(`${field} delay import directory is unbounded`);
+    }
+  }
+  values.sort();
+  if (values.length < 1 || new Set(values).size !== values.length) throw new Error(`${field} import allowlist is invalid`);
+  const digest = createHash("sha256");
+  digest.update("mini-lux/sec03/pe-import-allowlist/v1\0", "utf8");
+  for (const value of values) {
+    const encoded = Buffer.from(value, "utf8");
+    const length = Buffer.alloc(4); length.writeUInt32LE(encoded.length);
+    digest.update(length); digest.update(encoded);
+  }
+  return Object.freeze({ values: Object.freeze(values), sha256: digest.digest("hex") });
+}
+
 async function assertFileRecord(projectRoot, record, field) {
   const absolute = path.join(projectRoot, ...record.path.split("/"));
   const info = await lstat(absolute);
@@ -215,7 +284,7 @@ async function nativeSourcePaths(projectRoot) {
   const directory = path.join(projectRoot, "native", "sandbox-host");
   const sources = (await listRegularFiles(directory, projectRoot))
     .map((absolute) => toPosix(path.relative(projectRoot, absolute)));
-  sources.push("scripts/build-sec03-native.mjs");
+  sources.push("scripts/build-inputs.mjs", "scripts/build-sec03-native.mjs");
   return sources.sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
 }
 
@@ -291,12 +360,14 @@ export async function validateSec03NativeProjection(projectRoot, options = {}) {
   const binaries = [];
   for (const [index, expectedPath] of sec03NativeBinaryRelatives.entries()) {
     const record = manifest.outputs[index];
-    exactKeys(record, ["path", "bytes", "sha256", "machine"], `SEC-03 native outputs[${index}]`);
+    exactKeys(record, ["path", "bytes", "sha256", "machine", "importedDllAllowlistDigest"], `SEC-03 native outputs[${index}]`);
     if (record.machine !== "AMD64") throw new Error(`SEC-03 native output machine differs: ${expectedPath}`);
+    assertHash(record.importedDllAllowlistDigest, `SEC-03 native outputs[${index}].importedDllAllowlistDigest`);
     assertSafeRecord({ path: record.path, bytes: record.bytes, sha256: record.sha256 }, expectedPath, `SEC-03 native outputs[${index}]`);
     const bytes = await assertFileRecord(projectRoot, record, `SEC-03 native output ${expectedPath}`);
     if (parsePeMachine(bytes, expectedPath) !== 0x8664) throw new Error(`${expectedPath} is not AMD64 PE`);
-    binaries.push(Object.freeze({ path: expectedPath, bytes: bytes.length, sha256: sha256(bytes), machine: "AMD64" }));
+    if (parsePeImportAllowlist(bytes, expectedPath).sha256 !== record.importedDllAllowlistDigest) throw new Error(`${expectedPath} import allowlist digest differs`);
+    binaries.push(Object.freeze({ path: expectedPath, bytes: bytes.length, sha256: sha256(bytes), machine: "AMD64", importedDllAllowlistDigest: record.importedDllAllowlistDigest }));
   }
 
   const testProjection = Object.freeze({
@@ -311,7 +382,7 @@ export async function validateSec03NativeProjection(projectRoot, options = {}) {
     }
     if (!isolation || isolation.architectureSha256 !== sec03ArchitectureSha256 || isolation.protocolVersion !== 1
       || isolation.nativeSourceDigest !== manifest.sourceDigest || isolation.toolchainDigest !== manifest.toolchainDigest
-      || isolation.signatureStatus !== manifest.signatureStatus || JSON.stringify(isolation.artifacts) !== JSON.stringify(binaries)
+      || isolation.signatureStatus !== manifest.signatureStatus || JSON.stringify(isolation.artifacts) !== JSON.stringify(manifest.outputs)
       || isolation.testProjection.manifest.bytes !== testProjection.manifest.bytes
       || isolation.testProjection.manifest.sha256 !== testProjection.manifest.sha256) {
       throw new Error("build-info SEC-03 native identity differs from current outputs");
@@ -336,6 +407,15 @@ function expectedTestCompileArguments(argumentsList, field) {
   }
   const linkIndex = linkIndexes[0];
   return [...argumentsList.slice(0, linkIndex), "/DMINI_LUX_SEC03_NATIVE_TEST", ...argumentsList.slice(linkIndex)];
+}
+
+function expectedAdversaryCompileArguments() {
+  return [
+    "/nologo", "/std:c++20", "/O1", "/GS-", "/guard:cf", "/Gy", "/Zl", "/GR-", "/EHs-c-", "/W4", "/WX",
+    "/DUNICODE", "/D_UNICODE", "/DNOMINMAX", "native/sandbox-host/sec03-a07-adversary.cpp", "/link", "/NODEFAULTLIB",
+    "kernel32.lib", "advapi32.lib", "/ENTRY:Sec03Entry", "/OPT:REF", "/OPT:ICF", "/DYNAMICBASE", "/NXCOMPAT",
+    "/HIGHENTROPYVA", "/MACHINE:X64", "/SUBSYSTEM:CONSOLE", "/Brepro",
+  ];
 }
 
 export async function validateSec03NativeTestProjection(projectRoot, options = {}) {
@@ -368,7 +448,7 @@ export async function validateSec03NativeTestProjection(projectRoot, options = {
     throw new Error("SEC-03 native test manifest identity differs from production");
   }
 
-  exactKeys(testManifest.canonicalArguments, ["launcherCompile", "hostCompile"], "SEC-03 native test canonicalArguments");
+  exactKeys(testManifest.canonicalArguments, ["launcherCompile", "hostCompile", "adversaryCompile"], "SEC-03 native test canonicalArguments");
   for (const name of ["launcherCompile", "hostCompile"]) {
     const productionArguments = productionManifest.canonicalArguments[name];
     const testArguments = testManifest.canonicalArguments[name];
@@ -377,6 +457,9 @@ export async function validateSec03NativeTestProjection(projectRoot, options = {
       throw new Error(`SEC-03 native test ${name} differs from the one allowed test define`);
     }
   }
+  if (JSON.stringify(testManifest.canonicalArguments.adversaryCompile) !== JSON.stringify(expectedAdversaryCompileArguments())) {
+    throw new Error("SEC-03 native test adversaryCompile differs from the fixed no-CRT helper arguments");
+  }
 
   if (!Array.isArray(testManifest.outputs) || testManifest.outputs.length !== sec03NativeTestBinaryRelatives.length) {
     throw new Error("SEC-03 native test outputs are invalid");
@@ -384,11 +467,13 @@ export async function validateSec03NativeTestProjection(projectRoot, options = {
   const binaries = [];
   for (const [index, expectedPath] of sec03NativeTestBinaryRelatives.entries()) {
     const record = testManifest.outputs[index];
-    exactKeys(record, ["path", "bytes", "sha256", "machine"], `SEC-03 native test outputs[${index}]`);
+    exactKeys(record, ["path", "bytes", "sha256", "machine", "importedDllAllowlistDigest"], `SEC-03 native test outputs[${index}]`);
     if (record.machine !== "AMD64") throw new Error(`SEC-03 native test output machine differs: ${expectedPath}`);
+    assertHash(record.importedDllAllowlistDigest, `SEC-03 native test outputs[${index}].importedDllAllowlistDigest`);
     assertSafeRecord({ path: record.path, bytes: record.bytes, sha256: record.sha256 }, expectedPath, `SEC-03 native test outputs[${index}]`);
     const bytes = await assertFileRecord(projectRoot, record, `SEC-03 native test output ${expectedPath}`);
     if (parsePeMachine(bytes, expectedPath) !== 0x8664) throw new Error(`${expectedPath} is not AMD64 PE`);
+    if (parsePeImportAllowlist(bytes, expectedPath).sha256 !== record.importedDllAllowlistDigest) throw new Error(`${expectedPath} import allowlist digest differs`);
     binaries.push(Object.freeze({ path: expectedPath, bytes: bytes.length, sha256: sha256(bytes), machine: "AMD64" }));
   }
 

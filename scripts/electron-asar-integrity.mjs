@@ -23,6 +23,7 @@ const sec03NativeBinarySet = new Set(sec03NativeBinaryRelatives);
 
 function isRuntimeProjection(relative) {
   return relative === "build-info.json"
+    || relative === electronStageManifestName
     || relative === "package.json"
     || relative === "dist/document-parser-worker.js"
     || sec03NativeBinarySet.has(relative)
@@ -227,7 +228,7 @@ export async function validateElectronAsar(projectRoot, appResourcesDirectory) {
   assert.deepEqual(mismatched, [], "Packaged ASAR authored bytes differ");
   for (const relative of sec03NativeBinaryRelatives) assert.equal(actualAuthored.get(relative)?.unpacked, true, `SEC-03 native binary is not uniquely unpacked: ${relative}`);
   assert.equal(actualAuthored.get(sec03NativeManifestRelative)?.unpacked, false, "SEC-03 native manifest must remain inside ASAR");
-  assert.equal(actualAuthored.get(electronStageManifestName)?.unpacked, false, "Electron stage identity must remain inside ASAR");
+  assert.equal(actualAuthored.get(electronStageManifestName)?.unpacked, true, "Electron stage identity must be available only through the fixed unpacked projection");
   const [dialectCheckerBytes, dialectPolicyBytes] = await Promise.all([
     readFile(path.join(projectRoot, "scripts", "sec02-sink-crosscheck.mjs")),
     readFile(path.join(projectRoot, ...crosscheckPolicyPath.split("/")), "utf8"),

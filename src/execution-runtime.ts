@@ -5,6 +5,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { CapabilityContext, InspectedToolCall } from "./capability-broker.js";
 import {
+  createFiniteHttpsBroker,
+  FiniteHttpsBrokerError,
+  type FiniteHttpsBrokerObservation,
+  type FiniteHttpsInvocation,
+  type FiniteHttpsOperationDefinition,
+} from "./execution-network-broker.js";
+import {
   ExecutionDeniedError,
   ExecutionIsolationService,
   type ExecutionGrantRequest,
@@ -23,12 +30,29 @@ import {
 import { consumeExecutionRootLease, type ExecutionRootLease } from "./path-policy.js";
 import { assertResourceOwner, assertResourceOwnerForCleanup, type ResourceOwner } from "./resource-owner.js";
 import type { ManualConsentEvidenceBinding, ManualConsentOperation } from "./manual-execution-consent.js";
+import { NEVER_ABORT_SIGNAL, throwIfCancelled } from "./run-cancellation.js";
+import { createScriptPayload, parseScriptTimeout, scriptLimits, type ScriptLanguage } from "./script-runtime.js";
 
 export interface IsolatedTerminalLease { readonly leaseId: string }
 
+export interface ObservedFiniteHttpsOperation {
+  readonly observation: FiniteHttpsBrokerObservation;
+  readonly nativeObservation: NativeExecutionProof;
+}
+
 export interface ScopedExecutionGateway {
   readonly executeCommand: (input: Readonly<{ command: string; rootLease: ExecutionRootLease }>) => Promise<ExecutionResult>;
-  readonly executeScript: (input: Readonly<{ code: string; rootLease: ExecutionRootLease }>) => Promise<ExecutionResult>;
+  readonly executeScript: (input: Readonly<{
+    code: string;
+    lang: ScriptLanguage;
+    timeoutMs: number;
+    rootLease: ExecutionRootLease;
+  }>) => Promise<ExecutionResult>;
+  readonly executeHttps: (input: Readonly<{
+    entryPoint: "E1" | "E2" | "E3";
+    operations: readonly FiniteHttpsOperationDefinition[];
+    invocation: FiniteHttpsInvocation;
+  }>) => Promise<ObservedFiniteHttpsOperation>;
   readonly startShell: (input: Readonly<{ terminalId: string; shell: "cmd" | "powershell"; rootLease: ExecutionRootLease }>) => Promise<IsolatedTerminalLease>;
   readonly writeShell: (input: Readonly<{ lease: IsolatedTerminalLease; terminalId: string; data: string; appendNewline: boolean }>) => Promise<void>;
 }
@@ -47,7 +71,7 @@ interface PersistentRecord {
 const persistentRecords = new WeakMap<IsolatedTerminalLease, PersistentRecord>();
 
 const HASH = /^[a-f0-9]{64}$/u;
-const ARCHITECTURE_SHA256 = "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1";
+const ARCHITECTURE_SHA256 = "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe";
 const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectDirectory = path.basename(moduleDirectory).toLowerCase() === "dist"
   ? path.dirname(moduleDirectory)
@@ -200,7 +224,7 @@ export function manualConsentEvidenceBinding(
   operation: ManualConsentOperation
 ): ManualConsentEvidenceBinding {
   if (!context || context.principal !== "local-user-api"
-    || (operation !== "terminal-start" && operation !== "terminal-input")) {
+    || !["terminal-start", "terminal-input", "terminal-clear", "terminal-kill", "terminal-close"].includes(operation)) {
     throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Manual consent evidence binding is invalid");
   }
   return Object.freeze({
@@ -244,6 +268,52 @@ async function executionService(): Promise<ExecutionIsolationService> {
   return servicePromise;
 }
 
+async function executeFiniteHttpsOperation(input: Readonly<{
+  context: CapabilityContext;
+  entryPoint: "E1" | "E2" | "E3";
+  operations: readonly FiniteHttpsOperationDefinition[];
+  invocation: FiniteHttpsInvocation;
+  signal: AbortSignal;
+}>): Promise<ObservedFiniteHttpsOperation> {
+  const { context, entryPoint, operations, invocation, signal } = input;
+  throwIfCancelled(signal);
+  const profile = entryPoint === "E1" ? "one-shot-shell" : entryPoint === "E2" ? "agent-shell" : "script";
+  if (!context || !HASH.test(context.persona?.digest ?? "") || !context.executionDomainId || !context.sessionId || !context.runId
+    || !Number.isSafeInteger(context.authorityEpoch) || context.authorityEpoch < 1 || context.networkPolicy.mode !== "allowlist") {
+    throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Finite HTTPS execution authority is invalid");
+  }
+  const broker = createFiniteHttpsBroker(context, operations);
+  let observation: FiniteHttpsBrokerObservation;
+  try {
+    observation = await broker.execute(context, invocation, signal);
+  } catch (error) {
+    if (!(error instanceof FiniteHttpsBrokerError)) throw error;
+    observation = error.observation;
+  }
+  const policyDigest = sha256Json({
+    architectureSha256: ARCHITECTURE_SHA256,
+    operation: "finite-https-broker",
+    authorityDigest: broker.authorityDigest,
+    operationsDigest: broker.operationsDigest,
+  });
+  throwIfCancelled(signal);
+  const service = await executionService();
+  throwIfCancelled(signal);
+  const nativeObservation = await service.observeBrokerOperation(Object.freeze({
+    executionId: sha256Json({ schema: "mini-lux/sec03/finite-https-execution/v1", nonce: randomUUID() }),
+    entryPoint,
+    profile,
+    contextId: context.executionDomainId,
+    sessionId: context.sessionId,
+    runId: context.runId,
+    authorityEpoch: context.authorityEpoch,
+    personaDigest: context.persona.digest,
+    policyDigest,
+    observation,
+  }));
+  return Object.freeze({ observation, nativeObservation });
+}
+
 function trustedWindowsEnvironment(entryPoint: "E1" | "E2" | "E3" | "E4", canonicalRootPath: string, _canonicalCwd: string): Readonly<Record<string, string>> {
   const systemRoot = process.env.SystemRoot || process.env.WINDIR;
   if (!systemRoot || !path.win32.isAbsolute(systemRoot)) {
@@ -273,7 +343,7 @@ function trustedWindowsEnvironment(entryPoint: "E1" | "E2" | "E3" | "E4", canoni
   return Object.freeze(common);
 }
 
-function consumeNativeRoot(rootLease: ExecutionRootLease, authorityEpoch: number): Readonly<{
+function consumeNativeRoot(rootLease: ExecutionRootLease, authorityEpoch: number, scopeToCwd = false): Readonly<{
   rootId: string;
   access: "read-write";
   identity: Readonly<{ volumeSerial: string; fileId: string; type: "directory"; nativeAuthorityId: string }>;
@@ -282,11 +352,12 @@ function consumeNativeRoot(rootLease: ExecutionRootLease, authorityEpoch: number
   revoke: () => void;
 }> {
   return consumeExecutionRootLease(rootLease, { authorityEpoch, access: "read-write" }, snapshot => {
+    const rootIdentity = scopeToCwd ? snapshot.cwdIdentity : snapshot.identity;
     const authority = Object.freeze({
       rootId: snapshot.rootId,
       access: "read-write" as const,
-      canonicalPath: snapshot.canonicalPath,
-      identity: Object.freeze({ volumeSerial: snapshot.identity.deviceId, fileId: snapshot.identity.objectId, type: "directory" as const }),
+      canonicalPath: scopeToCwd ? snapshot.canonicalCwd : snapshot.canonicalPath,
+      identity: Object.freeze({ volumeSerial: rootIdentity.deviceId, fileId: rootIdentity.objectId, type: "directory" as const }),
       canonicalCwd: snapshot.canonicalCwd,
       cwdIdentity: Object.freeze({ volumeSerial: snapshot.cwdIdentity.deviceId, fileId: snapshot.cwdIdentity.objectId, type: "directory" as const }),
     });
@@ -313,8 +384,10 @@ export function createScopedExecutionGateway(input: Readonly<{
   context: CapabilityContext;
   inspected: InspectedToolCall;
   owner: ResourceOwner;
+  signal?: AbortSignal;
 }>): ScopedExecutionGateway {
-  const { context, inspected, owner } = input;
+  const { context, inspected, owner, signal = NEVER_ABORT_SIGNAL } = input;
+  throwIfCancelled(signal);
   const ownerMetadata = assertResourceOwner(owner);
   const bindingValid = ownerMetadata.sessionId === context.sessionId
     && ownerMetadata.authorityEpoch === context.authorityEpoch
@@ -324,17 +397,23 @@ export function createScopedExecutionGateway(input: Readonly<{
     && inspected.argumentsDigest === context.approvalGrant?.argumentsDigest
     && inspected.name === context.approvalGrant?.toolOrOperation;
   let consumed = false;
-  const launch = async (entryPoint: "E1" | "E3", payloadText: string, rootLease: ExecutionRootLease): Promise<ExecutionResult> => {
+  const launch = async (
+    entryPoint: "E1" | "E3",
+    payloadText: string,
+    rootLease: ExecutionRootLease,
+    requestedLimits: ExecutionLimits = PROFILE_LIMITS[entryPoint],
+  ): Promise<ExecutionResult> => {
+    throwIfCancelled(signal);
     if (!bindingValid) throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Execution invocation binding is invalid");
     if (consumed) throw new ExecutionDeniedError("EXEC_GRANT_REPLAYED", "Execution invocation was already consumed");
     consumed = true;
-    const root = consumeNativeRoot(rootLease, context.authorityEpoch);
+    const root = consumeNativeRoot(rootLease, context.authorityEpoch, entryPoint === "E3");
     try {
       if (!context.allowedRoots.includes(root.rootId) || !ownerMetadata.rootIds.includes(root.rootId)) {
         throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Execution root differs from the approved invocation");
       }
       const payload = Buffer.from(payloadText, "utf8");
-    const limits = PROFILE_LIMITS[entryPoint];
+    const limits = requestedLimits;
     if (payload.length > limits.inputBytes) throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Execution payload exceeds its limit");
     const request: ExecutionGrantRequest = {
       contextId: context.executionDomainId,
@@ -355,12 +434,13 @@ export function createScopedExecutionGateway(input: Readonly<{
       expiresAtMs: Date.now() + 5_000,
     };
       const service = await executionService();
-      return await service.launchOneShot(await service.issueExecutionGrantAuthenticated(request), owner, request);
+      return await service.launchOneShot(await service.issueExecutionGrantAuthenticated(request), owner, request, signal);
     } finally {
       root.revoke();
     }
   };
   const startPersistent = async (terminalId: string, shell: "cmd" | "powershell", rootLease: ExecutionRootLease): Promise<IsolatedTerminalLease> => {
+    throwIfCancelled(signal);
     if (!bindingValid || inspected.name !== "shell_start") throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Persistent launch binding is invalid");
     if (consumed) throw new ExecutionDeniedError("EXEC_GRANT_REPLAYED", "Execution invocation was already consumed");
     consumed = true;
@@ -395,7 +475,7 @@ export function createScopedExecutionGateway(input: Readonly<{
         expiresAtMs: Date.now() + 5_000,
       };
       service = await executionService();
-      nativeLease = await service.launchPersistent(await service.issueExecutionGrantAuthenticated(request), owner, request);
+      nativeLease = await service.launchPersistent(await service.issueExecutionGrantAuthenticated(request), owner, request, signal);
     } finally {
       root.revoke();
     }
@@ -404,21 +484,41 @@ export function createScopedExecutionGateway(input: Readonly<{
     return token;
   };
   return Object.freeze({
+    executeHttps: async ({ entryPoint, operations, invocation }: Readonly<{
+      entryPoint: "E1" | "E2" | "E3";
+      operations: readonly FiniteHttpsOperationDefinition[];
+      invocation: FiniteHttpsInvocation;
+    }>) => {
+      if (!bindingValid || consumed || !inspected.policy.riskClasses?.includes("network") || !inspected.policy.effects.includes("network")) {
+        throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Finite HTTPS operation is outside the approved invocation");
+      }
+      consumed = true;
+      return await executeFiniteHttpsOperation({ context, entryPoint, operations, invocation, signal });
+    },
     executeCommand: async ({ command, rootLease }: Readonly<{ command: string; rootLease: ExecutionRootLease }>) => {
       if (inspected.name !== "execute_command" || command !== inspected.args.command) {
         throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Command differs from the approved invocation");
       }
       return launch("E1", exactString(command, 128 * 2 ** 10, "Command"), rootLease);
     },
-    executeScript: async ({ code, rootLease }: Readonly<{ code: string; rootLease: ExecutionRootLease }>) => {
-      if (inspected.name !== "script" || code !== inspected.args.code) {
-        throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Script differs from the approved invocation");
+    executeScript: async ({ code, lang, timeoutMs, rootLease }: Readonly<{
+      code: string;
+      lang: ScriptLanguage;
+      timeoutMs: number;
+      rootLease: ExecutionRootLease;
+    }>) => {
+      const approvedLang = inspected.args.lang === undefined ? "node" : inspected.args.lang;
+      const approvedTimeout = parseScriptTimeout(inspected.args.timeout);
+      if (inspected.name !== "script" || code !== inspected.args.code || lang !== approvedLang || timeoutMs !== approvedTimeout) {
+        throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Script invocation differs from the approved invocation");
       }
-      return launch("E3", exactString(code, 128 * 2 ** 10, "Script"), rootLease);
+      const script = createScriptPayload({ code: exactString(code, 128 * 2 ** 10, "Script"), lang });
+      return launch("E3", script.payload, rootLease, scriptLimits(PROFILE_LIMITS.E3, timeoutMs));
     },
     startShell: async ({ terminalId, shell, rootLease }: Readonly<{ terminalId: string; shell: "cmd" | "powershell"; rootLease: ExecutionRootLease }>) =>
       startPersistent(terminalId, shell, rootLease),
     writeShell: async ({ lease, terminalId, data, appendNewline }: Readonly<{ lease: IsolatedTerminalLease; terminalId: string; data: string; appendNewline: boolean }>) => {
+      throwIfCancelled(signal);
       if (!bindingValid || inspected.name !== "shell_input" || consumed) throw new ExecutionDeniedError("EXEC_BINDING_MISMATCH", "Persistent input binding is invalid");
       consumed = true;
       const record = persistentRecords.get(lease);
@@ -444,7 +544,7 @@ export function createScopedExecutionGateway(input: Readonly<{
         expiresAtMs: Date.now() + 5_000,
       };
       const inputGrant = record.service.issueInputGrant(inputRequest);
-      await record.service.write(record.nativeLease, inputGrant, owner, inputRequest);
+      await record.service.write(record.nativeLease, inputGrant, owner, inputRequest, signal);
     },
   });
 }
@@ -466,6 +566,7 @@ export function createManualExecutionGateway(input: Readonly<{
   return Object.freeze({
     executeCommand: async () => denyWrongOperation(),
     executeScript: async () => denyWrongOperation(),
+    executeHttps: async () => denyWrongOperation(),
     startShell: async ({ terminalId, shell, rootLease }: Readonly<{ terminalId: string; shell: "cmd" | "powershell"; rootLease: ExecutionRootLease }>) => {
       if (!bindingValid || operation !== "terminal-start" || consumed) denyWrongOperation();
       consumed = true;
@@ -542,9 +643,128 @@ function requirePersistent(lease: IsolatedTerminalLease, owner: ResourceOwner, o
   return record;
 }
 
+export async function observeTerminalDirectDenial(
+  context: CapabilityContext,
+  event: "start" | "input"
+): Promise<NativeExecutionProof> {
+  if (!context || context.principal !== "local-user-api" || !HASH.test(context.persona.digest)
+    || !context.executionDomainId || !context.sessionId || !context.runId
+    || !Number.isSafeInteger(context.authorityEpoch) || context.authorityEpoch < 1
+    || (event !== "start" && event !== "input")) {
+    throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Direct terminal denial evidence binding is invalid");
+  }
+  const operation = event === "start" ? "launch" : "input";
+  const decisionState = event === "start" ? "terminal-direct-start" : "terminal-direct-input";
+  const payloadDigest = sha256Json({ schema: "mini-lux/sec03/terminal-direct-denial-payload/v1", method: "POST", route: event === "start" ? "/api/terminals" : "/api/terminals/:id/input" });
+  const policyDigest = sha256Json({ architecture: ARCHITECTURE_SHA256, operation: `terminal-direct-${event}` });
+  const requestDigest = sha256Json({
+    schema: "mini-lux/sec03/service-denial-request/v1",
+    operation,
+    entryPoint: "E4",
+    profile: "manual-terminal",
+    contextId: context.executionDomainId,
+    sessionId: context.sessionId,
+    runId: context.runId,
+    principal: context.principal,
+    authorityEpoch: context.authorityEpoch,
+    personaDigest: context.persona.digest,
+    policyDigest,
+    payloadDigest,
+  });
+  const service = await executionService();
+  return await service.observeTerminalBoundaryDenial(Object.freeze({
+    executionId: sha256Json({ schema: "mini-lux/sec03/terminal-direct-denial-execution/v1", nonce: randomUUID() }),
+    entryPoint: "E4",
+    profile: "manual-terminal",
+    contextId: context.executionDomainId,
+    sessionId: context.sessionId,
+    runId: context.runId,
+    authorityEpoch: context.authorityEpoch,
+    personaDigest: context.persona.digest,
+    policyDigest,
+    payloadDigest,
+    requestDigest,
+    operation,
+    decisionState,
+  }));
+}
+
+export async function observeTerminalOwnerDenial(
+  lease: IsolatedTerminalLease,
+  requester: ResourceOwner,
+  operation: "kill" | "close",
+  terminalId: string
+): Promise<NativeExecutionProof> {
+  const record = persistentRecords.get(lease);
+  const requesterMetadata = assertResourceOwner(requester);
+  if (!record || record.token !== lease || record.closed || record.owner === requester || record.terminalId !== terminalId
+    || record.entryPoint !== "E4" || !/^term_[a-f0-9]{8}$/u.test(terminalId)
+    || (operation !== "kill" && operation !== "close")
+    || requesterMetadata.sessionId === record.context.sessionId) {
+    throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Terminal owner denial evidence binding is invalid");
+  }
+  const decisionState = operation === "kill" ? "terminal-owner-kill" : "terminal-owner-close";
+  const payloadDigest = sha256Json({
+    schema: "mini-lux/sec03/terminal-owner-denial-payload/v1",
+    operation,
+    terminalId,
+    victimSessionId: record.context.sessionId,
+    requesterSessionId: requesterMetadata.sessionId,
+    requesterAuthorityId: requesterMetadata.authorityId,
+    requesterAuthorityEpoch: requesterMetadata.authorityEpoch,
+  });
+  const contextId = sha256Json({
+    schema: "mini-lux/sec03/terminal-owner-denial-context/v1",
+    victimContextId: record.context.executionDomainId,
+    requesterAuthorityId: requesterMetadata.authorityId,
+    requesterSessionId: requesterMetadata.sessionId,
+  });
+  const personaDigest = record.context.persona.digest;
+  const policyDigest = sha256Json({ architecture: ARCHITECTURE_SHA256, operation: `terminal-owner-${operation}` });
+  const requestDigest = sha256Json({
+    schema: "mini-lux/sec03/service-denial-request/v1",
+    operation,
+    entryPoint: "E4",
+    profile: "manual-terminal",
+    contextId,
+    sessionId: requesterMetadata.sessionId,
+    runId: record.context.runId,
+    principal: requesterMetadata.principal,
+    authorityEpoch: requesterMetadata.authorityEpoch,
+    personaDigest,
+    policyDigest,
+    payloadDigest,
+  });
+  return await record.service.observeTerminalBoundaryDenial(Object.freeze({
+    executionId: sha256Json({ schema: "mini-lux/sec03/terminal-owner-denial-execution/v1", nonce: randomUUID() }),
+    entryPoint: "E4",
+    profile: "manual-terminal",
+    contextId,
+    sessionId: requesterMetadata.sessionId,
+    runId: record.context.runId,
+    authorityEpoch: requesterMetadata.authorityEpoch,
+    personaDigest,
+    policyDigest,
+    payloadDigest,
+    requestDigest,
+    operation,
+    decisionState,
+  }));
+}
+
 export function readIsolatedTerminal(lease: IsolatedTerminalLease, owner: ResourceOwner): SessionOutput {
   const record = requirePersistent(lease, owner);
   return record.service.readOutput(record.nativeLease, owner);
+}
+
+export async function resizeIsolatedTerminal(
+  lease: IsolatedTerminalLease,
+  owner: ResourceOwner,
+  cols: number,
+  rows: number
+): Promise<void> {
+  const record = requirePersistent(lease, owner);
+  await record.service.resize(record.nativeLease, owner, cols, rows);
 }
 
 export async function terminateIsolatedTerminal(lease: IsolatedTerminalLease, owner: ResourceOwner, reason = "requested"): Promise<void> {

@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-03",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/ds-03.json",
+    "sha256": "954e66d889508b25587a5cace3f144c15c59ff700e93b6c697fe49ecc8aaf2ef"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/db.js",
+      "sha256": "5cfc545b89b8b5d6a49a06c219cc991ea1c0cd9980e1306c755f47c8dff173fb",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "ada797ef15969b70aab116a0e062ee98a68524e83c7d33e173aea2c0e6b9fe86",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "dist/version.js",
+      "sha256": "981683aeb9036331ec3aedd680a8e9695d8c07ac0fab3056fe43df9184a05c80",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "dist/workbench-layout.js",
+      "sha256": "0f47cea26f07ee156e1383dc692356200e452f2620565658abb4efce5d0069e9",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "public/index.html",
+      "sha256": "fa0750bf311d23f9a97bc7474234dd58452392a536e537361da6ea633caaee44",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "public/renderer.css",
+      "sha256": "eefcbfdabf7f4cc0e228e484b3dccc8244639470ae45cd47264cd1bde0dd3d2b",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "public/renderer.js",
+      "sha256": "64c83f779865c2b6705ad49efd8987f9dc1e2f2225d93daf267a7fe2ce6a5fa2",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "scripts/generate-build-info.mjs",
+      "sha256": "e760c870cad60a5e6733bcab36b61cffae4b72c9b775189476872bfddc33eb76",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "scripts/prepare-electron-app.mjs",
+      "sha256": "f610a92a3a825d93f0cdf96e3b7fffab3c591a1215e05f607163e5eef728b348",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "scripts/test-version-model.mjs",
+      "sha256": "49ed033a96f217ee0421476218a58894a7809c6c57358a295e59f45e3d8713e8",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "src/version.ts",
+      "sha256": "88d58ae37f27f624eee647775c6f54ff792d1097ed52cf9ab81898f52fb06655",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "src/workbench-layout.ts",
+      "sha256": "26e514c576be7962ed5173c2d36d3dbda4a8ef1c130eb89a95df19fe61ed0c21",
+      "owner": "DS-03"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/ds03-governance.test.mjs",
+      "sha256": "212edcd173769b8749547e94d50a26ef08cac11bbc886c77d16dd74e99c4d114",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "tests/unit/workbench-layout.test.mjs",
+      "sha256": "7094607131054f343024366c58d784e877c9f21603e75ba39c710d0dd4468a96",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs",
+      "sha256": "6a40934e02c117e8a1f4bd05c0d9e1b8104a18b61fb0f36a761ff1773c89db7a",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "tests/integration/ds03-workbench-layout.test.mjs",
+      "sha256": "67b0edae5408b405edb7bd6255425389c918b2ded4c9aadb5f434d3af9ad1be4",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "tests/integration/version-model.test.mjs",
+      "sha256": "5021ee42362d7c2e12ea1080ba57248fa8293309139361c1ea86d7668b4d3ca1",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-03"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "DS-03"
+    }
+  ],
+  "canonicalPayloadSha256": "2b22eb07e1481819d0283e6c17b13a6f65d3b78df0d136b83cff58f26c3618bb"
+}

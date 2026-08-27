@@ -25,7 +25,7 @@ export interface BuildInfo {
       nativeSourceDigest: string;
       toolchainDigest: string;
       signatureStatus: "unsigned-local";
-      artifacts: readonly Readonly<{ path: string; bytes: number; sha256: string; machine: "AMD64" }>[];
+      artifacts: readonly Readonly<{ path: string; bytes: number; sha256: string; machine: "AMD64"; importedDllAllowlistDigest: string }>[];
       testProjection: Readonly<{ manifest: Readonly<{ path: string; bytes: number; sha256: string }> }>;
     };
     protocols: {
@@ -44,8 +44,8 @@ export interface BuildInfo {
 const semverPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 const hashPattern = /^[a-f0-9]{64}$/;
 const buildIdPattern = /^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$/;
-const SUPPORTED_DATABASE_SCHEMA_VERSION = 1;
-const SUPPORTED_SESSION_EXPORT_VERSION = 1;
+const SUPPORTED_DATABASE_SCHEMA_VERSION = 11;
+const SUPPORTED_SESSION_EXPORT_VERSION = 2;
 const EXPECTED_BASELINE = Object.freeze({
   schemaVersion: 1,
   targetVersion: "0.1.898",
@@ -108,8 +108,9 @@ function validateBuildInfo(value: unknown): BuildInfo {
   if (!hashPattern.test(isolation.architectureSha256) || isolation.protocolVersion !== 1 || !hashPattern.test(isolation.nativeSourceDigest)
     || !hashPattern.test(isolation.toolchainDigest) || isolation.signatureStatus !== "unsigned-local" || !Array.isArray(isolation.artifacts) || isolation.artifacts.length !== 2) throw new Error("build-info execution isolation metadata is invalid");
   for (const artifact of isolation.artifacts) {
-    assertExactKeys(artifact as unknown as Record<string, unknown>, ["path", "bytes", "sha256", "machine"], "execution isolation artifact");
-    if (typeof artifact.path !== "string" || !Number.isSafeInteger(artifact.bytes) || artifact.bytes < 1 || !hashPattern.test(artifact.sha256) || artifact.machine !== "AMD64") throw new Error("build-info execution isolation artifact is invalid");
+    assertExactKeys(artifact as unknown as Record<string, unknown>, ["path", "bytes", "sha256", "machine", "importedDllAllowlistDigest"], "execution isolation artifact");
+    if (typeof artifact.path !== "string" || !Number.isSafeInteger(artifact.bytes) || artifact.bytes < 1 || !hashPattern.test(artifact.sha256)
+      || artifact.machine !== "AMD64" || !hashPattern.test(artifact.importedDllAllowlistDigest)) throw new Error("build-info execution isolation artifact is invalid");
   }
   const testProjection = isolation.testProjection;
   if (!testProjection || typeof testProjection !== "object" || Array.isArray(testProjection)) throw new Error("build-info execution isolation test projection is invalid");

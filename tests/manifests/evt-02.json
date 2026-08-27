@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "taskId": "EVT-02",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "3483e942daf8a2787996c4a6259412e3852dbb2dfa0b5a5cde66de1de74f121c"
+  },
+  "personaChain": [
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "dist/cron.js",
+    "dist/db.js",
+    "dist/index.js",
+    "dist/tools/ask-user-tool.js",
+    "dist/tools/cron-tools.js",
+    "src/cron.ts",
+    "src/db.ts",
+    "src/index.ts",
+    "src/tools/ask-user-tool.ts",
+    "src/tools/cron-tools.ts"
+  ],
+  "coverageExemptions": {
+    "dist/index.js": {
+      "reason": "The compiled server entrypoint owns EventBus target expansion, idle wake and active-run injection wiring; the exact assembled lifecycle is exercised by real-server and Electron evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/evt02-cron-flow.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/index.ts": {
+      "reason": "The server entrypoint requires a real SessionRuntime registry, audit journal, HTTP SSE channel and provider to prove running injection and broadcast wake behavior.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/evt02-cron-flow.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/contract/evt02-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/unit/cron.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/run-interaction-channel.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/integration/evt02-cron-flow.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "layer": "electron"
+    }
+  ]
+}

@@ -1,62 +1,92 @@
-import type { RiskClass, ToolEffect, ToolPolicy } from "./capability-broker.js";
+import type { RiskClass, ToolConcurrency, ToolEffect, ToolPolicy } from "./capability-broker.js";
 import type { ExecutionRootAccess, PathOperation } from "./path-policy.js";
+import type { PersonaPermissionLevel } from "./types.js";
 
 function policy(
   riskClasses: RiskClass[],
   approval: "none" | "user",
   effects: ToolEffect[],
   pathOperations: PathOperation[] = [],
-  executionRootAccess?: ExecutionRootAccess
+  executionRootAccess?: ExecutionRootAccess,
+  concurrency?: ToolConcurrency,
+  minimumPermissionLevel?: PersonaPermissionLevel,
 ): ToolPolicy {
   return Object.freeze({
+    minimumPermissionLevel,
     riskClasses: Object.freeze([...riskClasses]),
     approval,
     effects: Object.freeze([...effects]),
     pathOperations: Object.freeze([...pathOperations]),
     executionRootAccess,
+    concurrency,
   });
 }
 
+function minimalPolicy(
+  riskClasses: RiskClass[],
+  approval: "none" | "user",
+  effects: ToolEffect[],
+): ToolPolicy {
+  return policy(riskClasses, approval, effects, [], undefined, undefined, "minimal");
+}
+
+function parallelReadPolicy(
+  riskClasses: Array<"read" | "network">,
+  effects: Array<"filesystem" | "network"> = [],
+  pathOperations: Array<"read-file" | "read-directory" | "search-tree"> = [],
+): ToolPolicy {
+  return policy(riskClasses, "none", effects, pathOperations, undefined, "parallel-read");
+}
+
 export const STATIC_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Object.freeze({
-  list_directory: policy(["read"], "none", ["filesystem"], ["read-directory"]),
-  read_file: policy(["read"], "none", ["filesystem"], ["read-file"]),
-  search_files: policy(["read"], "none", ["filesystem"], ["search-tree"]),
+  read: parallelReadPolicy(["read"], ["filesystem"], ["read-file"]),
+  write: policy(["write"], "user", ["filesystem"], ["create-file", "replace-file"]),
+  edit: policy(["read", "write"], "user", ["filesystem"], ["replace-file"]),
+  replace: policy(["read", "write"], "user", ["filesystem"], ["replace-file"]),
+  glob: parallelReadPolicy(["read"], ["filesystem"], ["search-tree"]),
+  list_directory: parallelReadPolicy(["read"], ["filesystem"], ["read-directory"]),
+  read_file: parallelReadPolicy(["read"], ["filesystem"], ["read-file"]),
+  search_files: parallelReadPolicy(["read"], ["filesystem"], ["search-tree"]),
   write_file: policy(["write"], "user", ["filesystem"], ["create-file", "replace-file"]),
   edit_file: policy(["read", "write"], "user", ["filesystem"], ["replace-file"]),
-  grep: policy(["read"], "none", ["filesystem"], ["search-tree"]),
+  grep: parallelReadPolicy(["read"], ["filesystem"], ["search-tree"]),
   create_docx: policy(["write"], "user", ["filesystem"], ["create-file", "replace-file"]),
   create_xlsx: policy(["write"], "user", ["filesystem"], ["create-file", "replace-file"]),
   execute_command: policy(["read", "write", "network", "process", "control"], "user", ["filesystem", "network", "process", "control"], ["initial-cwd"], "read-write"),
   shell_start: policy(["read", "write", "process", "control"], "user", ["filesystem", "process", "control"], ["initial-cwd"], "read-write"),
   shell_input: policy(["read", "write", "network", "process", "control"], "user", ["filesystem", "network", "process", "control"]),
   shell_output: policy(["read", "process", "control"], "none", ["process", "control"]),
+  shell_resize: policy(["process", "control"], "none", ["process", "control"]),
   shell_list: policy(["read", "process", "control"], "none", ["process", "control"]),
   shell_kill: policy(["process", "control"], "user", ["process", "control"]),
-  fetch_url: policy(["read", "network"], "none", ["network"]),
+  fetch_markdown: parallelReadPolicy(["read", "network"], ["network"]),
+  fetch_url: parallelReadPolicy(["read", "network"], ["network"]),
   remember: policy(["read", "write"], "none", ["filesystem"]),
   recall: policy(["read"], "none", ["filesystem"]),
   list_memories: policy(["read"], "none", ["filesystem"]),
-  create_tasks: policy(["write"], "none", ["filesystem"]),
-  update_task: policy(["write"], "none", ["filesystem"]),
-  list_tasks: policy(["read"], "none", ["filesystem"]),
+  task_create: policy(["write"], "none", ["filesystem"]),
+  task_update: policy(["write"], "none", ["filesystem"]),
+  task_list: policy(["read"], "none", ["filesystem"]),
+  task_get: policy(["read"], "none", ["filesystem"]),
+  task_delete: policy(["write"], "none", ["filesystem"]),
   script: policy(["read", "write", "network", "process", "control"], "user", ["filesystem", "network", "process", "control"], ["initial-cwd"], "read-write"),
-  get_current_time: policy(["read"], "none", []),
+  get_current_time: minimalPolicy(["read"], "none", []),
   cron_list: policy(["read", "control"], "none", ["filesystem", "control"]),
   inspect: policy(["read"], "none", ["filesystem"]),
   graph: policy(["read"], "none", ["filesystem"]),
-  web_search: policy(["read", "network"], "none", ["network"]),
+  web_search: parallelReadPolicy(["read", "network"], ["network"]),
   download: policy(["write", "network"], "user", ["filesystem", "network"], ["create-file", "replace-file"]),
-  ask_user: policy(["control"], "none", ["control"]),
-  oracle_save: policy(["read", "write"], "user", ["filesystem"], ["search-tree"]),
-  oracle_status: policy(["read", "control"], "none", ["filesystem", "control"]),
+  ask_user: minimalPolicy(["control"], "none", ["control"]),
+  oracle_save: policy(["read", "write"], "user", ["filesystem"], ["read-directory", "create-file", "replace-file"]),
+  oracle_status: policy(["read", "control"], "none", ["filesystem", "control"], ["read-directory", "read-file"]),
   playbook_list: policy(["read", "write"], "none", ["filesystem"]),
   playbook_create: policy(["write", "control"], "user", ["filesystem", "control"]),
   playbook_status: policy(["read", "control"], "none", ["control"]),
   link_discover: policy(["read", "control"], "none", ["control"]),
   link_peek: policy(["read", "control"], "none", ["control"]),
   link_post: policy(["write", "control"], "user", ["control"]),
-  poll_subscribe: policy(["read", "control"], "user", ["filesystem", "control"], ["watch-directory"]),
-  poll_unsubscribe: policy(["control"], "none", ["control"]),
+  poll_subscribe: policy(["read", "control"], "user", ["control"]),
+  poll_unsubscribe: policy(["write", "control"], "user", ["control"]),
   poll_list: policy(["read", "control"], "none", ["control"]),
   supervise: policy(["read", "control"], "none", ["control"]),
   memo_add: policy(["write", "control"], "none", ["filesystem", "control"]),
@@ -71,14 +101,24 @@ export const STATIC_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Object
 export const RUNTIME_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Object.freeze({
   cron_schedule: policy(["write", "control"], "user", ["filesystem", "control"]),
   cron_cancel: policy(["read", "write", "control"], "user", ["filesystem", "control"]),
-  subagent: policy(["read", "write", "network", "process", "control"], "user", ["filesystem", "network", "process", "control"]),
+  subagent: policy(["read", "network", "control"], "none", ["network", "control"]),
+  subagent_list: policy(["read", "control"], "none", ["control"]),
+  subagent_output: policy(["read", "control"], "none", ["control"]),
+  subagent_peek: policy(["read", "control"], "none", ["control"]),
+  subagent_post: policy(["control"], "none", ["control"]),
+  subagent_stop: policy(["control"], "none", ["control"]),
+  subagent_wait: policy(["read", "control"], "none", ["control"]),
   curate: policy(["read", "network", "control"], "none", ["network", "control"]),
   consolidate: policy(["read", "write", "network"], "none", ["filesystem", "network"]),
-  oracle_query: policy(["read", "network"], "none", ["filesystem", "network"]),
+  oracle_query: policy(["read", "network", "control"], "user", ["filesystem", "network", "control"], ["read-directory", "read-file"]),
   muse: policy(["read", "network"], "none", ["network"]),
   playbook_execute: policy(["read", "write", "network", "process", "control"], "user", ["filesystem", "network", "process", "control"]),
   playbook_abort: policy(["control"], "user", ["control"]),
   save_persona: policy(["read", "write", "control"], "user", ["filesystem", "control"]),
+  list_personas: minimalPolicy(["read", "control"], "none", ["control"]),
+  current_persona: minimalPolicy(["read", "control"], "none", ["control"]),
+  find_personas: minimalPolicy(["read", "control"], "none", ["control"]),
+  switch_persona: minimalPolicy(["control"], "user", ["control"]),
 });
 
 export const DIRECT_OPERATION_POLICIES: Readonly<Record<string, ToolPolicy>> = Object.freeze({
@@ -87,12 +127,15 @@ export const DIRECT_OPERATION_POLICIES: Readonly<Record<string, ToolPolicy>> = O
   "terminal:output": policy(["read", "process", "control"], "none", ["process", "control"]),
   "terminal:input": policy(["read", "write", "network", "process", "control"], "none", ["filesystem", "network", "process", "control"]),
   "terminal:clear": policy(["control"], "none", ["control"]),
+  "terminal:resize": policy(["process", "control"], "none", ["process", "control"]),
   "terminal:kill": policy(["process", "control"], "none", ["process", "control"]),
   "terminal:close": policy(["process", "control"], "none", ["process", "control"]),
   "terminal:subscribe": policy(["read", "process", "control"], "none", ["process", "control"]),
   "file:roots": policy(["read", "control"], "none", ["filesystem", "control"]),
   "file:list": policy(["read", "control"], "none", ["filesystem", "control"]),
   "file:preview": policy(["read", "control"], "none", ["filesystem", "control"]),
+  "file:save": policy(["read", "write", "control"], "none", ["filesystem", "control"]),
+  "file:watch": policy(["read", "control"], "none", ["filesystem", "control"]),
   "file:resolve": policy(["read", "control"], "none", ["filesystem", "control"]),
   "file:content": policy(["read", "control"], "none", ["filesystem", "control"]),
   "file:reveal": policy(["read", "process", "control"], "none", ["filesystem", "process", "control"]),

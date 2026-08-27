@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-05",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "dist/agent.js",
+    "dist/attachment-store.js",
+    "dist/attachment.js",
+    "dist/db.js",
+    "dist/index.js",
+    "dist/llm.js",
+    "dist/memory.js",
+    "dist/session.js",
+    "dist/version.js",
+    "package.json",
+    "public/index.html",
+    "public/renderer.css",
+    "public/renderer.js",
+    "scripts/ds05-governance.mjs",
+    "scripts/generate-ds05-resolved-manifest.mjs",
+    "scripts/generate-build-info.mjs",
+    "scripts/prepare-electron-app.mjs",
+    "scripts/test-version-model.mjs",
+    "src/agent.ts",
+    "src/attachment-store.ts",
+    "src/attachment.ts",
+    "src/db.ts",
+    "src/index.ts",
+    "src/llm.ts",
+    "src/memory.ts",
+    "src/session.ts",
+    "src/types.ts",
+    "src/version.ts",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs"
+  ],
+  "coverageExemptions": {
+    "dist/index.js": {
+      "reason": "The authenticated Session attachment API, active upload cancellation and chat binding are exercised through the real server integration flow.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        { "exactCasePath": "tests/integration/ds05-attachments.test.mjs", "layer": "integration" }
+      ]
+    },
+    "package.json": {
+      "reason": "The DS-05 governance scripts and exact task runner registration are bound by the resolved governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        { "exactCasePath": "tests/contract/ds05-governance.test.mjs", "layer": "contract" }
+      ]
+    },
+    "public/index.html": {
+      "reason": "The attachment draft host, hidden File input and input controls are exercised in the sandboxed real Electron renderer.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "public/renderer.css": {
+      "reason": "Ready, uploading, failed and cancelled attachment presentation is exercised through the real Electron renderer smoke.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "public/renderer.js": {
+      "reason": "Alt+V, Clipboard File, drop File, XHR upload and reload restoration are exercised in the real Electron renderer.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "scripts/ds05-governance.mjs": {
+      "reason": "The DS-05 resolved manifest loader and identity validation are exercised by substitution-resistant governance contract cases.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        { "exactCasePath": "tests/contract/ds05-governance.test.mjs", "layer": "contract" }
+      ]
+    },
+    "scripts/generate-ds05-resolved-manifest.mjs": {
+      "reason": "Atomic resolved-manifest publication and parent identity pinning are exercised by the governance contract cases.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        { "exactCasePath": "tests/contract/ds05-governance.test.mjs", "layer": "contract" }
+      ]
+    },
+    "scripts/generate-build-info.mjs": {
+      "reason": "Schema 9 build metadata is exercised by the isolated version-model matrix and Electron identity probe.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        { "exactCasePath": "tests/integration/version-model.test.mjs", "layer": "integration" }
+      ]
+    },
+    "scripts/prepare-electron-app.mjs": {
+      "reason": "Schema 9 staged-runtime validation is executed by the isolated version-model integration matrix.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        { "exactCasePath": "tests/integration/version-model.test.mjs", "layer": "integration" }
+      ]
+    },
+    "scripts/test-version-model.mjs": {
+      "reason": "The schema 9 migration and repeated-start matrix is executed as an isolated child-process integration contract.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        { "exactCasePath": "tests/integration/version-model.test.mjs", "layer": "integration" }
+      ]
+    },
+    "src/index.ts": {
+      "reason": "The attachment HTTP and chat boundaries compile into the entrypoint and are exercised by real server and Electron evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        { "exactCasePath": "tests/integration/ds05-attachments.test.mjs", "layer": "integration" }
+      ]
+    },
+    "tests/coverage-scope.json": {
+      "reason": "DS-05 coverage registration and exact task ownership are checked by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        { "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }
+      ]
+    },
+    "tests/helpers.mjs": {
+      "reason": "The DS-05 resolved task view is loaded and validated by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        { "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }
+      ]
+    },
+    "tests/unit/framework.test.mjs": {
+      "reason": "The framework test owns the exact DS-05 additional coverage registration and is self-executing unit evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        { "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }
+      ]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/ds05-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/contract/data02-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/unit/attachment.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/ds05-attachments.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/data02-session-transfer.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/version-model.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+  ]
+}

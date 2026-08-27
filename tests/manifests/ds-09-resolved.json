@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-09",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/ds-09.json",
+    "sha256": "3c182e993798eec3a773eef53f7acdb8128e2b55c159440f96aa0b91248825d6"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "c4104e93af680e6a76288d2205ce0a5845f586d90c3e191b1cbe821aa7f123d2",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "electron/ipc-contract.cjs",
+      "sha256": "44ace7828e8eaf6de5b15822b3c991e696fb9576c3a04ebd5f3650c3f5c4ce9c",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "electron/main.cjs",
+      "sha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "electron/preload.cjs",
+      "sha256": "e201976c91539242837cad4e7fd5e35c656258aca95643955ac8c58720944b14",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "public/index.html",
+      "sha256": "fa0750bf311d23f9a97bc7474234dd58452392a536e537361da6ea633caaee44",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "public/renderer.css",
+      "sha256": "eefcbfdabf7f4cc0e228e484b3dccc8244639470ae45cd47264cd1bde0dd3d2b",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "public/renderer.js",
+      "sha256": "64c83f779865c2b6705ad49efd8987f9dc1e2f2225d93daf267a7fe2ce6a5fa2",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "scripts/ds09-governance.mjs",
+      "sha256": "2d4c66b677ecee7fa17611a0c8da8239880b79065e078f6db3245e6a289b97e1",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "scripts/generate-ds09-resolved-manifest.mjs",
+      "sha256": "8cd9a10bcb58b340130f7563141b0de2c680f76b357a6e56e1a3d29f26d324ae",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "src/config.ts",
+      "sha256": "26622a3035ad47531d8c2543f2621cc03a358caa82dc314e25a2a028b44134bf",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "src/credential-store.ts",
+      "sha256": "d58c86483e73f6b1b470b3caa16a62fb184e5506e5aaa2e74cbf439f225196b5",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "src/settings-schema.ts",
+      "sha256": "e43be5f82e51502a608181294ff0cd30e126777c3e39abba9b9d4dc130243194",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "decc03e49e89ba5ed6eb4e964da2e437c440935a1edcf23d864933e6f2e56a8a",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "270e0008a939b43558be7160812d9ec7c89ac4ec0c78537b4aa4434d2bc78682",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
+      "owner": "DS-09"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/ds09-governance.test.mjs",
+      "sha256": "62f0bdb5137ab129e4072cce515f6455cb32fa5d4b2a52212c9454f70e348f9e",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/contract/config-managed-store.test.mjs",
+      "sha256": "f635fa643435796b1efea1b8cdd7115c3b0ce609860c07c9b0113d1edf4bbc11",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs",
+      "sha256": "6a40934e02c117e8a1f4bd05c0d9e1b8104a18b61fb0f36a761ff1773c89db7a",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/unit/settings-schema.test.mjs",
+      "sha256": "d1c96d1872229786da84af91ecb1e0dea5f3ecf67831470948dbe73684e9d9ba",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/unit/ds09-renderer-contract.test.mjs",
+      "sha256": "44cd85a1336ed254eef64236864e81485b1ff5b7740d8dae279887db5e274d53",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/integration/ds09-settings-api.test.mjs",
+      "sha256": "18b4590af52fc1f6846fc49047e91bf96786fd58c51fe42b77ba4999daabaf63",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
+      "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs",
+      "sha256": "dc52a6dbbf3ff6ef17fa0f97442e8951002011ae0b13b1d24078aa7e88c93991",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-09"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "DS-09"
+    }
+  ],
+  "canonicalPayloadSha256": "8123e970ffec430a65f5ed64c3cd136690d911edb753565b21068989fd6c7b6d"
+}

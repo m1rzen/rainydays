@@ -15,7 +15,7 @@ function namesFromPolicyBlock(text, exportName) {
   assert(start >= 0, `${exportName} block missing`);
   const end = text.indexOf("});", start);
   assert(end > start, `${exportName} block terminator missing`);
-  return [...text.slice(start, end).matchAll(/^\s{2}(?:"([^"]+)"|([a-z0-9_]+)):\s*policy/gm)]
+  return [...text.slice(start, end).matchAll(/^\s{2}(?:"([^"]+)"|([a-z0-9_]+)):\s*(?:policy|parallelReadPolicy|minimalPolicy)/gm)]
     .map((match) => match[1] ?? match[2]);
 }
 
@@ -29,10 +29,10 @@ async function verifyPolicyRegistryBoundary() {
   const staticPolicies = namesFromPolicyBlock(policies, "STATIC_TOOL_POLICIES");
   const runtimePolicies = namesFromPolicyBlock(policies, "RUNTIME_TOOL_POLICIES");
 
-  assert.equal(staticNames.length, 48);
-  assert.equal(runtimePolicies.length, 10);
+  assert.equal(staticNames.length, 57);
+  assert.equal(runtimePolicies.length, 20);
   assert.deepEqual([...staticNames].sort(), [...staticPolicies].sort());
-  assert.equal(new Set([...staticNames, ...runtimePolicies]).size, 58);
+  assert.equal(new Set([...staticNames, ...runtimePolicies]).size, 77);
   assert.match(registry, /registerDynamicTool\(authority: RuntimeAuthority/);
   assert.doesNotMatch(registry, /registerRuntimeTool\([^,]+,\s*tool\)(?![\s\S]*policy)/);
   return true;
@@ -73,14 +73,16 @@ async function verifyTerminalFacadeBoundary() {
   const index = await source("src/index.ts");
   const operationCounts = new Map([
     ["file:reveal", 1], ["terminal:list", 1], ["terminal:start", 2], ["terminal:output", 1],
-    ["terminal:input", 1], ["terminal:clear", 1], ["terminal:kill", 1], ["terminal:close", 1],
+    ["terminal:input", 1], ["terminal:resize", 1], ["terminal:clear", 0], ["terminal:kill", 0], ["terminal:close", 0],
     ["terminal:subscribe", 1],
   ]);
   for (const [operation, expectedCount] of operationCounts) {
     assert.equal(index.split(`runDirectOperation("${operation}"`).length - 1, expectedCount, `${operation} direct-operation phase count differs`);
   }
+  assert.match(index, /const directOperation = `terminal:\$\{storedOperation\.slice\("terminal-"\.length\)\}`;/);
+  assert.match(index, /runDirectOperation\(directOperation, exactRequest,/);
 
-  for (const match of index.matchAll(/terminalFacade\.(list|start|output|input|get|clear|kill|close|subscribe)\(/g)) {
+  for (const match of index.matchAll(/terminalFacade\.(list|start|output|input|resize|get|clear|kill|close|subscribe)\(/g)) {
     const routeStart = index.lastIndexOf("app.", match.index);
     const authorizationStart = index.lastIndexOf("runDirectOperation(", match.index);
     assert(authorizationStart > routeStart, `${match[0]} bypasses direct-operation authorization`);

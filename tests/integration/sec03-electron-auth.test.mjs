@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir, readFile, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { request as httpRequest } from "node:http";
 import test from "node:test";
 import { createRequire } from "node:module";
 import {
@@ -80,7 +81,7 @@ test("SEC-03 local API accepts only the private trusted header and publishes no 
   const port = await freePort();
   const token = "sec03-main-private-header-token";
   const origin = `http://127.0.0.1:${port}`;
-  const child = spawnManaged(process.execPath, ["dist/index.js"], {
+  const child = spawnManaged(process.execPath, ["tests/fixtures/server-with-test-protector.mjs"], {
     cwd: projectRoot,
     env: {
       ...process.env,
@@ -119,17 +120,31 @@ test("SEC-03 local API accepts only the private trusted header and publishes no 
       await fetch(`${origin}/api/status`, {
         headers: { Cookie: "mini_lux_session=forged", Origin: origin, "Sec-Fetch-Site": "same-origin" },
       }),
-      await fetch(`${origin}/api/status`, {
-        headers: { Origin: "http://127.0.0.1:65534", Referer: `${origin}/`, "Sec-Fetch-Site": "same-origin" },
-      }),
     ];
     assert(rejected.every(response => response.status === 401), "browser-controlled metadata authorized the local API");
     assert(rejected.every(response => response.headers.get("set-cookie") === null), "a rejected request received a cookie");
+    const forgedOrigin = await fetch(`${origin}/api/status`, {
+      headers: { Origin: "http://127.0.0.1:65534", Referer: `${origin}/`, "Sec-Fetch-Site": "same-origin" },
+    });
+    assert.equal(forgedOrigin.status, 403, "forged Origin reached API credential handling");
+    assert.equal(forgedOrigin.headers.get("set-cookie"), null);
 
-    const headerClient = await fetch(`${origin}/api/status`, {
+    const wrongOrigin = await fetch(`${origin}/api/status`, {
       headers: { "X-RainyDays-Token": token, Origin: "http://127.0.0.1:65534" },
     });
-    assert.equal(headerClient.status, 200, "explicit trusted-header client compatibility regressed");
+    assert.equal(wrongOrigin.status, 403, "trusted header bypassed exact Origin binding");
+    const wrongHostStatus = await new Promise((resolve, reject) => {
+      const request = httpRequest(`${origin}/api/status`, {
+        headers: { "X-RainyDays-Token": token, Host: `localhost:${port}` },
+      }, response => { response.resume(); response.once("end", () => resolve(response.statusCode)); });
+      request.once("error", reject);
+      request.end();
+    });
+    assert.equal(wrongHostStatus, 403, "trusted header bypassed exact Host binding");
+    const headerClient = await fetch(`${origin}/api/status`, {
+      headers: { "X-RainyDays-Token": token, Origin: origin },
+    });
+    assert.equal(headerClient.status, 200, "exact trusted-header client compatibility regressed");
 
     const html = await page.text();
     assert.doesNotMatch(html, /miniLuxApiToken|withApiToken|X-RainyDays-Token|sessionStorage\.setItem\([^)]*token|[?&#]token=/iu);

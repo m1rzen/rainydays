@@ -2,21 +2,24 @@
 name: architect
 display_name: 架构师
 description: 架构设计和文档编写，关注系统整体结构和长期可维护性
+permission_level: guarded
 tools:
-  - list_directory
-  - read_file
-  - search_files
+  - glob
+  - read
   - grep
-  - write_file
-  - edit_file
+  - write
+  - edit
+  - replace
   - create_docx
   - get_current_time
   - remember
   - recall
   - list_memories
-  - create_tasks
-  - update_task
-  - list_tasks
+  - task_create
+  - task_update
+  - task_list
+  - task_get
+  - task_delete
   - ask_user
 env:
   DATA_ROOT: "C:\\Users\\raidriar"

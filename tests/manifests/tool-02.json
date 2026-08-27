@@ -1,0 +1,448 @@
+{
+  "schemaVersion": 1,
+  "taskId": "TOOL-02",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "package.json",
+    "scripts/tool02-governance.mjs",
+    "scripts/generate-tool02-resolved-manifest.mjs",
+    "scripts/report-schema.mjs",
+    "src/document-parser-worker.ts",
+    "src/document-parser.ts",
+    "src/pdf-parse.d.ts",
+    "src/supervisor.ts",
+    "src/tool-policies.ts",
+    "src/tool-protocol.ts",
+    "src/tools/filesystem.ts",
+    "src/tools/filesystem-lux.ts",
+    "src/tools/filesystem-grep.ts",
+    "src/tools/index.ts",
+    "src/tools/parsers.ts",
+    "personas/architect.md",
+    "personas/debugger.md",
+    "personas/developer.md",
+    "personas/explorer.md",
+    "personas/general.md",
+    "personas/planner.md",
+    "personas/quick-fix.md",
+    "personas/rds-assistant.md",
+    "personas/reviewer.md",
+    "personas/sentinel.md",
+    "personas/writer.md",
+    "tests/fixtures/tool02-two-pages.pdf",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs",
+    "tests/manifests/sec-02-current.json",
+    "tests/sec02-sink-inventory.json",
+    "tests/sec02-sink-policy.json",
+    "tests/manifests/sec-03-resolved.json",
+    "tests/sec03-execution-inventory.json",
+    "tests/sec03-execution-policy.json"
+  ],
+  "coverageExemptions": {
+    "package.json": {
+      "reason": "Exact TOOL-02 behavior for package.json is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/tool02-governance.mjs": {
+      "reason": "Exact TOOL-02 behavior for scripts/tool02-governance.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/generate-tool02-resolved-manifest.mjs": {
+      "reason": "Exact TOOL-02 behavior for scripts/generate-tool02-resolved-manifest.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/report-schema.mjs": {
+      "reason": "Exact TOOL-02 behavior for scripts/report-schema.mjs is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/framework.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/document-parser-worker.ts": {
+      "reason": "Exact TOOL-02 behavior for src/document-parser-worker.ts is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "src/document-parser.ts": {
+      "reason": "Exact TOOL-02 behavior for src/document-parser.ts is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "src/pdf-parse.d.ts": {
+      "reason": "Exact TOOL-02 behavior for src/pdf-parse.d.ts is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "src/supervisor.ts": {
+      "reason": "Exact TOOL-02 behavior for src/supervisor.ts is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "src/tool-policies.ts": {
+      "reason": "Exact TOOL-02 behavior for src/tool-policies.ts is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "src/tool-protocol.ts": {
+      "reason": "Exact TOOL-02 behavior for src/tool-protocol.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tools/filesystem.ts": {
+      "reason": "Exact TOOL-02 behavior for src/tools/filesystem.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tools/filesystem-lux.ts": {
+      "reason": "Exact TOOL-02 behavior for src/tools/filesystem-lux.ts is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "src/tools/filesystem-grep.ts": {
+      "reason": "Exact TOOL-02 behavior for src/tools/filesystem-grep.ts is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "src/tools/index.ts": {
+      "reason": "Exact TOOL-02 behavior for src/tools/index.ts is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "src/tools/parsers.ts": {
+      "reason": "Exact TOOL-02 behavior for src/tools/parsers.ts is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/architect.md": {
+      "reason": "Exact TOOL-02 behavior for personas/architect.md is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/debugger.md": {
+      "reason": "Exact TOOL-02 behavior for personas/debugger.md is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/developer.md": {
+      "reason": "Exact TOOL-02 behavior for personas/developer.md is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/explorer.md": {
+      "reason": "Exact TOOL-02 behavior for personas/explorer.md is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/general.md": {
+      "reason": "Exact TOOL-02 behavior for personas/general.md is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/planner.md": {
+      "reason": "Exact TOOL-02 behavior for personas/planner.md is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/quick-fix.md": {
+      "reason": "Exact TOOL-02 behavior for personas/quick-fix.md is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/rds-assistant.md": {
+      "reason": "Exact TOOL-02 behavior for personas/rds-assistant.md is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/reviewer.md": {
+      "reason": "Exact TOOL-02 behavior for personas/reviewer.md is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/sentinel.md": {
+      "reason": "Exact TOOL-02 behavior for personas/sentinel.md is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/writer.md": {
+      "reason": "Exact TOOL-02 behavior for personas/writer.md is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "tests/fixtures/tool02-two-pages.pdf": {
+      "reason": "Exact TOOL-02 behavior for tests/fixtures/tool02-two-pages.pdf is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "tests/coverage-scope.json": {
+      "reason": "Exact TOOL-02 behavior for tests/coverage-scope.json is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/framework.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "tests/helpers.mjs": {
+      "reason": "Exact TOOL-02 behavior for tests/helpers.mjs is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/framework.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "tests/unit/framework.test.mjs": {
+      "reason": "Exact TOOL-02 behavior for tests/unit/framework.test.mjs is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/framework.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "tests/manifests/sec-02-current.json": {
+      "reason": "TOOL-02 parser Worker operand identity for tests/manifests/sec-02-current.json is verified by the SEC-02 sink inventory contract.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "tests/sec02-sink-inventory.json": {
+      "reason": "TOOL-02 parser Worker operand identity for tests/sec02-sink-inventory.json is verified by the SEC-02 sink inventory contract.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "tests/sec02-sink-policy.json": {
+      "reason": "TOOL-02 parser Worker operand identity for tests/sec02-sink-policy.json is verified by the SEC-02 sink inventory contract.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "tests/manifests/sec-03-resolved.json": {
+      "reason": "TOOL-02 exact Worker execution identity for tests/manifests/sec-03-resolved.json is verified by the SEC-03 execution inventory contract.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/sec03-execution-inventory.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "tests/sec03-execution-inventory.json": {
+      "reason": "TOOL-02 exact Worker execution identity for tests/sec03-execution-inventory.json is verified by the SEC-03 execution inventory contract.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/sec03-execution-inventory.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "tests/sec03-execution-policy.json": {
+      "reason": "TOOL-02 exact Worker execution identity for tests/sec03-execution-policy.json is verified by the SEC-03 execution inventory contract.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/sec03-execution-inventory.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/contract/tool02-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/contract/sec03-execution-inventory.test.mjs",
+      "layer": "contract"
+    }
+  ]
+}

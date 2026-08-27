@@ -787,15 +787,15 @@ export class PathPolicy {
   }
 
   async readFile(authority: PathAuthority, request: PathRequest, maxBytes: number): Promise<PathReadResult> {
-    return this.#readExistingFile(authority, request, maxBytes, "read-file", false) as Promise<PathReadResult>;
+    return this.#readExistingFile(authority, request, maxBytes, "read-file", false, false) as Promise<PathReadResult>;
   }
 
   async readFileDirect(authority: PathAuthority, request: PathRequest, maxBytes: number): Promise<PathDirectReadResult> {
-    return this.#readExistingFile(authority, request, maxBytes, "read-file", true) as Promise<PathDirectReadResult>;
+    return this.#readExistingFile(authority, request, maxBytes, "read-file", true, false) as Promise<PathDirectReadResult>;
   }
 
   async searchFile(authority: PathAuthority, request: PathRequest, maxBytes: number): Promise<PathReadResult> {
-    return this.#readExistingFile(authority, request, maxBytes, "search-tree", false) as Promise<PathReadResult>;
+    return this.#readExistingFile(authority, request, maxBytes, "search-tree", false, true) as Promise<PathReadResult>;
   }
 
   async #readExistingFile(
@@ -803,7 +803,8 @@ export class PathPolicy {
     request: PathRequest,
     maxBytes: number,
     requiredOperation: "read-file" | "search-tree",
-    includeCanonicalPath: boolean
+    includeCanonicalPath: boolean,
+    rejectHardlinks: boolean,
   ): Promise<PathReadResult | PathDirectReadResult> {
     if (!Number.isSafeInteger(maxBytes) || maxBytes < 1) throw new TypeError("maxBytes must be a positive safe integer");
     return this.#run(authority, request, async (record, state) => {
@@ -830,6 +831,7 @@ export class PathPolicy {
         const openedInfo = await handle.stat({ bigint: true });
         const opened = identityFromStat(openedInfo);
         if (!sameIdentity(before.identity, opened)) deny("PATH_IDENTITY_CHANGED");
+        if (rejectHardlinks && openedInfo.nlink !== 1n) deny("PATH_REDIRECT_DENIED");
         await this.#barrier("afterHandleOpen", state.operationId);
         const chunks: Buffer[] = [];
         let total = 0;
@@ -1021,6 +1023,32 @@ export class PathPolicy {
     });
     if (outcome.kind === "error") throw outcome.error;
     return await outcome.value;
+  }
+
+  /** Qualify one directory and return its private canonical identity without enumerating children. */
+  async identifyDirectoryDirect(authority: PathAuthority, request: PathRequest): Promise<PathQualifiedResult> {
+    if (request.operation !== "read-directory") throw new TypeError("identifyDirectoryDirect requires read-directory permission");
+    return this.#run(authority, request, async (record, state) => {
+      const selected = this.#selectTarget(record, request);
+      state.rootId = selected.root.rootId;
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, selected.lexicalTarget);
+      await this.#barrier("afterLexicalContainment", state.operationId);
+      this.#assertActive(record);
+      const canonicalPath = this.#normalizeAbsolute(await this.#realpathOrDeny(selected.lexicalTarget));
+      const canonicalRoot = this.#selectCanonicalRoot(record, canonicalPath, "read-directory");
+      if (canonicalRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      const before = await this.#statIdentity(canonicalPath, "directory");
+      await this.#barrier("afterCanonicalValidation", state.operationId);
+      this.#assertActive(record);
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, selected.lexicalTarget);
+      const finalCanonical = this.#normalizeAbsolute(await this.#realpathOrDeny(selected.lexicalTarget));
+      if (!this.#samePath(canonicalPath, finalCanonical)) deny("PATH_IDENTITY_CHANGED");
+      const after = await this.#statIdentity(finalCanonical, "directory");
+      if (!sameIdentity(before.identity, after.identity)) deny("PATH_IDENTITY_CHANGED");
+      return Object.freeze({ rootId: selected.root.rootId, canonicalPath, identity: after.identity, snapshot: after.snapshot });
+    });
   }
 
   async listDirectory(authority: PathAuthority, request: PathRequest, maxEntries = 10_000): Promise<readonly PathDirectoryEntry[]> {
@@ -1851,6 +1879,100 @@ export class PathPolicy {
         if (created.length > 0) await this.#rollbackCreated(created);
         throw error;
       }
+    });
+  }
+
+  async removeDirectory(
+    authority: PathAuthority,
+    request: PathRequest
+  ): Promise<void> {
+    if (request.operation !== "create-directory") throw new TypeError("directory removal requires create-directory permission");
+    return this.#run(authority, request, async (record, state) => {
+      const selected = this.#selectTarget(record, request);
+      state.rootId = selected.root.rootId;
+      if (this.#samePath(selected.root.lexicalPath, selected.lexicalTarget)) deny("PATH_OPERATION_DENIED");
+      await this.#verifyRoot(record, selected.root, state);
+      const parent = this.#dirname(selected.lexicalTarget);
+      await this.#walkNoRedirect(selected.root, parent);
+      const canonicalParent = this.#normalizeAbsolute(await this.#realpathOrDeny(parent));
+      const parentRoot = this.#selectCanonicalRoot(record, canonicalParent, "create-directory");
+      if (parentRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      const parentIdentity = await this.#statIdentity(canonicalParent, "directory");
+      const targetInfo = await fs.lstat(selected.lexicalTarget, { bigint: true }).catch((error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT") deny("PATH_NOT_FOUND");
+        deny("PATH_OPERATION_DENIED");
+      });
+      if (targetInfo.isSymbolicLink()) deny("PATH_REDIRECT_DENIED");
+      const targetIdentity = identityFromStat(targetInfo);
+      if (targetIdentity.type !== "directory") deny("PATH_TYPE_MISMATCH");
+      const canonicalTarget = this.#normalizeAbsolute(await this.#realpathOrDeny(selected.lexicalTarget));
+      const targetRoot = this.#selectCanonicalRoot(record, canonicalTarget, "create-directory");
+      if (targetRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      await this.#barrier("afterCanonicalValidation", state.operationId);
+      this.#assertActive(record);
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, parent);
+      const parentNow = await this.#statIdentity(canonicalParent, "directory");
+      const targetNow = await this.#lstatIdentity(selected.lexicalTarget, "directory");
+      if (!sameIdentity(parentIdentity.identity, parentNow.identity) || !sameIdentity(targetIdentity, targetNow)) deny("PATH_IDENTITY_CHANGED");
+      await this.#barrier("beforeFinalCreate", state.operationId);
+      this.#assertActive(record);
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, parent);
+      const finalParent = await this.#statIdentity(canonicalParent, "directory");
+      const finalTarget = await this.#lstatIdentity(selected.lexicalTarget, "directory");
+      if (!sameIdentity(parentIdentity.identity, finalParent.identity) || !sameIdentity(targetIdentity, finalTarget)) deny("PATH_IDENTITY_CHANGED");
+      await fs.rmdir(selected.lexicalTarget).catch(() => deny("PATH_OPERATION_DENIED"));
+      await fs.lstat(selected.lexicalTarget).then(() => deny("PATH_OPERATION_DENIED"), (error: NodeJS.ErrnoException) => {
+        if (error.code !== "ENOENT") deny("PATH_OPERATION_DENIED");
+      });
+    });
+  }
+
+  async removeFile(
+    authority: PathAuthority,
+    request: PathRequest
+  ): Promise<void> {
+    if (request.operation !== "replace-file") throw new TypeError("file removal requires replace-file permission");
+    return this.#run(authority, request, async (record, state) => {
+      const selected = this.#selectTarget(record, request);
+      state.rootId = selected.root.rootId;
+      if (this.#samePath(selected.root.lexicalPath, selected.lexicalTarget)) deny("PATH_OPERATION_DENIED");
+      await this.#verifyRoot(record, selected.root, state);
+      const parent = this.#dirname(selected.lexicalTarget);
+      await this.#walkNoRedirect(selected.root, parent);
+      const canonicalParent = this.#normalizeAbsolute(await this.#realpathOrDeny(parent));
+      const parentRoot = this.#selectCanonicalRoot(record, canonicalParent, "replace-file");
+      if (parentRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      const parentIdentity = await this.#statIdentity(canonicalParent, "directory");
+      const targetInfo = await fs.lstat(selected.lexicalTarget, { bigint: true }).catch((error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT") deny("PATH_NOT_FOUND");
+        deny("PATH_OPERATION_DENIED");
+      });
+      if (targetInfo.isSymbolicLink()) deny("PATH_REDIRECT_DENIED");
+      const targetIdentity = identityFromStat(targetInfo);
+      if (targetIdentity.type !== "file" || targetInfo.nlink !== 1n) deny("PATH_IDENTITY_CHANGED");
+      const canonicalTarget = this.#normalizeAbsolute(await this.#realpathOrDeny(selected.lexicalTarget));
+      const targetRoot = this.#selectCanonicalRoot(record, canonicalTarget, "replace-file");
+      if (targetRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      await this.#barrier("afterCanonicalValidation", state.operationId);
+      this.#assertActive(record);
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, parent);
+      const parentNow = await this.#statIdentity(canonicalParent, "directory");
+      const targetNow = await this.#lstatIdentity(selected.lexicalTarget, "file");
+      if (!sameIdentity(parentIdentity.identity, parentNow.identity) || !sameIdentity(targetIdentity, targetNow)) deny("PATH_IDENTITY_CHANGED");
+      await this.#barrier("beforeFinalCreate", state.operationId);
+      this.#assertActive(record);
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, parent);
+      const finalParent = await this.#statIdentity(canonicalParent, "directory");
+      const finalTarget = await this.#lstatIdentity(selected.lexicalTarget, "file");
+      if (!sameIdentity(parentIdentity.identity, finalParent.identity) || !sameIdentity(targetIdentity, finalTarget)) deny("PATH_IDENTITY_CHANGED");
+      await fs.unlink(selected.lexicalTarget).catch(() => deny("PATH_OPERATION_DENIED"));
+      await fs.lstat(selected.lexicalTarget).then(() => deny("PATH_OPERATION_DENIED"), (error: NodeJS.ErrnoException) => {
+        if (error.code !== "ENOENT") deny("PATH_OPERATION_DENIED");
+      });
     });
   }
 

@@ -76,10 +76,54 @@ async function stopChild(child) {
   }
 }
 
+async function forceStopChild(child) {
+  if (child.exitCode !== null) return;
+  if (process.platform === "win32" && child.pid) {
+    const killed = spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { stdio: "ignore", windowsHide: true });
+    assert.equal(killed.status, 0, `taskkill failed for migration child ${child.pid}`);
+  } else {
+    child.kill("SIGKILL");
+  }
+  if (child.exitCode === null && child.signalCode === null) await new Promise((resolve) => child.once("exit", resolve));
+}
+
+async function crashMigrationBeforeCommit(root) {
+  const child = spawn(process.execPath, [helper, "db-migration-crash"], {
+    cwd: root,
+    env: childEnvironment(root),
+    windowsHide: true,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  let stdout = "";
+  let stderr = "";
+  child.stdout.on("data", chunk => { stdout += chunk; });
+  child.stderr.on("data", chunk => { stderr += chunk; });
+  try {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error(`migration crash barrier timeout\nstdout=${stdout}\nstderr=${stderr}`)), 15_000);
+      const inspect = () => {
+        if (!stdout.includes("MIGRATION_READY")) return;
+        clearTimeout(timeout);
+        resolve();
+      };
+      child.stdout.on("data", inspect);
+      child.once("exit", (code, signal) => {
+        clearTimeout(timeout);
+        reject(new Error(`migration child exited before barrier: code=${code} signal=${signal}\nstdout=${stdout}\nstderr=${stderr}`));
+      });
+    });
+  } finally {
+    await forceStopChild(child);
+  }
+}
+
 async function assertElectronMetadataRejected(root, buildInfoContent, expectedError) {
   const appRoot = path.join(root, `electron-metadata-${Math.random().toString(16).slice(2)}`);
   await mkdir(path.join(appRoot, "electron"), { recursive: true });
   await cp(path.join(projectRoot, "electron", "main.cjs"), path.join(appRoot, "electron", "main.cjs"));
+  await cp(path.join(projectRoot, "electron", "ipc-contract.cjs"), path.join(appRoot, "electron", "ipc-contract.cjs"));
   await cp(path.join(projectRoot, "electron", "path-bootstrap.cjs"), path.join(appRoot, "electron", "path-bootstrap.cjs"));
   await cp(path.join(projectRoot, "electron", "preload.cjs"), path.join(appRoot, "electron", "preload.cjs"));
   await cp(path.join(projectRoot, "electron", "user-data-migration.cjs"), path.join(appRoot, "electron", "user-data-migration.cjs"));
@@ -127,7 +171,7 @@ async function startServer(root, buildInfo) {
   const port = await freePort();
   const token = "gov02-version-test-token";
   const logs = { stdout: "", stderr: "" };
-  const child = spawn(process.execPath, [path.join(runtimeRoot, "dist", "index.js")], {
+  const child = spawn(process.execPath, [path.join(projectRoot, "tests", "fixtures", "server-with-test-protector.mjs")], {
     cwd: root,
     env: { ...childEnvironment(root), RAINYDAYS_API_TOKEN: token, RAINYDAYS_ELECTRON_VERSION: "33.4.11", PORT: String(port) },
     windowsHide: true,
@@ -331,12 +375,12 @@ async function main() {
     await writeFile(path.join(unsupportedMetadataRoot, "package.json"), JSON.stringify({ version: secondBuild.appVersion }));
     await writeFile(path.join(unsupportedMetadataRoot, "build-info.json"), JSON.stringify({
       ...secondBuild,
-      versions: { ...secondBuild.versions, databaseSchema: 2 },
+      versions: { ...secondBuild.versions, databaseSchema: 12 },
     }));
     const unsupportedMetadata = runHelper("version-info", unsupportedMetadataRoot, unsupportedMetadataRoot);
     assert.notEqual(unsupportedMetadata.status, 0);
     assert.match(unsupportedMetadata.stderr, /database schema version is unsupported/);
-    pass("semantically unsupported metadata rejected", "database schema 2 rejected before runtime initialization");
+    pass("semantically unsupported metadata rejected", "database schema 12 rejected before runtime initialization");
 
     const forgedMetadataRoot = path.join(tempRoot, "forged-metadata");
     await mkdir(forgedMetadataRoot, { recursive: true });
@@ -398,10 +442,11 @@ async function main() {
       ["source digest", { ...secondBuild, sourceDigest: "bad" }, /sourceDigest is invalid/],
       ["dist integrity", { ...secondBuild, distIntegritySha256: "bad" }, /distIntegritySha256 is invalid/],
       ["versions missing", { ...secondBuild, versions: null }, /versions are missing/],
-      ["session export version", { ...secondBuild, versions: { ...secondBuild.versions, sessionExport: 2 } }, /Session Export version is unsupported/],
+      ["session export version", { ...secondBuild, versions: { ...secondBuild.versions, sessionExport: 1 } }, /Session Export version is unsupported/],
       ["isolation missing", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: null } }, /execution isolation metadata is missing/],
       ["isolation identity", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, architectureSha256: "bad" } } }, /execution isolation metadata is invalid/],
       ["isolation artifact", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, artifacts: [{ ...secondBuild.versions.executionIsolation.artifacts[0], bytes: 0 }, secondBuild.versions.executionIsolation.artifacts[1]] } } }, /execution isolation artifact is invalid/],
+      ["isolation imported DLL digest", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, artifacts: [{ ...secondBuild.versions.executionIsolation.artifacts[0], importedDllAllowlistDigest: "bad" }, secondBuild.versions.executionIsolation.artifacts[1]] } } }, /execution isolation artifact is invalid/],
       ["isolation test projection", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, testProjection: null } } }, /execution isolation test projection is invalid/],
       ["isolation test manifest", { ...secondBuild, versions: { ...secondBuild.versions, executionIsolation: { ...secondBuild.versions.executionIsolation, testProjection: { manifest: { ...secondBuild.versions.executionIsolation.testProjection.manifest, sha256: "bad" } } } } }, /execution isolation test projection is invalid/],
       ["protocols missing", { ...secondBuild, versions: { ...secondBuild.versions, protocols: null } }, /protocols are missing/],
@@ -435,7 +480,7 @@ async function main() {
     await writeFile(path.join(emptyDatabaseRoot, "data", "mini-lux.db"), Buffer.alloc(0));
     const emptyDatabaseRun = runHelper("db-version", emptyDatabaseRoot);
     assert.equal(emptyDatabaseRun.status, 0, emptyDatabaseRun.stderr);
-    assert.equal(emptyDatabaseRun.payload?.userVersion, 1);
+    assert.equal(emptyDatabaseRun.payload?.userVersion, 11);
 
     const invalidHeaderRoot = path.join(tempRoot, "invalid-header");
     await mkdir(path.join(invalidHeaderRoot, "data"), { recursive: true });
@@ -447,24 +492,55 @@ async function main() {
     assert.match(invalidHeaderRun.stderr, /数据库文件头无效/);
     assert.equal(createHash("sha256").update(await readFile(invalidHeaderPath)).digest("hex"), invalidHeaderBefore);
 
+    const crashZero = path.join(tempRoot, "crash-zero");
+    await mkdir(path.join(crashZero, "data"), { recursive: true });
+    await crashMigrationBeforeCommit(crashZero);
+    const crashZeroPath = path.join(crashZero, "data", "mini-lux.db");
+    let crashDatabase = new Database(crashZeroPath, { readonly: true, fileMustExist: true });
+    try {
+      assert.equal(crashDatabase.pragma("user_version", { simple: true }), 0);
+      assert.deepEqual(crashDatabase.prepare("SELECT name FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name").all(), []);
+    } finally {
+      crashDatabase.close();
+    }
+    const crashZeroRecovery = runHelper("db-version", crashZero);
+    assert.equal(crashZeroRecovery.status, 0, crashZeroRecovery.stderr);
+    assert.equal(crashZeroRecovery.payload?.userVersion, 11);
+
     const fresh = path.join(tempRoot, "fresh");
     await mkdir(fresh, { recursive: true });
     const freshRun = runHelper("db-version", fresh);
     assert.equal(freshRun.status, 0, freshRun.stderr);
-    assert.equal(freshRun.payload?.userVersion, 1);
-    pass("fresh database migrates 0 to 1", "user_version=1");
+    assert.equal(freshRun.payload?.userVersion, 11);
+    pass("fresh database migrates 0 to 11", "user_version=11");
 
     const lifecycleWrite = runHelper("db-lifecycle-write", fresh);
     assert.equal(lifecycleWrite.status, 0, lifecycleWrite.stderr);
     assert.deepEqual(lifecycleWrite.payload, { sessions: 1, memos: 1 });
+    const lifecyclePath = path.join(fresh, "data", "mini-lux.db");
+    const logicalSnapshot = () => {
+      const target = new Database(lifecyclePath, { readonly: true, fileMustExist: true });
+      try {
+        return Object.freeze({
+          userVersion: target.pragma("user_version", { simple: true }),
+          schema: target.prepare("SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name").all(),
+          sessions: target.prepare("SELECT id,persona_name,title,created_at,updated_at FROM sessions ORDER BY id").all(),
+          memos: target.prepare("SELECT content,remind_at,repeat_rule,status,tags,created_at FROM memos ORDER BY id").all(),
+        });
+      } finally {
+        target.close();
+      }
+    };
+    const beforeRepeat = logicalSnapshot();
     const lifecycleRestart = runHelper("db-version", fresh);
     assert.equal(lifecycleRestart.status, 0, lifecycleRestart.stderr);
-    assert.equal(lifecycleRestart.payload?.userVersion, 1);
-    const lifecycleDatabase = new Database(path.join(fresh, "data", "mini-lux.db"), { readonly: true });
-    assert.equal(lifecycleDatabase.prepare("SELECT title FROM sessions WHERE id = 'restart-session'").get().title, "Restart");
-    assert.equal(lifecycleDatabase.prepare("SELECT content FROM memos").get().content, "restart-memo");
-    lifecycleDatabase.close();
-    pass("legitimate memo and session writes survive database restart", "Schema 1 reopens with session and memo rows preserved");
+    assert.equal(lifecycleRestart.payload?.userVersion, 11);
+    const afterRepeat = logicalSnapshot();
+    assert.deepEqual(afterRepeat, beforeRepeat);
+    assert.equal(afterRepeat.sessions.find(entry => entry.id === "restart-session")?.title, "Restart");
+    assert.equal(afterRepeat.memos[0]?.content, "restart-memo");
+    pass("legitimate memo and session writes survive database restart", "Schema 11 reopens with session, memo and workbench layout rows preserved");
+    pass("Schema 11 repeated startup is a migration no-op", "user_version, complete sqlite_master and sentinel rows remain logically identical");
 
     const legacy = path.join(tempRoot, "legacy");
     await mkdir(path.join(legacy, "data"), { recursive: true });
@@ -475,23 +551,139 @@ async function main() {
     const legacyRun = runHelper("db-version", legacy);
     assert.equal(legacyRun.status, 0, legacyRun.stderr);
     database = new Database(legacyPath, { readonly: true });
-    assert.equal(database.pragma("user_version", { simple: true }), 1);
+    assert.equal(database.pragma("user_version", { simple: true }), 11);
     assert.equal(database.prepare("SELECT content FROM memories").get().content, "preserve-me");
     assert(database.prepare("PRAGMA table_info(memories)").all().some((entry) => entry.name === "embedding"));
+    assert(database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='security_audit_events'").get());
     database.close();
-    pass("legacy database migrates without data loss", "sentinel row preserved");
+    pass("legacy database migrates 0 to 11 without data loss", "sentinel row, audit table, Task DAG, EventBus, Cron target, Poll subscription, and Session memo schema preserved");
+
+    const removeSchemaThreeSql = `
+      DROP TABLE IF EXISTS session_persona_bindings;
+      DROP INDEX IF EXISTS idx_desktop_notifications_unread;
+      DROP INDEX IF EXISTS idx_desktop_notifications_session;
+      DROP TABLE IF EXISTS desktop_notifications;
+      DROP TRIGGER IF EXISTS attachments_user_message_insert;
+      DROP TRIGGER IF EXISTS attachments_user_message_update;
+      DROP INDEX IF EXISTS idx_attachments_session_draft;
+      DROP INDEX IF EXISTS idx_attachments_message;
+      DROP INDEX IF EXISTS idx_attachments_draft_duplicate;
+      DROP TABLE IF EXISTS attachments;
+      DROP INDEX IF EXISTS idx_messages_session_id;
+      DROP TABLE IF EXISTS workbench_layout;
+      DROP INDEX IF EXISTS idx_memos_cron_job;
+      DROP INDEX IF EXISTS idx_memos_session_status;
+      ALTER TABLE memos DROP COLUMN last_reminded_at;
+      ALTER TABLE memos DROP COLUMN cron_job_id;
+      ALTER TABLE memos DROP COLUMN session_id;
+      DROP INDEX IF EXISTS idx_poll_batch_events_batch;
+      DROP TABLE IF EXISTS poll_batch_events;
+      DROP INDEX IF EXISTS idx_poll_batches_due;
+      DROP TABLE IF EXISTS poll_batches;
+      DROP INDEX IF EXISTS idx_poll_subscriptions_session;
+      DROP TABLE IF EXISTS poll_subscriptions;
+      ALTER TABLE cron_jobs DROP COLUMN broadcast;
+      ALTER TABLE cron_jobs DROP COLUMN target_session_id;
+      DROP INDEX IF EXISTS idx_events_due;
+      DROP INDEX IF EXISTS idx_events_source_dedupe;
+      DROP INDEX IF EXISTS idx_events_target;
+      DROP TABLE IF EXISTS events;
+      DROP INDEX idx_task_dependencies_blocker;
+      DROP TABLE task_dependencies;
+      DROP INDEX idx_tasks_session_status_order;
+      DROP INDEX idx_tasks_session;
+      ALTER TABLE tasks RENAME TO tasks_schema_three;
+      CREATE TABLE tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT NOT NULL,
+        parent_id INTEGER,
+        subject TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        active_form TEXT,
+        sort_order INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+      );
+      INSERT INTO tasks(id, session_id, parent_id, subject, status, active_form, sort_order, created_at, updated_at)
+        SELECT id, session_id, NULL, subject, status, active_form, sort_order, created_at, updated_at FROM tasks_schema_three;
+      DROP TABLE tasks_schema_three;
+      CREATE INDEX idx_tasks_session ON tasks(session_id);
+    `;
+    const removeSchemaTwoSql = "DROP TRIGGER security_audit_events_no_update; DROP TRIGGER security_audit_events_no_delete; DROP TABLE security_audit_events; DROP TRIGGER security_audit_head_no_delete; DROP TABLE security_audit_head; DROP TRIGGER security_audit_state_no_update; DROP TRIGGER security_audit_state_no_delete; DROP TABLE security_audit_state;";
+    const schemaOne = path.join(tempRoot, "schema-one");
+    await mkdir(path.join(schemaOne, "data"), { recursive: true });
+    const schemaOnePath = path.join(schemaOne, "data", "mini-lux.db");
+    await cp(path.join(fresh, "data", "mini-lux.db"), schemaOnePath);
+    database = new Database(schemaOnePath);
+    try {
+      database.exec(removeSchemaThreeSql);
+      database.exec(removeSchemaTwoSql);
+      database.pragma("user_version = 1");
+      database.prepare("INSERT INTO sessions(id,persona_name,title,created_at,updated_at) VALUES (?,?,?,?,?)")
+        .run("schema-one-sentinel", "general", "Schema One", "2026-08-13T00:00:00.000Z", "2026-08-13T00:00:00.000Z");
+      database.exec("VACUUM");
+    } finally {
+      database.close();
+    }
+    await crashMigrationBeforeCommit(schemaOne);
+    crashDatabase = new Database(schemaOnePath);
+    try {
+      assert.equal(crashDatabase.pragma("user_version", { simple: true }), 1);
+      assert.equal(crashDatabase.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE name LIKE 'security_audit_%' OR name LIKE 'idx_security_audit_%'").get().count, 0);
+      assert.equal(crashDatabase.prepare("SELECT title FROM sessions WHERE id='schema-one-sentinel'").get()?.title, "Schema One");
+    } finally {
+      crashDatabase.close();
+    }
+    pass("hard termination before migration commit recovers complete prior schemas", "0→1 returns to empty Schema 0; 1→2 returns to exact Schema 1 with sentinel");
+
+    const schemaOneFull = runHelper("db-migration-full", schemaOne);
+    assert.equal(schemaOneFull.status, 0, schemaOneFull.stderr);
+    assert.deepEqual(schemaOneFull.payload, {
+      code: "SQLITE_FULL",
+      userVersion: 1,
+      auditObjects: 0,
+      sentinel: "Schema One",
+      bootstrapRetired: true,
+    });
+    pass("Schema 1 SQLITE_FULL migration rolls back and releases bootstrap lifetime", "user_version=1, no audit objects, sentinel preserved and retry allowed");
+
+    const schemaOneRun = runHelper("db-version", schemaOne);
+    assert.equal(schemaOneRun.status, 0, schemaOneRun.stderr);
+    database = new Database(schemaOnePath, { readonly: true });
+    try {
+      assert.equal(database.pragma("user_version", { simple: true }), 11);
+      assert.equal(database.prepare("SELECT title FROM sessions WHERE id='schema-one-sentinel'").get().title, "Schema One");
+      const auditObjects = database.prepare("SELECT type,name FROM sqlite_master WHERE name IN ('security_audit_state','security_audit_state_no_delete','security_audit_state_no_update','security_audit_head','security_audit_head_no_delete','security_audit_events','idx_security_audit_request','idx_security_audit_run','idx_security_audit_session','security_audit_events_no_delete','security_audit_events_no_update') ORDER BY type,name").all();
+      assert.deepEqual(auditObjects.map(entry => `${entry.type}:${entry.name}`), [
+        "index:idx_security_audit_request",
+        "index:idx_security_audit_run",
+        "index:idx_security_audit_session",
+        "table:security_audit_events",
+        "table:security_audit_head",
+        "table:security_audit_state",
+        "trigger:security_audit_events_no_delete",
+        "trigger:security_audit_events_no_update",
+        "trigger:security_audit_head_no_delete",
+        "trigger:security_audit_state_no_delete",
+        "trigger:security_audit_state_no_update",
+      ]);
+    } finally {
+      database.close();
+    }
+    pass("Schema 1 migrates transactionally to 11", "sentinel row preserved and exact audit, Task DAG, EventBus, Cron target, Poll, and Session memo objects installed");
 
     const future = path.join(tempRoot, "future");
     await mkdir(path.join(future, "data"), { recursive: true });
     const futurePath = path.join(future, "data", "mini-lux.db");
-    database = new Database(futurePath); database.pragma("user_version = 2"); database.close();
+    database = new Database(futurePath); database.pragma("user_version = 12"); database.close();
     const futureHashBefore = createHash("sha256").update(await readFile(futurePath)).digest("hex");
     const futureRun = runHelper("db-version", future);
     assert.notEqual(futureRun.status, 0);
     const futureHashAfter = createHash("sha256").update(await readFile(futurePath)).digest("hex");
     assert.equal(futureHashAfter, futureHashBefore);
     database = new Database(futurePath, { readonly: true });
-    assert.equal(database.pragma("user_version", { simple: true }), 2); database.close();
+    assert.equal(database.pragma("user_version", { simple: true }), 12); database.close();
     pass("future database rejected without mutation", `database SHA-256 unchanged: ${futureHashBefore}`);
 
     const futureWal = path.join(tempRoot, "future-wal");
@@ -552,6 +744,8 @@ async function main() {
     await cp(path.join(fresh, "data", "mini-lux.db"), partialIndexPath);
     database = new Database(partialIndexPath);
     try {
+      database.exec(removeSchemaThreeSql);
+      database.exec(removeSchemaTwoSql);
       database.pragma("user_version = 0");
       database.exec("DROP INDEX idx_messages_session; CREATE INDEX idx_messages_session ON messages(session_id) WHERE role = 'never'");
     } finally {
@@ -574,6 +768,8 @@ async function main() {
     await cp(path.join(fresh, "data", "mini-lux.db"), extraConstraintPath);
     database = new Database(extraConstraintPath);
     try {
+      database.exec(removeSchemaThreeSql);
+      database.exec(removeSchemaTwoSql);
       database.pragma("foreign_keys = OFF");
       database.pragma("legacy_alter_table = ON");
       database.exec(`
@@ -609,6 +805,8 @@ async function main() {
     await cp(path.join(fresh, "data", "mini-lux.db"), extraTriggerPath);
     database = new Database(extraTriggerPath);
     try {
+      database.exec(removeSchemaThreeSql);
+      database.exec(removeSchemaTwoSql);
       database.pragma("user_version = 0");
       database.exec("CREATE TRIGGER audit_extra_trigger BEFORE INSERT ON messages BEGIN SELECT 1; END;");
     } finally {
@@ -630,7 +828,7 @@ async function main() {
     const sessionRun = runHelper("session-formats", sessionRoot);
     assert.equal(sessionRun.status, 0, sessionRun.stderr);
     assert.equal(sessionRun.payload.exportFormat, "mini-lux-session");
-    assert.equal(sessionRun.payload.exportVersion, 1);
+    assert.equal(sessionRun.payload.exportVersion, 2);
     assert.deepEqual(sessionRun.payload.failures, [
       "UNSUPPORTED_SESSION_EXPORT",
       "INVALID_SESSION_EXPORT",
@@ -661,7 +859,7 @@ async function main() {
     assert.equal(sessionRun.payload.branchMatrix.failures.length, 21);
     assert(sessionRun.payload.branchMatrix.failures.every((entry) => entry === "INVALID_SESSION_EXPORT"));
     assert.equal(sessionRun.payload.branchMatrix.emptyAutoTitle, "");
-    assert.equal(sessionRun.payload.branchMatrix.longAutoTitle, "x".repeat(30));
+    assert.equal(sessionRun.payload.branchMatrix.longAutoTitle, `${"x".repeat(30)}...`);
     assert.equal(sessionRun.payload.branchMatrix.untitledDefault, "新对话");
     assert.equal(sessionRun.payload.branchMatrix.renamedTitle, `${"x".repeat(30)}...`);
     assert(sessionRun.payload.branchMatrix.allSessionCount > 0);
@@ -711,7 +909,7 @@ async function main() {
       assert.deepEqual(version, runtimeBuild);
       assert.deepEqual(status.version, runtimeBuild);
       assert.deepEqual(diagnostics.version, runtimeBuild);
-      assert.equal(diagnostics.databaseSchemaVersion, 1);
+      assert.equal(diagnostics.databaseSchemaVersion, 11);
       assert.equal(diagnostics.runtime.electron, "33.4.11");
       assert.equal(diagnostics.protocols.worker.version, null);
       assert.equal(diagnostics.protocols.worker.enabled, false);

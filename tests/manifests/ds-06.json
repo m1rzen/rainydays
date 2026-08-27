@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-06",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "dist/file-viewer.js",
+    "dist/index.js",
+    "dist/tool-policies.js",
+    "package.json",
+    "public/index.html",
+    "public/renderer.css",
+    "public/renderer.js",
+    "scripts/ds06-governance.mjs",
+    "scripts/generate-ds06-resolved-manifest.mjs",
+    "scripts/prepare-electron-app.mjs",
+    "src/file-viewer.ts",
+    "src/index.ts",
+    "src/tool-policies.ts",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs"
+  ],
+  "coverageExemptions": {
+    "dist/index.js": {
+      "reason": "Session-scoped preview, save CAS, watcher SSE and media Range routes are exercised by the real server integration flow.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/ds06-file-api.test.mjs", "layer": "integration" }]
+    },
+    "package.json": {
+      "reason": "The formal package projects the complete local public tree and DS-06 task scripts without online dependencies.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/ds06-renderer-contract.test.mjs", "layer": "unit" }]
+    },
+    "public/index.html": {
+      "reason": "File Tab controls and local-only asset references are exercised by renderer contract and real Electron evidence.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "public/renderer.css": {
+      "reason": "Editor, media and bounded preview presentation are exercised through the real Electron File Tab flow.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "public/renderer.js": {
+      "reason": "Source/preview, inert HTML, edit conflict, navigation guard, watcher refresh and media are exercised in real Electron.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "scripts/ds06-governance.mjs": {
+      "reason": "Resolved manifest identity validation is exercised by substitution-resistant DS-06 governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds06-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/generate-ds06-resolved-manifest.mjs": {
+      "reason": "Atomic resolved manifest publication and parent identity pinning are exercised by governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds06-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/prepare-electron-app.mjs": {
+      "reason": "The formal Electron stage copies the complete governed public tree for offline package use.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/ds06-renderer-contract.test.mjs", "layer": "unit" }]
+    },
+    "src/index.ts": {
+      "reason": "Authenticated save, watcher and Range boundaries compile into the entrypoint and are covered by real HTTP evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/ds06-file-api.test.mjs", "layer": "integration" }]
+    },
+    "tests/coverage-scope.json": {
+      "reason": "DS-06 exact coverage ownership is checked by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/helpers.mjs": {
+      "reason": "The DS-06 resolved task view is loaded and validated by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/unit/framework.test.mjs": {
+      "reason": "The framework test owns exact DS-06 additional coverage registration and validates itself.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/ds06-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/contract/sec01-boundaries.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/unit/ds06-renderer-contract.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/ds06-file-tab.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/ds06-file-api.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/file-viewer-direct.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/file-viewer-settings.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+  ]
+}

@@ -4,6 +4,34 @@ import path from "node:path";
 import test from "node:test";
 import { makeTempDir, removeFixture, projectRoot } from "../helpers.mjs";
 import { assertSec01Probe } from "../sec01-probe.mjs";
+import {
+  appendSecurityAuditEvent,
+  createSecurityAuditCommitment,
+  verifySecurityAuditChain,
+} from "../../dist/security-audit.js";
+
+function createMemoryAuditJournal() {
+  const key = Buffer.alloc(32, 0x6c);
+  const events = [];
+  let closed = false;
+  return {
+    journal: Object.freeze({
+      append: async input => {
+        assert.equal(closed, false);
+        const event = appendSecurityAuditEvent(events, input, key);
+        events.push(event);
+        return event;
+      },
+      commit: value => {
+        assert.equal(closed, false);
+        return createSecurityAuditCommitment(key, value);
+      },
+      verify: async () => ({ schemaVersion: 1, integrity: "verified", ...verifySecurityAuditChain(events, key) }),
+      close: () => { closed = true; key.fill(0); },
+    }),
+    events,
+  };
+}
 
 function assistant(content, toolCalls) {
   return {
@@ -44,9 +72,9 @@ class FakeLlm {
   }
 }
 
-async function collect(agent, input) {
+async function collect(agent, input, signal) {
   const events = [];
-  for await (const event of agent.run(input)) events.push(event);
+  for await (const event of agent.run(input, undefined, signal)) events.push(event);
   return events;
 }
 
@@ -103,11 +131,12 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
   }]);
 
   const calls = { count: 0 };
+  let rt04Probe = null;
   const persona = createEffectivePersona({
     name: "sec01-test",
     displayName: "SEC01 Test",
     description: "SEC-01 isolated integration persona",
-    tools: ["subagent", "supervise"],
+    tools: ["subagent", "save_persona", "supervise"],
     env: { WORKSPACE_ROOT: fixture },
     allowedRoots: [fixture],
     networkPolicy: { mode: "unrestricted" },
@@ -138,10 +167,41 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
         },
       },
     },
-    executor: async () => {
+    executor: async (args, _env, invocation) => {
       calls.count += 1;
+      if (args.value === "rt04-block") {
+        assert(invocation?.signal);
+        const probe = rt04Probe;
+        assert(probe, "RT-04 cancellation probe is unavailable");
+        probe.started.resolve();
+        try {
+          await new Promise((resolve, reject) => {
+            const onAbort = () => {
+              invocation.signal.removeEventListener("abort", onAbort);
+              reject(invocation.signal.reason);
+            };
+            invocation.signal.addEventListener("abort", onAbort, { once: true });
+            if (invocation.signal.aborted) onAbort();
+          });
+          return "unreachable";
+        } finally {
+          probe.cleaned.resolve();
+        }
+      }
       return "instrumented executor ran";
     },
+  });
+  registerDynamicTool(authority, {
+    name: "save_persona",
+    definition: {
+      type: "function",
+      function: {
+        name: "save_persona",
+        description: "instrumented approval-bound executor",
+        parameters: { type: "object", properties: { value: { type: "string" } }, required: ["value"] },
+      },
+    },
+    executor: async () => { calls.count += 1; return "instrumented executor ran"; },
   });
 
   const llm = new FakeLlm();
@@ -175,7 +235,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
       this.iteration += 1;
       if (this.iteration === 1) {
         yield { type: "delta", content: "partial" };
-        yield { type: "result", message: assistant("", [toolCall("stream-tool", "supervise", JSON.stringify({ action: "status" }))]) };
+        yield { type: "result", message: assistant("", [toolCall("stream-tool", "supervise", "{}")]) };
       } else yield { type: "result", message: assistant("stream complete") };
     },
   };
@@ -212,7 +272,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
 
   const boundedLlm = new FakeLlm();
   boundedLlm.queue(...Array.from({ length: 25 }, (_, index) =>
-    assistant("", [toolCall(`bounded-${index}`, "supervise", JSON.stringify({ action: "status" }))])
+    assistant("", [toolCall(`bounded-${index}`, "supervise", "{}")])
   ));
   const boundedAgent = new Agent(boundedLlm, new ConversationMemory(80), persona, authority);
   const boundedSession = createSession(persona, "SEC-01 bounded iteration branch");
@@ -222,7 +282,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
 
   const taskPersona = createEffectivePersona({
     name: "sec01-task-mode", displayName: "SEC01 Task Mode", description: "Agent task-mode coverage",
-    tools: ["create_tasks", "update_task"], env: { WORKSPACE_ROOT: fixture }, allowedRoots: [fixture],
+    tools: ["task_create", "task_update"], env: { WORKSPACE_ROOT: fixture }, allowedRoots: [fixture],
     networkPolicy: { mode: "deny" }, systemPrompt: "SEC-01 task mode",
   });
   const taskAuthority = capabilityBroker.createRuntimeAuthority({
@@ -232,9 +292,9 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
   });
   const taskLlm = new FakeLlm();
   taskLlm.queue(
-    assistant("", [toolCall("tasks-create", "create_tasks", JSON.stringify({ tasks: ["first task"] }))]),
+    assistant("", [toolCall("tasks-create", "task_create", JSON.stringify({ id: "first_task", subject: "first task" }))]),
     assistant("intermediate task explanation"),
-    assistant("", [toolCall("tasks-complete", "update_task", JSON.stringify({ id: 1, status: "completed" }))]),
+    assistant("", [toolCall("tasks-complete", "task_update", JSON.stringify({ task_id: "first_task", status: "completed" }))]),
     assistant("task summary"),
   );
   const taskAgent = new Agent(taskLlm, new ConversationMemory(30), taskPersona, taskAuthority);
@@ -307,6 +367,13 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     const malformed = await collect(agent, "malformed provider arguments");
     assert.equal(calls.count, 0);
     assert(malformed.some((event) => event.type === "tool_result" && event.content.includes("不是合法 JSON")));
+    const malformedResult = malformed.find(event => event.type === "tool_result");
+    assert.equal(malformedResult?.toolStatus, "denied");
+    assert.equal(malformedResult?.toolCode, "TOOL_ARGUMENTS_INVALID");
+    assert.deepEqual(malformedResult?.toolStages.map(stage => [stage.stage, stage.state]), [
+      ["schema", "denied"], ["capability", "skipped"], ["loop", "skipped"], ["approval", "skipped"],
+      ["policy", "skipped"], ["execute", "skipped"], ["output", "passed"], ["audit", "passed"],
+    ]);
     const injectedSystem = memory.getAll().find(message => message.role === "system" && message.content.includes("跨会话记忆"));
     assert(injectedSystem?.content.includes("SEC-01 remembered fixture"));
     assert(injectedSystem?.content.includes("SEC-01 pinned fixture"));
@@ -355,7 +422,8 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
         get() { throw new Error("caller-owned accessor must not escape"); },
       });
       await assert.rejects(() => executeTool(directContext, "subagent", throwingArgs), (error) => error?.code === "TOOL_ARGUMENTS_INVALID");
-      await assert.rejects(() => executeTool(directContext, "subagent", { value: "no grant" }), (error) => error?.code === "CAPABILITY_GRANT_REQUIRED");
+      // RT-08 起 subagent 派遣不再需要 user approval；GRANT 语义由同 authority 的 approval-bound 桩承载。
+      await assert.rejects(() => executeTool(directContext, "save_persona", { value: "no grant" }), (error) => error?.code === "CAPABILITY_GRANT_REQUIRED");
       assertSec01Probe("SEC01-A01", "executor-call-count", calls.count, 0);
       const inspected = inspectToolCall(directContext, "subagent", { value: "prepared" });
       await assert.rejects(
@@ -381,9 +449,15 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     const supervisorRoot = capabilityBroker.beginAgentRun(authority, session.id);
     const supervisorSubagent = capabilityBroker.deriveChild(supervisorRoot, { principal: "subagent", tools: ["supervise"] });
     const supervisorPlaybook = capabilityBroker.deriveChild(supervisorRoot, { principal: "playbook", tools: ["supervise"] });
-    await executeTool(supervisorSubagent, "supervise", { action: "off" });
+    await assert.rejects(
+      () => executeTool(supervisorSubagent, "supervise", { action: "off" }),
+      error => error?.code === "TOOL_ARGUMENTS_INVALID",
+    );
     const stateAfterSubagentAttempt = isSupervisorEnabled();
-    await executeTool(supervisorPlaybook, "supervise", { action: "off" });
+    await assert.rejects(
+      () => executeTool(supervisorPlaybook, "supervise", { action: "off" }),
+      error => error?.code === "TOOL_ARGUMENTS_INVALID",
+    );
     const stateAfterPlaybookAttempt = isSupervisorEnabled();
     capabilityBroker.finishContext(supervisorRoot);
     assertSec01Probe("SEC01-A21", "supervisor-state", [stateAfterAgentAttempt, stateAfterSubagentAttempt, stateAfterPlaybookAttempt], [true, true, true]);
@@ -449,7 +523,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
       assistant("", [
         toolCall("unified-script", "script", JSON.stringify({ code: unifiedScriptCode })),
         toolCall("unified-shell", "execute_command", JSON.stringify({ command: unifiedShellCommand, cwd: fixture })),
-        toolCall("unified-grant", "subagent", JSON.stringify({ value: "denied" })),
+        toolCall("unified-grant", "save_persona", JSON.stringify({ value: "denied" })),
         toolCall("unified-supervisor", "supervise", JSON.stringify({ action: "off" })),
       ]),
       assistant("unified denials complete")
@@ -469,7 +543,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     };
     await capabilityBroker.retireSessionResources(authority, session.id);
     capabilityBroker.finishContext(registryAfterContext);
-    const unifiedApprovalDenied = unifiedEvents.some((event) => event.type === "tool_result" && event.toolName === "subagent" && /拒绝|CAPABILITY/.test(event.content));
+    const unifiedApprovalDenied = unifiedEvents.some((event) => event.type === "tool_result" && event.toolName === "save_persona" && /拒绝|CAPABILITY/.test(event.content));
     assertSec01Probe("SEC01-A31", "executor-call-count", { before: unifiedBefore.executorCalls, after: unifiedAfter.executorCalls }, { before: 0, after: 0 });
     assertSec01Probe("SEC01-A31", "filesystem-state", { before: unifiedBefore.files, after: unifiedAfter.files }, { before: [false, false], after: [false, false] });
     assertSec01Probe("SEC01-A31", "process-canary-state", unifiedAfter.files[1], false);
@@ -477,7 +551,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     assertSec01Probe("SEC01-A31", "manager-invocation-count", unifiedAfter.managerCalls, 0);
     assertSec01Probe("SEC01-A31", "direct-operation-ledger", unifiedDirectDenial, "CAPABILITY_CONTEXT_REQUIRED");
     assertSec01Probe("SEC01-A31", "supervisor-state", { before: unifiedBefore.supervisorEnabled, after: unifiedAfter.supervisorEnabled }, { before: true, after: true });
-    assertSec01Probe("SEC01-A31", "registry-state", { before: unifiedBefore.registry, after: unifiedAfter.registry, denial: unifiedRegistrationDenial }, { before: ["subagent", "supervise"], after: ["subagent", "supervise"], denial: "CAPABILITY_REGISTRATION_INVALID" });
+    assertSec01Probe("SEC01-A31", "registry-state", { before: unifiedBefore.registry, after: unifiedAfter.registry, denial: unifiedRegistrationDenial }, { before: ["subagent", "save_persona", "supervise"], after: ["subagent", "save_persona", "supervise"], denial: "CAPABILITY_REGISTRATION_INVALID" });
     assertSec01Probe("SEC01-A31", "approval-result-state", unifiedApprovalDenied, true);
     disableSupervisor();
 
@@ -487,7 +561,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
       }
     });
     llm.queue(
-      assistant("", [toolCall("denied", "subagent", JSON.stringify({ value: "denied" }))]),
+      assistant("", [toolCall("denied", "save_persona", JSON.stringify({ value: "denied" }))]),
       assistant("user denied")
     );
     await collect(agent, "deny approval-bound tool");
@@ -497,7 +571,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
       name: "sec01-advice-test",
       displayName: "SEC01 Advice Test",
       description: "Supervisor advice cannot replace a user grant",
-      tools: ["subagent"],
+      tools: ["save_persona"],
       env: { WORKSPACE_ROOT: fixture },
       allowedRoots: [fixture],
       networkPolicy: { mode: "deny" },
@@ -516,11 +590,11 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     });
     let adviceExecutorCalls = 0;
     registerDynamicTool(adviceAuthority, {
-      name: "subagent",
+      name: "save_persona",
       definition: {
         type: "function",
         function: {
-          name: "subagent",
+          name: "save_persona",
           description: "instrumented approval-bound advice probe",
           parameters: { type: "object", properties: { value: { type: "string" } }, required: ["value"] },
         },
@@ -552,7 +626,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
         const marker = path.join(fixture, `advice-${label}.marker`);
         adviceMarkers.push(marker);
         adviceLlm.queue(
-          assistant("", [toolCall(`advice-${label}`, "subagent", JSON.stringify({ value: label }))]),
+          assistant("", [toolCall(`advice-${label}`, "save_persona", JSON.stringify({ value: label }))]),
           assistant(`${label} advice did not grant execution`)
         );
         const events = await collect(adviceAgent, `${label} Supervisor advice variant`);
@@ -574,7 +648,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
       }
     });
     llm.queue(
-      assistant("", [toolCall("approved", "subagent", JSON.stringify({ value: "approved" }))]),
+      assistant("", [toolCall("approved", "save_persona", JSON.stringify({ value: "approved" }))]),
       assistant("user approved")
     );
     await collect(agent, "approve exact tool call");
@@ -582,7 +656,7 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
 
     llm.queue(
       assistant("", [
-        toolCall("batch-approved", "subagent", JSON.stringify({ value: "batch" })),
+        toolCall("batch-approved", "save_persona", JSON.stringify({ value: "batch" })),
         toolCall("batch-denied", "script", "{}"),
       ]),
       assistant("mixed batch complete")
@@ -613,6 +687,190 @@ test("SEC-01 Agent dispatcher rejects forged calls and requires exact user grant
     await firstNext;
     await firstIterator.return();
     assert.equal(calls.count, 2, "parallel denial must add no executor calls");
+
+    llm.responses.length = 0;
+    llm.blocker = null;
+    const started = Promise.withResolvers();
+    const cleaned = Promise.withResolvers();
+    rt04Probe = { started, cleaned };
+    llm.queue(
+      assistant("", [toolCall("rt04-blocking-tool", "subagent", JSON.stringify({ value: "rt04-block" }))]),
+      assistant("must not be consumed after cancellation"),
+    );
+    const cancellation = new AbortController();
+    const cancelledRun = collect(agent, "cancel blocking tool", cancellation.signal);
+    await started.promise;
+    cancellation.abort(new Error("agent tool cancelled"));
+    await assert.rejects(() => cancelledRun, error => error?.code === "RUN_CANCELLED" && /agent tool cancelled/u.test(error.message));
+    await cleaned.promise;
+    assert.equal(agent.isRunning(), false);
+    assert.equal(memory.getAll().some(message => message.role === "assistant" && message.tool_calls?.some(call => call.id === "rt04-blocking-tool")), true);
+    assert.match(memory.getAll().find(message => message.role === "tool" && message.tool_call_id === "rt04-blocking-tool")?.content ?? "", /工具执行已取消/u);
+
+    llm.responses.length = 0;
+    const batchStarted = Promise.withResolvers();
+    const batchCleaned = Promise.withResolvers();
+    rt04Probe = { started: batchStarted, cleaned: batchCleaned };
+    llm.queue(
+      assistant("", [
+        toolCall("rt04-batch-complete", "subagent", JSON.stringify({ value: "complete-before-cancel" })),
+        toolCall("rt04-batch-current", "subagent", JSON.stringify({ value: "rt04-block" })),
+        toolCall("rt04-batch-pending", "subagent", JSON.stringify({ value: "must-not-run" })),
+      ]),
+      assistant("must not be consumed after batch cancellation"),
+    );
+    const callsBeforeBatch = calls.count;
+    const batchController = new AbortController();
+    const cancelledBatch = collect(agent, "cancel multi-tool batch", batchController.signal);
+    await batchStarted.promise;
+    batchController.abort(new Error("agent batch cancelled"));
+    await assert.rejects(() => cancelledBatch, error => error?.code === "RUN_CANCELLED" && /agent batch cancelled/u.test(error.message));
+    await batchCleaned.promise;
+    assert.equal(calls.count, callsBeforeBatch + 2, "cancelled batch must not execute pending tools");
+    const batchAssistant = memory.getAll().find(message => message.role === "assistant" && message.tool_calls?.some(call => call.id === "rt04-batch-complete"));
+    assert.deepEqual(batchAssistant?.tool_calls?.map(call => call.id), ["rt04-batch-complete", "rt04-batch-current", "rt04-batch-pending"]);
+    const batchResults = new Map(memory.getAll().filter(message => message.role === "tool" && message.tool_call_id?.startsWith("rt04-batch-")).map(message => [message.tool_call_id, message.content]));
+    assert.match(batchResults.get("rt04-batch-complete") ?? "", /instrumented executor ran/u);
+    assert.match(batchResults.get("rt04-batch-current") ?? "", /工具执行已取消/u);
+    assert.match(batchResults.get("rt04-batch-pending") ?? "", /工具未执行/u);
+
+    rt04Probe = null;
+    llm.responses.length = 0;
+    llm.queue(assistant("post-cancel run complete"));
+    const postCancel = await collect(agent, "run after tool cancellation");
+    assert(postCancel.some(event => event.type === "answer_done" && event.content === "post-cancel run complete"));
+
+    disableSupervisor();
+    const auditPersona = createEffectivePersona({
+      name: "sec06-audited-agent", displayName: "SEC06 Audited Agent", description: "SEC-06 production Agent audit probe",
+      tools: ["subagent", "supervise"], env: { WORKSPACE_ROOT: fixture }, allowedRoots: [fixture],
+      networkPolicy: { mode: "unrestricted" }, systemPrompt: "SEC-06 audited Agent",
+    });
+    let auditCancellationProbe = null;
+    const auditAuthority = capabilityBroker.createRuntimeAuthority({
+      name: auditPersona.name, tools: auditPersona.tools, env: auditPersona.env, systemPrompt: auditPersona.systemPrompt,
+      allowedRoots: auditPersona.allowedRoots, rootEnv: { WORKSPACE_ROOT: "workspace" },
+      pathAuthority: await prepareWorkspacePathAuthority(), networkPolicy: auditPersona.networkPolicy, digest: auditPersona.digest,
+    });
+    registerDynamicTool(auditAuthority, {
+      name: "subagent",
+      definition: {
+        type: "function",
+        function: {
+          name: "subagent",
+          description: "SEC-06 nested dispatcher audit probe",
+          parameters: { type: "object", properties: { value: { type: "string" } }, required: ["value"] },
+        },
+      },
+      executor: async (args, _env, invocation) => {
+        assert(invocation?.auditContext, "nested invocation lost its audit context");
+        if (args.value === "rt04-cancel" || args.value === "rt04-settlement-fail") {
+          const probe = auditCancellationProbe;
+          assert(probe, "RT-04 audit cancellation probe is unavailable");
+          probe.started.resolve();
+          try {
+            await new Promise((resolve, reject) => {
+              const onAbort = () => {
+                invocation.signal.removeEventListener("abort", onAbort);
+                reject(invocation.signal.reason);
+              };
+              invocation.signal.addEventListener("abort", onAbort, { once: true });
+              if (invocation.signal.aborted) onAbort();
+            });
+            return "unreachable";
+          } catch (error) {
+            probe.cleaned.resolve();
+            if (args.value === "rt04-settlement-fail") throw new Error("synthetic audited cleanup failure");
+            throw error;
+          }
+        }
+        const child = invocation.deriveChild({ principal: "subagent", tools: ["supervise"] });
+        try { return await invocation.executeTool(child, "supervise", {}, "sec06-nested-tool-call"); }
+        finally { invocation.finishChild(child); }
+      },
+    });
+    const auditLlm = new FakeLlm();
+    const memoryAudit = createMemoryAuditJournal();
+    const auditedAgent = new Agent(auditLlm, new ConversationMemory(20), auditPersona, auditAuthority, memoryAudit.journal);
+    const auditSession = createSession(auditPersona, "SEC-06 audited Agent integration");
+    auditedAgent.setSession(auditSession.id);
+    const agentSecret = "sec06-agent-argument-secret";
+    auditLlm.queue(
+      assistant("", [toolCall("sec06-audit-success", "subagent", JSON.stringify({ value: "nested" }))]),
+      assistant("success branch complete"),
+      assistant("", [toolCall("sec06-audit-malformed", "supervise", `{not-json-${agentSecret}`)]),
+      assistant("malformed branch complete"),
+      assistant("", [toolCall("sec06-audit-denied", "script", JSON.stringify({ code: agentSecret }))]),
+      assistant("denied branch complete"),
+    );
+    try {
+      await collect(auditedAgent, "audit successful tool");
+      await collect(auditedAgent, "audit malformed tool");
+      await collect(auditedAgent, "audit denied tool");
+      const summary = await memoryAudit.journal.verify();
+      assert.equal(summary.eventCount, 16, JSON.stringify(memoryAudit.events.map(event => ({ toolCallId: event.correlation.toolCallId, phase: event.phase, outcome: event.outcome, code: event.code, principal: event.principal, parentRequestId: event.correlation.parentRequestId }))));
+      const byRequest = new Map();
+      for (const event of memoryAudit.events) {
+        const group = byRequest.get(event.correlation.requestId) ?? [];
+        group.push(event);
+        byRequest.set(event.correlation.requestId, group);
+        assert.equal(event.correlation.sessionId, auditSession.id);
+        assert.equal(typeof event.correlation.runId, "string");
+        assert.equal(typeof event.correlation.contextId, "string");
+      }
+      assert.equal(byRequest.size, 4);
+      for (const events of byRequest.values()) assert.deepEqual(events.map(event => event.phase), ["request", "authorization", "execution", "result"]);
+      const successful = memoryAudit.events.filter(event => event.correlation.toolCallId === "sec06-audit-success");
+      assert.match(successful[1].safePayload.policyDigest, /^hmac-sha256:[a-f0-9]{64}$/u);
+      assert.equal(successful[2].outcome, "started");
+      assert.equal(successful[3].outcome, "success");
+      const nestedAudit = memoryAudit.events.filter(event => event.correlation.toolCallId === "sec06-nested-tool-call");
+      assert.equal(nestedAudit.length, 4);
+      assert(nestedAudit.every(event => event.principal === "subagent"));
+      assert(nestedAudit.every(event => event.correlation.parentRequestId === successful[0].correlation.requestId));
+      assert(nestedAudit.every(event => event.correlation.sessionId === successful[0].correlation.sessionId));
+      assert(nestedAudit.every(event => event.correlation.runId === successful[0].correlation.runId));
+      const malformedAudit = memoryAudit.events.filter(event => event.correlation.toolCallId === "sec06-audit-malformed");
+      assert.deepEqual(malformedAudit.map(event => event.outcome), ["received", "denied", "not_started", "denied"]);
+      const deniedAudit = memoryAudit.events.filter(event => event.correlation.toolCallId === "sec06-audit-denied");
+      assert.deepEqual(deniedAudit.map(event => event.outcome), ["received", "denied", "not_started", "denied"]);
+      assert.equal(JSON.stringify(memoryAudit.events).includes(agentSecret), false);
+
+      const auditStarted = Promise.withResolvers();
+      const auditCleaned = Promise.withResolvers();
+      auditCancellationProbe = { started: auditStarted, cleaned: auditCleaned };
+      auditLlm.queue(assistant("", [toolCall("sec06-audit-cancel", "subagent", JSON.stringify({ value: "rt04-cancel" }))]));
+      const auditController = new AbortController();
+      const cancelledAuditRun = collect(auditedAgent, "audit cancelled tool", auditController.signal);
+      await auditStarted.promise;
+      auditController.abort(new Error("audited tool cancelled"));
+      await assert.rejects(() => cancelledAuditRun, error => error?.code === "RUN_CANCELLED");
+      await auditCleaned.promise;
+      const cancelledAudit = memoryAudit.events.filter(event => event.correlation.toolCallId === "sec06-audit-cancel");
+      assert.deepEqual(cancelledAudit.map(event => event.phase), ["request", "authorization", "execution", "result"]);
+      assert.deepEqual(cancelledAudit.map(event => event.outcome), ["received", "allowed", "started", "cancelled"]);
+      assert.equal(cancelledAudit.at(-1).code, "RUN_CANCELLED");
+      auditCancellationProbe = null;
+
+      const settlementStarted = Promise.withResolvers();
+      const settlementCleaned = Promise.withResolvers();
+      auditCancellationProbe = { started: settlementStarted, cleaned: settlementCleaned };
+      auditLlm.queue(assistant("", [toolCall("sec06-audit-settlement-fail", "subagent", JSON.stringify({ value: "rt04-settlement-fail" }))]));
+      const settlementController = new AbortController();
+      const failedSettlementRun = collect(auditedAgent, "audit failed cancellation settlement", settlementController.signal);
+      await settlementStarted.promise;
+      settlementController.abort(new Error("audited settlement cancelled"));
+      await assert.rejects(() => failedSettlementRun, error => error?.code === "RUN_SETTLEMENT_FAILED");
+      await settlementCleaned.promise;
+      const failedSettlementAudit = memoryAudit.events.filter(event => event.correlation.toolCallId === "sec06-audit-settlement-fail");
+      assert.deepEqual(failedSettlementAudit.map(event => event.phase), ["request", "authorization", "execution", "result"]);
+      assert.deepEqual(failedSettlementAudit.map(event => event.outcome), ["received", "allowed", "started", "error"]);
+      assert.equal(failedSettlementAudit.at(-1).code, "RUN_SETTLEMENT_FAILED");
+      auditCancellationProbe = null;
+    } finally {
+      memoryAudit.journal.close();
+      capabilityBroker.revokeAuthority(auditAuthority);
+    }
   } finally {
     setAskUserSseCallback(() => undefined);
     unregisterNativeProcessConsent();

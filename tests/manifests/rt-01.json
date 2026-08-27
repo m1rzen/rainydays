@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-01",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "sentinel", "developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "public/renderer.js",
+    "src/agent.ts",
+    "src/capability-broker.ts",
+    "src/index.ts",
+    "src/session-runtime.ts",
+    "src/session.ts",
+    "src/tools/ask-user-tool.ts",
+    "src/tools/phase1-tools.ts",
+    "dist/agent.js",
+    "dist/capability-broker.js",
+    "dist/index.js",
+    "dist/session-runtime.js",
+    "dist/session.js",
+    "dist/tools/ask-user-tool.js",
+    "dist/tools/phase1-tools.js"
+  ],
+  "coverageExemptions": {
+    "public/renderer.js": {
+      "reason": "Renderer Session/run/question isolation is exercised in the real Electron CDP layer.",
+      "evidenceLayer": "electron"
+    },
+    "src/agent.ts": {
+      "reason": "The compiled dist/agent.js equivalent is in the governed coverage registry.",
+      "evidenceLayer": "unit"
+    },
+    "src/capability-broker.ts": {
+      "reason": "The compiled dist/capability-broker.js equivalent is in the governed coverage registry.",
+      "evidenceLayer": "unit"
+    },
+    "src/index.ts": {
+      "reason": "Session-bound HTTP routing and runtime lifecycle wiring are exercised by the integration layer.",
+      "evidenceLayer": "integration"
+    },
+    "src/session-runtime.ts": {
+      "reason": "The compiled dist/session-runtime.js equivalent is in the governed coverage registry.",
+      "evidenceLayer": "unit"
+    },
+    "src/session.ts": {
+      "reason": "The compiled dist/session.js equivalent is in the governed coverage registry.",
+      "evidenceLayer": "integration"
+    },
+    "src/tools/ask-user-tool.ts": {
+      "reason": "The compiled dist/tools/ask-user-tool.js equivalent is in the governed coverage registry.",
+      "evidenceLayer": "unit"
+    },
+    "src/tools/phase1-tools.ts": {
+      "reason": "Run-local ask/notify tool registration is exercised by unit and integration contracts.",
+      "evidenceLayer": "unit"
+    },
+    "dist/index.js": {
+      "reason": "The server composition root is exercised through real multi-Session integration requests.",
+      "evidenceLayer": "integration"
+    },
+    "dist/tools/phase1-tools.js": {
+      "reason": "Run-local ask/notify tool registration is exercised by unit and integration contracts.",
+      "evidenceLayer": "unit"
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/unit/run-interaction-channel.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/session-runtime.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/contract/rt01-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" },
+    { "exactCasePath": "tests/packaged/installed-smoke.test.mjs", "layer": "packaged" }
+  ]
+}

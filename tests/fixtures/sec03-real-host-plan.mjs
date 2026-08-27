@@ -44,6 +44,59 @@ export function a01Probe(variantId, profileId) {
   return `if ${condition} (exit 91) else (echo ${A01_OUTPUT_MARKER})`;
 }
 
+const A10_SUBCODES = Object.freeze({
+  "A10-01": "length",
+  "A10-02": "oversize",
+  "A10-03": "unknown-key",
+  "A10-04": "duplicate-key",
+  "A10-05": "utf8",
+  "A10-06": "replay",
+  "A10-07": "second-launch",
+  "A10-08": "secret",
+  "A10-09": "state",
+});
+
+export function a10Case(variantId, profileId) {
+  const subcode = A10_SUBCODES[variantId];
+  if (!subcode || profileId !== "HOST") throw new Error(`Unsupported SEC-03 A10 record: ${variantId}/${profileId}`);
+  return Object.freeze({ subcode, carrierEntryPoint: "E2", carrierProfile: "agent-shell" });
+}
+
+export function a13Case(variantId, profileId) {
+  const cases = Object.freeze({
+    "A13-01": Object.freeze({ operation: "launch", decisionState: "terminal-direct-start" }),
+    "A13-02": Object.freeze({ operation: "input", decisionState: "terminal-direct-input" }),
+    "A13-03": Object.freeze({ operation: "kill", decisionState: "terminal-owner-kill" }),
+    "A13-04": Object.freeze({ operation: "close", decisionState: "terminal-owner-close" }),
+  });
+  const planned = cases[variantId];
+  if (!planned || profileId !== "E4") throw new Error(`Unsupported SEC-03 A13 record: ${variantId}/${profileId}`);
+  return Object.freeze({ ...planned, entryPoint: "E4", profile: "manual-terminal", expectedCode: variantId === "A13-01" || variantId === "A13-02" ? "EXEC_DIRECT_MUTATION_DENIED" : "EXEC_OWNER_MISMATCH" });
+}
+
+export const A14_INVALID_JOURNAL = "SEC03_A14_INVALID_JOURNAL\n";
+
+export const A15_EXTRA_ARTIFACT = "mini-lux/sec03/A15-03/unexpected-native-artifact/v1";
+
+export function a15Case(variantId, profileId) {
+  const profiles = Object.freeze({ E1: "one-shot-shell", E2: "agent-shell", E3: "script", E4: "manual-terminal" });
+  const states = Object.freeze({
+    "A15-01": ["native-missing-launcher", "absent", "host-exact"],
+    "A15-02": ["native-missing-host", "launcher-exact", "absent"],
+    "A15-03": ["native-extra-artifact", "launcher-exact", "host-exact"],
+    "A15-04": ["native-changed-launcher", "changed-amd64", "host-exact"],
+    "A15-05": ["native-changed-host", "launcher-exact", "changed-amd64"],
+    "A15-06": ["native-wrong-pe-machine", "launcher-exact", "machine-014c"],
+    "A15-07": ["native-forbidden-import-digest", "launcher-exact", "manifest-import-mutant-sha256"],
+    "A15-08": ["native-host-replacement-blocked", "launcher-exact", "replacement-blocked-win32-32"],
+    "A15-09": ["native-source-toolchain-mismatch", "launcher-exact", "manifest-mutant-sha256"],
+  });
+  const profile = profiles[profileId];
+  const state = states[variantId];
+  if (!state || !profile) throw new Error(`Unsupported SEC-03 A15 record: ${variantId}/${profileId}`);
+  return Object.freeze({ decisionState: state[0], launcherState: state[1], hostState: state[2], entryPoint: profileId, profile, expectedCode: "EXEC_NATIVE_IDENTITY_INVALID" });
+}
+
 export const A17_OUTPUT_MARKER = "SEC03_A17_SCRIPT_DENIED";
 const denied = expression => `try { ${expression}; throw new Error("SEC03_CAPABILITY_SUCCEEDED"); } catch (error) { if (error?.message === "SEC03_CAPABILITY_SUCCEEDED") throw error; console.log(${JSON.stringify(A17_OUTPUT_MARKER)}); }`;
 
@@ -125,8 +178,13 @@ export function a02Case(variantId, profileId) {
   return Object.freeze({ ...profileProbe(a02Source(variantId), a02PowerShell(variantId), A02_OUTPUT_MARKER, profileId), marker: A02_OUTPUT_MARKER });
 }
 
-function a04ExternalAddress(explicit) {
-  const address = explicit ?? Object.values(os.networkInterfaces()).flat().find(value => value?.family === "IPv4" && !value.internal)?.address;
+let cachedA04ExternalAddress;
+export function a04ExternalAddress(explicit) {
+  cachedA04ExternalAddress ??= Object.values(os.networkInterfaces()).flat()
+    .filter(value => value?.family === "IPv4" && !value.internal)
+    .map(value => value.address)
+    .sort((left, right) => left.localeCompare(right, "en"))[0];
+  const address = explicit ?? cachedA04ExternalAddress;
   if (typeof address !== "string" || !/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/u.test(address)) throw new Error("SEC-03 A04 requires a host-validated external IPv4 address");
   return address;
 }
@@ -148,11 +206,12 @@ function a04Source(variantId, externalAddress) {
 
 function a04PowerShell(variantId, externalAddress) {
   const external = `$external=[Net.IPAddress]::Parse('${a04ExternalAddress(externalAddress)}');`;
+  if (variantId === "A04-05") return `${external}try{$listener=[Net.Sockets.TcpListener]::new($external,${A04_PORTS.listen});$listener.Start();Write-Output '${A04_LISTEN_READY_MARKER}';$accept=$listener.AcceptTcpClientAsync();$accepted=$accept.Wait(1500);if($accepted){$accept.Result.Close()};$listener.Stop();if($accepted){exit 91}}catch{Write-Output '${A04_OUTPUT_MARKER}';exit 0}`;
   const operations = {
     "A04-01": `$client=[Net.Sockets.UdpClient]::new();$client.Client.ReceiveTimeout=500;$query=[byte[]](0x53,0x03,0x01,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x05,0x73,0x65,0x63,0x30,0x33,0x09,0x61,0x75,0x74,0x68,0x65,0x6e,0x74,0x69,0x63,0x07,0x69,0x6e,0x76,0x61,0x6c,0x69,0x64,0x00,0x00,0x01,0x00,0x01);$sent=$client.Send($query,$query.Length,'127.0.0.1',${A04_PORTS.dns});if($sent -ne $query.Length){throw 'dns-send'};$remote=[Net.IPEndPoint]::new([Net.IPAddress]::Any,0);$response=$client.Receive([ref]$remote);$client.Close()`,
-    "A04-02": `$client=[Net.Sockets.TcpClient]::new();$client.Connect($external,${A04_PORTS.externalTcp});$client.Close()`,
+    "A04-02": `$client=[Net.Sockets.TcpClient]::new();$connect=$client.ConnectAsync($external,${A04_PORTS.externalTcp});if(-not $connect.Wait(500)){$client.Close();throw 'tcp-timeout'};$client.Close()`,
     "A04-03": `$client=[Net.Sockets.UdpClient]::new();$client.Client.ReceiveTimeout=500;$bytes=[Text.Encoding]::ASCII.GetBytes('SEC03_A04_UDP');$sent=$client.Send($bytes,$bytes.Length,$external.ToString(),${A04_PORTS.udp});if($sent -ne $bytes.Length){throw 'udp-send'};$remote=[Net.IPEndPoint]::new([Net.IPAddress]::Any,0);$response=$client.Receive([ref]$remote);$client.Close()`,
-    "A04-04": `$client=[Net.Sockets.TcpClient]::new();$client.Connect([Net.IPAddress]::Loopback,${A04_PORTS.loopback});$client.Close()`,
+    "A04-04": `$client=[Net.Sockets.TcpClient]::new();$connect=$client.ConnectAsync([Net.IPAddress]::Loopback,${A04_PORTS.loopback});if(-not $connect.Wait(500)){$client.Close();throw 'loopback-timeout'};$client.Close()`,
     "A04-05": `$listener=[Net.Sockets.TcpListener]::new($external,${A04_PORTS.listen});$listener.Start();$listener.Stop()`,
   };
   const operation = operations[variantId];
@@ -195,6 +254,25 @@ function a08Plan(profileId, command, script, limits, nativeReason, expectedCode)
   return Object.freeze({ payload, input: persistent ? command : null, limits: Object.freeze(limits), nativeReason, expectedCode });
 }
 
+export function e3aCase(variantId, profileId) {
+  if (profileId !== "E3A") throw new Error(`Unsupported SEC-03 fixed adversary profile: ${profileId}`);
+  const baseLimits = Object.freeze({ activeProcesses: 8, processMemoryBytes: 128 * 2 ** 20, jobMemoryBytes: 512 * 2 ** 20, cpuRatePercent: 50, jobUserTimeMs: 10_000, wallTimeMs: 10_000, idleTimeMs: null, aggregateOutputBytes: 2 ** 20, retainedOutputBytes: 2 ** 20, inputBytes: 128 * 2 ** 10 });
+  const cases = {
+    "A06-01": { expectedCode: "OBS_JOB_EMPTY", nativeReason: "completed", childExit: 0, minimumDescendants: 1, limits: baseLimits },
+    "A06-02": { expectedCode: "OBS_JOB_EMPTY", nativeReason: "completed", childExit: 0, minimumDescendants: 2, limits: baseLimits },
+    "A06-03": { expectedCode: "OBS_JOB_EMPTY", nativeReason: "completed", childExit: 0, minimumDescendants: 1, limits: baseLimits },
+    "A06-04": { expectedCode: "OBS_JOB_EMPTY", nativeReason: "completed", childExit: 0, minimumDescendants: 1, limits: baseLimits },
+    "A07-01": { expectedCode: "EXEC_BREAKAWAY_DENIED", nativeReason: "completed", childExit: 5, minimumDescendants: 0, limits: baseLimits },
+    "A07-02": { expectedCode: "EXEC_BREAKAWAY_DENIED", nativeReason: "completed", childExit: 0, minimumDescendants: 1, limits: baseLimits },
+    "A07-03": { expectedCode: "EXEC_JOB_INCOMPATIBLE", nativeReason: "completed", childExit: 50, minimumDescendants: 0, limits: baseLimits },
+    "A08-02": { expectedCode: "EXEC_LIMIT_ACTIVE_PROCESS", nativeReason: "limit-active-process", childExit: 0xE085, minimumDescendants: 0, limits: Object.freeze({ ...baseLimits, activeProcesses: 1 }) },
+    "A08-04": { expectedCode: "EXEC_LIMIT_JOB_MEMORY", nativeReason: "limit-job-memory", childExit: 0xE087, minimumDescendants: 1, limits: Object.freeze({ ...baseLimits, processMemoryBytes: 96 * 2 ** 20, jobMemoryBytes: 160 * 2 ** 20 }) },
+  };
+  const planned = cases[variantId];
+  if (!planned) throw new Error(`Unsupported SEC-03 fixed adversary tuple: ${variantId}/${profileId}`);
+  return Object.freeze({ ...planned, tuple: `${variantId}/${profileId}`, payload: `mini-lux/sec03/fixed-adversary/v1/${variantId}/${profileId}`, input: null });
+}
+
 export function a06Case(variantId, profileId) {
   if (!["E1", "E2", "E4"].includes(profileId)) throw new Error(`SEC-03 A06 is not honestly reachable for profile: ${profileId}`);
   const foreground = `"%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoLogo -NoProfile -NonInteractive -Command "Start-Sleep -Seconds 2"`;
@@ -215,13 +293,29 @@ export function a06Case(variantId, profileId) {
   });
 }
 
+const A07_HELPER_SHA256 = "312750aa3be1c1ec9c78990f7fcdd43175011baba9c8fb8b24a86b4e42102e91";
+function a07NativeProbe(variantId) {
+  const mode = { "A07-01": "explicit", "A07-02": "silent", "A07-03": "nested" }[variantId];
+  if (!mode) throw new Error(`Unsupported SEC-03 A07 native variant: ${variantId}`);
+  const expectedExit = variantId === "A07-01" ? 5 : variantId === "A07-03" ? 50 : 0;
+  const command = `"%MINI_LUX_ROOT_0:~4%\\sec03-a07-adversary.exe" ${mode} & exit /b`;
+  return Object.freeze({ command, expectedExit, helperSha256: A07_HELPER_SHA256, minimumDescendants: variantId === "A07-02" ? 1 : 0 });
+}
+
 export function a07Case(variantId, profileId) {
-  if (!["A07-04", "A07-05", "A07-06"].includes(variantId) || !["E1", "E2", "E3", "E4"].includes(profileId)) throw new Error(`Unsupported SEC-03 A07 record: ${variantId}/${profileId}`);
   const persistent = profileId === "E2" || profileId === "E4";
+  if (["A07-01", "A07-02", "A07-03"].includes(variantId)) {
+    if (!["E1", "E2", "E4"].includes(profileId)) throw new Error(`Unsupported SEC-03 A07 record: ${variantId}/${profileId}`);
+    const planned = a07NativeProbe(variantId);
+    return Object.freeze({ payload: persistent ? "cmd" : planned.command, input: persistent ? planned.command : null, expectedCode: variantId === "A07-03" ? "EXEC_JOB_INCOMPATIBLE" : "EXEC_BREAKAWAY_DENIED", expectedExit: planned.expectedExit, helperSha256: planned.helperSha256, minimumDescendants: planned.minimumDescendants });
+  }
+  if (!["A07-04", "A07-05", "A07-06"].includes(variantId) || !["E1", "E2", "E3", "E4"].includes(profileId)) throw new Error(`Unsupported SEC-03 A07 record: ${variantId}/${profileId}`);
   return Object.freeze({
     payload: profileId === "E3" ? "process.exit(0);" : persistent ? "cmd" : "exit /b 0",
     input: persistent ? "exit" : null,
     expectedCode: "OBS_HANDLE_DENIED",
+    expectedExit: 0,
+    minimumDescendants: 0,
   });
 }
 
@@ -345,6 +439,20 @@ export function a09Case(variantId, profileId) {
   if (termination) {
     const payload = profileId === "E3" ? "await new Promise(resolve => setTimeout(resolve, 60_000));" : persistent ? "cmd" : `"%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoLogo -NoProfile -NonInteractive -Command "Start-Sleep -Seconds 60"`;
     return Object.freeze({ payload, input: null, terminateReason: termination[0], nativeReason: termination[1], completionReason: termination[2], expectedCode: termination[2] });
+  }
+  if (variantId === "A09-06" || variantId === "A09-07") {
+    const readyMarker = variantId === "A09-06" ? "SEC03_A09_SERVICE_READY" : "SEC03_A09_HOST_READY";
+    const payload = profileId === "E3"
+      ? `console.log(${JSON.stringify(readyMarker)}); await new Promise(resolve => setTimeout(resolve, 60_000));`
+      : persistent ? "cmd" : `echo ${readyMarker} & "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoLogo -NoProfile -NonInteractive -Command "Start-Sleep -Seconds 60"`;
+    return Object.freeze({ payload, input: null, readyMarker, nativeReason: variantId === "A09-06" ? "service-lost-recovered" : "host-lost-recovered", completionReason: variantId === "A09-06" ? "EXEC_SERVICE_LOST" : "EXEC_HOST_LOST", expectedCode: variantId === "A09-06" ? "EXEC_SERVICE_LOST" : "EXEC_HOST_LOST" });
+  }
+  if (variantId === "A09-08") {
+    const readyMarker = "SEC03_A09_CHANNEL_READY";
+    const payload = profileId === "E3"
+      ? `console.log(${JSON.stringify(readyMarker)}); await new Promise(resolve => setTimeout(resolve, 60_000));`
+      : persistent ? "cmd" : `echo ${readyMarker} & "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoLogo -NoProfile -NonInteractive -Command "Start-Sleep -Seconds 60"`;
+    return Object.freeze({ payload, input: null, closeControlChannel: true, readyMarker, nativeReason: "channel-lost", completionReason: "EXEC_CHANNEL_LOST", expectedCode: "EXEC_CHANNEL_LOST" });
   }
   throw new Error(`Unsupported SEC-03 A09 record: ${variantId}/${profileId}`);
 }

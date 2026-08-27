@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "taskId": "TOOL-04",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/tool-04.json",
+    "sha256": "3fe52c79d28823320aa5ef98d8d53862c5225628ae2a1f60aa2b998e09544b53"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "c4104e93af680e6a76288d2205ce0a5845f586d90c3e191b1cbe821aa7f123d2",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "scripts/tool04-governance.mjs",
+      "sha256": "1c6a0194635b5abbed1707d2b6c7bdafef515b09ab43b8f157aaa484c9a66bfe",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "scripts/generate-tool04-resolved-manifest.mjs",
+      "sha256": "e91d8db92f561a5f609bbd69541c81e5129e6ae89fdbf0b2dfeaaa380218a8d6",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "c11ced627a5563a3cdb96d7d1cb4d5cb04d7c0871bc1353ba10b0fe372446d12",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
+      "sha256": "7aae6f025aa45c433936d96abf3fb68c1e0e3612fea0079aee50cb7ae3a15079",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "sha256": "89aa4c6c63a1dda3fc469fcd96f571a83fa2563753aee6aadccb5ed64f2d9716",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "src/execution-isolation.ts",
+      "sha256": "83dfdf6e98865acce425a66e8eb0bd4cded8425f2f7e2854334db4c730a28f00",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "src/execution-native.ts",
+      "sha256": "4fa8d7600bb79b86e4741aa8952ea4231ce9b6251a553d00c318ea6b97bfcf33",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "src/execution-runtime.ts",
+      "sha256": "0264db73364b929b7a3e9de95093798b303cdb6bc81d301b8bfd327f6944e676",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "src/script-runtime.ts",
+      "sha256": "e9ff0fcc8bf3a5c9b3c947309716a7e17987032e0f5d1a814c1e5f0fbd6e4976",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "src/tool-protocol.ts",
+      "sha256": "4f5b925988709fec3bbc61097e60f1ff6daef4c58a179c4c0e4752c55ad07d9d",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "f7cec1d0f2daf8f46073bc254d22e4ab8c90c4f2f255c924dd5c2f66dc9549a3",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "src/tools/script.ts",
+      "sha256": "210f9d549c62a13345f6b10450a1faa303bcbf684477c9a9dafa65aa79d3973e",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "decc03e49e89ba5ed6eb4e964da2e437c440935a1edcf23d864933e6f2e56a8a",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "270e0008a939b43558be7160812d9ec7c89ac4ec0c78537b4aa4434d2bc78682",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/manifests/sec-03-resolved.json",
+      "sha256": "7ff83802e5cb21c098ef479c1eff8ffbcfaca1be56da543fa6141d387856a94c",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-inventory.json",
+      "sha256": "e7eddea060f057b065680cdc84f4eaf7b98fdd2acaf39f5e7fe08f5ab53811a8",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/sec03-execution-policy.json",
+      "sha256": "8192c7aead57030d225b3a557ddc87c221373ec4c43c6370e2e9a075dba4ffa3",
+      "owner": "TOOL-04"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/tool04-governance.test.mjs",
+      "sha256": "e70a9158d8f21c72d2959d69af12450c4231f49cbb515a0371737ee24ab37596",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/unit/tool04-script-runtime.test.mjs",
+      "sha256": "5d8007c6f4e12e80c8e3d940423f505504faad99e9f02c21a33d6dea5227ed0e",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+      "sha256": "d4beca652dcefcc64fe1dea5398d21366f2eeb967c5ade30fed5e85dd7b0959c",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+      "sha256": "c7b31ff6febde84380d2856105f92a2b7782d5aa8a7c6908365aab1bb430efdb",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/integration/process-cwd.test.mjs",
+      "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/integration/tool04-script-native.test.mjs",
+      "sha256": "e1b136923efa03be3a597da3b1eec9ff80a071ba4c8ec61aa93f6e1b403051a2",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "TOOL-04"
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
+      "sha256": "f70a23c9e33d426c0229fdb13a99521de897526dd81b6955702766d1c910e970",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "TOOL-04"
+    }
+  ],
+  "canonicalPayloadSha256": "899f181974eab27b825a886ca0f70f0a1c1d67fa1f1be14cbc8b71d92ee9f3c6"
+}

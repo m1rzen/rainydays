@@ -166,7 +166,7 @@ test("model bootstrap manifest pins the complete immutable payload", async () =>
   assert.equal(unifiedRunner.match(/atomicWriteJson\(reportTarget,/g)?.length, 1);
   assert.equal(unifiedRunner.match(/atomicWriteJson\(context\.reportTarget,/g)?.length, 1);
   assert.match(unifiedRunner, /GOV-04 diagnostic challenge is invalid/);
-  assert.equal(unifiedRunner.match(/env: withoutGov04DiagnosticChallenge\(\)/g)?.length, 1);
+  assert.equal(unifiedRunner.match(/env: withoutGov04DiagnosticChallenge\(\)/g)?.length ?? 0, 0);
   assert.equal(unifiedRunner.match(/env: withoutSec02ReceiptEnvironment\(withoutGov04DiagnosticChallenge\(\)\)/g)?.length, 2);
   assert.match(unifiedRunner, /reportVersion: 0,[\s\S]*state: "crashed",[\s\S]*diagnosticChallenge: context\.diagnosticChallenge,[\s\S]*crashStage: context\.stage/);
   assert.match(unifiedRunner, /\[\$\{context\.taskId\}:\$\{context\.diagnosticChallenge\}\] unified runner crashed at \$\{context\.stage\} code \$\{crashCode\}/);
@@ -225,13 +225,13 @@ test("merge and trusted artifact retention/trust domains stay separated", async 
   assert(!release.includes("pull_request:"));
 });
 
-test("trusted signer and hosted repository policies remain explicitly unconfigured", async () => {
+test("hosted repository identity is configured while trusted signer remains explicitly unconfigured", async () => {
   const signers = JSON.parse(await readFile(path.join(projectRoot, "parity", "policies", "gov-04-signer-allowlist.json"), "utf8"));
   const policy = JSON.parse(await readFile(path.join(projectRoot, "parity", "policies", "gov-04-policy.json"), "utf8"));
   assert.equal(signers.state, "unconfigured");
   assert.deepEqual(signers.allowedSigners, []);
-  assert.equal(policy.trustedRelease.state, "unconfigured");
-  assert.equal(policy.trustedRelease.repository, null);
+  assert.equal(policy.trustedRelease.state, "configured");
+  assert.equal(policy.trustedRelease.repository, "m1rzen/rainydays");
   assert.equal(policy.trustedRelease.provider, "github-actions");
   assert.equal(policy.trustedRelease.requireProtectedRef, true);
 });

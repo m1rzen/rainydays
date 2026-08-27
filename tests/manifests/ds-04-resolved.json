@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-04",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/ds-04.json",
+    "sha256": "7ef89d756547a4cedac844eb6c20f039885625538491405f04e70a40b3f8684d"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/execution-isolation.js",
+      "sha256": "b52727fa9a2a8da7e7746ccdec0bc38b9e714abf4f5baf4cd48f0f1d15653c80",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "dist/execution-native.js",
+      "sha256": "193872b2ee7c444763a9c796f1e1b6aaf67d1c7df8ada66632007bc99f330356",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "dist/execution-runtime.js",
+      "sha256": "8e5d9a42b00f8694de26a015c77f6131ba71100e1de8ec39dca4341d6112a1de",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "ada797ef15969b70aab116a0e062ee98a68524e83c7d33e173aea2c0e6b9fe86",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "dist/terminal.js",
+      "sha256": "700322511569fb33858abc48fb03922c6871577c8d64cc983902ded4d1048902",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "dist/tool-policies.js",
+      "sha256": "3c9b5e69af19c60db18edb192f370930ecf1e41770bcd0aa1cc985d8b009dcbb",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "dist/tools/index.js",
+      "sha256": "c89fe997e34260991bfa81b25d10388575de10a6b4253c39674797962de48c3e",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "dist/tools/terminal-tools.js",
+      "sha256": "076569eb5b09cdd8e9b8f936aacefa1005998c00907560b5d32977b736930e74",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "electron/main.cjs",
+      "sha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "electron/preload.cjs",
+      "sha256": "e201976c91539242837cad4e7fd5e35c656258aca95643955ac8c58720944b14",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
+      "sha256": "7aae6f025aa45c433936d96abf3fb68c1e0e3612fea0079aee50cb7ae3a15079",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "native/sandbox-host/sandbox-launcher.cpp",
+      "sha256": "89aa4c6c63a1dda3fc469fcd96f571a83fa2563753aee6aadccb5ed64f2d9716",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "package-lock.json",
+      "sha256": "2ec921899f4cff90f2334b66f4d8df310e3be74d1ef45bae0a5e01c9c70802b3",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "package.json",
+      "sha256": "c4104e93af680e6a76288d2205ce0a5845f586d90c3e191b1cbe821aa7f123d2",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "public/index.html",
+      "sha256": "fa0750bf311d23f9a97bc7474234dd58452392a536e537361da6ea633caaee44",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "public/renderer.css",
+      "sha256": "eefcbfdabf7f4cc0e228e484b3dccc8244639470ae45cd47264cd1bde0dd3d2b",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "public/renderer.js",
+      "sha256": "64c83f779865c2b6705ad49efd8987f9dc1e2f2225d93daf267a7fe2ce6a5fa2",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "public/vendor/xterm-addon-fit.js",
+      "sha256": "bdaefa370b1bfc42ee88d46fe6072400902a4d4b2d45cd93438dda9b23c97089",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "public/vendor/xterm.css",
+      "sha256": "ba8e6985669488981ccf40c0cefe3aba80722cb6c92de7ad628b0bd717faf2b6",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "public/vendor/xterm.js",
+      "sha256": "1f991ac3b4b283ebf96e60ae23a00a52765dd3a2e46fa6fdda9f1aab032f7495",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "scripts/copy-vendor.mjs",
+      "sha256": "290b02c4d6a056075b8506bbfce59f964b052be0129ef87c1754262919b55dfe",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "src/execution-isolation.ts",
+      "sha256": "83dfdf6e98865acce425a66e8eb0bd4cded8425f2f7e2854334db4c730a28f00",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "src/execution-native.ts",
+      "sha256": "4fa8d7600bb79b86e4741aa8952ea4231ce9b6251a553d00c318ea6b97bfcf33",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "src/execution-runtime.ts",
+      "sha256": "0264db73364b929b7a3e9de95093798b303cdb6bc81d301b8bfd327f6944e676",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "src/terminal.ts",
+      "sha256": "080e0e9f8820fb1c704041fbf70ee59c93f44c860c50ab8d7fe2d68669ca6980",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "f7cec1d0f2daf8f46073bc254d22e4ab8c90c4f2f255c924dd5c2f66dc9549a3",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "src/tools/terminal-tools.ts",
+      "sha256": "0da183cef975e88012dd98a56780cc382d80eb6d0580b2406eea955949f522e9",
+      "owner": "DS-04"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/ds04-governance.test.mjs",
+      "sha256": "a993b45b6f69ac010a415674e285eccdc05d446390398c18dd25247deb030774",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
+      "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+      "sha256": "c7b31ff6febde84380d2856105f92a2b7782d5aa8a7c6908365aab1bb430efdb",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "tests/unit/terminal-owner.test.mjs",
+      "sha256": "88a8a471055e0e304e2477395cea2a56d45d2d0bd295443bccf1ddb98e3a0ed9",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs",
+      "sha256": "6a40934e02c117e8a1f4bd05c0d9e1b8104a18b61fb0f36a761ff1773c89db7a",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
+      "sha256": "f70a23c9e33d426c0229fdb13a99521de897526dd81b6955702766d1c910e970",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "tests/integration/process-cwd.test.mjs",
+      "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs",
+      "sha256": "dc52a6dbbf3ff6ef17fa0f97442e8951002011ae0b13b1d24078aa7e88c93991",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "DS-04"
+    },
+    {
+      "exactCasePath": "tests/packaged/ds02-win-unpacked-ipc.test.mjs",
+      "sha256": "ff28ba8a4dda11d0570b04fbe14395e5e1e34301c55bb3f1b89231925eb20314",
+      "kind": "test",
+      "layer": "packaged",
+      "owner": "DS-04"
+    }
+  ],
+  "canonicalPayloadSha256": "5ba72c916f26399053768821e89ecd52e951bc78b109aeceb4ecb30cc6d23d4b"
+}

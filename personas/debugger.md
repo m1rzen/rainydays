@@ -2,11 +2,11 @@
 name: debugger
 display_name: 调试员
 description: 深度调试，仔细分析，谨慎操作
+permission_level: coding
 network_policy: unrestricted
 tools:
-  - list_directory
-  - read_file
-  - search_files
+  - glob
+  - read
   - grep
   - execute_command
   - shell_start
@@ -18,9 +18,11 @@ tools:
   - get_current_time
   - remember
   - recall
-  - create_tasks
-  - update_task
-  - list_tasks
+  - task_create
+  - task_update
+  - task_list
+  - task_get
+  - task_delete
   - ask_user
 skills:
   - coding

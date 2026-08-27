@@ -6,6 +6,7 @@
 // ===========================================
 
 import type { ToolDefinition, ToolExecutor } from "../types.js";
+import { truncateCodePoints } from "../tool-pipeline.js";
 import {
   insertMemory,
   searchMemories,
@@ -74,7 +75,7 @@ export const rememberExec: ToolExecutor = async (args) => {
   insertMemory(content, kind, tags, embedding);
 
   const embStatus = embedding ? "已向量化" : "纯文本";
-  return `✅ 已记住: ${content.slice(0, 60)}${content.length > 60 ? "..." : ""} (类型: ${kind}, 标签: ${tags.join(", ") || "无"}, ${embStatus})`;
+  return `✅ 已记住: ${truncateCodePoints(content, 60, "...")} (类型: ${kind}, 标签: ${tags.join(", ") || "无"}, ${embStatus})`;
 };
 
 // ===========================================

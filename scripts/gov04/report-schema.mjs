@@ -34,7 +34,7 @@ const commandByStep = Object.freeze({
   "typecheck": ["npm", "run", "typecheck"],
   "lint": ["npm", "run", "lint"],
   "source-test-build": ["internal", "source-test-build"],
-  "gov03-quick": ["node", "scripts/run-tests.mjs", "--profile", "quick", "--report", "<run-report>"],
+  "gov03-quick": ["node", "scripts/run-tests.mjs", "--task", "GOV-03", "--profile", "quick", "--report", "<run-report>"],
   "gov03-self-test": ["node", "scripts/test-gate-selftest.mjs", "--task", "GOV-03", "--report", "<run-report>"],
   "sca-production": ["npm", "audit", "--omit=dev", "--registry", "https://registry.npmjs.org", "--audit-level=high", "--json"],
   "sca-full": ["npm", "audit", "--registry", "https://registry.npmjs.org", "--audit-level=high", "--json"],

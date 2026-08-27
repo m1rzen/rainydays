@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "taskId": "TOOL-04",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "sentinel",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "package.json",
+    "scripts/tool04-governance.mjs",
+    "scripts/generate-tool04-resolved-manifest.mjs",
+    "scripts/report-schema.mjs",
+    "native/sandbox-host/sandbox-host.cpp",
+    "native/sandbox-host/sandbox-launcher.cpp",
+    "src/execution-isolation.ts",
+    "src/execution-native.ts",
+    "src/execution-runtime.ts",
+    "src/script-runtime.ts",
+    "src/tool-policies.ts",
+    "src/tool-protocol.ts",
+    "src/tools/index.ts",
+    "src/tools/script.ts",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs",
+    "tests/manifests/sec-03-resolved.json",
+    "tests/sec03-execution-inventory.json",
+    "tests/sec03-execution-policy.json"
+  ],
+  "coverageExemptions": {
+    "package.json": {
+      "reason": "Exact TOOL-04 behavior for package.json is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool04-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/tool04-governance.mjs": {
+      "reason": "Exact TOOL-04 behavior for scripts/tool04-governance.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool04-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/generate-tool04-resolved-manifest.mjs": {
+      "reason": "Exact TOOL-04 behavior for scripts/generate-tool04-resolved-manifest.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool04-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/report-schema.mjs": {
+      "reason": "Exact TOOL-04 behavior for scripts/report-schema.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool04-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "native/sandbox-host/sandbox-host.cpp": {
+      "reason": "Exact TOOL-04 behavior for native/sandbox-host/sandbox-host.cpp is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "native/sandbox-host/sandbox-launcher.cpp": {
+      "reason": "Exact TOOL-04 behavior for native/sandbox-host/sandbox-launcher.cpp is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/execution-isolation.ts": {
+      "reason": "Exact TOOL-04 behavior for src/execution-isolation.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/execution-native.ts": {
+      "reason": "Exact TOOL-04 behavior for src/execution-native.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/execution-runtime.ts": {
+      "reason": "Exact TOOL-04 behavior for src/execution-runtime.ts is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool04-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "src/script-runtime.ts": {
+      "reason": "Exact TOOL-04 behavior for src/script-runtime.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/tool04-script-native.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tool-policies.ts": {
+      "reason": "Exact TOOL-04 behavior for src/tool-policies.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tool-protocol.ts": {
+      "reason": "Exact TOOL-04 behavior for src/tool-protocol.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tools/index.ts": {
+      "reason": "Exact TOOL-04 behavior for src/tools/index.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tools/script.ts": {
+      "reason": "Exact TOOL-04 behavior for src/tools/script.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/tool04-script-native.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "tests/coverage-scope.json": {
+      "reason": "Exact TOOL-04 behavior for tests/coverage-scope.json is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/framework.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "tests/helpers.mjs": {
+      "reason": "Exact TOOL-04 behavior for tests/helpers.mjs is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/framework.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "tests/unit/framework.test.mjs": {
+      "reason": "Exact TOOL-04 behavior for tests/unit/framework.test.mjs is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/framework.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "tests/manifests/sec-03-resolved.json": {
+      "reason": "Exact TOOL-04 behavior for tests/manifests/sec-03-resolved.json is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool04-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "tests/sec03-execution-inventory.json": {
+      "reason": "Exact TOOL-04 behavior for tests/sec03-execution-inventory.json is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool04-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "tests/sec03-execution-policy.json": {
+      "reason": "Exact TOOL-04 behavior for tests/sec03-execution-policy.json is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool04-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/contract/tool04-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/unit/tool04-script-runtime.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/execution-isolation.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/integration/process-cwd.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/tool04-script-native.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/sec03-native-host.test.mjs",
+      "layer": "integration"
+    }
+  ]
+}

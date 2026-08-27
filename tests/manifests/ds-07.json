@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-07",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "package.json",
+    "public/index.html",
+    "public/keyboard-shortcuts.js",
+    "public/renderer.js",
+    "scripts/ds07-governance.mjs",
+    "scripts/generate-ds07-resolved-manifest.mjs",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs"
+  ],
+  "coverageExemptions": {
+    "package.json": {
+      "reason": "DS-07 governance and task runner registration are bound by the resolved governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds07-governance.test.mjs", "layer": "contract" }]
+    },
+    "public/index.html": {
+      "reason": "The local keyboard manager asset is loaded before renderer logic and exercised in real Electron.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "public/keyboard-shortcuts.js": {
+      "reason": "Chord parsing, persistence, conflict detection and platform mapping are covered by exact unit tests.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/keyboard-shortcuts.test.mjs", "layer": "unit" }]
+    },
+    "public/renderer.js": {
+      "reason": "Context priority, history draft restoration, Escape cancellation and Workbench actions are exercised in real Electron.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "scripts/ds07-governance.mjs": {
+      "reason": "Resolved identity validation is exercised by substitution-resistant DS-07 governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds07-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/generate-ds07-resolved-manifest.mjs": {
+      "reason": "Atomic resolved manifest publication and parent pinning are exercised by governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds07-governance.test.mjs", "layer": "contract" }]
+    },
+    "tests/coverage-scope.json": {
+      "reason": "DS-07 exact coverage ownership is checked by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/helpers.mjs": {
+      "reason": "The DS-07 resolved task view is loaded and validated by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/unit/framework.test.mjs": {
+      "reason": "The framework test owns exact DS-07 additional coverage registration and validates itself.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/ds07-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/unit/keyboard-shortcuts.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/run-cancellation.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/workbench-layout.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/ds03-workbench-layout.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+  ]
+}

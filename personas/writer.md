@@ -2,13 +2,14 @@
 name: writer
 display_name: 文档撰写者
 description: 技术文档撰写，关注清晰度和完整性
+permission_level: guarded
 network_policy: unrestricted
 tools:
-  - list_directory
-  - read_file
-  - search_files
-  - write_file
-  - edit_file
+  - glob
+  - read
+  - write
+  - edit
+  - replace
   - create_docx
   - get_current_time
   - remember

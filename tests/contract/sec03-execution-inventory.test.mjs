@@ -61,7 +61,7 @@ test("SEC-03 independent crosscheck rejects alias re-export callable escape and 
   assert.equal(result.migrated, false);
 });
 
-test("SEC-03 authored projection includes native host sources and public HTML inline scripts", () => {
+test("SEC-03 authored projection includes native host sources and public renderer scripts", () => {
   const native = scanSec03Source("native/sandbox-host/synthetic.cpp", `// CreateProcessW(fake);\nconst char* text="CreateJobObjectW(fake)"; int run(){ auto job=CreateJobObjectW(nullptr,nullptr); return CreateProcessW(app,cmd,0,0,TRUE,flags,env,cwd,startup,process); }`);
   assert.deepEqual(native.map(site => site.api).sort(), ["CreateJobObjectW", "CreateProcessW"]);
   const html = scanSec03Source("public/synthetic.html", `<p>fetch("not-code")</p><script type="module">// fetch("comment")\nfetch("/api/runtime")</script>`);
@@ -75,6 +75,7 @@ test("SEC-03 inventory reports current product migration drift without disguisin
   assert(inventory.sites.length > 0);
   assert(inventory.files.some(file => file.sourcePath.startsWith("native/sandbox-host/") && file.executionClass === "native-host"));
   assert(inventory.files.some(file => file.sourcePath === "public/index.html"));
+  assert(inventory.files.some(file => file.sourcePath === "public/renderer.js" && file.executionClass === "product-runtime"));
   assert.equal(new Set(inventory.sites.map(site => site.id)).size, inventory.sites.length, "occurrence IDs must be globally exact");
   if (!inventory.migrated) assert(inventory.violations.length > 0, "unmigrated source must expose concrete drift");
   else assert.deepEqual(inventory.violations, []);

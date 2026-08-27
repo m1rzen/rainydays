@@ -64,10 +64,113 @@ test("SEC-02 SQLite active main multi-hardlink poisons the guarded connection", 
   });
 });
 
+test("SEC-06 persisted audit journal survives restart, rejects mutation and enters snapshots", async () => {
+  assert.deepEqual(await runScenario("security-audit"), {
+    scenario: "security-audit",
+    persistedAcrossReopen: true,
+    appendOnlyTriggers: true,
+    snapshotContainsKeyAndChain: true,
+    secretBytesAbsent: true,
+    tamperDetected: true,
+    tailTruncationDetected: true,
+    missingCheckpointDetected: true,
+    genesisPublishedAtomically: true,
+  });
+});
+
+test("DATA-01 corrupted WAL is rejected before writable open without mutating recovery evidence", async () => {
+  assert.deepEqual(await runScenario("wal-corruption"), {
+    scenario: "wal-corruption",
+    corruptionsDenied: 11,
+    identityViolationsDenied: 2,
+    sourceByteIdentical: true,
+    validWalRecovered: true,
+    cleanClose: true,
+  });
+});
+
+test("DATA-01 SQLite online backup seals WAL content into one validated snapshot", async () => {
+  assert.deepEqual(await runScenario("snapshot"), {
+    scenario: "snapshot",
+    schemaVersion: 11,
+    walContentPreserved: true,
+    checksPassed: true,
+    cleanClose: true,
+  });
+});
+
+test("DATA-01 validated restore plan denies active DB and publishes the frozen snapshot after close", async () => {
+  assert.deepEqual(await runScenario("restore"), {
+    scenario: "restore",
+    activeDatabaseDenied: true,
+    publishAfterCloseSucceeded: true,
+    postBackupMutationAbsent: true,
+    oneShot: true,
+  });
+});
+
+test("DATA-01 restore publication refuses live SQLite sidecars without consuming the plan", async () => {
+  assert.deepEqual(await runScenario("restore-sidecar"), {
+    scenario: "restore-sidecar",
+    liveSidecarDenied: true,
+    liveSidecarUnchanged: true,
+    discardAfterDenial: true,
+  });
+});
+
+test("DATA-01B restore preflight rejects foreign-user vault and audit key before PREPARED", async () => {
+  assert.deepEqual(await runScenario("restore-dpapi-preflight"), {
+    scenario: "restore-dpapi-preflight",
+    foreignVaultDenied: true,
+    foreignAuditKeyDenied: true,
+    auditPreflightMatrix: 7,
+    noPreparedTransaction: true,
+    cleanClose: true,
+  });
+});
+
+test("DATA-01 restore rejects config references absent from the opaque vault before staging", async () => {
+  assert.deepEqual(await runScenario("restore-config-mismatch"), {
+    scenario: "restore-config-mismatch",
+    mismatchDenied: true,
+    stagingLeaseNotIssued: true,
+    cleanClose: true,
+  });
+});
+
+test("DATA-01 managed backup authenticates every allowlisted managed role and discard is one-shot", async () => {
+  assert.deepEqual(await runScenario("restore-rich-managed"), {
+    scenario: "restore-rich-managed",
+    allManagedRoles: true,
+    discardOneShot: true,
+    incompatibleVersionDenied: true,
+    exactSetPublished: true,
+    cleanClose: true,
+  });
+});
+
+test("DATA-01 restore staging primitives reject invalid input and enforce one-shot lifecycle", async () => {
+  assert.deepEqual(await runScenario("restore-primitives"), {
+    scenario: "restore-primitives",
+    invalidArgumentsDenied: true,
+    rejectedCandidateCleaned: true,
+    activeLeaseBlockedRetirement: true,
+    oneShotLease: true,
+    activeDatabaseDenied: true,
+    sidecarDeniedUnchanged: true,
+    multiLinkDenied: true,
+    publishAfterDenialsSucceeded: true,
+    invalidTemporaryPrefixDenied: true,
+    closedDatabaseLeaseDenied: true,
+    activeRuntimeLeaseBlockedRetirement: true,
+    closedRuntimeLeaseDenied: true,
+  });
+});
+
 test("SEC-02 governed database facade exercises the persistent schema and CRUD surface", async () => {
   assert.deepEqual(await runScenario("crud"), {
     scenario: "crud",
     crudCovered: true,
-    schemaVersion: 1,
+    schemaVersion: 11,
   });
 });

@@ -267,10 +267,14 @@ test("SEC-02 save_persona exclusively creates a user definition and hot reloads 
   assert.equal(loaded.displayName, "Saved Persona");
   assert.match(loaded.systemPrompt, /Saved managed prompt/);
   if (savePersonaRecorder.enabled) await savePersonaRecorder.positive("SEC02-POS-persona");
-  const second = await exec({ name: "saved-persona", displayName: "Duplicate" }, {});
-  assert.match(second, /已存在/);
-  const invalid = await exec({ name: "../escape", displayName: "Escape" }, {});
-  assert.match(invalid, /Persona 名称必须/);
+  await assert.rejects(
+    () => exec({ name: "saved-persona", displayName: "Duplicate" }, {}),
+    /已存在/u,
+  );
+  await assert.rejects(
+    () => exec({ name: "../escape", displayName: "Escape" }, {}),
+    /Persona 名称必须/u,
+  );
   await assert.rejects(() => fs.access(path.join(userData, "escape.md")));
 });
 
@@ -385,6 +389,7 @@ test("SEC-02 Playbook definitions use strict names, schema, and exclusive create
       { systemPrompt: "managed" },
       { sessionId: "managed-test-session", runId: "managed-test-run" },
       {
+        signal: new AbortController().signal,
         getToolDefinitions: () => [],
         executeTool: async () => { executorCalls += 1; return "unexpected"; },
       }

@@ -75,7 +75,7 @@ async function api(base, token, route, options = {}) {
 async function startServer(fixture, configPath, token) {
   const port = await freePort();
   const base = `http://127.0.0.1:${port}/api`;
-  const child = spawnManaged(process.execPath, ["dist/index.js"], {
+  const child = spawnManaged(process.execPath, ["tests/fixtures/server-with-test-protector.mjs"], {
     cwd: projectRoot,
     env: {
       ...process.env,
@@ -84,6 +84,7 @@ async function startServer(fixture, configPath, token) {
       RAINYDAYS_USER_DATA_DIR: fixture,
       RAINYDAYS_DATA_DIR: path.join(fixture, "data"),
       RAINYDAYS_CONFIG_PATH: configPath,
+      RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER: "1",
       RAINYDAYS_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
       RAINYDAYS_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
       RAINYDAYS_PUBLIC_DIR: path.join(projectRoot, "public"),
@@ -160,35 +161,46 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
 
     const session = await api(server.base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: "SEC-02 root enrollment" }) });
     assert.equal(session.status, 200);
+    const sessionId = session.body.session.id;
+    const runtimeApi = (route, options = {}) => api(server.base, token, route, {
+      ...options,
+      headers: { "X-RainyDays-Session": sessionId, ...options.headers },
+    });
+    const initialSettings = await api(server.base, token, "/settings");
+    assert.equal(initialSettings.status, 200);
+    let expectedRevision = initialSettings.body.revision;
+    assert.equal(typeof expectedRevision, "string");
 
-    const initialRoots = await api(server.base, token, "/files/roots");
+    const initialRoots = await runtimeApi("/files/roots");
     assert.equal(initialRoots.status, 200);
     assert.equal(initialRoots.body.roots.find(root => root.id === "workspace").path, oldWorkspace);
-    const preview = await api(server.base, token, "/files/preview?root=workspace&path=old.png");
+    const preview = await runtimeApi("/files/preview?root=workspace&path=old.png");
     assert.equal(preview.status, 200);
     assert.equal(preview.body.kind, "image");
 
-    const full = await fetch(`${server.base}/files/content?root=workspace&path=old.png`, { headers: { "X-RainyDays-Token": token } });
+    const full = await fetch(`${server.base}/files/content?root=workspace&path=old.png`, {
+      headers: { "X-RainyDays-Token": token, "X-RainyDays-Session": sessionId },
+    });
     assert.equal(full.status, 200);
     assert.deepEqual(Buffer.from(await full.arrayBuffer()), oldImage);
     const range = await fetch(`${server.base}/files/content?root=workspace&path=old.png`, {
-      headers: { "X-RainyDays-Token": token, Range: "bytes=2-5" },
+      headers: { "X-RainyDays-Token": token, "X-RainyDays-Session": sessionId, Range: "bytes=2-5" },
     });
     assert.equal(range.status, 206);
     assert.equal(range.headers.get("content-range"), `bytes 2-5/${oldImage.length}`);
     assert.equal(Buffer.from(await range.arrayBuffer()).toString("utf8"), "2345");
     const suffix = await fetch(`${server.base}/files/content?root=workspace&path=old.png`, {
-      headers: { "X-RainyDays-Token": token, Range: "bytes=-5" },
+      headers: { "X-RainyDays-Token": token, "X-RainyDays-Session": sessionId, Range: "bytes=-5" },
     });
     assert.equal(suffix.status, 206);
     assert.equal(Buffer.from(await suffix.arrayBuffer()).toString("utf8"), "IMAGE");
     const invalidRange = await fetch(`${server.base}/files/content?root=workspace&path=old.png`, {
-      headers: { "X-RainyDays-Token": token, Range: "bytes=999-1000" },
+      headers: { "X-RainyDays-Token": token, "X-RainyDays-Session": sessionId, Range: "bytes=999-1000" },
     });
     assert.equal(invalidRange.status, 416);
     assert.equal(invalidRange.headers.get("content-range"), `bytes */${oldImage.length}`);
 
-    const directTerminal = await api(server.base, token, "/terminals", {
+    const directTerminal = await runtimeApi("/terminals", {
       method: "POST",
       body: JSON.stringify({ name: "old-authority", shell: "cmd", cwd: oldWorkspace }),
     });
@@ -197,16 +209,17 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
 
     const enrolled = await api(server.base, token, "/settings/general", {
       method: "PUT",
-      body: JSON.stringify({ workspaceRoot: newWorkspace, departmentDataRoot: newDepartment, outputDir: newOutput }),
+      body: JSON.stringify({ workspaceRoot: newWorkspace, departmentDataRoot: newDepartment, outputDir: newOutput, expectedRevision }),
     });
     assert.equal(enrolled.status, 200, JSON.stringify(enrolled.body));
+    expectedRevision = enrolled.body.settings.revision;
 
-    const currentRoots = await api(server.base, token, "/files/roots");
+    const currentRoots = await runtimeApi("/files/roots");
     assert.equal(currentRoots.status, 200);
     assert.equal(currentRoots.body.roots.find(root => root.id === "workspace").path, newWorkspace);
-    const oldPreview = await api(server.base, token, "/files/preview?root=workspace&path=old.png");
+    const oldPreview = await runtimeApi("/files/preview?root=workspace&path=old.png");
     assert.equal(oldPreview.status, 400);
-    const newPreview = await api(server.base, token, "/files/preview?root=workspace&path=new.png");
+    const newPreview = await runtimeApi("/files/preview?root=workspace&path=new.png");
     assert.equal(newPreview.status, 200);
 
     const stableConfigBytes = await fs.readFile(configPath);
@@ -223,7 +236,7 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
       const auditOffset = parsePathDenialEvents(server.logs()).length;
       const denied = await api(server.base, token, "/settings/general", {
         method: "PUT",
-        body: JSON.stringify(vector.body),
+        body: JSON.stringify({ ...vector.body, expectedRevision }),
       });
       assert.equal(denied.status, 400, `${vector.family} Settings path was not denied`);
       await waitFor(
@@ -232,7 +245,7 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
       );
       const events = parsePathDenialEvents(server.logs()).slice(auditOffset).filter(event => event.rootId === vector.rootId);
       assert.deepEqual(await fs.readFile(configPath), stableConfigBytes);
-      assert.equal((await api(server.base, token, "/files/roots")).status, 200);
+      assert.equal((await runtimeApi("/files/roots")).status, 200);
       const actual = configurationDenialActual(events, vector.raw);
       assert.deepEqual(actual, {
         denied: true,
@@ -248,21 +261,21 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
     const rollbackOutput = path.join(newWorkspace, "rollback-candidate", "output");
     const rollbackCandidate = await api(server.base, token, "/settings/general", {
       method: "PUT",
-      body: JSON.stringify({ workspaceRoot: newDepartment, outputDir: rollbackOutput }),
+      body: JSON.stringify({ workspaceRoot: newDepartment, outputDir: rollbackOutput, expectedRevision }),
     });
     assert.equal(rollbackCandidate.status, 400);
     await assert.rejects(() => fs.access(path.join(newWorkspace, "rollback-candidate")));
     assert.deepEqual(await fs.readFile(configPath), stableConfigBytes);
-    assert.equal((await api(server.base, token, "/files/roots")).status, 200);
+    assert.equal((await runtimeApi("/files/roots")).status, 200);
 
     const generatedOutput = path.join(newWorkspace, "generated", "output");
     const missingOutputEnrolled = await api(server.base, token, "/settings/general", {
       method: "PUT",
-      body: JSON.stringify({ outputDir: generatedOutput }),
+      body: JSON.stringify({ outputDir: generatedOutput, expectedRevision }),
     });
     assert.equal(missingOutputEnrolled.status, 200, JSON.stringify(missingOutputEnrolled.body));
     assert.equal((await fs.stat(generatedOutput)).isDirectory(), true);
-    assert.equal((await api(server.base, token, "/files/roots")).body.roots.find(root => root.id === "output").path, generatedOutput);
+    assert.equal((await runtimeApi("/files/roots")).body.roots.find(root => root.id === "output").path, generatedOutput);
 
     const persisted = JSON.parse(await fs.readFile(configPath, "utf8"));
     assert.deepEqual(persisted.settings, {
@@ -275,10 +288,10 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
 
     await stopServer(server);
     server = await startServer(fixture, configPath, token);
-    const restartedRoots = await api(server.base, token, "/files/roots");
+    const restartedRoots = await runtimeApi("/files/roots");
     assert.equal(restartedRoots.status, 200);
     assert.equal(restartedRoots.body.roots.find(root => root.id === "workspace").path, newWorkspace);
-    assert.equal((await api(server.base, token, "/files/preview?root=workspace&path=new.png")).status, 200);
+    assert.equal((await runtimeApi("/files/preview?root=workspace&path=new.png")).status, 200);
   } finally {
     if (server?.child && server.child.exitCode === null) await stopServer(server);
     await removeFixture(fixture);
@@ -307,7 +320,7 @@ test("SEC-02 unsafe disk Settings paths never publish a runtime", async () => {
       const original = Buffer.from(JSON.stringify(config, null, 2));
       await fs.writeFile(configPath, original);
       const port = await freePort();
-      const child = spawnManaged(process.execPath, ["dist/index.js"], {
+      const child = spawnManaged(process.execPath, ["tests/fixtures/server-with-test-protector.mjs"], {
         cwd: projectRoot,
         env: {
           ...process.env,
@@ -316,6 +329,7 @@ test("SEC-02 unsafe disk Settings paths never publish a runtime", async () => {
           RAINYDAYS_USER_DATA_DIR: fixture,
           RAINYDAYS_DATA_DIR: path.join(fixture, "data"),
           RAINYDAYS_CONFIG_PATH: configPath,
+      RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER: "1",
           RAINYDAYS_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
           RAINYDAYS_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
           RAINYDAYS_PUBLIC_DIR: path.join(projectRoot, "public"),
@@ -328,16 +342,35 @@ test("SEC-02 unsafe disk Settings paths never publish a runtime", async () => {
       child.stdout.on("data", chunk => { stdout += chunk; });
       child.stderr.on("data", chunk => { stderr += chunk; });
       try {
-        assert.equal(await waitForChildExit(child, 20_000), true, `${vector.family} disk config did not terminate`);
-        assert.notEqual(child.exitCode, 0, `${vector.family} disk config published a runtime`);
-        const reachable = await fetch(`http://127.0.0.1:${port}/api/status`, {
-          headers: { "X-RainyDays-Token": `sec02-disk-${vector.family}` },
-        }).then(() => true, () => false);
+        const apiBase = `http://127.0.0.1:${port}/api`;
+        const apiToken = `sec02-disk-${vector.family}`;
+        await waitFor(async () => {
+          if (child.exitCode !== null) return true;
+          const response = await fetch(`${apiBase}/status`, { headers: { "X-RainyDays-Token": apiToken } }).catch(() => null);
+          return response?.ok === true;
+        }, { timeoutMs: 20_000, label: `${vector.family} lazy runtime startup` });
+
+        let runtimePublications = 0;
+        if (child.exitCode === null) {
+          const creation = await api(apiBase, apiToken, "/sessions", {
+            method: "POST",
+            body: JSON.stringify({ title: `invalid-${vector.family}` }),
+          });
+          assert.notEqual(creation.status, 200, `${vector.family} disk config created a Session runtime`);
+          const sessions = await api(apiBase, apiToken, "/sessions");
+          const status = await api(apiBase, apiToken, "/status");
+          assert.deepEqual(sessions.body.sessions, [], `${vector.family} failed runtime left a Session row`);
+          assert.deepEqual(status.body.runtimes, [], `${vector.family} failed runtime remained published`);
+          runtimePublications = creation.status === 200 || status.body.runtimes.length > 0 ? 1 : 0;
+        } else {
+          assert.notEqual(child.exitCode, 0, `${vector.family} disk config exited successfully without a runtime`);
+        }
+
         const unchanged = Buffer.compare(await fs.readFile(configPath), original) === 0;
         const events = parsePathDenialEvents({ stdout, stderr }).filter(event => event.rootId === vector.rootId);
         const actual = configurationDenialActual(events, vector.raw);
         actual.persistCalls = unchanged ? 0 : 1;
-        actual.runtimePublications = reachable ? 1 : 0;
+        actual.runtimePublications = runtimePublications;
         assert.deepEqual(actual, {
           denied: true,
           persistCalls: 0,
@@ -373,23 +406,32 @@ test("SEC-02 real persistence failure retires old authority and stops fail-close
   let server;
   try {
     server = await startServer(fixture, configPath, token);
-    assert.equal((await api(server.base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: "persist failure" }) })).status, 200);
-    const directTerminal = await api(server.base, token, "/terminals", {
+    const session = await api(server.base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: "persist failure" }) });
+    assert.equal(session.status, 200);
+    const sessionId = session.body.session.id;
+    const runtimeApi = (route, options = {}) => api(server.base, token, route, {
+      ...options,
+      headers: { "X-RainyDays-Session": sessionId, ...options.headers },
+    });
+    const directTerminal = await runtimeApi("/terminals", {
       method: "POST",
       body: JSON.stringify({ name: "retirement-canary", shell: "cmd", cwd: workspace }),
     });
     assert.equal(directTerminal.status, 403);
     assert.equal(directTerminal.body.code, "EXEC_DIRECT_MUTATION_DENIED");
 
+    const settings = await api(server.base, token, "/settings");
+    assert.equal(settings.status, 200);
+    assert.equal(typeof settings.body.revision, "string");
     await fs.rename(configDirectory, preservedConfigDirectory);
     await fs.symlink(outside, configDirectory, "junction");
     const failed = await api(server.base, token, "/settings/general", {
       method: "PUT",
-      body: JSON.stringify({ workspaceRoot: nextWorkspace }),
+      body: JSON.stringify({ workspaceRoot: nextWorkspace, expectedRevision: settings.body.revision }),
     });
     assert.equal(failed.status, 400);
     assert.match(failed.body.error, /runtime recovery failed|PATH_ROOT_UNAVAILABLE|PATH_IDENTITY_CHANGED/);
-    const rootsStatus = (await api(server.base, token, "/files/roots")).status;
+    const rootsStatus = (await runtimeApi("/files/roots")).status;
     assert.equal(rootsStatus, 400);
     const diskPreserved = Buffer.compare(await fs.readFile(path.join(preservedConfigDirectory, "config.json")), original) === 0;
     assert.equal(diskPreserved, true);
@@ -501,7 +543,7 @@ test("SEC-02 config parent junction fails closed before runtime publication", as
   const original = Buffer.from(JSON.stringify(configFor(workspace, department, output), null, 2));
   await fs.writeFile(path.join(outside, "config.json"), original);
   const port = await freePort();
-  const child = spawnManaged(process.execPath, ["dist/index.js"], {
+  const child = spawnManaged(process.execPath, ["tests/fixtures/server-with-test-protector.mjs"], {
     cwd: projectRoot,
     env: {
       ...process.env,
@@ -510,6 +552,7 @@ test("SEC-02 config parent junction fails closed before runtime publication", as
       RAINYDAYS_USER_DATA_DIR: fixture,
       RAINYDAYS_DATA_DIR: path.join(fixture, "data"),
       RAINYDAYS_CONFIG_PATH: configPath,
+      RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER: "1",
       RAINYDAYS_BUILTIN_PERSONAS_DIR: path.join(projectRoot, "personas"),
       RAINYDAYS_BUILTIN_SKILLS_DIR: path.join(projectRoot, "skills"),
       RAINYDAYS_PUBLIC_DIR: path.join(projectRoot, "public"),

@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "taskId": "EVT-02",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/evt-02.json",
+    "sha256": "32bdd905ba50610c25204a47bf828e6f4d22e300c6c658a1d1d6f5abed50702e"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/cron.js",
+      "sha256": "ebb124c04a188ad49bcf9555e4abeba2061575b4f577e7b3dafac29024b97fd1",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "dist/db.js",
+      "sha256": "5cfc545b89b8b5d6a49a06c219cc991ea1c0cd9980e1306c755f47c8dff173fb",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "ada797ef15969b70aab116a0e062ee98a68524e83c7d33e173aea2c0e6b9fe86",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "dist/tools/ask-user-tool.js",
+      "sha256": "a3d5fb7dfe7eae01a44863bbc3b8677ee0621bcb51e99e0b055a087ed4e17687",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "dist/tools/cron-tools.js",
+      "sha256": "5cabaa500cf371bd82b1728094b16ca68923fb8a275001ca0ff3132ddc3ed669",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "src/cron.ts",
+      "sha256": "61d8f6d6732e7c6a4c31b10044193ebedc52b68404dd5b2d55bf869fcd42fd90",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "src/tools/ask-user-tool.ts",
+      "sha256": "1566e6606325bf4ac926c735e11e06ee2936b931288d6d73eb8037653668801e",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "src/tools/cron-tools.ts",
+      "sha256": "24bd742bd88a5164ab1083e07cc7eefbf9ae43289731dab59f97daa94b48c0bd",
+      "owner": "EVT-02"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/evt02-governance.test.mjs",
+      "sha256": "3c504cde7795e3573052c7b2f57bc309964444a6a0be785332f9dd0dedd827ee",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "tests/unit/cron.test.mjs",
+      "sha256": "a9dfeefcd3bdb46c620bebef07b25b7312a2c654a7970b098a5c45bd78587003",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "tests/unit/run-interaction-channel.test.mjs",
+      "sha256": "39306ed056c52e42747c9f91136b66f09836e4e4a138afdb4a6f780d64f27664",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "tests/integration/evt02-cron-flow.test.mjs",
+      "sha256": "711c416ed1efecec13ce3c4430b44a1b40458c150185ea5520b2f297eac3b4f6",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "EVT-02"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "EVT-02"
+    }
+  ],
+  "canonicalPayloadSha256": "8c391c2be2b59fd8194bc97cfd12bac4f4d66110acc276c982dff0d14dcd2ec3"
+}

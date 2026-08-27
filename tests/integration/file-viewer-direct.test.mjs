@@ -5,12 +5,30 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { capabilityBroker } from "../../dist/tools/index.js";
-import { fileViewerService } from "../../dist/file-viewer.js";
-import { PathDeniedError } from "../../dist/path-policy.js";
-import { pathPolicy } from "../../dist/path-runtime.js";
-import { issueResourceOwner, registerOwnedResource, retireResourceOwner } from "../../dist/resource-owner.js";
 import { createSec02Recorder } from "../sec02-receipts.mjs";
+import { projectRoot } from "../helpers.mjs";
+
+const moduleFixture = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec02-viewer-module-"));
+const moduleData = path.join(moduleFixture, "data");
+await fs.mkdir(moduleData, { recursive: true });
+process.env.RAINYDAYS_APP_ROOT = projectRoot;
+process.env.RAINYDAYS_USER_DATA_DIR = moduleFixture;
+process.env.RAINYDAYS_DATA_DIR = moduleData;
+const [
+  { capabilityBroker },
+  { fileViewerService },
+  { PathDeniedError },
+  { pathPolicy },
+  { issueResourceOwner, registerOwnedResource, retireResourceOwner },
+  { closeDb },
+] = await Promise.all([
+  import("../../dist/tools/index.js"),
+  import("../../dist/file-viewer.js"),
+  import("../../dist/path-policy.js"),
+  import("../../dist/path-runtime.js"),
+  import("../../dist/resource-owner.js"),
+  import("../../dist/db.js"),
+]);
 
 const permissions = Object.freeze([
   "read-file", "read-directory", "search-tree", "create-file", "replace-file",
@@ -21,7 +39,11 @@ const viewerRecorder = await createSec02Recorder(import.meta.url, "SEC-02 File V
 const auditKeys = ["authorityEpoch", "code", "event", "inputFingerprint", "operation", "operationId", "principal", "rootId", "runId", "sessionId", "timestamp"].sort();
 const processContext = new AsyncLocalStorage();
 
-test.after(async () => viewerRecorder.close());
+test.after(async () => {
+  await viewerRecorder.close();
+  closeDb();
+  await fs.rm(moduleFixture, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+});
 
 async function captureDeniedOperation(action, rawInput, sentinelPath) {
   const events = [];

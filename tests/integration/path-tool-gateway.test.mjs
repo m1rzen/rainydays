@@ -1,21 +1,44 @@
 import assert from "node:assert/strict";
 import { AsyncLocalStorage, createHook } from "node:async_hooks";
 import fs from "node:fs/promises";
+import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import {
-  editFileExec,
-  grepExec,
-  listDirectoryExec,
-  readFileExec,
-  searchFilesExec,
-  writeFileExec,
-} from "../../dist/tools/filesystem.js";
-import { downloadExec } from "../../dist/tools/download-tool.js";
-import { createDocxExec, createXlsxExec } from "../../dist/tools/writer.js";
-import { PathDeniedError } from "../../dist/path-policy.js";
+import { fileURLToPath } from "node:url";
 import { createSec02Recorder } from "../sec02-receipts.mjs";
+
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+const bootstrapFixture = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-path-tool-bootstrap-"));
+const bootstrapData = path.join(bootstrapFixture, "data");
+await fs.mkdir(bootstrapData, { recursive: true });
+process.env.RAINYDAYS_APP_ROOT = projectRoot;
+process.env.RAINYDAYS_USER_DATA_DIR = bootstrapFixture;
+process.env.RAINYDAYS_DATA_DIR = bootstrapData;
+
+const [
+  { editFileExec, grepExec, listDirectoryExec, readFileExec, searchFilesExec, writeFileExec },
+  { downloadExec },
+  { createDocxExec, createXlsxExec },
+  { PathDeniedError },
+  { issueResourceOwner, retireResourceOwner },
+  { NEVER_ABORT_SIGNAL },
+] = await Promise.all([
+  import("../../dist/tools/filesystem.js"),
+  import("../../dist/tools/download-tool.js"),
+  import("../../dist/tools/writer.js"),
+  import("../../dist/path-policy.js"),
+  import("../../dist/resource-owner.js"),
+  import("../../dist/run-cancellation.js"),
+]);
+
+const fixtureResourceOwner = issueResourceOwner({
+  authorityId: "path-tool-gateway-fixture",
+  authorityEpoch: 1,
+  sessionId: "path-tool-gateway-fixture",
+  principal: "test",
+  rootIds: ["workspace", "output"],
+});
 
 const attackMatrix = JSON.parse(await fs.readFile(new URL("../sec02-attack-matrix.json", import.meta.url), "utf8"));
 const observationById = new Map(attackMatrix.scenarios.flatMap(scenario => scenario.observations).map(observation => [observation.id, observation]));
@@ -70,7 +93,7 @@ async function realRuntime() {
     ]);
     const toolNames = [
       "list_directory", "read_file", "search_files", "grep", "write_file", "edit_file",
-      "download", "create_docx", "create_xlsx", "image_helper",
+      "download", "create_docx", "create_xlsx", "image_helper", "fetch_url",
     ];
     const persona = personaModule.createEffectivePersona({
       name: "sec02-path-tools",
@@ -123,7 +146,7 @@ async function realRuntime() {
       workspace,
       output,
       outside,
-      execute: (name, args) => toolsModule.executeTool(root, name, args),
+      execute: (name, args, signal = NEVER_ABORT_SIGNAL) => toolsModule.executeTool(root, name, args, null, null, signal),
       approved,
       close: async () => {
         toolsModule.capabilityBroker.finishContext(root);
@@ -223,7 +246,12 @@ function gateway(overrides = {}) {
 }
 
 function invocation(pathGateway) {
-  return Object.freeze({ path: pathGateway });
+  return Object.freeze({
+    path: pathGateway,
+    network: Object.freeze({ fetch: (url, init) => globalThis.fetch(url, init) }),
+    signal: NEVER_ABORT_SIGNAL,
+    resourceOwner: fixtureResourceOwner,
+  });
 }
 
 test.after(async () => {
@@ -237,16 +265,22 @@ test.after(async () => {
     imageRecorder.close(),
   ]);
   if (realRuntimePromise) await (await realRuntimePromise).close();
+  await retireResourceOwner(fixtureResourceOwner);
+  await fs.rm(bootstrapFixture, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
 
 test("SEC-02 filesystem source has no raw filesystem or lexical authorization fallback", async () => {
-  const source = await fs.readFile(new URL("../../src/tools/filesystem.ts", import.meta.url), "utf8");
-  assert(!/from\s+["'](?:node:)?fs(?:\/promises)?["']/.test(source));
-  assert(!/\bfs\s*\./.test(source));
-  assert(!/path\.resolve\s*\(/.test(source));
-  assert(!/replace\s*\(\/\\\.\\\.\//.test(source));
-  assert(!/process\.env/.test(source));
-  assert.match(source, /parseFileBuffer\(/);
+  const sources = await Promise.all([
+    "filesystem.ts", "filesystem-lux.ts", "filesystem-grep.ts",
+  ].map(name => fs.readFile(new URL(`../../src/tools/${name}`, import.meta.url), "utf8")));
+  for (const source of sources) {
+    assert(!/from\s+["'](?:node:)?fs(?:\/promises)?["']/.test(source));
+    assert(!/\bfs\s*\./.test(source));
+    assert(!/path\.resolve\s*\(/.test(source));
+    assert(!/replace\s*\(\/\\\.\\\.\//.test(source));
+    assert(!/process\.env/.test(source));
+  }
+  assert.match(sources[1], /parseDocumentIsolated\(/);
 });
 
 test("SEC-02 list_directory delegates the raw input and exact DATA_ROOT ID", async () => {
@@ -371,7 +405,7 @@ test("SEC-02 edit_file no-match is a no-write transform result", async () => {
 test("SEC-02 grep uses only search-tree directory and bounded file operations", async () => {
   const calls = [];
   const output = await grepExec(
-    { pattern: "needle", path: "src", file_pattern: "*.txt" },
+    { pattern: "needle", path: "src", glob: "*.txt", output_mode: "content" },
     {},
     invocation(gateway({
       searchDirectory: async (input, options) => {
@@ -388,16 +422,16 @@ test("SEC-02 grep uses only search-tree directory and bounded file operations", 
     ["directory", "src", { defaultRootId: "workspace", maxEntries: 10_000 }],
     ["file", "src\\a.txt", { defaultRootId: "workspace", maxBytes: 8 * 1024 * 1024 }],
   ]);
-  assert.match(output, /src\\a\.txt:2: needle value/);
-  const realOutput = await (await realRuntime()).execute("grep", { pattern: "dispatcher", path: "" });
-  assert.match(realOutput, /input\.txt:1: dispatcher read content/);
+  assert.match(output, /src\\a\.txt:2:needle value/);
+  const realOutput = await (await realRuntime()).execute("grep", { pattern: "dispatcher", path: "", output_mode: "content" });
+  assert.match(realOutput, /input\.txt:1:dispatcher read content/);
   if (grepRecorder.enabled) await grepRecorder.positive("SEC02-POS-grep");
 });
 
 test("SEC-02 filesystem executors fail closed without invocation services", async () => {
   await assert.rejects(() => listDirectoryExec({}, {}), /Path gateway is required/);
-  await assert.rejects(() => readFileExec({ path: "x.txt" }, {}), /Path gateway is required/);
-  await assert.rejects(() => writeFileExec({ path: "x.txt", content: "x" }, {}), /Path gateway is required/);
+  await assert.rejects(() => readFileExec({ path: "x.txt" }, {}), /Tool invocation services are required/);
+  await assert.rejects(() => writeFileExec({ path: "x.txt", content: "x" }, {}), /Tool invocation services are required/);
 });
 
 test("SEC-02 filesystem coverage recovery closes bounded formatting and gateway edge branches", async () => {
@@ -407,19 +441,22 @@ test("SEC-02 filesystem coverage recovery closes bounded formatting and gateway 
 
   const empty = await listDirectoryExec({}, {}, invocation(gateway({ listDirectory: async () => [] })));
   assert.match(empty, /目录为空: \(根目录\)/u);
-  const failed = await readFileExec({ path: "broken.docx" }, {}, invocation(gateway({
-    readFile: async () => ({ bytes: Buffer.from("not-a-docx"), rootId: "workspace", identity: {}, snapshot: {} }),
-  })));
-  assert.match(failed, /读取失败/u);
+  await assert.rejects(
+    () => readFileExec({ path: "broken.docx" }, {}, invocation(gateway({
+      readFile: async () => ({ bytes: Buffer.from("not-a-docx"), rootId: "workspace", identity: {}, snapshot: {} }),
+    }))),
+    /读取失败/u,
+  );
   const longText = Array.from({ length: 90 }, (_, index) => `${index}-${"x".repeat(100)}`).join("\n");
   const truncated = await readFileExec({ path: "long.txt" }, {}, invocation(gateway({
     readFile: async () => ({ bytes: Buffer.from(longText), rootId: "workspace", identity: {}, snapshot: {} }),
   })));
-  assert.match(truncated, /省略中间内容/u);
+  assert.match(truncated, /89-xxxxxxxx/u);
+  assert(!truncated.includes("省略中间内容"));
   const paged = await readFileExec({ path: "short.txt", offset: 1, limit: 1 }, {}, invocation(gateway({
     readFile: async () => ({ bytes: Buffer.from("one\ntwo"), rootId: "workspace", identity: {}, snapshot: {} }),
   })));
-  assert.match(paged, /继续读取/u);
+  assert.match(paged, /下一页 offset=2/u);
 
   const many = Array.from({ length: 55 }, (_, index) => ({ name: `needle-${index}.txt`, type: "file" }));
   const manySearch = await searchFilesExec({ keyword: "needle", path: null }, {}, invocation(gateway({ searchDirectory: async () => many })));
@@ -436,7 +473,10 @@ test("SEC-02 filesystem coverage recovery closes bounded formatting and gateway 
     Date.now = originalNow;
   }
 
-  assert.equal(await editFileExec({ path: "x.txt", old_string: "", new_string: "x" }, {}, invocation(gateway())), "old_string 不能为空。");
+  await assert.rejects(
+    () => editFileExec({ path: "x.txt", old_string: "", new_string: "x" }, {}, invocation(gateway())),
+    error => error?.code === "TOOL_ARGUMENTS_INVALID",
+  );
   const ambiguous = await editFileExec({ path: "x.txt", old_string: "same", new_string: "new" }, {}, invocation(gateway({
     replaceFile: async (_input, transform) => {
       const value = await transform(Buffer.from("same same"));
@@ -452,19 +492,23 @@ test("SEC-02 filesystem coverage recovery closes bounded formatting and gateway 
   })));
   assert.match(unique, /替换 1 处/u);
 
-  assert.match(await grepExec({ pattern: "[" }, {}, invocation(gateway())), /无效的正则/u);
+  await assert.rejects(
+    () => grepExec({ pattern: "[" }, {}, invocation(gateway())),
+    error => error?.code === "TOOL_ARGUMENTS_INVALID",
+  );
   const noGrep = await grepExec({ pattern: "needle" }, {}, invocation(gateway({ searchDirectory: async () => [] })));
-  assert.match(noGrep, /未找到/u);
-  const manyGrep = await grepExec({ pattern: "needle", file_pattern: "*.txt" }, {}, invocation(gateway({
+  assert.match(noGrep, /No matches found/u);
+  const manyGrep = await grepExec({ pattern: "needle", glob: "*.txt", output_mode: "content", head_limit: 50 }, {}, invocation(gateway({
     searchDirectory: async input => input === "" ? [{ name: "matches.txt", type: "file" }, { name: ".hidden", type: "directory" }] : [],
     searchFile: async () => ({ bytes: Buffer.from(Array.from({ length: 60 }, () => "needle line").join("\n")), rootId: "workspace", identity: {}, snapshot: {} }),
   })));
-  assert.match(manyGrep, /还有 10 个结果/u);
+  assert.match(manyGrep, /matches\.txt:50:needle line/u);
+  assert(!manyGrep.includes("matches.txt:51:"));
   clockCalls = 0;
   Date.now = () => clockCalls++ === 0 ? 0 : 9_001;
   try {
     const timedGrep = await grepExec({ pattern: "needle" }, {}, invocation(gateway({ searchDirectory: async () => [] })));
-    assert.match(timedGrep, /搜索已超时/u);
+    assert.match(timedGrep, /search timed out/u);
   } finally {
     Date.now = originalNow;
   }
@@ -520,18 +564,153 @@ test("SEC-02 download reserves its target before fetch and commits bounded bytes
   if (downloadRecorder.enabled) await downloadRecorder.positive("SEC02-POS-download");
 });
 
+test("RT-04 download cancellation propagates to fetch and publishes no reserved output", async t => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  const entered = Promise.withResolvers();
+  globalThis.fetch = async (_url, options) => {
+    entered.resolve(options.signal);
+    return await new Promise((resolve, reject) => {
+      const onAbort = () => reject(options.signal.reason);
+      options.signal.addEventListener("abort", onAbort, { once: true });
+      if (options.signal.aborted) onAbort();
+    });
+  };
+  let commits = 0;
+  const controller = new AbortController();
+  const running = downloadExec(
+    { url: "https://example.test/held.bin", filename: "held.bin" },
+    {},
+    {
+      ...invocation(gateway({
+        reserveFile: async () => Object.freeze({ commit: async () => { commits += 1; return {}; } }),
+      })),
+      signal: controller.signal,
+    },
+  );
+  const fetchedSignal = await entered.promise;
+  assert.equal(fetchedSignal.aborted, false);
+  controller.abort(new Error("download cancelled"));
+  assert.equal(fetchedSignal.aborted, true);
+  await assert.rejects(() => running, error => error?.code === "RUN_CANCELLED" && /download cancelled/u.test(error.message));
+  assert.equal(commits, 0);
+});
+
 test("SEC-02 rejected download target invokes zero fetches", async t => {
   const originalFetch = globalThis.fetch;
   t.after(() => { globalThis.fetch = originalFetch; });
   let fetches = 0;
   globalThis.fetch = async () => { fetches += 1; throw new Error("must not fetch"); };
-  const output = await downloadExec(
-    { url: "https://example.test/secret", filename: "..\\escape.bin" },
-    {},
-    invocation(gateway({ reserveFile: async () => { throw new Error("Path operation denied"); } }))
+  await assert.rejects(
+    () => downloadExec(
+      { url: "https://example.test/secret", filename: "..\\escape.bin" },
+      {},
+      invocation(gateway({ reserveFile: async () => { throw new Error("Path operation denied"); } })),
+    ),
+    /Path operation denied/u,
   );
   assert.equal(fetches, 0);
-  assert.match(output, /下载失败/);
+});
+
+test("SEC-02 download closes invocation, naming, response, transport, and size boundaries", async () => {
+  await assert.rejects(() => downloadExec({ url: "https://example.test/file" }, {}), /Tool invocation services are required/u);
+  await assert.rejects(
+    () => downloadExec({ url: "https://example.test/file" }, {}, invocation(gateway({ rootIdForEnv: () => null }))),
+    /Path root is unavailable: OUTPUT_DIR/u,
+  );
+
+  const committed = [];
+  const names = [];
+  const pathGateway = gateway({
+    reserveFile: async name => {
+      names.push(name);
+      return Object.freeze({ commit: async bytes => { committed.push(Buffer.from(bytes)); return {}; } });
+    },
+  });
+  const withoutSignal = {
+    path: pathGateway,
+    network: Object.freeze({ fetch: async () => new Response(null, { status: 200 }) }),
+    resourceOwner: fixtureResourceOwner,
+  };
+  await downloadExec({ url: "https://example.test/path/derived.bin" }, {}, withoutSignal);
+  await downloadExec({ url: "https://example.test/" }, {}, withoutSignal);
+  await downloadExec({ url: "not a url" }, {}, withoutSignal);
+  assert.deepEqual(names, ["derived.bin", "download", "download"]);
+  assert(committed.every(buffer => buffer.length === 0));
+
+  const responseInvocation = (fetchImpl) => ({ ...invocation(pathGateway), network: Object.freeze({ fetch: fetchImpl }) });
+  await assert.rejects(
+    () => downloadExec({ url: "https://example.test/large", filename: "large.bin" }, {}, responseInvocation(async () => new Response(null, {
+      status: 200,
+      headers: { "content-length": String(128 * 1024 * 1024 + 1) },
+    }))),
+    /超过 128 MB/u,
+  );
+  await assert.rejects(
+    () => downloadExec({ url: "https://example.test/missing", filename: "missing.bin" }, {}, responseInvocation(async () => new Response(null, {
+      status: 404,
+      statusText: "Missing",
+    }))),
+    /HTTP 404 Missing/u,
+  );
+  await assert.rejects(
+    () => downloadExec({ url: "https://example.test/string-error", filename: "error.bin" }, {}, responseInvocation(async () => { throw "transport failed"; })),
+    /transport failed/u,
+  );
+
+  const controller = new AbortController();
+  await assert.rejects(
+    () => downloadExec({ url: "https://example.test/abort", filename: "abort.bin" }, {}, {
+      ...invocation(pathGateway),
+      signal: controller.signal,
+      network: Object.freeze({ fetch: async () => {
+        controller.abort(new Error("cancel during fetch"));
+        throw new DOMException("transport aborted", "AbortError");
+      } }),
+    }),
+    error => error?.code === "RUN_CANCELLED" && /cancel during fetch/u.test(error.message),
+  );
+});
+
+test("RT-04 Office writers stop after reservation and publish no file when the run is cancelled", async () => {
+  for (const [execute, args] of [
+    [createDocxExec, { path: "cancelled.docx", paragraphs: ["never generated"] }],
+    [createXlsxExec, { path: "cancelled.xlsx", sheets: [{ name: "Data", data: [["never generated"]] }] }],
+  ]) {
+    const controller = new AbortController();
+    let commits = 0;
+    const scoped = {
+      ...invocation(gateway({
+        reserveFile: async () => {
+          controller.abort(new Error("writer cancelled"));
+          return Object.freeze({ commit: async () => { commits += 1; return {}; } });
+        },
+      })),
+      signal: controller.signal,
+    };
+    await assert.rejects(
+      () => execute(args, {}, scoped),
+      error => error?.code === "RUN_CANCELLED" && /writer cancelled/u.test(error.message),
+    );
+    assert.equal(commits, 0);
+  }
+});
+
+test("SEC-02 Office writers close invocation, root, and empty-content boundaries", async () => {
+  await assert.rejects(() => createDocxExec({ path: "missing.docx", paragraphs: [] }, {}), /Tool invocation services are required/u);
+  await assert.rejects(() => createXlsxExec({ path: "missing.xlsx", sheets: [] }, {}), /Tool invocation services are required/u);
+  const unavailable = invocation(gateway({ rootIdForEnv: () => null }));
+  await assert.rejects(() => createDocxExec({ path: "missing.docx", paragraphs: [] }, {}, unavailable), /Path root is unavailable: OUTPUT_DIR/u);
+  await assert.rejects(() => createXlsxExec({ path: "missing.xlsx", sheets: [] }, {}, unavailable), /Path root is unavailable: OUTPUT_DIR/u);
+
+  const commits = [];
+  const emptyGateway = gateway({
+    reserveFile: async input => Object.freeze({ commit: async bytes => { commits.push([input, Buffer.from(bytes)]); return {}; } }),
+  });
+  await createDocxExec({ path: "empty.docx" }, {}, invocation(emptyGateway));
+  await assert.rejects(() => createXlsxExec({ path: "empty.xlsx" }, {}, invocation(emptyGateway)), /Workbook is empty/u);
+  assert.deepEqual(commits.map(([name]) => name), ["empty.docx"]);
+  assert(commits.every(([, bytes]) => bytes.length > 0));
 });
 
 test("SEC-02 Office writers reserve extension before generation and commit buffers", async () => {
@@ -617,6 +796,136 @@ test("SEC-02 Office writers reserve extension before generation and commit buffe
   }
 });
 
+test("RT-04 image_helper cancellation after authorized read starts no provider request", async t => {
+  const { imageHelperExec } = await import("../../dist/tools/image-helper.js");
+  await assert.rejects(
+    () => imageHelperExec(
+      { file_path: "image.png", query: "describe" },
+      {},
+      invocation(gateway({ readFile: async () => { throw "primitive image read failure"; } })),
+    ),
+    /primitive image read failure/u,
+  );
+
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  let providerCalls = 0;
+  globalThis.fetch = async () => { providerCalls += 1; throw new Error("provider must not start"); };
+  const controller = new AbortController();
+  const scoped = {
+    ...invocation(gateway({
+      readFile: async () => {
+        controller.abort(new Error("image analysis cancelled"));
+        return { bytes: Buffer.from("authorized image"), rootId: "workspace", identity: {}, snapshot: {} };
+      },
+    })),
+    signal: controller.signal,
+  };
+  await assert.rejects(
+    () => imageHelperExec({ file_path: "image.png", query: "describe" }, {}, scoped),
+    error => error?.code === "RUN_CANCELLED" && /image analysis cancelled/u.test(error.message),
+  );
+  assert.equal(providerCalls, 0);
+});
+
+test("RT-04 image_helper binds an authorized image to one signal-aware OpenAI request", async t => {
+  await realRuntime();
+  const [{ imageHelperExec }, { getCurrentProfile, initializeConfig }] = await Promise.all([
+    import("../../dist/tools/image-helper.js"),
+    import("../../dist/config.js"),
+  ]);
+  await initializeConfig();
+  const profile = getCurrentProfile();
+  const originalProfile = { ...profile };
+  const abortEntered = Promise.withResolvers();
+  const received = [];
+  let providerCalls = 0;
+  const server = createServer((request, response) => {
+    providerCalls += 1;
+    const chunks = [];
+    request.on("data", chunk => chunks.push(Buffer.from(chunk)));
+    request.on("end", () => {
+      const body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      received.push(body);
+      if (body.messages[0].content[0].text === "abort") {
+        abortEntered.resolve();
+        return;
+      }
+      const query = body.messages[0].content[0].text;
+      const content = query === "empty" ? null : `vision-ok-${providerCalls}`;
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({
+        id: "chatcmpl-rt04",
+        object: "chat.completion",
+        created: 1,
+        model: "vision-test-model",
+        choices: query === "no-choice"
+          ? []
+          : [{ index: 0, message: { role: "assistant", content }, finish_reason: "stop" }],
+      }));
+    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  assert(address && typeof address === "object");
+  t.after(async () => {
+    Object.assign(profile, originalProfile);
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+  });
+  Object.assign(profile, {
+    apiKey: "rt04-vision-test-key",
+    baseURL: `http://127.0.0.1:${address.port}/v1`,
+    model: "vision-test-model",
+  });
+  const pathGateway = gateway({
+    readFile: async () => ({ bytes: Buffer.from("authorized image"), rootId: "workspace", identity: {}, snapshot: {} }),
+  });
+  const scoped = invocation(pathGateway);
+  for (const [file, query, expected, mime] of [
+    ["image.png", "png", "vision-ok-1", "image/png"],
+    ["image.gif", "gif", "vision-ok-2", "image/gif"],
+    ["image.webp", "webp", "vision-ok-3", "image/webp"],
+    ["image.jpg", "empty", "(视觉模型无回复)", "image/jpeg"],
+    ["image.jpeg", "no-choice", "(视觉模型无回复)", "image/jpeg"],
+  ]) {
+    assert.equal(await imageHelperExec({ file_path: file, query }, {}, scoped), expected);
+    const request = received.at(-1);
+    assert.equal(request.model, "vision-test-model");
+    assert.match(request.messages[0].content[1].image_url.url, new RegExp(`^data:${mime.replace("/", "\\/")};base64,`, "u"));
+  }
+
+  await assert.rejects(
+    () => imageHelperExec({ file_path: "image.png", query: "missing invocation" }, {}, undefined),
+    /invocation services are required/u,
+  );
+  await assert.rejects(
+    () => imageHelperExec(
+      { file_path: "image.png", query: "missing root" },
+      {},
+      { ...invocation(pathGateway), path: gateway({ rootIdForEnv: () => null }) },
+    ),
+    /Path root is unavailable/u,
+  );
+
+  const controller = new AbortController();
+  const aborted = imageHelperExec(
+    { file_path: "image.png", query: "abort" },
+    {},
+    { ...invocation(pathGateway), signal: controller.signal },
+  );
+  await abortEntered.promise;
+  controller.abort(new Error("vision request cancelled"));
+  await assert.rejects(
+    () => aborted,
+    error => error?.code === "RUN_CANCELLED" && /vision request cancelled/u.test(error.message),
+  );
+  assert.equal(providerCalls, 6);
+});
+
 test("SEC-02 image_helper reads authorized bytes before provider setup", async () => {
   const runtime = await realRuntime();
   const authorized = await captureRuntimeAttempt(
@@ -624,8 +933,9 @@ test("SEC-02 image_helper reads authorized bytes before provider setup", async (
     () => runtime.approved("image_helper", { file_path: "image.png", query: "describe" }),
     { trackBase64: true, blockFetch: true }
   );
-  assert.equal(authorized.error, undefined);
-  assert.match(authorized.value, /图像分析失败/);
+  assert.equal(authorized.error?.code, "TOOL_EXECUTION_FAILED");
+  assert.match(authorized.error?.message ?? "", /image_helper execution failed/u);
+  assert.equal(authorized.value, undefined);
   assert.equal(authorized.counters.parserCalls, 1);
   assert(authorized.counters.filesystemCalls > 0);
 
@@ -701,4 +1011,28 @@ test("SEC-02 real dispatcher executes read and exact-approved write/edit through
   } finally {
     await recorder.close();
   }
+});
+
+test("RT-04 non-cooperative tool cancellation revokes capability and poisons the run context", { timeout: 15_000 }, async t => {
+  const runtime = await realRuntime();
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async () => await new Promise(() => {});
+  const controller = new AbortController();
+  const startedAt = Date.now();
+  const running = runtime.execute("fetch_url", { url: "https://non-cooperative.invalid/" }, controller.signal);
+  await new Promise(resolve => setImmediate(resolve));
+  controller.abort(new Error("non-cooperative tool cancelled"));
+  await assert.rejects(
+    () => running,
+    error => error?.code === "RUN_SETTLEMENT_FAILED"
+      && error instanceof AggregateError
+      && /cancellation settlement failed/u.test(error.message),
+  );
+  const elapsed = Date.now() - startedAt;
+  assert(elapsed >= 4_500 && elapsed < 10_000, `unexpected non-cooperative settlement latency: ${elapsed}`);
+  await assert.rejects(
+    () => runtime.execute("read_file", { path: "input.txt" }),
+    error => error?.code === "CAPABILITY_CONTEXT_STALE",
+  );
 });

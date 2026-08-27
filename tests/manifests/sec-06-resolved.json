@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "taskId": "SEC-06",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/sec-06.json",
+    "sha256": "f027c434e5862d2efd8745cba6dff7a74117d8dd3336c4c8ea286969d5d65b0c"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "electron/main.cjs",
+      "sha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "electron/path-bootstrap.cjs",
+      "sha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/agent.ts",
+      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/bootstrap-database.ts",
+      "sha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/credential-store.ts",
+      "sha256": "d58c86483e73f6b1b470b3caa16a62fb184e5506e5aaa2e74cbf439f225196b5",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/daemon.ts",
+      "sha256": "ddf9d8d60660807f41757a3620b431f99573fda211591a9268c8844993a9ee48",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/playbook.ts",
+      "sha256": "a420fdd834db4c8279dc866223a35de37df1a585dde4a35afc4af3f2bc1b004d",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/security-audit-journal.ts",
+      "sha256": "75130d7aa7b1845f77db7abbc8ca5b4a9675327d97de8b47b1dee838bbfd993c",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/security-audit.ts",
+      "sha256": "f824e72639593fc6e5dfe2f0220fcf93620333212c11fb90b6b41e6a992fd868",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/subagent.ts",
+      "sha256": "789f5a07b86c3100b90ac1707201b32c1be970a221631abad2b61afafa4464eb",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "f7cec1d0f2daf8f46073bc254d22e4ab8c90c4f2f255c924dd5c2f66dc9549a3",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "src/version.ts",
+      "sha256": "88d58ae37f27f624eee647775c6f54ff792d1097ed52cf9ab81898f52fb06655",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/agent.js",
+      "sha256": "478c9f9fed363353c12cddabb788fe85c60448d50dff27fb6a6697683ad6d7ba",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/bootstrap-database.js",
+      "sha256": "32eb2871a24cb68209c31897a833e4913815f69882216e494e33a7e42d840a3c",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/credential-store.js",
+      "sha256": "fd345f18f8b1714aebaebea532719375285f844ff468ee207e28ac7fbf52640b",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/daemon.js",
+      "sha256": "b32633c0849bf775ab599a0a3039d51b564436fe86df4953aa290bf5774f7c26",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/db.js",
+      "sha256": "5cfc545b89b8b5d6a49a06c219cc991ea1c0cd9980e1306c755f47c8dff173fb",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "ada797ef15969b70aab116a0e062ee98a68524e83c7d33e173aea2c0e6b9fe86",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/playbook.js",
+      "sha256": "78a8491b360c73d58ae5d1a95e4b31b230dc92f980392fe243d4c234c3959a16",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/security-audit-journal.js",
+      "sha256": "982eca901201b5d78c5955bd536252a21dad9694a17a5b8f0a8625ff667d64ff",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/security-audit.js",
+      "sha256": "685d71bd07584f089193b3bdc0d0469d2df1b5a568a52e8e9d4104f0c8de4e48",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/subagent.js",
+      "sha256": "b1bc9a8882745a76939159c34248a70bf228f907798255e94d875dc714dfb45a",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/tools/index.js",
+      "sha256": "c89fe997e34260991bfa81b25d10388575de10a6b4253c39674797962de48c3e",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "dist/version.js",
+      "sha256": "981683aeb9036331ec3aedd680a8e9695d8c07ac0fab3056fe43df9184a05c80",
+      "owner": "SEC-06"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/unit/security-audit.test.mjs",
+      "sha256": "dfb7263daf53269fae144615d3a52ce9205fb77aea33f535c24c3f146ba260e1",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "tests/unit/electron-path-bootstrap.test.mjs",
+      "sha256": "c130b2cd8c72d13f7d62890e99b83716dceaf4f4ab32ba4707ceb3b00fde076d",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "tests/contract/sec05-credential-store.test.mjs",
+      "sha256": "0515d9224de8e144d070267000bc785723e2344e383b660604538bdd098f6d61",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "tests/contract/sec06-governance.test.mjs",
+      "sha256": "004ef79c9324ec4949617c82a7f29849bf595c0645b34b4a42624777ffe43f13",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
+      "sha256": "ddafc43dec89d904749962cbeb1ace661d63ac748baf04506a0fcbee01493d15",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "tests/integration/daemon-bootstrap-lifetime.test.mjs",
+      "sha256": "631fbb788580ea3ad7875e46415da17c508701268fb3847be561a7059d0fce5b",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+      "sha256": "2950747c306277f7dd9ed0c0ee541817c4d5b87f70dc90e888e5f3555bad68e0",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "tests/integration/sec01-terminal-owner.test.mjs",
+      "sha256": "94334a596e8eba8991fa5286b7def3dc56c6d52dac8c5f4c8a04d88d29485c35",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "SEC-06"
+    },
+    {
+      "exactCasePath": "tests/packaged/sec05-win-unpacked-credentials.test.mjs",
+      "sha256": "33cb49fd11411e43617f51ec035a8380ff7fd3bf96bd0d69df0771fa1189d35c",
+      "kind": "test",
+      "layer": "packaged",
+      "owner": "SEC-06"
+    }
+  ],
+  "canonicalPayloadSha256": "4ba461e9776455992679a87810d48db908aeabeb4a32d9c8ded8e84a74480b15"
+}

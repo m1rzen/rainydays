@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-09",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/rt-09.json",
+    "sha256": "053cc9b9447320b7c72201208a7a7712ec67c275dbd54de1a850a92a76d5c901"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/agent.js",
+      "sha256": "478c9f9fed363353c12cddabb788fe85c60448d50dff27fb6a6697683ad6d7ba",
+      "owner": "RT-09"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "ada797ef15969b70aab116a0e062ee98a68524e83c7d33e173aea2c0e6b9fe86",
+      "owner": "RT-09"
+    },
+    {
+      "exactCasePath": "dist/session.js",
+      "sha256": "2614e8ad5aa360194c5b466c323a3e1ef0386ce79489f60b101bb56997bba49b",
+      "owner": "RT-09"
+    },
+    {
+      "exactCasePath": "public/renderer.js",
+      "sha256": "64c83f779865c2b6705ad49efd8987f9dc1e2f2225d93daf267a7fe2ce6a5fa2",
+      "owner": "RT-09"
+    },
+    {
+      "exactCasePath": "src/agent.ts",
+      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "owner": "RT-09"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "owner": "RT-09"
+    },
+    {
+      "exactCasePath": "src/session.ts",
+      "sha256": "ddee52bb93efe1c0a8ade1c5443d47f1d38e826ca3c269d232d7ed2f6f05924d",
+      "owner": "RT-09"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/rt09-governance.test.mjs",
+      "sha256": "f9da2cc3e02a533410a74352b46c3dd7aed778e5d9b530d5274a84cd85aeb783",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "RT-09"
+    },
+    {
+      "exactCasePath": "tests/integration/rt09-session-semantics.test.mjs",
+      "sha256": "d93b16930a546220c8238c86a56c48259844ebd4c25d72d73b70c521e6851e19",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-09"
+    },
+    {
+      "exactCasePath": "tests/integration/rt09-restore.test.mjs",
+      "sha256": "4555da6c462866718db5e83ac42116ee657fe872a61aeb7db9fdeef4c70f894d",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-09"
+    },
+    {
+      "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+      "sha256": "2950747c306277f7dd9ed0c0ee541817c4d5b87f70dc90e888e5f3555bad68e0",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-09"
+    }
+  ],
+  "canonicalPayloadSha256": "86694ea662abd367085c69fc2acd35be0d445b3c5f202a98dde740f6f3955b17"
+}

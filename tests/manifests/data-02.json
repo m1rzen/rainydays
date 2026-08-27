@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DATA-02",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "src/attachment-store.ts",
+    "src/attachment.ts",
+    "src/db.ts",
+    "src/index.ts",
+    "src/session.ts",
+    "src/task.ts",
+    "src/version.ts",
+    "package.json",
+    "scripts/data02-governance.mjs",
+    "scripts/generate-data02-resolved-manifest.mjs",
+    "scripts/generate-build-info.mjs",
+    "scripts/prepare-electron-app.mjs",
+    "scripts/test-version-model.mjs",
+    "scripts/version-test-child.mjs",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs",
+    "parity/GOV-02-VERSION-MODEL.md",
+    "dist/attachment-store.js",
+    "dist/attachment.js",
+    "dist/db.js",
+    "dist/index.js",
+    "dist/session.js",
+    "dist/task.js",
+    "dist/version.js"
+  ],
+  "tests": [
+    {
+      "exactCasePath": "tests/contract/data02-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/unit/attachment.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/integration/data02-session-transfer.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/ds05-attachments.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/version-model.test.mjs",
+      "layer": "integration"
+    }
+  ]
+}

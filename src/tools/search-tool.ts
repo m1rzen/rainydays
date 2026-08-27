@@ -1,26 +1,25 @@
 // ===========================================
-// web_search 工具 —— 网页搜索
-// 使用 DuckDuckGo HTML 版（无需 API Key）
+// web_search —— provider adapter with structured, traceable sources
 // ===========================================
 
 import type { ToolDefinition, ToolExecutor } from "../types.js";
+import { cancellationError, cancellationFailure, throwIfCancelled, timeoutSignal } from "../run-cancellation.js";
+import { duckDuckGoSearchProvider, parseSearchMaxResults, type SearchProvider } from "../fetch-runtime.js";
 
 export const webSearchDef: ToolDefinition = {
   type: "function",
   function: {
     name: "web_search",
-    description:
-      "搜索网页获取最新信息。返回搜索结果标题、摘要和链接。用于查询超出知识范围的事实、新闻、技术文档等。",
+    description: "Search the web through a bounded provider adapter. Returns titles, snippets, and traceable source URLs.",
     parameters: {
       type: "object",
       properties: {
-        query: {
-          type: "string",
-          description: "搜索关键词。",
-        },
+        query: { type: "string", minLength: 1, maxLength: 500, description: "Search query." },
         max_results: {
-          type: "number",
-          description: "最大返回结果数（默认 5）",
+          type: "integer",
+          minimum: 1,
+          maximum: 20,
+          description: "Maximum number of results. Defaults to 5.",
         },
       },
       required: ["query"],
@@ -28,78 +27,34 @@ export const webSearchDef: ToolDefinition = {
   },
 };
 
-export const webSearchExec: ToolExecutor = async (args) => {
-  const query = encodeURIComponent(args.query as string);
-  const maxResults = (args.max_results as number) || 5;
-
-  try {
-    const response = await fetch(`https://html.duckduckgo.com/html/?q=${query}`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        Accept: "text/html",
-      },
-      signal: AbortSignal.timeout(15000),
-    });
-
-    if (!response.ok) {
-      return `搜索失败: HTTP ${response.status}`;
-    }
-
-    const html = await response.text();
-
-    // 解析 DuckDuckGo HTML 结果
-    const results: { title: string; snippet: string; url: string }[] = [];
-
-    // 提取结果块
-    const resultRegex = /<div class="result[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g;
-    const titleRegex = /<a[^>]*class="result__a"[^>]*>([\s\S]*?)<\/a>/;
-    const snippetRegex = /<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/;
-    const urlRegex = /<a[^>]*class="result__a"[^>]*href="([^"]*)"/;
-
-    let match;
-    while ((match = resultRegex.exec(html)) !== null && results.length < maxResults) {
-      const block = match[1];
-      const titleMatch = titleRegex.exec(block);
-      const snippetMatch = snippetRegex.exec(block);
-      const urlMatch = urlRegex.exec(block);
-
-      if (titleMatch) {
-        const title = stripHtml(titleMatch[1]).trim();
-        const snippet = snippetMatch ? stripHtml(snippetMatch[1]).trim() : "";
-        let url = urlMatch ? urlMatch[1] : "";
-
-        // DuckDuckGo 的 URL 是跳转链接，提取实际 URL
-        const ddgUrl = url.match(/uddg=([^&]+)/);
-        if (ddgUrl) {
-          try { url = decodeURIComponent(ddgUrl[1]); } catch { /* keep original */ }
-        }
-
-        results.push({ title, snippet, url });
+export function createWebSearchExecutor(provider: SearchProvider): ToolExecutor {
+  return async (args, _env, invocation) => {
+    if (!invocation) throw new Error("Network gateway is required");
+    const query = String(args.query).trim();
+    if (!query || query.length > 500) throw new TypeError("Search query is invalid");
+    const maxResults = parseSearchMaxResults(args.max_results === 0 ? undefined : args.max_results);
+    const cancellation = timeoutSignal(invocation.signal, 15_000, `web_search:${provider.id}`);
+    try {
+      throwIfCancelled(cancellation.signal);
+      const results = await provider.search(query, maxResults, invocation.network.fetch, cancellation.signal);
+      if (results.length === 0) return `未找到与 ${JSON.stringify(query)} 相关的搜索结果。\n\nProvider: ${provider.id}`;
+      const rendered = results.map((result, index) => [
+        `[${index + 1}] ${result.title.replace(/[\r\n]/gu, " ")}`,
+        result.snippet ? `    ${result.snippet}` : "",
+        `    🔗 ${result.url}`,
+        `    Source: ${result.url}`,
+      ].filter(Boolean).join("\n"));
+      return `Search results for ${JSON.stringify(query)}\nProvider: ${provider.id}\n\n${rendered.join("\n\n")}`;
+    } catch (error) {
+      if (cancellation.signal.aborted && error instanceof Error && error.name === "AbortError") {
+        throw cancellationError(cancellation.signal, "web_search was cancelled");
       }
+      if (cancellation.signal.aborted) throw cancellationFailure(cancellation.signal, error, "web_search was cancelled");
+      throw error instanceof Error ? error : new Error(String(error));
+    } finally {
+      cancellation.dispose();
     }
-
-    if (results.length === 0) {
-      return `未找到与 "${args.query}" 相关的搜索结果。`;
-    }
-
-    const lines = results.map((r, i) =>
-      `[${i + 1}] ${r.title}\n    ${r.snippet}\n    🔗 ${r.url}`
-    );
-
-    return `搜索 "${args.query}" 找到 ${results.length} 个结果:\n\n${lines.join("\n\n")}`;
-  } catch (err) {
-    return `搜索失败: ${err instanceof Error ? err.message : String(err)}`;
-  }
-};
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, "")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, " ")
-    .trim();
+  };
 }
+
+export const webSearchExec: ToolExecutor = createWebSearchExecutor(duckDuckGoSearchProvider);

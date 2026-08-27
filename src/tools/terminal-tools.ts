@@ -108,6 +108,33 @@ export const shellOutputExec: ToolExecutor = async (args, _env, invocation) => {
   return `终端: ${result.info.id} (${result.info.status})\n范围: ${result.start}-${result.nextOffset}, nextOffset=${result.nextOffset}${result.truncated ? "，输出有截断" : ""}\n\n${result.data || "(暂无输出)"}`;
 };
 
+export const shellResizeDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "shell_resize",
+    description: "调整持久 PTY 的列数和行数。交互应用会收到真实终端 resize 事件。",
+    parameters: {
+      type: "object",
+      properties: {
+        terminalId: { type: "string", description: "终端 ID" },
+        cols: { type: "number", description: "列数，2-500" },
+        rows: { type: "number", description: "行数，1-300" },
+      },
+      required: ["terminalId", "cols", "rows"],
+    },
+  },
+};
+
+export const shellResizeExec: ToolExecutor = async (args, _env, invocation) => {
+  const info = await terminalFacade.resize(
+    terminalOwner(invocation),
+    args.terminalId as string,
+    args.cols as number,
+    args.rows as number,
+  );
+  return `✅ PTY ${info.id} 已调整为 ${info.cols}x${info.rows}`;
+};
+
 export const shellListDef: ToolDefinition = {
   type: "function",
   function: {

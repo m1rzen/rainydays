@@ -1,30 +1,41 @@
 // ===========================================
-// 网络工具 —— URL 抓取 + 网页内容提取
-// 让 agent 能访问互联网，读取网页内容
+// fetch_markdown —— bounded fetch + Readability Markdown extraction
 // ===========================================
 
 import type { ToolDefinition, ToolExecutor } from "../types.js";
+import { cancellationError, cancellationFailure, throwIfCancelled, timeoutSignal } from "../run-cancellation.js";
+import {
+  parseFetchMaxLength,
+  parseFetchTimeout,
+  readBoundedResponse,
+  renderFetchedContent,
+} from "../fetch-runtime.js";
 
-// ===========================================
-// fetch_url —— 抓取网页内容
-// ===========================================
-export const fetchUrlDef: ToolDefinition = {
+export const fetchMarkdownDef: ToolDefinition = {
   type: "function",
   function: {
-    name: "fetch_url",
+    name: "fetch_markdown",
     description:
-      "抓取指定 URL 的网页内容，返回纯文本。支持 HTTP/HTTPS。适合读取文档页面、API 返回的 JSON、文章内容等。",
+      "I fetch a URL and return its content as Markdown. For HTML pages, I extract the main content using Mozilla Readability and convert it to clean Markdown. For non-HTML content (JSON, plain text, XML), I return it directly.",
     parameters: {
       type: "object",
       properties: {
-        url: {
-          type: "string",
-          description: "要抓取的 URL，如 'https://example.com/doc'。",
+        url: { type: "string", description: "The URL to fetch (http or https)." },
+        max_length: {
+          type: "integer",
+          minimum: 1,
+          maximum: 200000,
+          description: "Maximum characters to return. Defaults to 20000.",
         },
-        format: {
-          type: "string",
-          enum: ["text", "json", "raw"],
-          description: "返回格式：text=去除HTML标签的纯文本（默认），json=解析JSON，raw=原始响应体。",
+        timeout: {
+          type: "integer",
+          minimum: 100,
+          maximum: 120000,
+          description: "Request timeout in milliseconds. Defaults to 30000 (30 seconds).",
+        },
+        raw: {
+          type: "boolean",
+          description: "If true, return raw content without HTML-to-Markdown conversion. Default: false.",
         },
       },
       required: ["url"],
@@ -32,71 +43,113 @@ export const fetchUrlDef: ToolDefinition = {
   },
 };
 
-export const fetchUrlExec: ToolExecutor = async (args) => {
+export const fetchMarkdownExec: ToolExecutor = async (args, _env, invocation) => {
+  if (!invocation) throw new Error("Network gateway is required");
   const url = args.url as string;
-  const format = (args.format as string) || "text";
-
+  const maxLength = parseFetchMaxLength(args.max_length);
+  const timeout = parseFetchTimeout(args.timeout);
+  const raw = args.raw === true;
+  const cancellation = timeoutSignal(invocation.signal, timeout, "fetch_markdown");
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "RainyDays/0.1 (AI Agent)",
-        Accept: "text/html,application/json,*/*",
-      },
-      signal: AbortSignal.timeout(15000),
-    });
-
+    throwIfCancelled(cancellation.signal);
+    let response: Response;
+    try {
+      response = await invocation.network.fetch(url, {
+        headers: {
+          "User-Agent": "Mini-Lux/0.1 (Readability Fetch)",
+          Accept: "text/html,application/xhtml+xml,application/json,text/plain,application/xml;q=0.9,*/*;q=0.1",
+        },
+        signal: cancellation.signal,
+      });
+    } catch (error) {
+      if (cancellation.signal.aborted && error instanceof Error && error.name === "AbortError") {
+        throw cancellationError(cancellation.signal, "fetch_markdown was cancelled");
+      }
+      throw error;
+    }
     if (!response.ok) {
-      return `请求失败: HTTP ${response.status} ${response.statusText}`;
+      await response.body?.cancel().catch(() => undefined);
+      throw new Error(`HTTP ${response.status} ${response.statusText}`.trim());
     }
-
-    const contentType = response.headers.get("content-type") || "";
-
-    // JSON 格式
-    if (format === "json" || contentType.includes("application/json")) {
-      const data = await response.json();
-      const text = JSON.stringify(data, null, 2);
-      return text.length > 8000 ? text.slice(0, 8000) + "\n...(已截断)" : text;
-    }
-
-    // 原始格式
-    if (format === "raw") {
-      const text = await response.text();
-      return text.length > 8000 ? text.slice(0, 8000) + "\n...(已截断)" : text;
-    }
-
-    // 默认：text —— 去除 HTML 标签
-    const html = await response.text();
-    const text = htmlToText(html);
-    return text.length > 8000 ? text.slice(0, 8000) + "\n...(已截断)" : text;
-  } catch (err) {
-    return `抓取失败: ${err instanceof Error ? err.message : String(err)}`;
+    const bytes = await readBoundedResponse(response, cancellation.signal);
+    return renderFetchedContent({
+      bytes,
+      contentType: response.headers.get("content-type") ?? "",
+      finalUrl: response.url || url,
+      raw,
+      maxLength,
+    });
+  } catch (error) {
+    if (cancellation.signal.aborted) throw cancellationFailure(cancellation.signal, error, "fetch_markdown was cancelled");
+    throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    cancellation.dispose();
   }
 };
 
-/**
- * 简单的 HTML 转纯文本
- * 去除标签、脚本、样式，保留文本内容
- */
-function htmlToText(html: string): string {
+// Compatibility alias retained for existing personas and stored tool calls.
+export const fetchUrlDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "fetch_url",
+    description: "Legacy alias for fetch_markdown.",
+    parameters: {
+      type: "object",
+      properties: {
+        url: { type: "string", description: "The URL to fetch." },
+        format: { type: "string", enum: ["text", "json", "raw"], description: "Legacy response format." },
+      },
+      required: ["url"],
+    },
+  },
+};
+
+function legacyHtmlToText(html: string): string {
   return html
-    // 移除 script 和 style 块
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<nav[\s\S]*?<\/nav>/gi, "")
-    .replace(/<footer[\s\S]*?<\/footer>/gi, "")
-    // 块级元素换行
-    .replace(/<\/(p|div|h[1-6]|li|tr|br)>/gi, "\n")
-    .replace(/<br\s*\/?>/gi, "\n")
-    // 移除所有标签
-    .replace(/<[^>]+>/g, "")
-    // 解码常见 HTML 实体
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    // 清理多余空行
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+    .replace(/<script[\s\S]*?<\/script>/giu, "")
+    .replace(/<style[\s\S]*?<\/style>/giu, "")
+    .replace(/<nav[\s\S]*?<\/nav>/giu, "")
+    .replace(/<footer[\s\S]*?<\/footer>/giu, "")
+    .replace(/<\/(p|div|h[1-6]|li|tr|br)>/giu, "\n")
+    .replace(/<br\s*\/?>/giu, "\n")
+    .replace(/<[^>]+>/gu, "")
+    .replace(/&nbsp;/gu, " ").replace(/&amp;/gu, "&").replace(/&lt;/gu, "<").replace(/&gt;/gu, ">")
+    .replace(/&quot;/gu, "\"").replace(/&#39;/gu, "'").replace(/\n{3,}/gu, "\n\n").trim();
 }
+
+export const fetchUrlExec: ToolExecutor = async (args, _env, invocation) => {
+  if (!invocation) throw new Error("Network gateway is required");
+  const cancellation = timeoutSignal(invocation.signal, 15_000, "fetch_url");
+  try {
+    let response: Response;
+    try {
+      response = await invocation.network.fetch(args.url as string, {
+        headers: { "User-Agent": "Mini-Lux/0.1", Accept: "text/html,application/json,*/*" },
+        signal: cancellation.signal,
+      });
+    } catch (error) {
+      if (cancellation.signal.aborted && error instanceof Error && error.name === "AbortError") {
+        throw cancellationError(cancellation.signal, "fetch_url was cancelled");
+      }
+      throw error;
+    }
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => undefined);
+      throw new Error(`HTTP ${response.status} ${response.statusText}`.trim());
+    }
+    const bytes = response.body
+      ? await readBoundedResponse(response, cancellation.signal)
+      : Buffer.from(await response.text(), "utf8");
+    if (bytes.length > 2 * 1024 * 1024) throw new Error("Response exceeds 2097152 byte limit");
+    const text = new TextDecoder("utf-8").decode(bytes);
+    const contentType = response.headers.get("content-type") ?? "";
+    if (args.format === "json" || contentType.includes("application/json")) return JSON.stringify(JSON.parse(text), null, 2);
+    if (args.format === "raw") return text;
+    return contentType.includes("html") ? legacyHtmlToText(text) : text;
+  } catch (error) {
+    if (cancellation.signal.aborted) throw cancellationFailure(cancellation.signal, error, "fetch_url was cancelled");
+    throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    cancellation.dispose();
+  }
+};

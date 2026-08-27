@@ -5,10 +5,9 @@
 
 import path from "path";
 import type { ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
-import { parseFileBuffer } from "./parsers.js";
+import { throwIfCancelled } from "../run-cancellation.js";
+import { editExec as luxEditExec, readExec as luxReadExec, writeExec as luxWriteExec } from "./filesystem-lux.js";
 
-const MAX_DOCUMENT_BYTES = 32 * 1024 * 1024;
-const MAX_TEXT_BYTES = 8 * 1024 * 1024;
 const MAX_DIRECTORY_ENTRIES = 10_000;
 
 function requirePathGateway(invocation?: ToolInvocationServices): ScopedPathGateway {
@@ -87,64 +86,11 @@ export const readFileDef: ToolDefinition = {
   },
 };
 
-export const readFileExec: ToolExecutor = async (args, _env, invocation) => {
-  const gateway = requirePathGateway(invocation);
-  const defaultRootId = requireRootId(gateway, "DATA_ROOT");
-  const inputPath = args.path as string;
-  const authorized = await gateway.readFile(inputPath, { defaultRootId, maxBytes: MAX_DOCUMENT_BYTES });
-  const result = await parseFileBuffer(inputPath, authorized.bytes);
-  if (!result.success) return `读取失败: ${result.error}\n文件: ${inputPath}`;
-
-  // 行号 + offset/limit
-  const offset = (args.offset as number) || 1; // 从第几行开始（1-based）
-  const limit = (args.limit as number) || 200;  // 读几行
-  const allLines = result.text.split("\n");
-  const totalLines = allLines.length;
-
-  const startIdx = Math.max(0, offset - 1);
-  const endIdx = Math.min(totalLines, startIdx + limit);
-  const selectedLines = allLines.slice(startIdx, endIdx);
-
-  // 加行号
-  const numbered = selectedLines.map((line, i) => {
-    const lineNum = startIdx + i + 1;
-    return `${String(lineNum).padStart(4, " ")} | ${line}`;
-  });
-
-  let text = numbered.join("\n");
-
-  // 如果有更多行，提示
-  const hasMore = endIdx < totalLines;
-  const footer = hasMore
-    ? `\n\n--- 共 ${totalLines} 行，已显示第 ${offset}-${endIdx} 行。用 offset=${endIdx + 1} 继续读取 ---`
-    : `\n\n--- 共 ${totalLines} 行，已全部显示 ---`;
-
-  // 如果内容超长（单行很长的情况），做智能截断
-  if (text.length > 6000) {
-    const lines = text.split("\n");
-    const headBudget = Math.floor(6000 * 0.6);
-    const tailBudget = Math.floor(6000 * 0.3);
-
-    let head = "";
-    let headEnd = 0;
-    for (let i = 0; i < lines.length; i++) {
-      if ((head + lines[i] + "\n").length > headBudget) break;
-      head += lines[i] + "\n";
-      headEnd = i + 1;
-    }
-
-    let tail = "";
-    for (let i = lines.length - 1; i > headEnd; i--) {
-      const candidate = lines[i] + "\n" + tail;
-      if (candidate.length > tailBudget) break;
-      tail = candidate;
-    }
-
-    text = head + "\n... (省略中间内容) ...\n" + tail;
-  }
-
-  return `文件: ${inputPath}\n内容:\n\n${text}${footer}`;
-};
+export const readFileExec: ToolExecutor = async (args, env, invocation) => luxReadExec({
+  file_path: args.path,
+  ...(args.offset === undefined ? {} : { offset: args.offset }),
+  ...(args.limit === undefined ? { limit: 200 } : { limit: args.limit }),
+}, env, invocation);
 
 // ===========================================
 // 工具 3: search_files
@@ -184,6 +130,7 @@ export const searchFilesExec: ToolExecutor = async (args, _env, invocation) => {
   let timedOut = false;
 
   async function walk(directoryInput: string): Promise<void> {
+    if (invocation) throwIfCancelled(invocation.signal);
     if (timedOut || Date.now() - startTime > timeBudgetMs) {
       timedOut = true;
       return;
@@ -233,14 +180,10 @@ export const writeFileDef: ToolDefinition = {
   },
 };
 
-export const writeFileExec: ToolExecutor = async (args, _env, invocation) => {
-  const gateway = requirePathGateway(invocation);
-  const defaultRootId = requireRootId(gateway, "OUTPUT_DIR");
-  const inputPath = args.path as string;
-  const content = Buffer.from(args.content as string, "utf8");
-  await gateway.writeFile(inputPath, content, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
-  return `✅ 文件已生成: ${inputPath}`;
-};
+export const writeFileExec: ToolExecutor = async (args, env, invocation) => luxWriteExec({
+  file_path: args.path,
+  content: args.content,
+}, env, invocation);
 
 // ===========================================
 // 工具 5: edit_file —— 精确查找替换
@@ -276,136 +219,12 @@ export const editFileDef: ToolDefinition = {
   },
 };
 
-type EditOutcome =
-  | { readonly state: "missing"; readonly count: 0 }
-  | { readonly state: "ambiguous"; readonly count: number }
-  | { readonly state: "written"; readonly count: number };
+export const editFileExec: ToolExecutor = async (args, env, invocation) => luxEditExec({
+  file_path: args.path,
+  old_string: args.old_string,
+  new_string: args.new_string,
+  ...(args.replace_all === undefined ? {} : { replace_all: args.replace_all }),
+}, env, invocation);
 
-export const editFileExec: ToolExecutor = async (args, _env, invocation) => {
-  const gateway = requirePathGateway(invocation);
-  const defaultRootId = requireRootId(gateway, "OUTPUT_DIR");
-  const inputPath = args.path as string;
-  const oldString = args.old_string as string;
-  const newString = args.new_string as string;
-  const replaceAll = args.replace_all === true;
-  if (oldString.length === 0) return "old_string 不能为空。";
-
-  const edited = await gateway.replaceFile<EditOutcome>(inputPath, (bytes) => {
-    const content = bytes.toString("utf8");
-    if (!content.includes(oldString)) {
-      return { bytes: null, value: { state: "missing" as const, count: 0 } };
-    }
-    const count = content.split(oldString).length - 1;
-    if (!replaceAll && count > 1) {
-      return { bytes: null, value: { state: "ambiguous" as const, count } };
-    }
-    const newContent = replaceAll ? content.split(oldString).join(newString) : content.replace(oldString, newString);
-    return { bytes: Buffer.from(newContent, "utf8"), value: { state: "written" as const, count: replaceAll ? count : 1 } };
-  }, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
-
-  if (edited.value.state === "missing") return `未找到要替换的文本。请确认 old_string 在文件中存在。\n文件: ${inputPath}`;
-  if (edited.value.state === "ambiguous") {
-    return `old_string 在文件中出现了 ${edited.value.count} 次，不是唯一的。请提供更多上下文使其唯一，或设置 replace_all=true。`;
-  }
-  return `✅ 已修改: ${inputPath}（${replaceAll ? `替换 ${edited.value.count} 处` : "替换 1 处"}）`;
-};
-
-// ===========================================
-// 工具 6: grep —— 文件内容搜索
-// ===========================================
-
-/** 可搜索的文本文件扩展名 */
-const TEXT_EXTENSIONS = new Set([
-  ".txt", ".md", ".csv", ".log", ".json", ".js", ".ts", ".tsx", ".jsx",
-  ".py", ".java", ".c", ".cpp", ".h", ".html", ".css", ".xml", ".yaml", ".yml",
-  ".sh", ".bat", ".ps1", ".sql", ".ini", ".conf", ".toml", ".env",
-]);
-
-export const grepDef: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "grep",
-    description:
-      "在文件内容中搜索匹配的行（正则表达式），递归搜索目录下所有文本文件。返回文件名、行号和匹配的行内容。当需要在文件内容中查找信息时，优先使用此工具而不是 execute_command 跑 findstr。",
-    parameters: {
-      type: "object",
-      properties: {
-        pattern: {
-          type: "string",
-          description: "正则表达式模式，如 '医院|中心医院' 或 '金额.*万'。",
-        },
-        path: {
-          type: "string",
-          description: "搜索范围（相对路径），留空则搜索整个工作根目录。",
-        },
-        file_pattern: {
-          type: "string",
-          description: "文件名过滤，如 '*.docx' 或 '*.txt'。留空则搜索所有文本文件。",
-        },
-      },
-      required: ["pattern"],
-    },
-  },
-};
-
-export const grepExec: ToolExecutor = async (args, _env, invocation) => {
-  const gateway = requirePathGateway(invocation);
-  const defaultRootId = requireRootId(gateway, "DATA_ROOT");
-  const pattern = args.pattern as string;
-  const searchPath = typeof args.path === "string" ? args.path : "";
-  const filePattern = typeof args.file_pattern === "string" ? args.file_pattern : "";
-
-  let regex: RegExp;
-  try {
-    regex = new RegExp(pattern, "i");
-  } catch {
-    return "无效的正则表达式: " + pattern;
-  }
-
-  let fileFilter: ((name: string) => boolean) | null = null;
-  if (filePattern) {
-    const globRegex = filePattern.replace(/\./g, "\\.").replace(/\*/g, ".*").replace(/\?/g, ".");
-    const fileRegex = new RegExp("^" + globRegex + "$", "i");
-    fileFilter = (name) => fileRegex.test(name);
-  }
-
-  const results: { file: string; line: number; content: string }[] = [];
-  const startTime = Date.now();
-  const timeBudgetMs = 8_000;
-  let timedOut = false;
-
-  async function grepAuthorizedFile(fileInput: string): Promise<void> {
-    const authorized = await gateway.searchFile(fileInput, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
-    const lines = authorized.bytes.toString("utf8").split("\n");
-    for (let index = 0; index < lines.length && results.length < 200; index += 1) {
-      if (regex.test(lines[index])) results.push({ file: fileInput, line: index + 1, content: lines[index] });
-    }
-  }
-
-  async function walk(directoryInput: string): Promise<void> {
-    if (timedOut || Date.now() - startTime > timeBudgetMs) {
-      timedOut = true;
-      return;
-    }
-    const entries = await gateway.searchDirectory(directoryInput, { defaultRootId, maxEntries: MAX_DIRECTORY_ENTRIES });
-    const tasks: Promise<void>[] = [];
-    for (const entry of entries) {
-      const logicalPath = childInput(directoryInput, entry.name);
-      if (entry.type === "directory") {
-        if (!entry.name.startsWith(".")) tasks.push(walk(logicalPath));
-        continue;
-      }
-      const extension = path.extname(entry.name).toLowerCase();
-      if (fileFilter ? fileFilter(entry.name) : TEXT_EXTENSIONS.has(extension)) tasks.push(grepAuthorizedFile(logicalPath));
-    }
-    await Promise.all(tasks);
-  }
-
-  await walk(searchPath);
-  const elapsed = Date.now() - startTime;
-  if (results.length === 0) {
-    return `未找到匹配 "${pattern}" 的内容` + (timedOut ? `（搜索已超时，耗时 ${elapsed}ms）` : "");
-  }
-  const lines = results.slice(0, 50).map((result) => `📄 ${result.file}:${result.line}: ${result.content.trim().slice(0, 120)}`);
-  return `找到 ${results.length} 处匹配:${timedOut ? `（搜索已超时，耗时 ${elapsed}ms）` : ""}\n\n${lines.join("\n")}${results.length > 50 ? `\n\n... 还有 ${results.length - 50} 个结果` : ""}`;
-};
+// grep 已升级为 Lux 完整契约；从此处 re-export 仅供旧 import 路径兼容。
+export { grepDef, grepExec } from "./filesystem-grep.js";

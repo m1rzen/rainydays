@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-06",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "dist/agent.js",
+    "dist/capability-broker.js",
+    "dist/tool-policies.js",
+    "dist/tool-scheduler.js",
+    "src/agent.ts",
+    "src/capability-broker.ts",
+    "src/tool-policies.ts",
+    "src/tool-scheduler.ts"
+  ],
+  "coverageExemptions": {
+    "src/agent.ts": {
+      "reason": "The compiled Agent batching state machine is governed directly; this authored source remains bound to exact RT-06 integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt06-tool-scheduling.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/capability-broker.ts": {
+      "reason": "The compiled Broker policy validator is governed directly; this authored source remains bound to exact fail-closed metadata evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/capability-broker.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tool-policies.ts": {
+      "reason": "The compiled frozen scheduling metadata is governed directly; this authored source remains bound to exact scheduler and Agent evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt06-tool-scheduling.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tool-scheduler.ts": {
+      "reason": "The compiled conflict scheduler is governed directly; this authored source remains bound to exact stable batching and graph evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool-scheduler.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/unit/tool-scheduler.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/capability-broker.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/contract/rt06-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/integration/rt06-tool-scheduling.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/rt05-tool-pipeline.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+      "layer": "integration"
+    }
+  ]
+}

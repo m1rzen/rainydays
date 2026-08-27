@@ -10,14 +10,20 @@ import { createRequire } from "node:module";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import test from "node:test";
+import { CapabilityBroker } from "../../dist/capability-broker.js";
 import { ExecutionDeniedError, ExecutionIsolationService } from "../../dist/execution-isolation.js";
+import { createFiniteHttpsBroker, FiniteHttpsBrokerError } from "../../dist/execution-network-broker.js";
 import { bindNativeRootAuthority, createProductionNativeExecutionBridge } from "../../dist/execution-native.js";
+import { createManualExecutionGateway, observeTerminalDirectDenial, shutdownExecutionRuntime } from "../../dist/execution-runtime.js";
+import { PathPolicy } from "../../dist/path-policy.js";
+import { terminalFacade } from "../../dist/terminal.js";
+import { DIRECT_OPERATION_POLICIES } from "../../dist/tool-policies.js";
 import { ManualConsentDeniedError, ManualExecutionConsentLedger } from "../../dist/manual-execution-consent.js";
 import { issueResourceOwner } from "../../dist/resource-owner.js";
 import { createSec03NativeVerifier } from "../../scripts/sec03-native-verifier.mjs";
 import { aggregateSec03Receipts } from "../../scripts/sec03-receipt-set.mjs";
 import { createSec03Receipt, createSec03Recorder, validateSec03Matrix, validateSec03Receipt } from "../sec03-receipts.mjs";
-import { A01_OUTPUT_MARKER, A02_ANOTHER_DRIVE_PATH, A02_OUTPUT_MARKER, A04_LISTEN_READY_MARKER, A04_OUTPUT_MARKER, A04_PORTS, A08_SUPPORT_FILES, A17_OUTPUT_MARKER, a01ParentMutation, a01Probe, a02Case, a03Case, a04Case, a06Case, a07Case, a08Case, a09Case, a11Case, a12Case, a17Probe, a19Case } from "../fixtures/sec03-real-host-plan.mjs";
+import { A01_OUTPUT_MARKER, A02_ANOTHER_DRIVE_PATH, A02_OUTPUT_MARKER, A04_LISTEN_READY_MARKER, A04_OUTPUT_MARKER, A04_PORTS, A08_SUPPORT_FILES, A14_INVALID_JOURNAL, A15_EXTRA_ARTIFACT, A17_OUTPUT_MARKER, a01ParentMutation, a01Probe, a02Case, a03Case, a04Case, a04ExternalAddress, a06Case, a07Case, a08Case, a09Case, a10Case, a11Case, a12Case, a13Case, a15Case, a17Probe, a19Case, e3aCase } from "../fixtures/sec03-real-host-plan.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -28,6 +34,7 @@ const addonPath = path.join(projectRoot, "dist/native/sandbox-launcher.node");
 const testNativeDirectory = path.join(projectRoot, ".sec03-native-test");
 const testAddonPath = path.join(testNativeDirectory, "sandbox-launcher.node");
 const testHostPath = path.join(testNativeDirectory, "sandbox-host.exe");
+const a07HelperPath = path.join(testNativeDirectory, "sec03-a07-adversary.exe");
 let sharedReceiptRecorder = null;
 
 async function receiptRecorder(identity, nativeVerifier) {
@@ -186,6 +193,10 @@ function inputFrame(data, appendNewline = true) {
   return frame({ v: 1, type: "input", secret: "0".repeat(64), data: bytes.toString("base64"), digest: createHash("sha256").update(bytes).digest("hex"), appendNewline });
 }
 
+function resizeFrame(cols, rows) {
+  return frame({ v: 1, type: "resize", secret: "0".repeat(64), cols, rows });
+}
+
 function terminateFrame(reason = "requested") {
   return frame({ v: 1, type: "terminate", secret: "0".repeat(64), reason });
 }
@@ -265,6 +276,58 @@ async function launch(addon, host, launcher, body) {
   return { ...started, completion: await started.handle.completed };
 }
 
+async function startAclConflictReceipt(addon, host, launcher, body) {
+  const lease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  const frames = [];
+  assert.equal(typeof lease.launchAclConflictForReceipt, "function");
+  const handle = lease.launchAclConflictForReceipt(frame(body), value => frames.push(value));
+  await lease.close();
+  return { handle, frames };
+}
+
+async function startAclCrashReceipt(addon, host, launcher, body, variantId) {
+  const method = variantId === "A14-01" ? "launchAclPristineCrashForReceipt" : variantId === "A14-02" ? "launchAclAppliedCrashForReceipt" : null;
+  assert(method);
+  const lease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  const frames = [];
+  assert.equal(typeof lease[method], "function");
+  const handle = lease[method](frame(body), value => frames.push(value));
+  await lease.close();
+  return { handle, frames };
+}
+
+async function startLifecycleCrashReceipt(addon, host, launcher, body, variantId) {
+  const method = variantId === "A09-06" ? "launchServiceCrashForReceipt" : variantId === "A09-07" ? "launchHostCrashForReceipt" : null;
+  assert(method);
+  const lease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  const frames = [];
+  assert.equal(typeof lease[method], "function");
+  const handle = lease[method](frame(body), value => frames.push(value));
+  await lease.close();
+  return { handle, frames };
+}
+
+function fixedAdversaryBody(variantId, identity) {
+  const planned = e3aCase(variantId, "E3A");
+  return Object.freeze({
+    v: 1,
+    type: "fixed-adversary",
+    tuple: planned.tuple,
+    secret: "0".repeat(64),
+    candidateId: identity.candidateId,
+    buildIdSha256: identity.buildId,
+    sourceSha256: identity.sourceSha256,
+    hostSha256: "0".repeat(64),
+    launcherSha256: "0".repeat(64),
+    executionId: createHash("sha256").update(randomUUID()).digest("hex"),
+    runId: identity.runId,
+  });
+}
+
+async function runFixedAdversary(addon, host, launcher, variantId, identity) {
+  return launch(addon, host, launcher, fixedAdversaryBody(variantId, identity));
+}
+
 async function observeRootDenial(addon, host, launcher, body, expectedCode = "EXEC_ROOT_UNSUPPORTED") {
   const lease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
   try {
@@ -278,6 +341,114 @@ async function observeRootDenial(addon, host, launcher, body, expectedCode = "EX
   } finally {
     await lease.close();
   }
+}
+
+async function observeA15NativeIdentity(addon, host, launcher, subjectPath, variantId, profileId, identity) {
+  const planned = a15Case(variantId, profileId);
+  const request = Object.freeze({
+    v: 1,
+    type: "native-identity-observation",
+    candidateId: identity.candidateId,
+    buildIdSha256: identity.buildId,
+    sourceSha256: identity.sourceSha256,
+    executionId: createHash("sha256").update(randomUUID()).digest("hex"),
+    contextId: createHash("sha256").update(`sec03-a15-context-${profileId}`).digest("hex"),
+    sessionId: createHash("sha256").update(`sec03-a15-session-${profileId}`).digest("hex"),
+    runId: identity.runId,
+    authorityEpoch: 1,
+    entryPoint: planned.entryPoint,
+    profile: planned.profile,
+    personaDigest: createHash("sha256").update("sec03-a15-persona").digest("hex"),
+    policyDigest: createHash("sha256").update(`sec03-a15-policy-${profileId}`).digest("hex"),
+    subjectPath,
+    variantId,
+  });
+  const lease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  try {
+    assert.equal(typeof lease.observeFixedNativeIdentity, "function");
+    return lease.observeFixedNativeIdentity(frame(request));
+  } finally {
+    await lease.close();
+  }
+}
+
+async function observeA14InvalidJournal(addon, host, launcher, profileId, identity) {
+  const profiles = { E1: "one-shot-shell", E2: "agent-shell", E3: "script", E4: "manual-terminal" };
+  const request = Object.freeze({
+    v: 1,
+    type: "invalid-recovery-observation",
+    candidateId: identity.candidateId,
+    buildIdSha256: identity.buildId,
+    sourceSha256: identity.sourceSha256,
+    executionId: createHash("sha256").update(randomUUID()).digest("hex"),
+    contextId: createHash("sha256").update(`sec03-a14-context-${profileId}`).digest("hex"),
+    sessionId: createHash("sha256").update(`sec03-a14-session-${profileId}`).digest("hex"),
+    runId: identity.runId,
+    authorityEpoch: 1,
+    entryPoint: profileId,
+    profile: profiles[profileId],
+    personaDigest: createHash("sha256").update("sec03-a14-persona").digest("hex"),
+    policyDigest: createHash("sha256").update(`sec03-a14-policy-${profileId}`).digest("hex"),
+    variantId: "A14-07",
+  });
+  assert.equal(typeof addon.openExclusiveHostLease.observeInvalidRecoveryJournal, "function");
+  return addon.openExclusiveHostLease.observeInvalidRecoveryJournal(host.sha256, host.bytes, launcher.sha256, frame(request));
+}
+
+async function createA13RealTerminal(root, runId) {
+  const policy = new PathPolicy({ auditKey: Buffer.alloc(32, 113) });
+  const broker = new CapabilityBroker({ pathPolicy: policy, resolveSessionPersona: sessionId => sessionId.startsWith("sec03-a13-") ? "sec03-a13" : null, newRunId: () => runId });
+  for (const operation of ["terminal:start", "terminal:kill", "terminal:close"]) broker.registerDirectOperation(operation, DIRECT_OPERATION_POLICIES[operation]);
+  const pathAuthority = await policy.createAuthority([{ rootId: "workspace", role: "workspace", configuredPath: root, permissions: ["initial-cwd"] }]);
+  const authority = broker.createRuntimeAuthority({
+    name: "sec03-a13",
+    tools: [],
+    env: { WORKSPACE_ROOT: root },
+    systemPrompt: "SEC-03 A13 authentic owner boundary",
+    allowedRoots: [root],
+    rootEnv: { WORKSPACE_ROOT: "workspace" },
+    pathAuthority,
+    networkPolicy: { mode: "deny" },
+  });
+  const principal = broker.createLocalApiPrincipal();
+  const exactRequest = Object.freeze({ name: "sec03-a13-victim", shell: "cmd", cwd: root });
+  const victimContext = broker.issueLocalApiContext({ authority, principal, sessionId: "sec03-a13-victim", operation: "terminal:start", args: exactRequest });
+  let victimOwner;
+  let terminal;
+  try {
+    const authorized = broker.authorizeDirectOperation(victimContext, "terminal:start", exactRequest);
+    victimOwner = broker.getResourceOwner(victimContext);
+    terminal = await broker.withDirectExecutionRoot(victimContext, "terminal:start", root, "WORKSPACE_ROOT", (authorizedCwd, executionRootLease) =>
+      terminalFacade.start(victimOwner, {
+        name: String(authorized.name),
+        shell: authorized.shell,
+        authorizedCwd,
+        executionRootLease,
+        execution: createManualExecutionGateway({ context: victimContext, owner: victimOwner, operation: "terminal-start", exactRequest: authorized }),
+      }));
+  } finally {
+    if (broker.isContextActive(victimContext)) broker.finishContext(victimContext);
+  }
+  assert(victimOwner && terminal);
+  const attack = async (operation) => {
+    const sessionId = `sec03-a13-attacker-${operation}`;
+    const directOperation = `terminal:${operation}`;
+    const args = Object.freeze({ id: terminal.id });
+    const context = broker.issueLocalApiContext({ authority, principal, sessionId, operation: directOperation, args });
+    try {
+      broker.authorizeDirectOperation(context, directOperation, args);
+      const owner = broker.getResourceOwner(context);
+      let denial;
+      try { await terminalFacade[operation](owner, terminal.id); }
+      catch (error) { denial = error; }
+      assert.equal(denial?.code, "EXEC_OWNER_MISMATCH");
+      assert(denial.nativeObservation, `${operation} owner mismatch omitted native observation`);
+      return denial.nativeObservation;
+    } finally {
+      if (broker.isContextActive(context)) broker.finishContext(context);
+    }
+  };
+  return Object.freeze({ broker, authority, victimOwner, terminal, attack });
 }
 
 async function runA06Profile(addon, host, launcher, root, variantId, profileId, identity) {
@@ -303,8 +474,14 @@ async function runA07Profile(addon, host, launcher, root, variantId, profileId, 
   if (profileId === "E1") return launch(addon, host, launcher, await launchBody(root, planned.payload, overrides));
   if (profileId === "E3") return launch(addon, host, launcher, await scriptLaunchBody(root, planned.payload, overrides));
   const started = await start(addon, host, launcher, await terminalLaunchBody(root, profileId, overrides));
-  await started.handle.writeFrame(inputFrame(planned.input));
-  return { ...started, completion: await started.handle.completed };
+  try {
+    await started.handle.writeFrame(inputFrame(planned.input));
+    return { ...started, completion: await started.handle.completed };
+  } catch (error) {
+    try { await started.handle.terminateHost(terminateFrame("test-cleanup")); } catch {}
+    await started.handle.completed.catch(() => undefined);
+    throw error;
+  }
 }
 
 async function runPositiveProfile(addon, host, launcher, root, profileId, identity) {
@@ -361,7 +538,7 @@ async function runExactDenyProfile(addon, host, launcher, root, profileId, ident
     await started.handle.writeFrame(inputFrame(planned.input));
     await Promise.race([
       waitFor(async () => decode(started.frames).some(value => value.text.includes(marker))),
-      started.handle.completed.then(value => { throw new Error(`SEC-03 ${profileId} deny probe completed before denial marker: ${JSON.stringify(value)}`); }),
+      started.handle.completed.then(value => { const output = decode(started.frames).map(frame => frame.text).join(""); throw new Error(`SEC-03 ${profileId} deny probe completed before denial marker: ${JSON.stringify(value)} output=${JSON.stringify(output)}`); }),
     ]);
     await started.handle.writeFrame(inputFrame("exit"));
     return { ...started, completion: await started.handle.completed };
@@ -390,13 +567,20 @@ async function attemptInboundConnection(host, port) {
 }
 
 async function runA04Profile(addon, host, launcher, root, variantId, profileId, identity, planned, external) {
-  if (variantId !== "A04-05" || profileId !== "E3") {
+  if (variantId !== "A04-05") {
     return { ...await runExactDenyProfile(addon, host, launcher, root, profileId, identity, planned, A04_OUTPUT_MARKER), networkAcceptedCount: 0 };
   }
   const executionId = createHash("sha256").update(randomUUID()).digest("hex");
   const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 };
-  const started = await start(addon, host, launcher, await scriptLaunchBody(root, planned.payload, overrides));
+  const persistent = profileId === "E2" || profileId === "E4";
+  const body = profileId === "E1"
+    ? await launchBody(root, planned.payload, overrides)
+    : profileId === "E3"
+      ? await scriptLaunchBody(root, planned.payload, overrides)
+      : await terminalLaunchBody(root, profileId, overrides);
+  const started = await start(addon, host, launcher, body);
   try {
+    if (persistent) await started.handle.writeFrame(inputFrame(planned.input));
     const state = await Promise.race([
       waitFor(async () => {
         const output = decode(started.frames).map(value => value.text).join("");
@@ -404,9 +588,10 @@ async function runA04Profile(addon, host, launcher, root, variantId, profileId, 
         if (output.includes(A04_OUTPUT_MARKER)) return "denied";
         return null;
       }),
-      started.handle.completed.then(value => { throw new Error(`SEC-03 E3 inbound probe completed before observation: ${JSON.stringify(value)}`); }),
+      started.handle.completed.then(value => { throw new Error(`SEC-03 ${profileId} inbound probe completed before observation: ${JSON.stringify(value)}`); }),
     ]);
     const networkAcceptedCount = state === "ready" ? await attemptInboundConnection(external, A04_PORTS.listen) : 0;
+    if (persistent) await started.handle.writeFrame(inputFrame("exit"));
     return { ...started, completion: await started.handle.completed, networkAcceptedCount };
   } catch (error) {
     try { await started.handle.terminateHost(terminateFrame("test-cleanup")); } catch {}
@@ -457,7 +642,36 @@ async function runA09Profile(addon, host, launcher, root, variantId, profileId, 
       : await terminalLaunchBody(root, profileId, overrides);
   const started = await start(addon, host, launcher, body);
   if (variantId === "A09-01" && planned.input !== null) await started.handle.writeFrame(inputFrame(planned.input));
-  if (variantId !== "A09-01") await started.handle.terminateHost(terminateFrame(planned.terminateReason));
+  if (planned.closeControlChannel) {
+    assert.equal(typeof started.handle.closeControlChannel, "function");
+    await Promise.race([
+      waitFor(async () => {
+        const output = decode(started.frames).map(value => value.text).join("");
+        return profileId === "E2" || profileId === "E4" ? started.frames.length > 0 : output.includes(planned.readyMarker);
+      }),
+      started.handle.completed.then(value => { throw new Error(`native host completed before channel-loss stimulus: ${JSON.stringify(value)}`); }),
+    ]);
+    await started.handle.closeControlChannel();
+  } else if (variantId !== "A09-01") await started.handle.terminateHost(terminateFrame(planned.terminateReason));
+  return { ...started, completion: await started.handle.completed };
+}
+
+async function runA09CrashProfile(addon, host, launcher, root, variantId, profileId, identity) {
+  const planned = a09Case(variantId, profileId);
+  const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+  const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 };
+  const body = profileId === "E1"
+    ? await launchBody(root, planned.payload, overrides)
+    : profileId === "E3"
+      ? await scriptLaunchBody(root, planned.payload, overrides)
+      : await terminalLaunchBody(root, profileId, overrides);
+  const started = await startLifecycleCrashReceipt(addon, host, launcher, body, variantId);
+  await Promise.race([
+    waitFor(async () => profileId === "E2" || profileId === "E4" ? started.frames.length > 0 : decode(started.frames).some(value => value.text.includes(planned.readyMarker))),
+    started.handle.completed.then(value => { throw new Error(`native host completed before lifecycle crash stimulus: ${JSON.stringify(value)}`); }),
+  ]);
+  assert.equal(typeof started.handle.triggerLifecycleCrashForReceipt, "function");
+  await started.handle.triggerLifecycleCrashForReceipt();
   return { ...started, completion: await started.handle.completed };
 }
 
@@ -473,7 +687,11 @@ async function waitFor(check, timeoutMs = 10_000) {
 
 async function recoveryDirectory() {
   assert.equal(typeof process.env.LOCALAPPDATA, "string");
-  const directory = path.join(process.env.LOCALAPPDATA, "RainyDays", "sec03-journal-v2");
+  const nonce = process.env.MINI_LUX_SEC03_NATIVE_TEST_NONCE;
+  const leaf = typeof nonce === "string" && /^[0-9a-f]{32}$/u.test(nonce)
+    ? `sec03-journal-v2-test-${nonce}`
+    : "sec03-journal-v2";
+  const directory = path.join(process.env.LOCALAPPDATA, "Mini-Lux", leaf);
   await fs.mkdir(directory, { recursive: true });
   return directory;
 }
@@ -498,11 +716,12 @@ async function realHostReceiptContext() {
   const launcher = manifest.outputs.find(value => value.path === "dist/native/sandbox-launcher.node");
   assert.ok(host && launcher);
   const configured = process.env.RAINYDAYS_SEC03_IDENTITY_FILE ? JSON.parse(await fs.readFile(process.env.RAINYDAYS_SEC03_IDENTITY_FILE, "utf8")) : null;
+  const buildInfo = configured ? null : JSON.parse(await fs.readFile(path.join(projectRoot, "build-info.json"), "utf8"));
   const identity = {
     runId: configured?.runId ?? randomUUID(),
-    candidateId: configured?.candidateId ?? "c".repeat(64),
-    buildId: configured?.buildId ?? "d".repeat(64),
-    sourceSha256: configured?.sourceSha256 ?? "e".repeat(64),
+    candidateId: configured?.candidateId ?? buildInfo.candidateId,
+    buildId: configured?.buildId ?? createHash("sha256").update(buildInfo.buildId).digest("hex"),
+    sourceSha256: configured?.sourceSha256 ?? buildInfo.sourceDigest,
     hostSha256: host.sha256,
     launcherSha256: launcher.sha256,
     packageSha256: configured?.packageSha256 ?? "5".repeat(64),
@@ -893,6 +1112,9 @@ async function createA02Fixture() {
     for (const target of readable) assert.ok((await fs.readFile(target)).length > 0, `A02 fixture is not host-readable: ${target}`);
     return {
       root,
+      outside,
+      hardlinkSource,
+      junctionTarget,
       async close() {
         await fs.rm(parent, { recursive: true, force: true });
         if (anotherDriveCreated) await fs.rm(anotherDrive, { force: true });
@@ -904,10 +1126,6 @@ async function createA02Fixture() {
     if (error?.code === "BLOCKED") throw error;
     throw blockedCapability("A02 authentic fixture construction", error);
   }
-}
-
-function externalIpv4() {
-  return Object.values(os.networkInterfaces()).flat().find(value => value?.family === "IPv4" && !value.internal)?.address ?? null;
 }
 
 async function closeServer(server) {
@@ -924,7 +1142,7 @@ async function probeListenAvailable(host, port) {
 }
 
 async function createA04Fixture() {
-  const external = externalIpv4();
+  const external = a04ExternalAddress();
   if (!external) throw blockedCapability("A04 external address", new Error("no non-loopback IPv4 address exists"));
   const counts = Object.fromEntries(["A04-01", "A04-02", "A04-03", "A04-04", "A04-05"].map(key => [key, 0]));
   const servers = [];
@@ -1029,6 +1247,29 @@ windowsTest("SEC-03 native E1 uses real AppContainer/Job, denies ambient user da
   }
 });
 
+windowsTest("SEC-03 J5 reuses the retained nested CWD identity lock", async () => {
+  const { host, launcher, addon } = await testNativeArtifacts();
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec03-nested-cwd-"));
+  const cwd = path.join(root, "nested-cwd");
+  const marker = "SEC03_NESTED_CWD_OK";
+  try {
+    await fs.mkdir(cwd);
+    const cwdInfo = await fs.stat(cwd, { bigint: true });
+    const body = await launchBody(root, `cd && echo ${marker}`);
+    body.roots[0].canonicalCwd = cwd;
+    body.roots[0].cwdIdentity = { volumeSerial: String(cwdInfo.dev), fileId: String(cwdInfo.ino), type: "directory" };
+    const result = await launch(addon, host, launcher, body);
+    const output = decode(result.frames).map(value => value.text).join("");
+    assert.deepEqual({ exitCode: result.completion.exitCode, reason: result.completion.reason }, { exitCode: 0, reason: "completed" });
+    assert.match(output, new RegExp(marker));
+    assert.equal(output.toLowerCase().includes(cwd.toLowerCase()), true);
+  } finally {
+    const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await recoveryLease.close();
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
 windowsTest("SEC-03 native execution proof is fixed-identity, host-produced, and verify-only", async () => {
   const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
   const host = manifest.outputs.find((value) => value.path === "dist/native/sandbox-host.exe");
@@ -1044,7 +1285,7 @@ windowsTest("SEC-03 native execution proof is fixed-identity, host-produced, and
   assert.throws(() => addon.openEvidenceVerifier(candidateId, buildIdSha256, sourceSha256, host.sha256, "0".repeat(64)), error => error?.code === "EXEC_NATIVE_IDENTITY_INVALID");
 
   const verifier = addon.openEvidenceVerifier(candidateId, buildIdSha256, sourceSha256, host.sha256, launcher.sha256);
-  assert.deepEqual(Object.keys(verifier).sort(), ["keyId", "verifyExecutionProof", "verifyLauncherObservation"]);
+  assert.deepEqual(Object.keys(verifier).sort(), ["createProjectionObservation", "keyId", "verifyExecutionProof", "verifyLauncherObservation"]);
   assert.equal("sign" in verifier, false);
   assert.equal("mac" in verifier, false);
   assert.equal("createReceipt" in verifier, false);
@@ -1064,10 +1305,17 @@ windowsTest("SEC-03 native execution proof is fixed-identity, host-produced, and
     assert.match(nativeProof.mac, /^[a-f0-9]{64}$/u);
     assert.match(nativeProof.channelMarker, /^[a-f0-9]{64}$/u);
     const proofText = nativeProof.proof.toString("utf8");
+    const proofFields = Object.fromEntries(proofText.trimEnd().split("\n").map(line => { const separator = line.indexOf("="); return [line.slice(0, separator), line.slice(separator + 1)]; }));
     assert.match(proofText, /^v=1\nkind=execution-proof\n/u);
-    assert.match(proofText, /profile=one-shot-shell\n/u);
-    assert.match(proofText, /tokenIsAppContainer=1\npackageSidSha256=[a-f0-9]{64}\ncapabilityCount=0\nlowIntegrity=1\njobConstrained=1\njobPolicySha256=[a-f0-9]{64}\nactiveProcessZero=1\n/u);
-    assert.match(proofText, /cleanupComplete=1\n/u);
+    assert.equal(proofFields.profile, "one-shot-shell");
+    assert.equal(proofFields.tokenIsAppContainer, "1");
+    assert.match(proofFields.packageSidSha256, /^[a-f0-9]{64}$/u);
+    assert.equal(proofFields.capabilityCount, "0");
+    assert.equal(proofFields.lowIntegrity, "1");
+    assert.equal(proofFields.jobConstrained, "1");
+    assert.match(proofFields.jobPolicySha256, /^[a-f0-9]{64}$/u);
+    assert.equal(proofFields.activeProcessZero, "1");
+    assert.equal(proofFields.cleanupComplete, "1");
     assert.doesNotMatch(proofText, /SEC03_PROOF_CANARY/u);
     assert.equal(proofText.includes(root), false);
     assert.equal(proofText.includes(command), false);
@@ -1077,7 +1325,6 @@ windowsTest("SEC-03 native execution proof is fixed-identity, host-produced, and
     assert.equal(verified.testOnly, false);
     assert.match(verified.attestationSha256, /^[a-f0-9]{64}$/u);
 
-    const proofFields = Object.fromEntries(proofText.trimEnd().split("\n").map(line => { const separator = line.indexOf("="); return [line.slice(0, separator), line.slice(separator + 1)]; }));
     assert.equal(proofFields.candidate, candidateId);
     assert.equal(proofFields.buildIdSha256, buildIdSha256);
     assert.equal(proofFields.sourceSha256, sourceSha256);
@@ -1134,7 +1381,100 @@ windowsTest("SEC-03 native execution proof is fixed-identity, host-produced, and
   }
 });
 
-windowsTest("SEC-03 real-host receipt harness authenticates A16 system-volume positives across E1-E4", { timeout: 60_000 }, async () => {
+windowsTest("SEC-03 real-host receipt harness authenticates fixed A15 native identity denials", { timeout: 60_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const subject = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a15-"));
+  const stagedLauncher = path.join(subject, "sandbox-launcher.node");
+  const stagedHost = path.join(subject, "sandbox-host.exe");
+  const stagedExtra = path.join(subject, "unexpected-native.bin");
+  const stagedManifest = path.join(subject, "sec03-native-manifest.json");
+  const receipts = [];
+  const envelopes = new Map();
+  const stage = async (variantId) => {
+    await Promise.all([fs.rm(stagedLauncher, { force: true }), fs.rm(stagedHost, { force: true }), fs.rm(stagedExtra, { force: true }), fs.rm(stagedManifest, { force: true })]);
+    if (variantId !== "A15-01" && variantId !== "A15-07" && variantId !== "A15-09") await fs.copyFile(addonPath, stagedLauncher);
+    if (variantId !== "A15-02" && variantId !== "A15-07" && variantId !== "A15-09") await fs.copyFile(path.join(projectRoot, "dist/native/sandbox-host.exe"), stagedHost);
+    if (variantId === "A15-03") await fs.writeFile(stagedExtra, A15_EXTRA_ARTIFACT, "utf8");
+    if (variantId === "A15-07") {
+      let text = await fs.readFile(manifestPath, "utf8");
+      const manifest = JSON.parse(text);
+      const hostOutput = manifest.outputs.find(value => value.path === "dist/native/sandbox-host.exe");
+      assert.match(hostOutput?.importedDllAllowlistDigest, /^[a-f0-9]{64}$/u);
+      const pathField = `"path": "${hostOutput.path}"`;
+      const importField = `"importedDllAllowlistDigest": "${hostOutput.importedDllAllowlistDigest}"`;
+      const pathPosition = text.indexOf(pathField);
+      const importPosition = text.indexOf(importField, pathPosition);
+      assert(pathPosition >= 0 && importPosition > pathPosition && importPosition < pathPosition + 384);
+      text = `${text.slice(0, importPosition)}"importedDllAllowlistDigest": "${"0".repeat(64)}"${text.slice(importPosition + importField.length)}`;
+      await fs.writeFile(stagedManifest, text, "utf8");
+    }
+    if (variantId === "A15-09") {
+      let text = await fs.readFile(manifestPath, "utf8");
+      const manifest = JSON.parse(text);
+      for (const [key, replacement] of [["sourceDigest", "0"], ["toolchainDigest", "1"]]) {
+        const needle = `"${key}": "${manifest[key]}"`;
+        assert.notEqual(text.indexOf(needle), -1);
+        assert.equal(text.indexOf(needle), text.lastIndexOf(needle));
+        text = text.replace(needle, `"${key}": "${replacement.repeat(64)}"`);
+      }
+      await fs.writeFile(stagedManifest, text, "utf8");
+    }
+    if (variantId === "A15-04") await fs.appendFile(stagedLauncher, "mini-lux/sec03/A15-04", "utf8");
+    if (variantId === "A15-05") await fs.appendFile(stagedHost, "mini-lux/sec03/A15-05", "utf8");
+    if (variantId === "A15-06") {
+      const bytes = await fs.readFile(stagedHost);
+      const peOffset = bytes.readUInt32LE(0x3c);
+      assert.equal(bytes.readUInt16LE(peOffset + 4), 0x8664);
+      bytes.writeUInt16LE(0x014c, peOffset + 4);
+      await fs.writeFile(stagedHost, bytes);
+    }
+  };
+  try {
+    for (const variantId of ["A15-01", "A15-02", "A15-03", "A15-04", "A15-05", "A15-06", "A15-07", "A15-08", "A15-09"]) {
+      await stage(variantId);
+      for (const profileId of ["E1", "E2", "E3", "E4"]) {
+        const planned = a15Case(variantId, profileId);
+        const observationSubject = variantId === "A15-08" ? "fixed-host-directory" : subject;
+        const nativeObservation = await observeA15NativeIdentity(addon, host, launcher, observationSubject, variantId, profileId, identity);
+        const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId: "A15", variantId, profileId });
+        assert.equal(fields.observationClass, "native-identity-denial");
+        assert.equal(fields.raceStage, "native-projection-validation");
+        assert.equal(fields.decisionState, planned.decisionState);
+        assert.equal(fields.observedCode, planned.expectedCode);
+        assert.equal(fields.processStarts, "0");
+        assert.equal(fields.profileCreates, "0");
+        assert.equal(fields.journalWrites, "0");
+        assert.equal(fields.aclMutations, "0");
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A15" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        envelopes.set(`${variantId}/${profileId}`, envelope);
+        if (recorder.enabled) await recorder.record("real-host", "A15", variantId, profileId, envelope);
+      }
+    }
+    const wrongRecord = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A15" && value.variantId === "A15-01" && value.profileId === "E1");
+    assert.ok(wrongRecord);
+    assert.throws(() => createSec03Receipt(wrongRecord, effectiveIdentity, { ...envelopes.get("A15-02/E1"), variantId: "A15-01" }, nativeVerifier));
+
+    await stage("A15-02");
+    await assert.rejects(
+      () => Promise.resolve().then(() => observeA15NativeIdentity(addon, host, launcher, subject, "A15-01", "E1", identity)),
+      error => error?.code === "EXEC_NATIVE_IDENTITY_INVALID",
+    );
+  } finally {
+    await fs.rm(subject, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 36);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 446);
+  assert.equal(partial.mockCount, 0);
+  assert.equal(partial.testOnlyCount, 0);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates A16 fixed NTFS positives across E1-E4", { timeout: 60_000 }, async () => {
   const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
   const host = manifest.outputs.find(value => value.path === "dist/native/sandbox-host.exe");
   const launcher = manifest.outputs.find(value => value.path === "dist/native/sandbox-launcher.node");
@@ -1166,7 +1506,17 @@ windowsTest("SEC-03 real-host receipt harness authenticates A16 system-volume po
     const unicodeRoot = path.join(unicodeParent, "工作 空间");
     await fs.mkdir(unicodeRoot);
     roots.push(asciiRoot, unicodeParent);
-    for (const [variantId, root] of [["A16-01", asciiRoot], ["A16-02", unicodeRoot]]) {
+    const variants = [["A16-01", asciiRoot], ["A16-02", unicodeRoot]];
+    if (process.env.MINI_LUX_SEC03_A16_FIXED_NTFS_ROOT) {
+      const fixtureRoot = path.resolve(process.env.MINI_LUX_SEC03_A16_FIXED_NTFS_ROOT);
+      const fixtureInfo = await fs.lstat(fixtureRoot);
+      assert(fixtureInfo.isDirectory() && !fixtureInfo.isSymbolicLink(), "A16-03 fixed NTFS fixture root is not a regular directory");
+      assert.equal(await fs.realpath(fixtureRoot), fixtureRoot, "A16-03 fixed NTFS fixture root is not canonical");
+      const separateRoot = await fs.mkdtemp(path.join(fixtureRoot, "mls3a16v-"));
+      roots.push(separateRoot);
+      variants.push(["A16-03", separateRoot]);
+    }
+    for (const [variantId, root] of variants) {
       for (const profileId of ["E1", "E2", "E3", "E4"]) {
         const result = await runPositiveProfile(addon, host, launcher, root, profileId, identity);
         assert.equal(result.completion.exitCode, 0);
@@ -1184,9 +1534,10 @@ windowsTest("SEC-03 real-host receipt harness authenticates A16 system-volume po
     for (const root of roots) await fs.rm(root, { recursive: true, force: true });
   }
   const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
-  assert.equal(partial.validCount, 8);
+  const expectedCount = process.env.MINI_LUX_SEC03_A16_FIXED_NTFS_ROOT ? 12 : 8;
+  assert.equal(partial.validCount, expectedCount);
   assert.equal(partial.invalidKeys.length, 0);
-  assert.equal(partial.missingKeys.length, 474);
+  assert.equal(partial.missingKeys.length, 482 - expectedCount);
   assert.equal(partial.complete, false);
 });
 
@@ -1232,6 +1583,7 @@ windowsTest("SEC-03 real-host receipt harness authenticates all 44 A02 root-esca
   const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
   const fixture = await createA02Fixture();
   const receipts = [];
+  let safeToClose = false;
   try {
     for (const variantId of ["A02-01", "A02-02", "A02-03", "A02-04", "A02-05", "A02-06", "A02-07", "A02-08", "A02-09", "A02-10", "A02-11"]) {
       for (const profileId of ["E1", "E2", "E3", "E4"]) {
@@ -1249,14 +1601,69 @@ windowsTest("SEC-03 real-host receipt harness authenticates all 44 A02 root-esca
         if (recorder.enabled) await recorder.record("real-host", "A02", variantId, profileId, envelope);
       }
     }
+    safeToClose = true;
   } finally {
-    await fixture.close();
+    if (!safeToClose) {
+      const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+      await recoveryLease.close();
+      safeToClose = true;
+    }
+    if (safeToClose) await fixture.close();
   }
   const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
   assert.equal(partial.validCount, 44);
   assert.equal(partial.invalidKeys.length, 0);
   assert.equal(partial.missingKeys.length, 438);
   assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 J5 locks prevent implicit SID propagation to hardlinks and reparse targets", { timeout: 60_000 }, async () => {
+  const { host, launcher, addon } = await testNativeArtifacts();
+  const directory = await recoveryDirectory();
+  const initialLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  await initialLease.close();
+  const baseline = new Set(await fs.readdir(directory));
+  const fixture = await createA02Fixture();
+  let started;
+  let safeToClose = false;
+  try {
+    started = await start(addon, host, launcher, await launchBody(fixture.root, "for /L %i in (1,1,2000000000) do @rem"));
+    const transactionFiles = await waitFor(async () => {
+      const names = (await fs.readdir(directory)).filter(name => !baseline.has(name));
+      return names.some(name => /\.0002\.jrn$/u.test(name)) ? names : null;
+    });
+    const appliedName = transactionFiles.find(name => /\.0002\.jrn$/u.test(name));
+    assert(appliedName);
+    const applied = await fs.readFile(path.join(directory, appliedName), "utf8");
+    const sidHex = /^sidString=([0-9a-f]+)$/mu.exec(applied)?.[1];
+    assert(sidHex);
+    const executionSid = Buffer.from(sidHex, "hex").toString("utf16le");
+    assert.match(executionSid, /^S-1-15-2-(?:[0-9]+-){6}[0-9]+$/u);
+    assert.match(applied, /^MLSEC03J5$/mu);
+    assert.match(applied, /^descendants=.*,[01],0,[0-9a-f]{64}(?:;|$)/mu);
+    for (const target of [fixture.hardlinkSource, fixture.outside, fixture.junctionTarget]) {
+      const observed = await icacls(target);
+      assert.equal(observed.stdout.includes(executionSid), false, `Ineligible outside object received the exact execution SID: ${path.basename(target)}`);
+    }
+    await started.handle.terminateHost(terminateFrame("requested"));
+    await started.handle.completed;
+    started = undefined;
+    const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await recoveryLease.close();
+    assert.deepEqual((await fs.readdir(directory)).filter(name => !baseline.has(name)), []);
+    safeToClose = true;
+  } finally {
+    if (started) {
+      try { await started.handle.crashHostForTest(); } catch {}
+      await started.handle.completed.catch(() => undefined);
+    }
+    if (!safeToClose) {
+      const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+      await recoveryLease.close();
+      safeToClose = true;
+    }
+    if (safeToClose) await fixture.close();
+  }
 });
 
 windowsTest("SEC-03 real-host receipt harness authenticates A03 retained-root replacement barriers", { timeout: 60_000 }, async () => {
@@ -1315,6 +1722,202 @@ windowsTest("SEC-03 real-host receipt harness authenticates A03 retained-root re
   assert.equal(partial.complete, false);
 });
 
+windowsTest("SEC-03 real-host receipt harness authenticates A14 root identity change", { timeout: 60_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const parent = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a14-root-"));
+  const receipts = [];
+  try {
+    for (const profileId of ["E1", "E2", "E3", "E4"]) {
+      const raceParent = path.join(parent, `identity-${profileId}`);
+      const raceRoot = path.join(raceParent, "root");
+      const raceCwd = path.join(raceRoot, "cwd");
+      const displacedRoot = path.join(raceParent, "displaced-root");
+      await fs.mkdir(raceCwd, { recursive: true });
+      const body = await a03LaunchBody(raceRoot, raceCwd, "A03-01", profileId, identity);
+      const expected = await fs.stat(raceRoot, { bigint: true });
+      await fs.rename(raceRoot, displacedRoot);
+      await fs.mkdir(raceCwd, { recursive: true });
+      const observed = await fs.stat(raceRoot, { bigint: true });
+      assert(expected.dev !== observed.dev || expected.ino !== observed.ino, `${profileId} A14 root replacement reused its object identity`);
+      const nativeObservation = await observeRootDenial(addon, host, launcher, body, "EXEC_ROOT_IDENTITY_CHANGED");
+      const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId: "A14", variantId: "A14-06", profileId });
+      assert.equal(fields.observationClass, "root-identity-changed");
+      assert.equal(fields.raceStage, "before-retained-handle");
+      assert.notEqual(fields.expectedRootIdentityDigest, fields.observedRootIdentityDigest);
+      const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A14" && value.variantId === "A14-06" && value.profileId === profileId);
+      assert.ok(record);
+      const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+      validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+      receipts.push(receipt);
+      if (recorder.enabled) await recorder.record("real-host", "A14", "A14-06", profileId, envelope);
+    }
+  } finally {
+    await fs.rm(parent, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 4);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 478);
+  assert.equal(partial.mockCount, 0);
+  assert.equal(partial.testOnlyCount, 0);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates A13 direct HTTP terminal denials", { timeout: 60_000 }, async () => {
+  const { host, launcher, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a13-http-"));
+  const policy = new PathPolicy({ auditKey: Buffer.alloc(32, 114) });
+  const broker = new CapabilityBroker({ pathPolicy: policy, resolveSessionPersona: sessionId => sessionId === "sec03-a13-http" ? "sec03-a13" : null, newRunId: () => effectiveIdentity.runId });
+  broker.registerDirectOperation("terminal:list", DIRECT_OPERATION_POLICIES["terminal:list"]);
+  const pathAuthority = await policy.createAuthority([{ rootId: "workspace", role: "workspace", configuredPath: root, permissions: ["initial-cwd"] }]);
+  const authority = broker.createRuntimeAuthority({ name: "sec03-a13", tools: [], env: { WORKSPACE_ROOT: root }, systemPrompt: "SEC-03 A13 authentic HTTP boundary", allowedRoots: [root], rootEnv: { WORKSPACE_ROOT: "workspace" }, pathAuthority, networkPolicy: { mode: "deny" } });
+  const principal = broker.createLocalApiPrincipal();
+  const observations = new Map();
+  const server = createServer(async (request, response) => {
+    const event = request.method === "POST" && request.url === "/api/terminals" ? "start"
+      : request.method === "POST" && /^\/api\/terminals\/[^/]+\/input$/u.test(request.url || "") ? "input" : null;
+    if (!event) { response.writeHead(404).end(); return; }
+    const operation = "terminal:list";
+    const context = broker.issueLocalApiContext({ authority, principal, sessionId: "sec03-a13-http", operation, args: { deniedRoute: event } });
+    try { observations.set(event, await observeTerminalDirectDenial(context, event)); }
+    finally { if (broker.isContextActive(context)) broker.finishContext(context); }
+    response.writeHead(403, { "Content-Type": "application/json" });
+    response.end(JSON.stringify({ code: "EXEC_DIRECT_MUTATION_DENIED", error: `Direct HTTP terminal ${event} is permanently denied` }));
+  });
+  const receipts = [];
+  try {
+    await new Promise((resolve, reject) => { server.once("error", reject); server.listen(0, "127.0.0.1", resolve); });
+    const address = server.address();
+    assert(address && typeof address === "object");
+    for (const [variantId, event, route] of [["A13-01", "start", "/api/terminals"], ["A13-02", "input", "/api/terminals/term_forged/input"]]) {
+      const response = await fetch(`http://127.0.0.1:${address.port}${route}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      assert.equal(response.status, 403);
+      assert.equal((await response.json()).code, "EXEC_DIRECT_MUTATION_DENIED");
+      const nativeObservation = observations.get(event);
+      assert(nativeObservation, `${event} HTTP denial omitted native observation`);
+      const planned = a13Case(variantId, "E4");
+      const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId: "A13", variantId, profileId: "E4" });
+      assert.equal(fields.operation, planned.operation);
+      assert.equal(fields.decisionState, planned.decisionState);
+      assert.equal(fields.observedCode, planned.expectedCode);
+      assert.equal(fields.processStarts, "0");
+      assert.equal(fields.profileCreates, "0");
+      assert.equal(fields.journalWrites, "0");
+      assert.equal(fields.aclMutations, "0");
+      assert.equal(fields.stdinWrites, "0");
+      const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A13" && value.variantId === variantId && value.profileId === "E4");
+      assert.ok(record);
+      const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+      validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+      receipts.push(receipt);
+      if (recorder.enabled) await recorder.record("real-host", "A13", variantId, "E4", envelope);
+    }
+  } finally {
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
+    await broker.retireAuthority(authority).catch(() => undefined);
+    await shutdownExecutionRuntime().catch(() => undefined);
+    await fs.rm(root, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 2);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 480);
+  assert.equal(partial.mockCount, 0);
+  assert.equal(partial.testOnlyCount, 0);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates A13 cross-owner terminal denials", { timeout: 60_000 }, async () => {
+  const { host, launcher, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a13-owner-"));
+  const receipts = [];
+  try {
+    for (const [variantId, operation] of [["A13-03", "kill"], ["A13-04", "close"]]) {
+      let fixture;
+      try {
+        fixture = await createA13RealTerminal(root, effectiveIdentity.runId);
+        const planned = a13Case(variantId, "E4");
+        assert.equal(planned.operation, operation);
+        const nativeObservation = await fixture.attack(operation);
+        const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId: "A13", variantId, profileId: "E4" });
+        assert.equal(fields.observationClass, "service-denial");
+        assert.equal(fields.raceStage, "trusted-service-decision");
+        assert.equal(fields.operation, operation);
+        assert.equal(fields.decisionState, planned.decisionState);
+        assert.equal(fields.observedCode, "EXEC_OWNER_MISMATCH");
+        assert.equal(fields.processStarts, "0");
+        assert.equal(fields.profileCreates, "0");
+        assert.equal(fields.journalWrites, "0");
+        assert.equal(fields.aclMutations, "0");
+        assert.equal(fields.stdinWrites, "0");
+        assert.equal(terminalFacade.get(fixture.victimOwner, fixture.terminal.id)?.status, "running");
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A13" && value.variantId === variantId && value.profileId === "E4");
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        if (recorder.enabled) await recorder.record("real-host", "A13", variantId, "E4", envelope);
+      } finally {
+        if (fixture) {
+          await terminalFacade.close(fixture.victimOwner, fixture.terminal.id).catch(() => undefined);
+          await fixture.broker.retireAuthority(fixture.authority).catch(() => undefined);
+        }
+      }
+    }
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 2);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 480);
+  assert.equal(partial.mockCount, 0);
+  assert.equal(partial.testOnlyCount, 0);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates A14 invalid recovery journals", { timeout: 60_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const journalDirectory = path.join(process.env.LOCALAPPDATA, "Mini-Lux", "sec03-journal-v2");
+  const journalPath = path.join(journalDirectory, "txn-00000000000000000000000000000000.0001.jrn");
+  const receipts = [];
+  let fixtureCreated = false;
+  try {
+    const initialLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await initialLease.close();
+    await fs.mkdir(journalDirectory, { recursive: true });
+    assert.deepEqual(await fs.readdir(journalDirectory), []);
+    await fs.writeFile(journalPath, A14_INVALID_JOURNAL, { encoding: "utf8", flag: "wx" });
+    fixtureCreated = true;
+    assert.throws(() => addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256), error => error?.code === "EXEC_ACL_RECOVERY_REQUIRED");
+    for (const profileId of ["E1", "E2", "E3", "E4"]) {
+      const nativeObservation = await observeA14InvalidJournal(addon, host, launcher, profileId, identity);
+      const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId: "A14", variantId: "A14-07", profileId });
+      assert.equal(fields.observationClass, "recovery-denial");
+      assert.equal(fields.raceStage, "startup-recovery");
+      assert.equal(fields.observedCode, "EXEC_RECOVERY_JOURNAL_INVALID");
+      assert.equal(fields.processStarts, "0");
+      assert.equal(fields.profileCreates, "0");
+      assert.equal(fields.journalWrites, "0");
+      assert.equal(fields.aclMutations, "0");
+      const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A14" && value.variantId === "A14-07" && value.profileId === profileId);
+      assert.ok(record);
+      const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+      validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+      receipts.push(receipt);
+      if (recorder.enabled) await recorder.record("real-host", "A14", "A14-07", profileId, envelope);
+    }
+  } finally {
+    if (fixtureCreated) await fs.rm(journalPath, { force: true });
+    const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await recoveryLease.close();
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 4);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 478);
+  assert.equal(partial.mockCount, 0);
+  assert.equal(partial.testOnlyCount, 0);
+});
+
 windowsTest("SEC-03 real-host receipt harness authenticates all 20 A04 direct-network denials", { timeout: 120_000 }, async () => {
   const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
   await fs.mkdir(testNativeDirectory, { recursive: true });
@@ -1351,6 +1954,187 @@ windowsTest("SEC-03 real-host receipt harness authenticates all 20 A04 direct-ne
   assert.equal(partial.complete, false);
 });
 
+windowsTest("SEC-03 real-host receipt harness authenticates all 30 finite HTTPS broker outcomes", { timeout: 240_000 }, async () => {
+  const { host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const artifactIdentity = Object.freeze({
+    candidateId: identity.candidateId,
+    buildIdSha256: identity.buildId,
+    sourceSha256: identity.sourceSha256,
+    launcherSha256: launcher.sha256,
+    launcherBytes: launcher.bytes,
+    hostSha256: host.sha256,
+    hostBytes: host.bytes,
+    machine: "x64",
+    protocolVersion: 1,
+  });
+  const bridge = createProductionNativeExecutionBridge(artifactIdentity);
+  await bridge.initialize?.();
+  const receipts = [];
+  let firstEnvelope = null;
+  const profiles = Object.freeze({ E1: "one-shot-shell", E2: "agent-shell", E3: "script" });
+  const emptyBody = Buffer.alloc(0);
+  const body = Buffer.from("body", "utf8");
+  const emptySha256 = createHash("sha256").digest("hex");
+  try {
+    for (const variantId of ["A05-01", "A05-02", "A05-03", "A05-04", "A05-05", "A05-06", "A05-07", "A05-08", "A05-09", "A05-10"]) {
+      for (const profileId of ["E1", "E2", "E3"]) {
+        const redirectCase = variantId === "A05-07";
+        const origin = redirectCase ? "https://iana.org" : "https://example.com";
+        const url = redirectCase ? "https://iana.org/domains/reserved" : "https://example.com/";
+        const requestBody = variantId === "A05-08" ? body : emptyBody;
+        const method = variantId === "A05-08" ? "POST" : "GET";
+        const limits = Object.freeze({
+          maxRequestBytes: variantId === "A05-08" ? body.length - 1 : 1024,
+          maxResponseBytes: variantId === "A05-09" ? 1 : 4096,
+          deadlineMs: variantId === "A05-10" ? 1 : 60_000,
+          maxRedirects: 0,
+        });
+        const operation = Object.freeze({
+          version: 1,
+          operationId: `${variantId.toLowerCase()}-${profileId.toLowerCase()}`,
+          method,
+          url,
+          headers: Object.freeze([]),
+          bodyBytes: requestBody.length,
+          bodySha256: requestBody.length ? createHash("sha256").update(requestBody).digest("hex") : emptySha256,
+          redirects: Object.freeze([]),
+          limits,
+        });
+        const personaDigest = createHash("sha256").update(`sec03-a05-persona\0${profileId}`).digest("hex");
+        const context = Object.freeze({
+          contextId: `a05-context-${variantId}-${profileId}`,
+          executionDomainId: `a05-domain-${variantId}-${profileId}`,
+          sessionId: `a05-session-${profileId}`,
+          runId: identity.runId,
+          parentContextId: null,
+          principal: "agent",
+          persona: Object.freeze({ name: "sec03-a05", digest: personaDigest }),
+          authorityEpoch: 1,
+          allowedTools: Object.freeze(["sec03-a05-broker"]),
+          allowedRoots: Object.freeze([]),
+          networkPolicy: Object.freeze({ mode: "allowlist", origins: Object.freeze([origin]) }),
+          allowedRiskClasses: Object.freeze(["network"]),
+          approvalGrant: null,
+        });
+        let resolution = 0;
+        const broker = createFiniteHttpsBroker(context, [operation], variantId === "A05-05"
+          ? { resolve: async () => Object.freeze([{ address: "169.254.169.254", family: 4 }]) }
+          : variantId === "A05-06"
+            ? { resolve: async () => Object.freeze([{ address: ++resolution === 1 ? "93.184.216.34" : "1.1.1.1", family: 4 }]) }
+            : {});
+        const invocationUrl = variantId === "A05-02" ? "http://example.com/"
+          : variantId === "A05-03" ? "https://www.example.com/"
+            : variantId === "A05-04" ? "https://example.com:444/" : url;
+        const invocation = Object.freeze({ operationId: operation.operationId, method, url: invocationUrl, headers: operation.headers, body: requestBody });
+        let observation;
+        try { observation = await broker.execute(context, invocation); }
+        catch (error) {
+          assert(error instanceof FiniteHttpsBrokerError, `${variantId}/${profileId}: unexpected broker failure ${error}`);
+          observation = error.observation;
+        }
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A05" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        assert.equal(observation.code, record.expectedCode, `${variantId}/${profileId}`);
+        const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+        const policyDigest = createHash("sha256").update(JSON.stringify(context.networkPolicy)).digest("hex");
+        const nativeObservation = await bridge.observeBrokerOperation(Object.freeze({
+          executionId,
+          entryPoint: profileId,
+          profile: profiles[profileId],
+          contextId: context.executionDomainId,
+          sessionId: context.sessionId,
+          runId: context.runId,
+          authorityEpoch: context.authorityEpoch,
+          personaDigest,
+          policyDigest,
+          observation,
+        }));
+        const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation, host, launcher, familyId: "A05", variantId, profileId });
+        assert.equal(fields.operation, "broker");
+        assert.equal(fields.observationClass, "broker-observation");
+        assert.equal(fields.raceStage, "trusted-network-broker");
+        assert.equal(fields.networkMode, "brokered");
+        assert.equal(fields.observedCode, record.expectedCode);
+        assert.equal(Number(fields.networkAttemptCount), observation.attemptCount);
+        assert.equal(Number(fields.journalWrites), observation.dnsResolutionCount);
+        assert.equal(Number(fields.aclMutations), observation.redirectCount);
+        assert.equal(Number(fields.stdinWrites), observation.requestBytes);
+        assert.equal(Number(fields.aggregateOutputBytes), observation.responseBytes);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        if (!firstEnvelope) firstEnvelope = envelope;
+        if (recorder.enabled) await recorder.record("real-host", "A05", variantId, profileId, envelope);
+      }
+    }
+  } finally {
+    await bridge.shutdown();
+  }
+  assert.ok(firstEnvelope);
+  const wrongRecord = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A05" && value.variantId === "A05-02" && value.profileId === "E1");
+  assert.ok(wrongRecord);
+  assert.throws(() => createSec03Receipt(wrongRecord, effectiveIdentity, { ...firstEnvelope, variantId: "A05-02", observedCode: wrongRecord.expectedCode }, nativeVerifier), /broker|observed|decisionState/iu);
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 30);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 452);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates all nine fixed E3A adversarial tuples", { timeout: 180_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const receipts = [];
+  let firstEnvelope = null;
+  const variants = ["A06-01", "A06-02", "A06-03", "A06-04", "A07-01", "A07-02", "A07-03", "A08-02", "A08-04"];
+  for (const variantId of variants) {
+    const planned = e3aCase(variantId, "E3A");
+    const result = await runFixedAdversary(addon, host, launcher, variantId, identity);
+    const fields = parseNativeProof(result.completion.nativeProof);
+    assert.equal(result.completion.reason, planned.nativeReason === "completed" ? "completed" : planned.expectedCode, `${variantId}/E3A: ${JSON.stringify({ childExit: fields.childExit, completionReason: fields.completionReason })}`);
+    assert.equal(fields.profile, "fixed-adversary");
+    assert.equal(fields.childExit, String(planned.childExit));
+    assert.equal(fields.completionReason, planned.nativeReason);
+    assert.equal(fields.aclMutations, "4");
+    assert.equal(fields.executableLease, "1");
+    assert.equal(fields.descendantValidationFailures, "0");
+    assert.equal(fields.activeProcessZero, "1");
+    assert.equal(fields.cleanupComplete, "1");
+    assert.equal(fields.handlesDrained, "1");
+    assert.equal(fields.treeTerminated, "1");
+    const { envelope } = evidenceFromNativeProof({ nativeProof: result.completion.nativeProof, host, launcher, layer: "real-host", familyId: variantId.slice(0, 3), variantId, profileId: "E3A", observedCode: planned.expectedCode });
+    const record = matrix.records.find(value => value.layer === "real-host" && value.variantId === variantId && value.profileId === "E3A");
+    assert.ok(record);
+    const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+    validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+    if (variantId === "A06-01") firstEnvelope = envelope;
+    receipts.push(receipt);
+    if (recorder.enabled) await recorder.record("real-host", record.familyId, variantId, "E3A", envelope);
+  }
+  assert.ok(firstEnvelope);
+  const wrongRecord = matrix.records.find(value => value.layer === "real-host" && value.variantId === "A06-02" && value.profileId === "E3A");
+  assert.ok(wrongRecord);
+  const substitutedEnvelope = { ...firstEnvelope, variantId: "A06-02" };
+  assert.throws(() => createSec03Receipt(wrongRecord, effectiveIdentity, substitutedEnvelope, nativeVerifier), /E3A fixed tuple payload differs/u);
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 9);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 473);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 fixed E3A launcher rejects every non-frozen tuple before host output", async () => {
+  const { addon, host, launcher, identity } = await realHostReceiptContext();
+  const lease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  const frames = [];
+  try {
+    const invalid = { ...fixedAdversaryBody("A06-01", identity), tuple: "A06-99/E3A" };
+    assert.throws(() => lease.launchHost(frame(invalid), value => frames.push(value)), error => error?.code === "EXEC_NATIVE_PROTOCOL");
+    assert.equal(frames.length, 0);
+  } finally {
+    await lease.close();
+  }
+});
+
 windowsTest("SEC-03 real-host receipt harness authenticates reachable A06 descendant containment", { timeout: 120_000 }, async () => {
   const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a06-"));
@@ -1385,19 +2169,31 @@ windowsTest("SEC-03 real-host receipt harness authenticates reachable A06 descen
   assert.equal(partial.complete, false);
 });
 
-windowsTest("SEC-03 real-host receipt harness authenticates reachable A07 handle denials", { timeout: 60_000 }, async () => {
+windowsTest("SEC-03 real-host receipt harness authenticates all production-profile A07 denials", { timeout: 180_000 }, async () => {
   const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a07-"));
+  const stagedHelper = path.join(root, "sec03-a07-adversary.exe");
   const receipts = [];
   try {
-    for (const variantId of ["A07-04", "A07-05", "A07-06"]) {
-      for (const profileId of ["E1", "E2", "E3", "E4"]) {
+    await fs.copyFile(a07HelperPath, stagedHelper);
+    const fixedHelperSha256 = a07Case("A07-01", "E1").helperSha256;
+    assert.equal(createHash("sha256").update(await fs.readFile(stagedHelper)).digest("hex"), fixedHelperSha256);
+    for (const variantId of ["A07-01", "A07-02", "A07-03", "A07-04", "A07-05", "A07-06"]) {
+      const profiles = ["A07-01", "A07-02", "A07-03"].includes(variantId) ? ["E1", "E2", "E4"] : ["E1", "E2", "E3", "E4"];
+      for (const profileId of profiles) {
         const planned = a07Case(variantId, profileId);
         const result = await runA07Profile(addon, host, launcher, root, variantId, profileId, identity);
         const output = decode(result.frames).map(value => value.text).join("");
         assert.deepEqual({ exitCode: result.completion.exitCode, reason: result.completion.reason }, { exitCode: 0, reason: "completed" }, `${variantId}/${profileId}: ${output}`);
         const { fields, envelope } = evidenceFromNativeProof({ nativeProof: result.completion.nativeProof, host, launcher, layer: "real-host", familyId: "A07", variantId, profileId, observedCode: planned.expectedCode });
-        if (variantId === "A07-04") {
+        assert.equal(fields.childExit, String(planned.expectedExit), `${variantId}/${profileId}: actual Win32 stimulus result differs: ${output}`);
+        assert.equal(fields.jobBreakawayAllowed, "0");
+        assert.equal(fields.jobSilentBreakawayAllowed, "0");
+        if (["A07-01", "A07-02", "A07-03"].includes(variantId)) {
+          assert.equal(createHash("sha256").update(await fs.readFile(stagedHelper)).digest("hex"), planned.helperSha256);
+          assert(Number(fields.observedDescendantCount) >= planned.minimumDescendants, `${variantId}/${profileId}: fixed Win32 stimulus descendant missing`);
+          assert.equal(fields.descendantValidationFailures, "0", `${variantId}/${profileId}: fixed Win32 stimulus escaped token or Job validation`);
+        } else if (variantId === "A07-04") {
           assert.equal(fields.hostDupOpenWin32, "5");
           assert.equal(fields.jobHandleInheritable, "0");
           assert.equal(fields.jobHandleDuplicateBlocked, "1");
@@ -1421,13 +2217,307 @@ windowsTest("SEC-03 real-host receipt harness authenticates reachable A07 handle
       }
     }
   } finally {
+    let recovered = false;
+    const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    try {
+      await recoveryLease.close();
+      recovered = true;
+    } finally {
+      if (recovered) await fs.rm(root, { recursive: true, force: true });
+    }
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 21);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 461);
+  assert.equal(partial.complete, false);
+});
+
+windowsTest("SEC-03 native rejects a protected existing descendant before root mutation", { timeout: 60_000 }, async () => {
+  const { addon, host, launcher, identity } = await realHostReceiptContext();
+  const recoveryRoot = await recoveryDirectory();
+  const journalBaseline = [...await fs.readdir(recoveryRoot)].sort();
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3acl-protected-"));
+  const protectedDirectory = path.join(root, "protected");
+  const protectedFile = path.join(protectedDirectory, "nested.txt");
+  const marker = "SEC03_PROTECTED_DESCENDANT_MUST_NOT_RUN";
+  let recovered = false;
+  try {
+    await fs.mkdir(protectedDirectory);
+    await fs.writeFile(protectedFile, "protected", "utf8");
+    await icacls(protectedDirectory, "/inheritance:d", "/Q");
+    assert.equal(await fs.readFile(protectedFile, "utf8"), "protected");
+    const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+    const result = await launch(addon, host, launcher, await launchBody(root, `echo ${marker}`, { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 }));
+    const output = decode(result.frames).map(value => value.text).join("");
+    assert.match(output, /EXEC_ACL_PROPAGATION_FAILED/u);
+    assert.deepEqual({ exitCode: result.completion.exitCode, reason: result.completion.reason }, { exitCode: 74, reason: "host-failed" });
+    assert.ok(result.completion.nativeProof && Buffer.isBuffer(result.completion.nativeProof.proof));
+    const proofFields = parseNativeProof(result.completion.nativeProof);
+    assert.equal(proofFields.completionReason, "acl-propagation-failed");
+    assert.equal(proofFields.execution, executionId);
+    assert.equal(proofFields.processStarts, "0");
+    assert.equal(proofFields.aclMutations, "0");
+    assert.equal(proofFields.jobConstrained, "0");
+    assert.equal(proofFields.cleanupComplete, "1");
+    assert.doesNotMatch(output, new RegExp(marker, "u"));
+    const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await recoveryLease.close();
+    recovered = true;
+    assert.deepEqual([...await fs.readdir(recoveryRoot)].sort(), journalBaseline);
+  } finally {
+    if (!recovered) {
+      const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+      await recoveryLease.close();
+      recovered = true;
+    }
+    if (recovered) {
+      await icacls(protectedDirectory, "/inheritance:e", "/Q").catch(() => undefined);
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  }
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates A14 crash recovery observations", { timeout: 180_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const recoveryRoot = await recoveryDirectory();
+  const initialLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  await initialLease.close();
+  const journalBaseline = [...await fs.readdir(recoveryRoot)].sort();
+  const receipts = [];
+  const envelopes = new Map();
+  for (const variantId of ["A14-01", "A14-02"]) {
+    const pristine = variantId === "A14-01";
+    for (const profileId of ["E1", "E2", "E3", "E4"]) {
+      const root = await fs.mkdtemp(path.join(os.tmpdir(), `mls3a14-${pristine ? "pristine" : "recovered"}-`));
+      const marker = `SEC03_${variantId.replace("-", "_")}_${profileId}_MUST_NOT_RUN`;
+      let recovered = false;
+      try {
+        const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+        const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 };
+        const body = profileId === "E3"
+          ? await scriptLaunchBody(root, `console.log(${JSON.stringify(marker)})`, overrides)
+          : profileId === "E2" || profileId === "E4"
+            ? await terminalLaunchBody(root, profileId, overrides)
+            : await launchBody(root, `echo ${marker}`, overrides);
+        const d0 = (await icacls(root)).stdout;
+        const started = await startAclCrashReceipt(addon, host, launcher, body, variantId);
+        const completion = await started.handle.completed;
+        recovered = true;
+        const output = decode(started.frames).map(value => value.text).join("");
+        assert.equal(completion.exitCode, pristine ? 58273 : 58274);
+        assert.equal(completion.reason, "host-failed");
+        assert.doesNotMatch(output, new RegExp(marker, "u"));
+        assert.equal((await icacls(root)).stdout, d0, "fixed ACL recovery did not restore the exact D0 sequence");
+        assert.deepEqual([...await fs.readdir(recoveryRoot)].sort(), journalBaseline);
+        assert(completion.nativeProof && Buffer.isBuffer(completion.nativeProof.proof));
+        const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation: completion.nativeProof, host, launcher, familyId: "A14", variantId, profileId });
+        assert.equal(fields.execution, executionId);
+        assert.equal(fields.observationClass, "acl-crash-recovery");
+        assert.equal(fields.raceStage, "post-host-recovery");
+        assert.equal(fields.decisionState, pristine ? "acl-pristine-recovered" : "acl-applied-recovered");
+        assert.equal(fields.observedCode, pristine ? "OBS_ACL_PRISTINE" : "OBS_ACL_RECOVERED");
+        assert.equal(fields.hostExitCode, pristine ? "58273" : "58274");
+        assert.equal(fields.recoveryJournalState, pristine ? "prepared" : "applied");
+        assert.equal(fields.recoveryJournalGeneration, pristine ? "1" : "2");
+        assert.equal(fields.journalWrites, pristine ? "1" : "2");
+        assert.equal(fields.aclMutations, pristine ? "0" : "2");
+        assert.equal(fields.processStarts, "0");
+        assert.equal(fields.profileCreates, "1");
+        assert.equal(fields.cleanupComplete, "1");
+        assert.equal(fields.hostExited, "1");
+        assert.equal(fields.childExit, "none");
+        assert.equal(fields.completionReason, "host-crash-recovered");
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A14" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        envelopes.set(`${variantId}/${profileId}`, envelope);
+        if (recorder.enabled) await recorder.record("real-host", "A14", variantId, profileId, envelope);
+      } finally {
+        if (!recovered) {
+          try { const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256); await recoveryLease.close(); } catch { /* Preserve the primary failure. */ }
+        }
+        await fs.rm(root, { recursive: true, force: true });
+      }
+    }
+  }
+  const a1401Record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A14" && value.variantId === "A14-01" && value.profileId === "E1");
+  const a1402Envelope = envelopes.get("A14-02/E1");
+  assert.ok(a1401Record && a1402Envelope);
+  const substituted = { ...a1402Envelope, variantId: "A14-01", observedCode: "OBS_ACL_PRISTINE" };
+  assert.throws(() => createSec03Receipt(a1401Record, effectiveIdentity, substituted, nativeVerifier), /fixed ACL recovery variant\/request binding differs/u);
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 8);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 474);
+  assert.equal(partial.mockCount, 0);
+  assert.equal(partial.testOnlyCount, 0);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates A14 D0 conflict denials", { timeout: 180_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const recoveryRoot = await recoveryDirectory();
+  const journalBaseline = [...await fs.readdir(recoveryRoot)].sort();
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a14-conflict-"));
+  const ready = path.join(root, ".sec03-a14-conflict-ready");
+  const release = path.join(root, ".sec03-a14-conflict-release");
+  const marker = "SEC03_A14_CONFLICT_MUST_NOT_RUN";
+  const receipts = [];
+  let unrelatedAdded = false;
+  try {
+    for (const profileId of ["E1", "E2", "E3", "E4"]) {
+      const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+      const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 };
+      const body = profileId === "E3"
+        ? await scriptLaunchBody(root, `console.log(${JSON.stringify(marker)})`, overrides)
+        : profileId === "E2" || profileId === "E4"
+          ? await terminalLaunchBody(root, profileId, overrides)
+          : await launchBody(root, `echo ${marker}`, overrides);
+      const started = await startAclConflictReceipt(addon, host, launcher, body);
+      await waitFor(async () => fs.access(ready).then(() => true, () => null));
+      await icacls(root, "/grant", "*S-1-5-20:(OI)(CI)(RX)", "/Q"); unrelatedAdded = true;
+      await fs.writeFile(release, "release", { flag: "wx" });
+      const completion = await started.handle.completed;
+      const output = decode(started.frames).map(value => value.text).join("");
+      assert.deepEqual({ exitCode: completion.exitCode, reason: completion.reason }, { exitCode: 74, reason: "host-failed" });
+      assert.match(output, /EXEC_ACL_CONFLICT/u);
+      assert.doesNotMatch(output, new RegExp(marker, "u"));
+      assert.match((await icacls(root)).stdout, /NETWORK SERVICE|S-1-5-20/iu);
+      const { fields, envelope } = evidenceFromNativeProof({ nativeProof: completion.nativeProof, host, launcher, layer: "real-host", familyId: "A14", variantId: "A14-05", profileId, observedCode: "EXEC_ACL_CONFLICT" });
+      assert.equal(fields.execution, executionId);
+      assert.equal(fields.completionReason, "acl-conflict");
+      assert.equal(fields.processStarts, "0");
+      assert.equal(fields.aclMutations, "0");
+      assert.equal(fields.jobConstrained, "0");
+      assert.equal(fields.cleanupComplete, "1");
+      const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A14" && value.variantId === "A14-05" && value.profileId === profileId);
+      assert.ok(record);
+      const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+      validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+      receipts.push(receipt);
+      if (recorder.enabled) await recorder.record("real-host", "A14", "A14-05", profileId, envelope);
+      assert.deepEqual([...await fs.readdir(recoveryRoot)].sort(), journalBaseline);
+      await icacls(root, "/remove:g", "*S-1-5-20", "/Q"); unrelatedAdded = false;
+    }
+  } finally {
+    if (unrelatedAdded) await icacls(root, "/remove:g", "*S-1-5-20", "/Q").catch(() => undefined);
     await fs.rm(root, { recursive: true, force: true });
   }
   const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
-  assert.equal(partial.validCount, 12);
+  assert.equal(partial.validCount, 4);
   assert.equal(partial.invalidKeys.length, 0);
-  assert.equal(partial.missingKeys.length, 470);
-  assert.equal(partial.complete, false);
+  assert.equal(partial.missingKeys.length, 478);
+  assert.equal(partial.mockCount, 0);
+  assert.equal(partial.testOnlyCount, 0);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates A14 retained-handle sharing denials", { timeout: 120_000 }, async () => {
+  const { addon: testAddon } = await testNativeArtifacts();
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const recoveryRoot = await recoveryDirectory();
+  const journalBaseline = [...await fs.readdir(recoveryRoot)].sort();
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a14-sharing-"));
+  const blockedFile = path.join(root, "blocked.txt");
+  const marker = "SEC03_A14_SHARING_MUST_NOT_RUN";
+  const receipts = [];
+  let sharingLease = null;
+  try {
+    await fs.writeFile(blockedFile, "locked", "utf8");
+    sharingLease = testAddon.openAclSharingLeaseForTest(blockedFile);
+    assert.equal(typeof sharingLease.close, "function");
+    for (const profileId of ["E1", "E2", "E3", "E4"]) {
+      const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+      const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 };
+      const body = profileId === "E3"
+        ? await scriptLaunchBody(root, `console.log(${JSON.stringify(marker)})`, overrides)
+        : profileId === "E2" || profileId === "E4"
+          ? await terminalLaunchBody(root, profileId, overrides)
+          : await launchBody(root, `echo ${marker}`, overrides);
+      const result = await launch(addon, host, launcher, body);
+      const output = decode(result.frames).map(value => value.text).join("");
+      assert.deepEqual({ exitCode: result.completion.exitCode, reason: result.completion.reason }, { exitCode: 74, reason: "host-failed" });
+      assert.match(output, /EXEC_ACL_SHARING_FAILED/u);
+      assert.doesNotMatch(output, new RegExp(marker, "u"));
+      const { fields, envelope } = evidenceFromNativeProof({ nativeProof: result.completion.nativeProof, host, launcher, layer: "real-host", familyId: "A14", variantId: "A14-03", profileId, observedCode: "EXEC_ACL_SHARING_FAILED" });
+      assert.equal(fields.execution, executionId);
+      assert.equal(fields.completionReason, "acl-sharing-failed");
+      assert.equal(fields.processStarts, "0");
+      assert.equal(fields.aclMutations, "0");
+      assert.equal(fields.jobConstrained, "0");
+      assert.equal(fields.cleanupComplete, "1");
+      const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A14" && value.variantId === "A14-03" && value.profileId === profileId);
+      assert.ok(record);
+      const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+      validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+      receipts.push(receipt);
+      if (recorder.enabled) await recorder.record("real-host", "A14", "A14-03", profileId, envelope);
+      assert.deepEqual([...await fs.readdir(recoveryRoot)].sort(), journalBaseline);
+    }
+  } finally {
+    if (sharingLease) sharingLease.close();
+    await fs.rm(root, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 4);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 478);
+  assert.equal(partial.mockCount, 0);
+  assert.equal(partial.testOnlyCount, 0);
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates A14 protected-DACL propagation denials", { timeout: 120_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const recoveryRoot = await recoveryDirectory();
+  const journalBaseline = [...await fs.readdir(recoveryRoot)].sort();
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a14-protected-"));
+  const protectedDirectory = path.join(root, "protected");
+  const protectedFile = path.join(protectedDirectory, "nested.txt");
+  const marker = "SEC03_A14_PROTECTED_DACL_MUST_NOT_RUN";
+  const receipts = [];
+  try {
+    await fs.mkdir(protectedDirectory);
+    await fs.writeFile(protectedFile, "protected", "utf8");
+    await icacls(protectedDirectory, "/inheritance:d", "/Q");
+    for (const profileId of ["E1", "E2", "E3", "E4"]) {
+      const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+      const overrides = { runId: identity.runId, executionId, candidateId: identity.candidateId, buildIdSha256: identity.buildId, sourceSha256: identity.sourceSha256 };
+      const body = profileId === "E3"
+        ? await scriptLaunchBody(root, `console.log(${JSON.stringify(marker)})`, overrides)
+        : profileId === "E2" || profileId === "E4"
+          ? await terminalLaunchBody(root, profileId, overrides)
+          : await launchBody(root, `echo ${marker}`, overrides);
+      const result = await launch(addon, host, launcher, body);
+      const output = decode(result.frames).map(value => value.text).join("");
+      assert.deepEqual({ exitCode: result.completion.exitCode, reason: result.completion.reason }, { exitCode: 74, reason: "host-failed" });
+      assert.match(output, /EXEC_ACL_PROPAGATION_FAILED/u);
+      assert.doesNotMatch(output, new RegExp(marker, "u"));
+      const { fields, envelope } = evidenceFromNativeProof({ nativeProof: result.completion.nativeProof, host, launcher, layer: "real-host", familyId: "A14", variantId: "A14-04", profileId, observedCode: "EXEC_ACL_PROPAGATION_FAILED" });
+      assert.equal(fields.execution, executionId);
+      assert.equal(fields.completionReason, "acl-propagation-failed");
+      assert.equal(fields.processStarts, "0");
+      assert.equal(fields.aclMutations, "0");
+      assert.equal(fields.jobConstrained, "0");
+      assert.equal(fields.cleanupComplete, "1");
+      const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A14" && value.variantId === "A14-04" && value.profileId === profileId);
+      assert.ok(record);
+      const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+      validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+      receipts.push(receipt);
+      if (recorder.enabled) await recorder.record("real-host", "A14", "A14-04", profileId, envelope);
+      assert.deepEqual([...await fs.readdir(recoveryRoot)].sort(), journalBaseline);
+    }
+  } finally {
+    await icacls(protectedDirectory, "/inheritance:e", "/Q").catch(() => undefined);
+    await fs.rm(root, { recursive: true, force: true });
+  }
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 4);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 478);
+  assert.equal(partial.mockCount, 0);
+  assert.equal(partial.testOnlyCount, 0);
 });
 
 windowsTest("SEC-03 real-host receipt harness authenticates all reachable A08 Job limits", { timeout: 120_000 }, async () => {
@@ -1471,12 +2561,72 @@ windowsTest("SEC-03 real-host receipt harness authenticates all reachable A08 Jo
   assert.equal(partial.complete, false);
 });
 
+windowsTest("SEC-03 real-host receipt harness authenticates A09 service and host crash recovery", { timeout: 120_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const recoveryRoot = await recoveryDirectory();
+  const initialLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  await initialLease.close();
+  const journalBaseline = [...await fs.readdir(recoveryRoot)].sort();
+  const receipts = [];
+  const envelopes = new Map();
+  for (const variantId of ["A09-06", "A09-07"]) {
+    for (const profileId of ["E1", "E2", "E3", "E4"]) {
+      const root = await fs.mkdtemp(path.join(os.tmpdir(), `mls3a09-${variantId.toLowerCase()}-`));
+      let recovered = false;
+      try {
+        const d0 = (await icacls(root)).stdout;
+        const result = await runA09CrashProfile(addon, host, launcher, root, variantId, profileId, identity);
+        recovered = true;
+        assert.equal(result.completion.exitCode, variantId === "A09-06" ? 58278 : 58279);
+        assert.equal(result.completion.reason, "host-failed");
+        assert.equal((await icacls(root)).stdout, d0, "lifecycle crash recovery did not restore the exact D0 sequence");
+        assert.deepEqual([...await fs.readdir(recoveryRoot)].sort(), journalBaseline);
+        const { fields, envelope } = evidenceFromLauncherObservation({ nativeObservation: result.completion.nativeProof, host, launcher, familyId: "A09", variantId, profileId });
+        assert.equal(fields.observationClass, "lifecycle-crash-recovery");
+        assert.equal(fields.decisionState, variantId === "A09-06" ? "service-lost-recovered" : "host-lost-recovered");
+        assert.equal(fields.observedCode, variantId === "A09-06" ? "EXEC_SERVICE_LOST" : "EXEC_HOST_LOST");
+        assert.equal(fields.recoveryJournalState, "applied");
+        assert.equal(fields.recoveryJournalGeneration, "2");
+        assert.equal(fields.activeProcessZero, "1");
+        assert(Number(fields.processStarts) >= 1);
+        assert.equal(fields.cleanupComplete, "1");
+        assert.equal(fields.jobClosed, "1");
+        assert.equal(fields.hostExited, "1");
+        assert.equal(fields.treeTerminated, "1");
+        const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A09" && value.variantId === variantId && value.profileId === profileId);
+        assert.ok(record);
+        const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+        validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+        receipts.push(receipt);
+        envelopes.set(`${variantId}/${profileId}`, envelope);
+        if (recorder.enabled) await recorder.record("real-host", "A09", variantId, profileId, envelope);
+      } finally {
+        if (!recovered) {
+          try { const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256); await recoveryLease.close(); } catch { /* Preserve the primary failure. */ }
+        }
+        await fs.rm(root, { recursive: true, force: true });
+      }
+    }
+  }
+  const hostLostRecord = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A09" && value.variantId === "A09-07" && value.profileId === "E1");
+  const serviceLostEnvelope = envelopes.get("A09-06/E1");
+  assert.ok(hostLostRecord && serviceLostEnvelope);
+  const substituted = { ...serviceLostEnvelope, variantId: "A09-07", observedCode: "EXEC_HOST_LOST" };
+  assert.throws(() => createSec03Receipt(hostLostRecord, effectiveIdentity, substituted, nativeVerifier), /fixed lifecycle variant\/request binding differs/u);
+  const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+  assert.equal(partial.validCount, 8);
+  assert.equal(partial.invalidKeys.length, 0);
+  assert.equal(partial.missingKeys.length, 474);
+  assert.equal(partial.mockCount, 0);
+  assert.equal(partial.testOnlyCount, 0);
+});
+
 windowsTest("SEC-03 real-host receipt harness authenticates reachable A09 lifecycle reasons", { timeout: 60_000 }, async () => {
   const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "mls3a09-"));
   const receipts = [];
   try {
-    for (const variantId of ["A09-01", "A09-02", "A09-03", "A09-04", "A09-05"]) {
+    for (const variantId of ["A09-01", "A09-02", "A09-03", "A09-04", "A09-05", "A09-08"]) {
       for (const profileId of ["E1", "E2", "E3", "E4"]) {
         const planned = a09Case(variantId, profileId);
         const result = await runA09Profile(addon, host, launcher, root, variantId, profileId, identity);
@@ -1495,9 +2645,9 @@ windowsTest("SEC-03 real-host receipt harness authenticates reachable A09 lifecy
     await fs.rm(root, { recursive: true, force: true });
   }
   const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
-  assert.equal(partial.validCount, 20);
+  assert.equal(partial.validCount, 24);
   assert.equal(partial.invalidKeys.length, 0);
-  assert.equal(partial.missingKeys.length, 462);
+  assert.equal(partial.missingKeys.length, 458);
   assert.equal(partial.complete, false);
 });
 
@@ -1791,7 +2941,15 @@ for (const entryPoint of ["E2", "E4"]) {
     try {
       started = await start(addon, host, launcher, await terminalLaunchBody(root, entryPoint));
       assert.throws(() => started.handle.writeFrame(frame({ v: 1, type: "input", secret: "1".repeat(64), data: "WA==", digest: "0".repeat(64), appendNewline: true })), error => error?.code === "EXEC_NATIVE_PROTOCOL");
-      await started.handle.writeFrame(inputFrame(`echo ${marker}`));
+      assert.throws(() => started.handle.writeFrame(frame({ v: 1, type: "resize", secret: "1".repeat(64), cols: 80, rows: 24 })), error => error?.code === "EXEC_NATIVE_PROTOCOL");
+      assert.throws(() => started.handle.writeFrame(resizeFrame(1, 24)), error => error?.code === "EXEC_NATIVE_PROTOCOL");
+      await started.handle.writeFrame(resizeFrame(93, 41));
+      await started.handle.writeFrame(inputFrame("mode con\r", false));
+      await waitFor(async () => {
+        const output = decode(started.frames).map(value => value.text).join("");
+        return output.includes("93") && output.includes("41");
+      });
+      await started.handle.writeFrame(inputFrame(`echo ${marker}\r`, false));
       try {
         await Promise.race([
           waitFor(async () => decode(started.frames).some(value => value.text.includes(marker))),
@@ -1800,8 +2958,12 @@ for (const entryPoint of ["E2", "E4"]) {
       } catch (error) {
         assert.fail(`${error.message}\n${decode(started.frames).map(value => `${value.stream}: ${value.text}`).join("")}`);
       }
+      const afterInterrupt = `${marker}_AFTER_CTRL_C`;
+      await started.handle.writeFrame(inputFrame("\u0003", false));
+      await started.handle.writeFrame(inputFrame(`echo ${afterInterrupt}\r`, false));
+      await waitFor(async () => decode(started.frames).some(value => value.text.includes(afterInterrupt)));
       if (entryPoint === "E2") {
-        await started.handle.writeFrame(inputFrame("exit"));
+        await started.handle.writeFrame(inputFrame("exit\r", false));
       } else {
         await started.handle.terminateHost(terminateFrame("requested"));
         assert.throws(() => started.handle.terminateHost(terminateFrame("requested")), error => error?.code === "EXEC_NATIVE_PROTOCOL");
@@ -1821,6 +2983,216 @@ for (const entryPoint of ["E2", "E4"]) {
   });
 }
 
+windowsTest("DS-04 eight real E4 ConPTY sessions route raw input and output without cross-talk", {
+  skip: "BLOCKED: SEC-03 shared-workspace ACL lease currently permits one live AppContainer root grant",
+  timeout: 60_000,
+}, async () => {
+  const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
+  const host = manifest.outputs.find(value => value.path === "dist/native/sandbox-host.exe");
+  const launcher = manifest.outputs.find(value => value.path === "dist/native/sandbox-launcher.node");
+  assert.ok(host && launcher);
+  const addon = require(addonPath);
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-ds04-eight-pty-"));
+  const terminals = [];
+  const markers = Array.from({ length: 8 }, (_, index) => `DS04_PTY_${index + 1}_${randomUUID().replaceAll("-", "").slice(0, 8)}`);
+  try {
+    for (let index = 0; index < markers.length; index += 1) {
+      terminals.push(await start(addon, host, launcher, await terminalLaunchBody(root, "E4")));
+    }
+    await Promise.all(terminals.map((terminal, index) => terminal.handle.writeFrame(inputFrame(`echo ${markers[index]}\r`, false))));
+    await Promise.all(terminals.map((terminal, index) => waitFor(async () =>
+      decode(terminal.frames).some(value => value.text.includes(markers[index])))));
+    for (let index = 0; index < terminals.length; index += 1) {
+      const output = decode(terminals[index].frames).map(value => value.text).join("");
+      assert.match(output, new RegExp(markers[index]));
+      for (let other = 0; other < markers.length; other += 1) {
+        if (other !== index) assert.equal(output.includes(markers[other]), false, `PTY ${index + 1} received PTY ${other + 1} output`);
+      }
+    }
+  } finally {
+    await Promise.all(terminals.map(async terminal => {
+      try { await terminal.handle.terminateHost(terminateFrame("test-cleanup")); } catch {}
+      await terminal.handle.completed.catch(() => undefined);
+    }));
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
+windowsTest("SEC-03 real-host receipt harness authenticates all nine frozen host protocol denials", { timeout: 120_000 }, async () => {
+  const { addon, host, launcher, identity, effectiveIdentity, matrix, nativeVerifier, recorder } = await realHostReceiptContext();
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec03-control-protocol-"));
+  const receipts = [];
+  const envelopes = new Map();
+  try {
+    for (let index = 1; index <= 9; index += 1) {
+      const variantId = `A10-${String(index).padStart(2, "0")}`;
+      const planned = a10Case(variantId, "HOST");
+      const executionId = createHash("sha256").update(randomUUID()).digest("hex");
+      const started = await start(addon, host, launcher, await terminalLaunchBody(root, planned.carrierEntryPoint, {
+        candidateId: identity.candidateId,
+        buildIdSha256: identity.buildId,
+        sourceSha256: identity.sourceSha256,
+        executionId,
+        runId: identity.runId,
+      }));
+      assert.equal(typeof started.handle.probeFixedHostProtocol, "function");
+      await Promise.race([
+        waitFor(async () => started.frames.length > 0),
+        started.handle.completed.then(value => { throw new Error(`host completed before protocol probe: ${JSON.stringify(value)}`); }),
+      ]);
+      await started.handle.probeFixedHostProtocol(planned.subcode);
+      const completion = await started.handle.completed;
+      assert.equal(completion.reason, "EXEC_PROTOCOL_INVALID", variantId);
+      assert(completion.nativeProof, `${variantId} did not publish authenticated native proof`);
+      const { fields, envelope } = evidenceFromNativeProof({
+        nativeProof: completion.nativeProof,
+        host,
+        launcher,
+        layer: "real-host",
+        familyId: "A10",
+        variantId,
+        profileId: "HOST",
+        observedCode: "EXEC_PROTOCOL_INVALID",
+        observedSubcode: planned.subcode,
+      });
+      assert.equal(fields.execution, executionId);
+      assert.equal(fields.protocolSubcode, planned.subcode);
+      assert.equal(fields.completionReason, "protocol-invalid");
+      assert.equal(fields.activeProcessZero, "1");
+      assert.equal(fields.cleanupComplete, "1");
+      const record = matrix.records.find(value => value.layer === "real-host" && value.familyId === "A10" && value.variantId === variantId && value.profileId === "HOST");
+      assert(record);
+      const receipt = createSec03Receipt(record, effectiveIdentity, envelope, nativeVerifier);
+      validateSec03Receipt(receipt, { matrix, identity: effectiveIdentity, nativeVerifier });
+      receipts.push(receipt);
+      envelopes.set(variantId, envelope);
+      if (recorder.enabled) await recorder.record("real-host", "A10", variantId, "HOST", envelope);
+    }
+    const lengthRecord = matrix.records.find(value => value.layer === "real-host" && value.variantId === "A10-01" && value.profileId === "HOST");
+    const oversizeEnvelope = envelopes.get("A10-02");
+    assert(lengthRecord && oversizeEnvelope);
+    assert.throws(
+      () => createSec03Receipt(lengthRecord, effectiveIdentity, { ...oversizeEnvelope, variantId: "A10-01", observedSubcode: "length" }, nativeVerifier),
+      error => error?.actual === "oversize" && error?.expected === "length",
+    );
+    const partial = aggregateSec03Receipts(receipts, { matrix, identity: effectiveIdentity, nativeVerifier });
+    assert.equal(partial.validCount, 9);
+    assert.equal(partial.layerCounts["real-host"], 9);
+    assert.equal(partial.mockCount, 0);
+    assert.equal(partial.testOnlyCount, 0);
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
+windowsTest("SEC-03 J5 prepared ledger recovers a partial descendant mutation", { timeout: 60_000 }, async () => {
+  const { host, launcher, addon } = await testNativeArtifacts();
+  const directory = await recoveryDirectory();
+  const initialLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  await initialLease.close();
+  const baseline = new Set(await fs.readdir(directory));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec03-partial-ledger-"));
+  const nestedDirectory = path.join(root, "nested");
+  const nestedFile = path.join(nestedDirectory, "existing.txt");
+  await fs.mkdir(nestedDirectory);
+  await fs.writeFile(nestedFile, "SEC03_PARTIAL_LEDGER", "utf8");
+  const previousCrash = process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH;
+  let recovered = false;
+  try {
+    process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH = "descendant-applied";
+    const started = await start(addon, host, launcher, await launchBody(root, "echo SEC03_MUST_NOT_RUN"));
+    await started.handle.completed;
+    const transactionFiles = (await fs.readdir(directory)).filter(name => !baseline.has(name));
+    assert.equal(transactionFiles.some(name => /\.0001\.jrn$/u.test(name)), true);
+    assert.equal(transactionFiles.some(name => /\.0002\.jrn$/u.test(name)), false);
+    const preparedName = transactionFiles.find(name => /\.0001\.jrn$/u.test(name));
+    assert(preparedName);
+    const prepared = await fs.readFile(path.join(directory, preparedName), "utf8");
+    const sidHex = /^sidString=([0-9a-f]+)$/mu.exec(prepared)?.[1];
+    assert(sidHex);
+    const executionSid = Buffer.from(sidHex, "hex").toString("utf16le");
+    assert.equal((await icacls(root)).stdout.includes(executionSid), true);
+    assert.equal((await icacls(nestedDirectory)).stdout.includes(executionSid), true);
+
+    const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await recoveryLease.close();
+    recovered = true;
+    assert.deepEqual((await fs.readdir(directory)).filter(name => !baseline.has(name)), []);
+    for (const target of [root, nestedDirectory, nestedFile]) assert.equal((await icacls(target)).stdout.includes(executionSid), false);
+  } finally {
+    if (previousCrash === undefined) delete process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH;
+    else process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH = previousCrash;
+    if (!recovered) {
+      const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+      await recoveryLease.close();
+      recovered = true;
+    }
+    if (recovered) await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
+windowsTest("SEC-03 J5 prevents late outside hardlink propagation after preflight", { timeout: 60_000 }, async () => {
+  const { host, launcher, addon } = await testNativeArtifacts();
+  const directory = await recoveryDirectory();
+  const initialLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  await initialLease.close();
+  const baseline = new Set(await fs.readdir(directory));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec03-late-link-root-"));
+  const outsideDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec03-late-link-outside-"));
+  const outsideFile = path.join(outsideDirectory, "outside.txt");
+  const lateLink = path.join(root, "late-link.txt");
+  const marker = path.join(root, ".sec03-j5-prepared");
+  const release = path.join(root, ".sec03-j5-release");
+  await fs.writeFile(outsideFile, "SEC03_LATE_OUTSIDE", "utf8");
+  const previousCrash = process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH;
+  let started;
+  let recovered = false;
+  try {
+    process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH = "barrier-prepared-hold-applied";
+    started = await start(addon, host, launcher, await launchBody(root, "echo SEC03_MUST_NOT_RUN"));
+    await waitFor(async () => fs.access(marker).then(() => true, () => null));
+    await fs.link(outsideFile, lateLink);
+    await fs.writeFile(release, "release", "utf8");
+    const transactionFiles = await waitFor(async () => {
+      const names = (await fs.readdir(directory)).filter(name => !baseline.has(name));
+      return names.some(name => /\.0002\.jrn$/u.test(name)) ? names : null;
+    });
+    const appliedName = transactionFiles.find(name => /\.0002\.jrn$/u.test(name));
+    assert(appliedName);
+    const applied = await fs.readFile(path.join(directory, appliedName), "utf8");
+    const sidHex = /^sidString=([0-9a-f]+)$/mu.exec(applied)?.[1];
+    assert(sidHex);
+    const executionSid = Buffer.from(sidHex, "hex").toString("utf16le");
+    assert.equal((await icacls(outsideFile)).stdout.includes(executionSid), false);
+    assert.equal((await icacls(lateLink)).stdout.includes(executionSid), false);
+    await started.handle.crashHostForTest();
+    await started.handle.completed;
+    started = undefined;
+    const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await recoveryLease.close();
+    recovered = true;
+    assert.deepEqual((await fs.readdir(directory)).filter(name => !baseline.has(name)), []);
+    assert.equal((await icacls(outsideFile)).stdout.includes(executionSid), false);
+  } finally {
+    if (previousCrash === undefined) delete process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH;
+    else process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH = previousCrash;
+    await fs.writeFile(release, "release", "utf8").catch(() => undefined);
+    if (started) {
+      try { await started.handle.crashHostForTest(); } catch {}
+      await started.handle.completed.catch(() => undefined);
+    }
+    if (!recovered) {
+      const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+      await recoveryLease.close();
+      recovered = true;
+    }
+    if (recovered) {
+      await fs.rm(root, { recursive: true, force: true });
+      await fs.rm(outsideDirectory, { recursive: true, force: true });
+    }
+  }
+});
+
 windowsTest("SEC-03 native startup recovery blocks a live host and preserves an unrelated ACE after host crash", { timeout: 60_000 }, async () => {
   const { host, launcher, addon } = await testNativeArtifacts();
   const directory = await recoveryDirectory();
@@ -1828,6 +3200,12 @@ windowsTest("SEC-03 native startup recovery blocks a live host and preserves an 
   await initialLease.close();
   const baseline = new Set(await fs.readdir(directory));
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec03-recovery-"));
+  const nestedDirectory = path.join(root, "nested");
+  const nestedFile = path.join(nestedDirectory, "existing.txt");
+  const movedDirectory = `${root}-moved-nested`;
+  const movedFile = path.join(movedDirectory, "existing.txt");
+  await fs.mkdir(nestedDirectory);
+  await fs.writeFile(nestedFile, "SEC03_RECOVERY_DESCENDANT", "utf8");
   let started;
   let unrelatedAdded = false;
   try {
@@ -1837,15 +3215,26 @@ windowsTest("SEC-03 native startup recovery blocks a live host and preserves an 
       return names.some(name => /\.0002\.jrn$/u.test(name)) ? names : null;
     });
     assert.ok(transactionFiles.some(name => /\.0001\.jrn$/u.test(name)));
-    assert.ok(transactionFiles.some(name => /\.0002\.jrn$/u.test(name)));
+    const journalCopies = await Promise.all(transactionFiles.filter(name => /\.jrn$/u.test(name)).map(async name => [name, await fs.readFile(path.join(directory, name))]));
+    const appliedJournalName = transactionFiles.find(name => /\.0002\.jrn$/u.test(name));
+    assert(appliedJournalName);
+    const appliedJournal = await fs.readFile(path.join(directory, appliedJournalName), "utf8");
+    const sidHex = /^sidString=([0-9a-f]+)$/mu.exec(appliedJournal)?.[1];
+    assert(sidHex);
+    const executionSid = Buffer.from(sidHex, "hex").toString("utf16le");
+    assert.match(executionSid, /^S-1-15-2-(?:[0-9]+-){6}[0-9]+$/u);
     assert.throws(
       () => addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256),
       error => error?.code === "EXEC_ACL_RECOVERY_REQUIRED",
     );
+    await assert.rejects(fs.rename(nestedDirectory, movedDirectory), error => error?.code === "EBUSY" || error?.code === "EPERM" || error?.code === "EACCES");
 
     await started.handle.crashHostForTest();
     await started.handle.completed;
     started = undefined;
+    await fs.rename(nestedDirectory, movedDirectory);
+    await fs.mkdir(nestedDirectory);
+    await fs.writeFile(nestedFile, "SEC03_RECOVERY_REPLACEMENT", "utf8");
     await icacls(root, "/grant", "*S-1-5-20:(OI)(CI)(RX)", "/Q");
     unrelatedAdded = true;
 
@@ -1855,17 +3244,240 @@ windowsTest("SEC-03 native startup recovery blocks a live host and preserves an 
     assert.deepEqual(remaining, []);
     const { stdout } = await icacls(root);
     assert.match(stdout, /NETWORK SERVICE|S-1-5-20/iu);
+    for (const target of [root, movedDirectory, movedFile, nestedDirectory, nestedFile]) {
+      const observed = await icacls(target);
+      assert.equal(observed.stdout.includes(executionSid), false, `Recovered ACL still contains the exact execution SID on ${path.basename(target)}`);
+    }
+    for (const [name, bytes] of journalCopies) await fs.writeFile(path.join(directory, name), bytes, { flag: "wx" });
+    const idempotentRecovery = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await idempotentRecovery.close();
+    assert.deepEqual((await fs.readdir(directory)).filter(name => !baseline.has(name)), []);
   } finally {
     if (started) {
       try { await started.handle.crashHostForTest(); } catch {}
       await started.handle.completed.catch(() => undefined);
     }
     if (unrelatedAdded) await icacls(root, "/remove:g", "*S-1-5-20", "/Q").catch(() => undefined);
+    let recovered = false;
     try {
       const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
       await recoveryLease.close();
+      recovered = true;
     } catch {}
-    await fs.rm(root, { recursive: true, force: true });
+    if (recovered) {
+      await fs.rm(root, { recursive: true, force: true });
+      await fs.rm(movedDirectory, { recursive: true, force: true });
+    }
+  }
+});
+
+windowsTest("SEC-03 J5 recovery traverses a protected parent to clean a current-namespace child", { timeout: 60_000 }, async () => {
+  const { host, launcher, addon } = await testNativeArtifacts();
+  const directory = await recoveryDirectory();
+  const initialLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  await initialLease.close();
+  const baseline = new Set(await fs.readdir(directory));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec03-protected-recovery-"));
+  const nestedDirectory = path.join(root, "protected-parent");
+  const nestedFile = path.join(nestedDirectory, "protected-child.txt");
+  let started;
+  let executionSid;
+  let recovered = false;
+  try {
+    started = await start(addon, host, launcher, await launchBody(root, "for /L %i in (1,1,2000000000) do @rem"));
+    const transactionFiles = await waitFor(async () => {
+      const names = (await fs.readdir(directory)).filter(name => !baseline.has(name));
+      return names.some(name => /\.0002\.jrn$/u.test(name)) ? names : null;
+    });
+    const appliedName = transactionFiles.find(name => /\.0002\.jrn$/u.test(name));
+    assert(appliedName);
+    const applied = await fs.readFile(path.join(directory, appliedName), "utf8");
+    const sidHex = /^sidString=([0-9a-f]+)$/mu.exec(applied)?.[1];
+    assert(sidHex);
+    executionSid = Buffer.from(sidHex, "hex").toString("utf16le");
+    await started.handle.crashHostForTest();
+    await started.handle.completed;
+    started = undefined;
+
+    await fs.mkdir(nestedDirectory);
+    await fs.writeFile(nestedFile, "SEC03_PROTECTED_RECOVERY", "utf8");
+    await icacls(nestedFile, "/inheritance:d", "/Q");
+    await icacls(nestedDirectory, "/inheritance:d", "/Q");
+    await icacls(nestedDirectory, "/remove:g", `*${executionSid}`, "/Q");
+    assert.equal((await icacls(nestedDirectory)).stdout.includes(executionSid), false);
+    assert.equal((await icacls(nestedFile)).stdout.includes(executionSid), true);
+
+    const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await recoveryLease.close();
+    recovered = true;
+    assert.deepEqual((await fs.readdir(directory)).filter(name => !baseline.has(name)), []);
+    assert.equal((await icacls(nestedFile)).stdout.includes(executionSid), false);
+  } finally {
+    if (started) {
+      try { await started.handle.crashHostForTest(); } catch {}
+      await started.handle.completed.catch(() => undefined);
+    }
+    if (!recovered && executionSid) await icacls(nestedFile, "/remove:g", `*${executionSid}`, "/Q").catch(() => undefined);
+    if (!recovered) {
+      const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+      await recoveryLease.close();
+      recovered = true;
+    }
+    if (recovered) await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
+windowsTest("SEC-03 J5 state gates and newest-first deletion remain crash recoverable", { timeout: 60_000 }, async () => {
+  const { host, launcher, addon } = await testNativeArtifacts();
+  const directory = await recoveryDirectory();
+  const initialLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  await initialLease.close();
+  const baseline = new Set(await fs.readdir(directory));
+  const previousCrash = process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH;
+  for (const scenario of [
+    { marker: "force-active-process-proof-failure", expectedGenerations: [1, 2] },
+    { marker: "journal-delete-newest", expectedGenerations: [1, 2, 3] },
+  ]) {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), `mini-lux-sec03-${scenario.marker}-`));
+    let recovered = false;
+    try {
+      process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH = scenario.marker;
+      const started = await start(addon, host, launcher, await launchBody(root, "echo SEC03_STATE_GATE"));
+      await started.handle.completed;
+      const names = (await fs.readdir(directory)).filter(name => !baseline.has(name));
+      const generations = names.filter(name => /\.jrn$/u.test(name)).map(name => Number(/\.(\d{4})\.jrn$/u.exec(name)?.[1])).sort((left, right) => left - right);
+      assert.deepEqual(generations, scenario.expectedGenerations, scenario.marker);
+      const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+      await recoveryLease.close();
+      recovered = true;
+      assert.deepEqual((await fs.readdir(directory)).filter(name => !baseline.has(name)), []);
+    } finally {
+      if (!recovered) {
+        const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+        await recoveryLease.close();
+        recovered = true;
+      }
+      if (recovered) await fs.rm(root, { recursive: true, force: true });
+    }
+  }
+  if (previousCrash === undefined) delete process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH;
+  else process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH = previousCrash;
+});
+
+windowsTest("SEC-03 J5 journal parser rejects noncanonical descendant ledgers", { timeout: 60_000 }, async () => {
+  const { host, launcher, addon } = await testNativeArtifacts();
+  const directory = await recoveryDirectory();
+  const initialLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  await initialLease.close();
+  const baseline = new Set(await fs.readdir(directory));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec03-j5-canonical-"));
+  await fs.writeFile(path.join(root, "first.txt"), "first", "utf8");
+  await fs.writeFile(path.join(root, "second.txt"), "second", "utf8");
+  const previousCrash = process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH;
+  let journalPath;
+  let original;
+  let recovered = false;
+  try {
+    process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH = "prepared";
+    const started = await start(addon, host, launcher, await launchBody(root, "echo SEC03_MUST_NOT_RUN"));
+    await started.handle.completed;
+    const journalName = (await fs.readdir(directory)).find(name => !baseline.has(name) && /\.0001\.jrn$/u.test(name));
+    assert(journalName);
+    journalPath = path.join(directory, journalName);
+    original = await fs.readFile(journalPath, "utf8");
+    const ledger = /^descendants=(.+)$/mu.exec(original)?.[1];
+    assert(ledger);
+    const tokens = ledger.split(";");
+    assert.equal(tokens.length >= 2, true);
+    const duplicate = tokens[1].split(",");
+    duplicate[0] = tokens[0].split(",")[0];
+    const mutations = [
+      `${ledger};`,
+      ledger.replace(";", ";;"),
+      `0${ledger}`,
+      [tokens[1], tokens[0], ...tokens.slice(2)].join(";"),
+      [tokens[0], duplicate.join(","), ...tokens.slice(2)].join(";"),
+    ];
+    for (const mutation of mutations) {
+      await fs.writeFile(journalPath, original.replace(`descendants=${ledger}`, `descendants=${mutation}`), "utf8");
+      assert.throws(() => addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256), error => error?.code === "EXEC_ACL_RECOVERY_REQUIRED");
+    }
+    await fs.writeFile(journalPath, original, "utf8");
+    const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await recoveryLease.close();
+    recovered = true;
+    assert.deepEqual((await fs.readdir(directory)).filter(name => !baseline.has(name)), []);
+  } finally {
+    if (previousCrash === undefined) delete process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH;
+    else process.env.MINI_LUX_SEC03_NATIVE_TEST_CRASH = previousCrash;
+    if (!recovered && journalPath && original) {
+      await fs.writeFile(journalPath, original, "utf8");
+      const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+      await recoveryLease.close();
+      recovered = true;
+    }
+    if (recovered) await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
+windowsTest("SEC-03 J5 recovery retains journals for missing or ACL-drifted ledger identities", { timeout: 60_000 }, async () => {
+  const { host, launcher, addon } = await testNativeArtifacts();
+  const directory = await recoveryDirectory();
+  const initialLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+  await initialLease.close();
+  const baseline = new Set(await fs.readdir(directory));
+
+  async function crashApplied(root) {
+    const started = await start(addon, host, launcher, await launchBody(root, "for /L %i in (1,1,2000000000) do @rem"));
+    const names = await waitFor(async () => {
+      const current = (await fs.readdir(directory)).filter(name => !baseline.has(name));
+      return current.some(name => /\.0002\.jrn$/u.test(name)) ? current : null;
+    });
+    const appliedName = names.find(name => /\.0002\.jrn$/u.test(name));
+    assert(appliedName);
+    const applied = await fs.readFile(path.join(directory, appliedName), "utf8");
+    const sidHex = /^sidString=([0-9a-f]+)$/mu.exec(applied)?.[1];
+    assert(sidHex);
+    await started.handle.crashHostForTest();
+    await started.handle.completed;
+    return { names, executionSid: Buffer.from(sidHex, "hex").toString("utf16le") };
+  }
+
+  const missingRoot = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec03-j5-missing-"));
+  const missingFile = path.join(missingRoot, "missing.txt");
+  await fs.writeFile(missingFile, "missing", "utf8");
+  const missing = await crashApplied(missingRoot);
+  await fs.rm(missingFile);
+  assert.throws(() => addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256), error => error?.code === "EXEC_ACL_RECOVERY_REQUIRED");
+  assert.equal((await fs.readdir(directory)).filter(name => !baseline.has(name)).length > 0, true);
+  assert.equal((await icacls(missingRoot)).stdout.includes(missing.executionSid), false);
+  for (const name of missing.names) await fs.rm(path.join(directory, name), { force: true });
+  await fs.rm(missingRoot, { recursive: true, force: true });
+
+  const driftRoot = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-sec03-j5-drift-"));
+  const driftFile = path.join(driftRoot, "drift.txt");
+  await fs.writeFile(driftFile, "drift", "utf8");
+  let driftRecovered = false;
+  try {
+    const drift = await crashApplied(driftRoot);
+    await icacls(driftFile, "/grant", "*S-1-5-20:(R)", "/Q");
+    assert.throws(() => addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256), error => error?.code === "EXEC_ACL_RECOVERY_REQUIRED");
+    assert.equal((await fs.readdir(directory)).filter(name => !baseline.has(name)).length > 0, true);
+    assert.equal((await icacls(driftFile)).stdout.includes(drift.executionSid), true);
+    await icacls(driftFile, "/remove:g", "*S-1-5-20", "/Q");
+    const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await recoveryLease.close();
+    driftRecovered = true;
+    assert.deepEqual((await fs.readdir(directory)).filter(name => !baseline.has(name)), []);
+    assert.equal((await icacls(driftFile)).stdout.includes(drift.executionSid), false);
+  } finally {
+    if (!driftRecovered) await icacls(driftFile, "/remove:g", "*S-1-5-20", "/Q").catch(() => undefined);
+    if (!driftRecovered) {
+      const recoveryLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+      await recoveryLease.close();
+      driftRecovered = true;
+    }
+    if (driftRecovered) await fs.rm(driftRoot, { recursive: true, force: true });
   }
 });
 
@@ -1876,7 +3488,12 @@ windowsTest("SEC-03 native startup recovery rejects corrupt and generation-gap j
   await initialLease.close();
   const corrupt = path.join(directory, `txn-${"a".repeat(32)}.0001.jrn`);
   const gap = path.join(directory, `txn-${"b".repeat(32)}.0002.jrn`);
+  const unpublished = path.join(directory, `txn-${"c".repeat(32)}.0001.tmp`);
   try {
+    await fs.writeFile(unpublished, "unpublished", { flag: "wx" });
+    const unpublishedLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
+    await unpublishedLease.close();
+    await assert.rejects(fs.access(unpublished));
     await fs.writeFile(corrupt, "MLSEC03J3\ninvalid=true\n", { flag: "wx" });
     assert.throws(
       () => addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256),
@@ -1891,6 +3508,7 @@ windowsTest("SEC-03 native startup recovery rejects corrupt and generation-gap j
   } finally {
     await fs.rm(corrupt, { force: true });
     await fs.rm(gap, { force: true });
+    await fs.rm(unpublished, { force: true });
   }
   const finalLease = addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256);
   await finalLease.close();

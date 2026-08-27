@@ -4,8 +4,11 @@
 // 包含：指数退避重试、超时、速率限制处理、错误恢复
 // ===========================================
 
-import OpenAI from "openai";
-import type { LLMConfig, Message, ToolDefinition } from "./types.js";
+import OpenAI, { APIUserAbortError } from "openai";
+import type { LLMConfig, Message, MessageAttachment, ScopedNetworkGateway, ToolDefinition } from "./types.js";
+import { abortableDelay, cancellationError, cancellationFailure, throwIfCancelled } from "./run-cancellation.js";
+import { MAX_DRAFT_ATTACHMENT_BYTES } from "./attachment.js";
+import { beginObservation } from "./observability.js";
 
 /** 最大重试次数 */
 const MAX_RETRIES = 3;
@@ -22,6 +25,12 @@ const RATE_LIMIT_WAIT_MS = 5000;
 /**
  * 判断错误是否可重试
  */
+function llmCancellationFailure(signal: AbortSignal, error: unknown, fallback: string): Error {
+  return error instanceof APIUserAbortError
+    ? cancellationError(signal, fallback)
+    : cancellationFailure(signal, error, fallback);
+}
+
 function isRetryableError(err: unknown): { retry: boolean; rateLimit?: boolean; reason: string } {
   // OpenAI API 错误
   const e = err as { status?: number; code?: string; message?: string; type?: string };
@@ -50,25 +59,87 @@ function isRetryableError(err: unknown): { retry: boolean; rateLimit?: boolean; 
   return { retry: false, reason: e.message || String(err) };
 }
 
-/**
- * 睡眠
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+export type LLMFetchTransport = ScopedNetworkGateway["fetch"];
+
+export type AttachmentResolver = (
+  sessionId: string,
+  attachmentId: string,
+) => Readonly<{ attachment: MessageAttachment; bytes: Buffer }>;
+
+export function projectMessagesForProvider(
+  sessionId: string | null,
+  messages: readonly Message[],
+  resolveAttachment: AttachmentResolver | null,
+  imageInput: "none" | "data-uri" = "none",
+): OpenAI.Chat.ChatCompletionMessageParam[] {
+  let attachmentBytes = 0;
+  return messages.map(message => {
+    const { attachments, ...base } = message;
+    if (!attachments?.length) return base as OpenAI.Chat.ChatCompletionMessageParam;
+    if (message.role !== "user") throw new TypeError("Only user messages may contain attachments");
+    if (!sessionId || !resolveAttachment) throw new Error("Attachment Provider projection requires a Session-bound resolver");
+    const content: OpenAI.Chat.ChatCompletionContentPart[] = [];
+    if (message.content) content.push({ type: "text", text: message.content });
+    for (const expected of attachments) {
+      const resolved = resolveAttachment(sessionId, expected.id);
+      const actual = resolved.attachment;
+      attachmentBytes += resolved.bytes.length;
+      if (attachmentBytes > MAX_DRAFT_ATTACHMENT_BYTES) throw new Error("Provider attachment payload exceeds the request budget");
+      if (actual.id !== expected.id || actual.sha256 !== expected.sha256 || actual.size !== expected.size
+        || actual.mime !== expected.mime || actual.kind !== expected.kind || resolved.bytes.length !== expected.size) {
+        throw new Error("Message attachment identity changed before Provider projection");
+      }
+      if (actual.kind === "image") {
+        if (imageInput !== "data-uri") throw new Error("PROVIDER_IMAGE_INPUT_UNSUPPORTED: current Provider profile does not enable data-uri images");
+        content.push({
+          type: "image_url",
+          image_url: { url: `data:${actual.mime};base64,${resolved.bytes.toString("base64")}`, detail: "auto" },
+        });
+      } else {
+        const label = JSON.stringify({ id: actual.id, name: actual.name, mime: actual.mime, sha256: actual.sha256 });
+        content.push({
+          type: "text",
+          text: `\n<user_attachment metadata=${label}>\n${resolved.bytes.toString("utf8")}\n</user_attachment>`,
+        });
+      }
+    }
+    if (content.length === 0) content.push({ type: "text", text: "[User supplied attachments]" });
+    return { role: "user", content };
+  });
 }
 
 export class LLMClient {
   private client: OpenAI;
   private model: string;
+  private config: Readonly<LLMConfig>;
+  private imageInput: "none" | "data-uri";
 
   constructor(config: LLMConfig) {
-    this.client = new OpenAI({
-      apiKey: config.apiKey,
-      baseURL: config.baseURL,
+    this.config = Object.freeze({ ...config });
+    this.client = this.createClient();
+    this.model = config.model;
+    this.imageInput = config.providerType === "openai-compatible-vision" ? "data-uri" : "none";
+  }
+
+  private createClient(transport?: LLMFetchTransport): OpenAI {
+    const scopedFetch: typeof fetch | undefined = transport
+      ? (input, init) => {
+          const url = typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.href
+              : null;
+          if (url === null) throw new Error("Scoped LLM transport rejected an unsupported Request input");
+          return transport(url, init);
+        }
+      : undefined;
+    return new OpenAI({
+      apiKey: this.config.apiKey,
+      baseURL: this.config.baseURL,
       timeout: REQUEST_TIMEOUT_MS,
       maxRetries: 0, // 我们自己管理重试
+      ...(scopedFetch ? { fetch: scopedFetch } : {}),
     });
-    this.model = config.model;
   }
 
   /**
@@ -77,11 +148,16 @@ export class LLMClient {
    */
   async chat(
     messages: Message[],
-    tools?: ToolDefinition[]
+    tools?: ToolDefinition[],
+    signal?: AbortSignal,
+    transport?: LLMFetchTransport,
+    attachmentSessionId: string | null = null,
+    attachmentResolver: AttachmentResolver | null = null,
   ): Promise<Message> {
+    const client = transport ? this.createClient(transport) : this.client;
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.model,
-      messages: messages as OpenAI.Chat.ChatCompletionMessageParam[],
+      messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
     };
 
     if (tools && tools.length > 0) {
@@ -90,15 +166,17 @@ export class LLMClient {
     }
 
     let lastError: unknown = null;
+    const observation = beginObservation("llm");
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const response = await this.client.chat.completions.create(params);
+        if (signal) throwIfCancelled(signal);
+        const response = await client.chat.completions.create(params, signal ? { signal } : undefined);
         const choice = response.choices[0];
         const message = choice.message;
 
-        return {
-          role: "assistant",
+        const result = {
+          role: "assistant" as const,
           content: message.content || "",
           tool_calls: message.tool_calls?.map((tc) => ({
             id: tc.id,
@@ -109,14 +187,21 @@ export class LLMClient {
             },
           })),
         };
+        observation.finish("success", { bytesOut: Buffer.byteLength(result.content, "utf8") });
+        return result;
       } catch (err) {
+        if (signal?.aborted) {
+          observation.finish("cancelled");
+          throw llmCancellationFailure(signal, err, "LLM request was cancelled");
+        }
         lastError = err;
         const { retry, rateLimit, reason } = isRetryableError(err);
 
         if (!retry || attempt === MAX_RETRIES) {
-          // 不可重试或已耗尽重试次数
+          observation.finish("error");
           throw new Error(`LLM 请求失败: ${reason}${attempt > 0 ? ` (已重试 ${attempt} 次)` : ""}`);
         }
+        observation.retry();
 
         // 计算等待时间
         const waitMs = rateLimit
@@ -128,10 +213,12 @@ export class LLMClient {
           `${waitMs}ms 后重试...`
         );
 
-        await sleep(waitMs);
+        if (signal) await abortableDelay(waitMs, signal);
+        else await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
       }
     }
 
+    observation.finish("error");
     throw new Error(
       `LLM 请求失败: 已耗尽 ${MAX_RETRIES + 1} 次尝试。` +
       `最后错误: ${lastError instanceof Error ? lastError.message : String(lastError)}`
@@ -147,11 +234,14 @@ export class LLMClient {
    */
   async *chatStream(
     messages: Message[],
-    tools?: ToolDefinition[]
+    tools?: ToolDefinition[],
+    signal?: AbortSignal,
+    attachmentSessionId: string | null = null,
+    attachmentResolver: AttachmentResolver | null = null,
   ): AsyncGenerator<StreamEvent> {
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.model,
-      messages: messages as OpenAI.Chat.ChatCompletionMessageParam[],
+      messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
       stream: true,
     };
 
@@ -161,16 +251,19 @@ export class LLMClient {
     }
 
     let lastError: unknown = null;
+    const observation = beginObservation("llm");
 
     // 重试只在流建立阶段（create 调用），流开始后不重试
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const stream = await this.client.chat.completions.create(params);
+        if (signal) throwIfCancelled(signal);
+        const stream = await this.client.chat.completions.create(params, signal ? { signal } : undefined);
 
         let fullContent = "";
         const toolCallMap = new Map<number, { id: string; name: string; arguments: string }>();
 
         for await (const chunk of stream) {
+          if (signal) throwIfCancelled(signal);
           const delta = chunk.choices[0]?.delta;
           if (!delta) continue;
 
@@ -212,15 +305,22 @@ export class LLMClient {
         };
 
         yield { type: "result", message: finalMessage };
+        observation.finish("success", { bytesOut: Buffer.byteLength(fullContent, "utf8") });
         return; // 成功，退出重试循环
 
       } catch (err) {
+        if (signal?.aborted) {
+          observation.finish("cancelled");
+          throw llmCancellationFailure(signal, err, "LLM stream was cancelled");
+        }
         lastError = err;
         const { retry, rateLimit, reason } = isRetryableError(err);
 
         if (!retry || attempt === MAX_RETRIES) {
+          observation.finish("error");
           throw new Error(`LLM 流式请求失败: ${reason}${attempt > 0 ? ` (已重试 ${attempt} 次)` : ""}`);
         }
+        observation.retry();
 
         const waitMs = rateLimit
           ? RATE_LIMIT_WAIT_MS
@@ -231,10 +331,12 @@ export class LLMClient {
           `${waitMs}ms 后重试...`
         );
 
-        await sleep(waitMs);
+        if (signal) await abortableDelay(waitMs, signal);
+        else await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
       }
     }
 
+    observation.finish("error");
     throw new Error(
       `LLM 流式请求失败: 已耗尽 ${MAX_RETRIES + 1} 次尝试。` +
       `最后错误: ${lastError instanceof Error ? lastError.message : String(lastError)}`

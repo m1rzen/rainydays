@@ -15,7 +15,7 @@ const repoRecorder = await createSec02Recorder(
 );
 const oracleRecorder = await createSec02Recorder(
   import.meta.url,
-  "SEC-02 Oracle project read and managed snapshot write use disjoint governed paths"
+  "SEC-02 Oracle writes and reads only the governed project-root LUX.oracle"
 );
 const auditKeys = ["authorityEpoch", "code", "event", "inputFingerprint", "operation", "operationId", "principal", "rootId", "runId", "sessionId", "timestamp"].sort();
 const pathAuditEvents = [];
@@ -94,20 +94,25 @@ await fs.mkdir(outside, { recursive: true });
 await fs.mkdir(data, { recursive: true });
 await fs.writeFile(path.join(repository, "package.json"), JSON.stringify({ name: "governed-repository" }));
 await fs.writeFile(path.join(repository, "src", "main.ts"), "export const governed = true;\n");
+await fs.writeFile(path.join(repository, "root.ts"), "export function rootLevel() { return true; }\n");
 await fs.writeFile(path.join(repository, "README.md"), "# Governed Repository\n");
+await fs.writeFile(path.join(repository, "# `FORGED`.md"), "safe filename content\n");
+await fs.writeFile(path.join(repository, "LICENSE"), "fixture license\n");
+await fs.writeFile(path.join(repository, "binary.bin"), Buffer.from([0, 1, 2, 3]));
+await fs.writeFile(path.join(repository, "invalid-utf8.bin"), Buffer.from([0xff, 0xfe, 0x41]));
+await fs.writeFile(path.join(repository, "long.txt"), "l".repeat(2_100));
 await fs.writeFile(externalSecretPath, externalSecret);
 await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["init", "--quiet"], { cwd: repository, windowsHide: true });
-await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "package.json", "README.md", "src/main.ts"], { cwd: repository, windowsHide: true });
+await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "package.json", "README.md", "# `FORGED`.md", "LICENSE", "binary.bin", "invalid-utf8.bin", "long.txt", "root.ts", "src/main.ts"], { cwd: repository, windowsHide: true });
 
 process.env.RAINYDAYS_USER_DATA_DIR = fixture;
 process.env.RAINYDAYS_DATA_DIR = data;
-const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule, managedStoreModule] = await Promise.all([
+const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule] = await Promise.all([
   import("../../dist/persona.js"),
   import("../../dist/session.js"),
   import("../../dist/db.js"),
   import("../../dist/tools/index.js"),
   import("../../dist/path-runtime.js"),
-  import("../../dist/managed-path-store.js"),
 ]);
 
 const persona = personaModule.createEffectivePersona({
@@ -127,7 +132,7 @@ async function makeAuthority() {
     rootId: "workspace",
     role: "workspace",
     configuredPath: repository,
-    permissions: ["initial-cwd", "search-tree"],
+    permissions: ["initial-cwd", "search-tree", "read-file", "read-directory", "create-file", "replace-file"],
   }]);
   return toolsModule.capabilityBroker.createRuntimeAuthority({
     name: persona.name,
@@ -172,11 +177,63 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
   const root = toolsModule.capabilityBroker.beginAgentRun(authority, session.id);
   try {
     const tree = await toolsModule.executeTool(root, "read_repo", { path: "", level: "tree" });
-    assert.match(tree, /package\.json/);
-    assert.match(tree, /src\/main\.ts/);
+    assert.match(tree, /package%2Ejson/u);
+    assert.match(tree, /src\/main%2Ets/u);
+    assert.match(tree, /- %23%20%60FORGED%60%2Emd/u);
+    assert.doesNotMatch(tree, /`FORGED`/u);
     const headers = await toolsModule.executeTool(root, "read_repo", { path: "", level: "headers" });
     assert.match(headers, /governed-repository/);
     assert.match(headers, /Governed Repository/);
+    const summary = await toolsModule.executeTool(root, "read_repo", { path: "", level: "summary", include: "*.ts" });
+    assert.match(summary, /Selected all 2 matched/u);
+    assert.match(summary, /- %2Ets: 2/u);
+    const full = await toolsModule.executeTool(root, "read_repo", { path: "", level: "full", exclude: "*.md" });
+    assert.match(full, /governed-repository/u);
+    assert.doesNotMatch(full, /Governed Repository/u);
+    assert.match(full, /Budgeted full-file view/u);
+    assert.doesNotMatch(full, /\(截断\)/u);
+    assert.equal(full.includes("\0"), false);
+    const signatures = await toolsModule.executeTool(root, "read_repo", { path: "", level: "signatures", include: "src/*.ts" });
+    assert.match(signatures, /export const governed =/u);
+    const all = await toolsModule.executeTool(root, "read_repo", { path: "", level: "all", include: "*.ts" });
+    assert.match(all, /Complete content for every selected text file/u);
+    assert.match(all, /export const governed = true/u);
+    const globstar = await toolsModule.executeTool(root, "read_repo", { path: "", level: "tree", include: "**/*.ts" });
+    assert.match(globstar, /- root%2Ets/u);
+    assert.match(globstar, /- src\/main%2Ets/u);
+    await assert.rejects(() => toolsModule.executeTool(root, "read_repo", { path: "", level: "all" }), /binary tracked file/u);
+    await assert.rejects(() => toolsModule.executeTool(root, "read_repo", { path: "", level: "all", include: "invalid-utf8.bin" }), /binary tracked file/u);
+
+    const hardlink = path.join(repository, "tracked-hardlink.txt");
+    await fs.link(externalSecretPath, hardlink);
+    await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "tracked-hardlink.txt"], { cwd: repository, windowsHide: true });
+    try {
+      await assert.rejects(
+        () => toolsModule.executeTool(root, "read_repo", { path: "", level: "all", include: "tracked-hardlink.txt" }),
+        /PATH_REDIRECT_DENIED|Path operation denied/u,
+      );
+    } finally {
+      await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["rm", "--cached", "--quiet", "--", "tracked-hardlink.txt"], { cwd: repository, windowsHide: true });
+      await fs.rm(hardlink, { force: true });
+    }
+
+    const multibyte = path.join(repository, "multibyte.txt");
+    await fs.writeFile(multibyte, "界".repeat(60_000));
+    await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "multibyte.txt"], { cwd: repository, windowsHide: true });
+    try {
+      await assert.rejects(
+        () => toolsModule.executeTool(root, "read_repo", { path: "", level: "all", include: "multibyte.txt" }),
+        /tool transport budget/u,
+      );
+      const budgeted = await toolsModule.executeTool(root, "read_repo", { path: "", level: "full", include: "multibyte.txt" });
+      assert.match(budgeted, /1 file\(s\) explicitly omitted by transport budget/u);
+      assert.doesNotMatch(budgeted, /tool output truncated/u);
+    } finally {
+      await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["rm", "--cached", "--quiet", "--", "multibyte.txt"], { cwd: repository, windowsHide: true });
+      await fs.rm(multibyte, { force: true });
+    }
+    const unfilteredSummary = await toolsModule.executeTool(root, "read_repo", { path: "", level: "summary", exclude: "?.md" });
+    assert.match(unfilteredSummary, /%28no%20ext%29: 1/u);
 
     const cwdBefore = await externalState();
     const cwdAttempt = await captureDenial(() => toolsModule.executeTool(root, "read_repo", { path: outside, level: "tree" }));
@@ -298,26 +355,19 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
     });
     if (repoRecorder.enabled) await repoRecorder.observe("SEC02-P25-oracle-project-escape", oracleEscapeActual);
 
-    await approved(root, "oracle_save", { path: "" });
-    const store = await managedStoreModule.getManagedPathStore();
-    const snapshotBefore = await store.readOracle();
-    assert(snapshotBefore);
-    const managedLinkName = "oracle-managed-link";
-    const managedLink = path.join(repository, managedLinkName);
-    await fs.symlink(outside, managedLink, "junction");
+    await approved(root, "oracle_save", {});
+    const oraclePath = path.join(repository, "LUX.oracle");
+    const snapshotBefore = await fs.readFile(oraclePath);
+    await fs.unlink(oraclePath);
+    await fs.symlink(externalSecretPath, oraclePath, "file");
     const managedBefore = await externalState();
-    const managedAttempt = await captureDenial(() => approved(root, "oracle_save", { path: "" }));
+    const managedAttempt = await captureDenial(() => approved(root, "oracle_save", {}));
     const managedAfter = await externalState();
-    const snapshotAfter = await store.readOracle();
-    assert(snapshotAfter);
     const managedActual = {
       denied: managedAttempt.error !== undefined,
       rootExternalBytesRead: exposedExternalBytes(managedAttempt.error, externalSecret),
-      rootExternalArtifacts: Number(
-        externalArtifactsChanged(managedBefore, managedAfter) !== 0
-        || Buffer.compare(snapshotBefore, snapshotAfter) !== 0
-      ),
-      ...denialAuditEvidence(managedAttempt.events, [managedLinkName, managedLink]),
+      rootExternalArtifacts: externalArtifactsChanged(managedBefore, managedAfter),
+      ...denialAuditEvidence(managedAttempt.events, [oraclePath]),
     };
     assert.equal(managedAttempt.error?.code, "PATH_REDIRECT_DENIED");
     assert.deepEqual(managedActual, {
@@ -329,27 +379,29 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
       rawPathsAbsent: true,
     });
     if (repoRecorder.enabled) await repoRecorder.observe("SEC02-P25-oracle-managed-store-denial", managedActual);
-    await fs.unlink(managedLink);
+    await fs.unlink(oraclePath);
+    await fs.writeFile(oraclePath, snapshotBefore);
   } finally {
     toolsModule.capabilityBroker.finishContext(root);
     await toolsModule.capabilityBroker.retireAuthority(authority);
   }
 });
 
-test("SEC-02 Oracle project read and managed snapshot write use disjoint governed paths", async () => {
+test("SEC-02 Oracle writes and reads only the governed project-root LUX.oracle", async () => {
   const authority = await makeAuthority();
   const root = toolsModule.capabilityBroker.beginAgentRun(authority, session.id);
   try {
-    const saved = await approved(root, "oracle_save", { path: "" });
+    const saved = await approved(root, "oracle_save", {});
     assert.match(saved, /Oracle 快照已保存/);
     const status = await toolsModule.executeTool(root, "oracle_status", {});
     assert.match(status, /Oracle 已加载/);
-    const store = await managedStoreModule.getManagedPathStore();
-    const before = await store.readOracle();
-    assert(before);
+    const before = await fs.readFile(path.join(repository, "LUX.oracle"));
     const parsed = JSON.parse(before.toString("utf8"));
+    assert.equal(parsed.format, "mini-lux-oracle");
+    assert.equal(parsed.formatVersion, 1);
     assert.equal(parsed.projectPath, ".");
-    assert.match(parsed.headers["package.json"].join("\n"), /governed-repository/);
+    assert.equal(parsed.session.session.id, session.id);
+    assert.deepEqual(parsed.session.canvas.pins, []);
 
     const linked = path.join(repository, "external-link");
     await fs.symlink(outside, linked, "junction");
@@ -358,13 +410,8 @@ test("SEC-02 Oracle project read and managed snapshot write use disjoint governe
       () => toolsModule.executeTool(root, "read_repo", { path: "", level: "tree" }),
       error => error?.code === "PATH_REDIRECT_DENIED"
     );
-    await assert.rejects(
-      () => approved(root, "oracle_save", { path: "" }),
-      error => error?.code === "PATH_REDIRECT_DENIED"
-    );
-    const after = await store.readOracle();
-    assert(after);
-    assert.equal(Buffer.compare(before, after), 0, "denied Oracle scan modified the managed snapshot");
+    const after = await fs.readFile(path.join(repository, "LUX.oracle"));
+    assert.equal(Buffer.compare(before, after), 0, "unrelated redirected tree entry modified the project Oracle");
     if (oracleRecorder.enabled) await oracleRecorder.positive("SEC02-POS-oracle");
   } finally {
     toolsModule.capabilityBroker.finishContext(root);
@@ -380,5 +427,6 @@ test("SEC-02 read_repo and Oracle sources have no direct filesystem or shell exe
   assert(!/\bexec\s*\(/.test(readRepoSource));
   assert.match(readRepoSource, /["']ls-files["'],\s*["']-z["']/);
   assert(!/listFilesRecursive|USERPROFILE|process\.env/.test(readRepoSource));
-  assert.match(oracleSource, /getManagedPathStore/);
+  assert.match(oracleSource, /gateway\.writeFile/);
+  assert.match(oracleSource, /gateway\.readFile/);
 });

@@ -6,6 +6,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import {
   canonicalJson,
+  canonicalPayloadSha256,
   currentResolvedManifestPath,
   projectRoot,
   validateSec02ObservationActual,
@@ -53,34 +54,64 @@ export function sec02EvidenceEnabled(env = process.env) {
   return configuredEnvironment(env) !== null;
 }
 
-let governedInputsPromise = null;
-async function loadGovernedInputs() {
-  if (!governedInputsPromise) governedInputsPromise = (async () => {
+async function governedInputs(manifest) {
+  const matrixBinding = manifest.governedArtifacts.find(entry => entry.exactCasePath === "tests/sec02-attack-matrix.json");
+  assert(matrixBinding, "resolved manifest does not bind the attack matrix");
+  const matrixBytes = await readFile(path.join(projectRoot, "tests", "sec02-attack-matrix.json"));
+  assert.equal(sha256(matrixBytes), matrixBinding.sha256, "attack matrix bytes differ from the resolved manifest");
+  const matrix = JSON.parse(matrixBytes);
+  const observations = new Map();
+  for (const scenario of matrix.scenarios) {
+    for (const observation of scenario.observations) {
+      assert(!observations.has(observation.id), `duplicate frozen observation: ${observation.id}`);
+      observations.set(observation.id, observation);
+    }
+  }
+  return {
+    manifest,
+    matrix,
+    matrixSha256: matrixBinding.sha256,
+    observations,
+    observationBindings: new Map(manifest.evidence.observations.map(binding => [binding.observationId, binding])),
+    positiveBindings: new Map(manifest.evidence.positives.map(binding => [binding.positiveReceiptId, binding])),
+  };
+}
+
+let currentGovernedInputsPromise = null;
+async function loadCurrentGovernedInputs() {
+  if (!currentGovernedInputsPromise) currentGovernedInputsPromise = (async () => {
     const manifestFile = path.join(projectRoot, ...currentResolvedManifestPath.split("/"));
     const manifest = JSON.parse(await readFile(manifestFile, "utf8"));
     await validateSec02ResolvedManifest(manifest, { root: projectRoot });
-    const matrixBinding = manifest.governedArtifacts.find(entry => entry.exactCasePath === "tests/sec02-attack-matrix.json");
-    assert(matrixBinding, "resolved manifest does not bind the attack matrix");
-    const matrixBytes = await readFile(path.join(projectRoot, "tests", "sec02-attack-matrix.json"));
-    assert.equal(sha256(matrixBytes), matrixBinding.sha256, "attack matrix bytes differ from the resolved manifest");
-    const matrix = JSON.parse(matrixBytes);
-    const observations = new Map();
-    for (const scenario of matrix.scenarios) {
-      for (const observation of scenario.observations) {
-        assert(!observations.has(observation.id), `duplicate frozen observation: ${observation.id}`);
-        observations.set(observation.id, observation);
-      }
-    }
-    return {
-      manifest,
-      matrix,
-      matrixSha256: matrixBinding.sha256,
-      observations,
-      observationBindings: new Map(manifest.evidence.observations.map(binding => [binding.observationId, binding])),
-      positiveBindings: new Map(manifest.evidence.positives.map(binding => [binding.positiveReceiptId, binding])),
-    };
+    return await governedInputs(manifest);
   })();
-  return governedInputsPromise;
+  return currentGovernedInputsPromise;
+}
+
+let frozenGovernedInputsPromise = null;
+async function loadFrozenGovernedInputs(resolvedSha256) {
+  if (!frozenGovernedInputsPromise) frozenGovernedInputsPromise = (async () => {
+    const sec03Governance = await import("../scripts/sec03-governance.mjs");
+    const sec03File = path.join(projectRoot, ...sec03Governance.resolvedManifestPath.split("/"));
+    const sec03Manifest = JSON.parse(await readFile(sec03File, "utf8"));
+    await sec03Governance.validateSec03ResolvedManifest(sec03Manifest, { root: projectRoot });
+    const predecessor = sec03Manifest.predecessor;
+    const bytes = await readFile(path.join(projectRoot, ...predecessor.exactCasePath.split("/")));
+    assert.equal(sha256(bytes), predecessor.fileSha256, "SEC-03 predecessor manifest bytes differ");
+    const manifest = JSON.parse(bytes);
+    assert.equal(manifest.canonicalPayloadSha256, predecessor.canonicalPayloadSha256, "SEC-03 predecessor manifest digest differs");
+    assert.equal(canonicalPayloadSha256(manifest), predecessor.canonicalPayloadSha256, "SEC-03 predecessor manifest payload differs");
+    return await governedInputs(manifest);
+  })();
+  const governed = await frozenGovernedInputsPromise;
+  assert.equal(governed.manifest.canonicalPayloadSha256, resolvedSha256, "SEC-02 resolved digest is not an authenticated current or frozen identity");
+  return governed;
+}
+
+async function loadGovernedInputs(resolvedSha256) {
+  const current = await loadCurrentGovernedInputs();
+  if (current.manifest.canonicalPayloadSha256 === resolvedSha256) return current;
+  return await loadFrozenGovernedInputs(resolvedSha256);
 }
 
 async function assertReceiptDirectory(directory) {
@@ -118,7 +149,7 @@ export async function createSec02Recorder(moduleUrl, testCaseId, env = process.e
   assert.match(matrixSha256, sha256Pattern, "SEC-02 matrix digest is invalid");
   await assertReceiptDirectory(receiptDirectory);
 
-  const governed = await loadGovernedInputs();
+  const governed = await loadGovernedInputs(resolvedSha256);
   assert.equal(governed.manifest.canonicalPayloadSha256, resolvedSha256, "SEC-02 resolved digest is stale");
   assert.equal(governed.matrixSha256, matrixSha256, "SEC-02 matrix digest is stale");
   const recorderId = sha256(`${evidenceFile}\0${testCaseId}`).slice(0, 16);

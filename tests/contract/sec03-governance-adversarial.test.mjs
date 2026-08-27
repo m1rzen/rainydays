@@ -7,7 +7,7 @@ import { crosscheckSec03SourceSet, validateSec03ExecutionPolicy } from "../../sc
 function policyFor(sourceSet, kind = "fixedPurposeProduction") {
   const sites = scanSec03SourceSet(sourceSet).filter(site => site.executionClass !== "build-test" && site.family !== "unknown-execution-sink");
   const entry = site => ({ sourcePath: site.sourcePath, family: site.family, api: site.api, container: site.container, occurrenceId: site.id });
-  const payload = { schemaVersion: 1, task: "SEC-03", architectureSha256: SEC03_ARCHITECTURE_SHA256, domain: "mini-lux/sec03/restricted-execution-dialect/v1", sourceRoots: ["src/", "electron/", "scripts/", "tests/", "native/", "public/**/*.html"], extensions: [".ts", ".tsx", ".js", ".cjs", ".mjs", ".cpp", ".cc", ".h", ".hpp", ".html"], governedEntryPaths: [], governedAdapters: [], fixedPurposeProduction: [], fixedDynamicLoads: [], nativeHostAdapters: [] };
+  const payload = { schemaVersion: 1, task: "SEC-03", architectureSha256: SEC03_ARCHITECTURE_SHA256, domain: "mini-lux/sec03/restricted-execution-dialect/v1", sourceRoots: ["src/", "electron/", "scripts/", "tests/", "native/", "public/index.html", "public/renderer.js"], extensions: [".ts", ".tsx", ".js", ".cjs", ".mjs", ".cpp", ".cc", ".h", ".hpp", ".html"], governedEntryPaths: [], governedAdapters: [], fixedPurposeProduction: [], fixedDynamicLoads: [], nativeHostAdapters: [] };
   payload[kind] = sites.map(entry); payload.canonicalPayloadSha256 = createHash("sha256").update(canonicalJson(payload)).digest("hex"); return validateSec03ExecutionPolicy(payload);
 }
 function assertBlocked(sources, policy, label) { const result = crosscheckSec03SourceSet(sources, policy); assert.equal(result.migrated, false, `${label} unexpectedly passed`); assert(result.violations.length > 0, `${label} emitted no violation`); return result; }
@@ -30,6 +30,15 @@ test("SEC-03 native scanner ignores comments and strings while recognizing secur
 
 test("SEC-03 product-to-build-test reachability is a hard fail", () => {
   const sources = new Map([["src/product.ts", `import { helper } from "../scripts/helper.mjs"; export const run = helper;`], ["scripts/helper.mjs", `import { spawn } from "node:child_process"; export const helper = () => spawn("x");`]]); const result = assertBlocked(sources, policyFor(new Map()), "product build-test import"); assert(result.violations.some(item => /build-test/u.test(item.detail)));
+});
+
+test("SEC-03 production native include reachability rejects build-test sources", () => {
+  const sources = new Map([
+    ["native/sandbox-host/product.cpp", `#include "sec03-a07-adversary.cpp"\nint product(){return 0;}`],
+    ["native/sandbox-host/sec03-a07-adversary.cpp", `int testOnly(){return 0;}`],
+  ]);
+  const result = assertBlocked(sources, policyFor(new Map()), "production native build-test include");
+  assert(result.violations.some(item => /production native source reaches build-test code/u.test(item.detail)));
 });
 
 test("SEC-03 finite dialect rejects call/apply/bind, bound invocation, re-export, storage escape, and dynamic loaders", () => {

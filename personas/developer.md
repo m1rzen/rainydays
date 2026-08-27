@@ -2,13 +2,14 @@
 name: developer
 display_name: 开发者
 description: 日常开发工作，完整的读写和执行能力
+permission_level: coding
 network_policy: unrestricted
 tools:
-  - list_directory
-  - read_file
-  - search_files
-  - write_file
-  - edit_file
+  - glob
+  - read
+  - write
+  - edit
+  - replace
   - grep
   - execute_command
   - shell_start
@@ -19,14 +20,22 @@ tools:
   - script
   - get_current_time
   - subagent
+  - subagent_wait
+  - subagent_output
+  - subagent_peek
+  - subagent_post
+  - subagent_stop
+  - subagent_list
   - curate
   - ask_user
   - remember
   - recall
   - list_memories
-  - create_tasks
-  - update_task
-  - list_tasks
+  - task_create
+  - task_update
+  - task_list
+  - task_get
+  - task_delete
 skills:
   - coding
 env:

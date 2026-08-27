@@ -11,7 +11,7 @@ const baselineRelative = "parity/baselines/lux-desktop-0.1.898.json";
 const expectedBaselineSha256 = "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df";
 const buildIdPattern = /^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$/;
 const semverPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
-const sec03ArchitectureSha256 = "849fc25a5e32eabdaa3b1285a14218f9877d46ecdc650a0e52a2120772e1cad1";
+const sec03ArchitectureSha256 = "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe";
 const hashPattern = /^[a-f0-9]{64}$/;
 
 function sha256(value) {
@@ -90,15 +90,15 @@ async function main() {
     distIntegritySha256: null,
     builtAt,
     versions: {
-      databaseSchema: 1,
-      sessionExport: 1,
+      databaseSchema: 11,
+      sessionExport: 2,
       executionIsolation: {
         architectureSha256: sec03ArchitectureSha256,
         protocolVersion: 1,
         nativeSourceDigest: nativeManifest.sourceDigest,
         toolchainDigest: nativeManifest.toolchainDigest,
         signatureStatus: nativeManifest.signatureStatus,
-        artifacts: nativeOutputs.map((entry) => ({ path: entry.path, bytes: entry.bytes, sha256: entry.sha256, machine: entry.machine })),
+        artifacts: nativeOutputs.map((entry) => ({ path: entry.path, bytes: entry.bytes, sha256: entry.sha256, machine: entry.machine, importedDllAllowlistDigest: entry.importedDllAllowlistDigest })),
         testProjection: { manifest: { ...testManifest } },
       },
       protocols: {

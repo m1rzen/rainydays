@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-01",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/rt-01.json",
+    "sha256": "0477a0afb2e22dd3d0e9c0efb95ec820ea731502736bf6d15d3e4bf3e9836462"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "public/renderer.js",
+      "sha256": "64c83f779865c2b6705ad49efd8987f9dc1e2f2225d93daf267a7fe2ce6a5fa2",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "src/agent.ts",
+      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "src/capability-broker.ts",
+      "sha256": "a36f7031be1aa04c0921a6d4766a1e4392fca68fb4bbf094b320553b186bb13b",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "src/session-runtime.ts",
+      "sha256": "e31da2d0a009780ee3edfb81e269784956ab66cd90d55c8c239e75c32f21c8ef",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "src/session.ts",
+      "sha256": "ddee52bb93efe1c0a8ade1c5443d47f1d38e826ca3c269d232d7ed2f6f05924d",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "src/tools/ask-user-tool.ts",
+      "sha256": "1566e6606325bf4ac926c735e11e06ee2936b931288d6d73eb8037653668801e",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "src/tools/phase1-tools.ts",
+      "sha256": "578145c99073dde95d9ba380a514699651bc571a1a9ddbb332aa71cd9ae297b2",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "dist/agent.js",
+      "sha256": "478c9f9fed363353c12cddabb788fe85c60448d50dff27fb6a6697683ad6d7ba",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "dist/capability-broker.js",
+      "sha256": "f8d2d4815bfddd55d045593c35f4dc6567bbdda47d8b2486cbd41196363bd79d",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "ada797ef15969b70aab116a0e062ee98a68524e83c7d33e173aea2c0e6b9fe86",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "dist/session-runtime.js",
+      "sha256": "d765b7c16a18b71ec650b7ea411db51022499af0044ff6f50a4aff7662c27809",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "dist/session.js",
+      "sha256": "2614e8ad5aa360194c5b466c323a3e1ef0386ce79489f60b101bb56997bba49b",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "dist/tools/ask-user-tool.js",
+      "sha256": "a3d5fb7dfe7eae01a44863bbc3b8677ee0621bcb51e99e0b055a087ed4e17687",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "dist/tools/phase1-tools.js",
+      "sha256": "2a09fe110c6914749b4652d00d8403836b7ac3993882694a2b786a4de7088348",
+      "owner": "RT-01"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/unit/run-interaction-channel.test.mjs",
+      "sha256": "39306ed056c52e42747c9f91136b66f09836e4e4a138afdb4a6f780d64f27664",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "tests/unit/session-runtime.test.mjs",
+      "sha256": "d7a7b1dcb711f26c2885c73674252c7aef324cef5b1b441ed054cf1196a36f08",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "tests/contract/rt01-governance.test.mjs",
+      "sha256": "ea86bfc56b473d08c6af6954f7bb179504ad691fc4df436084566221e9746fa3",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs",
+      "sha256": "dc52a6dbbf3ff6ef17fa0f97442e8951002011ae0b13b1d24078aa7e88c93991",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "RT-01"
+    },
+    {
+      "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
+      "sha256": "1bcaa3c56877014cab58866af4b2f92b7b295fdb2749bfdf51f24e38c87295e0",
+      "kind": "test",
+      "layer": "packaged",
+      "owner": "RT-01"
+    }
+  ],
+  "canonicalPayloadSha256": "5ce059afce81dd2d7a25954290afb986efeac337ccfcb1ee125bdcfa2fe4b2a6"
+}

@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-11",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "dist/cron.js",
+    "dist/db.js",
+    "dist/event-bus.js",
+    "dist/index.js",
+    "dist/subagent-registry.js",
+    "dist/tools/cron-tools.js",
+    "dist/tools/phase1-tools.js",
+    "scripts/generate-build-info.mjs",
+    "scripts/prepare-electron-app.mjs",
+    "scripts/test-version-model.mjs",
+    "scripts/version-test-child.mjs",
+    "src/cron.ts",
+    "src/db.ts",
+    "src/event-bus.ts",
+    "src/index.ts",
+    "src/subagent-registry.ts",
+    "src/tools/cron-tools.ts",
+    "src/tools/phase1-tools.ts",
+    "src/version.ts"
+  ],
+  "coverageExemptions": {
+    "dist/index.js": {
+      "reason": "The server entrypoint binds Memo Cron publication to the durable EventBus and is exercised through the exact EVT-01/EVT-02 integration flows.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/evt02-cron-flow.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "scripts/test-version-model.mjs": {
+      "reason": "The migration and staging matrix is executed as an isolated child-process integration contract rather than imported into c8.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/version-model.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "scripts/version-test-child.mjs": {
+      "reason": "The database lifecycle helper is consumed only by the isolated version-model integration matrix.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/version-model.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/index.ts": {
+      "reason": "Authored EventBus wake wiring is bound to the compiled entrypoint and exact Cron delivery integration evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/evt02-cron-flow.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/contract/rt11-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/unit/cron.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/event-bus.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/subagent-registry.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/evt02-cron-flow.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/rt08-subagent-lifecycle.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/integration/version-model.test.mjs",
+      "layer": "integration"
+    }
+  ]
+}

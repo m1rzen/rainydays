@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "taskId": "TOOL-07",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/tool-07.json",
+    "sha256": "5b7122cdfde1f5496555e68204a16282ec3964deebf920fa36addebdfaf07e13"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "c4104e93af680e6a76288d2205ce0a5845f586d90c3e191b1cbe821aa7f123d2",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "scripts/tool07-governance.mjs",
+      "sha256": "6a5693eff346f7fcf333f7b54f00e54a2a0df34cda1b826c596d22c54a58715b",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "scripts/generate-tool07-resolved-manifest.mjs",
+      "sha256": "2a4142de10ac428bcf029bc7c993e65ae626610ffa2c3e61ef96551b3627f96e",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "src/bootstrap-path-store.ts",
+      "sha256": "79bb992d4ec5bab8b790337c920b28adebd59d82fe863f8c2f1a2c9327e805f4",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "src/path-policy.ts",
+      "sha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "src/run-cancellation.ts",
+      "sha256": "6c267f1d557a8b93724c0f49632e8f109382b4698296eaa738f89f59be759694",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "src/tool-protocol.ts",
+      "sha256": "4f5b925988709fec3bbc61097e60f1ff6daef4c58a179c4c0e4752c55ad07d9d",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "f7cec1d0f2daf8f46073bc254d22e4ab8c90c4f2f255c924dd5c2f66dc9549a3",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "src/tools/read-repo.ts",
+      "sha256": "6ee0b533209a88745e993de25b33ad18ff9febdb14fa51864183bb884a66cd48",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "tests/coverage-scope.json",
+      "sha256": "decc03e49e89ba5ed6eb4e964da2e437c440935a1edcf23d864933e6f2e56a8a",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "270e0008a939b43558be7160812d9ec7c89ac4ec0c78537b4aa4434d2bc78682",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
+      "owner": "TOOL-07"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/tool07-governance.test.mjs",
+      "sha256": "330c02388575c84543a01063a01ff2fbf51acfe70943571dd97fa97783581297",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
+      "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+      "sha256": "d4beca652dcefcc64fe1dea5398d21366f2eeb967c5ade30fed5e85dd7b0959c",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-07"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "sha256": "205177356d05fd837a7641b69fab8518e999b1ca840f991016fa1cc14cc8133e",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "TOOL-07"
+    }
+  ],
+  "canonicalPayloadSha256": "c9edc0d37a861c4ed32eb82c7bf9746232336089786da5295b153c1ab13c7c46"
+}

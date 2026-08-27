@@ -527,19 +527,25 @@ test("SEC01 authorized arguments and executor environment are private frozen sna
   });
   const root = broker.beginAgentRun(authority, "session-a");
   const nested = { flag: true };
+  const dangerous = JSON.parse('{"__proto__":"preserved"}');
   const args = {
     get value() {
       getterReads += 1;
       return "original";
     },
     nested,
+    dangerous,
   };
   const inspected = prepare(broker, root, "snapshot_probe", args);
   nested.flag = false;
   assert.equal(getterReads, 1);
-  assert.deepEqual(inspected.args, { value: "original", nested: { flag: true } });
+  assert.deepEqual(inspected.args, { value: "original", nested: { flag: true }, dangerous });
+  assert.equal(Object.hasOwn(inspected.args.dangerous, "__proto__"), true);
+  assert.equal(inspected.args.dangerous.__proto__, "preserved");
+  assert.strictEqual(Object.getPrototypeOf(inspected.args.dangerous), Object.prototype);
   assert(Object.isFrozen(inspected.args));
   assert(Object.isFrozen(inspected.args.nested));
+  assert(Object.isFrozen(inspected.args.dangerous));
   assert.equal(await broker.invokeTool(root, inspected), "snapshot");
   assert.equal(getterReads, 1, "executor must not reread caller-owned accessors");
   assert.strictEqual(capturedArgs, inspected.args);
@@ -714,6 +720,10 @@ test("SEC01 malformed identities, policies, lifetimes and direct operations fail
     ["bad_path", { riskClasses: ["read"], approval: "none", effects: ["filesystem"], pathOperations: ["unknown"] }],
     ["bad_path_risk", { riskClasses: ["read"], approval: "none", effects: ["filesystem"], pathOperations: ["create-file"] }],
     ["bad_approval", { riskClasses: ["read"], approval: "maybe", effects: [] }],
+    ["bad_parallel_write", { riskClasses: ["read", "write"], approval: "none", effects: ["filesystem"], pathOperations: ["replace-file"], concurrency: "parallel-read" }],
+    ["bad_parallel_approval", { riskClasses: ["read"], approval: "user", effects: [], concurrency: "parallel-read" }],
+    ["bad_parallel_process", { riskClasses: ["read", "process"], approval: "none", effects: ["process"], concurrency: "parallel-read" }],
+    ["bad_concurrency", { riskClasses: ["read"], approval: "none", effects: [], concurrency: "parallel-write" }],
   ]) {
     assert.throws(() => broker.registerStaticTool(registered(name, policy).tool), TypeError);
   }
@@ -774,7 +784,7 @@ test("SEC02 Broker binds one-invocation PathGateway to the authentic tool policy
   const inspected = broker.inspectToolCall(root, "read_path", {});
   const issued = broker.issueToolPathGateway(root, inspected);
   assert.deepEqual(Object.keys(issued.gateway).sort(), [
-    "createFile", "listDirectory", "readFile", "replaceFile", "reserveFile", "rootIdForEnv", "searchDirectory", "searchFile", "watchDirectory", "withExecutionRoot", "withInitialCwd", "writeFile",
+    "createFile", "identifyDirectory", "listDirectory", "readFile", "replaceFile", "reserveFile", "rootIdForEnv", "searchDirectory", "searchFile", "watchDirectory", "withExecutionRoot", "withInitialCwd", "writeFile",
   ]);
   assert(!Object.hasOwn(issued.gateway, "authority"));
   expectCode(() => issued.gateway.rootIdForEnv("WORKSPACE_ROOT"), "CAPABILITY_BINDING_MISMATCH");

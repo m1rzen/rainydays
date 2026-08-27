@@ -341,8 +341,8 @@ test("SEC-02 production Electron bootstrap private-field and default-parameter f
   const sites = scanSec02Source("electron/path-bootstrap.cjs", source);
   assert(sites.length >= 12);
   assert(sites.some(site => site.api === "realpathSync"));
-  assert(sites.some(site => site.line === 217 && site.api === "realpathSync"));
-  assert(sites.some(site => site.line === 218 && site.api === "statSync"));
+  assert(sites.some(site => site.container === "ElectronFileLease.verify" && site.api === "realpathSync" && site.pathOperands.includes("argument:0")));
+  assert(sites.some(site => site.container === "ElectronFileLease.verify" && site.api === "statSync" && site.pathOperands.includes("argument:0")));
   assert(sites.some(site => site.api === "openSync"));
   assert(sites.some(site => site.api === "readFileSync"));
 });
@@ -420,14 +420,19 @@ test("SEC-02 restricted runtime dialect rejects unapproved imports, callable ali
 
 test("SEC-02 current restricted runtime domain and reviewed exceptions are exact", { timeout: 120_000 }, async () => {
   const { readFile } = await import("node:fs/promises");
-  const [policy, analyzerBytes] = await Promise.all([
+  const [policy, analyzerBytes, inventory] = await Promise.all([
     readFile(path.join(projectRoot, ...crosscheckPolicyPath.split("/")), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "scripts", "sec02-sink-crosscheck.mjs")),
+    readFile(path.join(projectRoot, ...sinkInventoryPath.split("/")), "utf8").then(JSON.parse),
   ]);
   const analyzer = createHash("sha256").update(analyzerBytes).digest("hex");
   const result = await scanSec02RestrictedRuntime(projectRoot, policy, analyzer);
-  assert.equal(result.fileCount, 71);
-  assert.equal(result.importCount, 33);
+  assert.equal(result.fileCount, inventory.sourceClosure.executableFileCount);
+  assert.deepEqual(
+    inventory.files.filter(entry => entry.sourcePath.startsWith("src/security-audit")).map(entry => entry.sourcePath).sort(),
+    ["src/security-audit-journal.ts", "src/security-audit.ts"]
+  );
+  assert.equal(result.importCount, 38);
   assert.equal(result.exceptionCount, 2);
   assert.equal(result.complete, true);
   assert.throws(() => validateSec02RestrictedSourceSet(new Map([["src/adapter.ts", `import fs from "node:fs"; fs.readFile(userPath, callback);`]]), policy, "b".repeat(64)), /different checker/);

@@ -6,9 +6,19 @@ import type { CapabilityContext, ChildCapabilityRequest, ToolPolicy } from "./ca
 import type { ResourceOwner } from "./resource-owner.js";
 import type { ScopedExecutionGateway } from "./execution-runtime.js";
 import type { ExecutionRootLease, PathCreateResult, PathDirectoryEntry, PathReadResult, PathReplaceResult, PathTransformResult, PathWatchEvent } from "./path-policy.js";
+import type { SecurityAuditJournal } from "./security-audit-journal.js";
 
 /** 对话角色 */
 export type Role = "system" | "user" | "assistant" | "tool";
+
+export interface MessageAttachment {
+  readonly id: string;
+  readonly name: string;
+  readonly mime: string;
+  readonly size: number;
+  readonly sha256: string;
+  readonly kind: "image" | "text";
+}
 
 /** 一条对话消息 */
 export interface Message {
@@ -16,6 +26,7 @@ export interface Message {
   content: string;
   tool_call_id?: string;
   tool_calls?: ToolCall[];
+  attachments?: readonly MessageAttachment[];
 }
 
 /** 工具调用 */
@@ -38,8 +49,48 @@ export interface ToolDefinition {
       type: "object";
       properties: Record<string, unknown>;
       required?: string[];
+      anyOf?: Array<{ required: string[] }>;
+      additionalProperties?: boolean;
     };
   };
+}
+
+export interface ToolBodyHeader {
+  readonly name: string;
+  readonly parameter: string;
+  readonly required: boolean;
+}
+
+export interface RawToolBodyMode {
+  readonly kind: "raw";
+  readonly blockName: string;
+  readonly bodyParameter: string;
+  readonly headers: readonly ToolBodyHeader[];
+}
+
+export interface SectionedToolBodyMode {
+  readonly kind: "sections";
+  readonly blockName: string;
+  readonly sections: readonly Readonly<{ blockName: string; parameter: string }>[];
+  readonly headers: readonly ToolBodyHeader[];
+}
+
+export type ToolBodyMode = RawToolBodyMode | SectionedToolBodyMode;
+
+/** Context-scoped unified descriptor. OpenAI receives only `schema`; other fields remain host-side. */
+export interface ToolProtocolDescriptor {
+  readonly schemaVersion: 1;
+  readonly name: string;
+  readonly schema: ToolDefinition;
+  readonly invocation: Readonly<{
+    json: true;
+    body: ToolBodyMode | null;
+  }>;
+  readonly permissions: ToolPolicy;
+  readonly sideEffects: ToolPolicy["effects"];
+  readonly hostBound: boolean;
+  readonly concurrency: "parallel-read" | "serial";
+  readonly timeoutMs: number;
 }
 
 export interface ScopedOutputReservation {
@@ -53,8 +104,18 @@ export interface ScopedWatchLease {
   readonly isOpen: () => boolean;
 }
 
+export interface ScopedDirectoryIdentity {
+  readonly rootId: string;
+  /** Opaque digest; canonical host paths and filesystem object identifiers never leave the Broker. */
+  readonly identityDigest: string;
+}
+
 export interface ScopedPathGateway {
   readonly rootIdForEnv: (envKey: string) => string | null;
+  readonly identifyDirectory: (
+    input: string,
+    options?: Readonly<{ defaultRootId?: string }>
+  ) => Promise<ScopedDirectoryIdentity>;
   readonly withInitialCwd: <T>(
     input: string,
     options: Readonly<{ defaultRootId?: string }>,
@@ -107,15 +168,40 @@ export interface ScopedPathGateway {
   ) => Promise<PathReplaceResult<T>>;
 }
 
+export interface ScopedNetworkGateway {
+  readonly fetch: (url: string, init?: RequestInit) => Promise<Response>;
+}
+
 export interface ToolInvocationServices {
+  /** Authentic Broker context from which detached children may attenuate. */
+  readonly capabilityContext: CapabilityContext;
+  /** Frozen at the parent run boundary; nested and detached invocations inherit it unchanged. */
+  readonly bodyToolsEnabled: boolean;
+  /** Exact parent run cancellation scope. Nested tools inherit this signal unchanged. */
+  readonly signal: AbortSignal;
   readonly path: ScopedPathGateway;
+  readonly network: ScopedNetworkGateway;
   readonly execution: ScopedExecutionGateway;
   readonly resourceOwner: ResourceOwner;
   readonly deriveChild: (request: ChildCapabilityRequest) => CapabilityContext;
   readonly finishChild: (context: CapabilityContext) => void;
+  readonly deriveDetachedChild: (request: ChildCapabilityRequest, runId: string) => CapabilityContext;
+  readonly finishDetachedChild: (context: CapabilityContext) => Promise<void>;
+  readonly executeDetachedTool: (
+    context: CapabilityContext,
+    name: string,
+    args: Record<string, unknown> | string,
+    toolCallId: string,
+    signal: AbortSignal,
+  ) => Promise<string>;
+  readonly createDetachedNetwork: (context: CapabilityContext, signal: AbortSignal) => ScopedNetworkGateway;
+  readonly getUnattendedChildToolNames: () => readonly string[];
   readonly listCurrentToolDefinitions: () => ToolDefinition[];
   readonly getToolDefinitions: (context: CapabilityContext) => ToolDefinition[];
-  readonly executeTool: (context: CapabilityContext, name: string, args: Record<string, unknown>) => Promise<string>;
+  readonly listCurrentToolProtocols: () => ToolProtocolDescriptor[];
+  readonly getToolProtocols: (context: CapabilityContext) => ToolProtocolDescriptor[];
+  readonly auditContext: Readonly<{ journal: SecurityAuditJournal; parentRequestId: string }> | null;
+  readonly executeTool: (context: CapabilityContext, name: string, args: Record<string, unknown> | string, toolCallId: string) => Promise<string>;
 }
 
 /** 工具的实际执行函数 */
@@ -139,6 +225,28 @@ export interface LLMConfig {
   apiKey: string;
   baseURL: string;
   model: string;
+  providerType?: string;
+}
+
+export type ToolPipelineStage = "schema" | "capability" | "loop" | "approval" | "policy" | "execute" | "output" | "audit";
+export type ToolPipelineStageState = "passed" | "denied" | "error" | "skipped" | "truncated";
+export type ToolOutcomeStatus = "success" | "denied" | "error" | "timeout" | "cancelled";
+
+export interface ToolPipelineStageRecord {
+  readonly stage: ToolPipelineStage;
+  readonly state: ToolPipelineStageState;
+  readonly code: string | null;
+}
+
+export interface ToolExecutionOutcome {
+  readonly status: ToolOutcomeStatus;
+  readonly content: string;
+  readonly code: string | null;
+  /** Bytes actually delivered and committed to the audit result. */
+  readonly outputBytes: number;
+  /** Executor bytes observed before centralized output control. */
+  readonly originalOutputBytes: number;
+  readonly truncated: boolean;
 }
 
 /** agent 运行中的一步 */
@@ -148,6 +256,12 @@ export interface AgentStep {
   content: string;
   toolName?: string;
   toolArgs?: Record<string, unknown>;
+  toolStatus?: ToolOutcomeStatus;
+  toolCode?: string | null;
+  toolOutputBytes?: number;
+  toolOriginalOutputBytes?: number;
+  toolOutputTruncated?: boolean;
+  toolStages?: readonly ToolPipelineStageRecord[];
   /** 任务相关事件时的任务快照 */
   tasks?: TaskSnapshot[];
   timestamp: number;
@@ -157,14 +271,20 @@ export interface AgentStep {
 // 任务系统
 // ===========================================
 
-export type TaskStatus = "pending" | "in_progress" | "completed" | "failed";
+export type TaskStatus = "pending" | "in_progress" | "completed";
 
-/** 任务快照（给前端展示用） */
+/** Task DAG 快照（给前端/Agent 使用；ID 在一个 Session 内唯一）。 */
 export interface TaskSnapshot {
-  id: number;
-  subject: string;
-  status: TaskStatus;
-  activeForm: string | null;
+  readonly id: string;
+  readonly subject: string;
+  readonly description: string | null;
+  readonly status: TaskStatus;
+  readonly activeForm: string | null;
+  readonly owner: string | null;
+  readonly metadata: Readonly<Record<string, unknown>>;
+  readonly blockedBy: readonly string[];
+  readonly blocks: readonly string[];
+  readonly blocked: boolean;
 }
 
 // ===========================================
@@ -189,6 +309,8 @@ export type PersonaNetworkPolicy =
   | { readonly mode: "allowlist"; readonly origins: readonly string[] }
   | { readonly mode: "unrestricted" };
 
+export type PersonaPermissionLevel = "minimal" | "read_only" | "coding" | "guarded" | "full";
+
 export interface PersonaDefinition {
   /** 内部名称 */
   readonly name: string;
@@ -196,15 +318,22 @@ export interface PersonaDefinition {
   readonly displayName: string;
   /** 描述 */
   readonly description: string;
-  /** 该 persona 可用的工具名列表 */
+  /** 权限等级；旧的内存 fixture 可省略，运行时按 guarded 处理。 */
+  readonly permissionLevel?: PersonaPermissionLevel;
+  /** 该 persona 最终可用的工具名列表。 */
   readonly tools: readonly string[];
+  /** Persona 源中的显式 allow/deny overlay，最终工具集已应用这些规则。 */
+  readonly allowTools?: readonly string[];
+  readonly denyTools?: readonly string[];
   /** 该 persona 的环境变量（如 DATA_ROOT, OUTPUT_DIR 等） */
   readonly env: Readonly<Record<string, string>>;
   /** SEC-01 绑定但由 SEC-02 完整规范化的允许根目录 */
   readonly allowedRoots: readonly string[];
   /** SEC-01 网络能力包络；实际 socket 隔离由 SEC-03 完成 */
   readonly networkPolicy: PersonaNetworkPolicy;
-  /** 安全相关有效快照的 SHA-256 */
+  /** 受管 Persona 源定义 digest；运行时 Settings 注入不会改变它。 */
+  readonly sourceDigest?: string;
+  /** 安全相关有效运行时快照的 SHA-256 */
   readonly digest: string;
   /** system prompt（markdown body 部分） */
   readonly systemPrompt: string;

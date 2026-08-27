@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "taskId": "TOOL-05",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "package.json",
+    "package-lock.json",
+    "scripts/tool05-governance.mjs",
+    "scripts/generate-tool05-resolved-manifest.mjs",
+    "personas/daily.md",
+    "personas/general.md",
+    "personas/rds-assistant.md",
+    "src/fetch-runtime.ts",
+    "src/network-policy.ts",
+    "src/run-cancellation.ts",
+    "src/tool-policies.ts",
+    "src/tools/index.ts",
+    "src/tools/search-tool.ts",
+    "src/tools/web.ts",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs"
+  ],
+  "coverageExemptions": {
+    "package.json": {
+      "reason": "Exact TOOL-05 behavior for package.json is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool05-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "package-lock.json": {
+      "reason": "Exact TOOL-05 behavior for package-lock.json is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool05-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/tool05-governance.mjs": {
+      "reason": "Exact TOOL-05 behavior for scripts/tool05-governance.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool05-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "scripts/generate-tool05-resolved-manifest.mjs": {
+      "reason": "Exact TOOL-05 behavior for scripts/generate-tool05-resolved-manifest.mjs is bound to focused contract evidence instead of generic line coverage.",
+      "evidenceLayer": "contract",
+      "evidence": [
+        {
+          "exactCasePath": "tests/contract/tool05-governance.test.mjs",
+          "layer": "contract"
+        }
+      ]
+    },
+    "personas/daily.md": {
+      "reason": "Exact TOOL-05 behavior for personas/daily.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/general.md": {
+      "reason": "Exact TOOL-05 behavior for personas/general.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "personas/rds-assistant.md": {
+      "reason": "Exact TOOL-05 behavior for personas/rds-assistant.md is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/fetch-runtime.ts": {
+      "reason": "Exact TOOL-05 behavior for src/fetch-runtime.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool05-fetch-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/network-policy.ts": {
+      "reason": "Exact TOOL-05 behavior for src/network-policy.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/network-policy.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/run-cancellation.ts": {
+      "reason": "Exact TOOL-05 behavior for src/run-cancellation.ts is bound to focused integration evidence instead of generic line coverage.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        {
+          "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+          "layer": "integration"
+        }
+      ]
+    },
+    "src/tool-policies.ts": {
+      "reason": "Exact TOOL-05 behavior for src/tool-policies.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tools/index.ts": {
+      "reason": "Exact TOOL-05 behavior for src/tools/index.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tools/search-tool.ts": {
+      "reason": "Exact TOOL-05 behavior for src/tools/search-tool.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool05-fetch-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "src/tools/web.ts": {
+      "reason": "Exact TOOL-05 behavior for src/tools/web.ts is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/tool05-fetch-runtime.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "tests/coverage-scope.json": {
+      "reason": "Exact TOOL-05 behavior for tests/coverage-scope.json is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/framework.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "tests/helpers.mjs": {
+      "reason": "Exact TOOL-05 behavior for tests/helpers.mjs is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/framework.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    },
+    "tests/unit/framework.test.mjs": {
+      "reason": "Exact TOOL-05 behavior for tests/unit/framework.test.mjs is bound to focused unit evidence instead of generic line coverage.",
+      "evidenceLayer": "unit",
+      "evidence": [
+        {
+          "exactCasePath": "tests/unit/framework.test.mjs",
+          "layer": "unit"
+        }
+      ]
+    }
+  },
+  "tests": [
+    {
+      "exactCasePath": "tests/contract/tool05-governance.test.mjs",
+      "layer": "contract"
+    },
+    {
+      "exactCasePath": "tests/unit/tool05-fetch-runtime.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/tool-protocol.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/unit/network-policy.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/unit/framework.test.mjs",
+      "layer": "unit"
+    }
+  ]
+}

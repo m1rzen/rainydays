@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-03",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "runtimeFiles": [
+    "dist/db.js",
+    "dist/index.js",
+    "dist/version.js",
+    "dist/workbench-layout.js",
+    "public/index.html",
+    "public/renderer.css",
+    "public/renderer.js",
+    "scripts/generate-build-info.mjs",
+    "scripts/prepare-electron-app.mjs",
+    "scripts/test-version-model.mjs",
+    "src/db.ts",
+    "src/index.ts",
+    "src/version.ts",
+    "src/workbench-layout.ts"
+  ],
+  "coverageExemptions": {
+    "dist/index.js": {
+      "reason": "The authenticated Workbench GET, PUT and operation routes are exercised through the real Electron renderer and restart smoke.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "public/index.html": {
+      "reason": "The sandboxed Workbench DOM host is browser code exercised by the real Electron renderer and restart smoke.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "public/renderer.css": {
+      "reason": "Recursive split and mounted singleton view presentation is exercised in the real Electron renderer smoke.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "public/renderer.js": {
+      "reason": "Renderer tab operations, simultaneous singleton mounts and restart restoration are exercised in the real Electron smoke.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    },
+    "scripts/test-version-model.mjs": {
+      "reason": "The schema 8 migration and repeated-start matrix is executed as an isolated child-process integration contract.",
+      "evidenceLayer": "integration",
+      "evidence": [
+        { "exactCasePath": "tests/integration/version-model.test.mjs", "layer": "integration" }
+      ]
+    },
+    "src/index.ts": {
+      "reason": "The Workbench HTTP boundary is compiled into the entrypoint and exercised through exact Electron operation and persistence evidence.",
+      "evidenceLayer": "electron",
+      "evidence": [
+        { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+      ]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/ds03-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/unit/workbench-layout.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/electron-ipc-contract.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/ds03-workbench-layout.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/version-model.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+  ]
+}

@@ -4,6 +4,7 @@
 // ===========================================
 
 import type { ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
+import { isRunCancellation } from "../run-cancellation.js";
 
 function initialCwd(
   args: Readonly<Record<string, unknown>>,
@@ -60,17 +61,19 @@ export const executeCommandExec: ToolExecutor = async (args, env, invocation) =>
     let result = "";
     if (stdout) result += stdout;
     if (stderr) result += `\n[stderr]\n${stderr}`;
-    if (exitCode !== 0 || reason !== "completed") result += `\n[execution ${reason}; exit ${exitCode ?? "none"}]`;
+    const failed = exitCode !== 0 || reason !== "completed";
+    if (failed) result += `\n[execution ${reason}; exit ${exitCode ?? "none"}]`;
     if (!result) result = "(命令执行完成，无输出)";
-    if (result.length > 4000) result = result.slice(0, 4000) + `\n\n... (输出已截断，共 ${result.length} 字符)`;
+    if (failed) throw new Error(result);
     return result;
   } catch (error: unknown) {
-    const failure = error as { stdout?: string; stderr?: string; message: string; killed?: boolean };
+    if (isRunCancellation(error)) throw error;
+    const failure = error as { stdout?: string; stderr?: string; message?: string; killed?: boolean };
     let result = "";
     if (failure.stdout) result += failure.stdout;
     if (failure.stderr) result += `\n[stderr]\n${failure.stderr}`;
     if (failure.killed) result += "\n(命令超时，已终止)";
-    if (!result) result = failure.message;
-    return `命令执行出错:\n${result}`;
+    if (!result) result = failure.message ?? String(error);
+    throw new Error(`命令执行出错:\n${result}`, { cause: error });
   }
 };

@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-05",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/rt-05.json",
+    "sha256": "d6fcf5dbab50a9a637e0383daf93307bd801f1a931ff2ff3fdac8dbaa7a076f3"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/agent.js",
+      "sha256": "478c9f9fed363353c12cddabb788fe85c60448d50dff27fb6a6697683ad6d7ba",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "ada797ef15969b70aab116a0e062ee98a68524e83c7d33e173aea2c0e6b9fe86",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/llm.js",
+      "sha256": "f957716d97e9e1b1a2c05b76ef4b1f45248cd9593647b0ad44002b817a13d0f8",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/memory.js",
+      "sha256": "4ae7f6bc4b327a2fd9dc0a0e277f5ea420d79fe63c5a9e9978024d98b8cbccba",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/network-policy.js",
+      "sha256": "0eafa198bc12e98b8883fd98f9b68f21ddce52879d8975d20ad7b4c40e665fa6",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/oracle.js",
+      "sha256": "2f6ba5b1c289a539a7c9d4a1152b61057ea9cb89ce7f00290e5feace0060ba79",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/playbook.js",
+      "sha256": "78a8491b360c73d58ae5d1a95e4b31b230dc92f980392fe243d4c234c3959a16",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/subagent.js",
+      "sha256": "b1bc9a8882745a76939159c34248a70bf228f907798255e94d875dc714dfb45a",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tool-pipeline.js",
+      "sha256": "9d13866d8bf48c5bcef82bb2e112f540678eb2e8098dd38086f9226d3387e9f5",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tools/advanced-tools.js",
+      "sha256": "cd9518f8f9fd771f56276e4dcc7d6445f6a79f354a5b124fee6d345b71e3f0ac",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tools/cron-tools.js",
+      "sha256": "5cabaa500cf371bd82b1728094b16ca68923fb8a275001ca0ff3132ddc3ed669",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tools/curate-tool.js",
+      "sha256": "cec12ea15550739d7f6623d8f6abe4d33d286c703a5e9e2f1ad06a7affc4d460",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tools/index.js",
+      "sha256": "c89fe997e34260991bfa81b25d10388575de10a6b4253c39674797962de48c3e",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tools/knowledge-tools.js",
+      "sha256": "4bc0cde164c563a34b27f291245ea88e8a5ec1d0aeca85627bb8fef7cfb01439",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tools/phase1-tools.js",
+      "sha256": "2a09fe110c6914749b4652d00d8403836b7ac3993882694a2b786a4de7088348",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tools/save-persona.js",
+      "sha256": "210f6150616ce5e7241492f9a754c78f1cf3da85e3aadaebabaeb56fac1235af",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tools/script.js",
+      "sha256": "fc252f7e2f1e2e279012fa679be23d581d1b0d2acfa667c298a056a0dc150307",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tools/shell.js",
+      "sha256": "5d8fe97c4d2e4b65458e47d15746bd4b5c430324a4d8712b00004af51827fd04",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tools/subagent-tools.js",
+      "sha256": "84b7acb71f5b0c9ce0b27ee01f6d1ca222a01f26220ebdf1bbc68e7e6c1c5eef",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/tools/web.js",
+      "sha256": "dc8b79497ec5533352b7aa949853551c187e7cdeeb6afcb9e1d0f0f0d776749a",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "dist/types.js",
+      "sha256": "f83194a028ad835129d2a26fa0c59dc527352befb5544616d118b01082ff748c",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/agent.ts",
+      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/llm.ts",
+      "sha256": "95275ddc9d491d75486cc009a44f1a71fe9c5b4006a0bf8d99448088b1189014",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/memory.ts",
+      "sha256": "315a651afba2de55f39c3af1ea9b7cf1967f8a1aa1cb1615aa79bdb3cd44da03",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/network-policy.ts",
+      "sha256": "d3c8ac442364436c77e0c455d462ea2092c7559fa623fb0be56fa891ddf75ca4",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/oracle.ts",
+      "sha256": "c0a2989c637dcca11054c7d23fa6d3e4977d23318b1e341d5a69c7288c5b471e",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/playbook.ts",
+      "sha256": "a420fdd834db4c8279dc866223a35de37df1a585dde4a35afc4af3f2bc1b004d",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/subagent.ts",
+      "sha256": "789f5a07b86c3100b90ac1707201b32c1be970a221631abad2b61afafa4464eb",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tool-pipeline.ts",
+      "sha256": "25edcee43877e5b96a53c23657d7cd7ec6add868a414c1efe608e256bf92ae20",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tools/advanced-tools.ts",
+      "sha256": "4c9e16cc5399e615beaf16e3de3f8899098f844bf2b7815fd66993c6af217def",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tools/cron-tools.ts",
+      "sha256": "24bd742bd88a5164ab1083e07cc7eefbf9ae43289731dab59f97daa94b48c0bd",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tools/curate-tool.ts",
+      "sha256": "20571a216c4e6f08c6393d24c57d5d52382c82e76e53df6d4e07f4869b7679c6",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "f7cec1d0f2daf8f46073bc254d22e4ab8c90c4f2f255c924dd5c2f66dc9549a3",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tools/knowledge-tools.ts",
+      "sha256": "345e8d758b7e77ee8d119f64e7757b562a3f676cd8b2156669bbc755b04dab3b",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tools/phase1-tools.ts",
+      "sha256": "578145c99073dde95d9ba380a514699651bc571a1a9ddbb332aa71cd9ae297b2",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tools/save-persona.ts",
+      "sha256": "5f5d900429d75b0d9219a14bf198d0ab385b63516abb02f050fbe69c70a62e01",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tools/script.ts",
+      "sha256": "210f9d549c62a13345f6b10450a1faa303bcbf684477c9a9dafa65aa79d3973e",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tools/shell.ts",
+      "sha256": "504ee8594c58458734a15d3a412faba465aec3b40f61a3b7462956ac9044a417",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tools/subagent-tools.ts",
+      "sha256": "13ba8d8afefc1f8b227514f99d7ffa881c61dfa09f90072c8df5fe5a7e770f73",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/tools/web.ts",
+      "sha256": "8ab37b363e07954eb9703401f019a438a1ebf8b7e1e0797f1e27905a132508ba",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "src/types.ts",
+      "sha256": "b8b3832dbcac45658a63bb020a86ac40fcaab42b010bd829ddd867f3c8fb3b4a",
+      "owner": "RT-05"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/contract/rt05-governance.test.mjs",
+      "sha256": "cd598ea2e99db32034f9fdf96e70da7762a4eb00d2e374cf7897df3c62f7ec80",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "tests/integration/managed-path-store.test.mjs",
+      "sha256": "296ad309727fdaa19fdf7760210c5b60bacb3508fd8e6dd78ba6d3c2c6d83e5a",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
+      "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "tests/integration/process-cwd.test.mjs",
+      "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
+      "sha256": "b8c794941b2b198e895d543003a883350129e075d240073e46a002f7879926f4",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
+      "sha256": "110cd99298f74bb7f58beabbcd2264f3bf55d5b19664ad80927f59b4bd5a2322",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "tests/integration/rt05-tool-pipeline.test.mjs",
+      "sha256": "2c56602dd6a55809418ba0c646bbe6c03c93e5caa396aed61e0b0f8abd00938e",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "tests/integration/sec01-agent.test.mjs",
+      "sha256": "2950747c306277f7dd9ed0c0ee541817c4d5b87f70dc90e888e5f3555bad68e0",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "tests/unit/network-policy.test.mjs",
+      "sha256": "114dcd4adb81ded95d8c9132c4c542288ed2cda4bc2276482a27ec52b4570f8d",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "RT-05"
+    },
+    {
+      "exactCasePath": "tests/unit/tool-pipeline.test.mjs",
+      "sha256": "888d675230367802c249be57aa9716a8b7c1005ba18ab62f8cb167e7386e6b66",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "RT-05"
+    }
+  ],
+  "canonicalPayloadSha256": "4e001ebb81403de4449b4f6a1025f7bfa0c21a1a6a3272e319a701c098c9c2e4"
+}

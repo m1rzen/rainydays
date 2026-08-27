@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-10",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["developer", "reviewer"],
+  "runtimeFiles": [
+    "package.json",
+    "package-lock.json",
+    "public/index.html",
+    "public/renderer.css",
+    "public/renderer.js",
+    "scripts/ds10-governance.mjs",
+    "scripts/generate-ds10-resolved-manifest.mjs",
+    "tests/coverage-scope.json",
+    "tests/helpers.mjs",
+    "tests/unit/framework.test.mjs"
+  ],
+  "coverageExemptions": {
+    "package.json": {
+      "reason": "The exact offline axe-core test dependency and DS-10 runner are bound by governance and Electron evidence.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "package-lock.json": {
+      "reason": "The lockfile pins axe-core without adding any renderer CDN or runtime load.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "public/index.html": {
+      "reason": "Dialogs, live regions, labels and tablists are checked statically and by real Electron axe scans.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "public/renderer.css": {
+      "reason": "Focus visibility, WCAG contrast, 200/400 percent reflow, reduced motion and forced colors are real-renderer tested.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "public/renderer.js": {
+      "reason": "Native controls, tab semantics, dialog focus stack, keyboard flow and inert background are tested in real Electron.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }]
+    },
+    "scripts/ds10-governance.mjs": {
+      "reason": "Resolved accessibility runtime identity validation is exercised by substitution-resistant governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds10-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/generate-ds10-resolved-manifest.mjs": {
+      "reason": "Atomic resolved publication and parent identity pinning are exercised by governance contracts.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds10-governance.test.mjs", "layer": "contract" }]
+    },
+    "tests/coverage-scope.json": {
+      "reason": "Exact DS-10 coverage ownership is checked by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/helpers.mjs": {
+      "reason": "The DS-10 resolved task view is loaded and validated by the framework unit contract.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    },
+    "tests/unit/framework.test.mjs": {
+      "reason": "The framework test owns exact DS-10 coverage registration and validates itself.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/ds10-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/unit/ds10-accessibility-contract.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/keyboard-shortcuts.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/workbench-layout.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/ds09-renderer-contract.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/framework.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" }
+  ]
+}

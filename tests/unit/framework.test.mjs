@@ -208,17 +208,109 @@ test("coverage scope is explicit and changed runtime files are governed", async 
   const { scope } = await loadCoverageScope();
   assert.equal(scope.schemaVersion, 3);
   assert.deepEqual(scope.additionalTestsByTask["GOV-03"], [
-    { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-isolation.test.mjs" },
-    { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-root-lease.test.mjs" },
-    { sourceTask: "SEC-03", exactCasePath: "tests/unit/native-process-consent.test.mjs" },
+    { sourceTask: "DATA-01", exactCasePath: "tests/integration/data01b-managed-restore.test.mjs" },
+    { sourceTask: "DATA-01", exactCasePath: "tests/unit/backup-container.test.mjs" },
+    { sourceTask: "DATA-02", exactCasePath: "tests/integration/data02-session-transfer.test.mjs" },
+    { sourceTask: "RT-01", exactCasePath: "tests/contract/rt01-governance.test.mjs" },
+    { sourceTask: "RT-01", exactCasePath: "tests/integration/rt01-session-runtime.test.mjs" },
+    { sourceTask: "RT-01", exactCasePath: "tests/unit/run-interaction-channel.test.mjs" },
+    { sourceTask: "RT-01", exactCasePath: "tests/unit/session-runtime.test.mjs" },
+    { sourceTask: "RT-04", exactCasePath: "tests/contract/rt04-governance.test.mjs" },
+    { sourceTask: "RT-04", exactCasePath: "tests/integration/rt04-child-cancellation.test.mjs" },
+    { sourceTask: "RT-04", exactCasePath: "tests/integration/rt04-parser-cancellation.test.mjs" },
+    { sourceTask: "RT-04", exactCasePath: "tests/integration/rt04-runtime-cancellation.test.mjs" },
+    { sourceTask: "RT-04", exactCasePath: "tests/unit/run-cancellation.test.mjs" },
+    { sourceTask: "RT-05", exactCasePath: "tests/contract/rt05-governance.test.mjs" },
+    { sourceTask: "RT-05", exactCasePath: "tests/integration/rt05-dynamic-adapters.test.mjs" },
+    { sourceTask: "RT-05", exactCasePath: "tests/integration/rt05-tool-pipeline.test.mjs" },
+    { sourceTask: "RT-05", exactCasePath: "tests/unit/network-policy.test.mjs" },
+    { sourceTask: "RT-05", exactCasePath: "tests/unit/tool-pipeline.test.mjs" },
+    { sourceTask: "RT-06", exactCasePath: "tests/contract/rt06-governance.test.mjs" },
+    { sourceTask: "RT-06", exactCasePath: "tests/integration/rt06-tool-scheduling.test.mjs" },
+    { sourceTask: "RT-06", exactCasePath: "tests/unit/tool-scheduler.test.mjs" },
+    { sourceTask: "RT-07", exactCasePath: "tests/contract/rt07-governance.test.mjs" },
+    { sourceTask: "RT-07", exactCasePath: "tests/integration/rt07-task-dag.test.mjs" },
+    { sourceTask: "RT-08", exactCasePath: "tests/contract/rt08-governance.test.mjs" },
+    { sourceTask: "RT-08", exactCasePath: "tests/unit/subagent-registry.test.mjs" },
+    { sourceTask: "RT-08", exactCasePath: "tests/unit/rt08-detached-capability.test.mjs" },
+    { sourceTask: "RT-08", exactCasePath: "tests/integration/rt08-subagent-lifecycle.test.mjs" },
+    { sourceTask: "RT-09", exactCasePath: "tests/integration/rt09-session-semantics.test.mjs" },
+    { sourceTask: "RT-09", exactCasePath: "tests/integration/rt09-restore.test.mjs" },
+    { sourceTask: "RT-11", exactCasePath: "tests/contract/rt11-governance.test.mjs" },
+    { sourceTask: "DS-03", exactCasePath: "tests/contract/ds03-governance.test.mjs" },
+    { sourceTask: "DS-03", exactCasePath: "tests/unit/workbench-layout.test.mjs" },
+    { sourceTask: "DS-03", exactCasePath: "tests/integration/ds03-workbench-layout.test.mjs" },
+    { sourceTask: "DS-04", exactCasePath: "tests/contract/ds04-governance.test.mjs" },
+    { sourceTask: "DS-04", exactCasePath: "tests/unit/terminal-owner.test.mjs" },
+    { sourceTask: "DS-04", exactCasePath: "tests/unit/electron-ipc-contract.test.mjs" },
+    { sourceTask: "DS-05", exactCasePath: "tests/contract/ds05-governance.test.mjs" },
+    { sourceTask: "DS-05", exactCasePath: "tests/unit/attachment.test.mjs" },
+    { sourceTask: "DS-05", exactCasePath: "tests/integration/ds05-attachments.test.mjs" },
+    { sourceTask: "DS-06", exactCasePath: "tests/contract/ds06-governance.test.mjs" },
+    { sourceTask: "DS-06", exactCasePath: "tests/unit/ds06-renderer-contract.test.mjs" },
+    { sourceTask: "DS-06", exactCasePath: "tests/integration/ds06-file-tab.test.mjs" },
+    { sourceTask: "DS-06", exactCasePath: "tests/integration/ds06-file-api.test.mjs" },
+    { sourceTask: "DS-07", exactCasePath: "tests/contract/ds07-governance.test.mjs" },
+    { sourceTask: "DS-07", exactCasePath: "tests/unit/keyboard-shortcuts.test.mjs" },
+    { sourceTask: "DS-08", exactCasePath: "tests/contract/ds08-governance.test.mjs" },
+    { sourceTask: "DS-08", exactCasePath: "tests/unit/ds08-renderer-contract.test.mjs" },
+    { sourceTask: "DS-08", exactCasePath: "tests/integration/ds08-notifications.test.mjs" },
+    { sourceTask: "DS-09", exactCasePath: "tests/contract/ds09-governance.test.mjs" },
+    { sourceTask: "DS-09", exactCasePath: "tests/unit/settings-schema.test.mjs" },
+    { sourceTask: "DS-09", exactCasePath: "tests/unit/ds09-renderer-contract.test.mjs" },
+    { sourceTask: "DS-09", exactCasePath: "tests/integration/ds09-settings-api.test.mjs" },
+    { sourceTask: "DS-10", exactCasePath: "tests/contract/ds10-governance.test.mjs" },
+    { sourceTask: "DS-10", exactCasePath: "tests/unit/ds10-accessibility-contract.test.mjs" },
+    { sourceTask: "TOOL-01", exactCasePath: "tests/contract/tool01-governance.test.mjs" },
+    { sourceTask: "TOOL-01", exactCasePath: "tests/unit/tool-protocol.test.mjs" },
+    { sourceTask: "TOOL-01", exactCasePath: "tests/integration/tool01-body-agent.test.mjs" },
+    { sourceTask: "TOOL-02", exactCasePath: "tests/contract/tool02-governance.test.mjs" },
+    { sourceTask: "TOOL-02", exactCasePath: "tests/contract/tool02-filesystem-contract.test.mjs" },
+    { sourceTask: "TOOL-02", exactCasePath: "tests/contract/sec01-boundaries.test.mjs" },
+    { sourceTask: "TOOL-02", exactCasePath: "tests/unit/framework.test.mjs" },
+    { sourceTask: "TOOL-02", exactCasePath: "tests/integration/path-tool-gateway.test.mjs" },
+    { sourceTask: "EVT-01", exactCasePath: "tests/contract/evt01-governance.test.mjs" },
+    { sourceTask: "EVT-01", exactCasePath: "tests/unit/event-bus.test.mjs" },
+    { sourceTask: "EVT-01", exactCasePath: "tests/integration/evt01-event-persistence.test.mjs" },
+    { sourceTask: "EVT-02", exactCasePath: "tests/contract/evt02-governance.test.mjs" },
+    { sourceTask: "EVT-02", exactCasePath: "tests/unit/cron.test.mjs" },
+    { sourceTask: "EVT-02", exactCasePath: "tests/integration/evt02-cron-flow.test.mjs" },
+    { sourceTask: "EVT-03", exactCasePath: "tests/contract/evt03-governance.test.mjs" },
+    { sourceTask: "EVT-03", exactCasePath: "tests/unit/poll.test.mjs" },
+    { sourceTask: "EVT-03", exactCasePath: "tests/integration/evt03-poll-batching.test.mjs" },
+    { sourceTask: "EVT-03", exactCasePath: "tests/integration/evt03-poll-flow.test.mjs" },
+    { sourceTask: "EVT-03", exactCasePath: "tests/integration/evt03-poll-persistence.test.mjs" },
     { sourceTask: "SEC-03", exactCasePath: "tests/integration/sec03-child-consent-transport.test.mjs" },
     { sourceTask: "SEC-03", exactCasePath: "tests/integration/sec03-electron-auth.test.mjs" },
+    { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-isolation.test.mjs" },
+    { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-network-broker.test.mjs" },
+    { sourceTask: "SEC-03", exactCasePath: "tests/unit/execution-root-lease.test.mjs" },
+    { sourceTask: "SEC-03", exactCasePath: "tests/unit/native-process-consent.test.mjs" },
+    { sourceTask: "SEC-06", exactCasePath: "tests/unit/security-audit.test.mjs" },
+    { sourceTask: "TOOL-04", exactCasePath: "tests/contract/tool04-governance.test.mjs" },
+    { sourceTask: "TOOL-04", exactCasePath: "tests/unit/tool04-script-runtime.test.mjs" },
+    { sourceTask: "TOOL-04", exactCasePath: "tests/integration/tool04-script-native.test.mjs" },
+    { sourceTask: "TOOL-05", exactCasePath: "tests/contract/tool05-governance.test.mjs" },
+    { sourceTask: "TOOL-05", exactCasePath: "tests/unit/tool05-fetch-runtime.test.mjs" },
+    { sourceTask: "TOOL-07", exactCasePath: "tests/contract/tool07-governance.test.mjs" },
+    { sourceTask: "TOOL-07", exactCasePath: "tests/integration/repo-oracle-path.test.mjs" },
+    { sourceTask: "PERS-01", exactCasePath: "tests/contract/pers01-governance.test.mjs" },
+    { sourceTask: "PERS-01", exactCasePath: "tests/integration/pers01-session-persona.test.mjs" },
+    { sourceTask: "PERS-01", exactCasePath: "tests/unit/persona-runtime.test.mjs" },
   ]);
   assert(scope.thresholds.overallLines >= 80);
   assert(scope.thresholds.securityBranches >= 90);
   for (const entry of scope.securityCritical) assert(scope.overall.includes(entry));
   assert(scope.securityCritical.includes("dist/path-runtime.js"));
   assert.equal(scope.perFileLineMinimum["dist/path-runtime.js"], 100);
+  assert(scope.securityCritical.includes("dist/workbench-layout.js"));
+  assert.equal(scope.perFileLineMinimum["dist/workbench-layout.js"], 90);
+  assert(scope.securityCritical.includes("dist/managed-restore.js"));
+  assert.equal(scope.perFileLineMinimum["dist/managed-restore.js"], 80);
+  assert(scope.securityCritical.includes("dist/security-audit.js"));
+  assert(scope.securityCritical.includes("dist/security-audit-journal.js"));
+  assert.equal(scope.perFileLineMinimum["dist/security-audit.js"], 95);
+  assert.equal(scope.perFileLineMinimum["dist/security-audit-journal.js"], 90);
   await validateCoverageGovernance(manifest, scope);
   assert.equal(manifest.coverageExemptions["electron/main.cjs"].evidenceLayer, "electron");
 });
@@ -294,6 +386,7 @@ test("TAP summary and process failure precedence are deterministic", () => {
   assert.throws(() => validateTap({ ...summary, failedTestIds: [] }), /count differs/);
   assert.throws(() => validateTap({ ...summary, nestedFailedTestIds: summary.nestedFailedTestIds.slice(0, 1) }), /count differs/);
   assert.throws(() => validateTap({ ...summary, failedTestIds: [summary.failedTestIds[0], summary.failedTestIds[0]] }), /duplicate/);
+  validateTap({ ...summary, failed: 0, cancelled: 4 });
   const boundedNestedFailures = Array(64).fill(0).map((_, index) => sha256Bytes(`nested:${index}`));
   validateTap({ ...summary, failed: 67, nestedFailedTestIds: boundedNestedFailures });
   assert.throws(() => validateTap({ ...summary, failed: 65, nestedFailedTestIds: boundedNestedFailures }), /count exceeds/);
@@ -303,6 +396,23 @@ test("TAP summary and process failure precedence are deterministic", () => {
   assert.equal(classifyProcessResult({ code: 1, signal: null }), "failed");
   assert.equal(classifyProcessResult({ code: 1, signal: "SIGTERM" }), "crashed");
   assert.equal(classifyProcessResult({ code: 0, signal: null, timedOut: true }), "timed-out");
+});
+
+test("integration timeout budgets preserve a bounded cleanup envelope", async () => {
+  const [layerRunner, unifiedRunner] = await Promise.all([
+    readFile(path.join(projectRoot, "scripts", "run-test-layer.mjs"), "utf8"),
+    readFile(path.join(projectRoot, "scripts", "run-tests.mjs"), "utf8"),
+  ]);
+  const inner = /result\.layer === "integration" \? ([0-9_]+) : 300_000/u.exec(layerRunner);
+  const outer = /layer === "integration" \? ([0-9_]+) : 360_000/u.exec(unifiedRunner);
+  assert(inner && outer, "integration timeout bindings are missing");
+  const innerMs = Number(inner[1].replaceAll("_", ""));
+  const outerMs = Number(outer[1].replaceAll("_", ""));
+  assert.equal(innerMs, 720_000);
+  assert.equal(outerMs, 840_000);
+  assert(outerMs > innerMs);
+  assert(outerMs - innerMs >= 120_000);
+  assert(outerMs < 900_000);
 });
 
 test("packaged crash and observation failures are fail-closed", () => {
@@ -317,8 +427,8 @@ test("packaged crash and observation failures are fail-closed", () => {
       manifest: { path: "dist/native/sec03-native-manifest.json", bytes: 128, sha256: "2".repeat(64) },
       sourceDigest: "3".repeat(64), toolchainDigest: "4".repeat(64), signatureStatus: "unsigned-local",
       binaries: [
-        { path: "dist/native/sandbox-host.exe", bytes: 128, sha256: "5".repeat(64), machine: "AMD64" },
-        { path: "dist/native/sandbox-launcher.node", bytes: 128, sha256: "6".repeat(64), machine: "AMD64" },
+        { path: "dist/native/sandbox-host.exe", bytes: 128, sha256: "5".repeat(64), machine: "AMD64", importedDllAllowlistDigest: "8".repeat(64) },
+        { path: "dist/native/sandbox-launcher.node", bytes: 128, sha256: "6".repeat(64), machine: "AMD64", importedDllAllowlistDigest: "9".repeat(64) },
       ],
       testProjection: { manifest: { path: ".sec03-native-test/sec03-native-test-manifest.json", bytes: 128, sha256: "7".repeat(64) } },
     },
@@ -416,6 +526,16 @@ test("packaged crash and observation failures are fail-closed", () => {
       matchingProcesses: [{ ...processMatch, imageName: "C:\\private\\RainyDays.exe" }],
     },
   }), /imageName is invalid/);
+  assert.throws(() => validatePackagedDetails({
+    ...packagedDetails,
+    packageBinding: {
+      ...packageBinding,
+      native: {
+        ...packageBinding.native,
+        binaries: [{ ...packageBinding.native.binaries[0], importedDllAllowlistDigest: "bad" }, packageBinding.native.binaries[1]],
+      },
+    },
+  }, { passed: true, sinkIdentity }), /importedDllAllowlistDigest is invalid/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, runtimeSinkSetSha256: "f".repeat(64) } }, { passed: true, sinkIdentity }), /runtime sink set differs/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, dialectPolicySha256: "f".repeat(64) } }, { passed: true, sinkIdentity }), /restricted dialect policy differs/);
   assert.throws(() => validatePackagedDetails({ ...packagedDetails, packageBinding: { ...packageBinding, missing: ["dist/bypass.js"] } }, { passed: true }), /asarPayloadBound is inconsistent/);

@@ -1083,10 +1083,12 @@
                 "value": {
                   "before": [
                     "subagent",
+                    "save_persona",
                     "supervise"
                   ],
                   "after": [
                     "subagent",
+                    "save_persona",
                     "supervise"
                   ],
                   "denial": "CAPABILITY_REGISTRATION_INVALID"

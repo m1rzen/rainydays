@@ -17,6 +17,35 @@ import {
   resolvedManifestPath as sec03ResolvedManifestRelative,
   validateSec03ResolvedManifest,
 } from "../scripts/sec03-governance.mjs";
+import { loadData01ResolvedManifest } from "../scripts/data01-governance.mjs";
+import { loadData02ResolvedManifest } from "../scripts/data02-governance.mjs";
+import { loadSec06ResolvedManifest } from "../scripts/sec06-governance.mjs";
+import { loadRt01ResolvedManifest } from "../scripts/rt01-governance.mjs";
+import { loadRt04ResolvedManifest } from "../scripts/rt04-governance.mjs";
+import { loadRt05ResolvedManifest } from "../scripts/rt05-governance.mjs";
+import { loadRt06ResolvedManifest } from "../scripts/rt06-governance.mjs";
+import { loadRt07ResolvedManifest } from "../scripts/rt07-governance.mjs";
+import { loadRt08ResolvedManifest } from "../scripts/rt08-governance.mjs";
+import { loadRt09ResolvedManifest } from "../scripts/rt09-governance.mjs";
+import { loadRt11ResolvedManifest } from "../scripts/rt11-governance.mjs";
+import { loadEvt01ResolvedManifest } from "../scripts/evt01-governance.mjs";
+import { loadEvt02ResolvedManifest } from "../scripts/evt02-governance.mjs";
+import { loadEvt03ResolvedManifest } from "../scripts/evt03-governance.mjs";
+import { loadDs03ResolvedManifest } from "../scripts/ds03-governance.mjs";
+import { loadDs04ResolvedManifest } from "../scripts/ds04-governance.mjs";
+import { loadDs05ResolvedManifest } from "../scripts/ds05-governance.mjs";
+import { loadDs06ResolvedManifest } from "../scripts/ds06-governance.mjs";
+import { loadDs07ResolvedManifest } from "../scripts/ds07-governance.mjs";
+import { loadDs08ResolvedManifest } from "../scripts/ds08-governance.mjs";
+import { loadDs09ResolvedManifest } from "../scripts/ds09-governance.mjs";
+import { loadDs10ResolvedManifest } from "../scripts/ds10-governance.mjs";
+import { loadTool01ResolvedManifest } from "../scripts/tool01-governance.mjs";
+import { loadTool02ResolvedManifest } from "../scripts/tool02-governance.mjs";
+import { loadTool04ResolvedManifest } from "../scripts/tool04-governance.mjs";
+import { loadTool05ResolvedManifest } from "../scripts/tool05-governance.mjs";
+import { loadTool07ResolvedManifest } from "../scripts/tool07-governance.mjs";
+import { loadPers01ResolvedManifest } from "../scripts/pers01-governance.mjs";
+import { loadRel04ResolvedManifest } from "../scripts/rel04-governance.mjs";
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const processTemporaryRootRequest = path.resolve(os.tmpdir());
@@ -25,9 +54,24 @@ const processTemporaryRoot = await realpath(processTemporaryRootRequest);
 export const layerNames = Object.freeze(["unit", "contract", "integration", "electron", "packaged"]);
 const expectedBaselineHash = "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df";
 const expectedPersonaChains = Object.freeze({
+  "DATA-01": Object.freeze(["explorer", "architect", "developer", "debugger", "reviewer"]),
   "GOV-03": Object.freeze(["planner", "architect", "developer", "debugger", "reviewer"]),
   "SEC-01": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
   "SEC-02": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
+  "SEC-06": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
+  "RT-01": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
+  "RT-04": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
+  "RT-05": Object.freeze(["architect", "sentinel", "developer", "debugger", "reviewer"]),
+  "RT-06": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
+  "RT-07": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
+  "RT-08": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
+  "RT-09": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
+  "TOOL-01": Object.freeze(["architect", "developer", "reviewer"]),
+  "TOOL-02": Object.freeze(["developer", "debugger", "reviewer"]),
+  "TOOL-04": Object.freeze(["architect", "developer", "sentinel", "debugger", "reviewer"]),
+  "TOOL-05": Object.freeze(["developer", "debugger", "reviewer"]),
+  "TOOL-07": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
+  "REL-04": Object.freeze(["architect", "developer", "reviewer"]),
 });
 const globMetaPattern = /[*?[\]{}!]/;
 
@@ -311,13 +355,19 @@ export async function loadResolvedTaskView(taskId, root = projectRoot) {
     coverageExemptions,
     layers,
   };
-  await validateCoverageGovernance(manifest, (await loadCoverageScope(undefined, root)).scope);
   return {
     manifest,
     filePath: target.filePath,
     sourceManifestPaths: resolved.manifest.sourceManifests.map(source => path.join(root, ...source.exactCasePath.split("/"))),
     resolvedManifest: resolved.manifest,
     resolvedManifestPath: resolved.filePath,
+    coverageRecords: view.tests.map(record => ({
+      exactCasePath: record.exactCasePath,
+      sha256: record.sha256,
+      kind: "test",
+      layer: record.layer,
+      owner: record.sourceTask,
+    })),
   };
 }
 
@@ -358,7 +408,703 @@ export async function loadSec03ResolvedTaskView(root = projectRoot) {
   };
 }
 
+async function loadData01TaskView(root = projectRoot) {
+  const resolved = await loadData01ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "data-01.json");
+  const source = JSON.parse(await readFile(sourcePath, "utf8"));
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DATA-01",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: {},
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadData02TaskView(root = projectRoot) {
+  const resolved = await loadData02ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "data-02.json");
+  const source = JSON.parse(await readFile(sourcePath, "utf8"));
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DATA-02",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: {},
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadSec06TaskView(root = projectRoot) {
+  const resolved = await loadSec06ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "sec-06.json");
+  const source = JSON.parse(await readFile(sourcePath, "utf8"));
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "SEC-06",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: {},
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadRt01TaskView(root = projectRoot) {
+  const resolved = await loadRt01ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "rt-01.json");
+  const source = JSON.parse(await readFile(sourcePath, "utf8"));
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "RT-01",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadRt04TaskView(root = projectRoot) {
+  const resolved = await loadRt04ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "rt-04.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "RT-04",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadRt05TaskView(root = projectRoot) {
+  const resolved = await loadRt05ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "rt-05.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "RT-05",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadRt06TaskView(root = projectRoot) {
+  const resolved = await loadRt06ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "rt-06.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "RT-06",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadRt07TaskView(root = projectRoot) {
+  const resolved = await loadRt07ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "rt-07.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "RT-07",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadRt08TaskView(root = projectRoot) {
+  const resolved = await loadRt08ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "rt-08.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "RT-08",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadRt09TaskView(root = projectRoot) {
+  const resolved = await loadRt09ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "rt-09.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "RT-09",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadRt11TaskView(root = projectRoot) {
+  const resolved = await loadRt11ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "rt-11.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "RT-11",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadEvt01TaskView(root = projectRoot) {
+  const resolved = await loadEvt01ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "evt-01.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "EVT-01",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadEvt02TaskView(root = projectRoot) {
+  const resolved = await loadEvt02ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "evt-02.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "EVT-02",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadEvt03TaskView(root = projectRoot) {
+  const resolved = await loadEvt03ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "evt-03.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "EVT-03",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadDs08TaskView(root = projectRoot) {
+  const resolved = await loadDs08ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "ds-08.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DS-08",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadDs09TaskView(root = projectRoot) {
+  const resolved = await loadDs09ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "ds-09.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DS-09",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadDs10TaskView(root = projectRoot) {
+  const resolved = await loadDs10ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "ds-10.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DS-10",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadTool01TaskView(root = projectRoot) {
+  const resolved = await loadTool01ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "tool-01.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "TOOL-01",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadTool02TaskView(root = projectRoot) {
+  const resolved = await loadTool02ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "tool-02.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "TOOL-02",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadTool04TaskView(root = projectRoot) {
+  const resolved = await loadTool04ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "tool-04.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "TOOL-04",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadTool05TaskView(root = projectRoot) {
+  const resolved = await loadTool05ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "tool-05.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "TOOL-05",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadTool07TaskView(root = projectRoot) {
+  const resolved = await loadTool07ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "tool-07.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "TOOL-07",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadPers01TaskView(root = projectRoot) {
+  const resolved = await loadPers01ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "pers-01.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "PERS-01",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadRel04TaskView(root = projectRoot) {
+  const resolved = await loadRel04ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "rel-04.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "REL-04",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadDs07TaskView(root = projectRoot) {
+  const resolved = await loadDs07ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "ds-07.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DS-07",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadDs06TaskView(root = projectRoot) {
+  const resolved = await loadDs06ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "ds-06.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DS-06",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadDs05TaskView(root = projectRoot) {
+  const resolved = await loadDs05ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "ds-05.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DS-05",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadDs04TaskView(root = projectRoot) {
+  const resolved = await loadDs04ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "ds-04.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DS-04",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
+async function loadDs03TaskView(root = projectRoot) {
+  const resolved = await loadDs03ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "ds-03.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DS-03",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
 export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
+  if (taskId === "DATA-01") return loadData01TaskView(root);
+  if (taskId === "DATA-02") return loadData02TaskView(root);
+  if (taskId === "SEC-06") return loadSec06TaskView(root);
+  if (taskId === "RT-01") return loadRt01TaskView(root);
+  if (taskId === "RT-04") return loadRt04TaskView(root);
+  if (taskId === "RT-05") return loadRt05TaskView(root);
+  if (taskId === "RT-06") return loadRt06TaskView(root);
+  if (taskId === "RT-07") return loadRt07TaskView(root);
+  if (taskId === "RT-08") return loadRt08TaskView(root);
+  if (taskId === "RT-09") return loadRt09TaskView(root);
+  if (taskId === "RT-11") return loadRt11TaskView(root);
+  if (taskId === "EVT-01") return loadEvt01TaskView(root);
+  if (taskId === "EVT-02") return loadEvt02TaskView(root);
+  if (taskId === "EVT-03") return loadEvt03TaskView(root);
+  if (taskId === "DS-03") return loadDs03TaskView(root);
+  if (taskId === "DS-04") return loadDs04TaskView(root);
+  if (taskId === "DS-05") return loadDs05TaskView(root);
+  if (taskId === "DS-06") return loadDs06TaskView(root);
+  if (taskId === "DS-07") return loadDs07TaskView(root);
+  if (taskId === "DS-08") return loadDs08TaskView(root);
+  if (taskId === "DS-09") return loadDs09TaskView(root);
+  if (taskId === "DS-10") return loadDs10TaskView(root);
+  if (taskId === "TOOL-01") return loadTool01TaskView(root);
+  if (taskId === "TOOL-02") return loadTool02TaskView(root);
+  if (taskId === "TOOL-04") return loadTool04TaskView(root);
+  if (taskId === "TOOL-05") return loadTool05TaskView(root);
+  if (taskId === "TOOL-07") return loadTool07TaskView(root);
+  if (taskId === "PERS-01") return loadPers01TaskView(root);
+  if (taskId === "REL-04") return loadRel04TaskView(root);
   if (taskId === "SEC-03") return loadSec03ResolvedTaskView(root);
   if (taskId === "SEC-02" || taskId === "GOV-03") return loadResolvedTaskView(taskId, root);
   return loadSourceTaskManifest(taskId, root);
@@ -385,8 +1131,9 @@ export async function loadCoverageScope(scopePath, root = projectRoot) {
       await assertRegularProjectFile(entry.exactCasePath, `additional coverage test ${taskId}`, root);
       if (!sourceManifestCache.has(entry.sourceTask)) sourceManifestCache.set(entry.sourceTask, await loadTaskManifest(entry.sourceTask, root));
       const source = sourceManifestCache.get(entry.sourceTask);
-      assert(source.resolvedManifest?.cumulativeEntries, `additional coverage source task lacks a resolved manifest: ${entry.sourceTask}`);
-      const records = source.resolvedManifest.cumulativeEntries.filter(record => record.exactCasePath === entry.exactCasePath);
+      const coverageRecords = source.coverageRecords ?? source.resolvedManifest?.cumulativeEntries;
+      assert(Array.isArray(coverageRecords), `additional coverage source task lacks a resolved manifest: ${entry.sourceTask}`);
+      const records = coverageRecords.filter(record => record.exactCasePath === entry.exactCasePath);
       assert.equal(records.length, 1, `additional coverage test is not exact in ${entry.sourceTask}: ${entry.exactCasePath}`);
       const record = records[0];
       assert.equal(record.owner, entry.sourceTask, `additional coverage test owner differs: ${entry.exactCasePath}`);
@@ -418,11 +1165,26 @@ export async function loadCoverageScope(scopePath, root = projectRoot) {
 
 export async function validateCoverageGovernance(manifest, scope) {
   const governed = new Set(scope.overall.map(pathIdentity));
+  const resolvedEvidence = manifest.taskId === "RT-04" ? (await loadTaskManifest("RT-04")).coverageRecords : null;
   for (const entry of manifest.changedRuntimeFiles) {
     const exemptionEntry = Object.entries(manifest.coverageExemptions).find(([candidate]) => pathIdentity(candidate) === pathIdentity(entry));
     const exemption = exemptionEntry?.[1];
     assert(governed.has(pathIdentity(entry)) || exemption, `changed runtime file lacks coverage or exemption: ${entry}`);
-    if (exemption) assert(manifest.layers[exemption.evidenceLayer]?.length > 0, `coverage exemption has no evidence tests: ${entry}`);
+    if (exemption) {
+      assert(manifest.layers[exemption.evidenceLayer]?.length > 0, `coverage exemption has no evidence tests: ${entry}`);
+      if (resolvedEvidence) {
+        assert(Array.isArray(exemption.evidence) && exemption.evidence.length > 0, `RT-04 coverage exemption lacks exact evidence: ${entry}`);
+        for (const evidence of exemption.evidence) {
+          assert.equal(evidence.layer, exemption.evidenceLayer, `RT-04 coverage exemption evidence layer differs: ${entry}`);
+          assert(manifest.layers[evidence.layer].includes(evidence.exactCasePath), `RT-04 coverage exemption evidence is outside its layer: ${entry}`);
+          const records = resolvedEvidence.filter(record => record.exactCasePath === evidence.exactCasePath);
+          assert.equal(records.length, 1, `RT-04 coverage exemption evidence is not exact: ${entry}`);
+          assert.equal(records[0].owner, "RT-04", `RT-04 coverage exemption evidence owner differs: ${entry}`);
+          assert.equal(records[0].layer, evidence.layer, `RT-04 coverage exemption resolved layer differs: ${entry}`);
+          assert.equal(await sha256File(path.join(projectRoot, ...evidence.exactCasePath.split("/"))), records[0].sha256, `RT-04 coverage exemption evidence hash differs: ${entry}`);
+        }
+      }
+    }
   }
   for (const entry of Object.keys(manifest.coverageExemptions)) assert(!governed.has(pathIdentity(entry)), `governed file must not also be exempt: ${entry}`);
 }
@@ -587,6 +1349,7 @@ const nativeTestAddonKeys = Object.freeze([
   "observeWindowsKnownFolderPathsForTest",
   "observeWindowsRegistryKeyForTest",
   "observeWindowsRegistrySnapshotForTest",
+  "openAclSharingLeaseForTest",
   "openEvidenceVerifier",
   "openExclusiveHostLease",
   "protocolVersion",
@@ -621,6 +1384,7 @@ async function validateAndLoadWindowsHandleObserverProjection() {
       "observeWindowsKnownFolderPathsForTest",
       "observeWindowsRegistryKeyForTest",
       "observeWindowsRegistrySnapshotForTest",
+      "openAclSharingLeaseForTest",
       "openEvidenceVerifier",
       "openExclusiveHostLease",
     ]) {
@@ -974,8 +1738,8 @@ export class CdpClient {
     });
   }
 
-  async evaluate(expression) {
-    const result = await this.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+  async evaluate(expression, timeoutMs = 15_000) {
+    const result = await this.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true }, timeoutMs);
     if (result.exceptionDetails) throw new Error(result.exceptionDetails.text || "Renderer evaluation failed");
     return result.result?.value;
   }

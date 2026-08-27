@@ -11,6 +11,7 @@ import type {
   ExecutionProfile,
   ExecutionRootLeaseSnapshot,
 } from "./execution-isolation.js";
+import type { FiniteHttpsBrokerObservation } from "./execution-network-broker.js";
 
 export interface NativeRootAuthority {
   readonly rootId: string;
@@ -52,6 +53,11 @@ export interface NativeInputFrame {
   readonly appendNewline: boolean;
 }
 
+export interface NativePtySize {
+  readonly cols: number;
+  readonly rows: number;
+}
+
 export interface NativeExecutionProof {
   readonly proof: Uint8Array;
   readonly mac: string;
@@ -63,7 +69,9 @@ export type NativeServiceDenialState =
   | "missing" | "forged" | "argument-mismatch" | "expired" | "replayed" | "cross-run" | "cross-session" | "concurrent-reuse"
   | "consent-denied" | "consent-dismissed" | "consent-expired" | "consent-argument-mismatch" | "consent-replayed"
   | "consent-synthetic" | "consent-cross-window" | "consent-cross-session" | "consent-concurrent-reuse"
-  | "network-profile-unsupported";
+  | "network-profile-unsupported"
+  | "terminal-direct-start" | "terminal-direct-input"
+  | "terminal-owner-kill" | "terminal-owner-close";
 
 export interface NativeServiceDenialRequest {
   readonly executionId: string;
@@ -77,8 +85,21 @@ export interface NativeServiceDenialRequest {
   readonly policyDigest: string;
   readonly payloadDigest: string;
   readonly requestDigest: string;
-  readonly operation: "launch" | "input" | "consent";
+  readonly operation: "launch" | "input" | "consent" | "kill" | "close";
   readonly decisionState: NativeServiceDenialState;
+}
+
+export interface NativeBrokerObservationRequest {
+  readonly executionId: string;
+  readonly entryPoint: "E1" | "E2" | "E3";
+  readonly profile: "one-shot-shell" | "agent-shell" | "script";
+  readonly contextId: string;
+  readonly sessionId: string;
+  readonly runId: string;
+  readonly authorityEpoch: number;
+  readonly personaDigest: string;
+  readonly policyDigest: string;
+  readonly observation: FiniteHttpsBrokerObservation;
 }
 
 export interface NativeExecutionCompletion {
@@ -91,6 +112,7 @@ export interface NativeExecutionHandle {
   readonly executionId: string;
   readonly completed: Promise<NativeExecutionCompletion>;
   readonly write: (frame: NativeInputFrame) => Promise<void>;
+  readonly resize: (size: NativePtySize) => Promise<void>;
   readonly terminate: (reason: string) => Promise<void>;
 }
 
@@ -98,6 +120,7 @@ export interface NativeExecutionBridge {
   readonly initialize?: () => Promise<void>;
   readonly launch: (request: NativeLaunchRequest, onFrame: (frame: NativeOutputFrame) => void) => Promise<NativeExecutionHandle>;
   readonly observeServiceDenial?: (request: NativeServiceDenialRequest) => Promise<NativeExecutionProof>;
+  readonly observeBrokerOperation?: (request: NativeBrokerObservationRequest) => Promise<NativeExecutionProof>;
   readonly shutdown: () => Promise<void>;
 }
 
@@ -129,7 +152,7 @@ export class NativeBridgeError extends Error {
   }
 }
 
-interface AddonCompletion { readonly exitCode: unknown; readonly reason: unknown; readonly nativeProof: unknown }
+interface AddonCompletion { readonly exitCode: unknown; readonly childExit: unknown; readonly reason: unknown; readonly nativeProof: unknown }
 interface AddonHandle {
   readonly executionId: unknown;
   readonly completed: unknown;
@@ -139,6 +162,7 @@ interface AddonHandle {
 interface AddonLease {
   readonly launchHost: unknown;
   readonly observeServiceDenial: unknown;
+  readonly observeBrokerOperation: unknown;
   readonly close: unknown;
 }
 interface LauncherAddon {
@@ -200,7 +224,7 @@ async function assertFixedRegularFile(file: string, expectedBytes: number, expec
   }
 }
 
-function encodeFrame(type: "launch" | "input" | "terminate" | "service-denial", body: Record<string, unknown>): Buffer {
+function encodeFrame(type: "launch" | "input" | "resize" | "terminate" | "service-denial" | "broker-observation", body: Record<string, unknown>): Buffer {
   const payload = Buffer.from(JSON.stringify({ v: PROTOCOL_VERSION, type, ...body }), "utf8");
   if (payload.length < 1 || payload.length > MAX_CONTROL_FRAME_BYTES) throw failure("EXEC_NATIVE_PROTOCOL", "Native control frame exceeds its bound");
   const frame = Buffer.allocUnsafe(payload.length + 4);
@@ -222,6 +246,23 @@ function decodeOutputFrame(frame: unknown): NativeOutputFrame {
   const bytes = Buffer.from(value.data, "base64");
   if (bytes.toString("base64") !== value.data || bytes.length > MAX_OUTPUT_FRAME_BYTES) throw failure("EXEC_NATIVE_PROTOCOL", "Native output bytes are invalid");
   return Object.freeze({ stream: value.stream, bytes });
+}
+
+function authenticatedCompletion(proof: NativeExecutionProof | null): Readonly<{ childExit: number; reason: string }> | null {
+  if (!proof) return null;
+  const text = Buffer.from(proof.proof).toString("utf8");
+  const kinds = [...text.matchAll(/^kind=([^\r\n]+)$/gmu)];
+  if (kinds.length !== 1 || kinds[0][1] !== "execution-proof") return null;
+  const exits = [...text.matchAll(/^childExit=(\d+)$/gmu)];
+  const reasons = [...text.matchAll(/^completionReason=([^\r\n]+)$/gmu)];
+  if (exits.length !== 1 || reasons.length !== 1 || reasons[0][1].length < 1 || reasons[0][1].length > 64) {
+    throw failure("EXEC_NATIVE_PROTOCOL", "Native execution proof completion is invalid");
+  }
+  const childExit = Number(exits[0][1]);
+  if (!Number.isSafeInteger(childExit) || childExit < 0 || childExit > 0xffff_ffff) {
+    throw failure("EXEC_NATIVE_PROTOCOL", "Native execution proof child exit is invalid");
+  }
+  return Object.freeze({ childExit, reason: reasons[0][1] });
 }
 
 function decodeNativeProof(value: unknown): NativeExecutionProof {
@@ -342,6 +383,33 @@ export function createProductionNativeExecutionBridge(identity: NativeArtifactId
         await (lease.close as () => Promise<void>).call(lease);
       }
     },
+    async observeBrokerOperation(request: NativeBrokerObservationRequest): Promise<NativeExecutionProof> {
+      if (stopped) throw failure("EXEC_NATIVE_SHUTDOWN", "Native execution bridge is shut down");
+      const addon = await loadAddon();
+      const openLease = addon.openExclusiveHostLease as (expectedSha256: string, expectedBytes: number, launcherSha256: string) => AddonLease;
+      const lease = openLease(identity.hostSha256, identity.hostBytes, identity.launcherSha256);
+      if (!lease || typeof lease.observeBrokerOperation !== "function" || typeof lease.close !== "function") throw failure("EXEC_NATIVE_PROTOCOL", "Broker observer ABI mismatch");
+      try {
+        const observe = lease.observeBrokerOperation as (frame: Buffer) => NativeExecutionProof;
+        return decodeNativeProof(await observe.call(lease, encodeFrame("broker-observation", {
+          candidateId: identity.candidateId,
+          buildIdSha256: identity.buildIdSha256,
+          sourceSha256: identity.sourceSha256,
+          executionId: request.executionId,
+          contextId: request.contextId,
+          sessionId: request.sessionId,
+          runId: request.runId,
+          authorityEpoch: request.authorityEpoch,
+          entryPoint: request.entryPoint,
+          profile: request.profile,
+          personaDigest: request.personaDigest,
+          policyDigest: request.policyDigest,
+          observation: request.observation,
+        })));
+      } finally {
+        await (lease.close as () => Promise<void>).call(lease);
+      }
+    },
     async launch(request: NativeLaunchRequest, onFrame: (frame: NativeOutputFrame) => void): Promise<NativeExecutionHandle> {
       if (stopped) throw failure("EXEC_NATIVE_SHUTDOWN", "Native execution bridge is shut down");
       const addon = await loadAddon();
@@ -370,10 +438,23 @@ export function createProductionNativeExecutionBridge(identity: NativeArtifactId
       }
 
       const completed = (addonHandle.completed as Promise<AddonCompletion>).then(value => {
-        if (protocolFailed || !value || (value.exitCode !== null && !Number.isInteger(value.exitCode)) || typeof value.reason !== "string" || value.reason.length < 1 || value.reason.length > 128) throw failure("EXEC_NATIVE_PROTOCOL", "Native completion is invalid");
+        if (protocolFailed || !value || (value.exitCode !== null && !Number.isInteger(value.exitCode))
+          || (value.childExit !== null && (!Number.isInteger(value.childExit) || Number(value.childExit) < 0 || Number(value.childExit) > 0xffff_ffff))
+          || typeof value.reason !== "string" || value.reason.length < 1 || value.reason.length > 128) {
+          throw failure("EXEC_NATIVE_PROTOCOL", "Native completion is invalid");
+        }
         let nativeProof: NativeExecutionProof | null = null;
         if (value.nativeProof !== null) nativeProof = decodeNativeProof(value.nativeProof);
-        return Object.freeze({ exitCode: value.exitCode as number | null, reason: value.reason, nativeProof });
+        const authenticated = authenticatedCompletion(nativeProof);
+        if ((value.childExit === null) !== (authenticated === null) || (authenticated && value.childExit !== authenticated.childExit)) {
+          throw failure("EXEC_NATIVE_PROTOCOL", "Native child completion differs from authenticated proof");
+        }
+        const childFailed = authenticated?.reason === "child-failed";
+        return Object.freeze({
+          exitCode: childFailed ? authenticated.childExit : value.exitCode as number | null,
+          reason: childFailed ? "child-failed" : value.reason,
+          nativeProof,
+        });
       });
       const handle: NativeExecutionHandle = Object.freeze({
         executionId: request.executionId,
@@ -382,6 +463,14 @@ export function createProductionNativeExecutionBridge(identity: NativeArtifactId
           if (protocolFailed || !Buffer.isBuffer(frame.bytes) || !HASH.test(frame.digest) || createHash("sha256").update(frame.bytes).digest("hex") !== frame.digest || typeof frame.appendNewline !== "boolean") throw failure("EXEC_NATIVE_PROTOCOL", "Native input is invalid");
           const writeFrame = addonHandle.writeFrame as (frame: Buffer) => Promise<void>;
           await writeFrame.call(addonHandle, encodeFrame("input", { secret: "0".repeat(64), data: Buffer.from(frame.bytes).toString("base64"), digest: frame.digest, appendNewline: frame.appendNewline }));
+        },
+        async resize(size: NativePtySize): Promise<void> {
+          if (protocolFailed || !Number.isSafeInteger(size?.cols) || size.cols < 2 || size.cols > 500
+            || !Number.isSafeInteger(size?.rows) || size.rows < 1 || size.rows > 300) {
+            throw failure("EXEC_NATIVE_PROTOCOL", "Native PTY size is invalid");
+          }
+          const writeFrame = addonHandle.writeFrame as (frame: Buffer) => Promise<void>;
+          await writeFrame.call(addonHandle, encodeFrame("resize", { secret: "0".repeat(64), cols: size.cols, rows: size.rows }));
         },
         async terminate(reason: string): Promise<void> {
           const safeReason = typeof reason === "string" && /^[a-z0-9-]{1,64}$/u.test(reason) ? reason : "invalid-reason";

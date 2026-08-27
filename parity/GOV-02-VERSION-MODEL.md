@@ -28,7 +28,7 @@ Changing all labels to one number would be incorrect. Each compatibility boundar
 | Application release | root `package.json.version` | SemVer string | `0.1.0` |
 | Build identity | generated root `build-info.json` | opaque string | generated |
 | SQLite schema | `PRAGMA user_version` | integer | `1` |
-| Session Export | `format` + `formatVersion` | string + integer | `mini-lux-session` / `1` |
+| Session Export | `format` + `formatVersion` | string + integer | `mini-lux-session` / `2` |
 | Link envelope | version contract | integer or null | `1` |
 | Worker envelope | version contract | integer or null | `null` until implemented |
 | MCP integration envelope | version contract | integer or null | `null` until implemented |
@@ -61,7 +61,7 @@ Canonical shape:
   "builtAt": "<ISO timestamp>",
   "versions": {
     "databaseSchema": 1,
-    "sessionExport": 1,
+    "sessionExport": 2,
     "protocols": {
       "link": { "version": 1, "enabled": true, "transport": "in-process" },
       "worker": { "version": null, "enabled": false, "transport": null },
@@ -147,14 +147,19 @@ New export envelope:
 ```json
 {
   "format": "mini-lux-session",
-  "formatVersion": 1,
+  "formatVersion": 2,
   "producer": {
     "appVersion": "0.1.0",
     "buildId": "..."
   },
   "exportedAt": "...",
   "session": {},
-  "messages": []
+  "messages": [],
+  "canvas": {
+    "pins": [],
+    "tasks": [],
+    "attachments": []
+  }
 }
 ```
 
@@ -162,21 +167,24 @@ Compatibility matrix:
 
 | Input | Result |
 |---|---|
-| new `format=mini-lux-session`, `formatVersion=1` | validate and import |
-| legacy `version="1.0"` with valid shape | normalize to format version 1 and import |
+| current `format=mini-lux-session`, `formatVersion=2` | validate and import complete Canvas |
+| current `formatVersion=1` with valid shape | migrate to version 2 with an empty Canvas |
+| legacy `version="1.0"` with valid shape | migrate to version 2 with an empty Canvas |
 | missing version/format marker | reject before database write |
 | unknown format | reject before database write |
 | `formatVersion < 1` | reject unless an explicit migration exists |
-| `formatVersion > 1` | reject as newer/incompatible |
-| malformed session or message | reject before database write |
+| `formatVersion > 2` | reject as newer/incompatible |
+| malformed session, message or Canvas | reject before database write |
 
 Import rules:
 
 - normalize and validate the entire envelope before creating a session;
 - reject conflicting legacy/current markers and imported `system` messages;
-- validate the complete session/message envelope and structured `ToolCall[]`, including JSON object arguments;
-- cap message count and relevant string sizes at the API boundary;
-- import session plus messages in one database transaction;
+- validate the complete session/message/Canvas envelope and structured `ToolCall[]`, including JSON object arguments and contiguous tool-result rounds;
+- cap canonical UTF-8 bytes, message/Pin/Task counts and relevant string sizes at the API boundary;
+- import session, messages, Pins and Task DAG in one database transaction;
+- require every successful current export to pass the current importer before publication;
+- publish an explicit empty attachment list until an attachment persistence model exists; reject non-empty attachment imports fail-closed;
 - use a new local session ID regardless of exported ID;
 - do not trust exported timestamps, roles or serialized tool fields without validation;
 - return a structured error containing format and supported versions.

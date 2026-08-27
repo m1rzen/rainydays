@@ -297,6 +297,8 @@ Reviewer verdict / user status
 
 Secrets, tokens, prompts, messages, absolute user paths, and environment dumps are forbidden. Console output is human-readable; JSON is the evidence authority. Layer state is one of `passed`, `failed`, `timed-out`, `crashed`, or `unsupported`; required `unsupported` is not success. Failure precedence is `timeout/crash → artifact mutation → test assertion → coverage threshold → cleanup → report validation`. Any failed required layer, failed cleanup, threshold miss, malformed report, artifact mutation, or missing/unsupported packaged result makes the acceptance runner exit non-zero. The report is published atomically only after schema validation; a partial temp report is never accepted as evidence.
 
+The default integration test-child budget is 720 seconds. The unified runner grants the complete layer process 840 seconds: the 120-second outer envelope covers governance preflight plus atomic report publication and verified process-tree cleanup, and must retain at least 60 seconds after the measured preflight cost. Both remain below the 900-second hard ceiling; changing either value requires Architect re-review and must preserve the inner-before-outer ordering.
+
 ## Fault-gate self-test
 
 `test-gate-selftest.mjs` must prove independent fail-closed behavior:

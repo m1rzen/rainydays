@@ -45,9 +45,10 @@ export async function verifyInstallerPreflight({ manifestPath, installerOverride
     exactKeys(manifest.build.executionIsolation, ["architectureSha256", "protocolVersion", "nativeSourceDigest", "toolchainDigest", "signatureStatus", "artifacts", "testProjection"], "artifact manifest execution isolation");
     assert(Array.isArray(manifest.build.executionIsolation.artifacts) && manifest.build.executionIsolation.artifacts.length === 2, "artifact manifest native artifacts differ");
     for (const artifact of manifest.build.executionIsolation.artifacts) {
-      exactKeys(artifact, ["path", "bytes", "sha256", "machine"], "artifact manifest native artifact");
+      exactKeys(artifact, ["path", "bytes", "sha256", "machine", "importedDllAllowlistDigest"], "artifact manifest native artifact");
       assert(Number.isSafeInteger(artifact.bytes) && artifact.bytes > 0, "artifact manifest native artifact bytes differ");
       assert.match(artifact.sha256, /^[a-f0-9]{64}$/);
+      assert.match(artifact.importedDllAllowlistDigest, /^[a-f0-9]{64}$/);
       assert.equal(artifact.machine, "AMD64");
     }
     exactKeys(manifest.build.executionIsolation.testProjection, ["manifest"], "artifact manifest native test projection");
