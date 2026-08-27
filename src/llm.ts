@@ -8,6 +8,7 @@ import OpenAI, { APIUserAbortError } from "openai";
 import type { LLMConfig, Message, MessageAttachment, ScopedNetworkGateway, ToolDefinition } from "./types.js";
 import { abortableDelay, cancellationError, cancellationFailure, throwIfCancelled } from "./run-cancellation.js";
 import { MAX_DRAFT_ATTACHMENT_BYTES } from "./attachment.js";
+import { beginObservation } from "./observability.js";
 
 /** 最大重试次数 */
 const MAX_RETRIES = 3;
@@ -165,6 +166,7 @@ export class LLMClient {
     }
 
     let lastError: unknown = null;
+    const observation = beginObservation("llm");
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
@@ -173,8 +175,8 @@ export class LLMClient {
         const choice = response.choices[0];
         const message = choice.message;
 
-        return {
-          role: "assistant",
+        const result = {
+          role: "assistant" as const,
           content: message.content || "",
           tool_calls: message.tool_calls?.map((tc) => ({
             id: tc.id,
@@ -185,15 +187,21 @@ export class LLMClient {
             },
           })),
         };
+        observation.finish("success", { bytesOut: Buffer.byteLength(result.content, "utf8") });
+        return result;
       } catch (err) {
-        if (signal?.aborted) throw llmCancellationFailure(signal, err, "LLM request was cancelled");
+        if (signal?.aborted) {
+          observation.finish("cancelled");
+          throw llmCancellationFailure(signal, err, "LLM request was cancelled");
+        }
         lastError = err;
         const { retry, rateLimit, reason } = isRetryableError(err);
 
         if (!retry || attempt === MAX_RETRIES) {
-          // 不可重试或已耗尽重试次数
+          observation.finish("error");
           throw new Error(`LLM 请求失败: ${reason}${attempt > 0 ? ` (已重试 ${attempt} 次)` : ""}`);
         }
+        observation.retry();
 
         // 计算等待时间
         const waitMs = rateLimit
@@ -210,6 +218,7 @@ export class LLMClient {
       }
     }
 
+    observation.finish("error");
     throw new Error(
       `LLM 请求失败: 已耗尽 ${MAX_RETRIES + 1} 次尝试。` +
       `最后错误: ${lastError instanceof Error ? lastError.message : String(lastError)}`
@@ -242,6 +251,7 @@ export class LLMClient {
     }
 
     let lastError: unknown = null;
+    const observation = beginObservation("llm");
 
     // 重试只在流建立阶段（create 调用），流开始后不重试
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -295,16 +305,22 @@ export class LLMClient {
         };
 
         yield { type: "result", message: finalMessage };
+        observation.finish("success", { bytesOut: Buffer.byteLength(fullContent, "utf8") });
         return; // 成功，退出重试循环
 
       } catch (err) {
-        if (signal?.aborted) throw llmCancellationFailure(signal, err, "LLM stream was cancelled");
+        if (signal?.aborted) {
+          observation.finish("cancelled");
+          throw llmCancellationFailure(signal, err, "LLM stream was cancelled");
+        }
         lastError = err;
         const { retry, rateLimit, reason } = isRetryableError(err);
 
         if (!retry || attempt === MAX_RETRIES) {
+          observation.finish("error");
           throw new Error(`LLM 流式请求失败: ${reason}${attempt > 0 ? ` (已重试 ${attempt} 次)` : ""}`);
         }
+        observation.retry();
 
         const waitMs = rateLimit
           ? RATE_LIMIT_WAIT_MS
@@ -320,6 +336,7 @@ export class LLMClient {
       }
     }
 
+    observation.finish("error");
     throw new Error(
       `LLM 流式请求失败: 已耗尽 ${MAX_RETRIES + 1} 次尝试。` +
       `最后错误: ${lastError instanceof Error ? lastError.message : String(lastError)}`

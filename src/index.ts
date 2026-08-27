@@ -153,6 +153,16 @@ import {
   type SessionRuntimeIdentity,
 } from "./session-runtime.js";
 import { isRunCancellation, isRunSettlementFailure } from "./run-cancellation.js";
+import { logger } from "./logger.js";
+import {
+  beginObservation,
+  createHealthSnapshot,
+  currentObservabilityContext,
+  observabilityMetricsSnapshot,
+  runWithObservabilityContext,
+  serializeDiagnosticBundle,
+  updateObservabilityContext,
+} from "./observability.js";
 import {
   makeAuthorizationAuditPayload,
   makeExecutionAuditPayload,
@@ -1472,6 +1482,26 @@ async function reloadPersonaRegistry(): Promise<void> {
 
 // --- Express ---
 const app = express();
+app.use((req, res, next) => {
+  const requestId = randomUUID();
+  const observation = beginObservation("http");
+  const started = Date.now();
+  res.setHeader("X-RainyDays-Request-Id", requestId);
+  runWithObservabilityContext({ requestId, sessionId: null, runId: null }, () => {
+    res.once("finish", () => {
+      const outcome = res.statusCode >= 400 ? "error" : "success";
+      observation.finish(outcome);
+      const routePath = typeof req.route?.path === "string" ? `${req.baseUrl}${req.route.path}` : "unmatched";
+      logger.info("http", "request-finished", {
+        method: req.method,
+        route: routePath,
+        statusCode: res.statusCode,
+        durationMs: Date.now() - started,
+      });
+    });
+    next();
+  });
+});
 app.use((_req, res, next) => {
   if (isShuttingDown) {
     res.status(503).json({ error: "服务正在关闭" });
@@ -1575,6 +1605,7 @@ app.use("/api", (req, res, next) => {
     res.status(400).json({ error: "Session runtime identity 无效" });
     return;
   }
+  updateObservabilityContext({ sessionId: rawSessionId ?? null });
   directRequestSession.run(rawSessionId ?? null, next);
 });
 const standardJsonBodyParser = express.json({ limit: "10mb" });
@@ -2688,32 +2719,82 @@ app.get("/api/version", (_req, res) => {
   res.json(getPublicVersionInfo());
 });
 
+async function currentHealthSnapshot(): Promise<Readonly<Record<string, unknown>>> {
+  let databaseSchemaVersion: number | null = null;
+  let securityAuditIntegrity: "verified" | "failed" | "unavailable" = "unavailable";
+  try { databaseSchemaVersion = getDatabaseSchemaVersion(); } catch { databaseSchemaVersion = null; }
+  try {
+    if (securityAuditJournal) {
+      const audit = await securityAuditJournal.verify();
+      securityAuditIntegrity = audit.integrity === "verified" ? "verified" : "failed";
+    }
+  } catch { securityAuditIntegrity = "failed"; }
+  return createHealthSnapshot({
+    shuttingDown: isShuttingDown,
+    databaseSchemaVersion,
+    expectedDatabaseSchemaVersion: BUILD_INFO.versions.databaseSchema,
+    securityAuditIntegrity,
+    runtimeRegistryAvailable: runtimeRegistry !== null,
+    providerConfigured: Boolean(getCurrentProfile().apiKey),
+    buildId: BUILD_ID,
+    uptimeSeconds: process.uptime(),
+  });
+}
+
+app.get("/api/health/live", async (_req, res) => {
+  const health = await currentHealthSnapshot();
+  res.status(health.live === true ? 200 : 503).json({
+    schemaVersion: health.schemaVersion,
+    status: health.live === true ? "live" : "degraded",
+    live: health.live,
+    buildId: health.buildId,
+    uptimeSeconds: health.uptimeSeconds,
+  });
+});
+
+app.get("/api/health/ready", async (_req, res) => {
+  const health = await currentHealthSnapshot();
+  res.status(health.ready === true ? 200 : 503).json(health);
+});
+
+app.get("/api/health", async (_req, res) => {
+  const health = await currentHealthSnapshot();
+  res.status(health.live === true ? 200 : 503).json(health);
+});
+
 app.get("/api/diagnostics", async (_req, res) => {
   try {
     if (!securityAuditJournal) throw new Error("Security audit journal is unavailable");
     const audit = await securityAuditJournal.verify();
-    const profile = getCurrentProfile();
+    const health = await currentHealthSnapshot();
+    const loadedSessionIds = runtimeRegistry?.loadedSessionIds() ?? [];
+    const bundle = {
+      schemaVersion: 1,
+      requestId: currentObservabilityContext()?.requestId ?? null,
+      generatedAt: new Date().toISOString(),
+      version: getPublicVersionInfo(),
+      runtime: {
+        node: process.versions.node,
+        electron: process.versions.electron || process.env.RAINYDAYS_ELECTRON_VERSION || null,
+        platform: process.platform,
+        arch: process.arch,
+      },
+      databaseSchemaVersion: getDatabaseSchemaVersion(),
+      securityAudit: audit,
+      protocols: structuredClone(PROTOCOL_CAPABILITIES),
+      health,
+      metrics: observabilityMetricsSnapshot(),
+      state: {
+        configured: Boolean(getCurrentProfile().apiKey),
+        activeSession: Boolean(selectedSessionId),
+        loadedSessions: loadedSessionIds.length,
+        runningSessions: loadedSessionIds.filter(sessionId => runtimeRegistry?.isRunning(sessionId)).length,
+      },
+    };
+    const serialized = serializeDiagnosticBundle(bundle);
     const safeBuildId = artifactSafeBuildId(BUILD_ID);
     res.setHeader("Content-Disposition", `attachment; filename="rainydays-diagnostics-${safeBuildId}.json"`);
-    res.json({
-    generatedAt: new Date().toISOString(),
-    version: getPublicVersionInfo(),
-    runtime: {
-      node: process.versions.node,
-      electron: process.versions.electron || process.env.RAINYDAYS_ELECTRON_VERSION || null,
-      platform: process.platform,
-      arch: process.arch,
-    },
-    databaseSchemaVersion: getDatabaseSchemaVersion(),
-    securityAudit: audit,
-    protocols: structuredClone(PROTOCOL_CAPABILITIES),
-    state: {
-      configured: Boolean(profile.apiKey),
-      activeProfile: getCurrentProfileName(),
-      activePersona: selectedPersona()?.name ?? null,
-      activeSession: Boolean(selectedSessionId),
-    },
-    });
+    res.type("application/json").send(serialized);
   } catch (error) {
     res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }

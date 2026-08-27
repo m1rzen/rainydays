@@ -26,6 +26,7 @@ import { readMessageAttachmentForSession } from "./attachment-store.js";
 import { requestNativeProcessConsent } from "./native-process-consent.js";
 import type { SecurityAuditJournal } from "./security-audit-journal.js";
 import { cancellationError, isRunCancellation, isRunSettlementFailure, NEVER_ABORT_SIGNAL, throwIfCancelled } from "./run-cancellation.js";
+import { beginObservation, updateObservabilityContext } from "./observability.js";
 import {
   makeAuthorizationAuditPayload,
   makeExecutionAuditPayload,
@@ -292,18 +293,37 @@ export class Agent {
     const { planned, capabilityContext, runAuthority, runSessionId, signal, loopDetector, bodyToolsEnabled } = input;
     const { toolCall, toolName, rawArguments, toolArgs, inspected, planningError, trace } = planned;
     const toolStart = Date.now();
+    const observation = beginObservation("tool");
+    let observationFinished = false;
+    const finishObservation = (outcome: ToolExecutionOutcome): void => {
+      if (observationFinished) return;
+      observationFinished = true;
+      observation.finish(outcome.status, {
+        bytesIn: Buffer.byteLength(rawArguments, "utf8"),
+        bytesOut: outcome.outputBytes,
+      });
+    };
     const audit = this.auditJournal
       ? new ToolAuditTrail(this.auditJournal, capabilityContext, toolCall.id, toolName, rawArguments)
       : null;
     let grantContext: CapabilityContext | null = null;
     let preparedExecution: PreparedToolExecution | null = null;
     let policyDigest: string | null = null;
-    const settled = (outcome: ToolExecutionOutcome, fatal: unknown = null): SettledAgentToolCall => Object.freeze({
-      result: Object.freeze({ toolName, outcome, stages: trace.snapshot(), toolMs: Date.now() - toolStart }),
-      fatal,
-    });
+    const settled = (outcome: ToolExecutionOutcome, fatal: unknown = null): SettledAgentToolCall => {
+      finishObservation(outcome);
+      return Object.freeze({
+        result: Object.freeze({ toolName, outcome, stages: trace.snapshot(), toolMs: Date.now() - toolStart }),
+        fatal,
+      });
+    };
 
-    await audit?.request(rawArguments);
+    try {
+      await audit?.request(rawArguments);
+    } catch (error) {
+      observationFinished = true;
+      observation.finish("error", { bytesIn: Buffer.byteLength(rawArguments, "utf8") });
+      throw error;
+    }
     try {
       if (planningError) throw planningError;
       if (!inspected || !toolArgs) {
@@ -468,6 +488,10 @@ export class Agent {
       trace.record("audit", "passed");
       return settled(outcome, isRunSettlementFailure(error) ? error : null);
     } finally {
+      if (!observationFinished) {
+        observationFinished = true;
+        observation.finish("error", { bytesIn: Buffer.byteLength(rawArguments, "utf8") });
+      }
       preparedExecution?.close();
       if (grantContext && capabilityBroker.isContextActive(grantContext)) capabilityBroker.finishContext(grantContext);
     }
@@ -499,6 +523,7 @@ export class Agent {
     let capabilityContext;
     try {
       capabilityContext = capabilityBroker.beginAgentRun(runAuthority, runSessionId, runId);
+      updateObservabilityContext({ sessionId: runSessionId, runId: capabilityContext.runId });
     } catch (error) {
       yield {
         type: "error",

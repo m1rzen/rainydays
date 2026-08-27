@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "taskId": "REL-04",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "reviewer"],
+  "runtimeFiles": [
+    "package.json",
+    "scripts/generate-rel04-resolved-manifest.mjs",
+    "scripts/rel04-governance.mjs",
+    "scripts/report-schema.mjs",
+    "src/agent.ts",
+    "src/daemon.ts",
+    "src/db.ts",
+    "src/index.ts",
+    "src/llm.ts",
+    "src/logger.ts",
+    "src/observability.ts",
+    "src/terminal.ts",
+    "tests/helpers.mjs"
+  ],
+  "coverageExemptions": {
+    "package.json": {
+      "reason": "REL-04 package scripts are verified by the exact governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel04-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/generate-rel04-resolved-manifest.mjs": {
+      "reason": "Atomic REL-04 manifest publication is verified by adversarial contract tests.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel04-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/rel04-governance.mjs": {
+      "reason": "REL-04 identity validation is verified by substitution-resistant contract tests.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel04-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/report-schema.mjs": {
+      "reason": "The canonical REL-04 persona chain is verified by the governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel04-governance.test.mjs", "layer": "contract" }]
+    },
+    "src/agent.ts": {
+      "reason": "Tool metrics wiring is verified by REL-04 observability and API evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rel04-health-diagnostics.test.mjs", "layer": "integration" }]
+    },
+    "src/daemon.ts": {
+      "reason": "The daemon readiness target is verified by the real REL-04 health API evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rel04-health-diagnostics.test.mjs", "layer": "integration" }]
+    },
+    "src/db.ts": {
+      "reason": "Database probe metrics are verified by the real REL-04 diagnostic bundle.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rel04-health-diagnostics.test.mjs", "layer": "integration" }]
+    },
+    "src/index.ts": {
+      "reason": "Correlated HTTP probes and bounded diagnostics are verified against a real server.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rel04-health-diagnostics.test.mjs", "layer": "integration" }]
+    },
+    "src/llm.ts": {
+      "reason": "LLM metrics use the fixed-cardinality registry verified by REL-04 unit evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/rel04-observability.test.mjs", "layer": "unit" }]
+    },
+    "src/logger.ts": {
+      "reason": "Structured correlation and recursive redaction are verified by REL-04 unit evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/rel04-observability.test.mjs", "layer": "unit" }]
+    },
+    "src/observability.ts": {
+      "reason": "Context, metrics, health states and diagnostic bounds are directly unit tested.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/rel04-observability.test.mjs", "layer": "unit" }]
+    },
+    "src/terminal.ts": {
+      "reason": "PTY operations use the fixed-cardinality registry verified by REL-04 unit evidence.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/rel04-observability.test.mjs", "layer": "unit" }]
+    },
+    "tests/helpers.mjs": {
+      "reason": "The REL-04 resolved task view is exercised by the governance contract and runner.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel04-governance.test.mjs", "layer": "contract" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/unit/rel04-observability.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/contract/rel04-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/integration/rel04-health-diagnostics.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" },
+    { "exactCasePath": "tests/packaged/installed-smoke.test.mjs", "layer": "packaged" }
+  ]
+}

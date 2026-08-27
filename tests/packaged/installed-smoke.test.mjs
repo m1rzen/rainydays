@@ -138,6 +138,7 @@ async function probeIdentity(client, buildInfo, httpPort) {
         documentTitle: document.title,
         preload: window.electronAPI,
         status: await (await fetch('/api/status')).json(),
+        health: await (await fetch('/api/health')).json(),
         version: await (await fetch('/api/version')).json(),
         diagnostics: await (await fetch('/api/diagnostics')).json()
       }))()`);
@@ -150,7 +151,12 @@ async function probeIdentity(client, buildInfo, httpPort) {
   assert.equal(identity.preload.buildId, buildInfo.buildId);
   assert.deepEqual(identity.version, buildInfo);
   assert.deepEqual(identity.status.version, buildInfo);
+  assert.equal(identity.health.live, true);
+  assert.equal(identity.health.ready, true);
+  assert.equal(identity.health.buildId, buildInfo.buildId);
   assert.deepEqual(identity.diagnostics.version, buildInfo);
+  assert.equal(identity.diagnostics.health.ready, true);
+  assert.deepEqual(Object.keys(identity.diagnostics.metrics).sort(), ["database", "http", "llm", "pty", "tool"]);
   const diagnosticText = JSON.stringify(identity.diagnostics);
   assert(!/apiKey|miniLuxApiToken|X-RainyDays-Token/i.test(diagnosticText));
   assert(!/[A-Za-z]:\\\\Users\\\\/i.test(diagnosticText));

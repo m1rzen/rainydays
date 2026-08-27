@@ -10,6 +10,7 @@ import { createInMemoryBootstrapDatabase, openBootstrapDatabase, validateDatabas
 import { verifySecurityAuditChain, verifySecurityAuditCheckpoint, type SecurityAuditCheckpoint, type SecurityAuditEvent } from "./security-audit.js";
 import { DATABASE_SCHEMA_VERSION } from "./version.js";
 import { encodeWorkbenchLayout } from "./workbench-layout.js";
+import { beginObservation } from "./observability.js";
 
 /** 仅在受管bootstrap identity与只读兼容探测通过后建立可写连接。 */
 const persistentConnection = await openBootstrapDatabase(DATABASE_SCHEMA_VERSION);
@@ -1164,11 +1165,27 @@ try {
 }
 
 export function getDatabaseSchemaVersion(): number {
-  return Number(db.pragma("user_version", { simple: true }));
+  const observation = beginObservation("database");
+  try {
+    const version = Number(db.pragma("user_version", { simple: true }));
+    observation.finish("success");
+    return version;
+  } catch (error) {
+    observation.finish("error");
+    throw error;
+  }
 }
 
 export function withTransaction<T>(action: () => T): T {
-  return db.transaction(action)();
+  const observation = beginObservation("database");
+  try {
+    const result = db.transaction(action)();
+    observation.finish("success");
+    return result;
+  } catch (error) {
+    observation.finish("error");
+    throw error;
+  }
 }
 
 export function validateDatabaseRestoreCandidate(

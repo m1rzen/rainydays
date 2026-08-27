@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "a353098a806411279593622f94d0a39852783c33e1bc34f318f602a28c4140ea",
+      "sha256": "c4104e93af680e6a76288d2205ce0a5845f586d90c3e191b1cbe821aa7f123d2",
       "owner": "TOOL-02"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "1fb8a1b3c2af8d7b0b1f559b0c7759308a95dc634babd0c1dec581babd536b03",
+      "sha256": "c11ced627a5563a3cdb96d7d1cb4d5cb04d7c0871bc1353ba10b0fe372446d12",
       "owner": "TOOL-02"
     },
     {
@@ -148,7 +148,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "9b38539681fc09a8657c448cb6eaba3d9418b73d25af08e8ba0003e80da224d7",
+      "sha256": "270e0008a939b43558be7160812d9ec7c89ac4ec0c78537b4aa4434d2bc78682",
       "owner": "TOOL-02"
     },
     {
@@ -158,12 +158,12 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-02-current.json",
-      "sha256": "c7da46037fbbcd683ac8330e728bd825e5e3ca1201dcbdd68a83d08776377db9",
+      "sha256": "8a12cf5438f398a9f0b1fb178e034c56c540e3d9b0588e8a2b0d5fe75fca4a76",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "0d5462edd3d8d4e632ca3399206e208764ded91fe5882148c553d0b8597bbc84",
+      "sha256": "c444bb69eb6b5dbbcd3c2c95181768317a9e7a2a5f8bfbe9a344aa514f8731e0",
       "owner": "TOOL-02"
     },
     {
@@ -173,7 +173,7 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "56da512928b4da1a2859d8e1512d00c2e222927e3071fb7b20aaf7efaf8d4628",
+      "sha256": "7ff83802e5cb21c098ef479c1eff8ffbcfaca1be56da543fa6141d387856a94c",
       "owner": "TOOL-02"
     },
     {
@@ -245,5 +245,5 @@
       "owner": "TOOL-02"
     }
   ],
-  "canonicalPayloadSha256": "08b64cacbdd1ff9fd4c73cdcb8e24f4ad99b2e588fbe8442614f842afef8dc9d"
+  "canonicalPayloadSha256": "b3e2f1f77a0d6ddc3ca191f0a37ca55faebd26f68864e006ee6f2eeb33fd5942"
 }

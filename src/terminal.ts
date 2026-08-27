@@ -14,6 +14,7 @@ import {
   type ResourceOwner,
 } from "./resource-owner.js";
 import { logger } from "./logger.js";
+import { beginObservation } from "./observability.js";
 
 export type TerminalShell = "cmd" | "powershell";
 export type TerminalStatus = "running" | "exited" | "killed" | "error";
@@ -387,18 +388,43 @@ class TerminalManager {
   }
 }
 
+function observePtySync<T>(action: () => T, details: (result: T) => Readonly<{ bytesIn?: number; bytesOut?: number }> = () => ({})): T {
+  const observation = beginObservation("pty");
+  try {
+    const result = action();
+    observation.finish("success", details(result));
+    return result;
+  } catch (error) {
+    observation.finish(error instanceof TerminalOwnerMismatchError ? "denied" : "error");
+    throw error;
+  }
+}
+
+async function observePtyAsync<T>(action: () => Promise<T>, details: (result: T) => Readonly<{ bytesIn?: number; bytesOut?: number }> = () => ({})): Promise<T> {
+  const observation = beginObservation("pty");
+  try {
+    const result = await action();
+    observation.finish("success", details(result));
+    return result;
+  } catch (error) {
+    observation.finish(error instanceof TerminalOwnerMismatchError ? "denied" : "error");
+    throw error;
+  }
+}
+
 function facadeFor(manager: TerminalManager) {
   return Object.freeze({
     list: (owner: TerminalOwner): TerminalInfo[] => manager.list(owner),
-    start: (owner: TerminalOwner, options: TerminalStartOptions): Promise<TerminalInfo> => manager.start(owner, options),
+    start: (owner: TerminalOwner, options: TerminalStartOptions): Promise<TerminalInfo> => observePtyAsync(() => manager.start(owner, options)),
     get: (owner: TerminalOwner, id: string): TerminalInfo | undefined => manager.get(owner, id),
     input: (owner: TerminalOwner, id: string, data: string, appendNewline: boolean, execution: ScopedExecutionGateway): Promise<void> =>
-      manager.input(owner, id, data, appendNewline, execution),
-    output: (owner: TerminalOwner, id: string, offset?: number, limit = 20000) => manager.output(owner, id, offset, limit),
-    clear: (owner: TerminalOwner, id: string): void => manager.clear(owner, id),
-    resize: (owner: TerminalOwner, id: string, cols: number, rows: number): Promise<TerminalInfo> => manager.resize(owner, id, cols, rows),
-    kill: (owner: TerminalOwner, id: string): Promise<void> => manager.kill(owner, id),
-    close: (owner: TerminalOwner, id: string): Promise<void> => manager.close(owner, id),
+      observePtyAsync(() => manager.input(owner, id, data, appendNewline, execution), () => ({ bytesIn: Buffer.byteLength(data, "utf8") })),
+    output: (owner: TerminalOwner, id: string, offset?: number, limit = 20000) =>
+      observePtySync(() => manager.output(owner, id, offset, limit), result => ({ bytesOut: Buffer.byteLength(result.data, "utf8") })),
+    clear: (owner: TerminalOwner, id: string): void => observePtySync(() => manager.clear(owner, id)),
+    resize: (owner: TerminalOwner, id: string, cols: number, rows: number): Promise<TerminalInfo> => observePtyAsync(() => manager.resize(owner, id, cols, rows)),
+    kill: (owner: TerminalOwner, id: string): Promise<void> => observePtyAsync(() => manager.kill(owner, id)),
+    close: (owner: TerminalOwner, id: string): Promise<void> => observePtyAsync(() => manager.close(owner, id)),
     subscribe: (owner: TerminalOwner, id: string, callback: (event: TerminalEvent) => void): (() => void) => manager.subscribe(owner, id, callback),
     disposeAllForShutdown: (): Promise<void> => manager.disposeAll(),
   });

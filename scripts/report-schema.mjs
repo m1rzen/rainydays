@@ -35,6 +35,7 @@ const personaChains = Object.freeze({
   "TOOL-01": Object.freeze(["architect", "developer", "reviewer"]),
   "TOOL-02": Object.freeze(["developer", "debugger", "reviewer"]),
   "PERS-01": Object.freeze(["architect", "developer", "sentinel", "reviewer"]),
+  "REL-04": Object.freeze(["architect", "developer", "reviewer"]),
 });
 
 const sec03ArchitectureSha256 = "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe";

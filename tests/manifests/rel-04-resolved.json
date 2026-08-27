@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "taskId": "REL-04",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/rel-04.json",
+    "sha256": "9343a2bc5e915c032404bf4c9d447cb410f3292b0e6a89d1fd717bce6a5ee5d7"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "c4104e93af680e6a76288d2205ce0a5845f586d90c3e191b1cbe821aa7f123d2",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "scripts/generate-rel04-resolved-manifest.mjs",
+      "sha256": "6923bf92b2e0736fcd277dca0fc80946087dcf66dd13f86c81d4a0251c5a8094",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "scripts/rel04-governance.mjs",
+      "sha256": "598194970bf6da80e44cfa680c139f3138da7e1d83a341543b8488f5d1508bf3",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "c11ced627a5563a3cdb96d7d1cb4d5cb04d7c0871bc1353ba10b0fe372446d12",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "src/agent.ts",
+      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "src/daemon.ts",
+      "sha256": "ddf9d8d60660807f41757a3620b431f99573fda211591a9268c8844993a9ee48",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "src/llm.ts",
+      "sha256": "95275ddc9d491d75486cc009a44f1a71fe9c5b4006a0bf8d99448088b1189014",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "src/logger.ts",
+      "sha256": "0f993ae4d425f5733b99b9e238c6105b52eb30df38b6f8ab152b315fc9274885",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "src/observability.ts",
+      "sha256": "a5a7e12fc960cdb5747336835e9af4cdd8fe4609e47282198bc1958306c2398e",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "src/terminal.ts",
+      "sha256": "080e0e9f8820fb1c704041fbf70ee59c93f44c860c50ab8d7fe2d68669ca6980",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "270e0008a939b43558be7160812d9ec7c89ac4ec0c78537b4aa4434d2bc78682",
+      "owner": "REL-04"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/unit/rel04-observability.test.mjs",
+      "sha256": "07d774456b63bfc0c26b5dc26aa21d7e6f2a59f5c74aae686bbc006eb2c1aac8",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "tests/contract/rel04-governance.test.mjs",
+      "sha256": "5fe4e55b6d9e7ab713f573364913f875b34caa245a9a2db5b39e2b83adaf1e46",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "tests/integration/rel04-health-diagnostics.test.mjs",
+      "sha256": "46d83dcb7e52019321e3ec322f48e237f7e68532f1b58d4d267f67b84b432589",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "REL-04"
+    },
+    {
+      "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
+      "sha256": "1bcaa3c56877014cab58866af4b2f92b7b295fdb2749bfdf51f24e38c87295e0",
+      "kind": "test",
+      "layer": "packaged",
+      "owner": "REL-04"
+    }
+  ],
+  "canonicalPayloadSha256": "f6667ce2df65a9abb32f15587103b223d2b848fe8017c1a7ddb0b7b8763ee218"
+}

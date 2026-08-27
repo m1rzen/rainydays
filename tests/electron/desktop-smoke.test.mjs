@@ -127,6 +127,7 @@ async function probeIdentity(client, buildInfo, httpPort) {
         capabilities: await window.electronAPI?.capabilities?.(),
         windowState: await window.electronAPI?.windowState?.(),
         status: await (await fetch('/api/status')).json(),
+        health: await (await fetch('/api/health')).json(),
         version: await (await fetch('/api/version')).json()
       }))()`);
       return result?.ui === expectedUi(buildInfo) ? result : null;
@@ -153,6 +154,10 @@ async function probeIdentity(client, buildInfo, httpPort) {
   assert.equal(typeof value.windowState?.bounds?.height, "number");
   assert.deepEqual(value.version, buildInfo);
   assert.deepEqual(value.status.version, buildInfo);
+  assert.equal(value.health.live, true);
+  assert.equal(value.health.ready, true);
+  assert.equal(value.health.buildId, buildInfo.buildId);
+  assert(["ready", "degraded"].includes(value.health.status));
   assert.equal((await boundedFetch(`http://127.0.0.1:${httpPort}/api/version`)).status, 401);
   assert.equal((await boundedFetch(`http://127.0.0.1:${httpPort}/api/version`, {
     headers: { "X-RainyDays-Token": "sec04-forged-environment-token" },
