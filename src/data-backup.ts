@@ -4,7 +4,7 @@ import { validatePersistedConfigBytes } from "./config.js";
 import { createBackupDataKeyWrapper, createSecurityAuditKeyWrapper, listCredentialVaultReferences, validateCredentialVaultDecryptable } from "./credential-store.js";
 import { createConsistentDatabaseSnapshot, validateDatabaseRestoreCandidate, validateDatabaseRestoreSecurityAudit } from "./db.js";
 import { getManagedPathStore } from "./managed-path-store.js";
-import { validateOracleSnapshot } from "./oracle.js";
+import { validateOracleBackupSnapshot } from "./oracle.js";
 import { validatePersonaSource } from "./persona.js";
 import { validatePlaybookSource } from "./playbook.js";
 import { APP_VERSION } from "./version.js";
@@ -87,7 +87,7 @@ async function validateManagedFiles(files: readonly Readonly<{ role: string; pat
       const name = file.path.slice("playbooks/".length, -".json".length);
       validatePlaybookSource(name, file.bytes);
     } else if (file.role === "oracle") {
-      validateOracleSnapshot(parseJson(file.bytes, "Oracle backup"));
+      validateOracleBackupSnapshot(parseJson(file.bytes, "Oracle backup"));
     } else if (file.role === "user-persona") {
       const name = file.path.slice("data/personas/".length, -".md".length);
       await validatePersonaSource(name, file.bytes, async skillName => skillSources.get(skillName) ?? null);

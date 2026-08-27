@@ -97,18 +97,18 @@
     },
     {
       "exactCasePath": "tests/integration/ds03-workbench-layout.test.mjs",
-      "sha256": "1f332e78d18a07e3e548130a324b1a4951f519d50287ea42237ff2a8705d0120",
+      "sha256": "67b0edae5408b405edb7bd6255425389c918b2ded4c9aadb5f434d3af9ad1be4",
       "kind": "test",
       "layer": "integration",
       "owner": "DS-07"
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3",
+      "sha256": "7aabfc21b50f4e3960a126e012da494de196551f82ff333cb0977c51c109bdcc",
       "kind": "test",
       "layer": "electron",
       "owner": "DS-07"
     }
   ],
-  "canonicalPayloadSha256": "44d68bfc9b27c7c84ba9706dddb91228a973e41a18fa649889c2fec2bbcb9169"
+  "canonicalPayloadSha256": "c5491c26edb3f20582bd79d29d74a1296e89bbd234bb6c29e34ad936098745c5"
 }

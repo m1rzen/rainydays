@@ -264,7 +264,7 @@ if (scenario === "normal") {
   );
   const lease = await store.stageValidatedDatabaseRestore(
     snapshot.bytes,
-    candidate => db.validateDatabaseRestoreCandidate(candidate, 10)
+    candidate => db.validateDatabaseRestoreCandidate(candidate, 11)
   );
   assert.equal(lease.isActive(), true);
   assert.deepEqual(await lease.readBytes(), snapshot.bytes);
@@ -277,9 +277,9 @@ if (scenario === "normal") {
 
   const publishLease = await store.stageValidatedDatabaseRestore(
     snapshot.bytes,
-    candidate => db.validateDatabaseRestoreCandidate(candidate, 10)
+    candidate => db.validateDatabaseRestoreCandidate(candidate, 11)
   );
-  const activeConnection = await openBootstrapDatabase(10);
+  const activeConnection = await openBootstrapDatabase(11);
   await assert.rejects(() => publishLease.publish(), error => error instanceof PathDeniedError && error.code === "PATH_AUTHORITY_STALE");
   await activeConnection.close();
 
@@ -888,7 +888,7 @@ if (scenario === "normal") {
   db.insertMessage({ session_id: "snapshot-session", role: "user", content: "committed-in-wal", tool_calls: null, tool_call_id: null, created_at: now });
   assert.equal(await fs.access(`${mainPath}-wal`).then(() => true, () => false), true);
   const snapshot = await db.createConsistentDatabaseSnapshot();
-  assert.equal(snapshot.validation.schemaVersion, 10);
+  assert.equal(snapshot.validation.schemaVersion, 11);
   assert.equal(snapshot.validation.quickCheck, "ok");
   assert.equal(snapshot.validation.integrityCheck, "ok");
   assert.equal(snapshot.validation.foreignKeyViolations, 0);

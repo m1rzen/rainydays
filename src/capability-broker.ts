@@ -655,6 +655,21 @@ export class CapabilityBroker {
         const rootId = record.authority.persona.rootEnv[envKey];
         return typeof rootId === "string" && record.roots.has(rootId) ? rootId : null;
       },
+      identifyDirectory: async (input, options = {}) => {
+        requireInvocation("read-directory");
+        const qualified = await this.pathPolicy.identifyDirectoryDirect(
+          invocationAuthority,
+          request(input, "read-directory", options.defaultRootId),
+        );
+        return Object.freeze({
+          rootId: qualified.rootId,
+          identityDigest: canonicalDigest({
+            rootId: qualified.rootId,
+            canonicalPath: qualified.canonicalPath,
+            identity: qualified.identity,
+          }),
+        });
+      },
       withInitialCwd: (input, options, use) => {
         requireInvocation("initial-cwd");
         return this.pathPolicy.withInitialCwd(invocationAuthority, request(input, "initial-cwd", options.defaultRootId), use);

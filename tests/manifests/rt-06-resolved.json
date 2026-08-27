@@ -13,12 +13,12 @@
     },
     {
       "exactCasePath": "dist/capability-broker.js",
-      "sha256": "66849de3c12f37ace913f3285d6782a27feb6c82ea55061f2e65fa4a4e620840",
+      "sha256": "f8d2d4815bfddd55d045593c35f4dc6567bbdda47d8b2486cbd41196363bd79d",
       "owner": "RT-06"
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "f6a95709eef123776891fb9bee7cb8b304b26793701a1582ef6c8ec4592ee393",
+      "sha256": "3c9b5e69af19c60db18edb192f370930ecf1e41770bcd0aa1cc985d8b009dcbb",
       "owner": "RT-06"
     },
     {
@@ -33,12 +33,12 @@
     },
     {
       "exactCasePath": "src/capability-broker.ts",
-      "sha256": "66d602a81e9320b5580c6b6ddc21674cbe224a22271f1143daafda375b10240c",
+      "sha256": "a36f7031be1aa04c0921a6d4766a1e4392fca68fb4bbf094b320553b186bb13b",
       "owner": "RT-06"
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "13f2a8a15e9e845857be968337e46fdb0f64bc19f13d7ef02e298efec95d5eab",
+      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
       "owner": "RT-06"
     },
     {
@@ -57,7 +57,7 @@
     },
     {
       "exactCasePath": "tests/unit/capability-broker.test.mjs",
-      "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7",
+      "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d",
       "kind": "test",
       "layer": "unit",
       "owner": "RT-06"
@@ -98,5 +98,5 @@
       "owner": "RT-06"
     }
   ],
-  "canonicalPayloadSha256": "165f7209d58f720353cfd1c9b9e704c28e4f4dff57d1bc14478ac0fe9bb404f3"
+  "canonicalPayloadSha256": "fb86aec2040edd55bba6473c8a60abba2964718d97133ecae3611c5d0bf0a95b"
 }

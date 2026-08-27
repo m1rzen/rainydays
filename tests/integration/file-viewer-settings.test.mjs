@@ -166,6 +166,10 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
       ...options,
       headers: { "X-RainyDays-Session": sessionId, ...options.headers },
     });
+    const initialSettings = await api(server.base, token, "/settings");
+    assert.equal(initialSettings.status, 200);
+    let expectedRevision = initialSettings.body.revision;
+    assert.equal(typeof expectedRevision, "string");
 
     const initialRoots = await runtimeApi("/files/roots");
     assert.equal(initialRoots.status, 200);
@@ -205,9 +209,10 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
 
     const enrolled = await api(server.base, token, "/settings/general", {
       method: "PUT",
-      body: JSON.stringify({ workspaceRoot: newWorkspace, departmentDataRoot: newDepartment, outputDir: newOutput }),
+      body: JSON.stringify({ workspaceRoot: newWorkspace, departmentDataRoot: newDepartment, outputDir: newOutput, expectedRevision }),
     });
     assert.equal(enrolled.status, 200, JSON.stringify(enrolled.body));
+    expectedRevision = enrolled.body.settings.revision;
 
     const currentRoots = await runtimeApi("/files/roots");
     assert.equal(currentRoots.status, 200);
@@ -231,7 +236,7 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
       const auditOffset = parsePathDenialEvents(server.logs()).length;
       const denied = await api(server.base, token, "/settings/general", {
         method: "PUT",
-        body: JSON.stringify(vector.body),
+        body: JSON.stringify({ ...vector.body, expectedRevision }),
       });
       assert.equal(denied.status, 400, `${vector.family} Settings path was not denied`);
       await waitFor(
@@ -256,7 +261,7 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
     const rollbackOutput = path.join(newWorkspace, "rollback-candidate", "output");
     const rollbackCandidate = await api(server.base, token, "/settings/general", {
       method: "PUT",
-      body: JSON.stringify({ workspaceRoot: newDepartment, outputDir: rollbackOutput }),
+      body: JSON.stringify({ workspaceRoot: newDepartment, outputDir: rollbackOutput, expectedRevision }),
     });
     assert.equal(rollbackCandidate.status, 400);
     await assert.rejects(() => fs.access(path.join(newWorkspace, "rollback-candidate")));
@@ -266,7 +271,7 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
     const generatedOutput = path.join(newWorkspace, "generated", "output");
     const missingOutputEnrolled = await api(server.base, token, "/settings/general", {
       method: "PUT",
-      body: JSON.stringify({ outputDir: generatedOutput }),
+      body: JSON.stringify({ outputDir: generatedOutput, expectedRevision }),
     });
     assert.equal(missingOutputEnrolled.status, 200, JSON.stringify(missingOutputEnrolled.body));
     assert.equal((await fs.stat(generatedOutput)).isDirectory(), true);
@@ -415,11 +420,14 @@ test("SEC-02 real persistence failure retires old authority and stops fail-close
     assert.equal(directTerminal.status, 403);
     assert.equal(directTerminal.body.code, "EXEC_DIRECT_MUTATION_DENIED");
 
+    const settings = await api(server.base, token, "/settings");
+    assert.equal(settings.status, 200);
+    assert.equal(typeof settings.body.revision, "string");
     await fs.rename(configDirectory, preservedConfigDirectory);
     await fs.symlink(outside, configDirectory, "junction");
     const failed = await api(server.base, token, "/settings/general", {
       method: "PUT",
-      body: JSON.stringify({ workspaceRoot: nextWorkspace }),
+      body: JSON.stringify({ workspaceRoot: nextWorkspace, expectedRevision: settings.body.revision }),
     });
     assert.equal(failed.status, 400);
     assert.match(failed.body.error, /runtime recovery failed|PATH_ROOT_UNAVAILABLE|PATH_IDENTITY_CHANGED/);

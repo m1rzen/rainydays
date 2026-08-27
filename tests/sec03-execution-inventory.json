@@ -5,7 +5,7 @@
   "scannerSha256": "d81dfe30bf6f7df1ce3221861923b011c495fb6be0af1efb026f8203f69d8cb1",
   "crosscheckSha256": "a2c62c23669d2924472d4c80761122a5c4446d12e6a27f8595221f55a0290093",
   "policySha256": "935a3cbc3d63d6dff1ba501340cb1e721151442039e0b6f3ef3a858eb6178474",
-  "sourceSetSha256": "087b424fbdbdb4d1480b6ad0870c819e2f93da23a7b3d8e81bb6f0671c04de8a",
+  "sourceSetSha256": "9f1219962f0377bacda380f9f5da6158d00add6d9d6a5852daf5db5244834bf6",
   "files": [
     {
       "sourcePath": "electron/ipc-contract.cjs",
@@ -111,8 +111,8 @@
     },
     {
       "sourcePath": "scripts/build-sec03-native.mjs",
-      "bytes": 17705,
-      "sha256": "e8d8550e2be38c8ea77ba50df1a0d929524366a55aebf309862288590a27678e",
+      "bytes": 17951,
+      "sha256": "3dad0da521a4b4bacdbfca7c320535a3397558aa9558ff84a7e3ee6df84bf9c0",
       "executionClass": "build-test"
     },
     {
@@ -753,14 +753,14 @@
     },
     {
       "sourcePath": "src/capability-broker.ts",
-      "bytes": 66849,
-      "sha256": "66d602a81e9320b5580c6b6ddc21674cbe224a22271f1143daafda375b10240c",
+      "bytes": 67412,
+      "sha256": "a36f7031be1aa04c0921a6d4766a1e4392fca68fb4bbf094b320553b186bb13b",
       "executionClass": "product-runtime"
     },
     {
       "sourcePath": "src/config.ts",
-      "bytes": 35660,
-      "sha256": "e0680d6b4c93075e32b861bfec9190e7a3bc76ffca5e5bcce341fa593347f324",
+      "bytes": 36030,
+      "sha256": "26622a3035ad47531d8c2543f2621cc03a358caa82dc314e25a2a028b44134bf",
       "executionClass": "product-runtime"
     },
     {
@@ -783,14 +783,14 @@
     },
     {
       "sourcePath": "src/data-backup.ts",
-      "bytes": 6752,
-      "sha256": "a0219799b78dad99a75d56e7ae4a7b9dfd118033583b8717cc794dfeaef8553c",
+      "bytes": 6764,
+      "sha256": "1e2efda9f06225ef0df3f9cb97a62e8bb158d07d0a6ea465d9d5e335fd153f17",
       "executionClass": "product-runtime"
     },
     {
       "sourcePath": "src/db.ts",
       "bytes": 130978,
-      "sha256": "d3b7f1071cd24b326fb619880344cb15272e968237ab9a77909519f5584be79e",
+      "sha256": "54f748e2febdd12d3288578b4d820fc3ce3964af45191da9af72e1b0d8906e31",
       "executionClass": "product-runtime"
     },
     {
@@ -855,8 +855,8 @@
     },
     {
       "sourcePath": "src/index.ts",
-      "bytes": 147733,
-      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
+      "bytes": 150455,
+      "sha256": "410c0f87e0226df9b517cb0d2b91a5227aadf61856306e4eab0bc5f572387399",
       "executionClass": "product-runtime"
     },
     {
@@ -921,14 +921,14 @@
     },
     {
       "sourcePath": "src/oracle.ts",
-      "bytes": 7187,
-      "sha256": "7d484265a28bbccc6b2e88db0b18fcc6cc3863420efd08b1f3c46be7de6ddc82",
+      "bytes": 16919,
+      "sha256": "c0a2989c637dcca11054c7d23fa6d3e4977d23318b1e341d5a69c7288c5b471e",
       "executionClass": "product-runtime"
     },
     {
       "sourcePath": "src/path-policy.ts",
-      "bytes": 114222,
-      "sha256": "c0ca8cd60a2ab56569667db92002108064d8bbd37e16b93f7a178bfd3d5d0145",
+      "bytes": 116080,
+      "sha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
       "executionClass": "product-runtime"
     },
     {
@@ -1011,8 +1011,8 @@
     },
     {
       "sourcePath": "src/session.ts",
-      "bytes": 33672,
-      "sha256": "ceffcc88c4133d9819d95ccd7558b370ac36af93f8bf1340c5dafaa4e29fa433",
+      "bytes": 33866,
+      "sha256": "ddee52bb93efe1c0a8ade1c5443d47f1d38e826ca3c269d232d7ed2f6f05924d",
       "executionClass": "product-runtime"
     },
     {
@@ -1071,8 +1071,8 @@
     },
     {
       "sourcePath": "src/tool-policies.ts",
-      "bytes": 9196,
-      "sha256": "13f2a8a15e9e845857be968337e46fdb0f64bc19f13d7ef02e298efec95d5eab",
+      "bytes": 9318,
+      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
       "executionClass": "product-runtime"
     },
     {
@@ -1089,8 +1089,8 @@
     },
     {
       "sourcePath": "src/tools/advanced-tools.ts",
-      "bytes": 10247,
-      "sha256": "293fbfe5b14ef9d258d742da88d47e4e5f16dfc7bf34ccb0bcd1cb7d2c91bedb",
+      "bytes": 12194,
+      "sha256": "4c9e16cc5399e615beaf16e3de3f8899098f844bf2b7815fd66993c6af217def",
       "executionClass": "product-runtime"
     },
     {
@@ -1161,8 +1161,8 @@
     },
     {
       "sourcePath": "src/tools/oracle-tool.ts",
-      "bytes": 1147,
-      "sha256": "169d6aa818edb927895764dc6deafad85ab48ef6463cebf4ecfa82103bb5c4bc",
+      "bytes": 159,
+      "sha256": "314797d9b570dda2c5c803b50e59a8814d1b218e71ce2641955a69ac9f6e427e",
       "executionClass": "product-runtime"
     },
     {
@@ -1251,8 +1251,8 @@
     },
     {
       "sourcePath": "src/types.ts",
-      "bytes": 11713,
-      "sha256": "4a3287b18b97d6fd3e804d637ebde221a5a440ca3a0e0d9735a104006c41b39d",
+      "bytes": 12067,
+      "sha256": "b8b3832dbcac45658a63bb020a86ac40fcaab42b010bd829ddd867f3c8fb3b4a",
       "executionClass": "product-runtime"
     },
     {
@@ -1425,8 +1425,8 @@
     },
     {
       "sourcePath": "tests/contract/sec01-boundaries.test.mjs",
-      "bytes": 7296,
-      "sha256": "1fa6411755115d68d0b8fa2e356c1822428e771105c91995fc60461b1bb7b0ad",
+      "bytes": 7310,
+      "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
       "executionClass": "build-test"
     },
     {
@@ -1521,20 +1521,20 @@
     },
     {
       "sourcePath": "tests/electron/desktop-smoke.test.mjs",
-      "bytes": 73831,
-      "sha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3",
+      "bytes": 79167,
+      "sha256": "7aabfc21b50f4e3960a126e012da494de196551f82ff333cb0977c51c109bdcc",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/fixtures/ds03-workbench-child.mjs",
       "bytes": 2404,
-      "sha256": "6513716448e0079d8fbe2e4f1134c85e3b906ba9825df044ea8dd0b6760af485",
+      "sha256": "b4ed115f41c02c16b64f9e29cfe01866e3df8712058ed79cabe3e2c9085eb669",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/fixtures/ds08-notification-seed.mjs",
       "bytes": 4224,
-      "sha256": "3766843e00db86b2ec810d1bdcc37ce4a066efb59304e33fff8f2547a516120d",
+      "sha256": "4da2d0f041a5092c6670ca998753267a570b49f3ef988ec62ab69ffbab1d94a7",
       "executionClass": "build-test"
     },
     {
@@ -1569,8 +1569,8 @@
     },
     {
       "sourcePath": "tests/fixtures/rt07-task-dag-child.mjs",
-      "bytes": 14667,
-      "sha256": "592813d38be0a1ed7904d8fcbf17506901409f0213516875eddde5105c0e2889",
+      "bytes": 14968,
+      "sha256": "322e576ab513df950ea4743b8396ef8baf2410bf0af016be9721d32f2b04c6a5",
       "executionClass": "build-test"
     },
     {
@@ -1606,7 +1606,7 @@
     {
       "sourcePath": "tests/fixtures/sqlite-lifetime-child.mjs",
       "bytes": 51481,
-      "sha256": "019d16de939251ef2293be6849124d9087917ffb24e14c2e5b7e12658a6f4315",
+      "sha256": "ea08526ebab39c550680b38367b7cb2f6626e8292053b8ca5b4cf8f225739470",
       "executionClass": "build-test"
     },
     {
@@ -1636,7 +1636,7 @@
     {
       "sourcePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
       "bytes": 5977,
-      "sha256": "612efc83c8996ea9e319b3870dac5e6b5bbae44693ce4978b6a3091d5e1627b5",
+      "sha256": "ddafc43dec89d904749962cbeb1ace661d63ac748baf04506a0fcbee01493d15",
       "executionClass": "build-test"
     },
     {
@@ -1653,14 +1653,14 @@
     },
     {
       "sourcePath": "tests/integration/data02-session-transfer.test.mjs",
-      "bytes": 9068,
-      "sha256": "57f86d5df5017458d1e49275321b7cca5847dd635e2e482e4c4a4702ec543160",
+      "bytes": 9379,
+      "sha256": "2f8b567b3b25a8cc6c2a3121c0d4412a8f13afcf8bf5134fc438e823fda8623d",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/integration/ds03-workbench-layout.test.mjs",
       "bytes": 1183,
-      "sha256": "1f332e78d18a07e3e548130a324b1a4951f519d50287ea42237ff2a8705d0120",
+      "sha256": "67b0edae5408b405edb7bd6255425389c918b2ded4c9aadb5f434d3af9ad1be4",
       "executionClass": "build-test"
     },
     {
@@ -1684,13 +1684,19 @@
     {
       "sourcePath": "tests/integration/ds08-notifications.test.mjs",
       "bytes": 9758,
-      "sha256": "bca9f154c081785f214bdf55f9dfce1693cdb18674832101a9eb0cc8a9885e89",
+      "sha256": "954f239d53f0627bf153ac496ae06733434f17960a0bef9ab279268b7f1d748b",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/integration/ds09-settings-api.test.mjs",
       "bytes": 11150,
       "sha256": "18b4590af52fc1f6846fc49047e91bf96786fd58c51fe42b77ba4999daabaf63",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/integration/eco05-oracle-canvas.test.mjs",
+      "bytes": 15272,
+      "sha256": "851ed26d512617406a3972e278c88f1e4c106c5a8034317a62834921b8a6d0c3",
       "executionClass": "build-test"
     },
     {
@@ -1702,7 +1708,7 @@
     {
       "sourcePath": "tests/integration/evt01-event-persistence.test.mjs",
       "bytes": 5313,
-      "sha256": "9d7fead9dcf4777900a03b78481d9747a3b69beeeafd668ac4ba9a33eeea6494",
+      "sha256": "226e3c1fa8cf72c1d888d1c763d65629ab6502c3471d091190eee8074f8624e2",
       "executionClass": "build-test"
     },
     {
@@ -1737,8 +1743,8 @@
     },
     {
       "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
-      "bytes": 29732,
-      "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880",
+      "bytes": 30303,
+      "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82",
       "executionClass": "build-test"
     },
     {
@@ -1767,8 +1773,8 @@
     },
     {
       "sourcePath": "tests/integration/repo-oracle-path.test.mjs",
-      "bytes": 21722,
-      "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe",
+      "bytes": 21420,
+      "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217",
       "executionClass": "build-test"
     },
     {
@@ -1797,8 +1803,8 @@
     },
     {
       "sourcePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
-      "bytes": 8808,
-      "sha256": "42ec792f137abbd39cf403a6515020cdb9a86c56473fe59a7dc63f5b3b05f066",
+      "bytes": 8826,
+      "sha256": "110cd99298f74bb7f58beabbcd2264f3bf55d5b19664ad80927f59b4bd5a2322",
       "executionClass": "build-test"
     },
     {
@@ -1815,8 +1821,8 @@
     },
     {
       "sourcePath": "tests/integration/rt07-task-dag.test.mjs",
-      "bytes": 11735,
-      "sha256": "8ca4d1eb9f336b1f4a780ba649e4974acdbd41e09e0f900f7d05ceecc200fc31",
+      "bytes": 11780,
+      "sha256": "f55358a474d133cd08b8d4a6185b6ecbd87636f558709f5f3a14eb2e1d4aa60a",
       "executionClass": "build-test"
     },
     {
@@ -1959,8 +1965,8 @@
     },
     {
       "sourcePath": "tests/unit/capability-broker.test.mjs",
-      "bytes": 80711,
-      "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7",
+      "bytes": 80732,
+      "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d",
       "executionClass": "build-test"
     },
     {
@@ -4451,10 +4457,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-adb729b88650d1d75740584c",
+      "id": "exec-1344c434dbdf21dd440fc250",
       "occurrence": 1,
       "sourcePath": "scripts/build-sec03-native.mjs",
-      "line": 125,
+      "line": 128,
       "column": 6,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -4468,10 +4474,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-8e3b34a7850e0a69d300fdad",
+      "id": "exec-1dbd92bf3cfb9c187f835c47",
       "occurrence": 1,
       "sourcePath": "scripts/build-sec03-native.mjs",
-      "line": 159,
+      "line": 162,
       "column": 18,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -6138,7 +6144,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-11959b969a58d2aed4658027",
+      "id": "exec-eb25a19340cbe7066ec6674c",
       "occurrence": 1,
       "sourcePath": "tests/integration/data02-session-transfer.test.mjs",
       "line": 10,
@@ -6527,6 +6533,23 @@
       "classification": "build-test"
     },
     {
+      "id": "exec-c2bc892e46bb06ca27970d70",
+      "occurrence": 1,
+      "sourcePath": "tests/integration/eco05-oracle-canvas.test.mjs",
+      "line": 10,
+      "column": 15,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "<top-level>",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "build-test",
+      "classification": "build-test"
+    },
+    {
       "id": "exec-90ff6556af801879ad399894",
       "occurrence": 1,
       "sourcePath": "tests/integration/embedding-path-lifetime.test.mjs",
@@ -6544,7 +6567,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-5b2fe7f08ba1c10004adc412",
+      "id": "exec-8a2f509f9b799ec737d66ec0",
       "occurrence": 1,
       "sourcePath": "tests/integration/evt01-event-persistence.test.mjs",
       "line": 10,
@@ -6561,7 +6584,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-3fae30b37eff30ae421e8289",
+      "id": "exec-837ad009fa8fab6d12f90210",
       "occurrence": 1,
       "sourcePath": "tests/integration/evt01-event-persistence.test.mjs",
       "line": 94,
@@ -6969,7 +6992,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-e298290c9b28381e2654b5d8",
+      "id": "exec-ed3efe71e9d8222412fac3e2",
       "occurrence": 1,
       "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
       "line": 156,
@@ -6987,7 +7010,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-e4c36e0b54003731f881d155",
+      "id": "exec-b4bc0d4610970569ee07d82b",
       "occurrence": 1,
       "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
       "line": 159,
@@ -7005,10 +7028,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-e65ae674ae920756c0637cad",
+      "id": "exec-cf0f1e845de3da550b2eb201",
       "occurrence": 1,
       "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
-      "line": 177,
+      "line": 181,
       "column": 24,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -7023,10 +7046,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-791c5e32af74aff3aecc9996",
+      "id": "exec-c1feb2ade768a3a1b2d82392",
       "occurrence": 1,
       "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
-      "line": 182,
+      "line": 186,
       "column": 25,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -7041,10 +7064,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-ded633eda45bcb4738dd87f2",
+      "id": "exec-8182de6819dbb7476e79684b",
       "occurrence": 1,
       "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
-      "line": 188,
+      "line": 192,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -7059,10 +7082,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-0b8d275a766567e1b94acf1a",
+      "id": "exec-00dbc40aa7367cf2ccff1148",
       "occurrence": 1,
       "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
-      "line": 193,
+      "line": 197,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -7080,7 +7103,7 @@
       "id": "exec-e0c15083aaa25579faf7e569",
       "occurrence": 1,
       "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
-      "line": 321,
+      "line": 326,
       "column": 14,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -7097,7 +7120,7 @@
       "id": "exec-59e2ec2b099b1d9f04bf6679",
       "occurrence": 1,
       "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
-      "line": 344,
+      "line": 349,
       "column": 34,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -7115,7 +7138,7 @@
       "id": "exec-94ed9c60a703e024c272e8f6",
       "occurrence": 1,
       "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
-      "line": 541,
+      "line": 549,
       "column": 10,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -7132,7 +7155,7 @@
       "id": "exec-59023429e00030ea19fdbeb0",
       "occurrence": 1,
       "sourcePath": "tests/integration/file-viewer-settings.test.mjs",
-      "line": 564,
+      "line": 572,
       "column": 29,
       "nodeKind": "CallExpression",
       "container": "<top-level>",
@@ -10155,5 +10178,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "f1ad3326d893378c7619402b39d01b7fef731e5e55768ce544f630388dda9fc8"
+  "canonicalPayloadSha256": "acf83d1dfbd3013b00892a7ab0d0c31c1d5b7a9475290de5a64a3c0b765a15b2"
 }

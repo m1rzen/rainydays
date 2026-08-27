@@ -15,7 +15,7 @@ const repoRecorder = await createSec02Recorder(
 );
 const oracleRecorder = await createSec02Recorder(
   import.meta.url,
-  "SEC-02 Oracle project read and managed snapshot write use disjoint governed paths"
+  "SEC-02 Oracle writes and reads only the governed project-root LUX.oracle"
 );
 const auditKeys = ["authorityEpoch", "code", "event", "inputFingerprint", "operation", "operationId", "principal", "rootId", "runId", "sessionId", "timestamp"].sort();
 const pathAuditEvents = [];
@@ -107,13 +107,12 @@ await execFileAsync(process.env.RAINYDAYS_GIT_EXECUTABLE, ["add", "--", "package
 
 process.env.RAINYDAYS_USER_DATA_DIR = fixture;
 process.env.RAINYDAYS_DATA_DIR = data;
-const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule, managedStoreModule] = await Promise.all([
+const [personaModule, sessionModule, dbModule, toolsModule, pathRuntimeModule] = await Promise.all([
   import("../../dist/persona.js"),
   import("../../dist/session.js"),
   import("../../dist/db.js"),
   import("../../dist/tools/index.js"),
   import("../../dist/path-runtime.js"),
-  import("../../dist/managed-path-store.js"),
 ]);
 
 const persona = personaModule.createEffectivePersona({
@@ -133,7 +132,7 @@ async function makeAuthority() {
     rootId: "workspace",
     role: "workspace",
     configuredPath: repository,
-    permissions: ["initial-cwd", "search-tree"],
+    permissions: ["initial-cwd", "search-tree", "read-file", "read-directory", "create-file", "replace-file"],
   }]);
   return toolsModule.capabilityBroker.createRuntimeAuthority({
     name: persona.name,
@@ -356,26 +355,19 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
     });
     if (repoRecorder.enabled) await repoRecorder.observe("SEC02-P25-oracle-project-escape", oracleEscapeActual);
 
-    await approved(root, "oracle_save", { path: "" });
-    const store = await managedStoreModule.getManagedPathStore();
-    const snapshotBefore = await store.readOracle();
-    assert(snapshotBefore);
-    const managedLinkName = "oracle-managed-link";
-    const managedLink = path.join(repository, managedLinkName);
-    await fs.symlink(outside, managedLink, "junction");
+    await approved(root, "oracle_save", {});
+    const oraclePath = path.join(repository, "LUX.oracle");
+    const snapshotBefore = await fs.readFile(oraclePath);
+    await fs.unlink(oraclePath);
+    await fs.symlink(externalSecretPath, oraclePath, "file");
     const managedBefore = await externalState();
-    const managedAttempt = await captureDenial(() => approved(root, "oracle_save", { path: "" }));
+    const managedAttempt = await captureDenial(() => approved(root, "oracle_save", {}));
     const managedAfter = await externalState();
-    const snapshotAfter = await store.readOracle();
-    assert(snapshotAfter);
     const managedActual = {
       denied: managedAttempt.error !== undefined,
       rootExternalBytesRead: exposedExternalBytes(managedAttempt.error, externalSecret),
-      rootExternalArtifacts: Number(
-        externalArtifactsChanged(managedBefore, managedAfter) !== 0
-        || Buffer.compare(snapshotBefore, snapshotAfter) !== 0
-      ),
-      ...denialAuditEvidence(managedAttempt.events, [managedLinkName, managedLink]),
+      rootExternalArtifacts: externalArtifactsChanged(managedBefore, managedAfter),
+      ...denialAuditEvidence(managedAttempt.events, [oraclePath]),
     };
     assert.equal(managedAttempt.error?.code, "PATH_REDIRECT_DENIED");
     assert.deepEqual(managedActual, {
@@ -387,27 +379,29 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
       rawPathsAbsent: true,
     });
     if (repoRecorder.enabled) await repoRecorder.observe("SEC02-P25-oracle-managed-store-denial", managedActual);
-    await fs.unlink(managedLink);
+    await fs.unlink(oraclePath);
+    await fs.writeFile(oraclePath, snapshotBefore);
   } finally {
     toolsModule.capabilityBroker.finishContext(root);
     await toolsModule.capabilityBroker.retireAuthority(authority);
   }
 });
 
-test("SEC-02 Oracle project read and managed snapshot write use disjoint governed paths", async () => {
+test("SEC-02 Oracle writes and reads only the governed project-root LUX.oracle", async () => {
   const authority = await makeAuthority();
   const root = toolsModule.capabilityBroker.beginAgentRun(authority, session.id);
   try {
-    const saved = await approved(root, "oracle_save", { path: "" });
+    const saved = await approved(root, "oracle_save", {});
     assert.match(saved, /Oracle 快照已保存/);
     const status = await toolsModule.executeTool(root, "oracle_status", {});
     assert.match(status, /Oracle 已加载/);
-    const store = await managedStoreModule.getManagedPathStore();
-    const before = await store.readOracle();
-    assert(before);
+    const before = await fs.readFile(path.join(repository, "LUX.oracle"));
     const parsed = JSON.parse(before.toString("utf8"));
+    assert.equal(parsed.format, "mini-lux-oracle");
+    assert.equal(parsed.formatVersion, 1);
     assert.equal(parsed.projectPath, ".");
-    assert.match(parsed.headers["package.json"].join("\n"), /governed-repository/);
+    assert.equal(parsed.session.session.id, session.id);
+    assert.deepEqual(parsed.session.canvas.pins, []);
 
     const linked = path.join(repository, "external-link");
     await fs.symlink(outside, linked, "junction");
@@ -416,13 +410,8 @@ test("SEC-02 Oracle project read and managed snapshot write use disjoint governe
       () => toolsModule.executeTool(root, "read_repo", { path: "", level: "tree" }),
       error => error?.code === "PATH_REDIRECT_DENIED"
     );
-    await assert.rejects(
-      () => approved(root, "oracle_save", { path: "" }),
-      error => error?.code === "PATH_REDIRECT_DENIED"
-    );
-    const after = await store.readOracle();
-    assert(after);
-    assert.equal(Buffer.compare(before, after), 0, "denied Oracle scan modified the managed snapshot");
+    const after = await fs.readFile(path.join(repository, "LUX.oracle"));
+    assert.equal(Buffer.compare(before, after), 0, "unrelated redirected tree entry modified the project Oracle");
     if (oracleRecorder.enabled) await oracleRecorder.positive("SEC02-POS-oracle");
   } finally {
     toolsModule.capabilityBroker.finishContext(root);
@@ -438,5 +427,6 @@ test("SEC-02 read_repo and Oracle sources have no direct filesystem or shell exe
   assert(!/\bexec\s*\(/.test(readRepoSource));
   assert.match(readRepoSource, /["']ls-files["'],\s*["']-z["']/);
   assert(!/listFilesRecursive|USERPROFILE|process\.env/.test(readRepoSource));
-  assert.match(oracleSource, /getManagedPathStore/);
+  assert.match(oracleSource, /gateway\.writeFile/);
+  assert.match(oracleSource, /gateway\.readFile/);
 });

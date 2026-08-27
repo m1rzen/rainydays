@@ -148,17 +148,17 @@
     },
     {
       "exactCasePath": "src/capability-broker.ts",
-      "sha256": "66d602a81e9320b5580c6b6ddc21674cbe224a22271f1143daafda375b10240c",
+      "sha256": "a36f7031be1aa04c0921a6d4766a1e4392fca68fb4bbf094b320553b186bb13b",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "d3b7f1071cd24b326fb619880344cb15272e968237ab9a77909519f5584be79e",
+      "sha256": "54f748e2febdd12d3288578b4d820fc3ce3964af45191da9af72e1b0d8906e31",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
+      "sha256": "410c0f87e0226df9b517cb0d2b91a5227aadf61856306e4eab0bc5f572387399",
       "owner": "PERS-01"
     },
     {
@@ -168,12 +168,12 @@
     },
     {
       "exactCasePath": "src/session.ts",
-      "sha256": "ceffcc88c4133d9819d95ccd7558b370ac36af93f8bf1340c5dafaa4e29fa433",
+      "sha256": "ddee52bb93efe1c0a8ade1c5443d47f1d38e826ca3c269d232d7ed2f6f05924d",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "13f2a8a15e9e845857be968337e46fdb0f64bc19f13d7ef02e298efec95d5eab",
+      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
       "owner": "PERS-01"
     },
     {
@@ -188,7 +188,7 @@
     },
     {
       "exactCasePath": "src/types.ts",
-      "sha256": "4a3287b18b97d6fd3e804d637ebde221a5a440ca3a0e0d9735a104006c41b39d",
+      "sha256": "b8b3832dbcac45658a63bb020a86ac40fcaab42b010bd829ddd867f3c8fb3b4a",
       "owner": "PERS-01"
     },
     {
@@ -235,5 +235,5 @@
       "owner": "PERS-01"
     }
   ],
-  "canonicalPayloadSha256": "92b3149a12b9503754f14ba030764003e4ebe38d9a051b596c30de0f1e7a3725"
+  "canonicalPayloadSha256": "9d06ce4bd6587dac8f7750f19fb84afdf545efcee6035002e32c462dfa37b9da"
 }

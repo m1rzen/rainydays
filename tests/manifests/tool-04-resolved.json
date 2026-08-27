@@ -58,7 +58,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "13f2a8a15e9e845857be968337e46fdb0f64bc19f13d7ef02e298efec95d5eab",
+      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
       "owner": "TOOL-04"
     },
     {
@@ -93,12 +93,12 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "21e154a260f9fffa0c66ee017071b03d070f1c5c411139964d4263119100c933",
+      "sha256": "2580342a6270d0cce12f25b5b5c12d6cdfefefe669713c9b2e0520ed4552ca7e",
       "owner": "TOOL-04"
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "b674b0aee9a7c667c08ee543ac90f7622f2f3f3d0dcee8a43f72ab6e8d98f84b",
+      "sha256": "e7eddea060f057b065680cdc84f4eaf7b98fdd2acaf39f5e7fe08f5ab53811a8",
       "owner": "TOOL-04"
     },
     {
@@ -165,5 +165,5 @@
       "owner": "TOOL-04"
     }
   ],
-  "canonicalPayloadSha256": "bb585376ed23b7ad1981b49cce631a80ea68dbfabcebe93c22292b29ef89f8e4"
+  "canonicalPayloadSha256": "95e5f43c3971dfacf24e0494cc9759d5b6f648986896215f273f454627a5759a"
 }

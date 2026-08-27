@@ -784,7 +784,7 @@ test("SEC02 Broker binds one-invocation PathGateway to the authentic tool policy
   const inspected = broker.inspectToolCall(root, "read_path", {});
   const issued = broker.issueToolPathGateway(root, inspected);
   assert.deepEqual(Object.keys(issued.gateway).sort(), [
-    "createFile", "listDirectory", "readFile", "replaceFile", "reserveFile", "rootIdForEnv", "searchDirectory", "searchFile", "watchDirectory", "withExecutionRoot", "withInitialCwd", "writeFile",
+    "createFile", "identifyDirectory", "listDirectory", "readFile", "replaceFile", "reserveFile", "rootIdForEnv", "searchDirectory", "searchFile", "watchDirectory", "withExecutionRoot", "withInitialCwd", "writeFile",
   ]);
   assert(!Object.hasOwn(issued.gateway, "authority"));
   expectCode(() => issued.gateway.rootIdForEnv("WORKSPACE_ROOT"), "CAPABILITY_BINDING_MISMATCH");

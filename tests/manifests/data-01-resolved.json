@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "src/config.ts",
-      "sha256": "e0680d6b4c93075e32b861bfec9190e7a3bc76ffca5e5bcce341fa593347f324",
+      "sha256": "26622a3035ad47531d8c2543f2621cc03a358caa82dc314e25a2a028b44134bf",
       "owner": "DATA-01"
     },
     {
@@ -33,12 +33,12 @@
     },
     {
       "exactCasePath": "src/data-backup.ts",
-      "sha256": "a0219799b78dad99a75d56e7ae4a7b9dfd118033583b8717cc794dfeaef8553c",
+      "sha256": "1e2efda9f06225ef0df3f9cb97a62e8bb158d07d0a6ea465d9d5e335fd153f17",
       "owner": "DATA-01"
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "d3b7f1071cd24b326fb619880344cb15272e968237ab9a77909519f5584be79e",
+      "sha256": "54f748e2febdd12d3288578b4d820fc3ce3964af45191da9af72e1b0d8906e31",
       "owner": "DATA-01"
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "exactCasePath": "src/oracle.ts",
-      "sha256": "7d484265a28bbccc6b2e88db0b18fcc6cc3863420efd08b1f3c46be7de6ddc82",
+      "sha256": "c0a2989c637dcca11054c7d23fa6d3e4977d23318b1e341d5a69c7288c5b471e",
       "owner": "DATA-01"
     },
     {
@@ -78,7 +78,7 @@
     },
     {
       "exactCasePath": "dist/config.js",
-      "sha256": "748e32c7e3076c740d488be13de9b8ba0c3f6156d1c5cffb952a8cbe2d9b39d0",
+      "sha256": "6923293064e51ff0a7cd3720f11387f8817ae24ecd0a6ba7a5d6b3b09afa514b",
       "owner": "DATA-01"
     },
     {
@@ -88,12 +88,12 @@
     },
     {
       "exactCasePath": "dist/data-backup.js",
-      "sha256": "df5bf8184ab6755e5aaa11883799722333a9b2def806d04d66ea9e3a065362cd",
+      "sha256": "0c09fe4011b0c8ae46804e5ce6a9fd0754cac0c3b2ac9e37979379001ca6e787",
       "owner": "DATA-01"
     },
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "043ee61110fbf015bff706ae3bbef64d697c6340d6c256c91a39111d84c870ea",
+      "sha256": "5110987e6e39fc628de0f63d20104bbaf7f516416dac0829b49e6b5a8955daa5",
       "owner": "DATA-01"
     },
     {
@@ -103,7 +103,7 @@
     },
     {
       "exactCasePath": "dist/oracle.js",
-      "sha256": "e6d86703ef0730a18d5a92993b3f8a90b0958c38fb7e1b2eb51188b1232f6a46",
+      "sha256": "2f6ba5b1c289a539a7c9d4a1152b61057ea9cb89ce7f00290e5feace0060ba79",
       "owner": "DATA-01"
     },
     {
@@ -134,7 +134,7 @@
     },
     {
       "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-      "sha256": "612efc83c8996ea9e319b3870dac5e6b5bbae44693ce4978b6a3091d5e1627b5",
+      "sha256": "ddafc43dec89d904749962cbeb1ace661d63ac748baf04506a0fcbee01493d15",
       "kind": "test",
       "layer": "integration",
       "owner": "DATA-01"
@@ -147,5 +147,5 @@
       "owner": "DATA-01"
     }
   ],
-  "canonicalPayloadSha256": "0dccd3987b557338be7c643dec2fa9f4591d24a233e4380369feeff296742a3f"
+  "canonicalPayloadSha256": "f54b550fb166fa8f506a48bb6444ba924c4a88c0fc585f2d7dca066c446a39a2"
 }

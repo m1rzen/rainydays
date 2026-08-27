@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "fbea71b29b0e66299217777661bbade30161ac51b18b6c0cf989c57a627a74fa",
+      "sha256": "e96ba4e8f93182403c50807bc44e69f72b7a43d115ab69ec586289d096c4f0bd",
       "owner": "DS-04"
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "f6a95709eef123776891fb9bee7cb8b304b26793701a1582ef6c8ec4592ee393",
+      "sha256": "3c9b5e69af19c60db18edb192f370930ecf1e41770bcd0aa1cc985d8b009dcbb",
       "owner": "DS-04"
     },
     {
@@ -128,7 +128,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
+      "sha256": "410c0f87e0226df9b517cb0d2b91a5227aadf61856306e4eab0bc5f572387399",
       "owner": "DS-04"
     },
     {
@@ -138,7 +138,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "13f2a8a15e9e845857be968337e46fdb0f64bc19f13d7ef02e298efec95d5eab",
+      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
       "owner": "DS-04"
     },
     {
@@ -162,7 +162,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-      "sha256": "1fa6411755115d68d0b8fa2e356c1822428e771105c91995fc60461b1bb7b0ad",
+      "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
       "kind": "test",
       "layer": "contract",
       "owner": "DS-04"
@@ -211,7 +211,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3",
+      "sha256": "7aabfc21b50f4e3960a126e012da494de196551f82ff333cb0977c51c109bdcc",
       "kind": "test",
       "layer": "electron",
       "owner": "DS-04"
@@ -224,5 +224,5 @@
       "owner": "DS-04"
     }
   ],
-  "canonicalPayloadSha256": "428cdceaf32150942661661f9ef50b96415f872fff77c327f99fb743d8aafa96"
+  "canonicalPayloadSha256": "d80c8d76f54d46282d3cdae5df3102661cd859836e735af9694401ac6777a861"
 }

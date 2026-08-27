@@ -40,7 +40,7 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7",
+          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -52,7 +52,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "1fa6411755115d68d0b8fa2e356c1822428e771105c91995fc60461b1bb7b0ad",
+          "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -88,7 +88,7 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3",
+          "sha256": "7aabfc21b50f4e3960a126e012da494de196551f82ff333cb0977c51c109bdcc",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
@@ -308,7 +308,7 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7",
+          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -320,7 +320,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "1fa6411755115d68d0b8fa2e356c1822428e771105c91995fc60461b1bb7b0ad",
+          "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -356,7 +356,7 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3",
+          "sha256": "7aabfc21b50f4e3960a126e012da494de196551f82ff333cb0977c51c109bdcc",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
@@ -416,7 +416,7 @@
         },
         {
           "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-          "sha256": "612efc83c8996ea9e319b3870dac5e6b5bbae44693ce4978b6a3091d5e1627b5",
+          "sha256": "ddafc43dec89d904749962cbeb1ace661d63ac748baf04506a0fcbee01493d15",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -440,7 +440,7 @@
         },
         {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880",
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -464,7 +464,7 @@
         },
         {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe",
+          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1000,7 +1000,7 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7",
+          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -1012,7 +1012,7 @@
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "1fa6411755115d68d0b8fa2e356c1822428e771105c91995fc60461b1bb7b0ad",
+          "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -1048,7 +1048,7 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3",
+          "sha256": "7aabfc21b50f4e3960a126e012da494de196551f82ff333cb0977c51c109bdcc",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
@@ -1108,7 +1108,7 @@
         },
         {
           "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-          "sha256": "612efc83c8996ea9e319b3870dac5e6b5bbae44693ce4978b6a3091d5e1627b5",
+          "sha256": "ddafc43dec89d904749962cbeb1ace661d63ac748baf04506a0fcbee01493d15",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1132,7 +1132,7 @@
         },
         {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880",
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1156,7 +1156,7 @@
         },
         {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe",
+          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -5526,7 +5526,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7"
+          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d"
         },
         "testCaseId": "SEC-02 Session deletion closes PathPolicy leases before removing the session identity",
         "producer": "node-test"
@@ -5838,7 +5838,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
+          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5850,7 +5850,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
+          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5862,7 +5862,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
+          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5874,7 +5874,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
+          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5886,7 +5886,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
+          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -6378,7 +6378,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6390,7 +6390,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6402,7 +6402,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6414,7 +6414,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6426,7 +6426,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6438,7 +6438,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6450,7 +6450,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6462,7 +6462,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6474,7 +6474,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6486,7 +6486,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6498,7 +6498,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6510,7 +6510,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6594,7 +6594,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 config parent junction fails closed before runtime publication",
         "producer": "node-test"
@@ -6606,7 +6606,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 real persistence failure retires old authority and stops fail-closed",
         "producer": "node-test"
@@ -6618,7 +6618,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "30bf1d165fc89277e49efdd968bdead2c6808df807b111a13a0d0e61cac46880"
+          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
         },
         "testCaseId": "SEC-02 real publication failure restores disk and runtime using a fresh old-config authority",
         "producer": "node-test"
@@ -6654,7 +6654,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7"
+          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d"
         },
         "testCaseId": "SEC-02 child PathAuthority and ResourceOwner preserve only the exact root subset",
         "producer": "node-test"
@@ -6666,7 +6666,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7"
+          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d"
         },
         "testCaseId": "SEC-02 same configured root string cannot substitute a new filesystem identity",
         "producer": "node-test"
@@ -6678,7 +6678,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7"
+          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d"
         },
         "testCaseId": "SEC-02 Broker gateway denies root object replacement during an in-flight read",
         "producer": "node-test"
@@ -6690,7 +6690,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "67eb4d27b68c13cdf4ad63fc9d33bd2f210877fc5a935e623e55774fdf91ffa7"
+          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d"
         },
         "testCaseId": "SEC-02 attenuated child gateway cannot fall back to broader parent roots",
         "producer": "node-test"
@@ -6972,9 +6972,9 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "812dd45c4bd825b9697c5da3b51adfb79e16281ec25ac32cad7db37f9c97cafe"
+          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
         },
-        "testCaseId": "SEC-02 Oracle project read and managed snapshot write use disjoint governed paths",
+        "testCaseId": "SEC-02 Oracle writes and reads only the governed project-root LUX.oracle",
         "producer": "node-test"
       },
       {
@@ -7138,7 +7138,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "4c8e06433a8606c3fb5703c0a23f35e14c1dd67c492b313fe6c4ea7f3e362e8c"
+      "sha256": "0d5462edd3d8d4e632ca3399206e208764ded91fe5882148c553d0b8597bbc84"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7178,7 +7178,7 @@
     },
     {
       "exactCasePath": "tests/sec02-evidence-map.json",
-      "sha256": "1544bdc43221c560b4d98c0dd48e122b9d79215fcce79898bc148bca5c6aacb5"
+      "sha256": "eb8b94effabd80594bdb9483783831fd3f8a9cba0703dc9054a1dd334bc359ba"
     },
     {
       "exactCasePath": "tests/sec02-receipts.mjs",
@@ -7202,5 +7202,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "333df3bf34185ffdfc01965be25a27c8c24632af976215a15ba41f5610af7a95"
+  "canonicalPayloadSha256": "2027ab7e65195ec7d0083bcd373aa99ce863680d64533b248c79d3935eb57101"
 }

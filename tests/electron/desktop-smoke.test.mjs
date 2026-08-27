@@ -234,19 +234,22 @@ async function assertRendererHardening(client, httpPort) {
 
 async function selectRendererSession(client, sessionId) {
   const selector = `.session-item[data-session-id="${sessionId}"]`;
-  const alreadyActive = await client.evaluate(`document.querySelector('.session-item.active')?.dataset.sessionId === ${JSON.stringify(sessionId)}`);
-  if (alreadyActive) return;
-  const clicked = await client.evaluate(`(()=>{const target=document.querySelector(${JSON.stringify(selector)});if(!target)return false;target.click();return true})()`);
-  assert.equal(clicked, true, `renderer Session button is missing: ${sessionId}`);
+  const alreadyActive = await client.evaluate(`currentSessionId === ${JSON.stringify(sessionId)}`);
+  if (!alreadyActive) {
+    const clicked = await client.evaluate(`(()=>{const target=document.querySelector(${JSON.stringify(selector)});if(!target)return false;target.click();return true})()`);
+    assert.equal(clicked, true, `renderer Session button is missing: ${sessionId}`);
+  }
   try {
     await waitFor(async () => {
-      try { return await client.evaluate(`document.querySelector('.session-item.active')?.dataset.sessionId === ${JSON.stringify(sessionId)}`); }
-      catch { return false; }
+      try {
+        return await client.evaluate(`(async()=>{await sessionSelectionQueue;return currentSessionId === ${JSON.stringify(sessionId)}})()`);
+      } catch { return false; }
     }, { timeoutMs: 10_000, label: `renderer session ${sessionId}` });
   } catch (error) {
     const diagnostic = await client.evaluate(`(async()=>({
       requested:${JSON.stringify(sessionId)},
       active:document.querySelector('.session-item.active')?.dataset.sessionId||null,
+      currentSessionId,
       listed:Array.from(document.querySelectorAll('.session-item')).map(item=>item.dataset.sessionId),
       system:Array.from(document.querySelectorAll('.msg-system,.msg-assistant')).slice(-3).map(item=>item.textContent),
       server:await fetch('/api/sessions').then(response=>response.json()).catch(error=>({error:String(error)}))
@@ -267,6 +270,7 @@ async function assertRendererSessionIsolation(client, restoreSessionId) {
     try { return await client.evaluate(`document.querySelectorAll('.session-item').length >= 3`); }
     catch { return false; }
   }, { timeoutMs: 20_000, label: "RT-01 renderer reload" });
+  await client.evaluate("(()=>{if(document.getElementById('settings-modal').classList.contains('visible'))closeSettings();return true})()");
 
   await client.evaluate(`(()=>{
     const originalFetch=window.fetch.bind(window);
@@ -374,16 +378,50 @@ async function assertRendererSessionIsolation(client, restoreSessionId) {
     return true;
   })()`);
   await waitFor(async () => {
-    try { return await client.evaluate("window.__rt01RendererProbe.cancels.length === 0 && document.getElementById('submit').disabled"); }
-    catch { return false; }
+    try {
+      return await client.evaluate(`window.__rt01RendererProbe.cancels.length === 0
+        && document.getElementById('submit').disabled
+        && activeRunsBySession.get(${JSON.stringify(sessions.b)})?.runId === 'run-cancel-b'`);
+    } catch { return false; }
   }, { timeoutMs: 10_000, label: "RT-04 renderer run identity" });
   await delay(100);
-  await client.evaluate("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));true");
+  await client.evaluate("(()=>{if(document.getElementById('settings-modal').classList.contains('visible'))closeSettings();return true})()");
   await waitFor(async () => {
-    try {
-      return await client.evaluate("window.__rt01RendererProbe.cancels.length === 1 && !document.getElementById('submit').disabled && document.getElementById('messages').textContent.includes('已中断')");
-    } catch { return false; }
-  }, { timeoutMs: 10_000, label: "RT-04 renderer cancellation" });
+    try { return await client.evaluate("dialogStack.length === 0"); }
+    catch { return false; }
+  }, { timeoutMs: 10_000, label: "RT-04 cancellation dialog precondition" });
+  await client.evaluate(`(()=>{
+    const event=new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});
+    const result=document.body.dispatchEvent(event);
+    window.__rt01RendererProbe.escapeDispatch={result,defaultPrevented:event.defaultPrevented,currentSessionId,running:isSessionRunning()};
+    return true;
+  })()`);
+  try {
+    await waitFor(async () => {
+      try {
+        return await client.evaluate("window.__rt01RendererProbe.cancels.length === 1 && !document.getElementById('submit').disabled && document.getElementById('messages').textContent.includes('已中断')");
+      } catch { return false; }
+    }, { timeoutMs: 10_000, label: "RT-04 renderer cancellation" });
+  } catch (error) {
+    const diagnostic = await client.evaluate(`(()=>{
+      const token=activeRunsBySession.get(${JSON.stringify(sessions.b)});
+      const synthetic=new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});
+      return {
+        cancels:window.__rt01RendererProbe.cancels,
+        escapeDispatch:window.__rt01RendererProbe.escapeDispatch,
+        currentSessionId,
+        running:isSessionRunning(),
+        token:token?{runId:token.runId,cancelling:token.cancelling,aborted:token.controller.signal.aborted}:null,
+        submitDisabled:document.getElementById('submit').disabled,
+        messages:document.getElementById('messages').textContent.slice(-500),
+        activeElement:document.activeElement?.id||document.activeElement?.className||null,
+        activeDialog:dialogStack.at(-1)?.id||null,
+        cancelBinding:shortcutBindings.cancelRun,
+        syntheticAction:keyboardManager.actionForEvent(synthetic,shortcutBindings,window.electronAPI?.platform||navigator.platform),
+      };
+    })()`);
+    throw new Error(`${error instanceof Error ? error.message : String(error)}; diagnostic=${JSON.stringify(diagnostic)}`);
+  }
   assert.deepEqual(await client.evaluate("window.__rt01RendererProbe.cancels[0]"), {
     sessionId: sessions.b,
     runId: "run-cancel-b",
@@ -551,10 +589,12 @@ async function createDs05AttachmentDrafts(client) {
     await newChat();
     const sessionId=currentSessionId;
     const fromBase64=value=>Uint8Array.from(atob(value),character=>character.charCodeAt(0));
+    if(document.getElementById('settings-modal').classList.contains('visible')) closeSettings();
+    inputEl.focus();
     let altVInvoked=false;
     attachmentFileInputEl.addEventListener('click',event=>{event.preventDefault();altVInvoked=true;},{once:true});
     const altVEvent=new KeyboardEvent('keydown',{bubbles:true,cancelable:true,altKey:true,key:'v'});
-    document.dispatchEvent(altVEvent);
+    inputEl.dispatchEvent(altVEvent);
 
     const pasteTransfer=new DataTransfer();
     pasteTransfer.items.add(new File([
@@ -579,6 +619,14 @@ async function createDs05AttachmentDrafts(client) {
       sessionId,
       prevented:{altV:altVEvent.defaultPrevented,paste:pasteEvent.defaultPrevented,drop:dropEvent.defaultPrevented},
       altVInvoked,
+      shortcut:{
+        binding:shortcutBindings.attachFile,
+        action:keyboardManager.actionForEvent(altVEvent,shortcutBindings,window.electronAPI?.platform||navigator.platform),
+        altKey:altVEvent.altKey,
+        key:altVEvent.key,
+        activeKind:activeWorkbenchTab()?.kind||null,
+        activeElement:document.activeElement?.id||document.activeElement?.className||null,
+      },
       xhrContract:/new XMLHttpRequest\\(\\)/u.test(uploadReservedAttachment.toString()),
       drafts:attachmentDrafts.map(({id,name,mime,size,state,kind})=>({id,name,mime,size,state,kind})),
       chips:[...document.querySelectorAll('#attachment-draft-list .attachment-chip')].map(chip=>({
@@ -597,7 +645,7 @@ test("RT-01 renderer source keeps runs and questions session-bound", async () =>
   assert.match(source, /const questionsBySession = new Map\(\);/u);
   assert.match(source, /activeRunsBySession\.get\(sessionId\) === token/u);
   assert.match(source, /if \(!chatSessionId \|\| isSessionRunning\(chatSessionId\)\) return;/u);
-  assert.match(source, /finally \{ finishSessionRun\(chatSessionId, runToken\); if \(currentSessionId === chatSessionId\) inputEl\.focus\(\); \}/u);
+  assert.match(source, /finally \{ completeAccessibleResponse\(bubbleEl\.textContent\); finishSessionRun\(chatSessionId, runToken\); if \(currentSessionId === chatSessionId\) inputEl\.focus\(\); \}/u);
   assert.match(source, /questionsBySession\.get\(answerSessionId\)/u);
   assert.match(source, /question\.sessionId !== answerSessionId/u);
   const askBranch = source.indexOf('if (step.type === "ask_user")');
@@ -749,8 +797,12 @@ test("DS-05 real Electron persists clipboard and drop File uploads across reload
     instance = await startElectron(userData, httpPort, cdpPort, context.signal);
     client = await connectCdp(cdpPort);
     await probeIdentity(client, buildInfo, httpPort);
+    await waitFor(async () => {
+      try { return await client.evaluate("Boolean(workbenchLayout && currentSessionId && activeWorkbenchTab()?.kind === 'session')"); }
+      catch { return false; }
+    }, { timeoutMs: 20_000, label: "DS-05 initialized Session workbench" });
     const created = await createDs05AttachmentDrafts(client);
-    assert.deepEqual(created.prevented, { altV: true, paste: true, drop: true });
+    assert.deepEqual(created.prevented, { altV: true, paste: true, drop: true }, JSON.stringify(created.shortcut));
     assert.equal(created.altVInvoked, true);
     assert.equal(created.xhrContract, true);
     assert.deepEqual(created.drafts.map(value => ({ name: value.name, mime: value.mime, size: value.size, state: value.state, kind: value.kind })).sort((a, b) => a.name.localeCompare(b.name)), [
@@ -1018,8 +1070,8 @@ test("DS-09 real Electron renders typed Settings and hot-applies TTS without sec
     instance = await startElectron(userData, httpPort, cdpPort, context.signal);
     client = await connectCdp(cdpPort);
     await probeIdentity(client, buildInfo, httpPort);
-    await client.evaluate("openSettings()");
-    await waitFor(async () => client.evaluate("document.querySelectorAll('.settings-domain-tab').length===11"), { timeoutMs: 10_000, label: "DS-09 Settings tabs" });
+    await client.evaluate("(async()=>{await openSettings();return true})()");
+    await waitFor(async () => client.evaluate("Boolean(settingsState && document.querySelectorAll('.settings-domain-tab').length===11)"), { timeoutMs: 10_000, label: "DS-09 Settings tabs" });
     const initial = await client.evaluate(`({
       labels:[...document.querySelectorAll('.settings-domain-tab')].map(button=>button.querySelector('span')?.textContent),
       sections:[...document.querySelectorAll('[data-settings-domain]')].map(section=>section.dataset.settingsDomain),
@@ -1079,14 +1131,44 @@ test("DS-10 real Electron passes axe, keyboard focus, reflow and accessibility m
     instance = await startElectron(userData, httpPort, cdpPort, context.signal);
     client = await connectCdp(cdpPort);
     await probeIdentity(client, buildInfo, httpPort);
+    await waitFor(async () => {
+      try { return await client.evaluate("Boolean(desktopNavigationReady && workbenchLayout && currentSessionId && document.getElementById('input')?.getClientRects().length)"); }
+      catch { return false; }
+    }, { timeoutMs: 20_000, label: "DS-10 initialized accessible workbench" });
+    await delay(350);
+    await client.evaluate("(async()=>{await sessionSelectionQueue;if(document.getElementById('settings-modal').classList.contains('visible'))closeSettings();return true})()");
+    await waitFor(async () => {
+      try { return await client.evaluate("dialogStack.length === 0 && !document.getElementById('settings-modal').classList.contains('visible')"); }
+      catch { return false; }
+    }, { timeoutMs: 10_000, label: "DS-10 Workbench dialog precondition" });
     await installAxe(client);
     const violations = [];
     violations.push(...(await wcag21AaViolations(client)).map(item => ({ surface: "workbench", ...item })));
     await client.send("Accessibility.enable");
-    const workbenchAxTree = await client.send("Accessibility.getFullAXTree");
-    assert(workbenchAxTree.nodes.some(node => !node.ignored && node.role?.value === "combobox" && node.name?.value === "消息"));
-    await client.evaluate("document.querySelector('.new-chat-btn').focus();openSettings()");
-    await waitFor(() => client.evaluate("document.querySelectorAll('.settings-domain-tab').length===11"), { timeoutMs: 10_000, label: "DS-10 Settings tabs" });
+    await client.send("DOM.enable");
+    const documentNode = await client.send("DOM.getDocument", { depth: 1, pierce: true });
+    const inputNode = await client.send("DOM.querySelector", { nodeId: documentNode.root.nodeId, selector: "#input" });
+    assert(inputNode.nodeId > 0, "DS-10 message input DOM node is missing");
+    let lastInputAxTree = null;
+    try {
+      await waitFor(async () => {
+        lastInputAxTree = await client.send("Accessibility.getPartialAXTree", { nodeId: inputNode.nodeId, fetchRelatives: true });
+        return lastInputAxTree.nodes.some(node => !node.ignored && node.role?.value === "combobox" && node.name?.value === "消息");
+      }, { timeoutMs: 10_000, label: "DS-10 message input AX node" });
+    } catch (error) {
+      const state = await client.evaluate(`({
+        stack:dialogStack.map(modal=>modal.id),
+        settingsVisible:document.getElementById('settings-modal').classList.contains('visible'),
+        settingsHidden:document.getElementById('settings-modal').getAttribute('aria-hidden'),
+        inputInert:Boolean(document.getElementById('input').closest('[inert]')),
+        inputRects:document.getElementById('input').getClientRects().length,
+        bodyInert:[...document.body.children].filter(child=>child.inert).map(child=>child.id||child.className||child.tagName),
+      })`);
+      const nodes = lastInputAxTree?.nodes?.map(node => ({ ignored: node.ignored, role: node.role?.value, name: node.name?.value, reasons: node.ignoredReasons })) || [];
+      throw new Error(`${error instanceof Error ? error.message : String(error)}; state=${JSON.stringify(state)}; ax=${JSON.stringify(nodes)}`);
+    }
+    await client.evaluate("(async()=>{document.querySelector('.new-chat-btn').focus();await openSettings();return true})()");
+    await waitFor(() => client.evaluate("Boolean(settingsState && document.querySelectorAll('.settings-domain-tab').length===11)"), { timeoutMs: 10_000, label: "DS-10 Settings tabs" });
     const domains = await client.evaluate("settingsState.domainManifest.map(domain=>domain.id)");
     for (const domainId of domains) {
       await client.evaluate(`switchSettingsDomain(${JSON.stringify(domainId)});true`);
@@ -1141,7 +1223,7 @@ test("DS-10 real Electron passes axe, keyboard focus, reflow and accessibility m
       refreshQuestionForCurrentSession();
       return true;
     })()`;
-    await client.evaluate("document.querySelector('.new-chat-btn').focus();openSettings()");
+    await client.evaluate("(async()=>{document.querySelector('.new-chat-btn').focus();await openSettings();return true})()");
     await client.evaluate(installQuestion);
     await waitFor(() => client.evaluate("dialogStack.length===2 && dialogStack.at(-1).id==='ask-modal'"), { timeoutMs: 5_000, label: "DS-10 nested Settings ask dialog" });
     assert.deepEqual(await wcag21AaViolations(client), []);
@@ -1158,7 +1240,7 @@ test("DS-10 real Electron passes axe, keyboard focus, reflow and accessibility m
 
     await client.evaluate("document.querySelector('.new-chat-btn').focus();true");
     await client.evaluate(installQuestion);
-    await client.evaluate("openSettings()");
+    await client.evaluate("(async()=>{await openSettings();return true})()");
     await waitFor(() => client.evaluate("dialogStack.length===2 && dialogStack.at(-1).id==='settings-modal'"), { timeoutMs: 5_000, label: "DS-10 reverse nested dialogs" });
     await client.evaluate("questionsBySession.delete(currentSessionId);refreshQuestionForCurrentSession();true");
     assert.equal(await client.evaluate("dialogStack.length===1 && dialogStack[0].id==='settings-modal' && document.activeElement.closest('#settings-modal')!==null"), true);
@@ -1180,7 +1262,7 @@ test("DS-10 real Electron passes axe, keyboard focus, reflow and accessibility m
       assert(reflow.inputWidth >= 40, JSON.stringify(reflow));
     }
     await client.send("Emulation.setDeviceMetricsOverride", { width: 320, height: 720, deviceScaleFactor: 1, mobile: false });
-    await client.evaluate("openSettings()");
+    await client.evaluate("(async()=>{await openSettings();return true})()");
     const settingsReflow = await client.evaluate(`(()=>{
       const panel=document.getElementById('settings-panel');const rect=panel.getBoundingClientRect();
       return {left:rect.left,right:rect.right,bottom:rect.bottom,innerWidth,innerHeight,scrollWidth:panel.scrollWidth,clientWidth:panel.clientWidth};

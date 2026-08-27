@@ -138,7 +138,7 @@ test("DS-08 legacy event backfill remains atomically capped at 500 rows", async 
     await fs.mkdir(path.join(fixture, "data"), { recursive: true });
     await runSeed(fixture, "seed");
     const result = await runSeed(fixture, "cap");
-    assert.deepEqual(result, { schemaVersion: 10, capped: 500 });
+    assert.deepEqual(result, { schemaVersion: 11, capped: 500 });
   } finally {
     await removeFixture(fixture);
   }

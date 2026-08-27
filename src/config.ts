@@ -281,6 +281,15 @@ export function getCurrentProfile(): ProviderProfile {
   return cfg.profiles[getCurrentProfileName()];
 }
 
+/** Resolve an exact provider profile without mutating the process-wide current profile. */
+export function getProviderProfile(name: string): ProviderProfile {
+  const cfg = loadConfig();
+  const selected = name || getCurrentProfileName();
+  const profile = cfg.profiles[selected];
+  if (!profile) throw new Error(`Profile 不存在: ${selected}`);
+  return profile;
+}
+
 function cloneConfig(source: Config): Config {
   return {
     schemaVersion: 2,

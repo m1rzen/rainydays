@@ -92,7 +92,7 @@ test("DATA-01 corrupted WAL is rejected before writable open without mutating re
 test("DATA-01 SQLite online backup seals WAL content into one validated snapshot", async () => {
   assert.deepEqual(await runScenario("snapshot"), {
     scenario: "snapshot",
-    schemaVersion: 10,
+    schemaVersion: 11,
     walContentPreserved: true,
     checksPassed: true,
     cleanClose: true,
@@ -171,6 +171,6 @@ test("SEC-02 governed database facade exercises the persistent schema and CRUD s
   assert.deepEqual(await runScenario("crud"), {
     scenario: "crud",
     crudCovered: true,
-    schemaVersion: 10,
+    schemaVersion: 11,
   });
 });

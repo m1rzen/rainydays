@@ -13,15 +13,26 @@ Object.assign(process.env, {
   RAINYDAYS_DATA_DIR: dataDir,
 });
 
-const [session, database, tasks, link, bootstrap] = await Promise.all([
+const [session, database, tasks, link, bootstrap, { createEffectivePersona }] = await Promise.all([
   import("../../dist/session.js"),
   import("../../dist/db.js"),
   import("../../dist/task.js"),
   import("../../dist/link.js"),
   import("../../dist/bootstrap-path-store.js"),
+  import("../../dist/persona.js"),
 ]);
 
-const persona = { name: "data02-fixture" };
+const persona = createEffectivePersona({
+  name: "data02-fixture",
+  displayName: "DATA-02 Fixture",
+  description: "Session transfer fixture",
+  permissionLevel: "guarded",
+  tools: [],
+  env: {},
+  allowedRoots: [],
+  networkPolicy: { mode: "deny" },
+  systemPrompt: "DATA-02 fixture",
+});
 const now = "2026-08-24T00:00:00.000Z";
 const plain = value => JSON.parse(JSON.stringify(value));
 

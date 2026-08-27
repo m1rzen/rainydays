@@ -2,11 +2,12 @@
 // 第四优先工具集合 —— Oracle/Playbook/Link/Wire
 // ===========================================
 
-import type { ToolDefinition, ToolExecutor } from "../types.js";
+import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 import type { LLMClient } from "../llm.js";
 import {
-  saveOracle, queryOracle, getOracleStatus,
-} from "../oracle.js";import {
+  saveOracle, queryOracle, getOracleStatus, type OracleChildRunner,
+} from "../oracle.js";
+import {
   listPlaybooks, createPlaybook, listActiveRuns, getRunStatus,
   type Playbook, type PlaybookOwner,
 } from "../playbook.js";
@@ -16,19 +17,47 @@ import { getDefaultPollManager } from "../poll.js";
 import { isSupervisorEnabled, getSupervisorRules } from "../supervisor.js";
 
 // ========== Oracle ==========
+async function assertOracleRootSelector(args: Readonly<Record<string, unknown>>, invocation: ToolInvocationServices): Promise<void> {
+  if (args.path === undefined || args.path === "" || args.path === ".") return;
+  const rootId = invocation.path.rootIdForEnv("DATA_ROOT") ?? invocation.path.rootIdForEnv("WORKSPACE_ROOT");
+  if (!rootId) throw new Error("Oracle project root is unavailable");
+  const selected = await invocation.path.identifyDirectory(String(args.path), { defaultRootId: rootId });
+  const projectRoot = await invocation.path.identifyDirectory("", { defaultRootId: rootId });
+  if (selected.rootId !== projectRoot.rootId || selected.identityDigest !== projectRoot.identityDigest) {
+    throw new Error("Oracle path may only assert the current governed project root");
+  }
+}
+
 export const oracleQueryDef: ToolDefinition = {
   type: "function",
   function: {
     name: "oracle_query",
-    description: "向项目知识库 Oracle 提问。Oracle 包含项目目录结构和关键文件内容快照。",
-    parameters: { type: "object", properties: { question: { type: "string", description: "关于项目的问题" } }, required: ["question"] },
+    description: "Consult project-root LUX.oracle through a read-only child Session. A bounded best-effort credential-scrubbed Canvas projection is sent after a second confirmation bound to its exact byte count and SHA-256 to the independently configured Oracle provider and requires user approval.",
+    parameters: {
+      type: "object",
+      properties: {
+        question: { type: "string", description: "关于项目的问题" },
+        path: { type: "string", description: "可选兼容性根断言；只能指向当前受管项目根，不能选择子项目" },
+      },
+      required: ["question"],
+      additionalProperties: false,
+    },
   },
 };
 
-export function createOracleQueryExec(llm: LLMClient): ToolExecutor {
+export type OracleChildRunnerFactory = (invocation: ToolInvocationServices) => OracleChildRunner;
+
+export function createOracleQueryExec(llm: LLMClient, createChildRunner?: OracleChildRunnerFactory): ToolExecutor {
   return async (args, _env, invocation) => {
     if (!invocation) throw new Error("Tool invocation services are required");
-    return queryOracle(llm, args.question as string, invocation.signal, invocation.network.fetch);
+    await assertOracleRootSelector(args, invocation);
+    return queryOracle(
+      llm,
+      args.question as string,
+      invocation.path,
+      invocation.signal, invocation.network.fetch,
+      createChildRunner?.(invocation),
+    );
   };
 }
 
@@ -36,36 +65,39 @@ export const oracleSaveDef: ToolDefinition = {
   type: "function",
   function: {
     name: "oracle_save",
-    description: "保存当前项目的知识快照到 Oracle。之后可以用 oracle_query 查询项目结构信息。",
+    description: "Save the complete current Session Canvas, Pins, Tasks, and attachment bytes as plaintext LUX.oracle in a project root. Requires user approval; do not commit or share the file unless intended.",
     parameters: {
       type: "object",
-      properties: {
-        path: { type: "string", description: "要保存快照的项目根路径" },
-      },
-      required: ["path"],
+      properties: { path: { type: "string", description: "可选兼容性根断言；只能指向当前受管项目根" } },
+      additionalProperties: false,
     },
   },
 };
 
 export const oracleSaveExec: ToolExecutor = async (args, _env, invocation) => {
   if (!invocation) throw new Error("Oracle project Path gateway is required");
-  const projectPath = args.path as string;
-  return await saveOracle(projectPath, invocation.path);
+  await assertOracleRootSelector(args, invocation);
+  return await saveOracle(invocation.path, invocation.capabilityContext.sessionId);
 };
 
 export const oracleStatusDef: ToolDefinition = {
   type: "function",
   function: {
     name: "oracle_status",
-    description: "查看 Oracle 知识库的状态（是否已加载、项目路径、创建时间）。",
-    parameters: { type: "object", properties: {} },
+    description: "Read and validate project-root LUX.oracle status.",
+    parameters: {
+      type: "object",
+      properties: { path: { type: "string", description: "可选兼容性根断言；只能指向当前受管项目根" } },
+      additionalProperties: false,
+    },
   },
 };
 
-export const oracleStatusExec: ToolExecutor = async () => {
-  const status = await getOracleStatus();
-  if (!status.loaded) return "Oracle 未初始化。请先用 oracle_save 保存项目快照。";
-  return `Oracle 已加载\n项目: ${status.projectPath}\n创建时间: ${status.createdAt}`;
+export const oracleStatusExec: ToolExecutor = async (args, _env, invocation) => {
+  if (!invocation) throw new Error("Tool invocation services are required");
+  await assertOracleRootSelector(args, invocation);
+  const status = await getOracleStatus(invocation.path);
+  return `Oracle 已加载\n项目: ${status.projectPath}\n创建时间: ${status.createdAt}\n格式版本: ${status.formatVersion}${status.legacy ? " (legacy, migration supported)" : ""}`;
 };
 
 // ========== Playbook ==========

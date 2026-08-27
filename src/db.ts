@@ -1184,7 +1184,7 @@ export function validateDatabaseRestoreCandidate(
   }
   const bytes = fs.readFileSync(databasePath);
   const candidate = createInMemoryBootstrapDatabase(bytes);
-  try { assertSchemaV10(candidate); }
+  try { assertSchemaV11(candidate); }
   finally { candidate.close(); }
   return validation;
 }

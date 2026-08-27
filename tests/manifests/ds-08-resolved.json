@@ -63,12 +63,12 @@
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "d3b7f1071cd24b326fb619880344cb15272e968237ab9a77909519f5584be79e",
+      "sha256": "54f748e2febdd12d3288578b4d820fc3ce3964af45191da9af72e1b0d8906e31",
       "owner": "DS-08"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
+      "sha256": "410c0f87e0226df9b517cb0d2b91a5227aadf61856306e4eab0bc5f572387399",
       "owner": "DS-08"
     },
     {
@@ -123,35 +123,35 @@
     },
     {
       "exactCasePath": "tests/integration/ds08-notifications.test.mjs",
-      "sha256": "bca9f154c081785f214bdf55f9dfce1693cdb18674832101a9eb0cc8a9885e89",
+      "sha256": "954f239d53f0627bf153ac496ae06733434f17960a0bef9ab279268b7f1d748b",
       "kind": "test",
       "layer": "integration",
       "owner": "DS-08"
     },
     {
       "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-      "sha256": "612efc83c8996ea9e319b3870dac5e6b5bbae44693ce4978b6a3091d5e1627b5",
+      "sha256": "ddafc43dec89d904749962cbeb1ace661d63ac748baf04506a0fcbee01493d15",
       "kind": "test",
       "layer": "integration",
       "owner": "DS-08"
     },
     {
       "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs",
-      "sha256": "9d7fead9dcf4777900a03b78481d9747a3b69beeeafd668ac4ba9a33eeea6494",
+      "sha256": "226e3c1fa8cf72c1d888d1c763d65629ab6502c3471d091190eee8074f8624e2",
       "kind": "test",
       "layer": "integration",
       "owner": "DS-08"
     },
     {
       "exactCasePath": "tests/integration/ds03-workbench-layout.test.mjs",
-      "sha256": "1f332e78d18a07e3e548130a324b1a4951f519d50287ea42237ff2a8705d0120",
+      "sha256": "67b0edae5408b405edb7bd6255425389c918b2ded4c9aadb5f434d3af9ad1be4",
       "kind": "test",
       "layer": "integration",
       "owner": "DS-08"
     },
     {
       "exactCasePath": "tests/integration/rt07-task-dag.test.mjs",
-      "sha256": "8ca4d1eb9f336b1f4a780ba649e4974acdbd41e09e0f900f7d05ceecc200fc31",
+      "sha256": "f55358a474d133cd08b8d4a6185b6ecbd87636f558709f5f3a14eb2e1d4aa60a",
       "kind": "test",
       "layer": "integration",
       "owner": "DS-08"
@@ -165,11 +165,11 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "3c9b3f62441c98341c95464b64e34098c7602a09d65651f502f40ec3213179c3",
+      "sha256": "7aabfc21b50f4e3960a126e012da494de196551f82ff333cb0977c51c109bdcc",
       "kind": "test",
       "layer": "electron",
       "owner": "DS-08"
     }
   ],
-  "canonicalPayloadSha256": "02fcf34f9a9963dd392c40c3f1aca12e1bca131077c1ffdf9302ea4232c9db16"
+  "canonicalPayloadSha256": "565c9f801f450078693b4cd53a060d6d610f9c6fc20667e5f4909d25cf9fc773"
 }

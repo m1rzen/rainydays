@@ -4,7 +4,18 @@ const action = process.argv[2];
 const task = await import("../../dist/task.js");
 const session = await import("../../dist/session.js");
 const db = await import("../../dist/db.js");
-const persona = { name: "general" };
+const { createEffectivePersona } = await import("../../dist/persona.js");
+const persona = createEffectivePersona({
+  name: "general",
+  displayName: "General",
+  description: "RT-07 fixture",
+  permissionLevel: "guarded",
+  tools: [],
+  env: {},
+  allowedRoots: [],
+  networkPolicy: { mode: "deny" },
+  systemPrompt: "RT-07 fixture",
+});
 
 function exactRows(sessionId) {
   return {
@@ -282,7 +293,7 @@ if (action === "seed") {
   const isolatedId = process.env.RT07_ISOLATED_ID;
   const forkId = process.env.RT07_FORK_ID;
   assert(sourceId && isolatedId && forkId, "RT-07 verification identities are missing");
-  assert.equal(db.getDatabaseSchemaVersion(), 10);
+  assert.equal(db.getDatabaseSchemaVersion(), 11);
   const source = task.getTasksBySession(sourceId);
   const isolated = task.getTasksBySession(isolatedId);
   const fork = task.getTasksBySession(forkId);
@@ -291,7 +302,7 @@ if (action === "seed") {
   assert.equal(fork.map(entry => entry.id).join(","), "setup,build,release");
   assert.equal(fork.find(entry => entry.id === "build")?.blockedBy.join(","), "setup");
   assert.equal(fork.find(entry => entry.id === "release")?.blockedBy.join(","), "build");
-  console.log(JSON.stringify({ schemaVersion: 10, source, isolated, fork }));
+  console.log(JSON.stringify({ schemaVersion: 11, source, isolated, fork }));
   db.closeDb();
 } else {
   throw new Error(`Unknown RT-07 fixture action: ${action}`);

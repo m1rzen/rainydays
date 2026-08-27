@@ -7,7 +7,7 @@ process.env.RAINYDAYS_USER_DATA_DIR = fixture;
 process.env.RAINYDAYS_DATA_DIR = path.join(fixture, "data");
 const db = await import("../../dist/db.js");
 try {
-  assert.equal(db.getDatabaseSchemaVersion(), 10);
+  assert.equal(db.getDatabaseSchemaVersion(), 11);
   const now = Date.now();
   if (mode === "seed") {
     db.insertSession({ id: "ds08-session-a", persona_name: "general", title: "Session A", created_at: new Date(now).toISOString(), updated_at: new Date(now).toISOString() });
@@ -19,7 +19,7 @@ try {
     assert.equal(duplicate.inserted, false);
     assert.equal(duplicate.notification.id, first.notification.id);
     assert.equal(second.inserted, true);
-    console.log(JSON.stringify({ schemaVersion: 10, firstId: first.notification.id, secondId: second.notification.id }));
+    console.log(JSON.stringify({ schemaVersion: 11, firstId: first.notification.id, secondId: second.notification.id }));
   } else if (mode === "backfill") {
     db.db.prepare(
       `INSERT INTO events
@@ -36,7 +36,7 @@ try {
     });
     assert.equal(db.getDesktopNotificationBySourceKey("event:evt_ds08atomic0000000000000000000001").body, "Atomic persisted");
     assert.equal(db.backfillDesktopNotificationsFromEvents(), 0);
-    console.log(JSON.stringify({ schemaVersion: 10, count: db.listDesktopNotifications().length }));
+    console.log(JSON.stringify({ schemaVersion: 11, count: db.listDesktopNotifications().length }));
   } else if (mode === "cap") {
     db.withTransaction(() => {
       const insert = db.db.prepare(
@@ -52,11 +52,11 @@ try {
     assert.equal(db.backfillDesktopNotificationsFromEvents(), 510);
     assert.equal(db.listDesktopNotifications(500).length, 500);
     assert.equal(db.desktopNotificationUnreadCounts().reduce((sum, entry) => sum + entry.count, 0), 500);
-    console.log(JSON.stringify({ schemaVersion: 10, capped: db.listDesktopNotifications(500).length }));
+    console.log(JSON.stringify({ schemaVersion: 11, capped: db.listDesktopNotifications(500).length }));
   } else {
     const notifications = db.listDesktopNotifications();
     const counts = db.desktopNotificationUnreadCounts();
-    console.log(JSON.stringify({ schemaVersion: 10, notifications, counts }));
+    console.log(JSON.stringify({ schemaVersion: 11, notifications, counts }));
   }
 } finally {
   await db.closeDb();

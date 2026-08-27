@@ -48,7 +48,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "13f2a8a15e9e845857be968337e46fdb0f64bc19f13d7ef02e298efec95d5eab",
+      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
       "owner": "TOOL-02"
     },
     {
@@ -158,12 +158,12 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-02-current.json",
-      "sha256": "e1193cadefb68f6405128503befe8aa96abd4a3f7da389c94a64f3b2abe085af",
+      "sha256": "c7da46037fbbcd683ac8330e728bd825e5e3ca1201dcbdd68a83d08776377db9",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "4c8e06433a8606c3fb5703c0a23f35e14c1dd67c492b313fe6c4ea7f3e362e8c",
+      "sha256": "0d5462edd3d8d4e632ca3399206e208764ded91fe5882148c553d0b8597bbc84",
       "owner": "TOOL-02"
     },
     {
@@ -173,12 +173,12 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "21e154a260f9fffa0c66ee017071b03d070f1c5c411139964d4263119100c933",
+      "sha256": "56da512928b4da1a2859d8e1512d00c2e222927e3071fb7b20aaf7efaf8d4628",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "b674b0aee9a7c667c08ee543ac90f7622f2f3f3d0dcee8a43f72ab6e8d98f84b",
+      "sha256": "e7eddea060f057b065680cdc84f4eaf7b98fdd2acaf39f5e7fe08f5ab53811a8",
       "owner": "TOOL-02"
     },
     {
@@ -204,7 +204,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-      "sha256": "1fa6411755115d68d0b8fa2e356c1822428e771105c91995fc60461b1bb7b0ad",
+      "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
       "kind": "test",
       "layer": "contract",
       "owner": "TOOL-02"
@@ -245,5 +245,5 @@
       "owner": "TOOL-02"
     }
   ],
-  "canonicalPayloadSha256": "1f542cbb90a2dd6f5f676f7f6d96afb60855055780bbd57c8373efd0d9b842bb"
+  "canonicalPayloadSha256": "08b64cacbdd1ff9fd4c73cdcb8e24f4ad99b2e588fbe8442614f842afef8dc9d"
 }

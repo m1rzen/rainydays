@@ -1025,6 +1025,32 @@ export class PathPolicy {
     return await outcome.value;
   }
 
+  /** Qualify one directory and return its private canonical identity without enumerating children. */
+  async identifyDirectoryDirect(authority: PathAuthority, request: PathRequest): Promise<PathQualifiedResult> {
+    if (request.operation !== "read-directory") throw new TypeError("identifyDirectoryDirect requires read-directory permission");
+    return this.#run(authority, request, async (record, state) => {
+      const selected = this.#selectTarget(record, request);
+      state.rootId = selected.root.rootId;
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, selected.lexicalTarget);
+      await this.#barrier("afterLexicalContainment", state.operationId);
+      this.#assertActive(record);
+      const canonicalPath = this.#normalizeAbsolute(await this.#realpathOrDeny(selected.lexicalTarget));
+      const canonicalRoot = this.#selectCanonicalRoot(record, canonicalPath, "read-directory");
+      if (canonicalRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      const before = await this.#statIdentity(canonicalPath, "directory");
+      await this.#barrier("afterCanonicalValidation", state.operationId);
+      this.#assertActive(record);
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, selected.lexicalTarget);
+      const finalCanonical = this.#normalizeAbsolute(await this.#realpathOrDeny(selected.lexicalTarget));
+      if (!this.#samePath(canonicalPath, finalCanonical)) deny("PATH_IDENTITY_CHANGED");
+      const after = await this.#statIdentity(finalCanonical, "directory");
+      if (!sameIdentity(before.identity, after.identity)) deny("PATH_IDENTITY_CHANGED");
+      return Object.freeze({ rootId: selected.root.rootId, canonicalPath, identity: after.identity, snapshot: after.snapshot });
+    });
+  }
+
   async listDirectory(authority: PathAuthority, request: PathRequest, maxEntries = 10_000): Promise<readonly PathDirectoryEntry[]> {
     const result = await this.#listExistingDirectory(authority, request, maxEntries, "read-directory");
     return Object.freeze(result.entries.map((entry) => Object.freeze({ name: entry.name, type: entry.type })));

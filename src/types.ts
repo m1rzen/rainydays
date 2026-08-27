@@ -104,8 +104,18 @@ export interface ScopedWatchLease {
   readonly isOpen: () => boolean;
 }
 
+export interface ScopedDirectoryIdentity {
+  readonly rootId: string;
+  /** Opaque digest; canonical host paths and filesystem object identifiers never leave the Broker. */
+  readonly identityDigest: string;
+}
+
 export interface ScopedPathGateway {
   readonly rootIdForEnv: (envKey: string) => string | null;
+  readonly identifyDirectory: (
+    input: string,
+    options?: Readonly<{ defaultRootId?: string }>
+  ) => Promise<ScopedDirectoryIdentity>;
   readonly withInitialCwd: <T>(
     input: string,
     options: Readonly<{ defaultRootId?: string }>,

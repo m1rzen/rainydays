@@ -13,7 +13,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "fbea71b29b0e66299217777661bbade30161ac51b18b6c0cf989c57a627a74fa",
+      "sha256": "e96ba4e8f93182403c50807bc44e69f72b7a43d115ab69ec586289d096c4f0bd",
       "owner": "RT-05"
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "exactCasePath": "dist/oracle.js",
-      "sha256": "e6d86703ef0730a18d5a92993b3f8a90b0958c38fb7e1b2eb51188b1232f6a46",
+      "sha256": "2f6ba5b1c289a539a7c9d4a1152b61057ea9cb89ce7f00290e5feace0060ba79",
       "owner": "RT-05"
     },
     {
@@ -53,7 +53,7 @@
     },
     {
       "exactCasePath": "dist/tools/advanced-tools.js",
-      "sha256": "bc238cf75b444102d087d29e927597adbe4b0d2d09e7f99088fb570fea8d6602",
+      "sha256": "cd9518f8f9fd771f56276e4dcc7d6445f6a79f354a5b124fee6d345b71e3f0ac",
       "owner": "RT-05"
     },
     {
@@ -118,7 +118,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
+      "sha256": "410c0f87e0226df9b517cb0d2b91a5227aadf61856306e4eab0bc5f572387399",
       "owner": "RT-05"
     },
     {
@@ -138,7 +138,7 @@
     },
     {
       "exactCasePath": "src/oracle.ts",
-      "sha256": "7d484265a28bbccc6b2e88db0b18fcc6cc3863420efd08b1f3c46be7de6ddc82",
+      "sha256": "c0a2989c637dcca11054c7d23fa6d3e4977d23318b1e341d5a69c7288c5b471e",
       "owner": "RT-05"
     },
     {
@@ -158,7 +158,7 @@
     },
     {
       "exactCasePath": "src/tools/advanced-tools.ts",
-      "sha256": "293fbfe5b14ef9d258d742da88d47e4e5f16dfc7bf34ccb0bcd1cb7d2c91bedb",
+      "sha256": "4c9e16cc5399e615beaf16e3de3f8899098f844bf2b7815fd66993c6af217def",
       "owner": "RT-05"
     },
     {
@@ -213,7 +213,7 @@
     },
     {
       "exactCasePath": "src/types.ts",
-      "sha256": "4a3287b18b97d6fd3e804d637ebde221a5a440ca3a0e0d9735a104006c41b39d",
+      "sha256": "b8b3832dbcac45658a63bb020a86ac40fcaab42b010bd829ddd867f3c8fb3b4a",
       "owner": "RT-05"
     }
   ],
@@ -255,7 +255,7 @@
     },
     {
       "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
-      "sha256": "42ec792f137abbd39cf403a6515020cdb9a86c56473fe59a7dc63f5b3b05f066",
+      "sha256": "110cd99298f74bb7f58beabbcd2264f3bf55d5b19664ad80927f59b4bd5a2322",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-05"
@@ -289,5 +289,5 @@
       "owner": "RT-05"
     }
   ],
-  "canonicalPayloadSha256": "39f0f53b6a3b242b7dd04114b97059046fede257b7680dfbb859debf2a7a57a6"
+  "canonicalPayloadSha256": "047e955c444d893e7344c52734662518532ecc4bc05a367dfd56918357005723"
 }

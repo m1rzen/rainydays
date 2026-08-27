@@ -675,6 +675,11 @@ export interface ExportData {
   };
 }
 
+/** Validate a serialized Session snapshot without importing or mutating database state. */
+export function validateSessionExportData(value: unknown): void {
+  normalizeSessionImport(value);
+}
+
 /** 导出会话为当前可序列化格式。 */
 export function exportSession(sessionId: string): ExportData | null {
   const session = getSession(sessionId);

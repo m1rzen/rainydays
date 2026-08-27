@@ -60,7 +60,7 @@ test("RT-05 LLM-backed dynamic adapters use the run-scoped network transport", a
       ["src/subagent.ts", /invocation\.signal, invocation\.network\.fetch/u],
       ["src/playbook.ts", /invocation\.signal, invocation\.network\.fetch/u],
       ["src/memory.ts", /undefined, signal, transport/u],
-      ["src/oracle.ts", /undefined, signal, transport/u],
+      ["src/oracle.ts", /llm\.chat\(messages, \[\], signal, transport\)/u],
     ];
     for (const [exactCasePath, pattern] of transportBindings) {
       assert.match(await readFile(path.join(projectRoot, exactCasePath), "utf8"), pattern, exactCasePath);

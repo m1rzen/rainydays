@@ -84,10 +84,13 @@ function parsePeMachine(bytes) {
 
 const programFilesX86 = process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)";
 const vswhere = path.join(programFilesX86, "Microsoft Visual Studio", "Installer", "vswhere.exe");
-const instances = JSON.parse(run(vswhere, ["-products", "*", "-version", "[17.0,18.0)", "-format", "json", "-utf8"]));
-if (!Array.isArray(instances) || instances.length !== 1) throw new Error(`Expected exactly one eligible Visual Studio 2022 instance, found ${instances.length}`);
-const vsInstance = instances[0];
+const discoveredInstances = JSON.parse(run(vswhere, ["-products", "*", "-version", "[17.0,18.0)", "-format", "json", "-utf8"]));
+if (!Array.isArray(discoveredInstances)) throw new Error("Visual Studio 2022 discovery result is invalid");
 const allowedVsProducts = new Set(["Microsoft.VisualStudio.Product.BuildTools", "Microsoft.VisualStudio.Product.Community"]);
+const instances = discoveredInstances.filter(instance => allowedVsProducts.has(instance?.productId)
+  && instance?.installationVersion === "17.13.35825.156");
+if (instances.length !== 1) throw new Error(`Expected exactly one pinned Visual Studio 2022 instance, found ${instances.length}`);
+const vsInstance = instances[0];
 if (!allowedVsProducts.has(vsInstance.productId) || vsInstance.installationVersion !== "17.13.35825.156") throw new Error("Pinned Visual Studio 2022 instance identity differs");
 const vsRoot = vsInstance.installationPath;
 const msvcRoot = path.join(vsRoot, "VC", "Tools", "MSVC", versions.msvc);

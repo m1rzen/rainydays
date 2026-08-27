@@ -13,7 +13,7 @@
     },
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "043ee61110fbf015bff706ae3bbef64d697c6340d6c256c91a39111d84c870ea",
+      "sha256": "5110987e6e39fc628de0f63d20104bbaf7f516416dac0829b49e6b5a8955daa5",
       "owner": "RT-11"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "fbea71b29b0e66299217777661bbade30161ac51b18b6c0cf989c57a627a74fa",
+      "sha256": "e96ba4e8f93182403c50807bc44e69f72b7a43d115ab69ec586289d096c4f0bd",
       "owner": "RT-11"
     },
     {
@@ -68,7 +68,7 @@
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "d3b7f1071cd24b326fb619880344cb15272e968237ab9a77909519f5584be79e",
+      "sha256": "54f748e2febdd12d3288578b4d820fc3ce3964af45191da9af72e1b0d8906e31",
       "owner": "RT-11"
     },
     {
@@ -78,7 +78,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "6411d1a3a1b6c5c601fdcd65bfd7714ebeb59dd1020be60eed8fd1e9869e2758",
+      "sha256": "410c0f87e0226df9b517cb0d2b91a5227aadf61856306e4eab0bc5f572387399",
       "owner": "RT-11"
     },
     {
@@ -133,14 +133,14 @@
     },
     {
       "exactCasePath": "tests/integration/rt05-dynamic-adapters.test.mjs",
-      "sha256": "42ec792f137abbd39cf403a6515020cdb9a86c56473fe59a7dc63f5b3b05f066",
+      "sha256": "110cd99298f74bb7f58beabbcd2264f3bf55d5b19664ad80927f59b4bd5a2322",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-11"
     },
     {
       "exactCasePath": "tests/integration/evt01-event-persistence.test.mjs",
-      "sha256": "9d7fead9dcf4777900a03b78481d9747a3b69beeeafd668ac4ba9a33eeea6494",
+      "sha256": "226e3c1fa8cf72c1d888d1c763d65629ab6502c3471d091190eee8074f8624e2",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-11"
@@ -167,5 +167,5 @@
       "owner": "RT-11"
     }
   ],
-  "canonicalPayloadSha256": "e278d32f1b8d0e1caeeb7a8660895a5d1b193cfe9e6d566c8767c8b85a871aa0"
+  "canonicalPayloadSha256": "7985fe74cf35b012b156724503c90f91012f125fd1584fa5e68e5fc22568c068"
 }
