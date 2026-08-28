@@ -146,7 +146,9 @@
     "governance:rel04:check": "node scripts/generate-rel04-resolved-manifest.mjs --check",
     "test:rel04": "node scripts/run-tests.mjs --task REL-04 --profile full",
     "governance:rt10:generate": "node scripts/generate-rt10-resolved-manifest.mjs",
-    "governance:rt10:check": "node scripts/generate-rt10-resolved-manifest.mjs --check"
+    "governance:rt10:check": "node scripts/generate-rt10-resolved-manifest.mjs --check",
+    "governance:ds01:generate": "node scripts/generate-ds01-resolved-manifest.mjs",
+    "governance:ds01:check": "node scripts/generate-ds01-resolved-manifest.mjs --check"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",

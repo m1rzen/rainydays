@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "9d5cdad9166448a379c1d4bac9a92e778a606ddb8844847ecbffc68e14da9b7c",
+      "sha256": "91a8855a79eaaa6f99e9c9dff0ea5464eb1dbf7de8767922f0e415929982c672",
       "owner": "DS-09"
     },
     {
@@ -18,7 +18,7 @@
     },
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "01e1bbbaa0c5ac2154d3b66eea360f5c62eb53cfcc89b8e96fc885cca18b6fef",
+      "sha256": "8c05678d87641a3e6a972506b79a235a6b7e49e70624a72ccff10d5947414b5b",
       "owner": "DS-09"
     },
     {
@@ -78,7 +78,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "009b934421afe838c029c8e0bae1d2bcc88d7c4af6aa6fbf4bff1608b5286f2a",
+      "sha256": "2979037ab93bf813552fe6fcefcdee7111109f47fe7afd9f15ea521089734089",
       "owner": "DS-09"
     },
     {
@@ -159,5 +159,5 @@
       "owner": "DS-09"
     }
   ],
-  "canonicalPayloadSha256": "d2ea581738860394d49975bc01211db50fa8f53b15841c84621184dfbe8f43c7"
+  "canonicalPayloadSha256": "f5f2dc4e030233bef00429e4f08c542f15f8ceceb9730414168c9d1898edea35"
 }

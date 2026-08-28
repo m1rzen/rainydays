@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "taskId": "DS-01",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "electron/main.cjs",
+    "electron/window-lifecycle.cjs",
+    "package.json",
+    "scripts/ds01-governance.mjs",
+    "scripts/generate-ds01-resolved-manifest.mjs",
+    "scripts/report-schema.mjs",
+    "tests/helpers.mjs",
+    "tests/sec02-sink-inventory.json",
+    "tests/sec02-sink-policy.json"
+  ],
+  "coverageExemptions": {
+    "electron/main.cjs": {
+      "reason": "Real Electron evidence covers display recovery, single-instance routing, renderer recovery and aggregated shutdown.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/electron/ds01-main-lifecycle.test.mjs", "layer": "integration" }]
+    },
+    "electron/window-lifecycle.cjs": {
+      "reason": "Window geometry, launch intents and identity-bound persistence are directly unit tested.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/window-lifecycle.test.mjs", "layer": "unit" }]
+    },
+    "package.json": {
+      "reason": "DS-01 governance commands are verified by the exact governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds01-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/ds01-governance.mjs": {
+      "reason": "DS-01 identity validation is verified by substitution-resistant governance tests.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds01-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/generate-ds01-resolved-manifest.mjs": {
+      "reason": "Atomic DS-01 manifest publication is verified by adversarial governance contract evidence.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds01-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/report-schema.mjs": {
+      "reason": "The canonical DS-01 authority chain is verified by the governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds01-governance.test.mjs", "layer": "contract" }]
+    },
+    "tests/helpers.mjs": {
+      "reason": "Canonical DS-01 runner dispatch is verified by the exact governance task view.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds01-governance.test.mjs", "layer": "contract" }]
+    },
+    "tests/sec02-sink-inventory.json": {
+      "reason": "The new lifecycle module and BrowserWindow sink identities are checked by the governed sink inventory.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds01-governance.test.mjs", "layer": "contract" }]
+    },
+    "tests/sec02-sink-policy.json": {
+      "reason": "The static lifecycle module loader and unchanged BrowserWindow path operands have explicit reviewed bindings.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/ds01-governance.test.mjs", "layer": "contract" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/unit/window-lifecycle.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/contract/ds01-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/electron/ds01-main-lifecycle.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" },
+    { "exactCasePath": "tests/packaged/rt10-service-recovery.test.mjs", "layer": "packaged" }
+  ]
+}

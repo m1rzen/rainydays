@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "9d5cdad9166448a379c1d4bac9a92e778a606ddb8844847ecbffc68e14da9b7c",
+      "sha256": "91a8855a79eaaa6f99e9c9dff0ea5464eb1dbf7de8767922f0e415929982c672",
       "owner": "DS-06"
     },
     {
@@ -78,7 +78,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "009b934421afe838c029c8e0bae1d2bcc88d7c4af6aa6fbf4bff1608b5286f2a",
+      "sha256": "2979037ab93bf813552fe6fcefcdee7111109f47fe7afd9f15ea521089734089",
       "owner": "DS-06"
     },
     {
@@ -152,5 +152,5 @@
       "owner": "DS-06"
     }
   ],
-  "canonicalPayloadSha256": "d957783c4236fbf72276504f01ca8c258c895d52c96425ca848f1d678d8ad408"
+  "canonicalPayloadSha256": "c8a2aa743120b0aa76966820e6b4a509413247c25a1dd3d2b4c2b10ec2da4019"
 }

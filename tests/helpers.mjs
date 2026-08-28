@@ -32,6 +32,7 @@ import { loadRt11ResolvedManifest } from "../scripts/rt11-governance.mjs";
 import { loadEvt01ResolvedManifest } from "../scripts/evt01-governance.mjs";
 import { loadEvt02ResolvedManifest } from "../scripts/evt02-governance.mjs";
 import { loadEvt03ResolvedManifest } from "../scripts/evt03-governance.mjs";
+import { loadDs01ResolvedManifest } from "../scripts/ds01-governance.mjs";
 import { loadDs03ResolvedManifest } from "../scripts/ds03-governance.mjs";
 import { loadDs04ResolvedManifest } from "../scripts/ds04-governance.mjs";
 import { loadDs05ResolvedManifest } from "../scripts/ds05-governance.mjs";
@@ -1076,6 +1077,29 @@ async function loadDs04TaskView(root = projectRoot) {
   };
 }
 
+async function loadDs01TaskView(root = projectRoot) {
+  const resolved = await loadDs01ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "ds-01.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "DS-01",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
 async function loadDs03TaskView(root = projectRoot) {
   const resolved = await loadDs03ResolvedManifest({ root });
   const sourcePath = path.join(root, "tests", "manifests", "ds-03.json");
@@ -1115,6 +1139,7 @@ export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
   if (taskId === "EVT-01") return loadEvt01TaskView(root);
   if (taskId === "EVT-02") return loadEvt02TaskView(root);
   if (taskId === "EVT-03") return loadEvt03TaskView(root);
+  if (taskId === "DS-01") return loadDs01TaskView(root);
   if (taskId === "DS-03") return loadDs03TaskView(root);
   if (taskId === "DS-04") return loadDs04TaskView(root);
   if (taskId === "DS-05") return loadDs05TaskView(root);

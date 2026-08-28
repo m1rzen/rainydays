@@ -7078,7 +7078,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "009b934421afe838c029c8e0bae1d2bcc88d7c4af6aa6fbf4bff1608b5286f2a"
+      "sha256": "2979037ab93bf813552fe6fcefcdee7111109f47fe7afd9f15ea521089734089"
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
@@ -7094,7 +7094,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "69affd63ffeb1f4206127b2ab202d54a9929c40fdf3b6cdd2097f95412cc5f23"
+      "sha256": "2b6aef5d10a9720b64b337475939757b7e09f4e4cfad17f85574bc4aac7552da"
     },
     {
       "exactCasePath": "scripts/test-gate-selftest.mjs",
@@ -7138,11 +7138,11 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "8db9f7964ceaf144575a2ee734c223b454e7632621b7be8b1a79f4f15c8e64f9"
+      "sha256": "b64a693061ac16e6030bc1fd5d6d4d9b59e56251fe09a438eb254a0ab90ff7a5"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "5f45bba0ace1910eb3838b3ebb2fccbe6c3f8cbbea2cd582a740f9e4ceef09af"
+      "sha256": "2af67249276fb0675775cd35c708806ecb47a3ab85e51b9293ab6eee2bf30926"
     },
     {
       "exactCasePath": "tests/sec02-sink-crosscheck-policy.json",
@@ -7194,7 +7194,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "9d5cdad9166448a379c1d4bac9a92e778a606ddb8844847ecbffc68e14da9b7c"
+      "sha256": "91a8855a79eaaa6f99e9c9dff0ea5464eb1dbf7de8767922f0e415929982c672"
     },
     {
       "exactCasePath": "package-lock.json",
@@ -7202,5 +7202,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "72e96ed69a7eebf0b43c748d5408d6a0242d7e2d5eaea084ec5593f82ce12c1a"
+  "canonicalPayloadSha256": "324fe96dcd05d363c2f0ef9ad3c5e73e5d651da8c7c9e752d723b93d603ea6ee"
 }

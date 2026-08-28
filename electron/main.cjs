@@ -3,7 +3,7 @@
 // 开发态启动 tsx；正式包直接加载 dist，不依赖系统 Node/npm
 // ===========================================
 
-const { app, BrowserWindow, Tray, Menu, Notification, nativeImage, dialog, ipcMain, safeStorage } = require("electron");
+const { app, BrowserWindow, Tray, Menu, Notification, nativeImage, dialog, ipcMain, safeStorage, screen } = require("electron");
 const path = require("node:path");
 const net = require("node:net");
 const { spawn } = require("node:child_process");
@@ -12,6 +12,7 @@ const { ElectronBootstrapPathStore, ElectronPathError } = require("./path-bootst
 const { migrateLegacyUserData } = require("./user-data-migration.cjs");
 const { assertTrustedJsonDownload, assertTrustedRendererBinding, parseDialogRequest, parseNotification, parseTrayState, parseWindowAction } = require("./ipc-contract.cjs");
 const { ServiceSupervisor } = require("./service-supervisor.cjs");
+const { createWindowStateStore, parseLaunchIntent, resolveWindowState } = require("./window-lifecycle.cjs");
 const originalFs = require("original-fs");
 
 let mainWindow = null;
@@ -30,6 +31,10 @@ let childNativeProcessConsentTransport = null;
 let mainFrameGeneration = 0;
 let quitCleanupPromise = null;
 let finalQuit = false;
+let windowStateStore = null;
+let applyingWindowState = false;
+let pendingLaunchIntent = null;
+const rendererCrashTimes = [];
 let port = Number(process.env.PORT || 3111);
 const apiToken = randomBytes(32).toString("hex");
 const terminalConsentOperations = Object.freeze(["start", "clear", "kill", "close"]);
@@ -64,13 +69,19 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
-  app.on("second-instance", () => {
-    if (!mainWindow) return;
-    if (mainWindow.isMinimized()) mainWindow.restore();
-    mainWindow.show();
-    mainWindow.focus();
-  });
+  app.on("second-instance", (_event, commandLine) => handleLaunchIntent(parseLaunchIntent(commandLine)));
 }
+
+app.on("open-url", (event, url) => {
+  event.preventDefault();
+  handleLaunchIntent(parseLaunchIntent([url]));
+});
+
+app.on("child-process-gone", (_event, details) => {
+  const type = typeof details?.type === "string" ? details.type.slice(0, 40) : "unknown";
+  const reason = typeof details?.reason === "string" ? details.reason.slice(0, 40) : "unknown";
+  console.error(JSON.stringify({ event: "rainydays_electron_child_gone", type, reason }));
+});
 
 function canListen(candidate) {
   return new Promise((resolve) => {
@@ -669,6 +680,166 @@ function windowState(window) {
   });
 }
 
+function reportWindowLifecycle(event, outcome) {
+  console.log(JSON.stringify({ event: "rainydays_window_lifecycle", action: event, outcome }));
+}
+
+function displayTopology() {
+  const primaryId = String(screen.getPrimaryDisplay().id);
+  return screen.getAllDisplays().map(display => Object.freeze({
+    id: String(display.id),
+    primary: String(display.id) === primaryId,
+    workArea: Object.freeze({
+      x: display.workArea.x,
+      y: display.workArea.y,
+      width: display.workArea.width,
+      height: display.workArea.height,
+    }),
+  }));
+}
+
+function captureMainWindowState(window = mainWindow) {
+  if (!window || window.isDestroyed()) return null;
+  const bounds = (window.isMaximized() || window.isFullScreen()) && typeof window.getNormalBounds === "function"
+    ? window.getNormalBounds()
+    : window.getBounds();
+  const display = screen.getDisplayMatching(bounds);
+  return Object.freeze({
+    schemaVersion: 1,
+    bounds: Object.freeze({ x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }),
+    maximized: window.isMaximized(),
+    fullscreen: window.isFullScreen(),
+    displayId: String(display.id),
+  });
+}
+
+function saveMainWindowState(immediate = false) {
+  if (applyingWindowState || !windowStateStore) return;
+  const state = captureMainWindowState();
+  if (!state) return;
+  try {
+    windowStateStore.schedule(state);
+    if (immediate) windowStateStore.flush();
+  } catch {
+    reportWindowLifecycle("state-save", "failure");
+  }
+}
+
+function sameBounds(left, right) {
+  return left.x === right.x && left.y === right.y && left.width === right.width && left.height === right.height;
+}
+
+function reconcileMainWindowBounds() {
+  const window = mainWindow;
+  if (!window || window.isDestroyed()) return;
+  const current = captureMainWindowState(window);
+  const reachable = resolveWindowState(current, displayTopology());
+  if (sameBounds(current.bounds, reachable.bounds)) {
+    saveMainWindowState();
+    return;
+  }
+  applyingWindowState = true;
+  try {
+    if (current.fullscreen) window.setFullScreen(false);
+    if (current.maximized) window.unmaximize();
+    window.setBounds(reachable.bounds, false);
+    if (current.maximized) window.maximize();
+    if (current.fullscreen) window.setFullScreen(true);
+    reportWindowLifecycle("display-reconcile", "success");
+  } finally {
+    applyingWindowState = false;
+  }
+  saveMainWindowState();
+}
+
+function onDisplayTopologyChanged() {
+  reconcileMainWindowBounds();
+}
+
+function installDisplayLifecycle() {
+  screen.on("display-added", onDisplayTopologyChanged);
+  screen.on("display-removed", onDisplayTopologyChanged);
+  screen.on("display-metrics-changed", onDisplayTopologyChanged);
+}
+
+function removeDisplayLifecycle() {
+  screen.removeListener("display-added", onDisplayTopologyChanged);
+  screen.removeListener("display-removed", onDisplayTopologyChanged);
+  screen.removeListener("display-metrics-changed", onDisplayTopologyChanged);
+}
+
+function focusMainWindow() {
+  const window = mainWindow;
+  if (!window || window.isDestroyed()) return false;
+  if (window.isMinimized()) window.restore();
+  window.show();
+  window.focus();
+  return true;
+}
+
+function deliverPendingLaunchIntent() {
+  const intent = pendingLaunchIntent;
+  const window = mainWindow;
+  if (!intent?.sessionId || !window || window.isDestroyed() || window.webContents.isLoadingMainFrame()) return;
+  pendingLaunchIntent = null;
+  window.webContents.send("rainydays:notification-clicked", Object.freeze({
+    id: null,
+    sessionId: intent.sessionId,
+    targetTab: "session",
+  }));
+  reportWindowLifecycle("launch-intent", "delivered");
+}
+
+function handleLaunchIntent(intent) {
+  if (intent?.sessionId) pendingLaunchIntent = intent;
+  focusMainWindow();
+  deliverPendingLaunchIntent();
+  reportWindowLifecycle("single-instance", intent?.sessionId ? "targeted" : "focused");
+}
+
+function handleRendererGone(window, details) {
+  if (window !== mainWindow || window.isDestroyed() || app.isQuitting) return;
+  const reason = typeof details?.reason === "string" ? details.reason.slice(0, 40) : "unknown";
+  const now = Date.now();
+  while (rendererCrashTimes.length > 0 && now - rendererCrashTimes[0] > 60_000) rendererCrashTimes.shift();
+  rendererCrashTimes.push(now);
+  console.error(JSON.stringify({ event: "rainydays_renderer_gone", reason, crashCount: rendererCrashTimes.length }));
+  invalidateManualTerminalConsent();
+  invalidateAllNativeConsent();
+  if (rendererCrashTimes.length > 2) {
+    dialog.showErrorBox("RainyDays 渲染进程反复崩溃", "窗口已停止自动重载；后台服务仍保持受管状态。请退出并重新启动 RainyDays。");
+    return;
+  }
+  const timer = setTimeout(() => {
+    if (window !== mainWindow || window.isDestroyed() || app.isQuitting) return;
+    void window.loadURL(`http://127.0.0.1:${port}/`).catch(error => {
+      console.error("RainyDays renderer recovery failed", error instanceof Error ? error.message : String(error));
+    });
+  }, 250 * rendererCrashTimes.length);
+  timer.unref?.();
+}
+
+function installApplicationMenu() {
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
+    {
+      label: "文件",
+      submenu: [
+        { label: "显示主窗口", accelerator: "CmdOrCtrl+Shift+R", click: focusMainWindow },
+        { type: "separator" },
+        { role: "quit", label: "退出" },
+      ],
+    },
+    {
+      label: "窗口",
+      submenu: [
+        { role: "minimize", label: "最小化" },
+        { role: "zoom", label: "最大化/还原" },
+        { role: "togglefullscreen", label: "切换全屏" },
+      ],
+    },
+  ]));
+}
+
 async function chooseNativePath(event, kind, request) {
   const window = trustedRendererWindow(event, true);
   const parsed = parseDialogRequest(request, kind);
@@ -818,6 +989,7 @@ function installRendererSecurity(window) {
 }
 
 function createWindow() {
+  const initialState = resolveWindowState(windowStateStore?.load() ?? null, displayTopology());
   const iconLease = electronPaths.openAppFile(path.join("public", "icon.png"), "window-icon");
   let icon;
   try {
@@ -832,8 +1004,10 @@ function createWindow() {
   try {
     preloadLease.verify("before-browser-window-preload");
     mainWindow = new BrowserWindow({
-      width: 1200,
-      height: 800,
+      x: initialState.bounds.x,
+      y: initialState.bounds.y,
+      width: initialState.bounds.width,
+      height: initialState.bounds.height,
       minWidth: 800,
       minHeight: 600,
       title: `RainyDays ${buildInfo.appVersion} (${buildInfo.buildId})`,
@@ -856,6 +1030,14 @@ function createWindow() {
     throw error;
   }
 
+  applyingWindowState = true;
+  try {
+    if (initialState.maximized) mainWindow.maximize();
+    if (initialState.fullscreen) mainWindow.setFullScreen(true);
+  } finally {
+    applyingWindowState = false;
+  }
+
   installApiHeaderInjection(mainWindow);
   installRendererSecurity(mainWindow);
   mainWindow.webContents.once("did-finish-load", () => {
@@ -872,6 +1054,9 @@ function createWindow() {
       lease?.close();
     }
   });
+  mainWindow.webContents.on("did-finish-load", deliverPendingLaunchIntent);
+  const createdWindow = mainWindow;
+  mainWindow.webContents.on("render-process-gone", (_event, details) => handleRendererGone(createdWindow, details));
   mainWindow.webContents.once("did-fail-load", releasePreloadLease);
   mainWindow.webContents.on("did-start-navigation", (_event, _url, _isInPlace, isMainFrame) => {
     if (!isMainFrame) return;
@@ -882,6 +1067,9 @@ function createWindow() {
   mainWindow.once("ready-to-show", () => mainWindow?.show());
   void mainWindow.loadURL(`http://127.0.0.1:${port}/`);
 
+  for (const eventName of ["move", "resize", "maximize", "unmaximize", "enter-full-screen", "leave-full-screen"]) {
+    mainWindow.on(eventName, () => saveMainWindowState());
+  }
   mainWindow.on("blur", () => {
     invalidateManualTerminalConsent();
     invalidateAllNativeConsent();
@@ -891,15 +1079,20 @@ function createWindow() {
     invalidateAllNativeConsent();
   });
   mainWindow.on("close", (event) => {
+    saveMainWindowState(true);
     invalidateManualTerminalConsent();
     invalidateAllNativeConsent();
     if (!app.isQuitting) {
       event.preventDefault();
-      mainWindow.hide();
+      createdWindow.hide();
     }
+  });
+  createdWindow.on("closed", () => {
+    if (mainWindow === createdWindow) mainWindow = null;
   });
 
   createTray(icon);
+  installApplicationMenu();
 }
 
 function navigateFromTray(sessionId) {
@@ -927,6 +1120,10 @@ function updateTrayPresentation() {
 }
 
 function createTray(icon) {
+  if (tray && !tray.isDestroyed()) {
+    updateTrayPresentation();
+    return;
+  }
   tray = new Tray(icon);
   updateTrayPresentation();
   tray.on("click", () => {
@@ -994,6 +1191,16 @@ app.whenReady().then(async () => {
     });
     clearUntrustedPathEnvironment();
     buildInfo = loadBuildInfo();
+    windowStateStore = createWindowStateStore({
+      root: electronPaths.runtimeRoots().userData,
+      io: originalFs,
+      path,
+      randomBytes,
+      onEvent: event => reportWindowLifecycle(`state-${event.event}`, event.outcome),
+    });
+    installDisplayLifecycle();
+    const initialIntent = parseLaunchIntent(process.argv);
+    if (initialIntent.sessionId) pendingLaunchIntent = initialIntent;
     Object.assign(process.env, runtimeEnvironment());
     port = await choosePort(port);
     const serverMode = selectServerMode();
@@ -1020,18 +1227,33 @@ app.whenReady().then(async () => {
 });
 
 async function cleanupBeforeFinalQuit() {
+  const errors = [];
   removeDesktopIpcHandlers();
   removeManualTerminalConsentHandlers();
   invalidateManualTerminalConsent();
   invalidateAllNativeConsent();
   removeApiHeaderInjection();
   releasePreloadLease();
+  removeDisplayLifecycle();
   stopServiceHealthMonitor();
+  try {
+    const finalWindowState = captureMainWindowState();
+    if (windowStateStore && finalWindowState) {
+      windowStateStore.schedule(finalWindowState);
+      windowStateStore.flush();
+    }
+    windowStateStore?.close();
+    windowStateStore = null;
+  } catch (error) {
+    errors.push(error);
+  }
   const supervisor = serverSupervisor;
   serverSupervisor = null;
-  await supervisor?.shutdown();
-  childNativeProcessConsentTransport?.close();
+  try { await supervisor?.shutdown(); } catch (error) { errors.push(error); }
+  try { childNativeProcessConsentTransport?.close(); } catch (error) { errors.push(error); }
   childNativeProcessConsentTransport = null;
+  if (errors.length === 1) throw errors[0];
+  if (errors.length > 1) throw new AggregateError(errors, "RainyDays shutdown cleanup failed");
 }
 
 app.on("before-quit", (event) => {
@@ -1046,6 +1268,7 @@ app.on("before-quit", (event) => {
     })
     .catch((error) => {
       quitCleanupPromise = null;
+      app.isQuitting = false;
       const message = error instanceof Error ? error.stack || error.message : String(error);
       console.error("RainyDays shutdown did not complete; quit remains blocked", message);
       dialog.showErrorBox("RainyDays 无法安全退出", message);
