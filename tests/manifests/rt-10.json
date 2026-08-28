@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-10",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "dist/index.js",
+    "electron/main.cjs",
+    "electron/path-bootstrap.cjs",
+    "electron/service-supervisor.cjs",
+    "package.json",
+    "scripts/generate-rt10-resolved-manifest.mjs",
+    "scripts/report-schema.mjs",
+    "scripts/rt10-governance.mjs",
+    "src/db.ts",
+    "src/index.ts",
+    "src/llm.ts",
+    "src/terminal.ts",
+    "tests/helpers.mjs"
+  ],
+  "coverageExemptions": {
+    "dist/index.js": {
+      "reason": "The exact compiled service entry is exercised by real child and packaged RT-10 lifecycle evidence.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt10-service-lifecycle.test.mjs", "layer": "integration" }]
+    },
+    "electron/main.cjs": {
+      "reason": "Electron supervision, recovery, control IPC and cleanup are exercised through real desktop process evidence.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/rt10-service-recovery.test.mjs", "layer": "electron" }]
+    },
+    "electron/path-bootstrap.cjs": {
+      "reason": "The ASAR runtime projection lease is exercised by the exact win-unpacked restart and shutdown scenario.",
+      "evidenceLayer": "packaged",
+      "evidence": [{ "exactCasePath": "tests/packaged/rt10-service-recovery.test.mjs", "layer": "packaged" }]
+    },
+    "electron/service-supervisor.cjs": {
+      "reason": "Supervisor transitions, bounded restart, crash-loop, readiness races and shutdown are directly unit tested.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/service-supervisor.test.mjs", "layer": "unit" }]
+    },
+    "package.json": {
+      "reason": "RT-10 governance commands are verified by the exact governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rt10-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/generate-rt10-resolved-manifest.mjs": {
+      "reason": "Atomic RT-10 manifest publication is verified by adversarial governance contract evidence.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rt10-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/report-schema.mjs": {
+      "reason": "The canonical RT-10 authority chain is verified by the governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rt10-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/rt10-governance.mjs": {
+      "reason": "RT-10 identity validation is verified by substitution-resistant governance tests.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rt10-governance.test.mjs", "layer": "contract" }]
+    },
+    "src/db.ts": {
+      "reason": "A real process is killed inside an open SQLite transaction and the rollback plus exact retry is verified.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt10-database-interruption.test.mjs", "layer": "integration" }]
+    },
+    "src/index.ts": {
+      "reason": "Authenticated readiness, private service control and parent-driven shutdown use the real service entrypoint.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt10-service-lifecycle.test.mjs", "layer": "integration" }]
+    },
+    "src/llm.ts": {
+      "reason": "A real held Provider stream is interrupted without duplicate requests and Chat resumes after restart.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/rt10-service-recovery.test.mjs", "layer": "electron" }]
+    },
+    "src/terminal.ts": {
+      "reason": "A real isolated Terminal tree is killed with the service and replaced exactly once after recovery.",
+      "evidenceLayer": "integration",
+      "evidence": [{ "exactCasePath": "tests/integration/rt10-terminal-interruption.test.mjs", "layer": "integration" }]
+    },
+    "tests/helpers.mjs": {
+      "reason": "The canonical runner dispatch for RT-10 is verified by its governance and unified task profile.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rt10-governance.test.mjs", "layer": "contract" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/unit/service-supervisor.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/contract/rt10-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/integration/rt10-service-lifecycle.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/rt10-database-interruption.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/rt10-terminal-interruption.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/rt10-service-recovery.test.mjs", "layer": "electron" },
+    { "exactCasePath": "tests/electron/desktop-smoke.test.mjs", "layer": "electron" },
+    { "exactCasePath": "tests/packaged/rt10-service-recovery.test.mjs", "layer": "packaged" }
+  ]
+}

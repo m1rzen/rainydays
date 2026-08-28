@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "taskId": "RT-10",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/rt-10.json",
+    "sha256": "36ab3b439c09d4f2cddb26d84ebe36260c2dacf8269c98fc31724277f67a00bd"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "dist/index.js",
+      "sha256": "c0f880bf7c0c15ffa618247f05557d521029387e1b8e0e786a39a88526105d51",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "electron/main.cjs",
+      "sha256": "01e1bbbaa0c5ac2154d3b66eea360f5c62eb53cfcc89b8e96fc885cca18b6fef",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "electron/path-bootstrap.cjs",
+      "sha256": "7f0071a0be15e8f0d82291703a5d6621db6f39870fbabe246e115082261b67bd",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "electron/service-supervisor.cjs",
+      "sha256": "8c9b1b5fafce61c5869cb8efec10775b12dd8a0bcc3d9863ac7cb403d8294284",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "package.json",
+      "sha256": "9d5cdad9166448a379c1d4bac9a92e778a606ddb8844847ecbffc68e14da9b7c",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "scripts/generate-rt10-resolved-manifest.mjs",
+      "sha256": "ed09dcbeea5c9d2b9996c047d1863ee898e7e5cf7bd0bdaf4fbd713c8db7d148",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "69affd63ffeb1f4206127b2ab202d54a9929c40fdf3b6cdd2097f95412cc5f23",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "scripts/rt10-governance.mjs",
+      "sha256": "e01a0a1149b54c1357454fa06307986f0b5ac06be4dfa11fcdea0d6c32c3c3c4",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "src/db.ts",
+      "sha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "66e6dc01044271f687f58748a1bfcdc765539292b1be78cca65fdcc924463e15",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "src/llm.ts",
+      "sha256": "cc9d812aa34fa14006bc951b108da70948452f79b66ed2cd67970d6b82aa2fe2",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "src/terminal.ts",
+      "sha256": "080e0e9f8820fb1c704041fbf70ee59c93f44c860c50ab8d7fe2d68669ca6980",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "009b934421afe838c029c8e0bae1d2bcc88d7c4af6aa6fbf4bff1608b5286f2a",
+      "owner": "RT-10"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/unit/service-supervisor.test.mjs",
+      "sha256": "f84baaa26a79fda272635dd0d2d63752ced1a2ee9d9e07730763218ecbca28bc",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "tests/contract/rt10-governance.test.mjs",
+      "sha256": "95b52467c1ea31e039db05acc8c4211b7e5a3bcd7b7744b9800ad81c9e4db94b",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "tests/integration/rt10-service-lifecycle.test.mjs",
+      "sha256": "5ad3e4f84625c1ebccab2a1d56366a56180fd0e05c3d08c0533d5ebd9b5b0a65",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "tests/integration/rt10-database-interruption.test.mjs",
+      "sha256": "ddc7e273ebd9ef4b6e4881f8945775ce15e80234ed7a36331ed1cde983a9d3dd",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "tests/integration/rt10-terminal-interruption.test.mjs",
+      "sha256": "52b11ba858e0803cf79ea5107428b601958c648ceb6794870ee2dde5d306f8cb",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "tests/electron/rt10-service-recovery.test.mjs",
+      "sha256": "cf9f944094bcf50be3061d7da13570cab6d298be58514b243325cedfbb9c9b38",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
+      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "RT-10"
+    },
+    {
+      "exactCasePath": "tests/packaged/rt10-service-recovery.test.mjs",
+      "sha256": "2dc5628cd1ec8926215b9ea196b0a3d2d6653f4e427f74beb105f413cd1341aa",
+      "kind": "test",
+      "layer": "packaged",
+      "owner": "RT-10"
+    }
+  ],
+  "canonicalPayloadSha256": "9302344e06fc8599831a16dcc1ec9b62fece390396007168100caa376757b222"
+}

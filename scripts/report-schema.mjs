@@ -32,6 +32,7 @@ const personaChains = Object.freeze({
   "RT-07": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
   "RT-08": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
   "RT-09": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
+  "RT-10": Object.freeze(["architect", "developer", "debugger", "reviewer"]),
   "TOOL-01": Object.freeze(["architect", "developer", "reviewer"]),
   "TOOL-02": Object.freeze(["developer", "debugger", "reviewer"]),
   "PERS-01": Object.freeze(["architect", "developer", "sentinel", "reviewer"]),

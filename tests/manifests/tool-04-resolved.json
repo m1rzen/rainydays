@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "c4104e93af680e6a76288d2205ce0a5845f586d90c3e191b1cbe821aa7f123d2",
+      "sha256": "9d5cdad9166448a379c1d4bac9a92e778a606ddb8844847ecbffc68e14da9b7c",
       "owner": "TOOL-04"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "c11ced627a5563a3cdb96d7d1cb4d5cb04d7c0871bc1353ba10b0fe372446d12",
+      "sha256": "69affd63ffeb1f4206127b2ab202d54a9929c40fdf3b6cdd2097f95412cc5f23",
       "owner": "TOOL-04"
     },
     {
@@ -83,7 +83,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "270e0008a939b43558be7160812d9ec7c89ac4ec0c78537b4aa4434d2bc78682",
+      "sha256": "009b934421afe838c029c8e0bae1d2bcc88d7c4af6aa6fbf4bff1608b5286f2a",
       "owner": "TOOL-04"
     },
     {
@@ -93,7 +93,7 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "96b5e02008393b187f072b6b8ae2f7f7e985acef04f6213a1201cb6072b436be",
+      "sha256": "5791d4558ca06da1dcfab6d90d42a588628b385ea3e61fea876d4c3097d55070",
       "owner": "TOOL-04"
     },
     {
@@ -165,5 +165,5 @@
       "owner": "TOOL-04"
     }
   ],
-  "canonicalPayloadSha256": "1eccd24018754e7a4fccafcd1d657398a49f91dc3e9296596c78179155a60d09"
+  "canonicalPayloadSha256": "ebdc6ca80d54cc629691d950f1bb86127777e13b7146ad268dcce4dba84a68ec"
 }

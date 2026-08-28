@@ -27,6 +27,7 @@ import { loadRt06ResolvedManifest } from "../scripts/rt06-governance.mjs";
 import { loadRt07ResolvedManifest } from "../scripts/rt07-governance.mjs";
 import { loadRt08ResolvedManifest } from "../scripts/rt08-governance.mjs";
 import { loadRt09ResolvedManifest } from "../scripts/rt09-governance.mjs";
+import { loadRt10ResolvedManifest } from "../scripts/rt10-governance.mjs";
 import { loadRt11ResolvedManifest } from "../scripts/rt11-governance.mjs";
 import { loadEvt01ResolvedManifest } from "../scripts/evt01-governance.mjs";
 import { loadEvt02ResolvedManifest } from "../scripts/evt02-governance.mjs";
@@ -638,6 +639,29 @@ async function loadRt09TaskView(root = projectRoot) {
   };
 }
 
+async function loadRt10TaskView(root = projectRoot) {
+  const resolved = await loadRt10ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "rt-10.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "RT-10",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
 async function loadRt11TaskView(root = projectRoot) {
   const resolved = await loadRt11ResolvedManifest({ root });
   const sourcePath = path.join(root, "tests", "manifests", "rt-11.json");
@@ -1086,6 +1110,7 @@ export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
   if (taskId === "RT-07") return loadRt07TaskView(root);
   if (taskId === "RT-08") return loadRt08TaskView(root);
   if (taskId === "RT-09") return loadRt09TaskView(root);
+  if (taskId === "RT-10") return loadRt10TaskView(root);
   if (taskId === "RT-11") return loadRt11TaskView(root);
   if (taskId === "EVT-01") return loadEvt01TaskView(root);
   if (taskId === "EVT-02") return loadEvt02TaskView(root);

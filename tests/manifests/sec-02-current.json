@@ -7078,7 +7078,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "270e0008a939b43558be7160812d9ec7c89ac4ec0c78537b4aa4434d2bc78682"
+      "sha256": "009b934421afe838c029c8e0bae1d2bcc88d7c4af6aa6fbf4bff1608b5286f2a"
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
@@ -7094,7 +7094,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "c11ced627a5563a3cdb96d7d1cb4d5cb04d7c0871bc1353ba10b0fe372446d12"
+      "sha256": "69affd63ffeb1f4206127b2ab202d54a9929c40fdf3b6cdd2097f95412cc5f23"
     },
     {
       "exactCasePath": "scripts/test-gate-selftest.mjs",
@@ -7194,7 +7194,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "c4104e93af680e6a76288d2205ce0a5845f586d90c3e191b1cbe821aa7f123d2"
+      "sha256": "9d5cdad9166448a379c1d4bac9a92e778a606ddb8844847ecbffc68e14da9b7c"
     },
     {
       "exactCasePath": "package-lock.json",
@@ -7202,5 +7202,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "ade66c6597bfb497b281cecd088405efab685b638d38605256edc3aae0e84458"
+  "canonicalPayloadSha256": "72e96ed69a7eebf0b43c748d5408d6a0242d7e2d5eaea084ec5593f82ce12c1a"
 }
