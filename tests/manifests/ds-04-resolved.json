@@ -48,7 +48,7 @@
     },
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "8c05678d87641a3e6a972506b79a235a6b7e49e70624a72ccff10d5947414b5b",
+      "sha256": "66eec398d4c51529e40a54b189c4961de2e7c40f22eab215d2e1cc4e336fc27a",
       "owner": "DS-04"
     },
     {
@@ -73,7 +73,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "91a8855a79eaaa6f99e9c9dff0ea5464eb1dbf7de8767922f0e415929982c672",
+      "sha256": "d2f5269d283b6cd1a163c01211d9e97bab1b74e512b1adec8541e7fe7decce54",
       "owner": "DS-04"
     },
     {
@@ -224,5 +224,5 @@
       "owner": "DS-04"
     }
   ],
-  "canonicalPayloadSha256": "2793ee1c33678e58f1b9e0f542be1a736c92a481536873dde2535339fbc87a59"
+  "canonicalPayloadSha256": "e0401d7e20dc32ad5f522976181262178bb88f3e6b4931863a1785c80422b7cb"
 }

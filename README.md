@@ -206,6 +206,7 @@ RainyDays 将安全约束作为运行时设计的一部分，而不是只依赖 
 | SEC-01 Capability Broker | 已实现并具备契约与攻击性测试 |
 | SEC-02 PathPolicy | 运行时与候选门禁已闭合；累计 Coverage 债务仍隔离跟踪 |
 | SEC-03 Execution Isolation | **进行中**：原生隔离与真实性原语已建立，完整真实宿主回执集仍待闭合 |
+| REL-03 Crash Recovery & Safe Mode | **WIP**：main/renderer/service crash-loop 会进入不启动后端或原生执行的恢复窗口；固定维度 crash ledger、脱敏诊断和一次性正常重试已实现，独立复审待恢复 |
 | REL-04 Observability & Diagnostics | **WIP**：结构化脱敏日志与关联标识、`live` / `ready` / `degraded` 健康状态、固定维度聚合指标和不超过 256 KiB 的诊断包已实现；3 个 P1 已完成修复与定向验证，等待新的独立只读复审；P2 DB 全量 instrumentation 仍明确隔离 |
 | RT-10 Background Service & Crash Recovery | **WIP**：核心生命周期、LLM/DB/Terminal 三类中断恢复与 resolved governance 均已通过；独立复审基础设施连续两次无法创建 Session，已按反卡死纪律搁置 |
 | DS-01 Electron Main Lifecycle | **WIP**：窗口 bounds/maximized/fullscreen 状态存储、多显示器可达恢复、菜单、单实例 Session 参数、renderer crash 有界恢复和聚合安全退出已实现；治理与独立复审待收敛 |
@@ -223,6 +224,7 @@ RainyDays 将安全约束作为运行时设计的一部分，而不是只依赖 
 - RT-10 resolved governance 7/7 已通过；两次独立只读 review Routine 均在创建 Session 时立即失败，未产生代码 finding，已列入搁置并停止重试。因此当前保持 WIP，不将“review 基础设施失败”误报为“独立复审通过”。
 - RT-10 unified runner 中 Unit 6/6、Contract 7/7、Integration 3/3、Electron 10/10、win-unpacked 1/1 均实际通过且 artifact unchanged；仅因聚焦 win-unpacked 测试不生成 installer lifecycle detail report，被 packaged report schema 标为 `REPORT_VALIDATION`，Coverage/self-test 因而未启动。该 schema/installer 边界已搁置，不重复长门禁。
 - DS-01 当前聚焦证据已通过：Window lifecycle Unit 4/4；真实 Electron 1/1 完成离屏状态回收、退出持久化/重启恢复、第二实例 Session 定向、renderer 强杀自动重载与服务存活、退出后服务树清理；既有 Electron desktop smoke 9/9 保持通过。
+- REL-03 已完成最小恢复切片：连续三次真实 main 崩溃、连续三次 renderer 崩溃或六次 service 崩溃均进入 backend-free Safe Mode；恢复页仅显示固定维度的 build/reason/count 诊断并提供一次性正常重试/退出；独立 native host 强杀保持 service 存活，且只允许一个新的运行中 Terminal。
 - 安装候选在 REL-04 探针完成后，于既有 Session/卸载清理尾段报告范围外 `CLEANUP`；该问题以及隔离的 SEC-02 累计 Coverage 债务均未在本次 WIP 中宣称解决。
 - 本地 `deliverables/` 构建与诊断产物不纳入版本库。
 

@@ -13,7 +13,7 @@
     },
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "8c05678d87641a3e6a972506b79a235a6b7e49e70624a72ccff10d5947414b5b",
+      "sha256": "66eec398d4c51529e40a54b189c4961de2e7c40f22eab215d2e1cc4e336fc27a",
       "owner": "RT-10"
     },
     {
@@ -28,7 +28,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "91a8855a79eaaa6f99e9c9dff0ea5464eb1dbf7de8767922f0e415929982c672",
+      "sha256": "d2f5269d283b6cd1a163c01211d9e97bab1b74e512b1adec8541e7fe7decce54",
       "owner": "RT-10"
     },
     {
@@ -38,7 +38,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "2b6aef5d10a9720b64b337475939757b7e09f4e4cfad17f85574bc4aac7552da",
+      "sha256": "0d913f3167364b53cf0f51101820b151d7d97b76167da57b8ec776b6baa644d5",
       "owner": "RT-10"
     },
     {
@@ -68,7 +68,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "2979037ab93bf813552fe6fcefcdee7111109f47fe7afd9f15ea521089734089",
+      "sha256": "2749389342cc762ea859f98aa344fca159e5c4d6752d746ed6f70c8720b5995f",
       "owner": "RT-10"
     }
   ],
@@ -130,5 +130,5 @@
       "owner": "RT-10"
     }
   ],
-  "canonicalPayloadSha256": "2db523cc94c64ad5b929ac50d49b3f3da68cb0cdee49cfcf6a50ab8be8be3435"
+  "canonicalPayloadSha256": "b887297f9c296678052ef7db8bb14f5fcf372c4a5d7701ac5d0340794dea1bf2"
 }

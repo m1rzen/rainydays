@@ -13,6 +13,7 @@ const { migrateLegacyUserData } = require("./user-data-migration.cjs");
 const { assertTrustedJsonDownload, assertTrustedRendererBinding, parseDialogRequest, parseNotification, parseTrayState, parseWindowAction } = require("./ipc-contract.cjs");
 const { ServiceSupervisor } = require("./service-supervisor.cjs");
 const { createWindowStateStore, parseLaunchIntent, resolveWindowState } = require("./window-lifecycle.cjs");
+const { createRecoveryStateStore } = require("./recovery-state.cjs");
 const originalFs = require("original-fs");
 
 let mainWindow = null;
@@ -35,6 +36,12 @@ let windowStateStore = null;
 let applyingWindowState = false;
 let pendingLaunchIntent = null;
 const rendererCrashTimes = [];
+const electronChildCrashTimes = [];
+let recoveryStateStore = null;
+let recoveryState = null;
+let recoveryWindow = null;
+let recoveryRelaunchRequested = false;
+let safeModeTransitionPromise = null;
 let port = Number(process.env.PORT || 3111);
 const apiToken = randomBytes(32).toString("hex");
 const terminalConsentOperations = Object.freeze(["start", "clear", "kill", "close"]);
@@ -81,6 +88,11 @@ app.on("child-process-gone", (_event, details) => {
   const type = typeof details?.type === "string" ? details.type.slice(0, 40) : "unknown";
   const reason = typeof details?.reason === "string" ? details.reason.slice(0, 40) : "unknown";
   console.error(JSON.stringify({ event: "rainydays_electron_child_gone", type, reason }));
+  if (type !== "Utility" || reason === "clean-exit" || app.isQuitting) return;
+  const now = Date.now();
+  while (electronChildCrashTimes.length > 0 && now - electronChildCrashTimes[0] > 60_000) electronChildCrashTimes.shift();
+  electronChildCrashTimes.push(now);
+  if (electronChildCrashTimes.length > 2) void activateSafeMode("electron-child-crash-loop");
 });
 
 function canListen(candidate) {
@@ -485,8 +497,10 @@ function reportServiceState(state) {
     pid: state.pid,
     failure: state.failure,
   };
-  if (state.phase === "crash-loop") console.error(JSON.stringify(payload));
-  else console.log(JSON.stringify(payload));
+  if (state.phase === "crash-loop") {
+    console.error(JSON.stringify(payload));
+    void activateSafeMode("service-crash-loop");
+  } else console.log(JSON.stringify(payload));
 }
 
 function startServiceHealthMonitor() {
@@ -769,7 +783,7 @@ function removeDisplayLifecycle() {
 }
 
 function focusMainWindow() {
-  const window = mainWindow;
+  const window = mainWindow ?? recoveryWindow;
   if (!window || window.isDestroyed()) return false;
   if (window.isMinimized()) window.restore();
   window.show();
@@ -807,7 +821,7 @@ function handleRendererGone(window, details) {
   invalidateManualTerminalConsent();
   invalidateAllNativeConsent();
   if (rendererCrashTimes.length > 2) {
-    dialog.showErrorBox("RainyDays 渲染进程反复崩溃", "窗口已停止自动重载；后台服务仍保持受管状态。请退出并重新启动 RainyDays。");
+    void activateSafeMode("renderer-crash-loop");
     return;
   }
   const timer = setTimeout(() => {
@@ -838,6 +852,169 @@ function installApplicationMenu() {
       ],
     },
   ]));
+}
+
+function escapeRecoveryText(value) {
+  return String(value).replace(/[&<>"']/gu, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;",
+  })[character]);
+}
+
+function recoveryDiagnostics(reason) {
+  let ledger = null;
+  try { ledger = recoveryStateStore?.diagnostics() ?? null; } catch { ledger = null; }
+  return Object.freeze({
+    schemaVersion: 1,
+    mode: "safe",
+    reason,
+    build: Object.freeze({
+      appVersion: buildInfo?.appVersion ?? app.getVersion(),
+      buildId: buildInfo?.buildId ?? "unavailable",
+    }),
+    integrity: buildInfo ? "verified" : "failed",
+    crashes: Object.freeze({
+      uncleanLaunches: ledger?.uncleanLaunches ?? 0,
+      serviceCrashLoops: ledger?.serviceCrashLoops ?? 0,
+      rendererCrashLoops: ledger?.rendererCrashLoops ?? 0,
+      electronChildCrashes: ledger?.electronChildCrashes ?? 0,
+    }),
+  });
+}
+
+function recoveryHtml(reason) {
+  const diagnosticText = escapeRecoveryText(JSON.stringify(recoveryDiagnostics(reason), null, 2));
+  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RainyDays 安全模式</title><style>body{margin:0;background:#111827;color:#e5e7eb;font:15px/1.6 system-ui,sans-serif}.wrap{max-width:720px;margin:0 auto;padding:48px 36px}h1{font-size:28px;margin:0 0 12px}.reason{color:#fbbf24}p{color:#cbd5e1}pre{max-height:260px;overflow:auto;padding:16px;border:1px solid #374151;border-radius:10px;background:#030712;color:#a7f3d0}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}a{display:inline-block;padding:10px 16px;border-radius:8px;background:#2563eb;color:white;text-decoration:none}a.secondary{background:#374151}</style></head><body><main class="wrap"><h1>RainyDays 已进入安全模式</h1><p class="reason">恢复原因：${escapeRecoveryText(reason)}</p><p>后台服务、原生执行和普通工作台均未启动。下面只显示固定维度、脱敏后的恢复诊断。</p><pre id="recovery-diagnostics">${diagnosticText}</pre><div class="actions"><a id="retry-normal" href="rainydays-recovery://retry">尝试正常重启</a><a id="quit-recovery" class="secondary" href="rainydays-recovery://quit">退出</a></div></main></body></html>`;
+}
+
+function relaunchArguments() {
+  const args = process.argv.slice(1).filter(argument => argument !== "--safe-mode" && argument !== "--recover-normal");
+  args.push("--recover-normal");
+  return args;
+}
+
+function handleRecoveryAction(action) {
+  if (action === "quit") {
+    app.quit();
+    return;
+  }
+  if (action !== "retry" || recoveryRelaunchRequested) return;
+  try {
+    recoveryState = recoveryStateStore.requestNormalRetry();
+    recoveryRelaunchRequested = true;
+    app.relaunch({ args: relaunchArguments() });
+    app.quit();
+  } catch (error) {
+    console.error(JSON.stringify({ event: "rainydays_recovery_action", action: "retry", outcome: "failure" }));
+    try { recoveryState = recoveryStateStore?.enterSafeMode(recoveryState?.safeModeReason ?? "integrity-failure"); } catch { /* Already fail-closed in the recovery window. */ }
+  }
+}
+
+function createRecoveryWindow(reason) {
+  if (recoveryWindow && !recoveryWindow.isDestroyed()) {
+    recoveryWindow.show();
+    recoveryWindow.focus();
+    return recoveryWindow;
+  }
+  const html = recoveryHtml(reason);
+  const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
+  recoveryWindow = new BrowserWindow({
+    width: 760,
+    height: 620,
+    minWidth: 640,
+    minHeight: 520,
+    title: `RainyDays 安全模式 (${buildInfo?.buildId ?? "unavailable"})`,
+    show: false,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      webviewTag: false,
+      nodeIntegrationInSubFrames: false,
+      nodeIntegrationInWorker: false,
+    },
+  });
+  const createdWindow = recoveryWindow;
+  createdWindow.setMenuBarVisibility(false);
+  createdWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  createdWindow.webContents.on("will-attach-webview", event => event.preventDefault());
+  createdWindow.webContents.on("will-navigate", (event, url) => {
+    if (url === dataUrl) return;
+    event.preventDefault();
+    let action = null;
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === "rainydays-recovery:") action = parsed.hostname;
+    } catch { action = null; }
+    if (action) handleRecoveryAction(action);
+  });
+  createdWindow.once("ready-to-show", () => createdWindow.show());
+  createdWindow.on("closed", () => {
+    if (recoveryWindow === createdWindow) recoveryWindow = null;
+    if (!app.isQuitting && !recoveryRelaunchRequested) app.quit();
+  });
+  void createdWindow.loadURL(dataUrl).catch(() => {
+    console.error(JSON.stringify({ event: "rainydays_safe_mode", reason, outcome: "load-failed" }));
+    app.quit();
+  });
+  console.error(JSON.stringify({ event: "rainydays_safe_mode", reason, outcome: "active" }));
+  return createdWindow;
+}
+
+async function suspendNormalRuntimeForSafeMode() {
+  const errors = [];
+  removeDesktopIpcHandlers();
+  removeManualTerminalConsentHandlers();
+  invalidateManualTerminalConsent();
+  invalidateAllNativeConsent();
+  removeApiHeaderInjection();
+  releasePreloadLease();
+  removeDisplayLifecycle();
+  stopServiceHealthMonitor();
+  const finalWindowState = captureMainWindowState();
+  try {
+    if (windowStateStore && finalWindowState) {
+      windowStateStore.schedule(finalWindowState);
+      windowStateStore.flush();
+    }
+    windowStateStore?.close();
+  } catch (error) { errors.push(error); }
+  windowStateStore = null;
+  const supervisor = serverSupervisor;
+  serverSupervisor = null;
+  try { await supervisor?.shutdown(); }
+  catch (error) {
+    errors.push(error);
+    try {
+      const child = serverProcess;
+      if (child) await terminateServerProcess(child, "safe-mode-fallback");
+    } catch (fallbackError) { errors.push(fallbackError); }
+  }
+  try { childNativeProcessConsentTransport?.close(); } catch (error) { errors.push(error); }
+  childNativeProcessConsentTransport = null;
+  tray?.destroy();
+  tray = null;
+  Menu.setApplicationMenu(null);
+  const workbench = mainWindow;
+  mainWindow = null;
+  workbench?.destroy();
+  if (errors.length) console.error(JSON.stringify({ event: "rainydays_safe_mode_cleanup", failureCount: errors.length }));
+}
+
+function activateSafeMode(reason) {
+  if (safeModeTransitionPromise) return safeModeTransitionPromise;
+  safeModeTransitionPromise = (async () => {
+    try { recoveryState = recoveryStateStore?.enterSafeMode(reason) ?? recoveryState; }
+    catch { reason = "integrity-failure"; }
+    await suspendNormalRuntimeForSafeMode();
+    createRecoveryWindow(reason);
+  })();
+  return safeModeTransitionPromise;
 }
 
 async function chooseNativePath(event, kind, request) {
@@ -1182,7 +1359,6 @@ async function terminateServerProcess(child, reason = "shutdown") {
 
 app.whenReady().then(async () => {
   try {
-    if (legacyUserDataMigrationError) throw new Error(`RainyDays 用户数据迁移失败: ${legacyUserDataMigrationError.message}`);
     electronPaths = new ElectronBootstrapPathStore({
       appRoot: app.getAppPath(),
       electronRoot: __dirname,
@@ -1190,9 +1366,36 @@ app.whenReady().then(async () => {
       nativeFs: originalFs,
     });
     clearUntrustedPathEnvironment();
-    buildInfo = loadBuildInfo();
+    const userDataRoot = electronPaths.runtimeRoots().userData;
+    recoveryStateStore = createRecoveryStateStore({
+      root: userDataRoot,
+      io: originalFs,
+      path,
+      randomBytes,
+      onEvent: event => console.log(JSON.stringify({ event: "rainydays_recovery_state", action: event.event, outcome: event.outcome })),
+    });
+    let integrityFailure = legacyUserDataMigrationError !== null;
+    try { buildInfo = loadBuildInfo(); } catch { integrityFailure = true; }
+    try {
+      recoveryState = recoveryStateStore.beginLaunch({
+        forceSafeMode: process.argv.includes("--safe-mode"),
+        normalRetry: process.argv.includes("--recover-normal"),
+      });
+    } catch {
+      integrityFailure = true;
+      recoveryState = Object.freeze({ safeMode: true, safeModeReason: "integrity-failure" });
+    }
+    if (integrityFailure) {
+      try { recoveryState = recoveryStateStore.enterSafeMode("integrity-failure"); } catch { /* Recovery UI remains fail-closed without ledger details. */ }
+      createRecoveryWindow("integrity-failure");
+      return;
+    }
+    if (recoveryState.safeMode) {
+      createRecoveryWindow(recoveryState.safeModeReason);
+      return;
+    }
     windowStateStore = createWindowStateStore({
-      root: electronPaths.runtimeRoots().userData,
+      root: userDataRoot,
       io: originalFs,
       path,
       randomBytes,
@@ -1213,7 +1416,14 @@ app.whenReady().then(async () => {
       backoffBaseMs: 500,
       backoffCapMs: 30_000,
     });
-    await serverSupervisor.start();
+    try { await serverSupervisor.start(); }
+    catch (error) {
+      if (safeModeTransitionPromise || serverSupervisor?.snapshot().phase === "crash-loop") {
+        await activateSafeMode("service-crash-loop");
+        return;
+      }
+      throw error;
+    }
     startServiceHealthMonitor();
     createWindow();
     registerDesktopIpcHandlers();
@@ -1252,6 +1462,13 @@ async function cleanupBeforeFinalQuit() {
   try { await supervisor?.shutdown(); } catch (error) { errors.push(error); }
   try { childNativeProcessConsentTransport?.close(); } catch (error) { errors.push(error); }
   childNativeProcessConsentTransport = null;
+  if (errors.length === 0) {
+    try {
+      if (!recoveryRelaunchRequested) recoveryState = recoveryStateStore?.markCleanExit() ?? recoveryState;
+      recoveryStateStore?.close();
+      recoveryStateStore = null;
+    } catch (error) { errors.push(error); }
+  }
   if (errors.length === 1) throw errors[0];
   if (errors.length > 1) throw new AggregateError(errors, "RainyDays shutdown cleanup failed");
 }
@@ -1284,6 +1501,10 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
+  if (recoveryState?.safeMode || recoveryWindow) {
+    createRecoveryWindow(recoveryState?.safeModeReason ?? "integrity-failure");
+    return;
+  }
   if (BrowserWindow.getAllWindows().length === 0 && !mainWindow) createWindow();
   else mainWindow?.show();
 });

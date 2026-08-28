@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "taskId": "REL-03",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "electron/main.cjs",
+    "electron/recovery-state.cjs",
+    "electron/service-supervisor.cjs",
+    "electron/window-lifecycle.cjs",
+    "package.json",
+    "scripts/generate-rel03-resolved-manifest.mjs",
+    "scripts/rel03-governance.mjs",
+    "scripts/report-schema.mjs",
+    "tests/helpers.mjs",
+    "tests/sec02-sink-inventory.json",
+    "tests/sec02-sink-policy.json"
+  ],
+  "coverageExemptions": {
+    "electron/main.cjs": {
+      "reason": "Real Electron fault injection verifies main, renderer and service crash-loop transitions into backend-free safe mode.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/rel03-safe-mode.test.mjs", "layer": "electron" }]
+    },
+    "electron/recovery-state.cjs": {
+      "reason": "Crash thresholds, one-shot retry, clean exit and integrity failure are directly unit tested.",
+      "evidenceLayer": "unit",
+      "evidence": [{ "exactCasePath": "tests/unit/recovery-state.test.mjs", "layer": "unit" }]
+    },
+    "electron/service-supervisor.cjs": {
+      "reason": "The existing bounded supervisor is driven through six real backend crashes into REL-03 safe mode.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/rel03-safe-mode.test.mjs", "layer": "electron" }]
+    },
+    "electron/window-lifecycle.cjs": {
+      "reason": "The recovery transition reuses the governed DS-01 final-state flush without altering its geometry contract.",
+      "evidenceLayer": "electron",
+      "evidence": [{ "exactCasePath": "tests/electron/rel03-safe-mode.test.mjs", "layer": "electron" }]
+    },
+    "package.json": {
+      "reason": "REL-03 governance commands are verified by the exact governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel03-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/generate-rel03-resolved-manifest.mjs": {
+      "reason": "Atomic REL-03 manifest publication is verified by adversarial governance contract evidence.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel03-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/rel03-governance.mjs": {
+      "reason": "REL-03 identity validation is verified by substitution-resistant governance tests.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel03-governance.test.mjs", "layer": "contract" }]
+    },
+    "scripts/report-schema.mjs": {
+      "reason": "The canonical REL-03 authority chain is verified by the governance contract.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel03-governance.test.mjs", "layer": "contract" }]
+    },
+    "tests/helpers.mjs": {
+      "reason": "Canonical REL-03 runner dispatch is verified by the exact governance task view.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel03-governance.test.mjs", "layer": "contract" }]
+    },
+    "tests/sec02-sink-inventory.json": {
+      "reason": "The new recovery module loader is covered by the complete governed sink inventory.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel03-governance.test.mjs", "layer": "contract" }]
+    },
+    "tests/sec02-sink-policy.json": {
+      "reason": "The static recovery module loader has an explicit reviewed packaged-ASAR binding.",
+      "evidenceLayer": "contract",
+      "evidence": [{ "exactCasePath": "tests/contract/rel03-governance.test.mjs", "layer": "contract" }]
+    }
+  },
+  "tests": [
+    { "exactCasePath": "tests/unit/recovery-state.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/contract/rel03-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/integration/rel03-native-crash-containment.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/electron/rel03-safe-mode.test.mjs", "layer": "electron" },
+    { "exactCasePath": "tests/packaged/rel03-safe-mode.test.mjs", "layer": "packaged" }
+  ]
+}

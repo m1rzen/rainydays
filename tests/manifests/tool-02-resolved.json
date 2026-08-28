@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "91a8855a79eaaa6f99e9c9dff0ea5464eb1dbf7de8767922f0e415929982c672",
+      "sha256": "d2f5269d283b6cd1a163c01211d9e97bab1b74e512b1adec8541e7fe7decce54",
       "owner": "TOOL-02"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "2b6aef5d10a9720b64b337475939757b7e09f4e4cfad17f85574bc4aac7552da",
+      "sha256": "0d913f3167364b53cf0f51101820b151d7d97b76167da57b8ec776b6baa644d5",
       "owner": "TOOL-02"
     },
     {
@@ -148,7 +148,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "2979037ab93bf813552fe6fcefcdee7111109f47fe7afd9f15ea521089734089",
+      "sha256": "2749389342cc762ea859f98aa344fca159e5c4d6752d746ed6f70c8720b5995f",
       "owner": "TOOL-02"
     },
     {
@@ -158,22 +158,22 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-02-current.json",
-      "sha256": "596fa52eaf923b8ab011f8663fea15b57c35bd0116dec49fd23101ef21a6ec1e",
+      "sha256": "de6c14775cb95db1354b07ab7b47bbd8d1c1115ca32c857cdaab3c9639f25c96",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "b64a693061ac16e6030bc1fd5d6d4d9b59e56251fe09a438eb254a0ab90ff7a5",
+      "sha256": "e206170c6c2661a4a9bd74467f492c459a9acf5a6ab4fa7d82adc3ea8e804c4b",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "2af67249276fb0675775cd35c708806ecb47a3ab85e51b9293ab6eee2bf30926",
+      "sha256": "36fc5f64811be861aa81ca8d69fb308de8039ee3e2400c4e2d4c8cdb57afe70e",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "f4ddb4a4c42a1ce621c9fbba0b3fe8daff8c500e3180e2ec73fdbdf6c2051e90",
+      "sha256": "5f41785d3bb8cfb1150b341486aa555bee431fcec5c4ef3cf63ab2254b931a0e",
       "owner": "TOOL-02"
     },
     {
@@ -245,5 +245,5 @@
       "owner": "TOOL-02"
     }
   ],
-  "canonicalPayloadSha256": "42099dbf0601261ceda974e555bc73a1fe25a3e275c2693a868b8ed02ffd5c6f"
+  "canonicalPayloadSha256": "c9db431b3078493dcbe6c645494da3ddec9adb11e37bb9a3fe68e39c074b9ef7"
 }

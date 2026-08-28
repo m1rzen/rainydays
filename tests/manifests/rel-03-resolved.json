@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "taskId": "REL-03",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/rel-03.json",
+    "sha256": "9ef685729d813aa8a738eb272e9840e5c66c21a1d0abef598722005bf8d0726c"
+  },
+  "runtimeEntries": [
+    {
+      "exactCasePath": "electron/main.cjs",
+      "sha256": "66eec398d4c51529e40a54b189c4961de2e7c40f22eab215d2e1cc4e336fc27a",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "electron/recovery-state.cjs",
+      "sha256": "391aa353a6561eff28881245ef29b19f529101deb7c7ff31e70f693906064a70",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "electron/service-supervisor.cjs",
+      "sha256": "8c9b1b5fafce61c5869cb8efec10775b12dd8a0bcc3d9863ac7cb403d8294284",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "electron/window-lifecycle.cjs",
+      "sha256": "5c0e8bb8e705cba0fcc510a9e0ac8d17ee3916bca00c0a3fcee5102b03121347",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "package.json",
+      "sha256": "d2f5269d283b6cd1a163c01211d9e97bab1b74e512b1adec8541e7fe7decce54",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "scripts/generate-rel03-resolved-manifest.mjs",
+      "sha256": "3ecf5228ecd5e0e8511a2f2a0426fd9912300156f387a33b8fe8e69629e4bd7a",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "scripts/rel03-governance.mjs",
+      "sha256": "bbef91b081fa6203a21d3aa17385fb4505c2b4df77c3389e408cc3ca70f956b9",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "0d913f3167364b53cf0f51101820b151d7d97b76167da57b8ec776b6baa644d5",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "tests/helpers.mjs",
+      "sha256": "2749389342cc762ea859f98aa344fca159e5c4d6752d746ed6f70c8720b5995f",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "tests/sec02-sink-inventory.json",
+      "sha256": "e206170c6c2661a4a9bd74467f492c459a9acf5a6ab4fa7d82adc3ea8e804c4b",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "tests/sec02-sink-policy.json",
+      "sha256": "36fc5f64811be861aa81ca8d69fb308de8039ee3e2400c4e2d4c8cdb57afe70e",
+      "owner": "REL-03"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/unit/recovery-state.test.mjs",
+      "sha256": "051a05480b875a06b78963469987df98ad12a75af5153efbb4732ce528c7aa9f",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "tests/contract/rel03-governance.test.mjs",
+      "sha256": "0a4900d80424a6a5796aac55e4b62cde1917191e8deebe4282f0b02367e807d9",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "tests/integration/rel03-native-crash-containment.test.mjs",
+      "sha256": "4452bea611327385b679db8677751f5c980536fca935cd113aca045592bb076f",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "tests/electron/rel03-safe-mode.test.mjs",
+      "sha256": "83b5101498be43ad00bef4391e7d8b251c7c5fe97a7b17114c69584687e01008",
+      "kind": "test",
+      "layer": "electron",
+      "owner": "REL-03"
+    },
+    {
+      "exactCasePath": "tests/packaged/rel03-safe-mode.test.mjs",
+      "sha256": "acd956a1c83517e759bf3779b8cbcfe1359ba6f01868c613ac04fcbf60883193",
+      "kind": "test",
+      "layer": "packaged",
+      "owner": "REL-03"
+    }
+  ],
+  "canonicalPayloadSha256": "76782223654420c2b81c50fb1e5d727316661d55f357318dd7c64667db31c1f6"
+}

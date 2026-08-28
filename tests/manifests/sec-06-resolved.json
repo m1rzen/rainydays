@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "8c05678d87641a3e6a972506b79a235a6b7e49e70624a72ccff10d5947414b5b",
+      "sha256": "66eec398d4c51529e40a54b189c4961de2e7c40f22eab215d2e1cc4e336fc27a",
       "owner": "SEC-06"
     },
     {
@@ -209,5 +209,5 @@
       "owner": "SEC-06"
     }
   ],
-  "canonicalPayloadSha256": "e16895d11f4cd318d5acd285716699098589752842eeeaa05754c55dd16a583e"
+  "canonicalPayloadSha256": "e91bd6244882c250c1e2c6ae53723c8325b14b7e5d98b85c56c59008cb6a5742"
 }
