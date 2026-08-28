@@ -207,7 +207,7 @@ RainyDays 将安全约束作为运行时设计的一部分，而不是只依赖 
 | SEC-02 PathPolicy | 运行时与候选门禁已闭合；累计 Coverage 债务仍隔离跟踪 |
 | SEC-03 Execution Isolation | **进行中**：原生隔离与真实性原语已建立，完整真实宿主回执集仍待闭合 |
 | REL-04 Observability & Diagnostics | **WIP**：结构化脱敏日志与关联标识、`live` / `ready` / `degraded` 健康状态、固定维度聚合指标和不超过 256 KiB 的诊断包已实现；3 个 P1 已完成修复与定向验证，等待新的独立只读复审；P2 DB 全量 instrumentation 仍明确隔离 |
-| RT-10 Background Service & Crash Recovery | **WIP**：开发态与正式包后端均已迁入独立 child 故障域，具备认证 ready 握手、有界退避重启、crash-loop 状态、健康探测和可靠退出；LLM/DB/Terminal 中断场景仍待逐项闭合 |
+| RT-10 Background Service & Crash Recovery | **WIP**：开发态与正式包后端均已迁入独立 child 故障域，具备认证 ready 握手、有界退避重启、crash-loop 状态、健康探测和可靠退出；LLM 请求中崩溃已闭合，DB/Terminal 中断场景仍待验证 |
 | Lux Desktop 全量 Parity | **进行中**，以 canonical execution spec 为唯一完成度依据 |
 
 ### 2026-08-28 开发快照
@@ -218,7 +218,7 @@ RainyDays 将安全约束作为运行时设计的一部分，而不是只依赖 
 - 已修复、待独立复审的 P1：LLM/HTTP observation 的 once-only 生命周期、结构化 logger 与既有 `process-cwd` 安全证据消费者的兼容、后台 EventBus/Cron/Poll Agent run 的 session/run correlation。
 - 已记录的 P2：当前 Database 指标覆盖边界/探针与事务，而不是所有直接 SQL 操作。
 - RT-10 核心切片已通过：Supervisor Unit 6/6、真实 service ready/control/shutdown 1/1、Electron 后端强杀与 Session 恢复 1/1、win-unpacked 后端强杀恢复与退出清理 1/1，以及受影响后的 Electron 9/9；正式包使用 ASAR unpacked runtime projection 作为受验证 CWD。
-- RT-10 尚未宣称整卡闭合：LLM 请求中崩溃、数据库写入中断和 Terminal 运行时退出的“不重复副作用”证据仍待独立切片验证；完整恢复 UI 留给 REL-03/DS-01 边界。
+- RT-10 的 LLM 中断切片已通过：后端在真实流式请求中被强杀后没有重复 Provider 请求，Session 在重启后保留且下一轮 Chat 可继续；数据库写入中断和 Terminal 运行时退出的“不重复副作用”证据仍待独立切片验证。完整恢复 UI 留给 REL-03/DS-01 边界。
 - 安装候选在 REL-04 探针完成后，于既有 Session/卸载清理尾段报告范围外 `CLEANUP`；该问题以及隔离的 SEC-02 累计 Coverage 债务均未在本次 WIP 中宣称解决。
 - 本地 `deliverables/` 构建与诊断产物不纳入版本库。
 
