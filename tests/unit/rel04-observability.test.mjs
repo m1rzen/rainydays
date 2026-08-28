@@ -4,6 +4,7 @@ import { logger } from "../../dist/logger.js";
 import { LLMClient } from "../../dist/llm.js";
 import {
   beginObservation,
+  bindObservabilityContext,
   createHealthSnapshot,
   currentObservabilityContext,
   observabilityMetricsSnapshot,
@@ -45,6 +46,19 @@ test("REL-04 propagates request/session/run correlation into bounded structured 
   assert.equal(entry.data.prompt, "[REDACTED]");
   assert.equal(entry.data.nested.message, "[REDACTED]");
   assert.equal(entry.data.nested.safe, "retained");
+});
+
+test("REL-04 bound lifecycle callbacks retain the updated request correlation", () => {
+  let bound;
+  runWithObservabilityContext({ requestId: "request-bound", sessionId: null, runId: null }, () => {
+    bound = bindObservabilityContext(() => currentObservabilityContext());
+    updateObservabilityContext({ sessionId: "session-bound", runId: "run-bound" });
+  });
+  assert.deepEqual(bound(), {
+    requestId: "request-bound",
+    sessionId: "session-bound",
+    runId: "run-bound",
+  });
 });
 
 test("REL-04 exposes fixed-cardinality aggregate metrics without labels or payloads", () => {
@@ -91,6 +105,73 @@ test("REL-04 LLM client records aggregate outcomes without retaining Provider pa
   assert.equal(metric.bytesOut, Buffer.byteLength("provider-result"));
   assert.equal(JSON.stringify(metric).includes("private-prompt"), false);
   assert.equal(JSON.stringify(metric).includes("provider-result"), false);
+});
+
+test("REL-04 settles an LLM observation when retry backoff is cancelled", async () => {
+  const client = new LLMClient({
+    apiKey: "rel04-test-key",
+    baseURL: "https://provider.invalid/v1",
+    model: "rel04-model",
+    providerType: "openai-compatible",
+  });
+  client.client = {
+    chat: {
+      completions: {
+        async create() {
+          throw Object.assign(new Error("retryable provider failure"), { status: 500 });
+        },
+      },
+    },
+  };
+  const controller = new AbortController();
+  const originalWarn = console.warn;
+  console.warn = () => undefined;
+  try {
+    const pending = client.chat([{ role: "user", content: "private-prompt" }], undefined, controller.signal);
+    setTimeout(() => controller.abort(new Error("stop retry backoff")), 20);
+    await assert.rejects(pending, error => error?.code === "RUN_CANCELLED");
+  } finally {
+    console.warn = originalWarn;
+  }
+
+  const metric = observabilityMetricsSnapshot().llm;
+  assert.equal(metric.active, 0);
+  assert.equal(metric.total, 1);
+  assert.equal(metric.retries, 1);
+  assert.equal(metric.outcomes.cancelled, 1);
+});
+
+test("REL-04 settles an LLM stream observation when its consumer stops early", async () => {
+  const client = new LLMClient({
+    apiKey: "rel04-test-key",
+    baseURL: "https://provider.invalid/v1",
+    model: "rel04-model",
+    providerType: "openai-compatible",
+  });
+  client.client = {
+    chat: {
+      completions: {
+        async create() {
+          return {
+            async *[Symbol.asyncIterator]() {
+              yield { choices: [{ delta: { content: "partial" } }] };
+              yield { choices: [{ delta: { content: "unused" } }] };
+            },
+          };
+        },
+      },
+    },
+  };
+
+  const stream = client.chatStream([{ role: "user", content: "private-prompt" }]);
+  const first = await stream.next();
+  assert.deepEqual(first, { done: false, value: { type: "delta", content: "partial" } });
+  await stream.return();
+
+  const metric = observabilityMetricsSnapshot().llm;
+  assert.equal(metric.active, 0);
+  assert.equal(metric.total, 1);
+  assert.equal(metric.outcomes.cancelled, 1);
 });
 
 test("REL-04 health contract distinguishes live, ready and degraded states", () => {

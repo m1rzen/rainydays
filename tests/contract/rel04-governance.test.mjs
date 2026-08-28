@@ -47,6 +47,7 @@ test("REL-04 governed runtime binds correlation, probes, metrics and bounded dia
   assert.match(files["src/index.ts"], /\/api\/health\/live/u);
   assert.match(files["src/index.ts"], /\/api\/health\/ready/u);
   assert.match(files["src/index.ts"], /serializeDiagnosticBundle\(bundle\)/u);
+  assert.match(files["src/index.ts"], /runWithObservabilityContext\(\{ requestId: event\.id, sessionId, runId \}, async/u);
   assert.match(files["src/llm.ts"], /beginObservation\("llm"\)/u);
   assert.match(files["src/agent.ts"], /beginObservation\("tool"\)/u);
   assert.match(files["src/db.ts"], /beginObservation\("database"\)/u);

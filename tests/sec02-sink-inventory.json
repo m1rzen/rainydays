@@ -10,7 +10,7 @@
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
     "executableFileCount": 99,
-    "executableManifestSha256": "00495108a565810f5a7218374040eecd8b0d3eb296a523d50094471478477ffc",
+    "executableManifestSha256": "cd0950a4366f3f94ca1f7ac7556bc5162e1b6098651f27ff7766bce0f10c0bf4",
     "dialectImportCount": 38,
     "dialectExceptionCount": 2
   },
@@ -213,8 +213,8 @@
     },
     {
       "sourcePath": "src/index.ts",
-      "bytes": 153606,
-      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "bytes": 154152,
+      "sha256": "8e0bd3d55307ca8911458bad397f6c6e09e67bd159c1025472c0e7f81f7b4c4e",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -227,8 +227,8 @@
     },
     {
       "sourcePath": "src/llm.ts",
-      "bytes": 13178,
-      "sha256": "95275ddc9d491d75486cc009a44f1a71fe9c5b4006a0bf8d99448088b1189014",
+      "bytes": 13520,
+      "sha256": "cc9d812aa34fa14006bc951b108da70948452f79b66ed2cd67970d6b82aa2fe2",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -290,8 +290,8 @@
     },
     {
       "sourcePath": "src/observability.ts",
-      "bytes": 7990,
-      "sha256": "a5a7e12fc960cdb5747336835e9af4cdd8fe4609e47282198bc1958306c2398e",
+      "bytes": 8285,
+      "sha256": "cbab31545e068c68f999a5202cea35f96160db6d3a189be45330b524c60f8db8",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -772,7 +772,7 @@
       "executionContract": "node-test-file-pass",
       "testFile": "tests/integration/process-cwd.test.mjs",
       "testCaseId": "SEC-02 Shell and Script use authorized initial CWD and deny external CWD before spawn",
-      "testFileSha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809"
+      "testFileSha256": "f49decd5ad8744c5db12ffdabebf1552d124c86dec7547818f1af8851d8db914"
     },
     {
       "id": "process-tree",
@@ -5592,5 +5592,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "345c462ab6ed44d0423c2f2c8539d8ea37c7610f1cc178c7e7135b5622586e20"
+  "canonicalPayloadSha256": "88f89e446b933fc560c2a6191116024c6ab5662bd23151613e783bd4f5e8e44c"
 }

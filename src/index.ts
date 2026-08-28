@@ -156,6 +156,7 @@ import { isRunCancellation, isRunSettlementFailure } from "./run-cancellation.js
 import { logger } from "./logger.js";
 import {
   beginObservation,
+  bindObservabilityContext,
   createHealthSnapshot,
   currentObservabilityContext,
   observabilityMetricsSnapshot,
@@ -1486,19 +1487,26 @@ app.use((req, res, next) => {
   const requestId = randomUUID();
   const observation = beginObservation("http");
   const started = Date.now();
+  let observationFinished = false;
+  const finishObservation = (outcome: "success" | "error" | "cancelled"): void => {
+    if (observationFinished) return;
+    observationFinished = true;
+    observation.finish(outcome);
+    const routePath = typeof req.route?.path === "string" ? `${req.baseUrl}${req.route.path}` : "unmatched";
+    logger.info("http", "request-finished", {
+      method: req.method,
+      route: routePath,
+      statusCode: res.statusCode,
+      outcome,
+      durationMs: Date.now() - started,
+    });
+  };
   res.setHeader("X-RainyDays-Request-Id", requestId);
   runWithObservabilityContext({ requestId, sessionId: null, runId: null }, () => {
-    res.once("finish", () => {
-      const outcome = res.statusCode >= 400 ? "error" : "success";
-      observation.finish(outcome);
-      const routePath = typeof req.route?.path === "string" ? `${req.baseUrl}${req.route.path}` : "unmatched";
-      logger.info("http", "request-finished", {
-        method: req.method,
-        route: routePath,
-        statusCode: res.statusCode,
-        durationMs: Date.now() - started,
-      });
-    });
+    res.once("finish", bindObservabilityContext(() => finishObservation(res.statusCode >= 400 ? "error" : "success")));
+    res.once("close", bindObservabilityContext(() => finishObservation(res.writableFinished
+      ? (res.statusCode >= 400 ? "error" : "success")
+      : "cancelled")));
     next();
   });
 });
@@ -3155,47 +3163,47 @@ async function eventSessionDeliveryHandler(event: EventEnvelope): Promise<Sessio
   // 让 dispatch 循环的 ack 落库（同步 SQLite 写）先于 run 消费。
   setImmediate(() => {
     runOutsideInteractionChannel(() => {
-      void (async () => {
+      void runWithObservabilityContext({ requestId: event.id, sessionId, runId }, async () => {
         const startedAt = Date.now();
-      const identity: ActiveRun = Object.freeze({ sessionId, runId });
-      activeRunInteractions.set(sessionId, identity);
-      updateDesktopSessionStatus(sessionId, "running");
-      let status: "idle" | "error" = "idle";
-      let settlementFailure: unknown = undefined;
-      try {
-        await runWithInteractionChannel(identity, { emit: () => undefined, signal: claim.signal }, async () => {
-          let input: string | null = eventInputMessage(event, "wake");
-          while (input !== null) {
-            for await (const step of runtime.agent.run(input, runId, claim.signal)) {
-              if (step?.type === "error") status = "error";
-            }
-            input = pendingPersonaSwitches.has(sessionId) ? null : takeActiveRunInjection(sessionId, claim.signal);
-          }
-        });
-      } catch (error) {
-        const cancelled = isRunCancellation(error);
-        if (isRunSettlementFailure(error) || (claim.signal.aborted && !cancelled)) settlementFailure = error;
-        status = cancelled ? "idle" : "error";
-        if (!cancelled) console.error("⚠️ 事件 Session flow 失败:", error instanceof Error ? error.stack || error.message : String(error));
-      } finally {
-        if (activeRunInteractions.get(sessionId) === identity) activeRunInteractions.delete(sessionId);
-        clearActiveRunInjections(sessionId);
-        updateDesktopSessionStatus(sessionId, status);
+        const identity: ActiveRun = Object.freeze({ sessionId, runId });
+        activeRunInteractions.set(sessionId, identity);
+        updateDesktopSessionStatus(sessionId, "running");
+        let status: "idle" | "error" = "idle";
+        let settlementFailure: unknown = undefined;
         try {
-          registry.releaseRun(claim, settlementFailure);
-          await completePendingPersonaSwitch(registry, sessionId);
+          await runWithInteractionChannel(identity, { emit: () => undefined, signal: claim.signal }, async () => {
+            let input: string | null = eventInputMessage(event, "wake");
+            while (input !== null) {
+              for await (const step of runtime.agent.run(input, runId, claim.signal)) {
+                if (step?.type === "error") status = "error";
+              }
+              input = pendingPersonaSwitches.has(sessionId) ? null : takeActiveRunInjection(sessionId, claim.signal);
+            }
+          });
         } catch (error) {
-          if (!(error instanceof SessionRuntimeLifecycleError) || error.code !== "SESSION_RUNTIME_CLAIM_STALE") {
-            console.error("⚠️ 事件唤醒 run 结算失败:", error instanceof Error ? error.message : String(error));
+          const cancelled = isRunCancellation(error);
+          if (isRunSettlementFailure(error) || (claim.signal.aborted && !cancelled)) settlementFailure = error;
+          status = cancelled ? "idle" : "error";
+          if (!cancelled) console.error("⚠️ 事件 Session flow 失败:", error instanceof Error ? error.stack || error.message : String(error));
+        } finally {
+          if (activeRunInteractions.get(sessionId) === identity) activeRunInteractions.delete(sessionId);
+          clearActiveRunInjections(sessionId);
+          updateDesktopSessionStatus(sessionId, status);
+          try {
+            registry.releaseRun(claim, settlementFailure);
+            await completePendingPersonaSwitch(registry, sessionId);
+          } catch (error) {
+            if (!(error instanceof SessionRuntimeLifecycleError) || error.code !== "SESSION_RUNTIME_CLAIM_STALE") {
+              console.error("⚠️ 事件唤醒 run 结算失败:", error instanceof Error ? error.message : String(error));
+            }
+          }
+          if (audit) {
+            try {
+              await audit.result({ eventId: event.id, status }, Date.now() - startedAt, status === "idle" ? "success" : "error", null);
+            } catch { /* 结果审计失败已由 journal 毒化机制兜底 */ }
           }
         }
-        if (audit) {
-          try {
-            await audit.result({ eventId: event.id, status }, Date.now() - startedAt, status === "idle" ? "success" : "error", null);
-          } catch { /* 结果审计失败已由 journal 毒化机制兜底 */ }
-        }
-        }
-      })();
+      });
     });
   });
   // 广播批次的 handler 在同一 turn 内串行执行；让出一次 setImmediate，保证刚调度的

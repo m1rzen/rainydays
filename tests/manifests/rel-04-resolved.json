@@ -43,12 +43,12 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "sha256": "8e0bd3d55307ca8911458bad397f6c6e09e67bd159c1025472c0e7f81f7b4c4e",
       "owner": "REL-04"
     },
     {
       "exactCasePath": "src/llm.ts",
-      "sha256": "95275ddc9d491d75486cc009a44f1a71fe9c5b4006a0bf8d99448088b1189014",
+      "sha256": "cc9d812aa34fa14006bc951b108da70948452f79b66ed2cd67970d6b82aa2fe2",
       "owner": "REL-04"
     },
     {
@@ -58,7 +58,7 @@
     },
     {
       "exactCasePath": "src/observability.ts",
-      "sha256": "a5a7e12fc960cdb5747336835e9af4cdd8fe4609e47282198bc1958306c2398e",
+      "sha256": "cbab31545e068c68f999a5202cea35f96160db6d3a189be45330b524c60f8db8",
       "owner": "REL-04"
     },
     {
@@ -75,21 +75,21 @@
   "testEntries": [
     {
       "exactCasePath": "tests/unit/rel04-observability.test.mjs",
-      "sha256": "07d774456b63bfc0c26b5dc26aa21d7e6f2a59f5c74aae686bbc006eb2c1aac8",
+      "sha256": "2f28c08863fd2f165451dcd12a07ac990f2d33104041926e545f61ecda3656e7",
       "kind": "test",
       "layer": "unit",
       "owner": "REL-04"
     },
     {
       "exactCasePath": "tests/contract/rel04-governance.test.mjs",
-      "sha256": "5fe4e55b6d9e7ab713f573364913f875b34caa245a9a2db5b39e2b83adaf1e46",
+      "sha256": "182d64b2cc5e51834eedcf539cdcc5b1793b801bfdc0a4ca6134a0d3aa81742c",
       "kind": "test",
       "layer": "contract",
       "owner": "REL-04"
     },
     {
       "exactCasePath": "tests/integration/rel04-health-diagnostics.test.mjs",
-      "sha256": "46d83dcb7e52019321e3ec322f48e237f7e68532f1b58d4d267f67b84b432589",
+      "sha256": "4060d9fad117789f7cbc89737644b6e4ed5aec0ad00f45adf09f9ea02cfcc75e",
       "kind": "test",
       "layer": "integration",
       "owner": "REL-04"
@@ -109,5 +109,5 @@
       "owner": "REL-04"
     }
   ],
-  "canonicalPayloadSha256": "f6667ce2df65a9abb32f15587103b223d2b848fe8017c1a7ddb0b7b8763ee218"
+  "canonicalPayloadSha256": "e105d45cb53de6b56bba6e7b48276e261fbcaebde00d15a45df911234ef33855"
 }

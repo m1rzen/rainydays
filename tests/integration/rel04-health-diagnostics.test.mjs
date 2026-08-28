@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import http from "node:http";
 import path from "node:path";
 import test from "node:test";
 import {
@@ -19,6 +20,24 @@ async function api(base, token, route) {
     requestId: response.headers.get("x-rainydays-request-id"),
     text: await response.text(),
   };
+}
+
+async function abortSse(base, token, route) {
+  await new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = error => {
+      if (settled) return;
+      settled = true;
+      if (error && error.code !== "ECONNRESET") reject(error);
+      else resolve();
+    };
+    const request = http.get(`${base}${route}`, { headers: { "X-RainyDays-Token": token } }, response => {
+      response.once("close", () => finish());
+      response.once("error", finish);
+      response.destroy();
+    });
+    request.once("error", finish);
+  });
 }
 
 function assertNoSensitiveKeys(value) {
@@ -85,6 +104,11 @@ test("REL-04 real API exposes correlated health probes and a bounded redacted su
     if (readyBody.status === "degraded") assert(readyBody.reasons.includes("provider_unconfigured"));
 
     await api(base, token, "/status");
+    await abortSse(base, token, "/events");
+    await waitFor(() => stdout.includes('"outcome":"cancelled"'), {
+      timeoutMs: 5_000,
+      label: "REL-04 cancelled HTTP observation",
+    });
     const diagnostics = await api(base, token, "/diagnostics");
     assert.equal(diagnostics.status, 200);
     assert.match(diagnostics.requestId, /^[0-9a-f-]{36}$/u);
@@ -95,7 +119,9 @@ test("REL-04 real API exposes correlated health probes and a bounded redacted su
     assert.equal(body.version.buildId, body.health.buildId);
     assert.equal(body.health.ready, true);
     assert.deepEqual(Object.keys(body.metrics).sort(), ["database", "http", "llm", "pty", "tool"]);
-    assert(body.metrics.http.total >= 4);
+    assert(body.metrics.http.total >= 5);
+    assert.equal(body.metrics.http.active, 1, "only the diagnostics request itself may remain active in its snapshot");
+    assert(body.metrics.http.outcomes.cancelled >= 1);
     assert(body.metrics.database.total >= 1);
     assert.deepEqual(Object.keys(body.securityAudit).sort(), ["eventCount", "headHash", "integrity", "schemaVersion"]);
     assert.equal(body.securityAudit.integrity, "verified");

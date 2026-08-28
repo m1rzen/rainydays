@@ -168,6 +168,7 @@ export class LLMClient {
     let lastError: unknown = null;
     const observation = beginObservation("llm");
 
+    try {
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
         if (signal) throwIfCancelled(signal);
@@ -223,6 +224,9 @@ export class LLMClient {
       `LLM 请求失败: 已耗尽 ${MAX_RETRIES + 1} 次尝试。` +
       `最后错误: ${lastError instanceof Error ? lastError.message : String(lastError)}`
     );
+    } finally {
+      observation.finish(signal?.aborted ? "cancelled" : "error");
+    }
   }
 
   /**
@@ -252,7 +256,9 @@ export class LLMClient {
 
     let lastError: unknown = null;
     const observation = beginObservation("llm");
+    let fallbackOutcome: "cancelled" | "error" = "cancelled";
 
+    try {
     // 重试只在流建立阶段（create 调用），流开始后不重试
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
@@ -304,8 +310,8 @@ export class LLMClient {
             : undefined,
         };
 
-        yield { type: "result", message: finalMessage };
         observation.finish("success", { bytesOut: Buffer.byteLength(fullContent, "utf8") });
+        yield { type: "result", message: finalMessage };
         return; // 成功，退出重试循环
 
       } catch (err) {
@@ -341,6 +347,12 @@ export class LLMClient {
       `LLM 流式请求失败: 已耗尽 ${MAX_RETRIES + 1} 次尝试。` +
       `最后错误: ${lastError instanceof Error ? lastError.message : String(lastError)}`
     );
+    } catch (error) {
+      fallbackOutcome = signal?.aborted ? "cancelled" : "error";
+      throw error;
+    } finally {
+      observation.finish(fallbackOutcome);
+    }
   }
 }
 

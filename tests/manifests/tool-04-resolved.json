@@ -93,7 +93,7 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "7ff83802e5cb21c098ef479c1eff8ffbcfaca1be56da543fa6141d387856a94c",
+      "sha256": "bb07ec5fd3c06fbfff5c73e36630a113f74d29b2f71782d3e6e6bad7258d768c",
       "owner": "TOOL-04"
     },
     {
@@ -145,7 +145,7 @@
     },
     {
       "exactCasePath": "tests/integration/process-cwd.test.mjs",
-      "sha256": "5c22e64d83e57a8c6bdd15aef22d5856bca0c3777c5d82ad9e734f8b61bd0809",
+      "sha256": "f49decd5ad8744c5db12ffdabebf1552d124c86dec7547818f1af8851d8db914",
       "kind": "test",
       "layer": "integration",
       "owner": "TOOL-04"
@@ -165,5 +165,5 @@
       "owner": "TOOL-04"
     }
   ],
-  "canonicalPayloadSha256": "899f181974eab27b825a886ca0f70f0a1c1d67fa1f1be14cbc8b71d92ee9f3c6"
+  "canonicalPayloadSha256": "3fd737928b2ba181468e58e2c74f3b7b414c14af6f806409cadce2ae9e354448"
 }

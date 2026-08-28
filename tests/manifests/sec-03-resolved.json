@@ -170,7 +170,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "sha256": "8e0bd3d55307ca8911458bad397f6c6e09e67bd159c1025472c0e7f81f7b4c4e",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -320,7 +320,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "ada797ef15969b70aab116a0e062ee98a68524e83c7d33e173aea2c0e6b9fe86",
+      "sha256": "10d73befd2594df4e17cc4ed38e1182c9751ab43d7fe30a489be0d3aa8c9717f",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -466,7 +466,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "c444bb69eb6b5dbbcd3c2c95181768317a9e7a2a5f8bfbe9a344aa514f8731e0",
+      "sha256": "c3834b4e58d5f529ca0024d153e3a88c8c28d89d3ed574bfe1e9d6c06eacd723",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -1536,7 +1536,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "sha256": "8e0bd3d55307ca8911458bad397f6c6e09e67bd159c1025472c0e7f81f7b4c4e",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -1866,7 +1866,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "ada797ef15969b70aab116a0e062ee98a68524e83c7d33e173aea2c0e6b9fe86",
+      "sha256": "10d73befd2594df4e17cc4ed38e1182c9751ab43d7fe30a489be0d3aa8c9717f",
       "kind": "runtime",
       "layer": null,
       "owner": "SEC-03",
@@ -2440,7 +2440,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "c444bb69eb6b5dbbcd3c2c95181768317a9e7a2a5f8bfbe9a344aa514f8731e0",
+      "sha256": "c3834b4e58d5f529ca0024d153e3a88c8c28d89d3ed574bfe1e9d6c06eacd723",
       "kind": "governance",
       "layer": null,
       "owner": "SEC-03",
@@ -3809,5 +3809,5 @@
       "evidenceOwners": []
     }
   ],
-  "canonicalPayloadSha256": "6675686a2a081388f1d316d395dbce8ebc222e6f790d5b326fd4af1999d3793f"
+  "canonicalPayloadSha256": "98db99db8146184a5bdb79b70e30a4a6c9f96b79ab17c67289755a0a54824a61"
 }

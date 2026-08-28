@@ -72,6 +72,14 @@ export function runWithObservabilityContext<T>(
   return contextStorage.run(store, action);
 }
 
+export function bindObservabilityContext<Args extends unknown[], Result>(
+  action: (...args: Args) => Result,
+): (...args: Args) => Result {
+  const store = contextStorage.getStore();
+  if (!store) return action;
+  return (...args: Args) => contextStorage.run(store, () => action(...args));
+}
+
 export function updateObservabilityContext(update: Partial<Omit<ObservabilityContext, "requestId">>): void {
   const store = contextStorage.getStore();
   if (!store) return;

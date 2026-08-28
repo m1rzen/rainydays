@@ -206,15 +206,15 @@ RainyDays 将安全约束作为运行时设计的一部分，而不是只依赖 
 | SEC-01 Capability Broker | 已实现并具备契约与攻击性测试 |
 | SEC-02 PathPolicy | 运行时与候选门禁已闭合；累计 Coverage 债务仍隔离跟踪 |
 | SEC-03 Execution Isolation | **进行中**：原生隔离与真实性原语已建立，完整真实宿主回执集仍待闭合 |
-| REL-04 Observability & Diagnostics | **WIP**：结构化脱敏日志与关联标识、`live` / `ready` / `degraded` 健康状态、固定维度聚合指标和不超过 256 KiB 的诊断包已实现；独立复审后仍有 3 个 P1 与 1 个 P2 未闭合 |
+| REL-04 Observability & Diagnostics | **WIP**：结构化脱敏日志与关联标识、`live` / `ready` / `degraded` 健康状态、固定维度聚合指标和不超过 256 KiB 的诊断包已实现；3 个 P1 已完成修复与定向验证，等待新的独立只读复审；P2 DB 全量 instrumentation 仍明确隔离 |
 | Lux Desktop 全量 Parity | **进行中**，以 canonical execution spec 为唯一完成度依据 |
 
-### 2026-08-27 开发快照
+### 2026-08-28 开发快照
 
-本次进度同步位于开发分支 `agent/data01-ds02-foundation`，用于保存和公开当前 WIP，不代表 REL-04 已达到发布或闭合条件。
+当前工作位于开发分支 `agent/data01-ds02-foundation`；REL-04 的 P1 修复尚未推送，不代表该卡已达到发布或闭合条件。
 
-- 已通过：TypeScript typecheck、ESLint、定向回归 19/19、REL-04 Unit 5/5、Contract 7/7、Integration 1/1、Electron 9/9，以及安装候选首次启动和重启后的 REL-04 health/diagnostics 探针。
-- 待修复的 P1：LLM/HTTP observation 的 once-only 生命周期、结构化 logger 与既有 `process-cwd` 安全证据消费者的兼容、后台 EventBus/Cron/Poll Agent run 的 session/run correlation。
+- 新增收口证据：TypeScript typecheck、受影响文件 ESLint、REL-04 Unit 8/8、Contract 7/7、真实 API Integration 1/1、`process-cwd` 2/2、EVT-02 detached flow 1/1。此前 Electron 9/9 和安装候选 REL-04 探针证据保持有效，未重复运行长门禁。
+- 已修复、待独立复审的 P1：LLM/HTTP observation 的 once-only 生命周期、结构化 logger 与既有 `process-cwd` 安全证据消费者的兼容、后台 EventBus/Cron/Poll Agent run 的 session/run correlation。
 - 已记录的 P2：当前 Database 指标覆盖边界/探针与事务，而不是所有直接 SQL 操作。
 - 安装候选在 REL-04 探针完成后，于既有 Session/卸载清理尾段报告范围外 `CLEANUP`；该问题以及隔离的 SEC-02 累计 Coverage 债务均未在本次 WIP 中宣称解决。
 - 本地 `deliverables/` 构建与诊断产物不纳入版本库。

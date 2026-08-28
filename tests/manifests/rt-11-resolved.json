@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "ada797ef15969b70aab116a0e062ee98a68524e83c7d33e173aea2c0e6b9fe86",
+      "sha256": "10d73befd2594df4e17cc4ed38e1182c9751ab43d7fe30a489be0d3aa8c9717f",
       "owner": "RT-11"
     },
     {
@@ -78,7 +78,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "a72e8f7ff4ea7909e6514a54696a7e6a1ea884e538a3a7db15565d9e0ea430b4",
+      "sha256": "8e0bd3d55307ca8911458bad397f6c6e09e67bd159c1025472c0e7f81f7b4c4e",
       "owner": "RT-11"
     },
     {
@@ -167,5 +167,5 @@
       "owner": "RT-11"
     }
   ],
-  "canonicalPayloadSha256": "726f0d7aa2322721de698a6188d7355b638128951b3c43504156458f130375ef"
+  "canonicalPayloadSha256": "f33e8d2b10c90978ca376ef1b5eca67305df6ab231fc2fada4f99f25b807a32a"
 }

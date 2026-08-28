@@ -451,9 +451,11 @@ test("SEC-02 Shell and Script use authorized initial CWD and deny external CWD b
       newAuthorityIsolated = terminalModule.terminalFacade.list(nextOwner).length === 0;
       const originalLog = console.log;
       console.log = (...args) => {
-        if (args[1] === "terminal-owner-denied" && typeof args[2] === "string") {
-          try { terminalEvents.push(JSON.parse(args[2])); }
-          catch { originalLog(...args); }
+        let entry = null;
+        try { entry = typeof args[0] === "string" ? JSON.parse(args[0]) : null; }
+        catch { entry = null; }
+        if (entry?.tag === "terminal-security" && entry?.message === "terminal-owner-denied" && entry?.data) {
+          terminalEvents.push(entry.data);
           return;
         }
         originalLog(...args);
