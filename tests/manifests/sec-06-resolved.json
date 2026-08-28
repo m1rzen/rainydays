@@ -8,12 +8,12 @@
   "runtimeEntries": [
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "e7259295d5181838dcf642d99b627e4add24e0eeadcf8cf7f663b40b5dd0c9b5",
+      "sha256": "01e1bbbaa0c5ac2154d3b66eea360f5c62eb53cfcc89b8e96fc885cca18b6fef",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "electron/path-bootstrap.cjs",
-      "sha256": "277caea71b7d7b551560380ea32b1b2fff21e934418ca360f9c2fffa278ca491",
+      "sha256": "7f0071a0be15e8f0d82291703a5d6621db6f39870fbabe246e115082261b67bd",
       "owner": "SEC-06"
     },
     {
@@ -43,7 +43,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "8e0bd3d55307ca8911458bad397f6c6e09e67bd159c1025472c0e7f81f7b4c4e",
+      "sha256": "66e6dc01044271f687f58748a1bfcdc765539292b1be78cca65fdcc924463e15",
       "owner": "SEC-06"
     },
     {
@@ -103,7 +103,7 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "10d73befd2594df4e17cc4ed38e1182c9751ab43d7fe30a489be0d3aa8c9717f",
+      "sha256": "c0f880bf7c0c15ffa618247f05557d521029387e1b8e0e786a39a88526105d51",
       "owner": "SEC-06"
     },
     {
@@ -209,5 +209,5 @@
       "owner": "SEC-06"
     }
   ],
-  "canonicalPayloadSha256": "c472aa9dcf6c8c32da846f78c289900ba40cabcbec57c110689b78fb6e8fe784"
+  "canonicalPayloadSha256": "b6c2a78527005374d0f03baec3a74602634a0bb500e5a25ab6561531af01003f"
 }

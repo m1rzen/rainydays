@@ -386,6 +386,17 @@ class ElectronBootstrapPathStore {
     return value;
   }
 
+  async withRuntimeAppRootDirectory(role, use) {
+    this.#assertOpen();
+    const record = this.#runtimeAppRoot ?? this.#appRoot;
+    this.#archiveLease?.verify(`${role}-archive`);
+    verifyDirectory(record, role);
+    const value = await use(record.canonical);
+    this.#archiveLease?.verify(`${role}-archive`);
+    verifyDirectory(record, role);
+    return value;
+  }
+
   runtimeRoots() {
     this.#assertOpen();
     if (this.#archiveLease) {

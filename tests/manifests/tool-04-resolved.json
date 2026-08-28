@@ -93,7 +93,7 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "bb07ec5fd3c06fbfff5c73e36630a113f74d29b2f71782d3e6e6bad7258d768c",
+      "sha256": "96b5e02008393b187f072b6b8ae2f7f7e985acef04f6213a1201cb6072b436be",
       "owner": "TOOL-04"
     },
     {
@@ -165,5 +165,5 @@
       "owner": "TOOL-04"
     }
   ],
-  "canonicalPayloadSha256": "3fd737928b2ba181468e58e2c74f3b7b414c14af6f806409cadce2ae9e354448"
+  "canonicalPayloadSha256": "1eccd24018754e7a4fccafcd1d657398a49f91dc3e9296596c78179155a60d09"
 }

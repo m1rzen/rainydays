@@ -3417,6 +3417,14 @@ async function start() {
   await new Promise<void>((resolve, reject) => {
     httpServer = app.listen(PORT, HOST, () => {
       console.log(`\n🚀 RainyDays ${APP_VERSION} (${BUILD_ID}) 已启动: http://${HOST}:${PORT}/\n`);
+      if (typeof process.send === "function" && process.connected) {
+        process.send(Object.freeze({
+          type: "rainydays-service-ready",
+          host: HOST,
+          port: PORT,
+          pid: process.pid,
+        }));
+      }
       resolve();
 
       migrateMissingEmbeddings().catch((err) => {
@@ -3669,7 +3677,85 @@ export async function shutdown(exitProcess = true): Promise<void> {
   await getBootstrapPathStore().close();
   if (exitProcess) process.exit(0);
 }
+const serviceControlOperations = new Set([
+  "prepare-manual-terminal",
+  "decide-manual-terminal",
+  "write-interactive-terminal",
+  "resize-interactive-terminal",
+  "invalidate-manual-terminal",
+  "invalidate-native-consent",
+]);
+
+async function handleServiceControlRequest(message: unknown): Promise<boolean> {
+  if (!message || typeof message !== "object" || Array.isArray(message)) return false;
+  const request = message as { type?: unknown; requestId?: unknown; operation?: unknown; args?: unknown };
+  if (JSON.stringify(Object.keys(request).sort()) !== JSON.stringify(["args", "operation", "requestId", "type"])
+    || request.type !== "rainydays-control-request"
+    || typeof request.requestId !== "string" || !/^[a-f0-9]{32}$/u.test(request.requestId)
+    || typeof request.operation !== "string" || !serviceControlOperations.has(request.operation)
+    || !Array.isArray(request.args)) return false;
+  try {
+    if (Buffer.byteLength(JSON.stringify(request), "utf8") > 256 * 1024) throw new TypeError("Service control request is too large");
+    let result: unknown;
+    if (request.operation === "prepare-manual-terminal" && request.args.length === 3) {
+      result = await prepareManualTerminalConsent(request.args[0] as ManualConsentOperation, request.args[1], request.args[2] as ManualTerminalPresence);
+    } else if (request.operation === "decide-manual-terminal" && request.args.length === 5) {
+      result = await decideManualTerminalConsent(
+        request.args[0] as string,
+        request.args[1] as ManualConsentDecision,
+        request.args[2] as ManualConsentOperation,
+        request.args[3] as string,
+        request.args[4] as ManualTerminalPresence,
+      );
+    } else if (request.operation === "write-interactive-terminal" && request.args.length === 2) {
+      result = await writeInteractiveTerminal(request.args[0], request.args[1] as ManualTerminalPresence);
+    } else if (request.operation === "resize-interactive-terminal" && request.args.length === 2) {
+      result = await resizeInteractiveTerminal(request.args[0], request.args[1] as ManualTerminalPresence);
+    } else if (request.operation === "invalidate-manual-terminal" && request.args.length === 1) {
+      invalidateManualTerminalConsent(request.args[0] as number);
+      result = null;
+    } else if (request.operation === "invalidate-native-consent" && request.args.length === 0) {
+      invalidateNativeProcessConsent();
+      result = null;
+    } else {
+      throw new TypeError("Service control arguments are invalid");
+    }
+    if (typeof process.send === "function" && process.connected) {
+      process.send({ type: "rainydays-control-result", requestId: request.requestId, ok: true, value: result ?? null });
+    }
+  } catch (error) {
+    if (typeof process.send === "function" && process.connected) {
+      process.send({
+        type: "rainydays-control-result",
+        requestId: request.requestId,
+        ok: false,
+        error: {
+          name: (error instanceof Error ? error.name : "Error").slice(0, 80),
+          message: (error instanceof Error ? error.message : String(error)).slice(0, 2_048),
+          code: typeof (error as { code?: unknown })?.code === "string"
+            ? (error as { code: string }).code.slice(0, 80)
+            : null,
+        },
+      });
+    }
+  }
+  return true;
+}
+
 process.on("SIGINT", () => { void shutdown(true); });
 process.on("SIGTERM", () => { void shutdown(true); });
+process.on("message", message => {
+  if (message && typeof message === "object" && !Array.isArray(message)) {
+    const value = message as { type?: unknown; reason?: unknown };
+    if (JSON.stringify(Object.keys(value).sort()) === JSON.stringify(["reason", "type"])
+      && value.type === "rainydays-service-shutdown"
+      && typeof value.reason === "string" && value.reason.length >= 1 && value.reason.length <= 64) {
+      void shutdown(true);
+      return;
+    }
+  }
+  void handleServiceControlRequest(message);
+});
+process.on("disconnect", () => { void shutdown(true); });
 
 export const ready = start();

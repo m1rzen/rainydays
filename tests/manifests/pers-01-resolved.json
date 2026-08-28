@@ -158,7 +158,7 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "8e0bd3d55307ca8911458bad397f6c6e09e67bd159c1025472c0e7f81f7b4c4e",
+      "sha256": "66e6dc01044271f687f58748a1bfcdc765539292b1be78cca65fdcc924463e15",
       "owner": "PERS-01"
     },
     {
@@ -235,5 +235,5 @@
       "owner": "PERS-01"
     }
   ],
-  "canonicalPayloadSha256": "7873c850b7e579f2a71df8c211ce427051f4cd5b4e735fc7da809b120693a797"
+  "canonicalPayloadSha256": "5e7da2f0378f4c136facc03379412a86e0241e6cfcca0438955f2c73fc18f4a0"
 }

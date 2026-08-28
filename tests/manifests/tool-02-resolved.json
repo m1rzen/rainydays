@@ -158,22 +158,22 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-02-current.json",
-      "sha256": "0743fb3af3e1f58efcaee35aaf2b570a53c5b1cb2eaa2c4d1ef4db4231813008",
+      "sha256": "055a6cd910452425d285c504c3b8873cfd3bdb877983c3c8255e343d393085ad",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "c3834b4e58d5f529ca0024d153e3a88c8c28d89d3ed574bfe1e9d6c06eacd723",
+      "sha256": "8db9f7964ceaf144575a2ee734c223b454e7632621b7be8b1a79f4f15c8e64f9",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "8f6f2452e0b17404bb7a92b1a855462fdd373ef980831880d8a368e738542a1c",
+      "sha256": "5f45bba0ace1910eb3838b3ebb2fccbe6c3f8cbbea2cd582a740f9e4ceef09af",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "bb07ec5fd3c06fbfff5c73e36630a113f74d29b2f71782d3e6e6bad7258d768c",
+      "sha256": "96b5e02008393b187f072b6b8ae2f7f7e985acef04f6213a1201cb6072b436be",
       "owner": "TOOL-02"
     },
     {
@@ -245,5 +245,5 @@
       "owner": "TOOL-02"
     }
   ],
-  "canonicalPayloadSha256": "59048306e4febd4eb9aab403801ced88a919cf9b741e94230f8653e5b649dec2"
+  "canonicalPayloadSha256": "118aaad96e17ba7285dbca8e0db9156421b312970afac7592f305d140f594290"
 }

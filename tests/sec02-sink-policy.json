@@ -228,9 +228,9 @@
       }
     },
     {
-      "siteId": "sink-47a0c025b69dfcbb8f9eec0b",
+      "siteId": "sink-6caca4a215d07aa693101e69",
       "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "cfcda07f2709b146c3f75d9ac37e75b245d3e1cd84cf68e9ee4e213eda4aecea",
+      "normalizedNodeSha256": "a6c91cc3c7ef54bffa6312991570794df26b9cc9f3bd755fe8e565b15e0f792d",
       "container": "<top-level>",
       "family": "module-loader",
       "api": "require",
@@ -256,12 +256,12 @@
       }
     },
     {
-      "siteId": "sink-98b57a2e4a6cdc53fad419d6",
+      "siteId": "sink-47a0c025b69dfcbb8f9eec0b",
       "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "becf68cc17b7b6506dad50a5814d87290da5db3f6238fd773fc00a3b2f83eb1a",
-      "container": "startPackagedServer",
+      "normalizedNodeSha256": "cfcda07f2709b146c3f75d9ac37e75b245d3e1cd84cf68e9ee4e213eda4aecea",
+      "container": "<top-level>",
       "family": "module-loader",
-      "api": "import",
+      "api": "require",
       "pathOperands": [
         "argument:0"
       ],
@@ -269,7 +269,7 @@
       "packageExpectation": "included-in-asar",
       "binding": {
         "kind": "static-module-loader",
-        "anchor": "electron/main.cjs#startPackagedServer:credential-store.import",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
         "evidenceIds": [
           "electron-source",
           "packaged-asar"
@@ -278,35 +278,7 @@
           {
             "selector": "argument:0",
             "classification": "reviewed-static-module-specifier",
-            "anchor": "electron/main.cjs#startPackagedServer:credential-store.argument:0"
-          }
-        ]
-      }
-    },
-    {
-      "siteId": "sink-168eb1caa3924a31a4166843",
-      "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "30e10fa869defa8ce0cbf81d75da38c679bdbc7dd0d6214dfde2f0c766f3733f",
-      "container": "startPackagedServer",
-      "family": "module-loader",
-      "api": "import",
-      "pathOperands": [
-        "argument:0"
-      ],
-      "executionClass": "electron-runtime",
-      "packageExpectation": "included-in-asar",
-      "binding": {
-        "kind": "static-module-loader",
-        "anchor": "electron/main.cjs#startPackagedServer:module-loader.import",
-        "evidenceIds": [
-          "electron-source",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "reviewed-static-module-specifier",
-            "anchor": "electron/main.cjs#startPackagedServer:argument:0"
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
           }
         ]
       }
@@ -479,7 +451,7 @@
       "siteId": "sink-d4de993c4220516df880bcc1",
       "sourcePath": "electron/main.cjs",
       "normalizedNodeSha256": "883606c0b9c88840dd620357470e2e3884792aaed94cba85161b862e95c26027",
-      "container": "stopDevelopmentServer",
+      "container": "terminateServerProcess",
       "family": "child-process",
       "api": "spawn",
       "pathOperands": [
@@ -491,7 +463,7 @@
       "packageExpectation": "included-in-asar",
       "binding": {
         "kind": "bootstrap-adapter",
-        "anchor": "electron/main.cjs#stopDevelopmentServer:child-process.spawn",
+        "anchor": "electron/main.cjs#terminateServerProcess:child-process.spawn",
         "evidenceIds": [
           "electron-source",
           "packaged-asar"
@@ -500,17 +472,17 @@
           {
             "selector": "argument:0",
             "classification": "runtime-executable-lease",
-            "anchor": "electron/main.cjs#stopDevelopmentServer:argument:0"
+            "anchor": "electron/main.cjs#terminateServerProcess:argument:0"
           },
           {
             "selector": "argument:1",
             "classification": "fixed-reviewed-argv",
-            "anchor": "electron/main.cjs#stopDevelopmentServer:argument:1"
+            "anchor": "electron/main.cjs#terminateServerProcess:argument:1"
           },
           {
             "selector": "argument:2.shell",
             "classification": "fixed-shell-false",
-            "anchor": "electron/main.cjs#stopDevelopmentServer:argument:2.shell"
+            "anchor": "electron/main.cjs#terminateServerProcess:argument:2.shell"
           }
         ]
       }
@@ -4081,5 +4053,5 @@
       }
     }
   ],
-  "canonicalPayloadSha256": "71da4a65e7bc19925bdbc43b36f0e453bfe87e8de32a22e82485fa7d1ad3ea67"
+  "canonicalPayloadSha256": "15a8b6292c825fbe6bd4ba98b6b96e459ba66bf7b3c7aadc8206f94db372e95e"
 }

@@ -11,17 +11,21 @@ const { randomBytes } = require("node:crypto");
 const { ElectronBootstrapPathStore, ElectronPathError } = require("./path-bootstrap.cjs");
 const { migrateLegacyUserData } = require("./user-data-migration.cjs");
 const { assertTrustedJsonDownload, assertTrustedRendererBinding, parseDialogRequest, parseNotification, parseTrayState, parseWindowAction } = require("./ipc-contract.cjs");
+const { ServiceSupervisor } = require("./service-supervisor.cjs");
 const originalFs = require("original-fs");
 
 let mainWindow = null;
 let tray = null;
 let serverProcess = null;
-let serverModule = null;
+let serverSupervisor = null;
+let serviceHealthInterval = null;
+let serviceHealthFailures = 0;
+let serviceHealthProbeActive = false;
+const serviceControlRequests = new Map();
 let buildInfo = null;
 let electronPaths = null;
 let preloadLease = null;
 let apiHeaderSession = null;
-let nativeProcessConsentCleanup = null;
 let childNativeProcessConsentTransport = null;
 let mainFrameGeneration = 0;
 let quitCleanupPromise = null;
@@ -206,36 +210,14 @@ async function protectCredential(plaintext) {
   return ciphertext;
 }
 
-async function startPackagedServer() {
-  Object.assign(process.env, runtimeEnvironment());
-  const lease = electronPaths.openAppFile(path.join("dist", "index.js"), "packaged-server-module");
+async function startPackagedServerProcess() {
+  const executableLease = electronPaths.openExternalBootstrapExecutable(process.execPath, "packaged-electron-node");
+  const serverLease = electronPaths.openAppFile(path.join("dist", "index.js"), "packaged-server-entry");
   try {
-    lease.verify("before-packaged-server-import");
-    const literalServerPath = path.resolve(__dirname, "..", "dist", "index.js");
-    if (path.resolve(lease.canonicalPath).toLowerCase() !== literalServerPath.toLowerCase()) {
-      throw new Error("Packaged server module differs from the verified literal import target");
-    }
-    const credentialModule = await import("../dist/credential-store.js");
-    if (typeof credentialModule.configureCredentialProtector !== "function") {
-      throw new Error("Credential protector registration is unavailable");
-    }
-    credentialModule.configureCredentialProtector({
-      protect: plaintext => protectCredential(plaintext),
-      unprotect: ciphertext => {
-        if (!safeStorage.isEncryptionAvailable()) throw new Error("OS credential protection is unavailable");
-        return safeStorage.decryptString(ciphertext);
-      },
-    });
-    serverModule = await import("../dist/index.js");
-    lease.verify();
-    if (typeof serverModule.registerNativeProcessConsentHandler !== "function") {
-      throw new Error("Native process consent broker is unavailable");
-    }
-    nativeProcessConsentCleanup = serverModule.registerNativeProcessConsentHandler(handleNativeProcessConsent);
-    await serverModule.ready;
-    lease.verify();
+    return await startServerProcess(executableLease, [serverLease], { ELECTRON_RUN_AS_NODE: "1" });
   } finally {
-    lease.close();
+    serverLease.close();
+    executableLease.close();
   }
 }
 
@@ -251,91 +233,204 @@ function selectServerMode() {
   }
   if (requested !== "1") throw new Error("RAINYDAYS_E2E_USE_DIST must be exactly 1 when set");
   if (!nodeExecutable) throw new Error("RAINYDAYS_E2E_NODE_EXECUTABLE is required");
-  return { type: "compiled", executableLease: electronPaths.openExternalTestExecutable(nodeExecutable) };
+  return { type: "compiled", executablePath: nodeExecutable };
+}
+
+async function probeServiceReady() {
+  const response = await fetch(`http://127.0.0.1:${port}/api/health/ready`, {
+    headers: { "X-RainyDays-Token": apiToken },
+    signal: AbortSignal.timeout(5_000),
+  });
+  if (!response.ok) throw new Error(`RainyDays readiness probe failed with HTTP ${response.status}`);
+  const body = await response.json();
+  if (body?.ready !== true || body?.buildId !== buildInfo.buildId) {
+    throw new Error("RainyDays readiness payload is invalid");
+  }
+}
+
+function waitForServiceReady(child) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let probing = false;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      child.off("message", onMessage);
+      child.off("error", onError);
+      child.off("exit", onExit);
+      if (error) reject(error);
+      else resolve();
+    };
+    const onMessage = (message) => {
+      if (probing || !message || typeof message !== "object" || Array.isArray(message)) return;
+      const keys = Object.keys(message).sort();
+      if (keys.length !== 4 || keys[0] !== "host" || keys[1] !== "pid" || keys[2] !== "port" || keys[3] !== "type"
+        || message.type !== "rainydays-service-ready" || message.host !== "127.0.0.1"
+        || message.port !== port || message.pid !== child.pid) return;
+      probing = true;
+      void probeServiceReady().then(() => finish(), finish);
+    };
+    const onError = error => finish(error);
+    const onExit = (code, signal) => finish(new Error(`RainyDays service exited before readiness (code ${code}, signal ${signal})`));
+    const timer = setTimeout(() => finish(new Error("RainyDays service readiness timed out")), 30_000);
+    timer.unref?.();
+    child.on("message", onMessage);
+    child.once("error", onError);
+    child.once("exit", onExit);
+  });
+}
+
+function rejectServiceControlRequests(child, reason) {
+  for (const [requestId, pending] of serviceControlRequests) {
+    if (pending.child !== child) continue;
+    serviceControlRequests.delete(requestId);
+    clearTimeout(pending.timer);
+    pending.reject(reason instanceof Error ? reason : new Error(String(reason)));
+  }
+}
+
+function handleServiceControlResult(child, message) {
+  if (!message || typeof message !== "object" || Array.isArray(message) || message.type !== "rainydays-control-result") return false;
+  const pending = typeof message.requestId === "string" ? serviceControlRequests.get(message.requestId) : null;
+  if (!pending || pending.child !== child) return true;
+  const success = message.ok === true
+    && JSON.stringify(Object.keys(message).sort()) === JSON.stringify(["ok", "requestId", "type", "value"]);
+  const failure = message.ok === false
+    && JSON.stringify(Object.keys(message).sort()) === JSON.stringify(["error", "ok", "requestId", "type"])
+    && message.error && typeof message.error === "object" && !Array.isArray(message.error)
+    && JSON.stringify(Object.keys(message.error).sort()) === JSON.stringify(["code", "message", "name"])
+    && typeof message.error.name === "string" && typeof message.error.message === "string"
+    && (message.error.code === null || typeof message.error.code === "string");
+  if (!success && !failure) return true;
+  serviceControlRequests.delete(message.requestId);
+  clearTimeout(pending.timer);
+  if (success) pending.resolve(message.value);
+  else {
+    const error = new Error(message.error.message);
+    error.name = message.error.name;
+    if (message.error.code !== null) error.code = message.error.code;
+    pending.reject(error);
+  }
+  return true;
+}
+
+function callServiceControl(operation, args) {
+  const child = serverProcess;
+  if (!child || !child.connected || child.exitCode !== null || child.signalCode !== null
+    || serverSupervisor?.snapshot().phase !== "ready") {
+    return Promise.reject(new Error("RainyDays service control channel is unavailable"));
+  }
+  if (typeof operation !== "string" || !Array.isArray(args)) return Promise.reject(new TypeError("Service control request is invalid"));
+  const requestId = randomBytes(16).toString("hex");
+  const request = Object.freeze({ type: "rainydays-control-request", requestId, operation, args });
+  if (Buffer.byteLength(JSON.stringify(request), "utf8") > 256 * 1024) {
+    return Promise.reject(new TypeError("Service control request is too large"));
+  }
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      serviceControlRequests.delete(requestId);
+      reject(new Error("RainyDays service control request timed out"));
+    }, 15_000);
+    timer.unref?.();
+    serviceControlRequests.set(requestId, { child, resolve, reject, timer });
+    child.send(request, error => {
+      if (!error) return;
+      const pending = serviceControlRequests.get(requestId);
+      if (!pending) return;
+      serviceControlRequests.delete(requestId);
+      clearTimeout(timer);
+      reject(error);
+    });
+  });
 }
 
 async function startServerProcess(commandLease, argumentLeases, extraEnvironment = {}) {
   commandLease.verify();
   for (const lease of argumentLeases) lease.verify();
   const { createNativeProcessConsentParentTransport } = await import("../dist/native-process-consent-transport.js");
-  await electronPaths.withAppRootDirectory("server-process-cwd", async canonicalCwd => {
-    commandLease.verify("before-server-process-spawn");
-    for (const lease of argumentLeases) lease.verify("before-server-process-spawn");
-    serverProcess = spawn(commandLease.canonicalPath, argumentLeases.map(lease => lease.canonicalPath), {
-      cwd: canonicalCwd,
-      env: { ...runtimeEnvironment(), ...extraEnvironment },
-      shell: false,
-      stdio: ["pipe", "pipe", "pipe", "pipe", "pipe", "ipc"],
-      windowsHide: true,
-    });
-    const child = serverProcess;
-    child.on("message", async message => {
-      if (!message || typeof message !== "object" || Array.isArray(message)) return;
-      const keys = Object.keys(message).sort();
-      if (keys.length !== 4 || keys[0] !== "operation" || keys[1] !== "requestId" || keys[2] !== "type" || keys[3] !== "value"
-        || message.type !== "rainydays-credential-request"
-        || typeof message.requestId !== "string" || !/^[a-f0-9]{32}$/.test(message.requestId)
-        || (message.operation !== "protect" && message.operation !== "unprotect")
-        || typeof message.value !== "string" || message.value.length < 1 || message.value.length > 128 * 1024) return;
-      let response;
-      try {
-        let value;
-        if (message.operation === "protect") {
-          value = (await protectCredential(message.value)).toString("base64");
-        } else {
-          if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(message.value)) {
-            throw new Error("Credential ciphertext encoding is invalid");
+  let child = null;
+  let consentTransport = null;
+  try {
+    await electronPaths.withRuntimeAppRootDirectory("server-process-cwd", async canonicalCwd => {
+      commandLease.verify("before-server-process-spawn");
+      for (const lease of argumentLeases) lease.verify("before-server-process-spawn");
+      child = spawn(commandLease.canonicalPath, argumentLeases.map(lease => lease.canonicalPath), {
+        cwd: canonicalCwd,
+        env: { ...runtimeEnvironment(), ...extraEnvironment },
+        shell: false,
+        stdio: ["pipe", "pipe", "pipe", "pipe", "pipe", "ipc"],
+        windowsHide: true,
+      });
+      serverProcess = child;
+      child.stdout.on("data", data => console.log("[server]", data.toString().trim()));
+      child.stderr.on("data", data => console.log("[server error]", data.toString().trim()));
+      child.on("message", async message => {
+        if (handleServiceControlResult(child, message)) return;
+        if (!message || typeof message !== "object" || Array.isArray(message)) return;
+        const keys = Object.keys(message).sort();
+        if (keys.length !== 4 || keys[0] !== "operation" || keys[1] !== "requestId" || keys[2] !== "type" || keys[3] !== "value"
+          || message.type !== "rainydays-credential-request"
+          || typeof message.requestId !== "string" || !/^[a-f0-9]{32}$/.test(message.requestId)
+          || (message.operation !== "protect" && message.operation !== "unprotect")
+          || typeof message.value !== "string" || message.value.length < 1 || message.value.length > 128 * 1024) return;
+        let response;
+        try {
+          let value;
+          if (message.operation === "protect") {
+            value = (await protectCredential(message.value)).toString("base64");
+          } else {
+            if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(message.value)) {
+              throw new Error("Credential ciphertext encoding is invalid");
+            }
+            const ciphertext = Buffer.from(message.value, "base64");
+            if (ciphertext.length < 1 || ciphertext.length > 64 * 1024 || ciphertext.toString("base64") !== message.value) {
+              throw new Error("Credential ciphertext encoding is invalid");
+            }
+            if (!safeStorage.isEncryptionAvailable()) throw new Error("OS credential protection is unavailable");
+            value = safeStorage.decryptString(ciphertext);
           }
-          const ciphertext = Buffer.from(message.value, "base64");
-          if (ciphertext.length < 1 || ciphertext.length > 64 * 1024 || ciphertext.toString("base64") !== message.value) {
-            throw new Error("Credential ciphertext encoding is invalid");
-          }
-          if (!safeStorage.isEncryptionAvailable()) throw new Error("OS credential protection is unavailable");
-          value = safeStorage.decryptString(ciphertext);
+          response = { type: "rainydays-credential-result", requestId: message.requestId, ok: true, value };
+        } catch {
+          console.error(`[credential-service] ${message.operation} failed`);
+          response = { type: "rainydays-credential-result", requestId: message.requestId, ok: false };
         }
-        response = { type: "rainydays-credential-result", requestId: message.requestId, ok: true, value };
-      } catch {
-        console.error(`[credential-service] ${message.operation} failed`);
-        response = { type: "rainydays-credential-result", requestId: message.requestId, ok: false };
+        if (child.connected) child.send(response);
+      });
+      const requestPipe = child.stdio[3];
+      const responsePipe = child.stdio[4];
+      if (!requestPipe || !responsePipe) throw new Error("Native process consent pipes are unavailable");
+      consentTransport = createNativeProcessConsentParentTransport({
+        request: requestPipe,
+        response: responsePipe,
+        decide: handleNativeProcessConsent,
+      });
+      childNativeProcessConsentTransport = consentTransport;
+      child.once("exit", (code, signal) => {
+        rejectServiceControlRequests(child, new Error(`RainyDays service exited (code ${code}, signal ${signal})`));
+        consentTransport?.close();
+        if (childNativeProcessConsentTransport === consentTransport) childNativeProcessConsentTransport = null;
+        if (serverProcess === child) serverProcess = null;
+      });
+      await Promise.all([consentTransport.ready, waitForServiceReady(child)]);
+    });
+    commandLease.verify();
+    for (const lease of argumentLeases) lease.verify();
+    return child;
+  } catch (error) {
+    consentTransport?.close();
+    if (childNativeProcessConsentTransport === consentTransport) childNativeProcessConsentTransport = null;
+    if (child && child.exitCode === null && child.signalCode === null) {
+      try {
+        await terminateServerProcess(child, "failed-launch");
+      } catch (cleanupError) {
+        if (serverProcess === child) serverProcess = null;
+        throw new AggregateError([error, cleanupError], "RainyDays service launch cleanup failed", { cause: error });
       }
-      if (child.connected) child.send(response);
-    });
-    const requestPipe = child.stdio[3];
-    const responsePipe = child.stdio[4];
-    if (!requestPipe || !responsePipe) throw new Error("Native process consent pipes are unavailable");
-    childNativeProcessConsentTransport = createNativeProcessConsentParentTransport({
-      request: requestPipe,
-      response: responsePipe,
-      decide: handleNativeProcessConsent,
-    });
-
-    await Promise.all([
-      childNativeProcessConsentTransport.ready,
-      new Promise((resolve, reject) => {
-        let resolved = false;
-        let readinessBuffer = "";
-        const onOutput = (prefix, data) => {
-          const text = data.toString();
-          console.log(prefix, text.trim());
-          readinessBuffer = `${readinessBuffer}${text}`.slice(-16_384);
-          if (!resolved && readinessBuffer.includes("已启动: http://127.0.0.1:")) {
-            resolved = true;
-            resolve();
-          }
-        };
-        serverProcess.stdout.on("data", (data) => onOutput("[server]", data));
-        serverProcess.stderr.on("data", (data) => onOutput("[server error]", data));
-        serverProcess.once("error", reject);
-        serverProcess.once("exit", (code) => {
-          childNativeProcessConsentTransport?.close();
-          childNativeProcessConsentTransport = null;
-          if (!resolved) reject(new Error(`RainyDays 服务启动失败（exit ${code}）`));
-        });
-      }),
-    ]);
-  });
-  commandLease.verify();
-  for (const lease of argumentLeases) lease.verify();
+    }
+    if (serverProcess === child) serverProcess = null;
+    throw error;
+  }
 }
 
 async function startDevelopmentServer() {
@@ -343,7 +438,7 @@ async function startDevelopmentServer() {
   const tsxLease = electronPaths.openAppFile(path.join("node_modules", "tsx", "dist", "cli.mjs"), "source-tsx-entry");
   const sourceLease = electronPaths.openAppFile(path.join("src", "index.ts"), "source-server-entry");
   try {
-    await startServerProcess(executableLease, [tsxLease, sourceLease], { ELECTRON_RUN_AS_NODE: "1" });
+    return await startServerProcess(executableLease, [tsxLease, sourceLease], { ELECTRON_RUN_AS_NODE: "1" });
   } finally {
     sourceLease.close();
     tsxLease.close();
@@ -351,14 +446,65 @@ async function startDevelopmentServer() {
   }
 }
 
-async function startCompiledTestServer(executableLease) {
+async function startCompiledTestServer(executablePath) {
+  const executableLease = electronPaths.openExternalTestExecutable(executablePath);
   const serverLease = electronPaths.openAppFile(path.join("dist", "index.js"), "compiled-server-entry");
   try {
-    await startServerProcess(executableLease, [serverLease]);
+    return await startServerProcess(executableLease, [serverLease]);
   } finally {
     serverLease.close();
     executableLease.close();
   }
+}
+
+function startConfiguredServer(mode) {
+  if (mode.type === "packaged") return startPackagedServerProcess();
+  if (mode.type === "compiled") return startCompiledTestServer(mode.executablePath);
+  return startDevelopmentServer();
+}
+
+function reportServiceState(state) {
+  if (state.phase === "ready") serviceHealthFailures = 0;
+  const payload = {
+    event: "rainydays_service_state",
+    phase: state.phase,
+    generation: state.generation,
+    restartCount: state.restartCount,
+    restartDelayMs: state.restartDelayMs,
+    pid: state.pid,
+    failure: state.failure,
+  };
+  if (state.phase === "crash-loop") console.error(JSON.stringify(payload));
+  else console.log(JSON.stringify(payload));
+}
+
+function startServiceHealthMonitor() {
+  if (serviceHealthInterval) return;
+  serviceHealthInterval = setInterval(() => {
+    if (serviceHealthProbeActive || app.isQuitting || serverSupervisor?.snapshot().phase !== "ready") return;
+    serviceHealthProbeActive = true;
+    void probeServiceReady().then(
+      () => { serviceHealthFailures = 0; },
+      error => {
+        serviceHealthFailures += 1;
+        console.warn(`[service-health] readiness failure ${serviceHealthFailures}: ${error instanceof Error ? error.message : String(error)}`);
+        if (serviceHealthFailures >= 3) {
+          serviceHealthFailures = 0;
+          void serverSupervisor?.restart("health-check-failed").catch(restartError => {
+            console.error("[service-health] restart failed:", restartError instanceof Error ? restartError.message : String(restartError));
+          });
+        }
+      },
+    ).finally(() => { serviceHealthProbeActive = false; });
+  }, 15_000);
+  serviceHealthInterval.unref?.();
+}
+
+function stopServiceHealthMonitor() {
+  if (serviceHealthInterval) clearInterval(serviceHealthInterval);
+  serviceHealthInterval = null;
+  serviceHealthFailures = 0;
+  serviceHealthProbeActive = false;
 }
 
 function releasePreloadLease() {
@@ -412,21 +558,24 @@ async function handleNativeProcessConsent(challenge) {
   return choice.response === 1 ? "approve" : "deny";
 }
 
-function invalidateAllNativeConsent() {
-  if (typeof serverModule?.invalidateNativeProcessConsent === "function") {
-    serverModule.invalidateNativeProcessConsent();
-  }
+function reportControlFailure(operation, error) {
+  console.error(`[service-control] ${operation} failed:`, error instanceof Error ? error.message : String(error));
 }
 
+function invalidateAllNativeConsent() {
+  void callServiceControl("invalidate-native-consent", []).catch(error => reportControlFailure("invalidate-native-consent", error));
+}
+
+const manualTerminalConsentServer = Object.freeze({
+  prepareManualTerminalConsent: (...args) => callServiceControl("prepare-manual-terminal", args),
+  decideManualTerminalConsent: (...args) => callServiceControl("decide-manual-terminal", args),
+  writeInteractiveTerminal: (...args) => callServiceControl("write-interactive-terminal", args),
+  resizeInteractiveTerminal: (...args) => callServiceControl("resize-interactive-terminal", args),
+});
+
 function requireManualTerminalConsentServer() {
-  if (!serverModule
-    || typeof serverModule.prepareManualTerminalConsent !== "function"
-    || typeof serverModule.decideManualTerminalConsent !== "function"
-    || typeof serverModule.writeInteractiveTerminal !== "function"
-    || typeof serverModule.resizeInteractiveTerminal !== "function") {
-    throw new Error("Manual terminal consent is unavailable");
-  }
-  return serverModule;
+  if (serverSupervisor?.snapshot().phase !== "ready") throw new Error("Manual terminal consent is unavailable");
+  return manualTerminalConsentServer;
 }
 
 function manualTerminalPresence(event) {
@@ -603,9 +752,9 @@ function removeDesktopIpcHandlers() {
 
 function invalidateManualTerminalConsent() {
   const webContentsId = mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents.id : null;
-  if (webContentsId && typeof serverModule?.invalidateManualTerminalConsent === "function") {
-    serverModule.invalidateManualTerminalConsent(webContentsId);
-  }
+  if (!webContentsId) return;
+  void callServiceControl("invalidate-manual-terminal", [webContentsId])
+    .catch(error => reportControlFailure("invalidate-manual-terminal", error));
 }
 
 function installApiHeaderInjection(window) {
@@ -787,39 +936,51 @@ function createTray(icon) {
   });
 }
 
-async function stopDevelopmentServer() {
-  const child = serverProcess;
-  serverProcess = null;
+async function terminateServerProcess(child, reason = "shutdown") {
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
   const exited = new Promise((resolve, reject) => {
     child.once("exit", resolve);
     child.once("error", reject);
   });
-  if (process.platform === "win32" && child.pid) {
-    const systemRoot = process.env.SystemRoot || process.env.WINDIR;
-    if (!systemRoot) throw new Error("Windows system root is unavailable");
-    const taskkillLease = electronPaths.openExternalBootstrapExecutable(path.join(systemRoot, "System32", "taskkill.exe"), "taskkill");
-    try {
-      taskkillLease.verify("before-taskkill-spawn");
-      const taskkill = spawn(taskkillLease.canonicalPath, ["/pid", String(child.pid), "/T", "/F"], {
-        shell: false,
-        windowsHide: true,
-        stdio: "ignore",
-      });
-      taskkillLease.verify("after-taskkill-spawn");
-      await new Promise((resolve, reject) => {
-        taskkill.once("error", reject);
-        taskkill.once("exit", (code) => code === 0 || code === 128
-          ? resolve()
-          : reject(new Error(`taskkill failed with exit ${code}`)));
-      });
-    } finally {
-      taskkillLease.close();
-    }
-  } else {
-    child.kill("SIGTERM");
+  if (child.connected) {
+    try { child.send({ type: "rainydays-service-shutdown", reason }); }
+    catch { /* Forced process-tree cleanup below remains authoritative. */ }
   }
-  await exited;
+  const graceful = await Promise.race([
+    exited.then(() => true, () => false),
+    new Promise(resolve => {
+      const timer = setTimeout(() => resolve(false), 3_000);
+      timer.unref?.();
+    }),
+  ]);
+  if (!graceful && child.exitCode === null && child.signalCode === null) {
+    if (process.platform === "win32" && child.pid) {
+      const systemRoot = process.env.SystemRoot || process.env.WINDIR;
+      if (!systemRoot) throw new Error("Windows system root is unavailable");
+      const taskkillLease = electronPaths.openExternalBootstrapExecutable(path.join(systemRoot, "System32", "taskkill.exe"), "taskkill");
+      try {
+        taskkillLease.verify("before-taskkill-spawn");
+        const taskkill = spawn(taskkillLease.canonicalPath, ["/pid", String(child.pid), "/T", "/F"], {
+          shell: false,
+          windowsHide: true,
+          stdio: "ignore",
+        });
+        taskkillLease.verify("after-taskkill-spawn");
+        await new Promise((resolve, reject) => {
+          taskkill.once("error", reject);
+          taskkill.once("exit", code => code === 0 || code === 128
+            ? resolve()
+            : reject(new Error(`taskkill failed with exit ${code}`)));
+        });
+      } finally {
+        taskkillLease.close();
+      }
+    } else {
+      child.kill("SIGTERM");
+    }
+    await exited;
+  }
+  if (serverProcess === child) serverProcess = null;
 }
 
 app.whenReady().then(async () => {
@@ -836,9 +997,17 @@ app.whenReady().then(async () => {
     Object.assign(process.env, runtimeEnvironment());
     port = await choosePort(port);
     const serverMode = selectServerMode();
-    if (serverMode.type === "packaged") await startPackagedServer();
-    else if (serverMode.type === "compiled") await startCompiledTestServer(serverMode.executableLease);
-    else await startDevelopmentServer();
+    serverSupervisor = new ServiceSupervisor({
+      launch: () => startConfiguredServer(serverMode),
+      terminate: terminateServerProcess,
+      onState: reportServiceState,
+      maxRestarts: 5,
+      crashWindowMs: 60_000,
+      backoffBaseMs: 500,
+      backoffCapMs: 30_000,
+    });
+    await serverSupervisor.start();
+    startServiceHealthMonitor();
     createWindow();
     registerDesktopIpcHandlers();
     registerManualTerminalConsentHandlers();
@@ -857,12 +1026,12 @@ async function cleanupBeforeFinalQuit() {
   invalidateAllNativeConsent();
   removeApiHeaderInjection();
   releasePreloadLease();
+  stopServiceHealthMonitor();
+  const supervisor = serverSupervisor;
+  serverSupervisor = null;
+  await supervisor?.shutdown();
   childNativeProcessConsentTransport?.close();
   childNativeProcessConsentTransport = null;
-  if (serverModule?.shutdown) await serverModule.shutdown(false);
-  else await stopDevelopmentServer();
-  nativeProcessConsentCleanup?.();
-  nativeProcessConsentCleanup = null;
 }
 
 app.on("before-quit", (event) => {

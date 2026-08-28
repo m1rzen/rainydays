@@ -7138,11 +7138,11 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "c3834b4e58d5f529ca0024d153e3a88c8c28d89d3ed574bfe1e9d6c06eacd723"
+      "sha256": "8db9f7964ceaf144575a2ee734c223b454e7632621b7be8b1a79f4f15c8e64f9"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "8f6f2452e0b17404bb7a92b1a855462fdd373ef980831880d8a368e738542a1c"
+      "sha256": "5f45bba0ace1910eb3838b3ebb2fccbe6c3f8cbbea2cd582a740f9e4ceef09af"
     },
     {
       "exactCasePath": "tests/sec02-sink-crosscheck-policy.json",
@@ -7202,5 +7202,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "1223cfc31406cf8a2c63fb8fbd169f20328de8c0cb1224d3eb962b1f44655191"
+  "canonicalPayloadSha256": "ade66c6597bfb497b281cecd088405efab685b638d38605256edc3aae0e84458"
 }
