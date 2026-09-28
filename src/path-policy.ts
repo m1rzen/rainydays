@@ -456,9 +456,12 @@ export interface PathCreateResult {
   readonly createdDirectories: number;
 }
 
-/** Opaque write preflight. Its target and parent identities remain private to PathPolicy. */
+/** One-use write preflight. Target and parent identities remain private to PathPolicy. */
 export interface PathWritePreflight {
   readonly rootId: string;
+  readonly path: string;
+  readonly directory: string;
+  readonly exists: boolean;
 }
 
 interface PathWritePreflightRecord {
@@ -1187,7 +1190,8 @@ export class PathPolicy {
       await this.#barrier("afterCanonicalValidation", state.operationId);
       this.#assertActive(record);
       await this.#verifyRoot(record, selected.root, state);
-      const view = Object.freeze({ rootId: selected.root.rootId });
+      const view = Object.freeze({ rootId: selected.root.rootId, path: selected.lexicalTarget,
+        directory: selected.root.canonicalPath, exists: expected.kind === "existing" });
       this.#writePreflights.set(view, {
         authority: record,
         request: Object.freeze({ ...request, auditIdentity: request.auditIdentity ? Object.freeze({ ...request.auditIdentity }) : undefined }),

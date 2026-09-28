@@ -17,3 +17,9 @@
 - `src/tools/filesystem-lux.ts` 的 read 与代理 read_file 是可复用公共接口；附件句柄在调用远程 Worker 之前解析，只使用调用上下文中的会话 ID。
 - `src/file-viewer.ts` 已有 Office 文本预览、PDF 预览；`src/tools/writer.ts` 已有 DOCX/XLSX 输出，不复制实现。
 - 保留 text/image 持久化枚举，通过 MIME 区分文档。旧附件与导出结构保持兼容；新增文档内容不会被 Provider 直接按 UTF-8 解码。
+
+## R2-02：任务内新建与成果清单（2026-09-28）
+
+本地代码为本次接口依据：capability-broker.ts 的审批挑战、运行上下文、调用路径网关；path-policy.ts 的 preflightWrite/commitPreflightWrite；ask-user-tool.ts 的身份绑定回答通道。新建提交使用已有 createFile 原子无覆盖语义；预检时缺失而提交时出现的文件必须拒绝。任务许可仅内存保存，绑定根运行对象与内置注册绑定。
+
+writer.ts 已在 reserveFile.commit 后返回结果；将回执改为含实际路径的 JSON，成果读取模块只接受匹配成功 tool 消息。db.ts getMessagesBySession 保留消息顺序，memory.compact 不删除数据库历史；复用 messages HTTP 响应附带 outputs，无额外迁移。renderer.js createLocalFileLink 复用受限 File Viewer。界面沿用 renderer.css 的现有颜色、控件与可滚动区域。

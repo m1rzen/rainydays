@@ -21,7 +21,7 @@ import { getTasksBySession, getNextPendingTask, allTasksCompleted } from "./task
 import { getRecentMemories, getPinsBySession } from "./db.js";
 import { approveToolCall } from "./supervisor.js";
 import { buildToolExecutionBatches } from "./tool-scheduler.js";
-import { askUserConfirm } from "./tools/ask-user-tool.js";
+import { askUserConfirm, askUserQuestion } from "./tools/ask-user-tool.js";
 import { readMessageAttachmentForSession } from "./attachment-store.js";
 import { requestNativeProcessConsent } from "./native-process-consent.js";
 import type { SecurityAuditJournal } from "./security-audit-journal.js";
@@ -349,13 +349,16 @@ export class Agent {
       }
 
       const requiresGrant = inspected.policy.approval === "user";
-      const requiresConfirmation = requiresGrant || advice.decision === "escalate";
-      let approvalKind: "none" | "user" | "native-process" = "none";
+      if (requiresGrant && advice.decision === "approve") {
+        grantContext = await capabilityBroker.reuseNewOutputApproval(capabilityContext, inspected);
+      }
+      const requiresConfirmation = (requiresGrant && !grantContext) || advice.decision === "escalate";
+      let approvalKind: "none" | "user" | "native-process" = grantContext ? "user" : "none";
       if (requiresConfirmation) {
-        const challenge = requiresGrant ? capabilityBroker.createApprovalChallenge(capabilityContext, inspected) : null;
         const requiresNativeProcessConsent = inspected.policy.effects.includes("process");
         approvalKind = requiresNativeProcessConsent ? "native-process" : "user";
         let approved = false;
+        let allowNewOutputs = false;
         let answer = "原生进程确认被拒绝或不可用";
         if (requiresNativeProcessConsent) {
           approved = await requestNativeProcessConsent({
@@ -382,11 +385,21 @@ export class Agent {
             signal,
           });
         } else {
-          const question = `${requiresGrant ? "此工具需要用户批准" : "Supervisor 请求用户确认"}。\n\n工具: ${toolName}\n参数: ${JSON.stringify(inspected.args, null, 2).slice(0, 1000)}\n原因: ${advice.reason}\n\n请选择是否执行。`;
-          const confirmation = await askUserConfirm(question, signal);
-          approved = confirmation.approved;
-          answer = confirmation.answer;
+          const output = advice.decision === "approve" ? await capabilityBroker.getNewOutputTarget(capabilityContext, inspected) : null;
+          if (output) {
+            answer = await askUserQuestion(`准备生成文档：\n${output.path}\n\n可以允许本次任务在以下目录连续新建 Word 和 Excel：\n${output.directory}\n\n仅到本次回答结束。覆盖已有文件仍会单独确认。`, ["本次任务允许新建文档", "仅这一次", "拒绝执行"], 300000, signal);
+            allowNewOutputs = answer === "本次任务允许新建文档";
+            approved = allowNewOutputs || answer === "仅这一次";
+          } else {
+            const question = `${requiresGrant ? "此工具需要用户批准" : "Supervisor 请求用户确认"}。\n\n工具: ${toolName}\n参数: ${JSON.stringify(inspected.args, null, 2).slice(0, 1000)}\n原因: ${advice.reason}\n\n请选择是否执行。`;
+            const confirmation = await askUserConfirm(question, signal);
+            approved = confirmation.approved;
+            answer = confirmation.answer;
+          }
         }
+        // Bind the frozen inspected call after the answer, so time spent reading the question
+        // does not consume the execution grant's short lifetime. Revoked contexts still fail.
+        const challenge = requiresGrant ? capabilityBroker.createApprovalChallenge(capabilityContext, inspected) : null;
         if (challenge) {
           grantContext = capabilityBroker.resolveApprovalChallenge({
             challengeId: challenge.challengeId,
@@ -395,6 +408,7 @@ export class Agent {
             runId: capabilityContext.runId,
             responsePrincipal: "local-user-api",
             responseChannel: requiresNativeProcessConsent ? "native-process" : "ask-user",
+            allowNewOutputs,
           });
         }
         if (!approved || (requiresGrant && !grantContext)) {

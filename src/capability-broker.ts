@@ -333,6 +333,7 @@ interface GrantRecord {
   readonly toolName: string;
   readonly argumentsDigest: string;
   readonly expiresAtMs: number;
+  readonly newOutputOnly?: boolean;
   consumed: boolean;
 }
 
@@ -421,6 +422,7 @@ export class CapabilityBroker {
   private readonly localPrincipals = new WeakSet<LocalApiPrincipal>();
   private readonly boundPathAuthorities = new WeakSet<PathAuthority>();
   private readonly challenges = new Map<string, ChallengeRecord>();
+  private readonly newOutputApprovals = new WeakSet<CapabilityContext>();
 
   constructor(options: CapabilityBrokerOptions) {
     if (!options?.pathPolicy) throw new TypeError("CapabilityBroker requires PathPolicy");
@@ -619,6 +621,10 @@ export class CapabilityBroker {
     }
 
     const allowedOperations = new Set<PathOperation>(binding.policy.pathOperations ?? []);
+    const newOutputOnly = initial.grant?.newOutputOnly === true;
+    if (newOutputOnly) {
+      for (const operation of allowedOperations) if (operation !== "create-file") allowedOperations.delete(operation);
+    }
     const invocationAuthority = this.pathPolicy.deriveAuthority(initial.pathAuthority, [...initial.roots]);
     const auditIdentity = Object.freeze({
       sessionId: context.sessionId,
@@ -778,16 +784,18 @@ export class CapabilityBroker {
       },
       reserveFile: async (input, options = {}) => {
         requireInvocation("create-file");
-        requireInvocation("replace-file");
+        if (!newOutputOnly) requireInvocation("replace-file");
         const maxBytes = options.maxBytes ?? 64 * 1024 * 1024;
         if (!Number.isSafeInteger(maxBytes) || maxBytes < 1) throw new TypeError("maxBytes must be a positive safe integer");
         const reservedRequest = request(input, "create-file", options.defaultRootId, options.requiredExtension);
         const preflight = await this.pathPolicy.preflightWrite(invocationAuthority, reservedRequest);
+        if (newOutputOnly && preflight.exists) denied("CAPABILITY_GRANT_REQUIRED", "已有文件需要单独确认覆盖；也可使用新的文件名");
         let consumed = false;
         return Object.freeze({
+          path: preflight.path,
           commit: (bytes: Uint8Array) => {
             requireInvocation("create-file");
-            requireInvocation("replace-file");
+            if (!newOutputOnly) requireInvocation("replace-file");
             if (consumed) denied("CAPABILITY_GRANT_REPLAYED", "output reservation was already consumed");
             consumed = true;
             return this.pathPolicy.commitPreflightWrite(invocationAuthority, preflight, bytes, maxBytes);
@@ -941,6 +949,48 @@ export class CapabilityBroker {
     }
   }
 
+  private newOutputRoot(parent: ContextRecord, binding: BindingRecord): string | null {
+    const rootId = parent.authority.persona.rootEnv.OUTPUT_DIR;
+    return parent.parent === null && parent.context.principal === "agent"
+      && ["create_docx", "create_xlsx"].includes(binding.name)
+      && this.staticBindings.get(binding.name) === binding
+      && binding.policy.approval === "user"
+      && binding.policy.effects.length === 1 && binding.policy.effects[0] === "filesystem"
+      && typeof rootId === "string" && parent.roots.has(rootId) ? rootId : null;
+  }
+
+  /** Host-only eligibility query; validates the actual output target without granting permission. */
+  async getNewOutputTarget(parent: CapabilityContext, inspected: InspectedToolCall): Promise<{ directory: string; path: string } | null> {
+    const record = this.requireActiveContext(parent);
+    const call = this.requireInspectedCall(inspected);
+    if (call.source !== record) denied("CAPABILITY_BINDING_MISMATCH", "output call belongs to another context");
+    this.assertToolEnvelope(record, call.binding);
+    const rootId = this.newOutputRoot(record, call.binding);
+    if (!rootId || typeof call.args.path !== "string") return null;
+    const authority = this.pathPolicy.deriveAuthority(record.pathAuthority, [rootId]);
+    try {
+      const target = await this.pathPolicy.preflightWrite(authority, {
+        input: call.args.path, operation: "create-file", defaultRootId: rootId,
+        requiredExtension: call.binding.name === "create_docx" ? ".docx" : ".xlsx",
+      });
+      this.requireActiveContext(parent);
+      return target.exists ? null : { directory: target.directory, path: target.path };
+    } catch (error) {
+      if (error instanceof PathDeniedError) return null;
+      throw error;
+    } finally {
+      if (this.pathPolicy.isActive(authority)) this.pathPolicy.revoke(authority);
+    }
+  }
+
+  async reuseNewOutputApproval(parent: CapabilityContext, inspected: InspectedToolCall): Promise<CapabilityContext | null> {
+    if (!this.newOutputApprovals.has(parent) || !await this.getNewOutputTarget(parent, inspected)) return null;
+    const challenge = this.createApprovalChallenge(parent, inspected);
+    return this.resolveApprovalChallenge({ challengeId: challenge.challengeId, choice: "approve",
+      sessionId: parent.sessionId, runId: parent.runId, responsePrincipal: "local-user-api",
+      responseChannel: "ask-user", allowNewOutputs: true });
+  }
+
   createApprovalChallenge(parent: CapabilityContext, inspected: InspectedToolCall, ttlMs = 60_000): ApprovalChallenge {
     const parentRecord = this.requireActiveContext(parent);
     const inspectedRecord = this.requireInspectedCall(inspected);
@@ -983,6 +1033,7 @@ export class CapabilityBroker {
     runId: string;
     responsePrincipal: "local-user-api";
     responseChannel: "ask-user" | "native-process";
+    allowNewOutputs?: boolean;
   }): CapabilityContext | null {
     const challenge = this.challenges.get(input.challengeId);
     if (!challenge || challenge.consumed || this.now() > challenge.expiresAtMs) denied("CAPABILITY_APPROVAL_CHALLENGE_INVALID", "approval challenge is unavailable");
@@ -995,12 +1046,17 @@ export class CapabilityBroker {
     challenge.consumed = true;
     if (input.choice === "deny") return null;
 
+    const outputRootId = input.allowNewOutputs ? this.newOutputRoot(challenge.parent, challenge.binding) : null;
+    if (input.allowNewOutputs && !outputRootId) denied("CAPABILITY_GRANT_INVALID", "tool cannot receive a new-output scope");
+    if (outputRootId) this.newOutputApprovals.add(challenge.parent.context);
+
     const grant: GrantRecord = {
       grantId: randomBytes(32).toString("hex"),
       registrationId: challenge.binding.registrationId,
       toolName: challenge.binding.name,
       argumentsDigest: challenge.argumentsDigest,
       expiresAtMs: challenge.expiresAtMs,
+      newOutputOnly: outputRootId !== null,
       consumed: false,
     };
     return this.createContext({
@@ -1010,7 +1066,7 @@ export class CapabilityBroker {
       sessionId: challenge.parent.context.sessionId,
       runId: challenge.parent.context.runId,
       bindings: new Map([[challenge.binding.name, challenge.binding]]),
-      roots: new Set(challenge.parent.roots),
+      roots: new Set(outputRootId ? [outputRootId] : challenge.parent.roots),
       risks: new Set(challenge.binding.policy.riskClasses),
       networkPolicy: challenge.parent.context.networkPolicy,
       grant,

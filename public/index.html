@@ -46,6 +46,10 @@
     </div>
     <div id="workbench-staging" hidden>
       <section id="chat-view" class="workbench-view" aria-label="会话">
+        <details id="document-outputs" hidden open>
+          <summary>成果文件 <span id="document-output-count"></span></summary>
+          <div id="document-output-list" aria-live="polite"></div>
+        </details>
         <div id="task-panel">
           <div id="task-panel-header"><span>📋 任务进度</span><span id="task-progress-text" role="status" aria-live="polite"></span></div>
           <div id="task-list"></div>

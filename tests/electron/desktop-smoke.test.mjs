@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, readFile, rename, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { createServer } from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
 import { emitSec03ProjectionReceipts } from "../sec03-projection-receipts.mjs";
 import {
@@ -34,7 +35,7 @@ async function wcag21AaViolations(client) {
   return client.evaluate(`axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']},resultTypes:['violations']}).then(result=>result.violations.map(item=>({id:item.id,impact:item.impact,nodes:item.nodes.map(node=>({target:node.target,html:node.html,failureSummary:node.failureSummary}))})))`, 30_000);
 }
 
-async function startElectron(userData, httpPort, cdpPort, signal) {
+async function startElectron(userData, httpPort, cdpPort, signal, modelBaseURL) {
   // Keep all three runtime roots distinct and fixture-local. Inheriting the host default
   // department root (for example an unavailable network drive) makes this smoke nondeterministic.
   const workspaceRoot = path.join(userData, "workspace");
@@ -52,8 +53,8 @@ async function startElectron(userData, httpPort, cdpPort, signal) {
     profiles: {
       default: {
         model: "electron-smoke-model",
-        apiKey: "",
-        baseURL: "https://provider.invalid/v1",
+        apiKey: modelBaseURL ? "fixture-only-key" : "",
+        baseURL: modelBaseURL || "https://provider.invalid/v1",
         providerType: "openai-compatible",
       },
     },
@@ -67,6 +68,7 @@ async function startElectron(userData, httpPort, cdpPort, signal) {
   const child = spawnManaged(electronExecutable, [projectRoot, `--user-data-dir=${userData}`, `--remote-debugging-port=${cdpPort}`, "--disable-gpu"], {
     env: {
       ...process.env,
+      ...(modelBaseURL ? { RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER: "1" } : {}),
       PORT: String(httpPort),
       RAINYDAYS_E2E_USE_DIST: "1",
       RAINYDAYS_E2E_NODE_EXECUTABLE: process.execPath,
@@ -1408,4 +1410,136 @@ test("SEC-03 Electron stage emits all 48 authenticated projection receipts", { t
     addonPath: path.join(projectRoot, ".electron-app", "dist", "native", "sandbox-launcher.node"),
   });
   assert.equal(result.enabled ? result.count : 0, result.enabled ? 48 : 0);
+});
+
+test("R2 real Electron completes document task, restores outputs and revises a copy", { timeout: 120_000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-r2-outputs-electron-");
+  const userData = path.join(fixture, "user-data");
+  let instance; let client; let stage = 0; let modelFailure = null;
+  const tool = (id, name, args) => ({ index: 0, id, type: "function", function: { name, arguments: JSON.stringify(args) } });
+  const server = createServer(async (request, response) => {
+    try {
+      const chunks = []; for await (const chunk of request) chunks.push(chunk);
+      const body = JSON.parse(Buffer.concat(chunks).toString());
+      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "文档任务" } }] })); return; }
+      let calls;
+      if (stage === 0) {
+        const attachment = /attachment:([a-zA-Z0-9_-]+)/u.exec(JSON.stringify(body.messages));
+        assert(attachment, "模型应获得附件句柄");
+        calls = [tool("desktop-read", "read", { file_path: `attachment:${attachment[1]}` })];
+      } else if (stage === 1) {
+        assert.match(JSON.stringify(body.messages), /FIRST_PAGE/);
+        calls = [tool("desktop-word", "create_docx", { path: "成果报告.docx", title: "资料报告", paragraphs: ["来源：资料.pdf，第 1 页。FIRST_PAGE"] }),
+          { ...tool("desktop-sheet", "create_xlsx", { path: "成果数据.xlsx", sheets: [{ name: "核对", data: [["来源", "事实"], ["资料.pdf", "FIRST_PAGE"]] }] }), index: 1 }];
+      } else if (stage === 3) {
+        calls = [tool("desktop-revise-read", "read", { file_path: path.join(userData, "output", "成果报告.docx") })];
+      } else if (stage === 4) {
+        assert.match(JSON.stringify(body.messages.filter(message => message.role === "tool").at(-1)), /FIRST_PAGE/);
+        calls = [tool("desktop-revision", "create_docx", { path: "成果报告-修改版.docx", paragraphs: ["已按要求补充结论。来源：资料.pdf，第 1 页。FIRST_PAGE"] })];
+      }
+      stage++;
+      response.writeHead(200, { "Content-Type": "text/event-stream" });
+      response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: calls ? { tool_calls: calls } : { content: "文档已完成，请查看成果文件。" }, finish_reason: null }] })}\n\n`);
+      response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: calls ? "tool_calls" : "stop" }] })}\n\n`);
+      response.end("data: [DONE]\n\n");
+    } catch (error) { modelFailure = error; response.statusCode = 500; response.end(String(error)); }
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const modelURL = `http://127.0.0.1:${server.address().port}/v1`;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, modelURL);
+    client = await connectCdp(cdpPort);
+    await waitFor(async () => { try { return await client.evaluate("Boolean(currentSessionId)"); } catch { return false; } }, { timeoutMs: 20_000, label: "R2 output session" });
+    const pdf = await readFile(path.join(projectRoot, "tests/fixtures/tool02-two-pages.pdf"));
+    await client.evaluate(`(() => {
+      if (document.getElementById('settings-modal').classList.contains('visible')) closeSettings();
+      const bytes = Uint8Array.from(atob(${JSON.stringify(pdf.toString("base64"))}), char => char.charCodeAt(0));
+      const transfer = new DataTransfer(); transfer.items.add(new File([bytes], '资料.pdf', { type:'application/pdf' }));
+      const input = document.getElementById('attachment-file-input'); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles:true }));
+      return true;
+    })()`);
+    await waitFor(() => client.evaluate("attachmentDrafts.some(item => item.state === 'ready')"), { timeoutMs: 15_000, label: "R2 source uploaded" });
+    const submit = async text => client.evaluate(`(() => { inputEl.value = ${JSON.stringify(text)}; inputEl.dispatchEvent(new Event('input')); document.getElementById('input-form').requestSubmit(); return true; })()`);
+    const allow = async () => {
+      await waitFor(() => client.evaluate("document.getElementById('ask-modal').classList.contains('visible')"), { timeoutMs: 20_000, label: "R2 output consent" });
+      assert.equal(await client.evaluate(`(() => { const button = [...document.querySelectorAll('#ask-options button')].find(button => button.textContent === '本次任务允许新建文档'); if (!button) return false; button.click(); return true; })()`), true);
+    };
+    await submit("读取资料，生成 Word 报告和 Excel 核对表"); await allow();
+    await waitFor(() => client.evaluate("document.querySelectorAll('.document-output-row .local-file-link').length === 2 && !document.getElementById('submit').disabled"), { timeoutMs: 25_000, label: "R2 two outputs from one consent" });
+    assert.equal(modelFailure, null);
+    assert.equal(stage, 3);
+    const original = await readFile(path.join(userData, "output", "成果报告.docx"));
+    const sessionId = await client.evaluate("currentSessionId");
+    // Restart the actual desktop: outputs come from persisted tool receipts.
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, modelURL); client = await connectCdp(cdpPort);
+    await waitFor(async () => { try { return await client.evaluate("typeof selectSession === 'function' && Boolean(workbenchLayout)"); } catch { return false; } }, { timeoutMs: 20_000, label: "R2 restart ready" });
+    await client.evaluate(`selectSession(${JSON.stringify(sessionId)})`);
+    assert.equal(await client.evaluate("document.querySelectorAll('.document-output-row .local-file-link').length"), 2);
+    await client.evaluate(`(() => {
+      window.__r2FileRequests = [];
+      const originalFetch = window.fetch;
+      window.fetch = async (...args) => {
+        const url = String(args[0]);
+        if (!url.startsWith('/api/files/')) return originalFetch(...args);
+        const entry = { url, start:Date.now() }; window.__r2FileRequests.push(entry);
+        try { const response = await originalFetch(...args); entry.status = response.status; entry.ms = Date.now() - entry.start; return response; }
+        catch (error) { entry.error = error.message; throw error; }
+      };
+      return true;
+    })()`);
+    await client.evaluate(`(() => { const link = [...document.querySelectorAll('#document-output-list a')].find(link => link.textContent === '成果报告.docx'); link.click(); return true; })()`);
+    await waitFor(() => client.evaluate("document.getElementById('file-preview-content').textContent.includes('FIRST_PAGE')"), { timeoutMs: 15_000, label: "R2 output preview" });
+    assert.equal(await client.evaluate(`(async () => {
+      const originalFetch = window.fetch; let release; let arrived;
+      const ready = new Promise(resolve => { arrived = resolve; });
+      const hold = new Promise(resolve => { release = resolve; });
+      window.fetch = async (...args) => {
+        const response = await originalFetch(...args);
+        if (String(args[0]).startsWith('/api/files/list?')) { arrived(); await hold; }
+        return response;
+      };
+      try {
+        const listing = openFileDirectory(currentFilePath, false);
+        await ready;
+        await previewFile(selectedFilePath, 1, selectedAbsoluteFilePath, selectedFileRoot);
+        release(); await listing;
+        return document.getElementById('file-preview-content').textContent.includes('FIRST_PAGE');
+      } finally { release(); window.fetch = originalFetch; }
+    })()`), true, "较早启动的目录请求不能清除用户刚打开的成果预览");
+    await client.evaluate(`selectSession(${JSON.stringify(sessionId)})`);
+    await client.evaluate(`(() => { inputEl.value = '补充结论'; document.querySelector('[aria-label="继续修改 成果报告.docx"]').click(); return true; })()`);
+    assert.match(await client.evaluate("inputEl.value"), /补充结论[\s\S]*成果报告.docx[\s\S]*另存为新文件/u);
+    await client.evaluate("document.getElementById('input-form').requestSubmit();true"); await allow();
+    await waitFor(() => client.evaluate("document.querySelectorAll('.document-output-row .local-file-link').length === 3 && !document.getElementById('submit').disabled"), { timeoutMs: 25_000, label: "R2 revised output" });
+    assert.equal(modelFailure, null); assert.equal(stage, 6);
+    assert.deepEqual(await readFile(path.join(userData, "output", "成果报告.docx")), original);
+    const visibleControls = `(() => {
+      const area = document.getElementById('workbench').getBoundingClientRect();
+      const heading = document.querySelector('#document-outputs summary').getBoundingClientRect();
+      const input = document.getElementById('input-form').getBoundingClientRect();
+      return heading.top >= area.top && input.bottom <= area.bottom + 1;
+    })()`;
+    assert.equal(await client.evaluate(visibleControls), true, "成果标题和输入框必须同时可见");
+    await installAxe(client);
+    assert.deepEqual(await client.evaluate("axe.run(document.getElementById('document-outputs'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']}}).then(result=>result.violations.map(item=>item.id))"), []);
+    const screenshot = await client.send("Page.captureScreenshot", { format: "png" });
+    await mkdir(path.join(projectRoot, "test-results"), { recursive:true });
+    await writeFile(path.join(projectRoot, "test-results/r2-output-desktop.png"), Buffer.from(screenshot.data, "base64"));
+    await client.send("Emulation.setDeviceMetricsOverride", { width: 360, height: 720, deviceScaleFactor: 1, mobile:false });
+    assert.equal(await client.evaluate(visibleControls), true, "窄窗口中成果标题和输入框必须同时可见");
+    assert.equal(await client.evaluate("document.documentElement.scrollWidth <= innerWidth + 1 && document.getElementById('document-output-list').scrollWidth <= document.getElementById('document-output-list').clientWidth + 1"), true);
+    const narrow = await client.send("Page.captureScreenshot", { format: "png" });
+    await writeFile(path.join(projectRoot, "test-results/r2-output-narrow.png"), Buffer.from(narrow.data, "base64"));
+    await writeFile(path.join(projectRoot, "test-results/r2-output-requests.json"), JSON.stringify(await client.evaluate("window.__r2FileRequests"), null, 2));
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } catch (error) {
+    const state = client ? await client.evaluate(`({preview:document.getElementById('file-preview-content').textContent,meta:document.getElementById('file-preview-meta').textContent,session:currentSessionId,owner:activeFileOwnerSessionId,selected:selectedFilePath,root:currentFileRoot,requests:window.__r2FileRequests})`).catch(() => null) : null;
+    throw new Error(`${error.message}; stage=${stage}; state=${JSON.stringify(state)}; model=${modelFailure?.message || 'ok'}; server=${JSON.stringify(instance?.logs()).slice(-3500)}`);
+  } finally {
+    client?.close(); if (instance) await terminateProcessTreeAsync(instance.child);
+    server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+    await removeFixture(fixture);
+  }
 });

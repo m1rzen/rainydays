@@ -649,7 +649,14 @@
       refreshWorkbenchTabStatus();
       const kinds = new Set(panes.map(pane => activeWorkbenchTab(pane)?.kind));
       if (kinds.has("terminal")) Promise.resolve(loadTerminals()).catch(error => addSystemMessage(`⚠️ ${error.message}`));
-      if (kinds.has("file")) Promise.resolve(ensureFileRoots().then(() => openFileDirectory(currentFilePath, false))).catch(error => showFileError(error.message));
+      if (kinds.has("file")) {
+        const directoryGeneration = fileDirectoryGeneration;
+        const previewGeneration = filePreviewGeneration;
+        Promise.resolve(ensureFileRoots().then(() => {
+          if (directoryGeneration !== fileDirectoryGeneration || previewGeneration !== filePreviewGeneration) return;
+          return openFileDirectory(currentFilePath, false);
+        })).catch(error => showFileError(error.message));
+      }
     }
     function refreshWorkbenchTabStatus() {
       document.querySelectorAll(".workbench-tab[data-session-id]").forEach(button => {
@@ -1144,6 +1151,7 @@
     async function openFileDirectory(relativePath = "", append = false) {
       if (!append && blockDirtyFileNavigation()) return;
       const generation = ++fileDirectoryGeneration;
+      const previewGeneration = filePreviewGeneration;
       const requestedRoot = currentFileRoot;
       const offset = append ? fileOffset : 0;
       const query = new URLSearchParams({ root: requestedRoot, path: relativePath, offset: String(offset), limit: String(filePageSize) });
@@ -1155,7 +1163,7 @@
       fileOffset = data.offset + data.entries.length;
       fileHasMore = Boolean(data.hasMore);
       fileEntries = append ? fileEntries.concat(data.entries || []) : (data.entries || []);
-      if (!append) {
+      if (!append && previewGeneration === filePreviewGeneration) {
         selectedFilePath = "";
         selectedAbsoluteFilePath = "";
         selectedFileRoot = currentFileRoot;
@@ -1567,10 +1575,11 @@
       return parts.join("\\");
     }
 
-    async function openResolvedFilePath(absolutePath) {
+    async function openResolvedFilePath(absolutePath, ownerSessionId = currentSessionId) {
       try {
-        const res = await fetch(`/api/files/resolve?path=${encodeURIComponent(absolutePath)}`, { headers: sessionHeaders(activeFileOwnerSessionId) });
+        const res = await fetch(`/api/files/resolve?path=${encodeURIComponent(absolutePath)}`, { headers: sessionHeaders(ownerSessionId) });
         const data = await res.json();
+        if (ownerSessionId !== currentSessionId) return;
         if (!res.ok) throw new Error(data.error || "无法打开该路径");
         currentFileRoot = data.rootId;
         currentFilePath = data.type === "directory" ? data.path : relativeDirectory(data.path);
@@ -1665,6 +1674,47 @@
         const label = document.createElement("span"); label.textContent = "📎 ";
         const link = createLocalFileLink(absolutePath); link.dataset.path = absolutePath;
         row.append(label, link); container.appendChild(row);
+      }
+    }
+
+    let documentOutputGeneration = 0;
+    function renderDocumentOutputs(outputs, error = "") {
+      documentOutputGeneration += 1;
+      const panel = document.getElementById("document-outputs");
+      const list = document.getElementById("document-output-list");
+      list.replaceChildren();
+      panel.hidden = outputs.length === 0 && !error;
+      document.getElementById("document-output-count").textContent = outputs.length ? `（${outputs.length}）` : "";
+      if (error) {
+        const row = document.createElement("div"); row.className = "document-output-row";
+        const text = document.createElement("span"); text.textContent = error;
+        const retry = document.createElement("button"); retry.type = "button"; retry.textContent = "重试";
+        retry.addEventListener("click", () => refreshDocumentOutputs(currentSessionId));
+        row.append(text, retry); list.append(row);
+      }
+      for (const output of outputs) {
+        const row = document.createElement("div"); row.className = "document-output-row";
+        const link = createLocalFileLink(output.path); link.textContent = output.name; link.title = `预览：${output.path}`;
+        const revise = document.createElement("button"); revise.type = "button"; revise.textContent = "继续修改";
+        revise.setAttribute("aria-label", `继续修改 ${output.name}`);
+        revise.addEventListener("click", () => {
+          const prompt = `请读取成果文件 ${JSON.stringify(output.path)}，按以下要求修改，并另存为新文件：`;
+          inputEl.value = [inputEl.value.trim(), prompt].filter(Boolean).join("\n");
+          inputEl.dispatchEvent(new Event("input")); inputEl.focus();
+        });
+        row.append(link, revise); list.append(row);
+      }
+    }
+    async function refreshDocumentOutputs(sessionId) {
+      if (!sessionId) return;
+      const generation = ++documentOutputGeneration;
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}/messages`, { headers: sessionHeaders(sessionId) });
+        if (!res.ok) throw new Error("成果列表加载失败");
+        const data = await res.json();
+        if (currentSessionId === sessionId && generation === documentOutputGeneration) renderDocumentOutputs(data.outputs || []);
+      } catch {
+        if (currentSessionId === sessionId && generation === documentOutputGeneration) renderDocumentOutputs([], "成果列表加载失败");
       }
     }
 
@@ -2323,6 +2373,7 @@
       const res = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) }); const data = await res.json();
       if (data.session) {
         currentSessionId = data.session.id; currentTitleEl.textContent = data.session.title; messagesEl.innerHTML = ""; restoreDraft(data.session.id);
+        renderDocumentOutputs([]);
         taskPanel.classList.remove("visible"); subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling();
         refreshRunControls(); refreshQuestionForCurrentSession(); await loadSessions(); await loadPins(); await loadAttachmentDrafts(data.session.id);
         if (workbenchLayout) await ensureWorkbenchTab({ id: workbenchId("tab"), kind: "session", title: data.session.title, sessionId: data.session.id });
@@ -2340,6 +2391,7 @@
       const data = await res.json();
       if (generation !== sessionSelectionGeneration || !data.session) return;
       currentSessionId = id; currentTitleEl.textContent = data.session.title; refreshRunControls(); refreshQuestionForCurrentSession(); restoreDraft(id);
+      renderDocumentOutputs([]);
       if (data.persona && personaSelect.value !== data.persona) {
         personaSelect.value = data.persona;
         const pres = await fetch("/api/personas"); const pdata = await pres.json();
@@ -2349,6 +2401,7 @@
       const mres = await fetch(`/api/sessions/${id}/messages`, { headers: sessionHeaders(id) }); const mdata = await mres.json();
       if (generation !== sessionSelectionGeneration) return;
       messagesEl.innerHTML = "";
+      renderDocumentOutputs(mdata.outputs || []);
       for (const msg of mdata.messages) { if (msg.role === "user") addMessage("user", msg.content, msg.id, msg.attachments); else if (msg.role === "assistant" && msg.content) addMessage("assistant", msg.content, msg.id); }
       if (generation !== sessionSelectionGeneration || currentSessionId !== id) return;
       if (!document.hidden && document.hasFocus()) await markSessionNotificationsRead(id).catch(() => undefined);
@@ -2379,6 +2432,7 @@
       questionsBySession.delete(id);
       for (const upload of attachmentUploads.values()) if (upload.sessionId === id) upload.xhr.abort();
       knownSessions = knownSessions.filter(session => session.id !== id);
+      if (currentSessionId === id) renderDocumentOutputs([]);
       if (currentSessionId === id) { currentSessionId = null; attachmentDrafts = []; renderAttachmentDrafts(); currentTitleEl.textContent = "未选择对话"; messagesEl.innerHTML = '<div class="msg msg-assistant"><div class="bubble">对话已删除。</div></div>'; subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling(); refreshRunControls(); refreshQuestionForCurrentSession(); }
       if (knownSessions.length === 0) {
         const created = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
@@ -2719,7 +2773,10 @@
             }
             if (step.type === "answer_chunk") { if (!streamingStarted) { bubbleEl.innerHTML = ""; streamingStarted = true; } fullText += step.content; bubbleEl.innerHTML = renderMarkdown(fullText); messagesEl.scrollTop = messagesEl.scrollHeight; }
             else if (step.type === "tool_call") { if (!streamingStarted) bubbleEl.innerHTML = ""; addToolCard(bubbleEl, step); }
-            else if (step.type === "tool_result") updateLastToolCard(bubbleEl, step);
+            else if (step.type === "tool_result") {
+              updateLastToolCard(bubbleEl, step);
+              if (["create_docx", "create_xlsx"].includes(step.toolName)) void refreshDocumentOutputs(chatSessionId);
+            }
             else if (step.type === "task_created" || step.type === "task_update") { if (step.tasks && step.tasks.length > 0) renderTasks(step.tasks); }
             else if (step.type === "answer_done") { if (!streamingStarted && step.content) { bubbleEl.innerHTML = ""; fullText = step.content; bubbleEl.innerHTML = renderMarkdown(fullText); } else if (!streamingStarted && !step.content) { bubbleEl.innerHTML = ""; bubbleEl.textContent = "(无回复)"; } if (fullText) { speakText(fullText.slice(0, 200)); enhanceLocalFileLinks(bubbleEl, fullText); } completeAccessibleResponse(fullText || bubbleEl.textContent); }
             else if (step.type === "run_cancelled") { bubbleEl.innerHTML = ""; bubbleEl.textContent = "已中断"; completeAccessibleResponse(bubbleEl.textContent); }
@@ -2813,8 +2870,12 @@
     }
     function updateLastToolCard(parent, step) {
       const cards = parent.querySelectorAll(".tool-card"); const last = cards[cards.length - 1]; if (!last) return;
-      const s = last.querySelector("span:nth-child(2)"); if (s) s.textContent = " — 完成";
-      const preview = step.content.length > 300 ? step.content.slice(0, 300) + "..." : step.content;
+      const s = last.querySelector("span:nth-child(2)"); if (s) s.textContent = step.toolStatus && step.toolStatus !== "success" ? " — 未完成" : " — 完成";
+      let displayContent = step.content;
+      if (["create_docx", "create_xlsx"].includes(step.toolName)) {
+        try { const receipt = JSON.parse(step.content); if (receipt.type === "document_output") displayContent = receipt.message + "\n" + receipt.path; } catch { /* Historical plain-text response. */ }
+      }
+      const preview = displayContent.length > 300 ? displayContent.slice(0, 300) + "..." : displayContent;
       const pre = document.createElement("pre"); pre.textContent = preview; last.querySelector("div").appendChild(pre);
       setTimeout(() => enhanceLocalFileLinks(pre, step.content), 0);
     }
@@ -2828,6 +2889,7 @@
         return;
       }
       if (currentSessionId !== sessionId) return;
+      void refreshDocumentOutputs(sessionId);
       const all = messagesEl.querySelectorAll(".msg");
       for (let i = 1; i < all.length; i++) all[i].remove();
       addSystemMessage("🧹 对话记忆已清空");

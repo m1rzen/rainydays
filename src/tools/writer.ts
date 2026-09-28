@@ -79,7 +79,7 @@ export const createDocxExec: ToolExecutor = async (args, _env, invocation) => {
   const buffer = await Packer.toBuffer(doc);
   throwIfCancelled(invocation.signal);
   await reservation.commit(buffer);
-  return `✅ Word 文档已生成: ${relativePath}`;
+  return JSON.stringify({ type: "document_output", format: "docx", path: reservation.path, message: `Word 文档已生成: ${relativePath}` });
 };
 
 // ===========================================
@@ -142,5 +142,5 @@ export const createXlsxExec: ToolExecutor = async (args, _env, invocation) => {
   const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
   throwIfCancelled(invocation.signal);
   await reservation.commit(buffer);
-  return `✅ Excel 表格已生成: ${relativePath}`;
+  return JSON.stringify({ type: "document_output", format: "xlsx", path: reservation.path, message: `Excel 表格已生成: ${relativePath}` });
 };

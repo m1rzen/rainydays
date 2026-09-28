@@ -114,6 +114,7 @@ import type { PersonaDefinition } from "./types.js";
 import type { TerminalOwner, TerminalShell } from "./terminal.js";
 import { terminalFacade } from "./terminal-facade.js";
 import { FileEditConflictError, fileViewerService, type FileRootSnapshotInput } from "./file-viewer.js";
+import { collectDocumentOutputs } from "./document-outputs.js";
 import { applyWorkbenchOperation, encodeWorkbenchLayout, parseWorkbenchLayout } from "./workbench-layout.js";
 import {
   AttachmentStoreError,
@@ -2343,7 +2344,7 @@ app.get("/api/sessions/:id/messages", (req, res) => {
       ...message,
       attachments: attachmentMap.get(message.id) ?? [],
     }));
-    res.json({ session, messages });
+    res.json({ session, messages, outputs: collectDocumentOutputs(messages) });
   } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : String(error) }); }
 });
 

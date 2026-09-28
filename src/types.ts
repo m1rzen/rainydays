@@ -94,6 +94,7 @@ export interface ToolProtocolDescriptor {
 }
 
 export interface ScopedOutputReservation {
+  readonly path: string;
   readonly commit: (bytes: Uint8Array) => Promise<PathCreateResult | PathReplaceResult<null>>;
 }
 
