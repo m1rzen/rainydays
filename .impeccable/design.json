@@ -1,0 +1,367 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T10:01:31.970Z",
+  "title": "Design System: RainyDays",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "暖瓷画布",
+        "canonical": "#f6f5f1",
+        "tonalRamp": [
+          "oklch(15% 0.005 95.1)",
+          "oklch(26% 0.005 95.1)",
+          "oklch(37% 0.005 95.1)",
+          "oklch(48% 0.005 95.1)",
+          "oklch(59% 0.005 95.1)",
+          "oklch(70% 0.005 95.1)",
+          "oklch(82% 0.005 95.1)",
+          "oklch(94% 0.005 95.1)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "浅瓷表面",
+        "canonical": "#fffefa",
+        "tonalRamp": [
+          "oklch(15% 0.005 95.1)",
+          "oklch(26% 0.005 95.1)",
+          "oklch(37% 0.005 95.1)",
+          "oklch(48% 0.005 95.1)",
+          "oklch(59% 0.005 95.1)",
+          "oklch(70% 0.005 95.1)",
+          "oklch(82% 0.005 95.1)",
+          "oklch(94% 0.005 95.1)"
+        ]
+      },
+      "control-surface": {
+        "role": "neutral",
+        "displayName": "控件表面",
+        "canonical": "#f8f7f3",
+        "tonalRamp": [
+          "oklch(15% 0.005 95.1)",
+          "oklch(26% 0.005 95.1)",
+          "oklch(37% 0.005 95.1)",
+          "oklch(48% 0.005 95.1)",
+          "oklch(59% 0.005 95.1)",
+          "oklch(70% 0.005 95.1)",
+          "oklch(82% 0.005 95.1)",
+          "oklch(94% 0.005 95.1)"
+        ]
+      },
+      "output-surface": {
+        "role": "neutral",
+        "displayName": "成果行表面",
+        "canonical": "#fbfaf7",
+        "tonalRamp": [
+          "oklch(15% 0.005 95.1)",
+          "oklch(26% 0.005 95.1)",
+          "oklch(37% 0.005 95.1)",
+          "oklch(48% 0.005 95.1)",
+          "oklch(59% 0.005 95.1)",
+          "oklch(70% 0.005 95.1)",
+          "oklch(82% 0.005 95.1)",
+          "oklch(94% 0.005 95.1)"
+        ]
+      },
+      "sidebar": {
+        "role": "neutral",
+        "displayName": "暖灰导航",
+        "canonical": "#efeee9",
+        "tonalRamp": [
+          "oklch(15% 0.007 97.4)",
+          "oklch(26% 0.007 97.4)",
+          "oklch(37% 0.007 97.4)",
+          "oklch(48% 0.007 97.4)",
+          "oklch(59% 0.007 97.4)",
+          "oklch(70% 0.007 97.4)",
+          "oklch(82% 0.007 97.4)",
+          "oklch(94% 0.007 97.4)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "深墨文字",
+        "canonical": "#292824",
+        "tonalRamp": [
+          "oklch(15% 0.007 95.3)",
+          "oklch(26% 0.007 95.3)",
+          "oklch(37% 0.007 95.3)",
+          "oklch(48% 0.007 95.3)",
+          "oklch(59% 0.007 95.3)",
+          "oklch(70% 0.007 95.3)",
+          "oklch(82% 0.007 95.3)",
+          "oklch(94% 0.007 95.3)"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "次级文字",
+        "canonical": "#6d6a64",
+        "tonalRamp": [
+          "oklch(15% 0.010 84.6)",
+          "oklch(26% 0.010 84.6)",
+          "oklch(37% 0.010 84.6)",
+          "oklch(48% 0.010 84.6)",
+          "oklch(59% 0.010 84.6)",
+          "oklch(70% 0.010 84.6)",
+          "oklch(82% 0.010 84.6)",
+          "oklch(94% 0.010 84.6)"
+        ]
+      },
+      "clay": {
+        "role": "primary",
+        "displayName": "陶土主色",
+        "canonical": "#a6543a",
+        "tonalRamp": [
+          "oklch(15% 0.115 38.3)",
+          "oklch(26% 0.115 38.3)",
+          "oklch(37% 0.115 38.3)",
+          "oklch(48% 0.115 38.3)",
+          "oklch(59% 0.115 38.3)",
+          "oklch(70% 0.115 38.3)",
+          "oklch(82% 0.115 38.3)",
+          "oklch(94% 0.115 38.3)"
+        ]
+      },
+      "clay-muted": {
+        "role": "primary",
+        "displayName": "柔和陶土",
+        "canonical": "#c49484",
+        "tonalRamp": [
+          "oklch(15% 0.063 39.2)",
+          "oklch(26% 0.063 39.2)",
+          "oklch(37% 0.063 39.2)",
+          "oklch(48% 0.063 39.2)",
+          "oklch(59% 0.063 39.2)",
+          "oklch(70% 0.063 39.2)",
+          "oklch(82% 0.063 39.2)",
+          "oklch(94% 0.063 39.2)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "细分隔线",
+        "canonical": "#dedbd4",
+        "tonalRamp": [
+          "oklch(15% 0.010 87.5)",
+          "oklch(26% 0.010 87.5)",
+          "oklch(37% 0.010 87.5)",
+          "oklch(48% 0.010 87.5)",
+          "oklch(59% 0.010 87.5)",
+          "oklch(70% 0.010 87.5)",
+          "oklch(82% 0.010 87.5)",
+          "oklch(94% 0.010 87.5)"
+        ]
+      },
+      "user-message": {
+        "role": "neutral",
+        "displayName": "用户消息底色",
+        "canonical": "#ebe8e3",
+        "tonalRamp": [
+          "oklch(15% 0.007 80.7)",
+          "oklch(26% 0.007 80.7)",
+          "oklch(37% 0.007 80.7)",
+          "oklch(48% 0.007 80.7)",
+          "oklch(59% 0.007 80.7)",
+          "oklch(70% 0.007 80.7)",
+          "oklch(82% 0.007 80.7)",
+          "oklch(94% 0.007 80.7)"
+        ]
+      },
+      "tool-surface": {
+        "role": "neutral",
+        "displayName": "工具底色",
+        "canonical": "#f0eee9",
+        "tonalRamp": [
+          "oklch(15% 0.007 88.6)",
+          "oklch(26% 0.007 88.6)",
+          "oklch(37% 0.007 88.6)",
+          "oklch(48% 0.007 88.6)",
+          "oklch(59% 0.007 88.6)",
+          "oklch(70% 0.007 88.6)",
+          "oklch(82% 0.007 88.6)",
+          "oklch(94% 0.007 88.6)"
+        ]
+      },
+      "hover": {
+        "role": "neutral",
+        "displayName": "悬停底色",
+        "canonical": "#e8e5df",
+        "tonalRamp": [
+          "oklch(15% 0.009 84.6)",
+          "oklch(26% 0.009 84.6)",
+          "oklch(37% 0.009 84.6)",
+          "oklch(48% 0.009 84.6)",
+          "oklch(59% 0.009 84.6)",
+          "oklch(70% 0.009 84.6)",
+          "oklch(82% 0.009 84.6)",
+          "oklch(94% 0.009 84.6)"
+        ]
+      },
+      "success": {
+        "role": "secondary",
+        "displayName": "成功绿",
+        "canonical": "#3d7957",
+        "tonalRamp": [
+          "oklch(15% 0.083 157.0)",
+          "oklch(26% 0.083 157.0)",
+          "oklch(37% 0.083 157.0)",
+          "oklch(48% 0.083 157.0)",
+          "oklch(59% 0.083 157.0)",
+          "oklch(70% 0.083 157.0)",
+          "oklch(82% 0.083 157.0)",
+          "oklch(94% 0.083 157.0)"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "错误红",
+        "canonical": "#b0443b",
+        "tonalRamp": [
+          "oklch(15% 0.120 27.7)",
+          "oklch(26% 0.120 27.7)",
+          "oklch(37% 0.120 27.7)",
+          "oklch(48% 0.120 27.7)",
+          "oklch(59% 0.120 27.7)",
+          "oklch(70% 0.120 27.7)",
+          "oklch(82% 0.120 27.7)",
+          "oklch(94% 0.120 27.7)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "会话标题",
+        "purpose": "当前会话标题"
+      },
+      "title": {
+        "displayName": "品牌标题",
+        "purpose": "侧栏 RainyDays 名称"
+      },
+      "body": {
+        "displayName": "对话正文",
+        "purpose": "用户与助手消息"
+      },
+      "label": {
+        "displayName": "辅助标签",
+        "purpose": "导航、成果摘要与辅助信息"
+      }
+    },
+    "shadows": [
+      {
+        "name": "composer-ambient",
+        "value": "0 5px 17px rgba(49,43,35,.045)",
+        "purpose": "输入框在画布上的微弱层次"
+      },
+      {
+        "name": "menu-float",
+        "value": "0 14px 32px rgba(53,47,39,.14)",
+        "purpose": "更多工具菜单"
+      },
+      {
+        "name": "dialog-float",
+        "value": "0 24px 70px rgba(41,38,33,.2)",
+        "purpose": "设置对话框"
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-state",
+        "value": "background .18s,border-color .18s",
+        "purpose": "按钮悬停反馈"
+      },
+      {
+        "name": "drawer-open",
+        "value": "transform .2s ease",
+        "purpose": "窄屏会话抽屉；减少动态效果时关闭"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "900px"
+      },
+      {
+        "name": "drawer",
+        "value": "650px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "发送按钮",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "输入区的主要动作；禁用与悬停状态须可辨。",
+      "html": "<button class=\"ds-send\" aria-label=\"发送\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m3 11 17-8-6 18-2.7-8.3zM11.3 12.7 20 3\"/></svg></button>",
+      "css": ".ds-send{width:38px;height:38px;display:inline-grid;place-items:center;background:var(--accent);color:var(--panel);border:0;border-radius:8px;cursor:pointer}.ds-send svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.ds-send:hover{background:#8e432e}.ds-send:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.ds-send:disabled{background:#b9a9a0;cursor:default}"
+    },
+    {
+      "name": "新建对话",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "侧栏中的主要导航动作。",
+      "html": "<button class=\"ds-new\"><span aria-hidden=\"true\">＋</span>新建对话</button>",
+      "css": ".ds-new{height:44px;padding:0 16px;display:inline-flex;align-items:center;gap:12px;background:#f8f7f3;color:var(--text);border:1px solid #d6d2cb;border-radius:11px;font:600 13px \"Segoe UI\",sans-serif;cursor:pointer;transition:background .18s,border-color .18s}.ds-new:hover{background:var(--panel);border-color:#b7b1a8}.ds-new:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    },
+    {
+      "name": "会话导航项",
+      "kind": "nav",
+      "description": "选中态靠暖灰底和字重表达。",
+      "html": "<button class=\"ds-session\">整理本周的研究资料</button>",
+      "css": ".ds-session{min-height:41px;padding:7px 13px;background:#e3ded7;color:var(--text);border:0;border-radius:9px;font:600 13px \"Segoe UI\",sans-serif;text-align:left;cursor:pointer}.ds-session:hover{background:#e7e4de}.ds-session:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    },
+    {
+      "name": "搜索对话",
+      "kind": "input",
+      "description": "侧栏轻边界搜索框，悬停或聚焦时显出表面。",
+      "html": "<input class=\"ds-search\" type=\"search\" aria-label=\"搜索对话\" placeholder=\"搜索对话\">",
+      "css": ".ds-search{height:39px;padding:0 12px;background:transparent;color:var(--text);border:1px solid transparent;border-radius:10px;font:13px \"Segoe UI\",sans-serif}.ds-search:hover,.ds-search:focus{background:#f9f8f4;border-color:var(--border)}.ds-search:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    },
+    {
+      "name": "用户消息",
+      "kind": "custom",
+      "refersTo": "message-user",
+      "description": "请求轻底气泡；助手正文保持无外框。",
+      "html": "<div class=\"ds-user-message\">帮我整理这份资料，生成一份简洁的研究报告和数据表。</div>",
+      "css": ".ds-user-message{max-width:620px;padding:15px 19px;background:var(--user-bg);color:var(--text);border-radius:13px;font:15px/1.65 \"Segoe UI\",sans-serif}"
+    },
+    {
+      "name": "成果文件行",
+      "kind": "card",
+      "refersTo": "output-row",
+      "description": "真实回执出现时显示文件名与操作；示例名称仅用于预览。",
+      "html": "<div class=\"ds-output\"><span class=\"ds-output-type\">DOCX</span><span class=\"ds-output-name\">研究报告.docx</span><button>打开</button><button>继续修改</button></div>",
+      "css": ".ds-output{min-height:65px;display:flex;align-items:center;gap:12px;padding:8px 12px;background:#fbfaf7;color:var(--text);border:1px solid var(--border);border-radius:11px;font:13px \"Segoe UI\",sans-serif}.ds-output-type{width:43px;height:37px;display:grid;place-items:center;background:#e5eaf1;color:#3e648e;border-radius:6px;font-size:10px;font-weight:700}.ds-output-name{flex:1;font-weight:600}.ds-output button{padding:7px 11px;background:transparent;color:var(--text);border:1px solid #d6d2ca;border-radius:7px;cursor:pointer}.ds-output button:hover{background:var(--hover-bg)}.ds-output button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "安静的对话工作间",
+    "overview": "工作中的对话和成果文件是主角。暖瓷色画布、浅暖灰导航、深墨色文字与少量陶土色动作组成克制的桌面界面。用户先看到可读的对话；文件、终端和高级设置在需要时打开。这个方向来自用户选择的 A 稿及 Claude Code 感受参考，不复制其品牌标识。",
+    "keyCharacteristics": [
+      "清楚的文字层级",
+      "无卡片包裹的助手正文",
+      "紧凑的成果行",
+      "按需展开的工具",
+      "原创三笔雨滴标记与细线图标"
+    ],
+    "rules": [
+      {
+        "name": "The Quiet Accent Rule",
+        "body": "陶土色只提示身份、主要动作和局部重点，不铺满大面积容器。",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do 让对话文字和可操作的成果首先被看到，并在真实状态下显示处理、等待、成功或失败。",
+      "Do 在新屏幕沿用暖色表面、细线图标、可见键盘焦点与窄屏重排。",
+      "Do 让文件名、计数和能力说明取自真实数据流。"
+    ],
+    "donts": [
+      "Don't 把助手回复改成成排大卡片，或让文件工具长期占据默认工作区。",
+      "Don't 用渐变、霓虹边缘、装饰性仪表盘、emoji 或借用 Claude 标识代替当前视觉语言。",
+      "Don't 将设计稿或测试截图中的研究报告、数据表、示例对话及数量写成产品承诺；它们是演示数据。"
+    ]
+  }
+}

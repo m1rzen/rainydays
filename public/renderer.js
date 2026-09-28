@@ -1,6 +1,7 @@
 
     // ========== 全局状态 ==========
     const messagesEl = document.getElementById("messages");
+    const documentOutputsEl = document.getElementById("document-outputs");
     const inputEl = document.getElementById("input");
     const formEl = document.getElementById("input-form");
     const submitBtn = document.getElementById("submit");
@@ -530,7 +531,7 @@
         return split;
       }
       const pane = document.createElement("section");
-      pane.className = `workbench-pane ${node.id === workbenchLayout.focusedPaneId ? "focused" : ""}`;
+      pane.className = `workbench-pane ${node.id === workbenchLayout.focusedPaneId ? "focused" : ""} ${activeWorkbenchTab(node)?.kind === "session" ? "chat-only" : ""}`;
       pane.dataset.workbenchPaneId = node.id;
       const strip = document.createElement("div");
       strip.className = "workbench-tabs";
@@ -1680,11 +1681,13 @@
     let documentOutputGeneration = 0;
     function renderDocumentOutputs(outputs, error = "") {
       documentOutputGeneration += 1;
-      const panel = document.getElementById("document-outputs");
-      const list = document.getElementById("document-output-list");
+      const panel = documentOutputsEl;
+      const list = panel.querySelector("#document-output-list");
       list.replaceChildren();
       panel.hidden = outputs.length === 0 && !error;
-      document.getElementById("document-output-count").textContent = outputs.length ? `（${outputs.length}）` : "";
+      document.getElementById("header-outputs").hidden = outputs.length === 0;
+      document.getElementById("header-output-count").textContent = String(outputs.length);
+      panel.querySelector("#document-output-count").textContent = outputs.length ? `（${outputs.length}）` : "";
       if (error) {
         const row = document.createElement("div"); row.className = "document-output-row";
         const text = document.createElement("span"); text.textContent = error;
@@ -1694,16 +1697,24 @@
       }
       for (const output of outputs) {
         const row = document.createElement("div"); row.className = "document-output-row";
+        const type = document.createElement("span");
+        type.className = `document-output-type ${output.format === "docx" || String(output.name).toLowerCase().endsWith(".docx") ? "docx" : "xlsx"}`;
+        type.textContent = String(output.name).toLowerCase().endsWith(".docx") ? "DOCX" : "XLSX";
         const link = createLocalFileLink(output.path); link.textContent = output.name; link.title = `预览：${output.path}`;
+        const open = document.createElement("button"); open.type = "button"; open.textContent = "打开";
+        open.setAttribute("aria-label", `打开 ${output.name}`);
+        open.addEventListener("click", () => link.click());
         const revise = document.createElement("button"); revise.type = "button"; revise.textContent = "继续修改";
+        revise.className = "revise-output";
         revise.setAttribute("aria-label", `继续修改 ${output.name}`);
         revise.addEventListener("click", () => {
           const prompt = `请读取成果文件 ${JSON.stringify(output.path)}，按以下要求修改，并另存为新文件：`;
           inputEl.value = [inputEl.value.trim(), prompt].filter(Boolean).join("\n");
           inputEl.dispatchEvent(new Event("input")); inputEl.focus();
         });
-        row.append(link, revise); list.append(row);
+        row.append(type, link, open, revise); list.append(row);
       }
+      messagesEl.appendChild(panel);
     }
     async function refreshDocumentOutputs(sessionId) {
       if (!sessionId) return;
@@ -2304,6 +2315,7 @@
     }
     function showPersonaInfo(p) {
       if (!p) { personaInfo.hidden = true; personaInfo.replaceChildren(); return; }
+      document.getElementById("composer-persona").textContent = p.displayName;
       personaInfo.hidden = false;
       const mode = document.createTextNode("模式: ");
       const name = document.createElement("strong");
@@ -2344,7 +2356,7 @@
         item.dataset.sessionId = session.id;
         const icon = document.createElement("span");
         icon.className = "icon";
-        icon.textContent = "💬";
+        icon.innerHTML = '<svg aria-hidden="true"><use href="#i-chat"/></svg>';
         const name = document.createElement("span");
         name.className = "name";
         name.textContent = session.title;
@@ -2832,7 +2844,8 @@
         actions.appendChild(fork);
         el.appendChild(actions);
       }
-      messagesEl.appendChild(el); messagesEl.scrollTop = messagesEl.scrollHeight;
+      messagesEl.insertBefore(el, documentOutputsEl.parentNode === messagesEl ? documentOutputsEl : null);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
       if (content) setTimeout(() => enhanceLocalFileLinks(bubble, content), 0);
       return el;
     }
@@ -2843,7 +2856,8 @@
       bubble.className = "bubble system-message";
       bubble.textContent = text;
       el.appendChild(bubble);
-      messagesEl.appendChild(el); messagesEl.scrollTop = messagesEl.scrollHeight;
+      messagesEl.insertBefore(el, documentOutputsEl.parentNode === messagesEl ? documentOutputsEl : null);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
     }
     function addToolCard(parent, step) {
       const card = document.createElement("div");
@@ -3025,13 +3039,13 @@
       }
       asrPreferences = nextAsr;
       const ttsButton = document.getElementById("tts-toggle");
-      if (ttsButton) { ttsButton.textContent = ttsEnabled ? "🔊" : "🔇"; ttsButton.title = ttsEnabled ? "语音播报已开启" : "语音播报已关闭"; ttsButton.setAttribute("aria-pressed", String(ttsEnabled)); }
+      if (ttsButton) { ttsButton.innerHTML = `<svg aria-hidden="true"><use href="#i-volume-${ttsEnabled ? "on" : "off"}"/></svg>`; ttsButton.title = ttsEnabled ? "语音播报已开启" : "语音播报已关闭"; ttsButton.setAttribute("aria-pressed", String(ttsEnabled)); }
     }
 
     function toggleTTS() {
       ttsEnabled = !ttsEnabled;
       const btn = document.getElementById("tts-toggle");
-      btn.textContent = ttsEnabled ? "🔊" : "🔇";
+      btn.innerHTML = `<svg aria-hidden="true"><use href="#i-volume-${ttsEnabled ? "on" : "off"}"/></svg>`;
       btn.title = ttsEnabled ? "语音播报已开启" : "语音播报已关闭";
       btn.setAttribute("aria-pressed", String(ttsEnabled));
       if (!ttsEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
@@ -3159,6 +3173,16 @@
       refreshQuestionForCurrentSession();
     }
     const actionHandlers = Object.freeze({
+      "toggle-sidebar": () => {
+        const open = document.body.classList.toggle("sidebar-visible");
+        document.querySelector(".sidebar-open")?.setAttribute("aria-expanded", String(open));
+      },
+      "show-document-outputs": async () => {
+        if (documentOutputsEl.hidden) return;
+        if (!documentOutputsEl.closest(".workbench-pane-content") && currentSessionId) await selectSession(currentSessionId);
+        documentOutputsEl.open = true;
+        documentOutputsEl.scrollIntoView({ block:"nearest", behavior:"smooth" });
+      },
       "download-diagnostics": () => downloadDiagnostics(),
       "new-chat": () => newChat(),
       "toggle-file-viewer": () => toggleFileViewer(),
@@ -3237,6 +3261,10 @@
       if (expectedEvent !== event.type) return;
       const handler = actionHandlers[target.dataset.action];
       if (typeof handler !== "function") return;
+      if (event.type === "click") {
+        target.closest(".utility-menu")?.removeAttribute("open");
+        if (["new-chat", "select-session"].includes(target.dataset.action)) document.body.classList.remove("sidebar-visible");
+      }
       Promise.resolve(handler(event, target)).catch(error => addSystemMessage(`⚠️ 操作失败: ${error instanceof Error ? error.message : String(error)}`));
     }
 

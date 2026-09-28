@@ -3,40 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RainyDays · AI Agent</title>
+  <title>RainyDays</title>
   <script src="/vendor/marked.umd.js"></script>
   <link rel="stylesheet" href="/vendor/github-dark.min.css">
   <script src="/vendor/highlight.min.js"></script>
   <link rel="stylesheet" href="/vendor/xterm.css">
   <link rel="stylesheet" href="/renderer.css">
+  <link rel="stylesheet" href="/redesign.css">
 </head>
 <body>
-  <div id="sidebar">
+  <!-- THESIS: RainyDays makes a working conversation and its finished files the whole desktop. The default screen gives them room instead of presenting a tool dashboard.
+  OWN-WORLD: porcelain and warm-grey planes, ink text, restrained clay action, a three-stroke rain mark, quiet outline controls, and unboxed assistant prose.
+  STORY: choose a conversation, attach material, follow progress, open or revise each result.
+  FIRST VIEWPORT: a narrow session rail on the left, small title and controls above a centered conversation, compact file rows below the answer, and a broad composer anchored at the bottom.
+  FORM: approved composition A, quiet workspace; user-pinned familiar assistant direction after seed 02c2d474.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->
+  <svg class="ui-icons" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-rain" viewBox="0 0 32 32"><path d="M12 3 5 17M22 5 11 28M28 15l-6 13"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 15a4 4 0 0 1-4 4H8l-4 3v-5a4 4 0 0 1-1-2V7a4 4 0 0 1 4-4h9a4 4 0 0 1 4 4z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2.5h8l4 4V21H6a2 2 0 0 1-2-2V4.5a2 2 0 0 1 2-2Z"/><path d="M14 2.5V7h4M8 12h8M8 16h6"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M2.5 6a2 2 0 0 1 2-2H10l2 2h7.5a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="2.5" y="3.5" width="19" height="17" rx="2"/><path d="m6.5 8 4 4-4 4M12.5 16h5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m10 2.5-.5 2.2-2 1-2-.8-2 3.4 1.7 1.4v2.5l-1.7 1.4 2 3.4 2-.8 2 1 .5 2.2h4l.5-2.2 2-1 2 .8 2-3.4-1.7-1.4v-2.5l1.7-1.4-2-3.4-2 .8-2-1-.5-2.2z" transform="translate(0 1) scale(1 .88)"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m3 11 17-8-6 18-2.7-8.3zM11.3 12.7 20 3"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v5m-4 0h8"/></symbol>
+    <symbol id="i-volume-on" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 9a5 5 0 0 1 0 6M19.5 6a9 9 0 0 1 0 12"/></symbol>
+    <symbol id="i-volume-off" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 9l5 6M22 9l-5 6"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 18v3h16v-3"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 17v4h16v-4"/></symbol>
+  </svg>
+  <aside id="sidebar" aria-label="会话导航">
     <div class="sidebar-header">
-      <span class="dot"></span>
+      <svg class="brand-mark" aria-hidden="true"><use href="#i-rain"/></svg>
       <span class="title">RainyDays</span>
-      <button class="ver" id="app-version" type="button" aria-label="下载诊断信息" title="下载诊断信息" data-action="download-diagnostics">v--</button>
+      <button class="sidebar-close icon-only" type="button" data-action="toggle-sidebar" aria-label="关闭会话导航"><svg><use href="#i-close"/></svg></button>
     </div>
-    <button class="new-chat-btn" data-action="new-chat">＋ 新建对话</button>
-    <div id="search-area"><label class="sr-only" for="search-input">搜索对话</label><input id="search-input" type="search" placeholder="🔍 搜索对话..." /></div>
+    <button class="new-chat-btn" data-action="new-chat"><svg aria-hidden="true"><use href="#i-plus"/></svg><span>新建对话</span></button>
+    <div id="search-area"><svg aria-hidden="true"><use href="#i-search"/></svg><label class="sr-only" for="search-input">搜索对话</label><input id="search-input" type="search" placeholder="搜索对话" /></div>
+    <div class="sidebar-section-label">最近对话</div>
     <div id="session-list"><div class="empty-sessions">还没有对话<br>点击上方开始</div></div>
     <div id="search-results" hidden></div>
     <div id="pin-area"></div>
-  </div>
+    <div class="sidebar-footer"><button class="sidebar-settings" type="button" data-action="open-settings"><svg aria-hidden="true"><use href="#i-settings"/></svg><span>设置</span></button><button class="ver" id="app-version" type="button" aria-label="下载诊断信息" title="下载诊断信息" data-action="download-diagnostics">v--</button></div>
+  </aside>
 
   <div id="main">
     <header>
+      <button class="sidebar-open icon-only" type="button" data-action="toggle-sidebar" aria-label="打开会话导航"><svg><use href="#i-menu"/></svg></button>
       <div id="current-title" role="heading" aria-level="1">未选择对话</div>
       <div class="header-right">
-        <div class="persona-selector">
-          <label for="persona-select">模式:</label>
-          <select id="persona-select" data-action="switch-persona" data-event="change"><option value="">加载中...</option></select>
-        </div>
-        <button class="btn-icon" data-action="toggle-file-viewer" title="文件查看器">📁</button>
-        <button class="btn-icon" data-action="toggle-terminal" title="终端">⌨️</button>
-        <button class="btn-icon" data-action="open-settings" title="设置">⚙️</button>
-        <button class="btn-icon" data-action="export-session" title="导出对话">📥</button>
-        <button class="btn-icon" data-action="choose-import" title="导入对话">📤</button>
+        <button id="header-outputs" type="button" data-action="show-document-outputs" hidden><svg aria-hidden="true"><use href="#i-file"/></svg><span>成果</span><span id="header-output-count"></span></button>
+        <details class="utility-menu"><summary class="icon-only" aria-label="更多工具" title="更多工具"><svg aria-hidden="true"><use href="#i-more"/></svg></summary><div class="utility-menu-panel">
+          <div class="persona-selector"><label for="persona-select">助手模式</label><select id="persona-select" data-action="switch-persona" data-event="change"><option value="">加载中...</option></select></div>
+          <button data-action="toggle-file-viewer"><svg aria-hidden="true"><use href="#i-folder"/></svg>文件查看器</button>
+          <button data-action="toggle-terminal"><svg aria-hidden="true"><use href="#i-terminal"/></svg>终端</button>
+          <button data-action="export-session"><svg aria-hidden="true"><use href="#i-download"/></svg>导出对话</button>
+          <button data-action="choose-import"><svg aria-hidden="true"><use href="#i-upload"/></svg>导入对话</button>
+          <button data-action="open-settings"><svg aria-hidden="true"><use href="#i-settings"/></svg>设置</button>
+        </div></details>
         <input type="file" id="import-file" class="hidden-control" accept=".json" data-action="import-session" data-event="change">
       </div>
     </header>
@@ -51,26 +82,27 @@
           <div id="document-output-list" aria-live="polite"></div>
         </details>
         <div id="task-panel">
-          <div id="task-panel-header"><span>📋 任务进度</span><span id="task-progress-text" role="status" aria-live="polite"></span></div>
+          <div id="task-panel-header"><span><svg aria-hidden="true"><use href="#i-check"/></svg>任务进度</span><span id="task-progress-text" role="status" aria-live="polite"></span></div>
           <div id="task-list"></div>
         </div>
         <div id="subagent-panel">
-          <div id="subagent-panel-header"><span>🤖 后台 Subagent</span><span id="subagent-progress-text" role="status" aria-live="polite"></span></div>
+          <div id="subagent-panel-header"><span><svg aria-hidden="true"><use href="#i-chat"/></svg>后台任务</span><span id="subagent-progress-text" role="status" aria-live="polite"></span></div>
           <div id="subagent-list"></div>
         </div>
         <div id="messages" role="log" aria-live="polite" aria-relevant="additions" aria-label="对话消息">
-          <div class="msg msg-assistant"><div class="bubble">👋 你好！我是 RainyDays。点击左侧「新建对话」开始。输入 <code>/</code> 查看可用命令。</div></div>
+          <div class="msg msg-assistant"><div class="bubble"><h2>你好，我是 RainyDays。</h2><p>描述你想完成的事，或先添加一份资料。</p></div></div>
         </div>
         <div id="response-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
         <div id="slash-menu" role="listbox" aria-label="斜杠命令建议"></div>
         <div id="input-area">
           <div id="attachment-draft-list" aria-live="polite"></div>
           <form id="input-form" autocomplete="off">
-            <button type="button" class="attachment-btn" title="添加附件 (Alt+V)" data-action="choose-attachments">＋</button>
-            <button type="button" class="voice-btn" id="mic-btn" title="语音输入" data-action="toggle-asr">🎙</button>
-            <label class="sr-only" for="input">消息</label><textarea id="input" rows="1" role="combobox" aria-haspopup="listbox" aria-controls="slash-menu" aria-autocomplete="list" aria-expanded="false" placeholder="输入消息；Ctrl+V 粘贴图片，Alt+V 添加文件..." autofocus></textarea>
-            <button type="submit" id="submit">发送</button>
+            <button type="button" class="attachment-btn" title="添加附件 (Alt+V)" aria-label="添加附件" data-action="choose-attachments"><svg aria-hidden="true"><use href="#i-plus"/></svg></button>
+            <button type="button" class="voice-btn" id="mic-btn" title="语音输入" aria-label="语音输入" data-action="toggle-asr"><svg aria-hidden="true"><use href="#i-mic"/></svg></button>
+            <label class="sr-only" for="input">消息</label><textarea id="input" rows="1" role="combobox" aria-haspopup="listbox" aria-controls="slash-menu" aria-autocomplete="list" aria-expanded="false" placeholder="描述你想完成的事，或添加文件…" autofocus></textarea>
+            <button type="submit" id="submit" aria-label="发送"><svg aria-hidden="true"><use href="#i-send"/></svg><span class="sr-only">发送</span></button>
           </form>
+          <div class="composer-hint"><span id="composer-persona">通用助手</span><span>Enter 发送 · Shift + Enter 换行</span></div>
           <input id="attachment-file-input" class="hidden-control" type="file" multiple accept="image/png,text/plain,text/markdown,text/csv,application/json,.md,.markdown,.json,.csv,.txt,.pdf,.docx,.xlsx">
         </div>
       </section>
@@ -94,7 +126,7 @@
         <div class="status-item" id="status-model">--</div>
       </div>
       <div class="status-right">
-        <button id="tts-toggle" type="button" class="tts-btn" data-action="toggle-tts" aria-pressed="false" aria-label="语音播报开关" title="语音播报开关">🔇</button>
+        <button id="tts-toggle" type="button" class="tts-btn" data-action="toggle-tts" aria-pressed="false" aria-label="语音播报开关" title="语音播报已关闭"><svg aria-hidden="true"><use href="#i-volume-off"/></svg></button>
         <span id="status-persona">未选择</span>
       </div>
     </div>
@@ -103,7 +135,7 @@
   <!-- File Viewer -->
   <aside id="file-viewer" aria-label="文件查看器" tabindex="-1">
     <div class="file-viewer-header">
-      <span>📁</span><h2>文件查看器</h2>
+      <svg aria-hidden="true"><use href="#i-folder"/></svg><h2>文件查看器</h2>
       <button class="file-viewer-close" data-action="close-file-viewer" aria-label="关闭文件查看器">✕</button>
     </div>
     <div class="file-viewer-controls">
@@ -140,7 +172,7 @@
   <!-- Settings 面板 -->
   <div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-hidden="true" tabindex="-1">
     <div id="settings-panel">
-      <div class="settings-header"><h2 id="settings-title">⚙️ RainyDays Settings</h2><button class="settings-close" data-action="close-settings">✕</button></div>
+      <div class="settings-header"><h2 id="settings-title"><svg aria-hidden="true"><use href="#i-settings"/></svg>设置</h2><button class="settings-close" data-action="close-settings">✕</button></div>
       <div class="settings-body">
         <div class="settings-nav">
           <div class="settings-nav-title">Settings</div>
@@ -212,7 +244,7 @@
   <!-- ask_user 弹窗 -->
   <div id="ask-modal" role="dialog" aria-modal="true" aria-labelledby="ask-title" aria-describedby="ask-question-text" aria-hidden="true" tabindex="-1">
     <div id="ask-box">
-      <div class="ask-title" id="ask-title">🤔 Agent 需要你的回答</div>
+      <div class="ask-title" id="ask-title"><svg aria-hidden="true"><use href="#i-chat"/></svg>RainyDays 需要你的回答</div>
       <div class="ask-question" id="ask-question-text"></div>
       <div class="ask-options" id="ask-options"></div>
       <label class="sr-only" for="ask-input">回答</label><input class="ask-input" id="ask-input" placeholder="或输入自定义答案..." />
