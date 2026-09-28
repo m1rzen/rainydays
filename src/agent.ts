@@ -598,6 +598,7 @@ export class Agent {
 
       let finalMessage: Message | null = null;
       let hasStreamedContent = false;
+      let streamedContent = "";
 
       const llmStart = Date.now();
       try {
@@ -605,6 +606,7 @@ export class Agent {
           if (event.type === "delta") {
             if (!orgModeEnabled) {
               hasStreamedContent = true;
+              streamedContent += event.content;
               yield {
                 type: "answer_chunk",
                 content: event.content,
@@ -617,10 +619,15 @@ export class Agent {
         }
       } catch (err) {
         if (isRunCancellation(err) || signal.aborted) throw err;
-        // LLM 请求失败（重试已耗尽），yield error 而不是崩溃
+        const errorContent = `回答未完成，请重新发送或要求继续。LLM 请求失败: ${err instanceof Error ? err.message : String(err)}`;
+        // 只保存已经向用户显示的正文，不保存或执行未完成的工具调用。
+        if (streamedContent) {
+          this.memory.add({ role: "assistant", content: `${streamedContent}\n\n⚠️ ${errorContent}` });
+          touch(runSessionId);
+        }
         yield {
           type: "error",
-          content: `LLM 请求失败: ${err instanceof Error ? err.message : String(err)}`,
+          content: errorContent,
           timestamp: Date.now(),
         };
         return;

@@ -2723,12 +2723,12 @@
             else if (step.type === "task_created" || step.type === "task_update") { if (step.tasks && step.tasks.length > 0) renderTasks(step.tasks); }
             else if (step.type === "answer_done") { if (!streamingStarted && step.content) { bubbleEl.innerHTML = ""; fullText = step.content; bubbleEl.innerHTML = renderMarkdown(fullText); } else if (!streamingStarted && !step.content) { bubbleEl.innerHTML = ""; bubbleEl.textContent = "(无回复)"; } if (fullText) { speakText(fullText.slice(0, 200)); enhanceLocalFileLinks(bubbleEl, fullText); } completeAccessibleResponse(fullText || bubbleEl.textContent); }
             else if (step.type === "run_cancelled") { bubbleEl.innerHTML = ""; bubbleEl.textContent = "已中断"; completeAccessibleResponse(bubbleEl.textContent); }
-            else if (step.type === "error") { bubbleEl.innerHTML = ""; bubbleEl.textContent = "⚠️ " + step.content; completeAccessibleResponse(bubbleEl.textContent); }
+            else if (step.type === "error") { bubbleEl.innerHTML = renderMarkdown((fullText ? fullText + "\n\n" : "") + "⚠️ " + step.content); completeAccessibleResponse(bubbleEl.textContent); }
           }
         }
       } catch (err) {
         bubbleEl.innerHTML = "";
-        bubbleEl.textContent = runToken.controller.signal.aborted || err?.name === "AbortError" ? "已中断" : "⚠️ 连接错误: " + err.message;
+        bubbleEl.textContent = runToken.controller.signal.aborted || err?.name === "AbortError" ? "已中断" : (fullText ? fullText + "\n\n" : "") + "⚠️ 连接错误: " + err.message;
         completeAccessibleResponse(bubbleEl.textContent);
       }
       finally { completeAccessibleResponse(bubbleEl.textContent); finishSessionRun(chatSessionId, runToken); if (currentSessionId === chatSessionId) inputEl.focus(); }

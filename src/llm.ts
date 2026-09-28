@@ -261,15 +261,19 @@ export class LLMClient {
     try {
     // 重试只在流建立阶段（create 调用），流开始后不重试
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      let streamEstablished = false;
       try {
         if (signal) throwIfCancelled(signal);
         const stream = await this.client.chat.completions.create(params, signal ? { signal } : undefined);
+        streamEstablished = true;
 
         let fullContent = "";
+        let finishReason: string | null = null;
         const toolCallMap = new Map<number, { id: string; name: string; arguments: string }>();
 
         for await (const chunk of stream) {
           if (signal) throwIfCancelled(signal);
+          if (chunk.choices[0]?.finish_reason) finishReason = chunk.choices[0].finish_reason;
           const delta = chunk.choices[0]?.delta;
           if (!delta) continue;
 
@@ -290,6 +294,11 @@ export class LLMClient {
               if (tc.function?.arguments) existing.arguments += tc.function.arguments;
             }
           }
+        }
+
+        if (signal) throwIfCancelled(signal);
+        if (finishReason !== "stop" && finishReason !== "tool_calls") {
+          throw new Error(`回答未完整结束 (${finishReason ?? "连接提前关闭"})`);
         }
 
         // 构建最终 message
@@ -322,7 +331,7 @@ export class LLMClient {
         lastError = err;
         const { retry, rateLimit, reason } = isRetryableError(err);
 
-        if (!retry || attempt === MAX_RETRIES) {
+        if (streamEstablished || !retry || attempt === MAX_RETRIES) {
           observation.finish("error");
           throw new Error(`LLM 流式请求失败: ${reason}${attempt > 0 ? ` (已重试 ${attempt} 次)` : ""}`);
         }

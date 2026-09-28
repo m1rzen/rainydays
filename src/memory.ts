@@ -4,7 +4,7 @@
 // SQLite：持久化存储（完整内容），重启不丢失
 //
 // 上下文管理策略（仿 Lux canvas）：
-//   1. 工具结果存入历史时截断到 1500 字符（第一道防线）
+//   1. 工具结果完整保留；只在整体超预算时处理旧消息
 //   2. agent 每轮调 LLM 前调用 compact()，检查 token 预算
 //   3. 超预算时：用 LLM 把旧对话生成摘要，替换旧消息
 //   4. 保留：system prompt + 摘要 + 最近 N 轮完整对话
@@ -20,9 +20,6 @@ import { bindMessageAttachments, getMessageAttachmentMap } from "./attachment-st
 import { messageAttachmentTokenText } from "./attachment.js";
 
 // --- 常量 ---
-
-/** 工具结果在历史中保留的最大字符数（超出截断，第一道防线） */
-const MAX_TOOL_RESULT_CHARS = 1500;
 
 /** 上下文 token 预算（留出空间给 system prompt + 新回复） */
 const MAX_CONTEXT_TOKENS = 28000;
@@ -54,48 +51,18 @@ function totalTokens(messages: Message[]): number {
   return messages.reduce((sum, m) => sum + messageTokens(m), 0);
 }
 
-// --- 工具结果压缩（第一道防线） ---
+/** 近期资料不能在预算内完整提供时，让调用方明确告知用户。 */
+export class ContextBudgetExceededError extends Error {
+  readonly code = "CONTEXT_BUDGET_EXCEEDED";
 
-function compressToolResult(content: string): string {
-  if (content.length <= MAX_TOOL_RESULT_CHARS) return content;
-
-  const lines = content.split("\n");
-  const headBudget = Math.floor(MAX_TOOL_RESULT_CHARS * 0.6); // 60% 给头部
-  const tailBudget = Math.floor(MAX_TOOL_RESULT_CHARS * 0.3);  // 30% 给尾部
-
-  // 头部
-  let head = "";
-  let headEnd = 0;
-  for (let i = 0; i < lines.length; i++) {
-    if ((head + lines[i] + "\n").length > headBudget) break;
-    head += lines[i] + "\n";
-    headEnd = i + 1;
+  constructor() {
+    super("当前资料超过上下文容量，尚未继续生成回答。请在新会话中缩小读取范围或分段读取；原始会话记录仍保留。");
+    this.name = "ContextBudgetExceededError";
   }
+}
 
-  // 尾部
-  let tail = "";
-  let tailStart = lines.length;
-  for (let i = lines.length - 1; i > headEnd; i--) {
-    const candidate = lines[i] + "\n" + tail;
-    if (candidate.length > tailBudget) break;
-    tail = candidate;
-    tailStart = i;
-  }
-
-  // 中间关键行（含路径、错误、状态等关键词的行）
-  const keyPattern = /(错误|失败|警告|error|fail|warn|路径|文件|✅|❌|⚠️|总结|结果|total|count)/i;
-  let middle = "";
-  for (let i = headEnd; i < tailStart && middle.length < MAX_TOOL_RESULT_CHARS * 0.1; i++) {
-    if (keyPattern.test(lines[i])) {
-      middle += lines[i] + "\n";
-    }
-  }
-
-  const result = head +
-    (middle ? `\n... (省略中间内容，以下为关键行)\n${middle}` : "") +
-    (tail ? `\n... (省略中间内容)\n${tail}` : "");
-
-  return result + `\n\n...(结果已压缩，原始 ${content.length} 字符)`;
+function assertContextBudget(messages: Message[]): void {
+  if (totalTokens(messages) > MAX_CONTEXT_TOKENS) throw new ContextBudgetExceededError();
 }
 
 // --- 消息格式化（供摘要用） ---
@@ -158,7 +125,7 @@ export class ConversationMemory {
     const rows = getMessagesBySession(sessionId);
     const attachmentsByMessage = getMessageAttachmentMap(sessionId);
 
-    let messages = rows.map((row) => {
+    const messages = rows.map((row) => {
       const msg: Message = {
         role: row.role as Message["role"],
         content: row.content,
@@ -176,14 +143,6 @@ export class ConversationMemory {
       const attachments = attachmentsByMessage.get(row.id);
       if (attachments?.length) msg.attachments = attachments;
       return msg;
-    });
-
-    // 工具结果压缩（数据库存的是完整内容，内存里压缩）
-    messages = messages.map((m) => {
-      if (m.role === "tool") {
-        return { ...m, content: compressToolResult(m.content) };
-      }
-      return m;
     });
 
     this.messages = messages;
@@ -205,10 +164,7 @@ export class ConversationMemory {
   /** 原子提交一组消息，避免取消时留下 assistant/tool 半条回合。 */
   addMany(messages: readonly Message[]): void {
     if (!Array.isArray(messages) || messages.length === 0) return;
-    const memoryMessages = messages.map((message) => ({
-      ...message,
-      content: message.role === "tool" ? compressToolResult(message.content) : message.content,
-    }));
+    const memoryMessages = messages.map((message) => ({ ...message }));
     if (this.sessionId) {
       const sessionId = this.sessionId;
       const createdAt = new Date().toISOString();
@@ -276,27 +232,17 @@ export class ConversationMemory {
     let otherMsgs = this.messages.filter((m) => m.role !== "system");
 
     // 不够消息可压缩
-    if (otherMsgs.length <= KEEP_RECENT) return false;
+    if (otherMsgs.length <= KEEP_RECENT) throw new ContextBudgetExceededError();
 
     // 分割：旧消息（要压缩的）+ 最近消息（保留的）
     let toSummarize = otherMsgs.slice(0, otherMsgs.length - KEEP_RECENT);
     let recent = otherMsgs.slice(-KEEP_RECENT);
 
-    // 确保不在 assistant(tool_calls) 和 tool 之间切断
-    while (
-      toSummarize.length > 0 &&
-      toSummarize[toSummarize.length - 1].role === "assistant" &&
-      toSummarize[toSummarize.length - 1].tool_calls &&
-      recent.length > 0 &&
-      recent[0].role === "tool"
-    ) {
+    // 完整工具结果组一起进入摘要，避免只收第一项而丢弃其余项。
+    while (recent.length > 0 && recent[0].role === "tool") {
       toSummarize.push(recent.shift()!);
     }
-
-    // 清除 recent 开头的孤立 tool 消息
-    while (recent.length > 0 && recent[0].role === "tool") {
-      recent.shift();
-    }
+    assertContextBudget([...mainSystem, ...recent]);
 
     if (toSummarize.length === 0) return false;
 
@@ -324,7 +270,9 @@ export class ConversationMemory {
       };
 
       if (signal) throwIfCancelled(signal);
-      this.messages = [...mainSystem, newSummary, ...recent];
+      const candidate = [...mainSystem, newSummary, ...recent];
+      assertContextBudget(candidate);
+      this.messages = candidate;
 
       console.log(
         `📦 上下文已压缩: ${toSummarize.length} 条消息 → 摘要 ` +
@@ -334,10 +282,10 @@ export class ConversationMemory {
 
       return true;
     } catch (err) {
-      if (isRunCancellation(err) || signal?.aborted) throw err;
+      if (isRunCancellation(err) || signal?.aborted || err instanceof ContextBudgetExceededError) throw err;
       // LLM 摘要失败，回退到删除策略
       console.error("⚠️ 上下文摘要失败，回退到删除:", err instanceof Error ? err.message : String(err));
-      this.fallbackDelete(mainSystem, otherMsgs, recent);
+      this.fallbackDelete(mainSystem, otherMsgs);
       return true;
     }
   }
@@ -345,8 +293,8 @@ export class ConversationMemory {
   /**
    * 回退策略：LLM 摘要失败时，删除最旧的消息
    */
-  private fallbackDelete(mainSystem: Message[], allMsgs: Message[], recent: Message[]): void {
-    let otherMsgs = allMsgs;
+  private fallbackDelete(mainSystem: Message[], allMsgs: Message[]): void {
+    let otherMsgs = [...allMsgs];
     let tokens = totalTokens([...mainSystem, ...otherMsgs]);
 
     while (tokens > MAX_CONTEXT_TOKENS && otherMsgs.length > KEEP_RECENT) {
@@ -360,7 +308,9 @@ export class ConversationMemory {
       }
     }
 
-    this.messages = [...mainSystem, ...otherMsgs];
+    const candidate = [...mainSystem, ...otherMsgs];
+    assertContextBudget(candidate);
+    this.messages = candidate;
   }
 
   getAll(): Message[] {

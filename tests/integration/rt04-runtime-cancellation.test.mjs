@@ -109,7 +109,7 @@ test("RT-04 LLM client binds one signal through non-stream and stream state mach
     return (async function* chunks() {
       yield { choices: [{ delta: { content: "A", tool_calls: [{ index: 0, id: "call-stream", function: { name: "fixture", arguments: "{\"" } }] } }] };
       yield { choices: [{ delta: { content: "B", tool_calls: [{ index: 0, function: { arguments: "ok\":true}" } }] } }] };
-      yield { choices: [{}] };
+      yield { choices: [{ delta: {}, finish_reason: "tool_calls" }] };
     })();
   };
   const events = [];
@@ -215,7 +215,7 @@ test("RT-04 memory compaction is atomic across success, fallback, and cancellati
   const restored = new ConversationMemory(6);
   restored.loadFromDb(sessionId);
   assert.equal(restored.getMessageCount(), 4);
-  assert.match(restored.getAll()[2].content, /结果已压缩/u);
+  assert.equal(restored.getAll()[2].content, "head\n" + "middle-error\n".repeat(200) + "tail");
   assert.equal(restored.getAll()[1].tool_calls[0].function.name, "fixture");
   restored.setSystemPrompt("restored system");
   for (let index = 0; index < 10; index += 1) restored.add({ role: "user", content: `bounded-${index}` });
@@ -419,7 +419,7 @@ test("RT-04 LLM retry classification remains cancellable across rate, server, ne
     llm.client.chat.completions.create = async () => {
       attempts += 1;
       if (attempts === 1) throw Object.assign(new Error("stream rate"), { status: 429 });
-      return (async function* emptyStream() { yield { choices: [{ delta: {} }] }; })();
+      return (async function* emptyStream() { yield { choices: [{ delta: {}, finish_reason: "stop" }] }; })();
     };
     const events = [];
     for await (const event of llm.chatStream([{ role: "user", content: "stream retry" }])) events.push(event);
@@ -431,7 +431,7 @@ test("RT-04 LLM retry classification remains cancellable across rate, server, ne
     }, /LLM 流式请求失败: bad stream/u);
 
     llm.client.chat.completions.create = async () => (async function* defaultIndexStream() {
-      yield { choices: [{ delta: { tool_calls: [{ id: "default-index", function: { name: "fixture", arguments: "{}" } }] } }] };
+      yield { choices: [{ delta: { tool_calls: [{ id: "default-index", function: { name: "fixture", arguments: "{}" } }] }, finish_reason: "tool_calls" }] };
     })();
     const defaultIndexEvents = [];
     for await (const event of llm.chatStream([{ role: "user", content: "default index" }])) defaultIndexEvents.push(event);
@@ -441,7 +441,7 @@ test("RT-04 LLM retry classification remains cancellable across rate, server, ne
     llm.client.chat.completions.create = async () => {
       attempts += 1;
       if (attempts === 1) throw new Error("stream network retry");
-      return (async function* recoveredStream() { yield { choices: [{ delta: { content: "recovered" } }] }; })();
+      return (async function* recoveredStream() { yield { choices: [{ delta: { content: "recovered" }, finish_reason: "stop" }] }; })();
     };
     const recoveredEvents = [];
     for await (const event of llm.chatStream([{ role: "user", content: "network retry" }])) recoveredEvents.push(event);
@@ -451,7 +451,7 @@ test("RT-04 LLM retry classification remains cancellable across rate, server, ne
     llm.client.chat.completions.create = async () => {
       attempts += 1;
       if (attempts === 1) throw Object.assign(new Error("signalled rate"), { status: 429 });
-      return (async function* signalledStream() { yield { choices: [{ delta: {} }] }; })();
+      return (async function* signalledStream() { yield { choices: [{ delta: {}, finish_reason: "stop" }] }; })();
     };
     for await (const _event of llm.chatStream([{ role: "user", content: "signalled retry" }], undefined, NEVER_ABORT_SIGNAL)) { /* consume */ }
 
@@ -516,7 +516,7 @@ test("RT-04 memory and subagent reject malformed persisted and child-turn states
   const large = "x".repeat(75_000);
   const tooFew = new ConversationMemory(100);
   for (let index = 0; index < 8; index += 1) tooFew.add({ role: "user", content: large });
-  assert.equal(await tooFew.compact({ chat: async () => assert.fail("too few messages reached summarizer") }), false);
+  await assert.rejects(() => tooFew.compact({ chat: async () => assert.fail("too few messages reached summarizer") }), error => error.code === "CONTEXT_BUDGET_EXCEEDED");
 
   const boundary = new ConversationMemory(100);
   boundary.addMany([

@@ -861,6 +861,60 @@ test("DS-05 real Electron persists clipboard and drop File uploads across reload
   assert.equal(await pathExists(fixture), false);
 });
 
+test("R1 real Electron preserves partial answers on provider and transport errors", { timeout: 90_000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-r1-electron-");
+  const userData = path.join(fixture, "user-data");
+  let instance;
+  let client;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal);
+    client = await connectCdp(cdpPort);
+    await waitFor(async () => {
+      try { return await client.evaluate("Boolean(currentSessionId && document.getElementById('input'))"); }
+      catch { return false; }
+    }, { timeoutMs: 20_000, label: "R1 conversation ready" });
+    await client.evaluate(`(() => {
+      if (document.getElementById('settings-modal').classList.contains('visible')) closeSettings();
+      const originalFetch = window.fetch.bind(window);
+      window.__r1ChatCount = 0;
+      window.fetch = async (input, options = {}) => {
+        if (new URL(typeof input === 'string' ? input : input.url, location.href).pathname !== '/api/chat') return originalFetch(input, options);
+        window.__r1ChatCount++;
+        const encoder = new TextEncoder();
+        return new Response(new ReadableStream({ start(controller) {
+          const send = step => controller.enqueue(encoder.encode('data: ' + JSON.stringify(step) + '\\n\\n'));
+          send({ type: 'answer_chunk', content: '已生成的正文' });
+          if (window.__r1ChatCount === 1) {
+            send({ type: 'error', content: '回答未完成，请继续。' });
+            controller.close();
+          } else setTimeout(() => controller.error(new Error('fixture disconnect')), 50);
+        }}), { headers: { 'Content-Type': 'text/event-stream' } });
+      };
+      return true;
+    })()`);
+    for (const [index, expected] of [[1, "回答未完成"], [2, "连接错误"]]) {
+      await client.evaluate(`(() => {
+        const input = document.getElementById('input'); input.value = '测试断流';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        document.getElementById('input-form').requestSubmit(); return true;
+      })()`);
+      const text = await waitFor(async () => {
+        const state = await client.evaluate(`({ text: document.querySelector('#messages .msg-assistant:last-child .bubble')?.textContent, count: window.__r1ChatCount, busy: document.getElementById('submit').disabled })`);
+        return state.count === index && !state.busy && state.text?.includes(expected) ? state.text : null;
+      }, { timeoutMs: 15_000, label: `R1 error ${index}` });
+      assert.match(text, /已生成的正文/u);
+      assert.equal(text.split("已生成的正文").length - 1, 1);
+    }
+    client.close(); client = null;
+    await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    client?.close();
+    if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture);
+  }
+});
+
 test("DS-06 real Electron edits, sandboxes, refreshes and streams File Tabs offline", { timeout: 90_000 }, async (context) => {
   const fixture = await makeTempDir("mini-lux-ds06-electron-");
   const userData = path.join(fixture, "user-data");
