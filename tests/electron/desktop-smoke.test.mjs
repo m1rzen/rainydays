@@ -861,6 +861,40 @@ test("DS-05 real Electron persists clipboard and drop File uploads across reload
   assert.equal(await pathExists(fixture), false);
 });
 
+test("R2 real Electron uploads PDF from the document picker and preserves original bytes", { timeout: 90_000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-r2-electron-");
+  let instance; let client;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(path.join(fixture, "user-data"), httpPort, cdpPort, context.signal);
+    client = await connectCdp(cdpPort);
+    await waitFor(async () => {
+      try { return await client.evaluate("Boolean(currentSessionId && document.getElementById('attachment-file-input'))"); } catch { return false; }
+    }, { timeoutMs: 20_000, label: "R2 upload ready" });
+    const pdf = await readFile(path.join(projectRoot, "tests/fixtures/tool02-two-pages.pdf"));
+    const accepted = await client.evaluate(`(() => {
+      const input = document.getElementById('attachment-file-input');
+      const bytes = Uint8Array.from(atob(${JSON.stringify(pdf.toString("base64"))}), char => char.charCodeAt(0));
+      const transfer = new DataTransfer(); transfer.items.add(new File([bytes], '资料.pdf', { type: 'application/pdf' }));
+      input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles: true }));
+      return input.accept;
+    })()`);
+    assert.match(accepted, /\.pdf/u); assert.match(accepted, /\.docx/u); assert.match(accepted, /\.xlsx/u);
+    const uploaded = await waitFor(async () => client.evaluate(`(() => {
+      const item = attachmentDrafts.find(item => item.name === '资料.pdf' && item.state === 'ready');
+      return item ? { id:item.id, size:item.size, sessionId:currentSessionId } : null;
+    })()`), { timeoutMs: 15_000, label: "R2 PDF ready" });
+    assert.equal(uploaded.size, pdf.length);
+    const downloaded = await client.evaluate(`fetch(attachmentContentUrl(${JSON.stringify(uploaded.sessionId)}, ${JSON.stringify(uploaded.id)})).then(response => response.arrayBuffer()).then(bytes => btoa(String.fromCharCode(...new Uint8Array(bytes))))`);
+    assert.equal(downloaded, pdf.toString("base64"));
+    client.close(); client = null;
+    await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    client?.close(); if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture);
+  }
+});
+
 test("R1 real Electron preserves partial answers on provider and transport errors", { timeout: 90_000 }, async context => {
   const fixture = await makeTempDir("mini-lux-r1-electron-");
   const userData = path.join(fixture, "user-data");

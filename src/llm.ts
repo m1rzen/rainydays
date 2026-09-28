@@ -7,7 +7,7 @@
 import OpenAI, { APIUserAbortError } from "openai";
 import type { LLMConfig, Message, MessageAttachment, ScopedNetworkGateway, ToolDefinition } from "./types.js";
 import { abortableDelay, cancellationError, cancellationFailure, throwIfCancelled } from "./run-cancellation.js";
-import { MAX_DRAFT_ATTACHMENT_BYTES } from "./attachment.js";
+import { MAX_DRAFT_ATTACHMENT_BYTES, INLINE_ATTACHMENT_BYTES, isDocumentMime } from "./attachment.js";
 import { beginObservation } from "./observability.js";
 
 /** 最大重试次数 */
@@ -99,7 +99,9 @@ export function projectMessagesForProvider(
         const label = JSON.stringify({ id: actual.id, name: actual.name, mime: actual.mime, sha256: actual.sha256 });
         content.push({
           type: "text",
-          text: `\n<user_attachment metadata=${label}>\n${resolved.bytes.toString("utf8")}\n</user_attachment>`,
+          text: isDocumentMime(actual.mime) || actual.size > INLINE_ATTACHMENT_BYTES
+            ? `\n<user_attachment metadata=${label}>\n资料尚未读取。使用 read(file_path="attachment:${actual.id}", offset=1, limit=12) 或 read_file(path="attachment:${actual.id}", offset=1, limit=12) 分段读取，根据下一页位置继续。回答请引用文件名及提取行号；未读部分不能当作已知事实。若当前没有读取工具，请明确告知用户切换到通用助手。\n</user_attachment>`
+            : `\n<user_attachment metadata=${label}>\n${resolved.bytes.toString("utf8")}\n</user_attachment>`,
         });
       }
     }

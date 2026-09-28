@@ -133,6 +133,7 @@ async function parsePdf(buffer: Buffer, requestedPages: readonly number[] | null
   const pdfParse = (await import("pdf-parse")).default;
   const requested = requestedPages ? new Set(requestedPages) : null;
   const renderedPages: number[] = [];
+  let hasText = false;
   const pagerender = async (pageData: any): Promise<string> => {
     const pageNumber = Number(pageData.pageNumber);
     if (requested && !requested.has(pageNumber)) return "";
@@ -140,6 +141,7 @@ async function parsePdf(buffer: Buffer, requestedPages: readonly number[] | null
     let lastY: number | undefined;
     let text = "";
     for (const item of textContent.items as Array<{ str: string; transform: number[] }>) {
+      if (item.str.trim()) hasText = true;
       text += lastY === undefined || lastY === item.transform[5] ? item.str : `\n${item.str}`;
       lastY = item.transform[5];
     }
@@ -154,6 +156,7 @@ async function parsePdf(buffer: Buffer, requestedPages: readonly number[] | null
   if (requested && renderedPages.length === 0) {
     return { success: false, text: "", error: `请求页面超出 PDF 范围（共 ${data.numpages} 页）`, pageCount: data.numpages, renderedPages: [] };
   }
+  if (!hasText) return { success: false, text: "", error: "PDF 未提取到文字，可能是扫描件；请先识别文字或提供文本型 PDF。", pageCount: data.numpages, renderedPages };
   return {
     success: true,
     text: data.text.trim() || "（PDF 内容为空或为扫描件）",

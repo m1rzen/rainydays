@@ -32,7 +32,13 @@ const MIME_BY_EXTENSION = Object.freeze<Record<string, string>>({
   ".markdown": "text/markdown",
   ".csv": "text/csv",
   ".json": "application/json",
+  ".pdf": "application/pdf",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 });
+const DOCUMENT_MIMES = new Set([MIME_BY_EXTENSION[".pdf"], MIME_BY_EXTENSION[".docx"], MIME_BY_EXTENSION[".xlsx"]]);
+export const isDocumentMime = (mime: string): boolean => DOCUMENT_MIMES.has(mime);
+export const INLINE_ATTACHMENT_BYTES = 4000;
 const IMAGE_MIMES = new Set(["image/png"]);
 const TEXT_MIMES = new Set(["text/plain", "text/markdown", "text/csv", "application/json"]);
 
@@ -75,7 +81,7 @@ function canonicalMime(name: string, value: unknown): string {
   const inferred = MIME_BY_EXTENSION[path.extname(name).toLowerCase()] ?? "";
   const mime = supplied || inferred;
   if (supplied && inferred && supplied !== inferred) throw new TypeError("Attachment extension and MIME differ");
-  if (!IMAGE_MIMES.has(mime) && !TEXT_MIMES.has(mime)) throw new TypeError("Attachment type is unsupported");
+  if (!IMAGE_MIMES.has(mime) && !TEXT_MIMES.has(mime) && !isDocumentMime(mime)) throw new TypeError("Attachment type is unsupported");
   return mime;
 }
 
@@ -84,7 +90,7 @@ export function validateAttachmentUploadMetadata(value: unknown): AttachmentUplo
   const name = attachmentName(record.name);
   const mime = canonicalMime(name, record.mime);
   const kind = IMAGE_MIMES.has(mime) ? "image" : "text";
-  const maximum = kind === "image" ? MAX_ATTACHMENT_BYTES : MAX_TEXT_ATTACHMENT_BYTES;
+  const maximum = kind === "image" || isDocumentMime(mime) ? MAX_ATTACHMENT_BYTES : MAX_TEXT_ATTACHMENT_BYTES;
   if (!Number.isSafeInteger(record.size) || (record.size as number) < 1 || (record.size as number) > maximum) {
     throw new TypeError("Attachment size is invalid");
   }
@@ -207,12 +213,17 @@ function validateText(bytes: Buffer, mime: string): void {
 
 export function validateAttachmentContent(metadata: AttachmentUploadMetadata, input: Uint8Array): ValidatedAttachmentContent {
   if ((metadata.kind === "image" && !IMAGE_MIMES.has(metadata.mime))
-    || (metadata.kind === "text" && !TEXT_MIMES.has(metadata.mime))) throw new TypeError("Attachment type is unsupported");
+    || (metadata.kind === "text" && !TEXT_MIMES.has(metadata.mime) && !isDocumentMime(metadata.mime))) throw new TypeError("Attachment type is unsupported");
   if (!(input instanceof Uint8Array)) throw new TypeError("Attachment bytes are invalid");
   const bytes = Buffer.from(input);
   if (bytes.length !== metadata.size || bytes.length < 1 || bytes.length > MAX_ATTACHMENT_BYTES) throw new TypeError("Attachment byte length differs");
   if (metadata.kind === "image") validateImage(bytes, metadata.mime);
-  else validateText(bytes, metadata.mime);
+  else if (isDocumentMime(metadata.mime)) {
+    const valid = metadata.mime === "application/pdf"
+      ? bytes.subarray(0, 5).toString("ascii") === "%PDF-"
+      : bytes.subarray(0, 4).toString("hex") === "504b0304";
+    if (!valid) throw new TypeError("文档内容与文件类型不符，请重新选择 PDF、DOCX 或 XLSX 文件");
+  } else validateText(bytes, metadata.mime);
   return Object.freeze({ ...metadata, bytes, sha256: createHash("sha256").update(bytes).digest("hex") });
 }
 

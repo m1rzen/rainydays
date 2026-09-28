@@ -7,7 +7,7 @@ node --import tsx --test tests/product/*.test.mjs
 npm run typecheck
 ```
 
-第一条直接测试当前源码，不依赖旧 dist、不调用真实模型。覆盖资料完整性、SQLite 恢复、Agent 断流持久化以及本地 HTTP/SSE。当前切片不需要先生成所有旧任务卡的证明文件。
+测试主体直接使用当前源码，不调用真实模型。R2 文档测试复用已构建的隔离解析 worker，因此首次运行或修改解析器后先执行 `npm run build`。覆盖资料完整性、SQLite 恢复、Agent 断流、文档分页以及本地 HTTP/SSE。当前切片不需要先生成所有旧任务卡的证明文件。
 
 与本次改动相关的构建后回归：
 

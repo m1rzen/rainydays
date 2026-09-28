@@ -3,6 +3,7 @@ import { throwIfCancelled } from "../run-cancellation.js";
 import { ToolArgumentsError } from "../tool-pipeline.js";
 import type { ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 import { parseDocumentIsolated } from "../document-parser.js";
+import { readAttachmentDocument } from "../attachment-reader.js";
 
 const MAX_DOCUMENT_BYTES = 32 * 1024 * 1024;
 const MAX_TEXT_BYTES = 8 * 1024 * 1024;
@@ -89,7 +90,7 @@ export const readDef: ToolDefinition = {
     parameters: {
       type: "object",
       properties: {
-        file_path: { type: "string", description: "绝对路径，或相对于 DATA_ROOT 的路径。" },
+        file_path: { type: "string", description: "绝对路径、相对于 DATA_ROOT 的路径，或当前会话的 attachment:ID。附件每次最多返回 12 个提取行，按下一页 offset 继续。" },
         offset: { type: "integer", minimum: 1, description: "起始行（1-based），默认 1。" },
         limit: { type: "integer", minimum: 1, description: "最多返回的行数；省略则读取全部。" },
         pages: { type: "string", description: "PDF 页码范围，如 1-5、3、1-3,8。" },
@@ -101,6 +102,7 @@ export const readDef: ToolDefinition = {
 
 export const readExec: ToolExecutor = async (args, _env, invocationValue) => {
   const invocation = requireInvocation(invocationValue);
+  if (typeof args.file_path === "string" && args.file_path.startsWith("attachment:")) return readAttachmentDocument(args, invocation);
   const defaultRootId = requireRootId(invocation.path, "DATA_ROOT");
   const filePath = args.file_path as string;
   const extension = path.extname(filePath).toLowerCase();

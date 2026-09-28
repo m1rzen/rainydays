@@ -961,7 +961,15 @@ const SCHEMA_V11_SQL = `
     );
   `;
 
-function assertSchemaV11(database: typeof db = db): void {
+function applySchemaV12(database: typeof db): void {
+  // 附件表没有被其他表引用；在迁移事务中重建约束并保留全部记录。
+  database.exec("CREATE TEMP TABLE attachment_migration AS SELECT * FROM attachments; DROP TABLE attachments;");
+  database.exec(SCHEMA_V9_SQL.slice(SCHEMA_V9_SQL.indexOf("CREATE TABLE attachments"))
+    .replace("'application/json'", "'application/json', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'"));
+  database.exec("INSERT INTO attachments SELECT * FROM attachment_migration; DROP TABLE attachment_migration;");
+}
+
+function assertSchemaV11(database: typeof db = db, documents = false): void {
   const reference = createInMemoryBootstrapDatabase();
   try {
     reference.pragma("foreign_keys = ON");
@@ -976,6 +984,7 @@ function assertSchemaV11(database: typeof db = db): void {
     reference.exec(SCHEMA_V9_SQL);
     reference.exec(SCHEMA_V10_SQL);
     reference.exec(SCHEMA_V11_SQL);
+    if (documents) applySchemaV12(reference);
     const objectRows = (target: typeof db): Array<{ type: string; name: string; tbl_name: string; sql: string | null }> => target.prepare(
       "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') ORDER BY type, name"
     ).all() as Array<{ type: string; name: string; tbl_name: string; sql: string | null }>;
@@ -1108,6 +1117,15 @@ const DATABASE_MIGRATIONS: readonly DatabaseMigration[] = Object.freeze([
       assertSchemaV11(database);
     },
   }),
+  Object.freeze({
+    from: 11,
+    to: 12,
+    apply: (database: typeof db): void => {
+      assertSchemaV11(database);
+      applySchemaV12(database);
+      assertSchemaV11(database, true);
+    },
+  }),
 ]);
 
 function assertMigrationRegistry(): void {
@@ -1148,7 +1166,7 @@ function migrateDatabase(): void {
   if (version !== DATABASE_SCHEMA_VERSION) {
     throw new Error(`数据库 Schema 迁移未达到目标版本: 当前 ${version}，目标 ${DATABASE_SCHEMA_VERSION}`);
   }
-  assertSchemaV11(db);
+  assertSchemaV11(db, true);
 }
 
 try {
@@ -1201,7 +1219,7 @@ export function validateDatabaseRestoreCandidate(
   }
   const bytes = fs.readFileSync(databasePath);
   const candidate = createInMemoryBootstrapDatabase(bytes);
-  try { assertSchemaV11(candidate); }
+  try { assertSchemaV11(candidate, true); }
   finally { candidate.close(); }
   return validation;
 }

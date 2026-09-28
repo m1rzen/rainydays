@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -114,4 +114,121 @@ test("Agent 断流后保存已显示文字和失败提示，重开会话可恢�
   restored.loadFromDb(session.id);
   assert.equal(restored.getAll().at(-1).content, expected);
   assert.equal(restored.getAll().at(-1).tool_calls, undefined);
+});
+
+test("文档附件保留原文，模型获得索引，读取工具分段取回且拒绝跨会话", async () => {
+  const store = await import("../../src/attachment-store.ts");
+  const { projectMessagesForProvider } = await import("../../src/llm.ts");
+  const { readExec } = await import("../../src/tools/filesystem-lux.ts");
+  const { issueResourceOwner, retireResourceOwner } = await import("../../src/resource-owner.ts");
+  const { createDocxExec, createXlsxExec } = await import("../../src/tools/writer.ts");
+  const { parseFileBuffer } = await import("../../src/tools/parsers.ts");
+  const sessionId = "product-documents";
+  const now = new Date().toISOString();
+  insertSession({ id: sessionId, persona_name: "product", title: "documents", created_at: now, updated_at: now });
+  let docx;
+  await createDocxExec({ path: "报告.docx", title: "季度报告", paragraphs: ["正文".repeat(12000), "结论：末尾事实必须读到。"] }, {}, {
+    signal: new AbortController().signal,
+    path: { rootIdForEnv: () => "output", reserveFile: async () => ({ commit: async bytes => { docx = bytes; } }) },
+  });
+  const pdf = await readFile(new URL("../fixtures/tool02-two-pages.pdf", import.meta.url));
+  let xlsx;
+  await createXlsxExec({ path: "数据.xlsx", sheets: [{ name: "销量", data: [["产品", "数量"], ["甲", 42]] }] }, {}, {
+    signal: new AbortController().signal,
+    path: { rootIdForEnv: () => "output", reserveFile: async () => ({ commit: async bytes => { xlsx = bytes; } }) },
+  });
+  const owner = issueResourceOwner({ authorityId: "fixture", authorityEpoch: 1, sessionId, principal: "agent", rootIds: [] });
+  const invocation = { resourceOwner: owner, capabilityContext: { sessionId }, signal: new AbortController().signal };
+  try {
+    for (const [name, mime, bytes] of [
+      ["报告.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docx],
+      ["资料.pdf", "application/pdf", pdf],
+      ["数据.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", xlsx],
+    ]) {
+      const draft = store.reserveAttachment(sessionId, { name, mime, size: bytes.length });
+      const ready = store.completeAttachment(sessionId, draft.id, bytes);
+      const memory = new ConversationMemory(); memory.setSessionId(sessionId);
+      memory.add({ role: "user", content: "读完并引用依据", attachments: [ready] });
+      const projected = projectMessagesForProvider(sessionId, memory.getAll(), store.readMessageAttachmentForSession);
+      assert.match(JSON.stringify(projected), new RegExp(`attachment:${ready.id}`));
+      assert(!JSON.stringify(projected).includes("PK\\u0003"));
+      assert.deepEqual(store.readMessageAttachmentForSession(sessionId, ready.id).bytes, bytes);
+      const first = await readExec({ file_path: `attachment:${ready.id}`, limit: 4 }, {}, invocation);
+      assert.match(first, new RegExp(name.replace(".", "\\.")));
+      if (name.endsWith("docx")) {
+        assert.match(first, /下一页 offset=/);
+        let page = first;
+        const allPages = [first];
+        let pages = 0;
+        while (/下一页 offset=(\d+)/u.test(page)) {
+          assert(++pages < 50);
+          page = await readExec({ file_path: `attachment:${ready.id}`, offset: Number(/下一页 offset=(\d+)/u.exec(page)[1]), limit: 4 }, {}, invocation);
+          allPages.push(page);
+        }
+        assert.match(allPages.join("\n"), /末尾事实必须读到/);
+        assert.equal(allPages.join("\n").split("正文").length - 1, 12000);
+      } else if (name.endsWith("pdf")) assert.match(first, /PDF Page 1/);
+      else assert.match(first, /42/);
+      await assert.rejects(() => readExec({ file_path: `attachment:${ready.id}` }, {}, { ...invocation, capabilityContext: { sessionId: "another-session" } }), /不存在|does not exist/);
+      const restored = new ConversationMemory(); restored.loadFromDb(sessionId);
+      assert.equal(restored.getAll().at(-1).attachments[0].sha256, ready.sha256);
+    }
+    let revision;
+    await createDocxExec({ path: "报告-修订.docx", title: "季度报告修订版", paragraphs: ["根据原报告末尾事实修订。", "来源：报告.docx，提取文本末段。"] }, {}, {
+      signal: invocation.signal,
+      path: { rootIdForEnv: () => "output", reserveFile: async () => ({ commit: async bytes => { revision = bytes; } }) },
+    });
+    const revised = await parseFileBuffer("报告-修订.docx", revision);
+    assert.equal(revised.success, true);
+    assert.match(revised.text, /季度报告修订版/);
+    assert.match(revised.text, /来源：报告.docx/);
+  } finally { await retireResourceOwner(owner); }
+});
+
+test("长 Unicode 单行可完整翻页且输入损坏会明确报错", async () => {
+  const { documentTextPage } = await import("../../src/attachment-reader.ts");
+  const { parseFileBuffer } = await import("../../src/tools/parsers.ts");
+  const text = "🙂".repeat(6501);
+  const first = documentTextPage(text);
+  const next = Number(/下一页 offset=(\d+)/u.exec(first)[1]);
+  const second = documentTextPage(text, next);
+  assert.equal((first + second).split("🙂").length - 1, 6501);
+  assert.match(second, /已到末尾/);
+  assert.equal((await parseFileBuffer("bad.docx", Buffer.from("PK\x03\x04broken"))).success, false);
+  const original = await readFile(new URL("../fixtures/tool02-two-pages.pdf", import.meta.url));
+  const scanned = Buffer.from(original.toString("latin1").replace(/\/Contents \d+ 0 R/gu, value => " ".repeat(value.length)), "latin1");
+  const parsed = await parseFileBuffer("scan.pdf", scanned);
+  assert.equal(parsed.success, false);
+  assert.match(parsed.error, /未提取到文字/);
+});
+
+test("Agent 通过真实工具调度读取文档附件并获得可引用内容", async () => {
+  const [{ Agent }, { createEffectivePersona }, { createSession }, { capabilityBroker }, { pathPolicy }, store] = await Promise.all([
+    import("../../src/agent.ts"), import("../../src/persona.ts"), import("../../src/session.ts"),
+    import("../../src/tools/index.ts"), import("../../src/path-runtime.ts"), import("../../src/attachment-store.ts"),
+  ]);
+  const persona = createEffectivePersona({ name: "document-reader", displayName: "Documents", description: "Fixture", tools: ["read"], env: {}, allowedRoots: [fixture], networkPolicy: { mode: "unrestricted" }, systemPrompt: "Read and cite documents" });
+  const authority = capabilityBroker.createRuntimeAuthority({ ...persona, rootEnv: {}, pathAuthority: await pathPolicy.createAuthority([{ rootId: "workspace", role: "workspace", configuredPath: fixture, permissions: ["read-file"] }]) });
+  const session = createSession(persona, "Documents");
+  const bytes = await readFile(new URL("../fixtures/tool02-two-pages.pdf", import.meta.url));
+  const draft = store.reserveAttachment(session.id, { name: "资料.pdf", mime: "application/pdf", size: bytes.length });
+  const attachment = store.completeAttachment(session.id, draft.id, bytes);
+  let iteration = 0;
+  const llm = {
+    async chat() { return { role: "assistant", content: "资料阅读" }; },
+    async *chatStream(messages) {
+      if (iteration++ === 0) yield { type: "result", message: { role: "assistant", content: "", tool_calls: [{ id: "read-document", type: "function", function: { name: "read", arguments: JSON.stringify({ file_path: `attachment:${attachment.id}` }) } }] } };
+      else {
+        const result = messages.find(message => message.tool_call_id === "read-document");
+        assert.match(result.content, /FIRST_PAGE/);
+        assert.match(result.content, /来源: 资料.pdf/);
+        yield { type: "result", message: { role: "assistant", content: "已读取 FIRST_PAGE（资料.pdf，第 1 页）。" } };
+      }
+    },
+  };
+  const memory = new ConversationMemory(); const agent = new Agent(llm, memory, persona, authority); agent.setSession(session.id);
+  const events = [];
+  for await (const event of agent.run("读附件并注明出处", undefined, undefined, [attachment])) events.push(event);
+  assert(events.some(event => event.type === "tool_result" && event.toolStatus === "success"));
+  assert(events.some(event => event.type === "answer_done" && event.content.includes("FIRST_PAGE")));
 });
