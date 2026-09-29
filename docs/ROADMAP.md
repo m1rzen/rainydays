@@ -1,8 +1,8 @@
 ---
 workflow: project-workflow
 kind: roadmap
-updated: 2026-09-28
-status: user-authorized implementation; first R1 slice verified, document workflow next
+updated: 2026-09-29
+status: R1/R2 verified; R3 partial; R4-R7 pending product validation
 ---
 
 # RainyDays：以真实任务完成为目标的产品规划
@@ -14,6 +14,14 @@ status: user-authorized implementation; first R1 slice verified, document workfl
 用户已于 2026-09-28 授权按照本路线开始二次开发；实施进度见 [STATUS](STATUS.md)。首批工作修复资料截断与回答断流，结束以“100% Lux Desktop 对齐”为首版门槛的推进方式。旧总规范与 parity 文件保留为历史知识及安全约束参考，不能直接沿用其中所有功能和过程要求作为新版本的前置条件。涉及权限或执行保护的改变必须有明确的新契约和验证，不因目标调整自动失效。
 
 判断依据见 [2026-09-28 评估](audits/baseline-2026-09-28.md)。核心策略是复用已有基础、减少同时推进的能力、交付完整的用户任务；不先重写运行时，不先把所有旧 WIP 卡补齐。
+
+## 2026-09-29 进度校准
+
+最新证据见 [二次重构进度审计](audits/baseline-2026-09-29.md)。R1 资料完整性与断流恢复、R2 文档输入到成果与继续修改均已通过确定性回归和真实 Electron 流程；新版对话与成果界面已完成。R3 只完成了快速产品测试与局部反馈缩短，重复治理和混合 WIP 仍未收敛。
+
+R4 研究、R5 首次使用与默认能力收敛、R6 重复任务入口、R7 小范围内测尚未达到产品退出条件。Playbook、Routine、Browser、Media、Worker 和 Download 的代码或定向测试存在，不因此计为这些阶段完成。
+
+当前执行顺序固定为：**R3 最小治理收敛 → R4 真实研究任务 → R5 首次使用和默认能力 → R6 单一重复任务入口 → R7 安装包与三人内测**。在 R7 前冻结 Media、远程 Worker、双浏览器后端和更多生态扩展。
 
 ## 第一版要交付的四类工作
 
