@@ -1093,7 +1093,6 @@
           id: workbenchId("tab"), kind: "file", title: "文件", sessionId: currentSessionId,
           rootId: currentFileRoot, path: currentFilePath || ".",
         });
-        await openFileDirectory(currentFilePath, false);
       } catch (err) { showFileError(err.message); }
     }
 
@@ -3038,16 +3037,23 @@
         document.getElementById("mic-btn")?.classList.remove("recording");
       }
       asrPreferences = nextAsr;
-      const ttsButton = document.getElementById("tts-toggle");
-      if (ttsButton) { ttsButton.innerHTML = `<svg aria-hidden="true"><use href="#i-volume-${ttsEnabled ? "on" : "off"}"/></svg>`; ttsButton.title = ttsEnabled ? "语音播报已开启" : "语音播报已关闭"; ttsButton.setAttribute("aria-pressed", String(ttsEnabled)); }
+      renderTtsToggleState();
+    }
+
+    function renderTtsToggleState() {
+      const button = document.getElementById("tts-toggle");
+      if (!button) return;
+      button.querySelector("use")?.setAttribute("href", `#i-volume-${ttsEnabled ? "on" : "off"}`);
+      const state = button.querySelector(".utility-menu-state");
+      if (state) state.textContent = ttsEnabled ? "开启" : "关闭";
+      button.title = ttsEnabled ? "语音播报已开启" : "语音播报已关闭";
+      button.setAttribute("aria-label", ttsEnabled ? "关闭语音播报" : "开启语音播报");
+      button.setAttribute("aria-pressed", String(ttsEnabled));
     }
 
     function toggleTTS() {
       ttsEnabled = !ttsEnabled;
-      const btn = document.getElementById("tts-toggle");
-      btn.innerHTML = `<svg aria-hidden="true"><use href="#i-volume-${ttsEnabled ? "on" : "off"}"/></svg>`;
-      btn.title = ttsEnabled ? "语音播报已开启" : "语音播报已关闭";
-      btn.setAttribute("aria-pressed", String(ttsEnabled));
+      renderTtsToggleState();
       if (!ttsEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
     }
 

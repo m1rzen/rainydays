@@ -70,6 +70,8 @@ header { height:76px; min-height:76px; padding:0 38px; background:var(--bg); bor
 .utility-menu-panel button { width:100%; height:36px; display:flex; align-items:center; gap:11px; padding:0 10px; background:transparent; border:0; border-radius:7px; text-align:left; cursor:pointer; font-size:12px; }
 .utility-menu-panel button:hover { background:var(--hover-bg); }
 .utility-menu-panel svg { width:16px; height:16px; color:var(--text-dim); }
+.utility-menu-panel #tts-toggle svg { width:18px; height:18px; }
+.utility-menu-state { margin-left:auto; color:var(--text-dim); font-size:11px; }
 .utility-menu-panel .persona-selector { display:flex; align-items:center; gap:9px; border-bottom:1px solid var(--border); border-radius:0; margin-bottom:4px; padding:0 9px 7px; height:auto; min-height:40px; white-space:nowrap; }
 .utility-menu-panel .persona-selector label { color:var(--text-dim); font-size:11px; }
 .utility-menu-panel .persona-selector select { flex:1; min-width:0; max-width:none; color:var(--text); }
@@ -152,7 +154,6 @@ header { height:76px; min-height:76px; padding:0 38px; background:var(--bg); bor
 #status-bar #status-tokens,#status-bar #status-model,#status-bar #status-persona { display:none; }
 .sidebar-footer .ver { opacity:0; }
 .sidebar-footer:hover .ver,.sidebar-footer .ver:focus-visible { opacity:.75; }
-.tts-btn { border:0; background:transparent; }
 
 /* Secondary surfaces inherit the palette while code and terminal retain useful contrast. */
 #settings-modal { background:rgba(41,38,33,.35); }

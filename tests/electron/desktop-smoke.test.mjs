@@ -1491,6 +1491,7 @@ test("R2 real Electron completes document task, restores outputs and revises a c
     })()`);
     await client.evaluate(`(() => { const link = [...document.querySelectorAll('#document-output-list a')].find(link => link.textContent === '成果报告.docx'); link.click(); return true; })()`);
     await waitFor(() => client.evaluate("document.getElementById('file-preview-content').textContent.includes('FIRST_PAGE')"), { timeoutMs: 15_000, label: "R2 output preview" });
+    assert.equal(await client.evaluate("window.__r2FileRequests.filter(request => request.url.startsWith('/api/files/list?')).length"), 1, "打开成果时目录只加载一次");
     assert.equal(await client.evaluate(`(async () => {
       const originalFetch = window.fetch; let release; let arrived;
       const ready = new Promise(resolve => { arrived = resolve; });

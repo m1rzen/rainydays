@@ -26,13 +26,13 @@
     <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2.5h8l4 4V21H6a2 2 0 0 1-2-2V4.5a2 2 0 0 1 2-2Z"/><path d="M14 2.5V7h4M8 12h8M8 16h6"/></symbol>
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M2.5 6a2 2 0 0 1 2-2H10l2 2h7.5a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2z"/></symbol>
     <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="2.5" y="3.5" width="19" height="17" rx="2"/><path d="m6.5 8 4 4-4 4M12.5 16h5"/></symbol>
-    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m10 2.5-.5 2.2-2 1-2-.8-2 3.4 1.7 1.4v2.5l-1.7 1.4 2 3.4 2-.8 2 1 .5 2.2h4l.5-2.2 2-1 2 .8 2-3.4-1.7-1.4v-2.5l1.7-1.4-2-3.4-2 .8-2-1-.5-2.2z" transform="translate(0 1) scale(1 .88)"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-2.83 2.83-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21h-4v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06-2.83-2.83.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3v-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06L7.04 4.3l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3h4v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06 2.83 2.83-.06.06A1.65 1.65 0 0 0 19.4 9v.01a1.65 1.65 0 0 0 1.51 1H21v4h-.09A1.65 1.65 0 0 0 19.4 15Z"/></symbol>
     <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
     <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
     <symbol id="i-send" viewBox="0 0 24 24"><path d="m3 11 17-8-6 18-2.7-8.3zM11.3 12.7 20 3"/></symbol>
     <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v5m-4 0h8"/></symbol>
-    <symbol id="i-volume-on" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 9a5 5 0 0 1 0 6M19.5 6a9 9 0 0 1 0 12"/></symbol>
-    <symbol id="i-volume-off" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 9l5 6M22 9l-5 6"/></symbol>
+    <symbol id="i-volume-on" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/></symbol>
+    <symbol id="i-volume-off" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 9l4 6M21 9l-4 6"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
@@ -66,6 +66,7 @@
           <button data-action="toggle-terminal"><svg aria-hidden="true"><use href="#i-terminal"/></svg>终端</button>
           <button data-action="export-session"><svg aria-hidden="true"><use href="#i-download"/></svg>导出对话</button>
           <button data-action="choose-import"><svg aria-hidden="true"><use href="#i-upload"/></svg>导入对话</button>
+          <button id="tts-toggle" type="button" data-action="toggle-tts" aria-pressed="false" aria-label="开启语音播报" title="语音播报已关闭"><svg aria-hidden="true"><use href="#i-volume-off"/></svg><span>语音播报</span><span class="utility-menu-state">关闭</span></button>
           <button data-action="open-settings"><svg aria-hidden="true"><use href="#i-settings"/></svg>设置</button>
         </div></details>
         <input type="file" id="import-file" class="hidden-control" accept=".json" data-action="import-session" data-event="change">
@@ -126,7 +127,6 @@
         <div class="status-item" id="status-model">--</div>
       </div>
       <div class="status-right">
-        <button id="tts-toggle" type="button" class="tts-btn" data-action="toggle-tts" aria-pressed="false" aria-label="语音播报开关" title="语音播报已关闭"><svg aria-hidden="true"><use href="#i-volume-off"/></svg></button>
         <span id="status-persona">未选择</span>
       </div>
     </div>
