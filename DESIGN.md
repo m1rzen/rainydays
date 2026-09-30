@@ -89,7 +89,6 @@ components:
   button-secondary:
     backgroundColor: "{colors.control-surface}"
     textColor: "{colors.ink}"
-    typography: "{typography.label}"
     rounded: "{rounded.field}"
     height: "38px"
     padding: "0 12px"
