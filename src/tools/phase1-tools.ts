@@ -218,7 +218,7 @@ export const searchToolsDef: ToolDefinition = {
   function: {
     name: "search_tools",
     description:
-      "搜索 agent 自身可用的工具列表（不是搜索文件系统）。当你不确定当前有哪些工具可用、或想找某个功能的工具时使用。例如搜 'image' 会返回 image_helper，搜 'memory' 会返回 remember/recall。",
+      "搜索当前助手允许的工具并在下一轮加载匹配能力（不是搜索文件）。需要未显示的能力时先调用本工具；可搜索工具名称或功能描述，例如 'memory'、'下载'、'计算'。发现不会扩大权限。",
     parameters: {
       type: "object",
       properties: {
@@ -253,6 +253,6 @@ export const searchToolsExec: ToolExecutor = async (args, _env, invocation) => {
     return terms.some(term => nameLower.includes(term) || desc.includes(term));
   });
 
-  if (matched.length === 0) return `未找到匹配 "${keywords}" 的工具。`;
-  return `匹配的工具 (${matched.length}):\n${matched.map(t => `  • ${t}`).join("\n")}`;
+  return JSON.stringify({ type: "tool_discovery", tools: matched,
+    message: matched.length ? "匹配的能力将在下一轮加载，按实际提供的工具参数调用。" : "没有匹配的可用能力，请换关键词或向用户说明限制。" });
 };

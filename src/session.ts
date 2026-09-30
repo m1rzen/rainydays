@@ -114,6 +114,11 @@ export function sessionPersonaBinding(id: string) {
   return getSessionPersonaBinding(id);
 }
 
+export class SessionPersonaChangedError extends Error {
+  readonly code = "SESSION_PERSONA_CHANGED";
+  constructor() { super("助手能力已更新，请在新对话副本中继续。旧对话已保留。"); this.name = "SessionPersonaChangedError"; }
+}
+
 /** CAS 切换一个持久 Session 的 Persona；调用方负责安全替换该 Session runtime。 */
 export function rebindSessionPersona(id: string, current: PersonaDefinition, target: PersonaDefinition): boolean {
   return updateSessionPersonaBinding(id, current.name, current.sourceDigest ?? current.digest, {

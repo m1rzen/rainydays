@@ -31,6 +31,7 @@ import {
   ensureSessionLinkRegistration,
   SessionExportError,
   SessionImportError,
+  SessionPersonaChangedError,
   searchSessions,
 } from "./session.js";
 import {
@@ -1204,7 +1205,7 @@ async function prepareRuntimeInstance(
   const binding = sessionPersonaBinding(identity.sessionId);
   if (!binding || binding.persona_name !== persona.name || binding.persona_digest !== (persona.sourceDigest ?? persona.digest)
     || binding.permission_level !== personaPermissionLevel(persona)) {
-    throw new Error(`Session Persona 定义已变化，需要显式重新确认: ${persona.name}`);
+    throw new SessionPersonaChangedError();
   }
   const memory = new ConversationMemory(80);
   const authority = await issueRuntimeAuthority(persona, settings);
@@ -2251,15 +2252,26 @@ app.post("/api/sessions/:id/select", async (req, res) => {
   try {
     const runtime = await withRuntimeMutation(async () => {
       ensureRuntimeAccepting();
-      const loaded = await requireRuntimeRegistry().ensure(id);
-      selectSessionIdentity(id);
-      touch(id);
-      return loaded;
+      try {
+        const loaded = await requireRuntimeRegistry().ensure(id);
+        selectSessionIdentity(id);
+        touch(id);
+        return loaded;
+      } catch (error) {
+        if (error instanceof SessionPersonaChangedError) {
+          // Selection is UI state only; no authority is issued for this read-only history.
+          selectSessionIdentity(id);
+          touch(id);
+        }
+        throw error;
+      }
     });
     console.log(`✅ 切换会话: ${id} (${session.title})`);
     res.json({ session, persona: runtime.persona.name });
   } catch (error) {
-    res.status(409).json({ error: error instanceof Error ? error.message : String(error) });
+    res.status(409).json(error instanceof SessionPersonaChangedError
+      ? { code: error.code, error: error.message, session }
+      : { error: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -2440,13 +2452,14 @@ app.post("/api/sessions/:id/rollback", async (req, res) => {
       ensureRuntimeAccepting();
       const registry = requireRuntimeRegistry();
       if (registry.isRunning(id)) throw new SessionRuntimeLifecycleError("SESSION_RUNTIME_BUSY", "Agent 正在运行，不能回退该会话");
+      await registry.ensure(id);
       const count = deleteMessagesAfterLastUserMessage(id);
       registry.get(id)?.agent.setSession(id);
       return count;
     });
     res.json({ success: true, deletedMessages: deleted });
   } catch (error) {
-    res.status(error instanceof SessionRuntimeLifecycleError && error.code === "SESSION_RUNTIME_BUSY" ? 409 : 400)
+    res.status(error instanceof SessionPersonaChangedError || (error instanceof SessionRuntimeLifecycleError && error.code === "SESSION_RUNTIME_BUSY") ? 409 : 400)
       .json({ error: error instanceof Error ? error.message : String(error) });
   }
 });

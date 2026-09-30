@@ -49,6 +49,7 @@
     }
 
     let currentSessionId = null;
+    const unavailableSessionIds = new Set();
     let sessionSelectionGeneration = 0;
     let sessionSelectionQueue = Promise.resolve();
     let knownSessions = [];
@@ -488,6 +489,7 @@
     async function rollback() {
       if (!currentSessionId) return;
       const res = await fetch(`/api/sessions/${currentSessionId}/rollback`, { method: "POST" }); const data = await res.json();
+      if (!res.ok) { addSystemMessage(data.error || "回退失败，原对话已保留。"); return; }
       addSystemMessage("⏪ 已回退 " + data.deletedMessages + " 条消息"); await selectSession(currentSessionId);
     }
 
@@ -2545,7 +2547,10 @@
       if (generation !== sessionSelectionGeneration) return;
       const res = await fetch(`/api/sessions/${id}/select`, { method: "POST" });
       const data = await res.json();
-      if (generation !== sessionSelectionGeneration || !data.session) return;
+      if (generation !== sessionSelectionGeneration) return;
+      if (!res.ok && data.code !== "SESSION_PERSONA_CHANGED") { addSystemMessage(data.error || "打开对话失败，请重试。"); return; }
+      if (!data.session) return;
+      if (data.code === "SESSION_PERSONA_CHANGED") unavailableSessionIds.add(id); else unavailableSessionIds.delete(id);
       currentSessionId = id; currentTitleEl.textContent = data.session.title; refreshRunControls(); refreshQuestionForCurrentSession(); restoreDraft(id);
       renderDocumentOutputs([]);
       if (data.persona && personaSelect.value !== data.persona) {
@@ -2560,6 +2565,16 @@
       renderDocumentOutputs(mdata.outputs || [], "", mdata.research);
       for (const msg of mdata.messages) { if (msg.role === "user") addMessage("user", msg.content, msg.id, msg.attachments); else if (msg.role === "assistant" && msg.content) addMessage("assistant", msg.content, msg.id); }
       renderWelcomeState();
+      if (unavailableSessionIds.has(id)) {
+        const notice = document.createElement("div"); notice.className = "session-upgrade-message";
+        const text = document.createElement("p"); text.textContent = "助手能力已更新。旧对话保持只读，继续时会创建保留资料和对话的副本。";
+        const button = document.createElement("button"); button.className = "msg-action-btn"; button.dataset.action = "continue-updated-session"; button.textContent = "使用新版助手继续";
+        notice.append(text, button); messagesEl.appendChild(notice);
+        attachmentDrafts = []; renderAttachmentDrafts(); pinArea.classList.remove("visible"); taskPanel.classList.remove("visible");
+        subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling();
+        if (!fromWorkbench && workbenchLayout) await ensureWorkbenchTab({ id: workbenchId("tab"), kind: "session", title: data.session.title, sessionId: id });
+        return;
+      }
       if (generation !== sessionSelectionGeneration || currentSessionId !== id) return;
       if (!document.hidden && document.hasFocus()) await markSessionNotificationsRead(id).catch(() => undefined);
       if (generation !== sessionSelectionGeneration || currentSessionId !== id) return;
@@ -2605,14 +2620,14 @@
     }
     function refreshRunControls() {
       const running = isSessionRunning();
-      submitBtn.disabled = running;
+      submitBtn.disabled = running || unavailableSessionIds.has(currentSessionId);
       const cancel = document.getElementById("cancel-run");
       const localRun = activeRunsBySession.get(currentSessionId);
       cancel.hidden = !localRun;
       cancel.disabled = Boolean(localRun?.cancelling);
       submitBtn.hidden = Boolean(localRun);
       statusDot.className = running ? "status-dot busy" : "status-dot";
-      statusText.textContent = running ? "思考中..." : "就绪";
+      statusText.textContent = running ? "思考中..." : unavailableSessionIds.has(currentSessionId) ? "旧对话只读" : "就绪";
       refreshWorkbenchTabStatus();
     }
     function beginSessionRun(sessionId) {
@@ -2775,6 +2790,7 @@
     }
 
     async function queueAttachmentFiles(files) {
+      if (unavailableSessionIds.has(currentSessionId)) { addSystemMessage("请先使用新版助手继续，再添加资料。"); return; }
       const candidates = [...files].filter(file => file instanceof File);
       if (candidates.length === 0) return;
       const settlements = await Promise.allSettled(candidates.map(queueAttachmentFile));
@@ -2879,6 +2895,7 @@
       const text = inputEl.value.trim();
       const readyAttachments = attachmentDrafts.filter(attachment => attachment.state === "ready");
       if ((!text && readyAttachments.length === 0) || isSessionRunning()) return;
+      if (unavailableSessionIds.has(currentSessionId)) { addSystemMessage("请点击“使用新版助手继续”，在保留资料的副本中开始任务。"); return; }
       if (attachmentDrafts.some(attachment => attachment.state === "uploading")) { addSystemMessage("⚠️ 请等待附件上传完成或取消上传"); return; }
       if (text.startsWith("/") && readyAttachments.length === 0) { const handled = handleSlashCommand(text); if (handled) { inputEl.value = ""; inputEl.rows = 1; closeSlashMenu(); return; } }
       if (!currentSessionId) await newChat();
@@ -3381,6 +3398,7 @@
         ? restoreWorkbenchTab(target.dataset.paneId) : undefined,
       "open-settings": () => openSettings(),
       "test-provider": () => testCurrentProvider(),
+      "continue-updated-session": () => forkCurrentSession(null),
       "close-settings": () => closeSettings(),
       "select-settings-domain": (_event, target) => target.dataset.domainId ? switchSettingsDomain(target.dataset.domainId) : undefined,
       "save-settings-domain": (_event, target) => target.dataset.domainId ? saveSettingsDomain(target.dataset.domainId) : undefined,

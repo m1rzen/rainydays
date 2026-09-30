@@ -15,6 +15,7 @@ import { NetworkPolicyDeniedError } from "./network-policy.js";
 import { capabilityBroker, getToolProtocolDescriptors, inspectToolCall, prepareInspectedToolExecution, type PreparedToolExecution } from "./tools/index.js";
 import { createToolOutcome, isValidToolCallId, serializeToolOutcome, ToolArgumentsError, ToolExecutionError, ToolLoopDetector, ToolLoopError, ToolStageTrace } from "./tool-pipeline.js";
 import { extractBodyToolCalls, parseToolInvocationArguments, renderBodyToolInstructions } from "./tool-protocol.js";
+import { TaskToolSelection } from "./task-tools.js";
 import { getConfigSnapshot } from "./config.js";
 import { touch, autoGenerateTitle, generateSemanticSessionTitle } from "./session.js";
 import { getTasksBySession, getNextPendingTask, allTasksCompleted } from "./task.js";
@@ -562,10 +563,10 @@ export class Agent {
       }
 
       const toolProtocols = getToolProtocolDescriptors(capabilityContext);
-      const tools = toolProtocols.map(descriptor => descriptor.schema);
+      const toolSelection = new TaskToolSelection(this.persona.name, toolProtocols);
       let orgModeEnabled = false;
       try { orgModeEnabled = getConfigSnapshot().domains.common.orgMode; } catch { /* isolated Agent fixtures have no global config */ }
-      this.refreshSystemPrompt(runSessionId, orgModeEnabled ? renderBodyToolInstructions(toolProtocols) : "");
+      this.refreshSystemPrompt(runSessionId, orgModeEnabled ? renderBodyToolInstructions(toolSelection.protocols()) : "");
 
       // 任务驱动模式：新建 DAG 或重启后已有未完成 DAG 都会选择未阻塞任务。
       let taskMode = getTasksBySession(runSessionId).some(task => task.status !== "completed");
@@ -617,7 +618,7 @@ export class Agent {
 
       const llmStart = Date.now();
       try {
-        for await (const event of this.llm.chatStream(this.memory.getAll(), tools, signal, runSessionId, readMessageAttachmentForSession)) {
+        for await (const event of this.llm.chatStream(this.memory.getAll(), toolSelection.protocols().map(protocol => protocol.schema), signal, runSessionId, readMessageAttachmentForSession)) {
           if (event.type === "delta") {
             if (!orgModeEnabled) {
               hasStreamedContent = true;
@@ -756,6 +757,7 @@ export class Agent {
             : new ToolArgumentsError(parsed.parseError ?? "工具参数不是合法 JSON"));
           if (parsed.toolArgs) {
             try {
+              if (toolSelection.enabled && !toolSelection.has(parsed.toolName)) throw new ToolArgumentsError("工具尚未加载或不在当前可用范围；请先调用 search_tools 发现所需能力，再按返回的参数调用。");
               inspected = inspectToolCall(capabilityContext, parsed.toolName, parsed.toolArgs);
               trace.record("schema", "passed");
               trace.record("capability", "passed");
@@ -864,6 +866,9 @@ export class Agent {
         touch(runSessionId);
         if (batchCancellation) throw batchCancellation;
         throwIfCancelled(signal);
+        const previousToolCount = toolSelection.protocols().length;
+        for (const result of results) toolSelection.discover(result.toolName, result.outcome);
+        if (orgModeEnabled && toolSelection.protocols().length !== previousToolCount) this.refreshSystemPrompt(runSessionId, renderBodyToolInstructions(toolSelection.protocols()));
 
         // yield 已原子提交的结果。
         for (let ri = 0; ri < results.length; ri++) {

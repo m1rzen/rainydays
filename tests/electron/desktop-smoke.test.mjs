@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { createServer } from "node:http";
+import { execFileSync } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import { emitSec03ProjectionReceipts } from "../sec03-projection-receipts.mjs";
 import {
@@ -1492,6 +1493,145 @@ test("R5 real Electron first setup tests saved connection without sending histor
   } catch (error) {
     const state = client ? await client.evaluate("({domain:activeSettingsDomain,message:document.getElementById('settings-message').textContent,result:document.getElementById('provider-test-result').textContent})").catch(() => null) : null;
     throw new Error(`${error.message}\n${JSON.stringify({ state, requests: requests.length })}\n${instance?.logs().stdout.slice(-1600)}`, { cause: error });
+  } finally {
+    client?.close(); if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test("R5 real Electron loads discovered tools for one task and resets the next", { timeout: 120_000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-r5-tools-electron-");
+  // Measure the previous allowlist under today's schemas, with a fixture identity that loads all tools.
+  const legacyDirectory = path.join(fixture, "user-data", "personas");
+  await mkdir(legacyDirectory, { recursive: true });
+  const legacy = execFileSync("git", ["show", "790a097:personas/general.md"], { cwd: projectRoot, encoding: "utf8" }).replace(/^name: general$/mu, "name: legacy-measure");
+  await writeFile(path.join(legacyDirectory, "legacy-measure.md"), legacy);
+  let instance, client, iteration = 0, modelFailure = null;
+  const toolSizes = [];
+  const server = createServer(async (request, response) => {
+    try {
+      const chunks = []; for await (const chunk of request) chunks.push(chunk);
+      const body = JSON.parse(Buffer.concat(chunks).toString());
+      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "Fixture" } }] })); return; }
+      const names = body.tools.map(tool => tool.function.name);
+      toolSizes.push({ count: names.length, bytes: Buffer.byteLength(JSON.stringify(body.tools)), names });
+      const stage = iteration++;
+      let calls;
+      if (stage === 0) {
+        assert.equal(names.length, 12); assert(!names.includes("list_memories")); assert(!names.includes("worker_connect"));
+        calls = [{ index: 0, id: "discover-memories", type: "function", function: { name: "search_tools", arguments: JSON.stringify({ keywords: "list_memories worker_connect" }) } }];
+      } else if (stage === 1) {
+        assert(names.includes("list_memories")); assert(!names.includes("worker_connect"));
+        calls = [{ index: 0, id: "use-memories", type: "function", function: { name: "list_memories", arguments: "{}" } }];
+      } else if (stage === 3) { assert.equal(names.length, 12); assert(!names.includes("list_memories")); }
+      response.writeHead(200, { "Content-Type": "text/event-stream" });
+      response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: calls ? { tool_calls: calls } : { content: "已检查当前记录。" }, finish_reason: null }] })}\n\n`);
+      response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: calls ? "tool_calls" : "stop" }] })}\n\n`);
+      response.end("data: [DONE]\n\n");
+    } catch (error) { modelFailure = error; response.writeHead(400); response.end("fixture assertion failed"); }
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(path.join(fixture, "user-data"), httpPort, cdpPort, context.signal, `http://127.0.0.1:${server.address().port}/v1`);
+    client = await connectCdp(cdpPort);
+    await waitFor(() => client.evaluate("Boolean(desktopNavigationReady && currentSessionId)"), { timeoutMs: 20_000, label: "R5 task ready" });
+    await client.evaluate("if(document.getElementById('settings-modal').classList.contains('visible'))closeSettings();inputEl.value='检查当前记忆';document.getElementById('input-form').requestSubmit()");
+    await waitFor(() => client.evaluate("!isSessionRunning() && [...document.querySelectorAll('#messages .msg-assistant .bubble')].at(-1)?.textContent.includes('已检查')"), { timeoutMs: 45_000, label: "R5 discovered capability task" });
+    assert.equal(modelFailure, null); assert.equal(iteration, 3);
+    await client.evaluate("(async()=>{await newChat();inputEl.value='一个新的简单任务';document.getElementById('input-form').requestSubmit()})()");
+    await waitFor(() => client.evaluate("!isSessionRunning() && [...document.querySelectorAll('#messages .msg-assistant .bubble')].at(-1)?.textContent.includes('已检查')"), { timeoutMs: 25_000, label: "R5 next task reset" });
+    assert.equal(modelFailure, null); assert.equal(iteration, 4);
+    const switched = await client.evaluate("(async()=>{await newChat();const r=await fetch('/api/switch-persona',{method:'POST',headers:sessionHeaders(currentSessionId,true),body:JSON.stringify({name:'legacy-measure',sessionId:currentSessionId})});return {status:r.status,body:await r.json()}})()");
+    assert.equal(switched.status, 200, JSON.stringify(switched));
+    await client.evaluate("inputEl.value='只回复 OK';document.getElementById('input-form').requestSubmit()");
+    await waitFor(() => client.evaluate("!isSessionRunning() && [...document.querySelectorAll('#messages .msg-assistant .bubble')].at(-1)?.textContent.includes('已检查')"), { timeoutMs: 25_000, label: "R5 previous allowlist measurement" });
+    assert.equal(modelFailure, null); assert.equal(iteration, 5);
+    assert(toolSizes[4].count > toolSizes[0].count, JSON.stringify({ toolSizes, switched }));
+    const metrics = { initial: toolSizes[0], discovered: toolSizes[1], next: toolSizes[3], previousAllowlistWithCurrentSchemas: toolSizes[4] };
+    await mkdir(path.join(projectRoot, "test-results"), { recursive: true });
+    await writeFile(path.join(projectRoot, "test-results", "r5-task-tool-sizes.json"), JSON.stringify(metrics, null, 2));
+  } finally {
+    client?.close(); if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test("R5 real Electron restores changed-persona history read-only and continues in a new copy", { timeout: 120_000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-r5-upgrade-electron-");
+  const userData = path.join(fixture, "user-data");
+  let instance, client, streamRequests = 0;
+  const server = createServer(async (request, response) => {
+    const chunks = []; for await (const chunk of request) chunks.push(chunk);
+    const body = JSON.parse(Buffer.concat(chunks).toString());
+    if (!body.stream) {
+      response.setHeader("Content-Type", "application/json");
+      response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "升级前的任务" } }] })); return;
+    }
+    streamRequests++;
+    response.writeHead(200, { "Content-Type": "text/event-stream" });
+    response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: streamRequests === 1 ? "原有资料和回答。" : "在副本中继续完成。" }, finish_reason: null }] })}\n\n`);
+    response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: "stop" }] })}\n\n`);
+    response.end("data: [DONE]\n\n");
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    const modelURL = `http://127.0.0.1:${server.address().port}/v1`;
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, modelURL);
+    client = await connectCdp(cdpPort);
+    await waitFor(() => client.evaluate("Boolean(desktopNavigationReady && currentSessionId)"), { timeoutMs: 20_000, label: "R5 upgrade original session" });
+    await client.evaluate(`(() => {
+      if (document.getElementById('settings-modal').classList.contains('visible')) closeSettings();
+      const transfer = new DataTransfer(); transfer.items.add(new File(['升级前的公开资料'], '原资料.txt', { type:'text/plain' }));
+      attachmentFileInputEl.files = transfer.files; attachmentFileInputEl.dispatchEvent(new Event('change', { bubbles:true }));
+    })()`);
+    await waitFor(() => client.evaluate("attachmentDrafts.some(item => item.state === 'ready')"), { timeoutMs: 15_000, label: "R5 upgrade attachment" });
+    await client.evaluate("inputEl.value='整理资料';document.getElementById('input-form').requestSubmit()");
+    await waitFor(() => client.evaluate("!isSessionRunning() && messagesEl.textContent.includes('原有资料和回答。')"), { timeoutMs: 25_000, label: "R5 upgrade original answer" });
+    const originalId = await client.evaluate("currentSessionId");
+    const original = await client.evaluate(`fetch('/api/sessions/${originalId}/messages',{headers:sessionHeaders('${originalId}')}).then(r=>r.json())`);
+    assert.equal(original.messages.find(message => message.role === "user").attachments.length, 1);
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
+    // Alter only this stopped fixture's old definition hash, as a source upgrade would invalidate it.
+    const { default: Database } = await import("better-sqlite3");
+    const databasePath = path.join(userData, "data", "mini-lux.db");
+    assert.equal(path.relative(fixture, databasePath), path.join("user-data", "data", "mini-lux.db"));
+    const staleDigest = "0".repeat(64);
+    const database = new Database(databasePath, { fileMustExist: true });
+    try { assert.equal(database.prepare("UPDATE session_persona_bindings SET persona_digest = ? WHERE session_id = ?").run(staleDigest, originalId).changes, 1); }
+    finally { database.close(); }
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, modelURL);
+    client = await connectCdp(cdpPort);
+    await waitFor(() => client.evaluate("typeof selectSession === 'function' && Boolean(desktopNavigationReady)"), { timeoutMs: 20_000, label: "R5 upgrade restarted session" });
+    await client.evaluate(`selectSession('${originalId}')`);
+    const readOnly = await client.evaluate(`({ id:currentSessionId, text:messagesEl.textContent,
+      disabled:submitBtn.disabled, notice:Boolean(document.querySelector('[data-action="continue-updated-session"]')) })`);
+    assert.equal(readOnly.id, originalId); assert.match(readOnly.text, /原有资料和回答。/u);
+    assert.equal(readOnly.disabled, true); assert.equal(readOnly.notice, true);
+    await client.evaluate(`(async()=>{await newChat();await selectSession('${originalId}');await loadSessions()})()`);
+    assert.equal(await client.evaluate("currentSessionId"), originalId, "只读选择不能被会话列表刷新改回另一个对话");
+    const refused = await client.evaluate(`(async()=>{const r=await fetch('/api/chat',{method:'POST',headers:sessionHeaders('${originalId}',true),body:JSON.stringify({sessionId:'${originalId}',message:'不要执行'})});return {status:r.status,body:await r.json()}})()`);
+    assert.equal(refused.status, 409); assert.equal(streamRequests, 1, "旧定义不能执行模型任务");
+    assert.equal(await client.evaluate(`fetch('/api/sessions/${originalId}/rollback',{method:'POST',headers:sessionHeaders('${originalId}')}).then(r=>r.status)`), 409, "只读会话不能因重新生成而删除原回答");
+    await client.evaluate("document.querySelector('[data-action=continue-updated-session]').click()");
+    await waitFor(() => client.evaluate(`currentSessionId !== '${originalId}' && !submitBtn.disabled && messagesEl.textContent.includes('原有资料和回答。')`), { timeoutMs: 20_000, label: "R5 upgrade copied history" });
+    const copyId = await client.evaluate("currentSessionId");
+    const copy = await client.evaluate(`fetch('/api/sessions/${copyId}/messages',{headers:sessionHeaders('${copyId}')}).then(r=>r.json())`);
+    assert.deepEqual(copy.messages.map(message => [message.role, message.content]), original.messages.map(message => [message.role, message.content]));
+    const copiedAttachment = copy.messages.find(message => message.role === "user").attachments[0];
+    assert.equal(copiedAttachment.name, "原资料.txt");
+    assert.equal(await client.evaluate(`fetch('/api/sessions/${copyId}/attachments/${copiedAttachment.id}/content',{headers:sessionHeaders('${copyId}')}).then(r=>r.text())`), "升级前的公开资料");
+    assert.equal(streamRequests, 1, "创建副本不应调用模型");
+    await client.evaluate("inputEl.value='继续整理';document.getElementById('input-form').requestSubmit()");
+    await waitFor(() => client.evaluate("!isSessionRunning() && messagesEl.textContent.includes('在副本中继续完成。')"), { timeoutMs: 25_000, label: "R5 upgrade continuation" });
+    assert.equal(streamRequests, 2);
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
+    const restored = new Database(databasePath, { readonly: true, fileMustExist: true });
+    try {
+      assert.equal(restored.prepare("SELECT persona_digest FROM session_persona_bindings WHERE session_id = ?").get(originalId).persona_digest, staleDigest);
+      assert.notEqual(restored.prepare("SELECT persona_digest FROM session_persona_bindings WHERE session_id = ?").get(copyId).persona_digest, staleDigest);
+    } finally { restored.close(); }
   } finally {
     client?.close(); if (instance) await terminateProcessTreeAsync(instance.child);
     await removeFixture(fixture); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));

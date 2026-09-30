@@ -18,6 +18,8 @@ Word 参考资料使用当前 docx 安装版本的 ExternalHyperlink/HeadingLeve
 
 连接检测复用本地 OpenAI SDK chat.completions.create 和 AbortSignal；SDK maxRetries 已为 0，检测独立一次调用，不走 Agent/Memory。当前 Provider 只接通 OpenAI compatible 两类；不添加不支持的 Provider。读取受保护的 getProviderProfile 快照，现有 Base URL 校验和 HTTP 鉴权保持有效。
 
+默认工具复用 getToolProtocolDescriptors 的 authentic Broker 快照、search_tools 的 scoped definitions 和 Agent 现有 outcome 历史。新的加载集合只在单次运行内保存，成功宿主发现回执加工具；实际调用仍经过 inspectToolCall。普通正文不能改变加载集合，集合不能超过本轮允许协议。前后体积以已安装的真实严格化 schemas 序列化测量，不用工具名长度代替。
+
 设置可用性以 settings-schema.ts 的 domainManifest 与实际 AppSettings 为准；common 的内部 domain 未接通不代表工作/输出目录无效。新界面隐藏待接入设置，不修改存储 schema。impeccable onboard 依据用户既定“对话与成果”方向与已批准 DESIGN.md。
 
 独立模型验收需 Windows Chromium Local State 中 OS 保护配置密钥；依据 [Electron 43.1.1 源码](https://raw.githubusercontent.com/electron/electron/v43.1.1/shell/browser/electron_browser_main_parts.cc)，只复制必要字段并在退出后删除。

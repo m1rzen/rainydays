@@ -183,6 +183,8 @@ details:not([open]) > summary > .disclosure-icon { transform:rotate(-90deg); }
 .research-note { margin:4px 0 8px; font-size:11px; color:var(--text-dim); }
 #research-source-list { display:grid; gap:1px; max-height:260px; overflow:auto; }
 .research-source-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:12px; }
+.session-upgrade-message { max-width:760px; margin:24px auto; padding:16px 0; border-top:1px solid var(--border); font-size:12px; line-height:1.8; color:var(--text-dim); }
+.session-upgrade-message p { margin:0 0 10px; }
 .research-source-row > svg { width:16px; height:16px; flex:none; color:var(--text-dim); }
 .research-source-copy { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
 .research-source-title,.research-source-url { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

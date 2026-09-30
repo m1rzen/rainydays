@@ -2,7 +2,7 @@
 workflow: project-workflow
 kind: roadmap
 updated: 2026-09-30
-status: R1/R2/R3 verified; R4 engineering reviewed, live validation blocked by provider quota; R5 in progress; R6/R7 pending
+status: R1/R2/R3 verified; R4 engineering reviewed, live validation blocked by provider quota; R5 engineering verified, live/new-user validation pending; R6/R7 pending
 ---
 
 # RainyDays：以真实任务完成为目标的产品规划
@@ -22,6 +22,8 @@ status: R1/R2/R3 verified; R4 engineering reviewed, live validation blocked by p
 R4 研究、R5 首次使用与默认能力收敛、R6 重复任务入口、R7 小范围内测尚未达到产品退出条件。Playbook、Routine、Browser、Media、Worker 和 Download 的代码或定向测试存在，不因此计为这些阶段完成。
 
 当前执行顺序固定为：**R3 最小治理收敛 → R4 真实研究任务 → R5 首次使用和默认能力 → R6 单一重复任务入口 → R7 安装包与三人内测**。在 R7 前冻结 Media、远程 Worker、双浏览器后端和更多生态扩展。
+
+2026-09-30 实施更新：R3 完成；R4 来源与报告工程通过，获准使用 default 的五项真实研究均遭 Kimi 月度额度 403 拒绝，没有有效成果。等待用户补充配置时，完成 R5-01 首次配置/连接检测和 R5-02 默认工具收敛的独立工程；原生工具 JSON 52,920 → 8,119 bytes，旧会话升级恢复通过。R4 真实质量、R5 真实模型比较/新用户任务仍未验收，R6/R7 不标记完成。
 
 ## 第一版要交付的四类工作
 
