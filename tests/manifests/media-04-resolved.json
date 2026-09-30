@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "taskId": "MEDIA-04",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/media-04.json",
+    "sha256": "8e814099a306eb11b2d67a371ac464cd023ae2345ae51d95aee9750905c17301"
+  },
+  "requirements": [
+    "vision-image-video-profiles",
+    "reference-image-validation-and-edit",
+    "asynchronous-image-video-jobs",
+    "provider-polling-and-cancellation",
+    "artifact-metadata-and-bounded-files",
+    "persistent-history-and-restart-recovery",
+    "capability-and-mime-detection"
+  ],
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "015660656242ff4f2f9bb78328bd13353185dff31a2c70da7a0810170ea86d6c",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "scripts/media04-governance.mjs",
+      "sha256": "0a7da60dd097bea3a682afeb443354b568baeb1540eca22a697277693cc9437b",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "scripts/generate-media04-resolved-manifest.mjs",
+      "sha256": "6aec5e9d03cee250e1b18a2bf5c42074ef1818d7b03f95ccb0302f9bb10baf6f",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "e23e72b230a2efb1da04bf62447829c29726c4fb72aebea7ac7c715bf7cd8641",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "src/config.ts",
+      "sha256": "0029fff89449805c469f1c78c07120d68ff04d1e45dc1843662b2f47f000e988",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "src/media.ts",
+      "sha256": "d188d1ee430c62767b644bf393d85c8b7b83a5f5d58e55c1bf6e7618a575c855",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "src/runtime-paths.ts",
+      "sha256": "248a50aac109f0b20e64b710df28d19d0e335c1c2aa88df5d5f0c60d83ad038c",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "src/settings-schema.ts",
+      "sha256": "6bd3c3c8a434a4ba4101f9d1a3afb2837505203c93ca126f649c961e2de82bbf",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "258addb70b2eb5e4daf33d14a28d067fd35d543e6df899b87fd36d9d44634108",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "src/tools/image-helper.ts",
+      "sha256": "8e063319384afcc47b5fe30b3b00727a70a922eb423ed27617c2b85246ffacf7",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "src/tools/media-tools.ts",
+      "sha256": "5eed5dd0abf29420fb49b4187f599004343be8e0b1ea0dec9d6efdd60533b025",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "4f4e59bb00cbba33779219f9598b6ef62b66ca553d36f2b1cff0210fb76bfedc",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "personas/default.md",
+      "sha256": "62603307d724ea06a8f403073816f7d11d8f8c9b246ee60e440c8213160b0839",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "personas/general.md",
+      "sha256": "444a50e3936bad3fe6cac5d1ffe5f8729c58d78e9d29be4a7b563d633b9770bf",
+      "owner": "MEDIA-04"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/unit/media04-jobs.test.mjs",
+      "sha256": "2e21c4ccc12aebbb9342d7bd4842678aa16ed8efe64c34d0eb684878a8314a70",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "tests/integration/media04-provider.test.mjs",
+      "sha256": "9273e2639814c03e16a0b37db26a55413fc4f1940c1c309efedeaf8fd58dcb19",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "MEDIA-04"
+    },
+    {
+      "exactCasePath": "tests/contract/media04-governance.test.mjs",
+      "sha256": "3123a8c41d2735519ea32646323b242bedb8c31afd012b0a0b9bca9ab5c0eae2",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "MEDIA-04"
+    }
+  ],
+  "canonicalPayloadSha256": "49e4b85b02e1f34c19e0faf97bd5a8887a3adf9fa8988e03b2ca492489294866"
+}

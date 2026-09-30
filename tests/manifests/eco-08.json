@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "taskId": "ECO-08",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "debugger", "sentinel", "reviewer"],
+  "requirements": [
+    "cdp-and-extension-backends",
+    "session-isolated-login-and-tabs",
+    "snapshot-ref-actions-and-staleness",
+    "spa-modal-and-iframe-observation",
+    "safe-approved-eval-and-session-fetch",
+    "browser-process-lifecycle",
+    "persistent-screenshot-artifact"
+  ],
+  "runtimeFiles": [
+    "package.json",
+    "scripts/eco08-governance.mjs",
+    "scripts/generate-eco08-resolved-manifest.mjs",
+    "scripts/report-schema.mjs",
+    "src/browser.ts",
+    "src/runtime-paths.ts",
+    "src/tool-policies.ts",
+    "src/tools/browser-tools.ts",
+    "src/tools/index.ts",
+    "personas/default.md",
+    "personas/general.md"
+  ],
+  "tests": [
+    { "exactCasePath": "tests/unit/eco08-browser-session.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/eco08-browser-cdp.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/contract/eco08-governance.test.mjs", "layer": "contract" }
+  ]
+}

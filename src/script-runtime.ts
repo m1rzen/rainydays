@@ -1,10 +1,12 @@
 import { ExecutionDeniedError, type ExecutionLimits } from "./execution-isolation.js";
 
 export type ScriptLanguage = "node" | "node-cjs";
+export type ScriptMode = "script" | "routine";
 
 export const SCRIPT_DEFAULT_TIMEOUT_MS = 10_000;
 export const SCRIPT_MIN_TIMEOUT_MS = 100;
 export const SCRIPT_MAX_TIMEOUT_MS = 10_000;
+export const ROUTINE_DONE_PREFIX = "__LUX_ROUTINE_DONE__:";
 
 function exactLanguage(value: unknown): ScriptLanguage {
   const lang = value === undefined ? "node" : value;
@@ -22,7 +24,14 @@ export function parseScriptTimeout(value: unknown): number {
   return Number(value);
 }
 
-function bridgePrelude(): string {
+function bridgePrelude(mode: ScriptMode, routineInput?: unknown, completionToken?: string): string {
+  let encodedRoutineInput = "undefined";
+  if (mode === "routine") {
+    const encoded = JSON.stringify(routineInput);
+    if (encoded === undefined) throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Routine input must be JSON-serializable");
+    if (typeof completionToken !== "string" || !/^[a-f0-9]{32}$/u.test(completionToken)) throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Routine completion token is invalid");
+    encodedRoutineInput = `JSON.parse(${JSON.stringify(encoded)})`;
+  }
   return `
 await (async () => {
   const [{ lstat, open, stat }, { dirname, isAbsolute, relative, resolve, sep }] = await Promise.all([
@@ -93,25 +102,49 @@ await (async () => {
     try { await handle.truncate(0); await handle.writeFile(value, "utf8"); } finally { await handle.close(); }
   };
   const format = (value) => typeof value === "string" ? value : JSON.stringify(value);
+  const deepFreeze = (value) => {
+    if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+    for (const child of Object.values(value)) deepFreeze(child);
+    return Object.freeze(value);
+  };
+  const routineInput = deepFreeze(${encodedRoutineInput});
+  let completed = false;
+  const done = ${mode === "routine" ? `(value) => {
+    if (completed) throw new TypeError("lux.done may only be called once");
+    const encoded = JSON.stringify(value);
+    if (encoded === undefined) throw new TypeError("lux.done value must be JSON-serializable");
+    completed = true;
+    console.log(${JSON.stringify(`${ROUTINE_DONE_PREFIX}${completionToken ?? ""}:`)} + encoded);
+  }` : `(value) => console.log(format(value))`};
   const bridge = Object.freeze({
     cwd,
+    ${mode === "routine" ? "input: routineInput," : ""}
     readText,
     writeText,
     readJson: async (input) => JSON.parse(await readText(input)),
     writeJson: async (input, value) => await writeText(input, JSON.stringify(value, null, 2) + "\\n"),
-    done: (value) => console.log(format(value)),
+    done,
   });
   Object.defineProperty(globalThis, "lux", { value: bridge, enumerable: true, configurable: false, writable: false });
 })();
 `;
 }
 
-export function createScriptPayload(input: Readonly<{ code: string; lang?: unknown }>): Readonly<{ lang: ScriptLanguage; payload: string }> {
+export function createScriptPayload(input: Readonly<{
+  code: string;
+  lang?: unknown;
+  mode?: ScriptMode;
+  routineInput?: unknown;
+  completionToken?: string;
+}>): Readonly<{ lang: ScriptLanguage; payload: string }> {
   if (typeof input.code !== "string" || input.code.length < 1 || input.code.length > 128 * 1024 || input.code.includes("\0")) {
     throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Script code is invalid");
   }
   const lang = exactLanguage(input.lang);
-  const prelude = bridgePrelude();
+  const mode = input.mode ?? "script";
+  if (mode !== "script" && mode !== "routine") throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Script mode is invalid");
+  if (mode === "routine" && lang !== "node") throw new ExecutionDeniedError("EXEC_REQUEST_INVALID", "Routine source must be Node ESM");
+  const prelude = bridgePrelude(mode, input.routineInput, input.completionToken);
   if (lang === "node") return Object.freeze({ lang, payload: `${prelude}\n${input.code}\n` });
   const encoded = JSON.stringify(input.code);
   return Object.freeze({

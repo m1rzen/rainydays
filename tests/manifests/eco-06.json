@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "taskId": "ECO-06",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "debugger", "reviewer"],
+  "requirements": [
+    "managed-npm-esm-project",
+    "canonical-playbook-mjs",
+    "lux-done-agent-parallel-pipeline",
+    "persistent-status-logs-artifacts-state",
+    "singleton-and-child-abort",
+    "archive-unarchive-delete-lifecycle",
+    "running-mutation-denial"
+  ],
+  "runtimeFiles": [
+    "package.json",
+    "scripts/eco06-governance.mjs",
+    "scripts/generate-eco06-resolved-manifest.mjs",
+    "scripts/report-schema.mjs",
+    "src/index.ts",
+    "src/playbook.ts",
+    "src/runtime-paths.ts",
+    "src/tool-policies.ts",
+    "src/tools/advanced-tools.ts",
+    "src/tools/index.ts",
+    "personas/default.md",
+    "personas/general.md",
+    "personas/playbook.md"
+  ],
+  "tests": [
+    { "exactCasePath": "tests/unit/eco06-playbook.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/eco06-playbook-run.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/contract/eco06-governance.test.mjs", "layer": "contract" }
+  ]
+}

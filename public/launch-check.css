@@ -1,0 +1,65 @@
+html.file-launch {
+  color-scheme: light;
+  background: #f6f5f1;
+}
+
+.file-launch body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f6f5f1;
+  color: #292824;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.file-launch body > :not(.file-launch-guide) {
+  display: none !important;
+}
+
+.file-launch-guide {
+  box-sizing: border-box;
+  width: min(100%, 620px);
+  margin: 0 auto;
+  padding: clamp(64px, 16vh, 160px) 28px 48px;
+}
+
+.file-launch-wordmark {
+  margin: 0 0 48px;
+  color: #a6543a;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.file-launch-guide h1 {
+  margin: 0 0 20px;
+  font-size: clamp(26px, 4vw, 34px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.file-launch-guide p,
+.file-launch-guide li {
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.file-launch-guide ol {
+  margin: 28px 0;
+  padding-left: 22px;
+}
+
+.file-launch-guide li + li {
+  margin-top: 8px;
+}
+
+.file-launch-guide strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.file-launch-guide .file-launch-note {
+  padding-top: 24px;
+  border-top: 1px solid #dddad2;
+  color: #65625c;
+  font-size: 13px;
+}

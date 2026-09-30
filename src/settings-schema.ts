@@ -30,6 +30,7 @@ export interface SettingsDomains {
     curatorProfile: string;
     consolidationProfile: string;
     oracleProfile: string;
+    visionProfile: string;
     imageProfile: string;
     videoProfile: string;
     autoRename: boolean;
@@ -58,7 +59,7 @@ export interface SettingsDomainManifest {
 }
 
 const DOMAIN_MANIFEST: readonly SettingsDomainManifest[] = Object.freeze([
-  domain("common", "Common", "基础配置、运行限制和默认行为", "restart-required", false, ["maxIterations", "maxCanvasTokens", "defaultSupervisorRules", "worker", "orgMode", "yoloMode", "supervisorEnabled", "supervisorProfile", "curatorProfile", "consolidationProfile", "oracleProfile", "imageProfile", "videoProfile", "autoRename", "renameProfile", "pinRenderMode", "pinRenderInterval"], [], { yoloMode: "unavailable" }),
+  domain("common", "Common", "基础配置、运行限制和默认行为", "restart-required", false, ["maxIterations", "maxCanvasTokens", "defaultSupervisorRules", "worker", "orgMode", "yoloMode", "supervisorEnabled", "supervisorProfile", "curatorProfile", "consolidationProfile", "oracleProfile", "visionProfile", "imageProfile", "videoProfile", "autoRename", "renameProfile", "pinRenderMode", "pinRenderInterval"], [], { yoloMode: "unavailable" }),
   domain("profiles", "Profiles", "Provider 配置集和运行时切换", "immediate", true, ["model", "apiKey", "baseURL", "providerType", "codexTransport", "proxy", "stripImages", "knowledgeMaxCount", "personaProfileBindings"], ["apiKey"]),
   domain("mcp", "MCP", "MCP Server 启用和连接配置", "restart-required", false, ["servers"]),
   domain("wire", "Wire", "Wire 外部事件源配置", "restart-required", false, ["sources"]),
@@ -87,7 +88,7 @@ export function defaultSettingsDomains(): SettingsDomains {
     common: {
       maxIterations: 200, maxCanvasTokens: 100_000, defaultSupervisorRules: "", worker: { enabled: false, target: "local" }, orgMode: false, yoloMode: false,
       supervisorEnabled: false, supervisorProfile: "", curatorProfile: "", consolidationProfile: "",
-      oracleProfile: "", imageProfile: "", videoProfile: "", autoRename: true, renameProfile: "",
+      oracleProfile: "", visionProfile: "", imageProfile: "", videoProfile: "", autoRename: true, renameProfile: "",
       pinRenderMode: "system", pinRenderInterval: 0,
     },
     mcp: { servers: [] },
@@ -185,7 +186,7 @@ export function parseSettingsDomains(value: unknown): SettingsDomains {
   const keys = ["common", "mcp", "wire", "animas", "nous", "tts", "asr", "shell", "relay", "update"] as const;
   exact(root, keys, "Settings domains");
   const common = record(root.common, "Common settings");
-  exact(common, ["maxIterations", "maxCanvasTokens", "defaultSupervisorRules", "worker", "orgMode", "yoloMode", "supervisorEnabled", "supervisorProfile", "curatorProfile", "consolidationProfile", "oracleProfile", "imageProfile", "videoProfile", "autoRename", "renameProfile", "pinRenderMode", "pinRenderInterval"], "Common settings");
+  exact(common, ["maxIterations", "maxCanvasTokens", "defaultSupervisorRules", "worker", "orgMode", "yoloMode", "supervisorEnabled", "supervisorProfile", "curatorProfile", "consolidationProfile", "oracleProfile", "visionProfile", "imageProfile", "videoProfile", "autoRename", "renameProfile", "pinRenderMode", "pinRenderInterval"], "Common settings");
   const worker = record(common.worker, "Worker settings"); exact(worker, ["enabled", "target"], "Worker settings");
   if (common.yoloMode !== false) throw new TypeError("yoloMode 在 Mini-Lux 中不可用，不能绕过 SEC-02 PathGuard");
   const mcp = record(root.mcp, "MCP settings"); exact(mcp, ["servers"], "MCP settings");
@@ -206,7 +207,7 @@ export function parseSettingsDomains(value: unknown): SettingsDomains {
       orgMode: bool(common.orgMode, "orgMode"), yoloMode: bool(common.yoloMode, "yoloMode"),
       supervisorEnabled: bool(common.supervisorEnabled, "supervisorEnabled"), supervisorProfile: profile(common.supervisorProfile, "supervisorProfile"),
       curatorProfile: profile(common.curatorProfile, "curatorProfile"), consolidationProfile: profile(common.consolidationProfile, "consolidationProfile"),
-      oracleProfile: profile(common.oracleProfile, "oracleProfile"), imageProfile: profile(common.imageProfile, "imageProfile"), videoProfile: profile(common.videoProfile, "videoProfile"),
+      oracleProfile: profile(common.oracleProfile, "oracleProfile"), visionProfile: profile(common.visionProfile, "visionProfile"), imageProfile: profile(common.imageProfile, "imageProfile"), videoProfile: profile(common.videoProfile, "videoProfile"),
       autoRename: bool(common.autoRename, "autoRename"), renameProfile: profile(common.renameProfile, "renameProfile"),
       pinRenderMode: choice(common.pinRenderMode, "pinRenderMode", ["system", "user-tail"] as const), pinRenderInterval: integer(common.pinRenderInterval, "pinRenderInterval", 0, 1000),
     },

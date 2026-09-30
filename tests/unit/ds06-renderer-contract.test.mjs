@@ -49,7 +49,8 @@ test("DS-06 media uses retained Session-scoped content URLs without online asset
   // SVG fragment references point inside this document; they are not online assets.
   const assetReferences = [...html.matchAll(/(?:src|href)="([^"]+)"/gu)].map(match => match[1]).filter(value => !value.startsWith("#"));
   assert(assetReferences.length > 0);
-  assert(assetReferences.every(value => value.startsWith("/")), JSON.stringify(assetReferences));
+  const localOrigin = "http://127.0.0.1:3111";
+  assert(assetReferences.every(value => new URL(value, `${localOrigin}/`).origin === localOrigin), JSON.stringify(assetReferences));
   const packageModel = JSON.parse(packageJson);
   assert(packageModel.build.files.includes("public/**/*"));
   assert(packageModel.build.asarUnpack.includes("public/**/*"));

@@ -2260,6 +2260,52 @@
       }
     },
     {
+      "siteId": "sink-7107aeeabde6a8690ae8ac8d",
+      "sourcePath": "src/document-parser.ts",
+      "normalizedNodeSha256": "5867a08692a8c06c5af781602de42aca9923f4cf2cf0227e274a3022ec3b733e",
+      "container": "parseDocumentIsolated",
+      "family": "worker",
+      "api": "Worker",
+      "pathOperands": [
+        "argument:0",
+        "argument:1.workerData.bytes",
+        "argument:1.workerData.fileName",
+        "argument:1.workerData.options"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "worker-byte-only",
+        "anchor": "src/document-parser.ts#parseDocumentIsolated:worker.Worker",
+        "evidenceIds": [
+          "file-viewer",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bootstrap-file-lease",
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:0"
+          },
+          {
+            "selector": "argument:1.workerData.bytes",
+            "classification": "bounded-bytes",
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.bytes"
+          },
+          {
+            "selector": "argument:1.workerData.fileName",
+            "classification": "basename-metadata",
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.fileName"
+          },
+          {
+            "selector": "argument:1.workerData.options",
+            "classification": "validated-parser-options",
+            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.options"
+          }
+        ]
+      }
+    },
+    {
       "siteId": "sink-593ddb9dc2535b87bfb34104",
       "sourcePath": "src/embedding.ts",
       "normalizedNodeSha256": "9b2e9acae209b4e67192c038272e63c57f7d7dd3778b9521b5f5d974beb1c451",
@@ -2535,52 +2581,6 @@
             "selector": "argument:0",
             "classification": "fixed-native-identity-file",
             "anchor": "src/execution-runtime.ts#loadNativeIdentity:argument:0"
-          }
-        ]
-      }
-    },
-    {
-      "siteId": "sink-7107aeeabde6a8690ae8ac8d",
-      "sourcePath": "src/document-parser.ts",
-      "normalizedNodeSha256": "5867a08692a8c06c5af781602de42aca9923f4cf2cf0227e274a3022ec3b733e",
-      "container": "parseDocumentIsolated",
-      "family": "worker",
-      "api": "Worker",
-      "pathOperands": [
-        "argument:0",
-        "argument:1.workerData.bytes",
-        "argument:1.workerData.fileName",
-        "argument:1.workerData.options"
-      ],
-      "executionClass": "product-runtime",
-      "packageExpectation": "compiled-to-asar",
-      "binding": {
-        "kind": "worker-byte-only",
-        "anchor": "src/document-parser.ts#parseDocumentIsolated:worker.Worker",
-        "evidenceIds": [
-          "file-viewer",
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "bootstrap-file-lease",
-            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:0"
-          },
-          {
-            "selector": "argument:1.workerData.bytes",
-            "classification": "bounded-bytes",
-            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.bytes"
-          },
-          {
-            "selector": "argument:1.workerData.fileName",
-            "classification": "basename-metadata",
-            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.fileName"
-          },
-          {
-            "selector": "argument:1.workerData.options",
-            "classification": "validated-parser-options",
-            "anchor": "src/document-parser.ts#parseDocumentIsolated:argument:1.workerData.options"
           }
         ]
       }
@@ -2929,6 +2929,476 @@
             "selector": "argument:0",
             "classification": "adapter-canonical-path",
             "anchor": "src/path-policy.ts#PathPolicy.preflightWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-01f05b3163240573077a462b",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "83ac57920f3f224d43e2b52602cc654a84f47fbe5d4650778794ef7a374a9a6c",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-7b3826d77bdb5b5353f91c6c",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "bc81103db61999b971c862732dabc787878e4b6f4c9d8caab174ee649914351a",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-3e7ca74407b131fd5c6983fc",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "782af95d87e9b64edba5360f7277c303c932bc438e16cc0ea8c276f68726e1a4",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.open",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-3b244d2fb5bbf5ee26e9fb5a",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "9df2e33977db92adb1f5d425437965811d3c27123e74ccda18c46fc98082dbda",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.open",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-d9a6cf7fe322371edc4edcd0",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "bc81103db61999b971c862732dabc787878e4b6f4c9d8caab174ee649914351a",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-41ddcc0da1311ee1482d3b19",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "590a6e6acd23502ee67571dfabc895f41777311a575041eb6675a7e67d0c7104",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.unlink",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-91ab5c27ca4d01c980f5566f",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "6729776477ad8c48baabbe6aee3a8048c1e1ceb60c5aeb3dce66e110da4c6937",
+      "container": "PathPolicy.#verifyStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#verifyStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#verifyStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-ba1c3246da353ca663b4ac71",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "6729776477ad8c48baabbe6aee3a8048c1e1ceb60c5aeb3dce66e110da4c6937",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-4b97e96c56be5935fee7c919",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "3253ad1a101e7f9f3f2256e5490d105486d9faed0b9292df142c047ba0effb74",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-5d55792ec49ac0eb48f125fc",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "3253ad1a101e7f9f3f2256e5490d105486d9faed0b9292df142c047ba0effb74",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-5af8a71e3d2fa08c0abcdc34",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "ff171651773b253d14c9ad91b6ee0cd281171f1d5632ff0415f92e166b92b20c",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "rename",
+      "pathOperands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.rename",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:1"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-1aad2048831c9b6d96620497",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "3253ad1a101e7f9f3f2256e5490d105486d9faed0b9292df142c047ba0effb74",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-ff3285eccecc95e70b6d8ae4",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "3253ad1a101e7f9f3f2256e5490d105486d9faed0b9292df142c047ba0effb74",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-0ee93bd46905ffdc66117b9e",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "6be1ca904c9922e2d0af1a4beb167c2532efa86b078a85ef36c3f4ccf54d765d",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.unlink",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-1220ec26afc3982b474aa23e",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "6729776477ad8c48baabbe6aee3a8048c1e1ceb60c5aeb3dce66e110da4c6937",
+      "container": "PathPolicy.#cancelStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#cancelStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#cancelStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-077dc6d4c2f31b72da5d38a7",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "ce8cbc92e550c0db538c611613b9ef9c66eb73e8d4702c523ff77abaa1ac2a7b",
+      "container": "PathPolicy.#cancelStreamingWrite",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#cancelStreamingWrite:node-fs.unlink",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#cancelStreamingWrite:argument:0"
           }
         ]
       }
@@ -4109,5 +4579,5 @@
       }
     }
   ],
-  "canonicalPayloadSha256": "6bf5b31e77fad8a36b91acaa805b35fa613f4295d9964740892cf1d625dc608a"
+  "canonicalPayloadSha256": "e9f9773821caae72fea9d048a42a81f7ddc4b8234a6a07eea2ba66459b921f2e"
 }

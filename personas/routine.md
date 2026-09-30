@@ -11,6 +11,11 @@ tools:
   - edit
   - grep
   - script
+  - routine_search
+  - routine_get
+  - routine_create
+  - routine_delete
+  - routine_run
   - get_current_time
   - ask_user
   - task_create

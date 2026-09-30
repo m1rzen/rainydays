@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "taskId": "ECO-08",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/eco-08.json",
+    "sha256": "687a13341eb9958d3f85cce85ba0d17816bc0a7f65239c8405a6dcec08227787"
+  },
+  "requirements": [
+    "cdp-and-extension-backends",
+    "session-isolated-login-and-tabs",
+    "snapshot-ref-actions-and-staleness",
+    "spa-modal-and-iframe-observation",
+    "safe-approved-eval-and-session-fetch",
+    "browser-process-lifecycle",
+    "persistent-screenshot-artifact"
+  ],
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "015660656242ff4f2f9bb78328bd13353185dff31a2c70da7a0810170ea86d6c",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "scripts/eco08-governance.mjs",
+      "sha256": "8775d810a3008c7fcee6ec6b99396f0002c17af4249707dddb70ae76cd6e8a36",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "scripts/generate-eco08-resolved-manifest.mjs",
+      "sha256": "87d317679ab001cd5b57859baa3ef41f16b9e2a9ee61dd06b6b829b3ce2b8552",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "e23e72b230a2efb1da04bf62447829c29726c4fb72aebea7ac7c715bf7cd8641",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "src/browser.ts",
+      "sha256": "adfb006bd9f197b515d68af7a87fd69fb340af8fe390ef0a2c3283e32d3a3004",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "src/runtime-paths.ts",
+      "sha256": "248a50aac109f0b20e64b710df28d19d0e335c1c2aa88df5d5f0c60d83ad038c",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "258addb70b2eb5e4daf33d14a28d067fd35d543e6df899b87fd36d9d44634108",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "src/tools/browser-tools.ts",
+      "sha256": "fbeeaa8f29822ee57238733d6643760efef8fc1b3d10b7f8ac79073dd7e4239a",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "4f4e59bb00cbba33779219f9598b6ef62b66ca553d36f2b1cff0210fb76bfedc",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "personas/default.md",
+      "sha256": "62603307d724ea06a8f403073816f7d11d8f8c9b246ee60e440c8213160b0839",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "personas/general.md",
+      "sha256": "444a50e3936bad3fe6cac5d1ffe5f8729c58d78e9d29be4a7b563d633b9770bf",
+      "owner": "ECO-08"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/unit/eco08-browser-session.test.mjs",
+      "sha256": "0f2e39260e7608090582d75e190d315b41c57f82e60a2073b8c47988de1ffdb5",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "tests/integration/eco08-browser-cdp.test.mjs",
+      "sha256": "fb17349ab1db4857524bb5f3f6a2db3bb94dbb0ff3e9dbcbe329546cda022c2a",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "ECO-08"
+    },
+    {
+      "exactCasePath": "tests/contract/eco08-governance.test.mjs",
+      "sha256": "a1ce4c944d2c3e19c8e668717d5ca4fe6f89b73d26d5753ed2caf50116d60ac3",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "ECO-08"
+    }
+  ],
+  "canonicalPayloadSha256": "1ddcdbafc46013c2a628262a3aad5e64c274702a61d50246582f796d924879b6"
+}

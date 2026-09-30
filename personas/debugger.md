@@ -14,6 +14,17 @@ tools:
   - shell_output
   - shell_list
   - shell_kill
+  - bash
+  - bash_output
+  - bash_list
+  - bash_kill
+  - worker_list
+  - worker_status
+  - worker_select
+  - worker_connect
+  - worker_disconnect
+  - worker_upload
+  - worker_download
   - script
   - get_current_time
   - remember

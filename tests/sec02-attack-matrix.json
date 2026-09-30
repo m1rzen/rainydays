@@ -103,6 +103,14 @@
       "externalArtifacts": 0,
       "auditAttempts": 1
     },
+    "download-header-failure-no-write": {
+      "denied": false,
+      "failed": true,
+      "fetchCalls": 1,
+      "writerPathCalls": 0,
+      "externalArtifacts": 0,
+      "auditAttempts": 0
+    },
     "provider-preflight-denial": {
       "denied": true,
       "parserCalls": 0,
@@ -7442,25 +7450,26 @@
     },
     {
       "id": "SEC02-P23",
-      "title": "download/DOCX/XLSX independently deny escape before fetch/create and enforce extensions.",
+      "title": "download sanitizes names after bounded headers while DOCX/XLSX deny path escape before generation.",
       "observations": [
         {
-          "id": "SEC02-P23-download-escape-no-fetch",
+          "id": "SEC02-P23-download-unsafe-name-no-write-on-header-failure",
           "evidenceTier": "windows-native",
-          "expectedProfile": "output-preflight-denial",
+          "expectedProfile": "download-header-failure-no-write",
           "required": true,
-          "outcomeClass": "denial",
+          "outcomeClass": "failure",
           "environmentPolicy": "required-capability-fail-no-skip-mock-or-downgrade",
           "stimulus": {
-            "fixtureRecipeId": "SEC02-P23-download-escape-no-fetch",
-            "operationVariant": "download-escape-no-fetch"
+            "fixtureRecipeId": "SEC02-P23-download-unsafe-name-no-write-on-header-failure",
+            "operationVariant": "download-unsafe-name-header-failure"
           },
           "expected": {
-            "denied": true,
-            "fetchCalls": 0,
+            "denied": false,
+            "failed": true,
+            "fetchCalls": 1,
             "writerPathCalls": 0,
             "externalArtifacts": 0,
-            "auditAttempts": 1,
+            "auditAttempts": 0,
             "auditAllowedFieldsExact": true,
             "rawPathsAbsent": true
           }
@@ -9625,7 +9634,7 @@
     "SEC02-P22-search-relative-escape",
     "SEC02-P23-docx-escape",
     "SEC02-P23-docx-extension",
-    "SEC02-P23-download-escape-no-fetch",
+    "SEC02-P23-download-unsafe-name-no-write-on-header-failure",
     "SEC02-P23-xlsx-escape",
     "SEC02-P23-xlsx-extension",
     "SEC02-P24-image-external-preflight",

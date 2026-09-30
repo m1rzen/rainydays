@@ -31,7 +31,7 @@ import { consumeExecutionRootLease, type ExecutionRootLease } from "./path-polic
 import { assertResourceOwner, assertResourceOwnerForCleanup, type ResourceOwner } from "./resource-owner.js";
 import type { ManualConsentEvidenceBinding, ManualConsentOperation } from "./manual-execution-consent.js";
 import { NEVER_ABORT_SIGNAL, throwIfCancelled } from "./run-cancellation.js";
-import { createScriptPayload, parseScriptTimeout, scriptLimits, type ScriptLanguage } from "./script-runtime.js";
+import { createScriptPayload, parseScriptTimeout, scriptLimits, type ScriptLanguage, type ScriptMode } from "./script-runtime.js";
 
 export interface IsolatedTerminalLease { readonly leaseId: string }
 
@@ -47,6 +47,10 @@ export interface ScopedExecutionGateway {
     lang: ScriptLanguage;
     timeoutMs: number;
     rootLease: ExecutionRootLease;
+    mode?: ScriptMode;
+    routineId?: string;
+    routineInput?: unknown;
+    completionToken?: string;
   }>) => Promise<ExecutionResult>;
   readonly executeHttps: (input: Readonly<{
     entryPoint: "E1" | "E2" | "E3";
@@ -409,7 +413,8 @@ export function createScopedExecutionGateway(input: Readonly<{
     consumed = true;
     const root = consumeNativeRoot(rootLease, context.authorityEpoch, entryPoint === "E3");
     try {
-      if (!context.allowedRoots.includes(root.rootId) || !ownerMetadata.rootIds.includes(root.rootId)) {
+      const managedRoutineRoot = entryPoint === "E3" && inspected.name === "routine_run" && root.rootId === "routines";
+      if (!managedRoutineRoot && (!context.allowedRoots.includes(root.rootId) || !ownerMetadata.rootIds.includes(root.rootId))) {
         throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Execution root differs from the approved invocation");
       }
       const payload = Buffer.from(payloadText, "utf8");
@@ -501,12 +506,25 @@ export function createScopedExecutionGateway(input: Readonly<{
       }
       return launch("E1", exactString(command, 128 * 2 ** 10, "Command"), rootLease);
     },
-    executeScript: async ({ code, lang, timeoutMs, rootLease }: Readonly<{
+    executeScript: async ({ code, lang, timeoutMs, rootLease, mode = "script", routineId, routineInput, completionToken }: Readonly<{
       code: string;
       lang: ScriptLanguage;
       timeoutMs: number;
       rootLease: ExecutionRootLease;
+      mode?: ScriptMode;
+      routineId?: string;
+      routineInput?: unknown;
+      completionToken?: string;
     }>) => {
+      if (mode === "routine") {
+        if (inspected.name !== "routine_run" || lang !== "node" || routineId !== inspected.args.id
+          || sha256Json(routineInput) !== sha256Json(inspected.args.input)
+          || typeof completionToken !== "string" || !/^[a-f0-9]{32}$/u.test(completionToken)) {
+          throw new ExecutionDeniedError("EXEC_GRANT_ARGUMENT_MISMATCH", "Routine invocation differs from the approved invocation");
+        }
+        const script = createScriptPayload({ code: exactString(code, 128 * 2 ** 10, "Routine source"), lang, mode, routineInput, completionToken });
+        return launch("E3", script.payload, rootLease, scriptLimits(PROFILE_LIMITS.E3, timeoutMs));
+      }
       const approvedLang = inspected.args.lang === undefined ? "node" : inspected.args.lang;
       const approvedTimeout = parseScriptTimeout(inspected.args.timeout);
       if (inspected.name !== "script" || code !== inspected.args.code || lang !== approvedLang || timeoutMs !== approvedTimeout) {

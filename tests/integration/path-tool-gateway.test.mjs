@@ -93,7 +93,7 @@ async function realRuntime() {
     ]);
     const toolNames = [
       "list_directory", "read_file", "search_files", "grep", "write_file", "edit_file",
-      "download", "create_docx", "create_xlsx", "image_helper", "fetch_url",
+      "download", "download_status", "download_wait", "download_cancel", "create_docx", "create_xlsx", "image_helper", "fetch_url",
     ];
     const persona = personaModule.createEffectivePersona({
       name: "sec02-path-tools",
@@ -533,142 +533,89 @@ test("SEC-02 DOCX and XLSX parsers consume in-memory buffers", async () => {
   assert.match(xlsxResult.text, /buffer-row,42/);
 });
 
-test("SEC-02 download reserves its target before fetch and commits bounded bytes", async t => {
+test("SEC-02 download streams through detached path authority and publishes only after completion", async t => {
   const originalFetch = globalThis.fetch;
   t.after(() => { globalThis.fetch = originalFetch; });
-  const calls = [];
-  globalThis.fetch = async url => {
-    calls.push(["fetch", url]);
-    return new Response(Buffer.from("downloaded"), { status: 200, headers: { "content-length": "10" } });
-  };
-  const output = await downloadExec(
-    { url: "https://example.test/file.bin", filename: "downloads/file.bin" },
-    {},
-    invocation(gateway({
-      reserveFile: async (input, options) => {
-        calls.push(["reserve", input, options]);
-        return Object.freeze({ commit: async bytes => { calls.push(["commit", bytes.toString()]); return {}; } });
-      },
-    }))
-  );
-  assert.deepEqual(calls, [
-    ["reserve", "downloads/file.bin", { defaultRootId: "output", maxBytes: 128 * 1024 * 1024 }],
-    ["fetch", "https://example.test/file.bin"],
-    ["commit", "downloaded"],
-  ]);
-  assert.match(output, /file\.bin/);
+  globalThis.fetch = async () => new Response(Buffer.from("downloaded"), {
+    status: 200,
+    headers: { "content-length": "10", etag: '"positive"' },
+  });
   const runtime = await realRuntime();
-  const realOutput = await runtime.approved("download", { url: "https://example.test/file.bin", filename: "positive-download.bin" });
-  assert.match(realOutput, /positive-download\.bin/);
+  const started = JSON.parse(await runtime.approved("download", {
+    url: "https://example.test/file.bin",
+    filename: "positive-download.bin",
+  }));
+  const completed = JSON.parse(await runtime.execute("download_wait", { task_id: started.taskId, timeout_ms: 10_000 }));
+  assert.equal(completed.state, "completed");
   assert.equal(await fs.readFile(path.join(runtime.output, "positive-download.bin"), "utf8"), "downloaded");
   if (downloadRecorder.enabled) await downloadRecorder.positive("SEC02-POS-download");
 });
 
-test("RT-04 download cancellation propagates to fetch and publishes no reserved output", async t => {
+test("RT-04 download_cancel aborts transport and publishes no partial output", async t => {
   const originalFetch = globalThis.fetch;
   t.after(() => { globalThis.fetch = originalFetch; });
-  const entered = Promise.withResolvers();
-  globalThis.fetch = async (_url, options) => {
-    entered.resolve(options.signal);
-    return await new Promise((resolve, reject) => {
-      const onAbort = () => reject(options.signal.reason);
-      options.signal.addEventListener("abort", onAbort, { once: true });
-      if (options.signal.aborted) onAbort();
-    });
-  };
-  let commits = 0;
-  const controller = new AbortController();
-  const running = downloadExec(
-    { url: "https://example.test/held.bin", filename: "held.bin" },
-    {},
-    {
-      ...invocation(gateway({
-        reserveFile: async () => Object.freeze({ commit: async () => { commits += 1; return {}; } }),
-      })),
-      signal: controller.signal,
+  let timer;
+  globalThis.fetch = async () => new Response(new ReadableStream({
+    start(controller) {
+      timer = setInterval(() => controller.enqueue(Buffer.alloc(1024, 7)), 20);
+      timer.unref?.();
     },
-  );
-  const fetchedSignal = await entered.promise;
-  assert.equal(fetchedSignal.aborted, false);
-  controller.abort(new Error("download cancelled"));
-  assert.equal(fetchedSignal.aborted, true);
-  await assert.rejects(() => running, error => error?.code === "RUN_CANCELLED" && /download cancelled/u.test(error.message));
-  assert.equal(commits, 0);
+    cancel() { if (timer) clearInterval(timer); },
+  }), { status: 200 });
+  const runtime = await realRuntime();
+  const started = JSON.parse(await runtime.approved("download", {
+    url: "https://example.test/held.bin",
+    filename: "held.bin",
+  }));
+  const cancelled = JSON.parse(await runtime.execute("download_cancel", { task_id: started.taskId }));
+  assert.equal(cancelled.state, "cancelled");
+  await assert.rejects(() => fs.access(path.join(runtime.output, "held.bin")));
+  assert.equal((await fs.readdir(runtime.output)).some(name => name.endsWith(".part")), false);
 });
 
-test("SEC-02 rejected download target invokes zero fetches", async t => {
-  const originalFetch = globalThis.fetch;
-  t.after(() => { globalThis.fetch = originalFetch; });
-  let fetches = 0;
-  globalThis.fetch = async () => { fetches += 1; throw new Error("must not fetch"); };
-  await assert.rejects(
-    () => downloadExec(
-      { url: "https://example.test/secret", filename: "..\\escape.bin" },
-      {},
-      invocation(gateway({ reserveFile: async () => { throw new Error("Path operation denied"); } })),
-    ),
-    /Path operation denied/u,
-  );
-  assert.equal(fetches, 0);
-});
-
-test("SEC-02 download closes invocation, naming, response, transport, and size boundaries", async () => {
+test("SEC-02 download closes invocation, root, URL, response, and size boundaries", async () => {
   await assert.rejects(() => downloadExec({ url: "https://example.test/file" }, {}), /Tool invocation services are required/u);
   await assert.rejects(
     () => downloadExec({ url: "https://example.test/file" }, {}, invocation(gateway({ rootIdForEnv: () => null }))),
     /Path root is unavailable: OUTPUT_DIR/u,
   );
-
-  const committed = [];
-  const names = [];
-  const pathGateway = gateway({
-    reserveFile: async name => {
-      names.push(name);
-      return Object.freeze({ commit: async bytes => { committed.push(Buffer.from(bytes)); return {}; } });
-    },
-  });
-  const withoutSignal = {
-    path: pathGateway,
-    network: Object.freeze({ fetch: async () => new Response(null, { status: 200 }) }),
-    resourceOwner: fixtureResourceOwner,
-  };
-  await downloadExec({ url: "https://example.test/path/derived.bin" }, {}, withoutSignal);
-  await downloadExec({ url: "https://example.test/" }, {}, withoutSignal);
-  await downloadExec({ url: "not a url" }, {}, withoutSignal);
-  assert.deepEqual(names, ["derived.bin", "download", "download"]);
-  assert(committed.every(buffer => buffer.length === 0));
-
-  const responseInvocation = (fetchImpl) => ({ ...invocation(pathGateway), network: Object.freeze({ fetch: fetchImpl }) });
   await assert.rejects(
-    () => downloadExec({ url: "https://example.test/large", filename: "large.bin" }, {}, responseInvocation(async () => new Response(null, {
+    () => downloadExec({ url: "not a url" }, {}, invocation(gateway())),
+    /download url is invalid|Invalid URL/u,
+  );
+
+  const runtime = await realRuntime();
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => new Response(null, {
       status: 200,
-      headers: { "content-length": String(128 * 1024 * 1024 + 1) },
-    }))),
-    /超过 128 MB/u,
-  );
-  await assert.rejects(
-    () => downloadExec({ url: "https://example.test/missing", filename: "missing.bin" }, {}, responseInvocation(async () => new Response(null, {
-      status: 404,
-      statusText: "Missing",
-    }))),
-    /HTTP 404 Missing/u,
-  );
-  await assert.rejects(
-    () => downloadExec({ url: "https://example.test/string-error", filename: "error.bin" }, {}, responseInvocation(async () => { throw "transport failed"; })),
-    /transport failed/u,
-  );
+      headers: { "content-length": String(2 * 1024 * 1024 + 1) },
+    });
+    await assert.rejects(
+      () => runtime.approved("download", {
+        url: "https://example.test/large",
+        filename: "large-boundary.bin",
+        max_bytes: 2 * 1024 * 1024,
+      }),
+      /content length exceeds limit/u,
+    );
+    globalThis.fetch = async () => new Response(null, { status: 404, statusText: "Missing" });
+    await assert.rejects(
+      () => runtime.approved("download", { url: "https://example.test/missing", filename: "missing.bin" }),
+      /HTTP status 404/u,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 
   const controller = new AbortController();
+  controller.abort(new Error("cancel before download"));
   await assert.rejects(
-    () => downloadExec({ url: "https://example.test/abort", filename: "abort.bin" }, {}, {
-      ...invocation(pathGateway),
+    () => downloadExec({ url: "https://example.test/abort" }, {}, {
+      ...invocation(gateway()),
       signal: controller.signal,
-      network: Object.freeze({ fetch: async () => {
-        controller.abort(new Error("cancel during fetch"));
-        throw new DOMException("transport aborted", "AbortError");
-      } }),
     }),
-    error => error?.code === "RUN_CANCELLED" && /cancel during fetch/u.test(error.message),
+    error => error?.code === "RUN_CANCELLED" && /cancel before download/u.test(error.message),
   );
 });
 
@@ -762,7 +709,7 @@ test("SEC-02 Office writers reserve extension before generation and commit buffe
     return originalXlsxGenerator.apply(this, args);
   };
   const cases = [
-    ["SEC02-P23-download-escape-no-fetch", "download", { url: "https://example.test/secret", filename: "..\\outside\\download.bin" }, path.join(runtime.outside, "download.bin"), false],
+    ["SEC02-P23-download-unsafe-name-no-write-on-header-failure", "download", { url: "https://example.test/secret", filename: "..\\outside\\download.bin" }, path.join(runtime.outside, "download.bin"), false],
     ["SEC02-P23-docx-escape", "create_docx", { path: "..\\outside\\escape.docx", paragraphs: ["x"] }, path.join(runtime.outside, "escape.docx"), true],
     ["SEC02-P23-xlsx-escape", "create_xlsx", { path: "..\\outside\\escape.xlsx", sheets: [{ name: "Data", data: [["x"]] }] }, path.join(runtime.outside, "escape.xlsx"), true],
     ["SEC02-P23-docx-extension", "create_docx", { path: "wrong.txt", paragraphs: ["x"] }, path.join(runtime.output, "wrong.txt"), true],
@@ -783,7 +730,7 @@ test("SEC-02 Office writers reserve extension before generation and commit buffe
         writerPathCalls: attempt.counters.filesystemCalls,
         externalArtifacts: Number(await exists(target)),
         auditAttempts: attempt.audit.auditAttempts,
-        ...(officeCase ? { generatorCalls: attempt.counters.generatorCalls } : {}),
+        ...(officeCase ? { generatorCalls: attempt.counters.generatorCalls } : { failed: attempt.error instanceof Error }),
         auditAllowedFieldsExact: attempt.audit.auditAllowedFieldsExact,
         rawPathsAbsent: attempt.audit.rawPathsAbsent,
       };

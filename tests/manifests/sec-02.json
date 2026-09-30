@@ -139,6 +139,7 @@
       "tests/integration/file-viewer-settings.test.mjs",
       "tests/integration/managed-path-store.test.mjs",
       "tests/integration/path-tool-gateway.test.mjs",
+      "tests/integration/tool06-download.test.mjs",
       "tests/integration/process-cwd.test.mjs",
       "tests/integration/repo-oracle-path.test.mjs",
       "tests/integration/watcher-authority.test.mjs"

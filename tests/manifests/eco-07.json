@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "taskId": "ECO-07",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": [
+    "architect",
+    "developer",
+    "debugger",
+    "reviewer"
+  ],
+  "requirements": [
+    "managed-npm-routine-project",
+    "search-get-create-delete-run",
+    "input-output-json-schema",
+    "finite-sec03-execution",
+    "structured-lux-done",
+    "tool-error-propagation",
+    "running-delete-denial"
+  ],
+  "runtimeFiles": [
+    "package.json",
+    "scripts/eco07-governance.mjs",
+    "scripts/generate-eco07-resolved-manifest.mjs",
+    "scripts/report-schema.mjs",
+    "src/execution-runtime.ts",
+    "src/managed-path-store.ts",
+    "src/routine.ts",
+    "src/runtime-paths.ts",
+    "src/script-runtime.ts",
+    "src/tool-policies.ts",
+    "src/tools/index.ts",
+    "src/tools/routine-tools.ts",
+    "personas/default.md",
+    "personas/general.md",
+    "personas/routine.md"
+  ],
+  "tests": [
+    {
+      "exactCasePath": "tests/unit/eco07-routine.test.mjs",
+      "layer": "unit"
+    },
+    {
+      "exactCasePath": "tests/integration/eco07-routine-run.test.mjs",
+      "layer": "integration"
+    },
+    {
+      "exactCasePath": "tests/contract/eco07-governance.test.mjs",
+      "layer": "contract"
+    }
+  ]
+}

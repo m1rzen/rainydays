@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "taskId": "ECO-07",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/eco-07.json",
+    "sha256": "2a7c90fe976e0c3dbce8a6c9102ff4cb84d11568b65bf0a9c0e23d8a0554bcf0"
+  },
+  "requirements": [
+    "managed-npm-routine-project",
+    "search-get-create-delete-run",
+    "input-output-json-schema",
+    "finite-sec03-execution",
+    "structured-lux-done",
+    "tool-error-propagation",
+    "running-delete-denial"
+  ],
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "143b1471f390522c323e49260d182a17e8bc100fe2f6ae591db8738ad68342c2",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "scripts/eco07-governance.mjs",
+      "sha256": "1c63ef5b7d3663f0a280a2f57e4c629654a9ee48e3b7b49d046d7d7810ee7196",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "scripts/generate-eco07-resolved-manifest.mjs",
+      "sha256": "a8d98eb90a5066f30d2fbbc8f8f73cba4498746a57de3628a65f8dc1819df5df",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "39516ed54382da16fd3cee591bb8a9eed02e426f75b3ddea37393a7b8a85ebb9",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "src/execution-runtime.ts",
+      "sha256": "6201dd1df3a00ff136c1d705d3b93a87c86a6c2ba0ca15f661392fa4146f3b4f",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "src/managed-path-store.ts",
+      "sha256": "6d942cd3738419fdf1384c3476b3b2c2bd1afab7aefb5badccc16f35dbc2e9c0",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "src/routine.ts",
+      "sha256": "c83fb46b27badf91963cfb3ad817f90c8c7a2b76838373186c0eb00f225c4cb4",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "src/runtime-paths.ts",
+      "sha256": "1693a0e15f320507801cf3fe2cd430de5e64bfe9f9fdb5b99c642e4c2a23e653",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "src/script-runtime.ts",
+      "sha256": "e11145f87ecfc2832e5016546e2d9b9ff6a0d9f04de367171ad5e0badd5d931d",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "8df1628730342930771df252079203074e65a9b9246e43a0064c71fa2f6bb4ef",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "1ea1ae52d2751c3f5711ba5fa3569daa9a43bf6fd197031d7c5c781dab1c7dae",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "src/tools/routine-tools.ts",
+      "sha256": "fae44c1fad6f0c09e3928cdb6de7ff06834d8872b08791a5492fea401ad23336",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "personas/default.md",
+      "sha256": "079b76087e6039e12772a59abf8642f6fd77806059146e724428e1b1a3ecbb36",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "personas/general.md",
+      "sha256": "4aef2957ae5220c71f4b1634f646d6a1731408b8c17249042653c003de1ed74e",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "personas/routine.md",
+      "sha256": "a77473c380fda2d09e8ae6c5269b1b5979fe297f0102753518f08edebe34f3e2",
+      "owner": "ECO-07"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/unit/eco07-routine.test.mjs",
+      "sha256": "65bb12640740c44eb59e800f37ebb8eac8768e1a61ff2c0f2dff716bc3a6be1b",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "tests/integration/eco07-routine-run.test.mjs",
+      "sha256": "dd5341230643d373579e747ba321e88b6c290354e33e9e492be741645169a270",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "ECO-07"
+    },
+    {
+      "exactCasePath": "tests/contract/eco07-governance.test.mjs",
+      "sha256": "403c582987fee20b5595a8ee99c9cce3fabecb97786a35a4e73070c7f0bd3bfc",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "ECO-07"
+    }
+  ],
+  "canonicalPayloadSha256": "8550b043b7fb22d1c3eaaa83ed4cfe1579ecdf43b7687d81856e55379026e9a6"
+}

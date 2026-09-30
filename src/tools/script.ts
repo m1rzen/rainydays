@@ -6,6 +6,7 @@ import type { ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationSer
 import { ExecutionDeniedError } from "../execution-isolation.js";
 import { isRunCancellation } from "../run-cancellation.js";
 import { parseScriptTimeout, type ScriptLanguage } from "../script-runtime.js";
+import { routeToSelectedWorker } from "../worker.js";
 
 function initialCwd(
   args: Readonly<Record<string, unknown>>,
@@ -70,6 +71,8 @@ export const scriptDef: ToolDefinition = {
 };
 
 export const scriptExec: ToolExecutor = async (args, env, invocation) => {
+  const remote = await routeToSelectedWorker(invocation, "script", args);
+  if (remote !== null) return remote;
   const code = args.code as string;
   const lang = scriptLanguage(args.lang);
   const timeoutMs = parseScriptTimeout(args.timeout);

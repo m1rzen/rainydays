@@ -45,6 +45,7 @@ import { loadTool01ResolvedManifest } from "../scripts/tool01-governance.mjs";
 import { loadTool02ResolvedManifest } from "../scripts/tool02-governance.mjs";
 import { loadTool04ResolvedManifest } from "../scripts/tool04-governance.mjs";
 import { loadTool05ResolvedManifest } from "../scripts/tool05-governance.mjs";
+import { loadTool06ResolvedManifest } from "../scripts/tool06-governance.mjs";
 import { loadTool07ResolvedManifest } from "../scripts/tool07-governance.mjs";
 import { loadPers01ResolvedManifest } from "../scripts/pers01-governance.mjs";
 import { loadRel03ResolvedManifest } from "../scripts/rel03-governance.mjs";
@@ -917,6 +918,29 @@ async function loadTool05TaskView(root = projectRoot) {
   };
 }
 
+async function loadTool06TaskView(root = projectRoot) {
+  const resolved = await loadTool06ResolvedManifest({ root });
+  const sourcePath = path.join(root, "tests", "manifests", "tool-06.json");
+  const source = resolved.source;
+  const layers = Object.fromEntries(layerNames.map(layer => [layer, []]));
+  for (const record of resolved.manifest.testEntries) layers[record.layer].push(record.exactCasePath);
+  return {
+    manifest: {
+      schemaVersion: 1,
+      taskId: "TOOL-06",
+      baseline: source.baseline,
+      personaChain: source.personaChain,
+      changedRuntimeFiles: resolved.manifest.runtimeEntries.map(record => record.exactCasePath),
+      coverageExemptions: structuredClone(source.coverageExemptions),
+      layers,
+    },
+    filePath: sourcePath,
+    resolvedManifest: resolved.manifest,
+    resolvedManifestPath: resolved.filePath,
+    coverageRecords: resolved.manifest.testEntries,
+  };
+}
+
 async function loadTool07TaskView(root = projectRoot) {
   const resolved = await loadTool07ResolvedManifest({ root });
   const sourcePath = path.join(root, "tests", "manifests", "tool-07.json");
@@ -1176,6 +1200,7 @@ export async function loadTaskManifest(taskId = "GOV-03", root = projectRoot) {
   if (taskId === "TOOL-02") return loadTool02TaskView(root);
   if (taskId === "TOOL-04") return loadTool04TaskView(root);
   if (taskId === "TOOL-05") return loadTool05TaskView(root);
+  if (taskId === "TOOL-06") return loadTool06TaskView(root);
   if (taskId === "TOOL-07") return loadTool07TaskView(root);
   if (taskId === "PERS-01") return loadPers01TaskView(root);
   if (taskId === "REL-03") return loadRel03TaskView(root);

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "taskId": "TOOL-06",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["developer", "debugger", "reviewer"],
+  "runtimeFiles": [
+    "package.json",
+    "scripts/generate-tool06-resolved-manifest.mjs",
+    "scripts/report-schema.mjs",
+    "scripts/sec02-sink-inventory.mjs",
+    "scripts/tool06-governance.mjs",
+    "personas/default.md",
+    "personas/general.md",
+    "personas/rds-assistant.md",
+    "src/capability-broker.ts",
+    "src/path-policy.ts",
+    "src/tool-policies.ts",
+    "src/tools/download-tool.ts",
+    "src/tools/index.ts",
+    "src/types.ts",
+    "tests/helpers.mjs",
+    "tests/manifests/sec-02.json",
+    "tests/sec02-attack-matrix.json",
+    "tests/sec02-sink-inventory.json",
+    "tests/sec02-sink-policy.json"
+  ],
+  "coverageExemptions": {
+    "package.json": { "reason": "TOOL-06 runner and governance commands are bound by exact contract evidence.", "evidenceLayer": "contract", "evidence": [{ "exactCasePath": "tests/contract/tool06-governance.test.mjs", "layer": "contract" }] },
+    "scripts/generate-tool06-resolved-manifest.mjs": { "reason": "Atomic TOOL-06 identity publication is covered by adversarial contract evidence.", "evidenceLayer": "contract", "evidence": [{ "exactCasePath": "tests/contract/tool06-governance.test.mjs", "layer": "contract" }] },
+    "scripts/report-schema.mjs": { "reason": "The exact TOOL-06 authority chain is covered by governance contract evidence.", "evidenceLayer": "contract", "evidence": [{ "exactCasePath": "tests/contract/tool06-governance.test.mjs", "layer": "contract" }] },
+    "scripts/sec02-sink-inventory.mjs": { "reason": "TOOL-06 streaming sink evidence ownership is validated by the governed sink inventory contract.", "evidenceLayer": "contract", "evidence": [{ "exactCasePath": "tests/contract/tool06-governance.test.mjs", "layer": "contract" }] },
+    "scripts/tool06-governance.mjs": { "reason": "TOOL-06 identity validation is covered by substitution-resistant contract evidence.", "evidenceLayer": "contract", "evidence": [{ "exactCasePath": "tests/contract/tool06-governance.test.mjs", "layer": "contract" }] },
+    "personas/default.md": { "reason": "The default Persona exposes all four TOOL-06 control tools in the real integration runtime.", "evidenceLayer": "integration", "evidence": [{ "exactCasePath": "tests/integration/tool06-download.test.mjs", "layer": "integration" }] },
+    "personas/general.md": { "reason": "The general Persona TOOL-06 registration is bound with the real registry contract.", "evidenceLayer": "integration", "evidence": [{ "exactCasePath": "tests/integration/tool06-download.test.mjs", "layer": "integration" }] },
+    "personas/rds-assistant.md": { "reason": "The RDS assistant TOOL-06 registration is bound with the real registry contract.", "evidenceLayer": "integration", "evidence": [{ "exactCasePath": "tests/integration/tool06-download.test.mjs", "layer": "integration" }] },
+    "src/capability-broker.ts": { "reason": "Detached network, streaming path authority, and resource-owner cleanup execute through the real integration runtime.", "evidenceLayer": "integration", "evidence": [{ "exactCasePath": "tests/integration/tool06-download.test.mjs", "layer": "integration" }] },
+    "src/path-policy.ts": { "reason": "Streaming partial identity, resume, reset, cancellation, checksum and publication races are directly unit tested.", "evidenceLayer": "unit", "evidence": [{ "exactCasePath": "tests/unit/path-policy-streaming.test.mjs", "layer": "unit" }] },
+    "src/tool-policies.ts": { "reason": "Start/status/wait/cancel policies are exercised through approved and unattended real tool dispatch.", "evidenceLayer": "integration", "evidence": [{ "exactCasePath": "tests/integration/tool06-download.test.mjs", "layer": "integration" }] },
+    "src/tools/download-tool.ts": { "reason": "Large streaming, restart state, Range/If-Range, reset, timeout, cancel, checksum and safe filename behavior are directly integrated.", "evidenceLayer": "integration", "evidence": [{ "exactCasePath": "tests/integration/tool06-download.test.mjs", "layer": "integration" }] },
+    "src/tools/index.ts": { "reason": "All TOOL-06 tools and detached services are exercised through the authentic registry dispatcher.", "evidenceLayer": "integration", "evidence": [{ "exactCasePath": "tests/integration/tool06-download.test.mjs", "layer": "integration" }] },
+    "src/types.ts": { "reason": "The opaque streaming lease and detached invocation contract are exercised by unit and integration evidence.", "evidenceLayer": "unit", "evidence": [{ "exactCasePath": "tests/unit/path-policy-streaming.test.mjs", "layer": "unit" }] },
+    "tests/helpers.mjs": { "reason": "Canonical TOOL-06 task view dispatch is covered by governance contract evidence.", "evidenceLayer": "contract", "evidence": [{ "exactCasePath": "tests/contract/tool06-governance.test.mjs", "layer": "contract" }] },
+    "tests/manifests/sec-02.json": { "reason": "TOOL-06 streaming evidence is explicitly bound into the SEC-02 integration layer catalog.", "evidenceLayer": "contract", "evidence": [{ "exactCasePath": "tests/contract/tool06-governance.test.mjs", "layer": "contract" }] },
+    "tests/sec02-attack-matrix.json": { "reason": "The updated safe-filename/header-failure observation is executed by the path gateway integration.", "evidenceLayer": "integration", "evidence": [{ "exactCasePath": "tests/integration/path-tool-gateway.test.mjs", "layer": "integration" }] },
+    "tests/sec02-sink-inventory.json": { "reason": "New streaming filesystem sinks remain complete and package-bound under the governed inventory.", "evidenceLayer": "contract", "evidence": [{ "exactCasePath": "tests/contract/tool06-governance.test.mjs", "layer": "contract" }] },
+    "tests/sec02-sink-policy.json": { "reason": "New streaming filesystem sinks have explicit PathPolicy-only review bindings.", "evidenceLayer": "contract", "evidence": [{ "exactCasePath": "tests/contract/tool06-governance.test.mjs", "layer": "contract" }] }
+  },
+  "tests": [
+    { "exactCasePath": "tests/contract/tool06-governance.test.mjs", "layer": "contract" },
+    { "exactCasePath": "tests/unit/path-policy-streaming.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/unit/capability-broker.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/tool06-download.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/integration/path-tool-gateway.test.mjs", "layer": "integration" }
+  ]
+}

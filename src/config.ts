@@ -537,7 +537,7 @@ function assertDomainId(value: string): asserts value is Exclude<SettingsDomainI
 function assertDomainProfileReferences(domains: SettingsDomains, profiles: Record<string, ProviderProfile>): void {
   const references = [
     domains.common.supervisorProfile, domains.common.curatorProfile, domains.common.consolidationProfile,
-    domains.common.oracleProfile, domains.common.imageProfile, domains.common.videoProfile,
+    domains.common.oracleProfile, domains.common.visionProfile, domains.common.imageProfile, domains.common.videoProfile,
     domains.common.renameProfile, domains.nous.profile,
   ].filter(Boolean);
   for (const reference of references) if (!Object.hasOwn(profiles, reference)) throw new TypeError(`Settings 引用了不存在的 Profile: ${reference}`);

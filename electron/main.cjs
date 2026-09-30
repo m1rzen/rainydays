@@ -5,6 +5,7 @@
 
 const { app, BrowserWindow, Tray, Menu, Notification, nativeImage, dialog, ipcMain, safeStorage, screen } = require("electron");
 const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 const net = require("node:net");
 const { spawn } = require("node:child_process");
 const { randomBytes } = require("node:crypto");
@@ -368,17 +369,19 @@ function callServiceControl(operation, args) {
   });
 }
 
-async function startServerProcess(commandLease, argumentLeases, extraEnvironment = {}) {
+async function startServerProcess(commandLease, argumentLeases, extraEnvironment = {}, importLease = null) {
+  const launchLeases = importLease ? [importLease, ...argumentLeases] : argumentLeases;
   commandLease.verify();
-  for (const lease of argumentLeases) lease.verify();
+  for (const lease of launchLeases) lease.verify();
   const { createNativeProcessConsentParentTransport } = await import("../dist/native-process-consent-transport.js");
   let child = null;
   let consentTransport = null;
   try {
     await electronPaths.withRuntimeAppRootDirectory("server-process-cwd", async canonicalCwd => {
       commandLease.verify("before-server-process-spawn");
-      for (const lease of argumentLeases) lease.verify("before-server-process-spawn");
-      child = spawn(commandLease.canonicalPath, argumentLeases.map(lease => lease.canonicalPath), {
+      for (const lease of launchLeases) lease.verify("before-server-process-spawn");
+      const args = [...(importLease ? ["--import", pathToFileURL(importLease.canonicalPath).href] : []), ...argumentLeases.map(lease => lease.canonicalPath)];
+      child = spawn(commandLease.canonicalPath, args, {
         cwd: canonicalCwd,
         env: { ...runtimeEnvironment(), ...extraEnvironment },
         shell: false,
@@ -438,7 +441,7 @@ async function startServerProcess(commandLease, argumentLeases, extraEnvironment
       await Promise.all([consentTransport.ready, waitForServiceReady(child)]);
     });
     commandLease.verify();
-    for (const lease of argumentLeases) lease.verify();
+    for (const lease of launchLeases) lease.verify();
     return child;
   } catch (error) {
     consentTransport?.close();
@@ -457,11 +460,15 @@ async function startServerProcess(commandLease, argumentLeases, extraEnvironment
 }
 
 async function startDevelopmentServer() {
-  const executableLease = electronPaths.openExternalTestExecutable(process.execPath);
-  const tsxLease = electronPaths.openAppFile(path.join("node_modules", "tsx", "dist", "cli.mjs"), "source-tsx-entry");
+  // npm identifies the Node runtime that installed the development dependencies.
+  // Electron has a different native-module ABI (for example better-sqlite3).
+  const nodeExecutable = process.env.npm_node_execpath || process.execPath;
+  const executableLease = electronPaths.openExternalBootstrapExecutable(nodeExecutable, "development-node-executable");
+  const tsxLease = electronPaths.openAppFile(path.join("node_modules", "tsx", "dist", "loader.mjs"), "source-tsx-entry");
   const sourceLease = electronPaths.openAppFile(path.join("src", "index.ts"), "source-server-entry");
   try {
-    return await startServerProcess(executableLease, [tsxLease, sourceLease], { ELECTRON_RUN_AS_NODE: "1" });
+    return await startServerProcess(executableLease, [sourceLease],
+      nodeExecutable === process.execPath ? { ELECTRON_RUN_AS_NODE: "1" } : {}, tsxLease);
   } finally {
     sourceLease.close();
     tsxLease.close();

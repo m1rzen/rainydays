@@ -18,6 +18,17 @@ tools:
   - shell_output
   - shell_list
   - shell_kill
+  - bash
+  - bash_output
+  - bash_list
+  - bash_kill
+  - worker_list
+  - worker_status
+  - worker_select
+  - worker_connect
+  - worker_disconnect
+  - worker_upload
+  - worker_download
   - fetch_markdown
   - fetch_url
   - script
@@ -47,6 +58,25 @@ tools:
   - curate
   - web_search
   - download
+  - download_status
+  - download_wait
+  - download_cancel
+  - browser_open
+  - browser_close
+  - browser_tabs
+  - browser_new_tab
+  - browser_close_tab
+  - browser_snapshot
+  - browser_click
+  - browser_fill
+  - browser_type
+  - browser_press
+  - browser_scroll
+  - browser_screenshot
+  - browser_eval
+  - browser_back
+  - browser_forward
+  - browser_fetch
   - ask_user
   - oracle_query
   - oracle_save
@@ -56,6 +86,14 @@ tools:
   - playbook_status
   - playbook_execute
   - playbook_abort
+  - playbook_archive
+  - playbook_unarchive
+  - playbook_delete
+  - routine_search
+  - routine_get
+  - routine_create
+  - routine_delete
+  - routine_run
   - link_discover
   - link_peek
   - link_post
@@ -64,6 +102,11 @@ tools:
   - poll_list
   - supervise
   - image_helper
+  - generate_image
+  - generate_video
+  - media_status
+  - media_cancel
+  - media_history
   - read_repo
   - memo_add
   - memo_list

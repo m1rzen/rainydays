@@ -8,8 +8,12 @@ import {
   saveOracle, queryOracle, getOracleStatus, type OracleChildRunner,
 } from "../oracle.js";
 import {
-  listPlaybooks, createPlaybook, listActiveRuns, getRunStatus,
-  type Playbook, type PlaybookOwner,
+  archivePlaybook,
+  createPlaybook,
+  deletePlaybook,
+  getPlaybookStatus,
+  listPlaybooks,
+  unarchivePlaybook,
 } from "../playbook.js";
 import { discoverSessions, peekSession } from "../link.js";
 import { postSessionLinkMessage } from "../session.js";
@@ -101,46 +105,91 @@ export const oracleStatusExec: ToolExecutor = async (args, _env, invocation) => 
 };
 
 // ========== Playbook ==========
-function playbookOwner(env?: Readonly<Record<string, string>>): PlaybookOwner {
-  const sessionId = env?._SESSION_ID;
-  const runId = env?._CAPABILITY_RUN_ID;
-  if (!sessionId || !runId) throw new Error("缺少Broker签发的Playbook owner");
-  return { sessionId, runId };
-}
+const playbookIdProperty = { type: "string", pattern: "^[a-z0-9][a-z0-9-]{0,63}$" } as const;
 
 export const playbookListDef: ToolDefinition = {
   type: "function",
-  function: { name: "playbook_list", description: "列出所有可用的 Playbook 自动化脚本。", parameters: { type: "object", properties: {} } },
+  function: {
+    name: "playbook_list",
+    description: "List managed npm ESM Playbook projects, optionally including archived projects.",
+    parameters: {
+      type: "object",
+      properties: {
+        includeArchived: { type: "boolean" },
+        archivedOnly: { type: "boolean" },
+      },
+      additionalProperties: false,
+    },
+  },
 };
-export const playbookListExec: ToolExecutor = async () => {
-  const pbs = await listPlaybooks();
-  if (pbs.length === 0) return "没有 Playbook。";
-  return pbs.map(p => `[${p.name}] ${p.description} (${p.steps} 步)`).join("\n");
-};
+export const playbookListExec: ToolExecutor = async (args) => JSON.stringify(await listPlaybooks({
+  includeArchived: args.includeArchived === true,
+  archivedOnly: args.archivedOnly === true,
+}), null, 2);
 
 export const playbookCreateDef: ToolDefinition = {
   type: "function",
   function: {
-    name: "playbook_create", description: "创建一个新的 Playbook 自动化脚本。",
-    parameters: { type: "object", properties: { name: { type: "string" }, description: { type: "string" }, steps: { type: "array", items: { type: "object", properties: { message: { type: "string" } }, required: ["message"] } } }, required: ["name", "steps"] },
+    name: "playbook_create",
+    description: "Create a managed npm ESM Playbook project with package.json and canonical playbook.mjs.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", maxLength: 120 },
+        description: { type: "string", maxLength: 2000 },
+        script: { type: "string", maxLength: 262144, description: "Optional trusted Node.js ESM playbook.mjs source." },
+      },
+      additionalProperties: false,
+    },
   },
 };
-export const playbookCreateExec: ToolExecutor = async (args) => {
-  const pb: Playbook = { name: args.name as string, description: (args.description as string) || "", steps: args.steps as Playbook["steps"] };
-  return await createPlaybook(pb);
-};
+export const playbookCreateExec: ToolExecutor = async (args) => JSON.stringify(await createPlaybook({
+  name: typeof args.name === "string" ? args.name : undefined,
+  description: typeof args.description === "string" ? args.description : undefined,
+  script: typeof args.script === "string" ? args.script : undefined,
+}), null, 2);
 
 export const playbookStatusDef: ToolDefinition = {
   type: "function",
-  function: { name: "playbook_status", description: "查看 Playbook 运行状态。", parameters: { type: "object", properties: { runId: { type: "string" } } } },
+  function: {
+    name: "playbook_status",
+    description: "Get persisted singleton Playbook status, log tail, artifacts, result, and child context ids.",
+    parameters: { type: "object", properties: { playbookId: playbookIdProperty }, required: ["playbookId"], additionalProperties: false },
+  },
 };
-export const playbookStatusExec: ToolExecutor = async (args, env) => {
-  const owner = playbookOwner(env);
-  const runId = args.runId as string;
-  if (runId) { const r = getRunStatus(runId, owner); return r ? `Run ${r.id}: ${r.status} (${r.currentStep}/${r.totalSteps})` : "运行不存在"; }
-  const runs = listActiveRuns(owner);
-  if (runs.length === 0) return "没有活跃的 Playbook 运行。";
-  return runs.map(r => `[${r.id}] ${r.playbookName}: ${r.status} (${r.currentStep}/${r.totalSteps})`).join("\n");
+export const playbookStatusExec: ToolExecutor = async (args) => JSON.stringify(await getPlaybookStatus(args.playbookId as string), null, 2);
+
+export const playbookArchiveDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "playbook_archive",
+    description: "Archive a Playbook project. Refuses while its singleton run is active.",
+    parameters: { type: "object", properties: { playbookId: playbookIdProperty }, required: ["playbookId"], additionalProperties: false },
+  },
+};
+export const playbookArchiveExec: ToolExecutor = async (args) => JSON.stringify(await archivePlaybook(args.playbookId as string), null, 2);
+
+export const playbookUnarchiveDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "playbook_unarchive",
+    description: "Restore an archived Playbook project to the active collection.",
+    parameters: { type: "object", properties: { playbookId: playbookIdProperty }, required: ["playbookId"], additionalProperties: false },
+  },
+};
+export const playbookUnarchiveExec: ToolExecutor = async (args) => JSON.stringify(await unarchivePlaybook(args.playbookId as string), null, 2);
+
+export const playbookDeleteDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "playbook_delete",
+    description: "Permanently delete a Playbook project. Refuses while its singleton run is active.",
+    parameters: { type: "object", properties: { playbookId: playbookIdProperty }, required: ["playbookId"], additionalProperties: false },
+  },
+};
+export const playbookDeleteExec: ToolExecutor = async (args) => {
+  await deletePlaybook(args.playbookId as string);
+  return `Playbook ${args.playbookId as string} deleted`;
 };
 
 // ========== Link ==========

@@ -31,6 +31,9 @@ tools:
   - curate
   - web_search
   - download
+  - download_status
+  - download_wait
+  - download_cancel
   - ask_user
 skills:
   - zhengqi-business

@@ -16,6 +16,9 @@ tools:
   - playbook_status
   - playbook_execute
   - playbook_abort
+  - playbook_archive
+  - playbook_unarchive
+  - playbook_delete
   - get_current_time
   - ask_user
   - task_create

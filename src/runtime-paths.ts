@@ -87,6 +87,24 @@ export const PLAYBOOKS_DIR = await bootstrapCandidate(
   "playbooks",
   USER_DATA_DIR
 );
+export const PLAYBOOKS_ARCHIVED_DIR = await bootstrapCandidate(
+  "RAINYDAYS_PLAYBOOKS_ARCHIVED_DIR",
+  path.join(USER_DATA_DIR, "playbooks_archived"),
+  "playbooks-archived",
+  USER_DATA_DIR
+);
+export const MEDIA_ARTIFACTS_DIR = await bootstrapCandidate(
+  "RAINYDAYS_MEDIA_ARTIFACTS_DIR",
+  path.join(USER_DATA_DIR, "media-artifacts"),
+  "media-artifacts",
+  USER_DATA_DIR
+);
+export const ROUTINES_DIR = await bootstrapCandidate(
+  "RAINYDAYS_ROUTINES_DIR",
+  path.join(USER_DATA_DIR, "routines"),
+  "routines",
+  USER_DATA_DIR
+);
 // Oracle是可选lazy store：先做纯语法/absolute校验，父子关系和identity在首次使用时验证。
 export const ORACLE_PATH = await bootstrapCandidate(
   "RAINYDAYS_ORACLE_PATH",

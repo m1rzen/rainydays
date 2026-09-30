@@ -1,5 +1,5 @@
 import path from "node:path";
-import { PathDeniedError, type PathAuthority, type PathOperation } from "./path-policy.js";
+import { PathDeniedError, type ExecutionRootLease, type PathAuthority, type PathOperation } from "./path-policy.js";
 import { pathPolicy } from "./path-runtime.js";
 import {
   BUILTIN_PERSONAS_DIR,
@@ -7,6 +7,7 @@ import {
   CONFIG_PATH,
   ORACLE_PATH,
   PLAYBOOKS_DIR,
+  ROUTINES_DIR,
   USER_DATA_DIR,
   USER_PERSONAS_DIR,
   USER_SKILLS_DIR,
@@ -19,6 +20,7 @@ export type ManagedStoreRole =
   | "builtin-skills"
   | "user-skills"
   | "playbooks"
+  | "routines"
   | "config";
 
 interface ManagedRoot {
@@ -42,6 +44,7 @@ const roleConfig: Readonly<Record<ManagedStoreRole, Readonly<{
   "builtin-skills": Object.freeze({ rootId: "builtin-skills", directory: BUILTIN_SKILLS_DIR, writable: false }),
   "user-skills": Object.freeze({ rootId: "user-skills", directory: USER_SKILLS_DIR, writable: false }),
   playbooks: Object.freeze({ rootId: "playbooks", directory: PLAYBOOKS_DIR, writable: true }),
+  routines: Object.freeze({ rootId: "routines", directory: ROUTINES_DIR, writable: true, replaceable: true }),
   config: Object.freeze({ rootId: "config", directory: path.dirname(CONFIG_PATH), writable: true, replaceable: true }),
 });
 
@@ -113,6 +116,7 @@ async function prepareRoot(role: ManagedStoreRole): Promise<ManagedRoot> {
   const permissions: PathOperation[] = [...readPermissions];
   if (config.writable) permissions.push("create-file");
   if (config.replaceable) permissions.push("replace-file");
+  if (role === "routines") permissions.push("create-directory", "initial-cwd");
   const authority = await pathPolicy.createAuthority([{
     rootId: config.rootId,
     role,
@@ -165,6 +169,96 @@ export class ManagedPathStore {
       defaultRootId: root.rootId,
       requiredExtension: extension,
     }, bytes, WRITE_BYTES);
+  }
+
+  async listRoutineIds(): Promise<string[]> {
+    const root = await this.#root("routines");
+    const entries = await pathPolicy.listDirectory(root.authority, {
+      input: "",
+      operation: "read-directory",
+      defaultRootId: root.rootId,
+    });
+    return entries
+      .filter((entry) => entry.type === "directory" && identifierPattern.test(entry.name))
+      .map((entry) => entry.name)
+      .sort();
+  }
+
+  async readRoutineFile(id: string, fileName: "package.json" | "routine.mjs"): Promise<Buffer> {
+    const root = await this.#root("routines");
+    const safeId = validateManagedIdentifier(id);
+    const result = await pathPolicy.readFile(root.authority, {
+      input: path.join(safeId, fileName),
+      operation: "read-file",
+      defaultRootId: root.rootId,
+      requiredExtension: fileName.endsWith(".json") ? ".json" : ".mjs",
+    }, READ_BYTES);
+    return Buffer.from(result.bytes);
+  }
+
+  async createRoutineProject(id: string, packageBytes: Uint8Array, sourceBytes: Uint8Array): Promise<void> {
+    const root = await this.#root("routines");
+    const safeId = validateManagedIdentifier(id);
+    const enrollment = await pathPolicy.createDirectoryEnrollment(root.authority, {
+      input: safeId,
+      operation: "create-directory",
+      defaultRootId: root.rootId,
+    });
+    if (enrollment.createdDirectories === 0) {
+      await enrollment.rollback();
+      throw new PathDeniedError("PATH_OPERATION_DENIED", "Routine project already exists");
+    }
+    let packageCreated = false;
+    let sourceCreated = false;
+    try {
+      await pathPolicy.createFile(root.authority, {
+        input: path.join(safeId, "package.json"),
+        operation: "create-file",
+        defaultRootId: root.rootId,
+        requiredExtension: ".json",
+      }, packageBytes, WRITE_BYTES);
+      packageCreated = true;
+      await pathPolicy.createFile(root.authority, {
+        input: path.join(safeId, "routine.mjs"),
+        operation: "create-file",
+        defaultRootId: root.rootId,
+        requiredExtension: ".mjs",
+      }, sourceBytes, WRITE_BYTES);
+      sourceCreated = true;
+      enrollment.commit();
+    } catch (error) {
+      if (sourceCreated) await pathPolicy.removeFile(root.authority, { input: path.join(safeId, "routine.mjs"), operation: "replace-file", defaultRootId: root.rootId }).catch(() => undefined);
+      if (packageCreated) await pathPolicy.removeFile(root.authority, { input: path.join(safeId, "package.json"), operation: "replace-file", defaultRootId: root.rootId }).catch(() => undefined);
+      await enrollment.rollback().catch(() => undefined);
+      throw error;
+    }
+  }
+
+  async removeRoutineProject(id: string): Promise<void> {
+    const root = await this.#root("routines");
+    const safeId = validateManagedIdentifier(id);
+    for (const fileName of ["routine.mjs", "package.json"] as const) {
+      await pathPolicy.removeFile(root.authority, {
+        input: path.join(safeId, fileName),
+        operation: "replace-file",
+        defaultRootId: root.rootId,
+      });
+    }
+    await pathPolicy.removeDirectory(root.authority, {
+      input: safeId,
+      operation: "create-directory",
+      defaultRootId: root.rootId,
+    });
+  }
+
+  async withRoutineExecutionRoot<T>(id: string, use: (canonicalCwd: string, lease: ExecutionRootLease) => T | Promise<T>): Promise<T> {
+    const root = await this.#root("routines");
+    const safeId = validateManagedIdentifier(id);
+    return pathPolicy.withExecutionRoot(root.authority, {
+      input: safeId,
+      operation: "initial-cwd",
+      defaultRootId: root.rootId,
+    }, "read-write", (canonicalCwd, lease) => use(canonicalCwd, lease));
   }
 
   async readConfig(): Promise<Buffer | null> {

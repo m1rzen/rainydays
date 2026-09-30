@@ -3,9 +3,9 @@
 // 使用 LLM 的视觉能力分析图片内容
 // ===========================================
 
-import path from "path";
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 import { cancellationError, cancellationFailure, throwIfCancelled } from "../run-cancellation.js";
+import { detectImageMime, getVisionProfile } from "../media.js";
 
 const MAX_IMAGE_BYTES = 32 * 1024 * 1024;
 
@@ -45,12 +45,10 @@ export const imageHelperExec: ToolExecutor = async (args, _env, invocation) => {
     throwIfCancelled(invocation.signal);
     const buffer = authorized.bytes;
     const base64 = buffer.toString("base64");
-    const ext = path.extname(filePath).toLowerCase();
-    const mime = ext === ".png" ? "image/png" : ext === ".gif" ? "image/gif" : ext === ".webp" ? "image/webp" : "image/jpeg";
+    const mime = detectImageMime(buffer, filePath);
 
-    // 使用 OpenAI 兼容的 vision API
-    const { getCurrentProfile } = await import("../config.js");
-    const profile = getCurrentProfile();
+    // 使用独立 vision profile，不再隐式复用当前聊天 profile。
+    const { profile } = getVisionProfile();
     const { default: OpenAI, APIUserAbortError } = await import("openai");
     const client = new OpenAI({
       apiKey: profile.apiKey,

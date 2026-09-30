@@ -18,7 +18,7 @@
     },
     {
       "exactCasePath": "src/capability-broker.ts",
-      "sha256": "a36f7031be1aa04c0921a6d4766a1e4392fca68fb4bbf094b320553b186bb13b",
+      "sha256": "28a2eadfbd65171e88559309c3ea4ae50a9aaf3f149c6f548903b047e8909fbb",
       "owner": "RT-01"
     },
     {
@@ -53,7 +53,7 @@
     },
     {
       "exactCasePath": "dist/capability-broker.js",
-      "sha256": "f8d2d4815bfddd55d045593c35f4dc6567bbdda47d8b2486cbd41196363bd79d",
+      "sha256": "5fadcace7053a7a2ba42b2bd52b2cf70a16d8e84f8a2f31f94ce4265280e886e",
       "owner": "RT-01"
     },
     {
@@ -126,5 +126,5 @@
       "owner": "RT-01"
     }
   ],
-  "canonicalPayloadSha256": "38dde7dc6ab0b766a1c9f2fc5d2857069647d7df3872c5e5d9d610a27abbaa51"
+  "canonicalPayloadSha256": "ef4a55f6eb4a8f11e3c25682088e462afec63870dce2e3119f46a079dd8595d4"
 }

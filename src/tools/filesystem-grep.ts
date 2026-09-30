@@ -2,6 +2,7 @@ import path from "node:path";
 import { PathDeniedError } from "../path-policy.js";
 import { throwIfCancelled } from "../run-cancellation.js";
 import { ToolArgumentsError, truncateCodePoints } from "../tool-pipeline.js";
+import { routeToSelectedWorker } from "../worker.js";
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 import { compileGlob, decodeUtf8Text } from "./filesystem-lux.js";
 
@@ -214,6 +215,12 @@ export const grepDef: ToolDefinition = {
 
 export const grepExec: ToolExecutor = async (args, _env, invocationValue) => {
   const invocation = requireInvocation(invocationValue);
+  const remote = await routeToSelectedWorker(invocation, "grep", {
+    ...args,
+    case_insensitive: args["-i"] === true,
+    head_limit: args.head_limit,
+  });
+  if (remote !== null) return remote;
   const defaultRootId = invocation.path.rootIdForEnv("DATA_ROOT");
   if (!defaultRootId) throw new Error("Path root is unavailable: DATA_ROOT");
   const pattern = args.pattern as string;

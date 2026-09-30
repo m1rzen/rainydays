@@ -116,6 +116,7 @@ export type PathBarrierPoint =
   | "afterLexicalContainment"
   | "afterCanonicalValidation"
   | "afterHandleOpen"
+  | "afterStreamingRename"
   | "beforeCreateSegment"
   | "beforeFinalCreate"
   | "beforeProcessSpawn"
@@ -464,6 +465,29 @@ export interface PathWritePreflight {
   readonly exists: boolean;
 }
 
+export interface PathStreamingWriteSnapshot {
+  readonly rootId: string;
+  readonly bytesWritten: number;
+  readonly sha256: string;
+}
+
+export interface PathStreamingWriteResult extends PathStreamingWriteSnapshot {
+  readonly identity: ObjectIdentity;
+  readonly createdDirectories: 0;
+}
+
+export interface PathStreamingWriteLease {
+  readonly rootId: string;
+  readonly snapshot: () => PathStreamingWriteSnapshot;
+  readonly write: (bytes: Uint8Array) => Promise<PathStreamingWriteSnapshot>;
+  readonly reset: () => Promise<PathStreamingWriteSnapshot>;
+  readonly commit: (expectedSha256?: string) => Promise<PathStreamingWriteResult>;
+  /** Close the descriptor but retain the identity-bound partial for a later resume. */
+  readonly preserve: () => Promise<PathStreamingWriteSnapshot>;
+  /** Close and remove the partial without publishing a target file. */
+  readonly cancel: () => Promise<void>;
+}
+
 interface PathWritePreflightRecord {
   readonly authority: AuthorityRecord;
   readonly request: PathRequest;
@@ -472,6 +496,24 @@ interface PathWritePreflightRecord {
     | Readonly<{ kind: "existing"; identity: ObjectIdentity; snapshot: MutableSnapshot }>
     | Readonly<{ kind: "missing"; parentPath: string; parentIdentity: ObjectIdentity }>;
   consumed: boolean;
+}
+
+interface PathStreamingWriteRecord {
+  readonly authority: AuthorityRecord;
+  readonly request: PathRequest;
+  readonly root: CanonicalRootRecord;
+  readonly parentPath: string;
+  readonly parentIdentity: ObjectIdentity;
+  readonly targetPath: string;
+  readonly temporaryPath: string;
+  readonly temporaryIdentity: ObjectIdentity;
+  readonly handle: Awaited<ReturnType<typeof fs.open>>;
+  readonly maxBytes: number;
+  handleOpen: boolean;
+  hash: ReturnType<typeof createHash>;
+  bytesWritten: number;
+  queue: Promise<void>;
+  state: "open" | "committing" | "preserved" | "cancelled" | "committed" | "failed";
 }
 
 export interface PathDirectoryEnrollmentLease {
@@ -520,6 +562,7 @@ export class PathPolicy {
   readonly #watchFactory: NativeWatchFactory;
   readonly #authorities = new WeakMap<PathAuthority, AuthorityRecord>();
   readonly #writePreflights = new WeakMap<PathWritePreflight, PathWritePreflightRecord>();
+  readonly #streamingWrites = new WeakMap<PathStreamingWriteLease, PathStreamingWriteRecord>();
 
   constructor(options: PathPolicyOptions = {}) {
     this.#platform = options.platform ?? process.platform;
@@ -1228,6 +1271,325 @@ export class PathPolicy {
       );
     }
     return this.#createFileInternal(authority, record.request, bytes, maxBytes, record.expected);
+  }
+
+  async beginStreamingWrite(
+    authority: PathAuthority,
+    preflight: PathWritePreflight,
+    maxBytes: number,
+    resumeId: string,
+  ): Promise<PathStreamingWriteLease> {
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 2 * 1024 * 1024 * 1024) {
+      throw new TypeError("streaming write maxBytes is invalid");
+    }
+    if (!/^[a-z0-9][a-z0-9_-]{7,63}$/u.test(resumeId)) throw new TypeError("streaming write resumeId is invalid");
+    const preflightRecord = this.#writePreflights.get(preflight);
+    const authorityRecord = this.#authorities.get(authority);
+    if (!preflightRecord || !authorityRecord || preflightRecord.authority !== authorityRecord) deny("PATH_AUTHORITY_FORGED");
+    if (preflightRecord.consumed) deny("PATH_OPERATION_DENIED");
+    preflightRecord.consumed = true;
+    if (this.#now() > preflightRecord.expiresAtMs) {
+      return this.#run(authority, preflightRecord.request, async () => deny("PATH_OPERATION_DENIED"));
+    }
+    if (preflightRecord.expected.kind !== "missing") {
+      return this.#run(authority, preflightRecord.request, async () => deny("PATH_OPERATION_DENIED"));
+    }
+    const expected = preflightRecord.expected;
+    return this.#run(authority, preflightRecord.request, async (record, state) => {
+      const selected = this.#selectTarget(record, preflightRecord.request);
+      state.rootId = selected.root.rootId;
+      const lexicalParent = this.#dirname(selected.lexicalTarget);
+      if (!this.#samePath(lexicalParent, expected.parentPath)) deny("PATH_OPERATION_DENIED");
+      await this.#verifyRoot(record, selected.root, state);
+      await this.#walkNoRedirect(selected.root, lexicalParent);
+      const canonicalParent = this.#normalizeAbsolute(await this.#realpathOrDeny(lexicalParent));
+      const canonicalRoot = this.#selectCanonicalRoot(record, canonicalParent, "create-file");
+      if (canonicalRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      const parent = await this.#statIdentity(canonicalParent, "directory");
+      if (!sameIdentity(parent.identity, expected.parentIdentity)) deny("PATH_IDENTITY_CHANGED");
+      const targetName = this.#basename(selected.lexicalTarget);
+      const targetPath = this.#resolve(canonicalParent, targetName);
+      const targetRoot = this.#selectCanonicalRoot(record, targetPath, "create-file");
+      if (targetRoot.rootId !== selected.root.rootId) deny("PATH_ROOT_DENIED");
+      try {
+        await fs.lstat(targetPath, { bigint: true });
+        deny("PATH_OPERATION_DENIED");
+      } catch (error) {
+        if (error instanceof PathDeniedError) throw error;
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") deny("PATH_OPERATION_DENIED");
+      }
+      const targetDigest = createHash("sha256").update(JSON.stringify({
+        rootId: selected.root.rootId,
+        targetPath,
+        resumeId,
+      })).digest("hex").slice(0, 24);
+      const temporaryPath = this.#resolve(canonicalParent, `.rainydays-stream-${resumeId}-${targetDigest}.part`);
+      if (this.#samePath(temporaryPath, targetPath)) deny("PATH_OPERATION_DENIED");
+      let handle: Awaited<ReturnType<typeof fs.open>> | null = null;
+      let created = false;
+      try {
+        let bytesWritten = 0;
+        let hash = createHash("sha256");
+        try {
+          const before = await fs.lstat(temporaryPath, { bigint: true });
+          if (before.isSymbolicLink() || !before.isFile() || before.nlink !== 1n || before.size > BigInt(maxBytes)) deny("PATH_REDIRECT_DENIED");
+          handle = await fs.open(temporaryPath, "r+");
+          const opened = await handle.stat({ bigint: true });
+          if (!sameIdentity(identityFromStat(before), identityFromStat(opened)) || !sameSnapshot(mutableSnapshot(before), mutableSnapshot(opened))) {
+            deny("PATH_IDENTITY_CHANGED");
+          }
+          bytesWritten = Number(opened.size);
+          const chunk = Buffer.allocUnsafe(64 * 1024);
+          let position = 0;
+          while (position < bytesWritten) {
+            const length = Math.min(chunk.length, bytesWritten - position);
+            const result = await handle.read(chunk, 0, length, position);
+            if (result.bytesRead !== length) deny("PATH_IDENTITY_CHANGED");
+            hash.update(chunk.subarray(0, result.bytesRead));
+            position += result.bytesRead;
+          }
+        } catch (error) {
+          if (error instanceof PathDeniedError) throw error;
+          if ((error as NodeJS.ErrnoException).code !== "ENOENT") deny("PATH_OPERATION_DENIED");
+          handle = await fs.open(temporaryPath, "wx+", 0o600);
+          created = true;
+        }
+        const opened = await handle.stat({ bigint: true });
+        const named = await fs.lstat(temporaryPath, { bigint: true });
+        if (named.isSymbolicLink() || !named.isFile() || named.nlink !== 1n
+          || !sameIdentity(identityFromStat(opened), identityFromStat(named))
+          || !sameSnapshot(mutableSnapshot(opened), mutableSnapshot(named))) deny("PATH_IDENTITY_CHANGED");
+        await this.#verifyRoot(record, selected.root, state);
+        const finalParent = await this.#statIdentity(canonicalParent, "directory");
+        if (!sameIdentity(parent.identity, finalParent.identity)) deny("PATH_IDENTITY_CHANGED");
+        let lease!: PathStreamingWriteLease;
+        const streamingRecord: PathStreamingWriteRecord = {
+          authority: record,
+          request: preflightRecord.request,
+          root: selected.root,
+          parentPath: canonicalParent,
+          parentIdentity: parent.identity,
+          targetPath,
+          temporaryPath,
+          temporaryIdentity: identityFromStat(opened),
+          handle,
+          maxBytes,
+          handleOpen: true,
+          hash,
+          bytesWritten,
+          queue: Promise.resolve(),
+          state: "open",
+        };
+        lease = Object.freeze({
+          rootId: selected.root.rootId,
+          snapshot: () => this.#streamingSnapshot(authority, lease),
+          write: (bytes: Uint8Array) => this.#writeStreamingChunk(authority, lease, bytes),
+          reset: () => this.#resetStreamingWrite(authority, lease),
+          commit: (expectedSha256?: string) => this.#commitStreamingWrite(authority, lease, expectedSha256),
+          preserve: () => this.#preserveStreamingWrite(authority, lease),
+          cancel: () => this.#cancelStreamingWrite(authority, lease),
+        });
+        this.#streamingWrites.set(lease, streamingRecord);
+        return lease;
+      } catch (error) {
+        if (handle) await handle.close().catch(() => undefined);
+        if (created) await fs.unlink(temporaryPath).catch(() => undefined);
+        throw error;
+      }
+    });
+  }
+
+  #streamingRecord(authority: PathAuthority, lease: PathStreamingWriteLease, requireActive = true): PathStreamingWriteRecord {
+    const record = this.#streamingWrites.get(lease);
+    const authorityRecord = this.#authorities.get(authority);
+    if (!record || !authorityRecord || record.authority !== authorityRecord) deny("PATH_AUTHORITY_FORGED");
+    if (requireActive) this.#assertActive(authorityRecord);
+    return record;
+  }
+
+  async #withStreamingLock<T>(record: PathStreamingWriteRecord, operation: () => Promise<T>): Promise<T> {
+    const previous = record.queue;
+    let release: () => void = () => undefined;
+    record.queue = new Promise<void>(resolve => { release = resolve; });
+    await previous;
+    try { return await operation(); }
+    finally { release(); }
+  }
+
+  #streamingSnapshot(authority: PathAuthority, lease: PathStreamingWriteLease): PathStreamingWriteSnapshot {
+    const record = this.#streamingRecord(authority, lease);
+    return Object.freeze({
+      rootId: record.root.rootId,
+      bytesWritten: record.bytesWritten,
+      sha256: record.hash.copy().digest("hex"),
+    });
+  }
+
+  async #verifyStreamingWrite(record: PathStreamingWriteRecord): Promise<void> {
+    this.#assertActive(record.authority);
+    const root = await this.#statIdentity(record.root.canonicalPath, "directory");
+    if (!sameIdentity(root.identity, record.root.identity)) deny("PATH_IDENTITY_CHANGED");
+    await this.#walkNoRedirect(record.root, record.parentPath);
+    const parent = await this.#statIdentity(record.parentPath, "directory");
+    if (!sameIdentity(parent.identity, record.parentIdentity)) deny("PATH_IDENTITY_CHANGED");
+    const opened = await record.handle.stat({ bigint: true });
+    const named = await fs.lstat(record.temporaryPath, { bigint: true });
+    if (named.isSymbolicLink() || !named.isFile() || named.nlink !== 1n
+      || !sameIdentity(identityFromStat(opened), record.temporaryIdentity)
+      || !sameIdentity(identityFromStat(named), record.temporaryIdentity)
+      || !sameSnapshot(mutableSnapshot(opened), mutableSnapshot(named))
+      || Number(opened.size) !== record.bytesWritten) deny("PATH_IDENTITY_CHANGED");
+  }
+
+  async #writeStreamingChunk(authority: PathAuthority, lease: PathStreamingWriteLease, input: Uint8Array): Promise<PathStreamingWriteSnapshot> {
+    const record = this.#streamingRecord(authority, lease);
+    const bytes = Buffer.from(input);
+    return this.#withStreamingLock(record, async () => {
+      if (record.state !== "open" || !record.handleOpen) deny("PATH_OPERATION_DENIED");
+      if (bytes.length > 4 * 1024 * 1024 || record.bytesWritten + bytes.length > record.maxBytes) deny("PATH_OPERATION_DENIED");
+      await this.#verifyStreamingWrite(record);
+      let offset = 0;
+      while (offset < bytes.length) {
+        const result = await record.handle.write(bytes, offset, bytes.length - offset, record.bytesWritten + offset);
+        if (result.bytesWritten < 1) deny("PATH_OPERATION_DENIED");
+        offset += result.bytesWritten;
+      }
+      record.hash.update(bytes);
+      record.bytesWritten += bytes.length;
+      const written = await record.handle.stat({ bigint: true });
+      if (Number(written.size) !== record.bytesWritten) deny("PATH_IDENTITY_CHANGED");
+      return this.#streamingSnapshot(authority, lease);
+    });
+  }
+
+  async #resetStreamingWrite(authority: PathAuthority, lease: PathStreamingWriteLease): Promise<PathStreamingWriteSnapshot> {
+    const record = this.#streamingRecord(authority, lease);
+    return this.#withStreamingLock(record, async () => {
+      if (record.state !== "open" || !record.handleOpen) deny("PATH_OPERATION_DENIED");
+      await this.#verifyStreamingWrite(record);
+      await record.handle.truncate(0);
+      record.bytesWritten = 0;
+      record.hash = createHash("sha256");
+      return this.#streamingSnapshot(authority, lease);
+    });
+  }
+
+  async #commitStreamingWrite(
+    authority: PathAuthority,
+    lease: PathStreamingWriteLease,
+    expectedSha256?: string,
+  ): Promise<PathStreamingWriteResult> {
+    const record = this.#streamingRecord(authority, lease);
+    if (expectedSha256 !== undefined && !/^[a-f0-9]{64}$/u.test(expectedSha256)) throw new TypeError("expectedSha256 is invalid");
+    return this.#withStreamingLock(record, () => this.#run(authority, record.request, async (current, state) => {
+      if (current !== record.authority || record.state !== "open" || !record.handleOpen) deny("PATH_OPERATION_DENIED");
+      await this.#verifyStreamingWrite(record);
+      const digest = record.hash.copy().digest("hex");
+      if (expectedSha256 !== undefined && digest !== expectedSha256) deny("PATH_OPERATION_DENIED");
+      record.state = "committing";
+      let renamed = false;
+      try {
+        await record.handle.sync();
+        await this.#verifyStreamingWrite(record);
+        await record.handle.close();
+        record.handleOpen = false;
+        state.rootId = record.root.rootId;
+        await this.#verifyRoot(record.authority, record.root, state);
+        const parent = await this.#statIdentity(record.parentPath, "directory");
+        if (!sameIdentity(parent.identity, record.parentIdentity)) deny("PATH_IDENTITY_CHANGED");
+        const temporary = await fs.lstat(record.temporaryPath, { bigint: true });
+        if (temporary.isSymbolicLink() || !temporary.isFile() || temporary.nlink !== 1n
+          || !sameIdentity(identityFromStat(temporary), record.temporaryIdentity)
+          || Number(temporary.size) !== record.bytesWritten) deny("PATH_IDENTITY_CHANGED");
+        try {
+          await fs.lstat(record.targetPath, { bigint: true });
+          deny("PATH_OPERATION_DENIED");
+        } catch (error) {
+          if (error instanceof PathDeniedError) throw error;
+          if ((error as NodeJS.ErrnoException).code !== "ENOENT") deny("PATH_OPERATION_DENIED");
+        }
+        await this.#barrier("beforeFinalCreate", state.operationId);
+        this.#assertActive(record.authority);
+        await this.#verifyRoot(record.authority, record.root, state);
+        const finalParent = await this.#statIdentity(record.parentPath, "directory");
+        if (!sameIdentity(finalParent.identity, record.parentIdentity)) deny("PATH_IDENTITY_CHANGED");
+        try {
+          await fs.lstat(record.targetPath, { bigint: true });
+          deny("PATH_OPERATION_DENIED");
+        } catch (error) {
+          if (error instanceof PathDeniedError) throw error;
+          if ((error as NodeJS.ErrnoException).code !== "ENOENT") deny("PATH_OPERATION_DENIED");
+        }
+        await fs.rename(record.temporaryPath, record.targetPath);
+        renamed = true;
+        await this.#barrier("afterStreamingRename", state.operationId);
+        const published = await fs.lstat(record.targetPath, { bigint: true });
+        if (published.isSymbolicLink() || !published.isFile() || published.nlink !== 1n
+          || !sameIdentity(identityFromStat(published), record.temporaryIdentity)
+          || Number(published.size) !== record.bytesWritten) deny("PATH_IDENTITY_CHANGED");
+        const publishedIdentity = identityFromStat(published);
+        record.state = "committed";
+        return Object.freeze({
+          rootId: record.root.rootId,
+          identity: publishedIdentity,
+          bytesWritten: record.bytesWritten,
+          createdDirectories: 0 as const,
+          sha256: digest,
+        });
+      } catch (error) {
+        record.state = "failed";
+        if (renamed) {
+          try {
+            const published = await fs.lstat(record.targetPath, { bigint: true });
+            if (published.isSymbolicLink() || !published.isFile() || published.nlink !== 1n
+              || !sameIdentity(identityFromStat(published), record.temporaryIdentity)) deny("PATH_ROLLBACK_FAILED");
+            await fs.unlink(record.targetPath);
+          } catch (rollbackError) {
+            if (rollbackError instanceof PathDeniedError && rollbackError.code === "PATH_ROLLBACK_FAILED") throw rollbackError;
+            throw new PathDeniedError("PATH_ROLLBACK_FAILED", safeMessage("PATH_ROLLBACK_FAILED"));
+          }
+        }
+        throw error;
+      }
+    }));
+  }
+
+  async #preserveStreamingWrite(authority: PathAuthority, lease: PathStreamingWriteLease): Promise<PathStreamingWriteSnapshot> {
+    const record = this.#streamingRecord(authority, lease);
+    return this.#withStreamingLock(record, async () => {
+      if (record.state !== "open" || !record.handleOpen) deny("PATH_OPERATION_DENIED");
+      await this.#verifyStreamingWrite(record);
+      await record.handle.sync();
+      await record.handle.close();
+      record.handleOpen = false;
+      record.state = "preserved";
+      return Object.freeze({
+        rootId: record.root.rootId,
+        bytesWritten: record.bytesWritten,
+        sha256: record.hash.copy().digest("hex"),
+      });
+    });
+  }
+
+  async #cancelStreamingWrite(authority: PathAuthority, lease: PathStreamingWriteLease): Promise<void> {
+    const record = this.#streamingRecord(authority, lease, false);
+    await this.#withStreamingLock(record, async () => {
+      if (record.state === "committed" || record.state === "cancelled") return;
+      if (record.handleOpen) {
+        await record.handle.close();
+        record.handleOpen = false;
+      }
+      try {
+        const temporary = await fs.lstat(record.temporaryPath, { bigint: true });
+        if (temporary.isSymbolicLink() || !temporary.isFile() || temporary.nlink !== 1n
+          || !sameIdentity(identityFromStat(temporary), record.temporaryIdentity)) deny("PATH_IDENTITY_CHANGED");
+        await fs.unlink(record.temporaryPath);
+      } catch (error) {
+        if (error instanceof PathDeniedError) throw error;
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") deny("PATH_OPERATION_DENIED");
+      }
+      record.state = "cancelled";
+    });
   }
 
   async withExecutionRoot<T>(

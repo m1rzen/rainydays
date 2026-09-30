@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "taskId": "ECO-06",
+  "sourceManifest": {
+    "exactCasePath": "tests/manifests/eco-06.json",
+    "sha256": "ca9fabb9aafd1be37b65ca5c088ddf2eb45c32f850924096aedb4d592adcb35c"
+  },
+  "requirements": [
+    "managed-npm-esm-project",
+    "canonical-playbook-mjs",
+    "lux-done-agent-parallel-pipeline",
+    "persistent-status-logs-artifacts-state",
+    "singleton-and-child-abort",
+    "archive-unarchive-delete-lifecycle",
+    "running-mutation-denial"
+  ],
+  "runtimeEntries": [
+    {
+      "exactCasePath": "package.json",
+      "sha256": "39e107bc2e6e1ae33c9054f21915ed6141d301b580b2d32fb692712cfd172c09",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "scripts/eco06-governance.mjs",
+      "sha256": "ac4870b632466baf1ab7ffece3edd73cd3aec5848bb4b2f758872f1487376bb7",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "scripts/generate-eco06-resolved-manifest.mjs",
+      "sha256": "6bb2cd2e8e3028a170da85311eec31abda6cdc97dbd5b60ebe3f3c79f0ee0435",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "scripts/report-schema.mjs",
+      "sha256": "5a29619a60712cc31c4b5f8d42e275bc50af8170cc94e510f42e4142155e1047",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "src/index.ts",
+      "sha256": "66e6dc01044271f687f58748a1bfcdc765539292b1be78cca65fdcc924463e15",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "src/playbook.ts",
+      "sha256": "526dcdf2f28038235d3ba89561469268c96b3e97989278a58fab1823d36c904b",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "src/runtime-paths.ts",
+      "sha256": "bffd38c5e1680146eb7f88c58ed23358681b2425831d93aedfa1840ac3624e0c",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "src/tool-policies.ts",
+      "sha256": "12ca10ddf0b6cb1650af92774292ee4530a6db60464011c9615176c2d69bb86c",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "src/tools/advanced-tools.ts",
+      "sha256": "84df100b9cb98f32bebce28b70eeea0533042a2c6adc6c7908704a766596f7d6",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "src/tools/index.ts",
+      "sha256": "72742b9adf6712401516073d77444e7a7c129e43b9224866118e27f846ef10d9",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "personas/default.md",
+      "sha256": "0bb3b8ab8c357a8f920dee063b4529d905474f3e2c76a1ad50066a2049638bfd",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "personas/general.md",
+      "sha256": "a19110b427516f70c26af6e1e13bd64c4b6e339e7e82f613b6ba419351985313",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "personas/playbook.md",
+      "sha256": "8b398f0736975a945213ab3ca444c65ceeb9ebe2d14df96337a3c2f2e17e9e43",
+      "owner": "ECO-06"
+    }
+  ],
+  "testEntries": [
+    {
+      "exactCasePath": "tests/unit/eco06-playbook.test.mjs",
+      "sha256": "235162b87ef299318c3c5e01917aaab80a479736fddc23d4b8346ff9855a3772",
+      "kind": "test",
+      "layer": "unit",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "tests/integration/eco06-playbook-run.test.mjs",
+      "sha256": "3b8ad9befc809c06df746934f1b69396484fa66376d5cc7b7b1d5600403cc008",
+      "kind": "test",
+      "layer": "integration",
+      "owner": "ECO-06"
+    },
+    {
+      "exactCasePath": "tests/contract/eco06-governance.test.mjs",
+      "sha256": "e48fb11ce691aca1f87f3307edcb8a5d1c5a00e2d6632e964bd4ec2c542bf095",
+      "kind": "test",
+      "layer": "contract",
+      "owner": "ECO-06"
+    }
+  ],
+  "canonicalPayloadSha256": "2f7700c305e8e42e4f5619d8bf891f2dcc09ab22d4dca90d59602d623ce6743e"
+}

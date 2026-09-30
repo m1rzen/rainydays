@@ -147,6 +147,12 @@ npm run electron:dev
 
 ### 3. 启动桌面应用
 
+Windows 下可以直接在项目文件夹中双击 **`启动 RainyDays.cmd`**。启动程序会先完成构建，再打开 RainyDays 桌面窗口；构建记录保存在 `test-results/desktop-launch.log`。
+
+`public/index.html` 是桌面应用的界面文件，需要应用服务才能工作。直接在浏览器中打开它会显示启动说明。
+
+也可以从终端启动：
+
 ```powershell
 npm run electron:dev
 ```
@@ -206,6 +212,7 @@ RainyDays 将安全约束作为运行时设计的一部分，而不是只依赖 
 | SEC-01 Capability Broker | 已实现并具备契约与攻击性测试 |
 | SEC-02 PathPolicy | 运行时与候选门禁已闭合；累计 Coverage 债务仍隔离跟踪 |
 | SEC-03 Execution Isolation | **进行中**：原生隔离与真实性原语已建立，完整真实宿主回执集仍待闭合 |
+| TOOL-06 Streaming Download | **WIP**：后台任务、状态/等待/取消、Range/If-Range 续传、身份绑定 partial、原子发布、SHA-256 与安全文件名已实现；独立复审待恢复 |
 | REL-03 Crash Recovery & Safe Mode | **WIP**：main/renderer/service crash-loop 会进入不启动后端或原生执行的恢复窗口；固定维度 crash ledger、脱敏诊断和一次性正常重试已实现，独立复审待恢复 |
 | REL-04 Observability & Diagnostics | **WIP**：结构化脱敏日志与关联标识、`live` / `ready` / `degraded` 健康状态、固定维度聚合指标和不超过 256 KiB 的诊断包已实现；3 个 P1 已完成修复与定向验证，等待新的独立只读复审；P2 DB 全量 instrumentation 仍明确隔离 |
 | RT-10 Background Service & Crash Recovery | **WIP**：核心生命周期、LLM/DB/Terminal 三类中断恢复与 resolved governance 均已通过；独立复审基础设施连续两次无法创建 Session，已按反卡死纪律搁置 |

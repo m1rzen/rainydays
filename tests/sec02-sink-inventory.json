@@ -2,15 +2,15 @@
   "schemaVersion": 2,
   "task": "SEC-02",
   "detectorPolicySha256": "56821eb657093c79b26f088c61458a0d6a20e5e3353d04556970b1f3ba11fe6a",
-  "reviewPolicySha256": "6bf5b31e77fad8a36b91acaa805b35fa613f4295d9964740892cf1d625dc608a",
+  "reviewPolicySha256": "e9f9773821caae72fea9d048a42a81f7ddc4b8234a6a07eea2ba66459b921f2e",
   "dialectCheckerSha256": "30a70a1a4263c1451c584c95d4f226f1939a46cbf3081faa3144925d225a477b",
   "dialectPolicySha256": "e71e8be1b0a4220a50275bb6e88ead58e82f610dade5bd5c53e6242df7c4d769",
   "dialectImportSetSha256": "982af510e73de6d7cb1dedb8659ffb1532cbf7fe18474a64f294a3945f556569",
-  "runtimeSinkSetSha256": "5f8f7a48c21d3325958132e539ad0325ed6d49d0caeb6d840b0b133887fc2a0f",
+  "runtimeSinkSetSha256": "a3192e3e0cad1cf60b51f36b95750561a1fcffa83968db81174f558e6a1cf0ba",
   "sourceClosure": {
     "domain": "mini-lux/sec02/restricted-runtime-dialect/v1",
     "executableFileCount": 102,
-    "executableManifestSha256": "08bc0bea4f01d2643d04b153f1c73d08f7c5f99c9c15e45f406752d20b815985",
+    "executableManifestSha256": "c47b82c00f7c006afcb93624177dc5dc9311610c0a8f8def7afe8b68c9316e45",
     "dialectImportCount": 36,
     "dialectExceptionCount": 2
   },
@@ -115,8 +115,8 @@
     },
     {
       "sourcePath": "src/capability-broker.ts",
-      "bytes": 67412,
-      "sha256": "a36f7031be1aa04c0921a6d4766a1e4392fca68fb4bbf094b320553b186bb13b",
+      "bytes": 73643,
+      "sha256": "28a2eadfbd65171e88559309c3ea4ae50a9aaf3f149c6f548903b047e8909fbb",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -325,8 +325,8 @@
     },
     {
       "sourcePath": "src/path-policy.ts",
-      "bytes": 116080,
-      "sha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
+      "bytes": 134261,
+      "sha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -493,8 +493,8 @@
     },
     {
       "sourcePath": "src/tool-policies.ts",
-      "bytes": 9318,
-      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
+      "bytes": 9621,
+      "sha256": "b02ad6940f8c77ac634a9b9c022eb660425d85120dba2cadd87f14d20fbdef0d",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -542,8 +542,8 @@
     },
     {
       "sourcePath": "src/tools/download-tool.ts",
-      "bytes": 3869,
-      "sha256": "c6f84ea739b25c2a9a7dc3efb8f346fac70567a04d50b13957c88b9c5b039849",
+      "bytes": 33424,
+      "sha256": "688a6f8c9ecacdf6fcf6e9f87b8da9c96b92a141f8e0af7b3c65320d9f427466",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -577,8 +577,8 @@
     },
     {
       "sourcePath": "src/tools/index.ts",
-      "bytes": 32038,
-      "sha256": "f7cec1d0f2daf8f46073bc254d22e4ab8c90c4f2f255c924dd5c2f66dc9549a3",
+      "bytes": 33128,
+      "sha256": "c2be1f37eb9603eb296ebab06efca90fed389abd823c1150c8ed57cb08b803f0",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -703,8 +703,8 @@
     },
     {
       "sourcePath": "src/types.ts",
-      "bytes": 12067,
-      "sha256": "b8b3832dbcac45658a63bb020a86ac40fcaab42b010bd829ddd867f3c8fb3b4a",
+      "bytes": 12459,
+      "sha256": "6ae065f4fe3647fc777de9435965894ff03e5428c9753b79df16cdf08dcece88",
       "role": "product-runtime",
       "packageExpectation": "compiled-to-asar"
     },
@@ -753,7 +753,15 @@
       "executionContract": "sec02-receipt",
       "testFile": "tests/integration/path-tool-gateway.test.mjs",
       "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
-      "testFileSha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+      "testFileSha256": "c00de130f92cc692c77e771bf7d8b93d7e98ac20308d2519b73a25e18efcac2b"
+    },
+    {
+      "id": "download-streaming",
+      "layer": "integration",
+      "executionContract": "node-test-file-pass",
+      "testFile": "tests/integration/tool06-download.test.mjs",
+      "testCaseId": "TOOL-06 streams a large file with bounded ArrayBuffer growth",
+      "testFileSha256": "b0e0f2c7a7423d588c7b92ceabfd0169ee82438ec1ddcd9c848c6c6a13f7ec75"
     },
     {
       "id": "electron-source",
@@ -3996,8 +4004,8 @@
       "id": "sink-d07b4b2c8cf7ed613e3fd830",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 528,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 571,
       "column": 7,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.constructor",
@@ -4029,8 +4037,8 @@
       "id": "sink-5b4b1a17f54d5de7a7588020",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 671,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 714,
       "column": 55,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.createAuthority",
@@ -4062,8 +4070,8 @@
       "id": "sink-1325c487f00c8b00e5fd4197",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 828,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 871,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#readExistingFile",
@@ -4095,8 +4103,8 @@
       "id": "sink-f2d559c8c06d3799c3e6ff23",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 910,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 953,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.openReadLease",
@@ -4128,8 +4136,8 @@
       "id": "sink-a2b77b03c3ab9d929c4bee3a",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1095,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1138,
       "column": 31,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#listExistingDirectory",
@@ -4161,8 +4169,8 @@
       "id": "sink-78d1b7507b44007ca06340dd",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1106,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1149,
       "column": 35,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#listExistingDirectory",
@@ -4194,8 +4202,8 @@
       "id": "sink-ff4b9c576fb181b9541df431",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1146,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1189,
       "column": 34,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.preflightWrite",
@@ -4227,8 +4235,8 @@
       "id": "sink-de1767bbba819217e62bc36b",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1164,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1207,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.preflightWrite",
@@ -4257,11 +4265,561 @@
       }
     },
     {
+      "id": "sink-01f05b3163240573077a462b",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1311,
+      "column": 15,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "83ac57920f3f224d43e2b52602cc654a84f47fbe5d4650778794ef7a374a9a6c",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-7b3826d77bdb5b5353f91c6c",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1330,
+      "column": 32,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "bc81103db61999b971c862732dabc787878e4b6f4c9d8caab174ee649914351a",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-3e7ca74407b131fd5c6983fc",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1332,
+      "column": 26,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "782af95d87e9b64edba5360f7277c303c932bc438e16cc0ea8c276f68726e1a4",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.open",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-3b244d2fb5bbf5ee26e9fb5a",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1350,
+      "column": 26,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "open",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "9df2e33977db92adb1f5d425437965811d3c27123e74ccda18c46fc98082dbda",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.open",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-d9a6cf7fe322371edc4edcd0",
+      "occurrence": 2,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1354,
+      "column": 29,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "bc81103db61999b971c862732dabc787878e4b6f4c9d8caab174ee649914351a",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-41ddcc0da1311ee1482d3b19",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1392,
+      "column": 28,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.beginStreamingWrite",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "590a6e6acd23502ee67571dfabc895f41777311a575041eb6675a7e67d0c7104",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:node-fs.unlink",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.beginStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-91ab5c27ca4d01c980f5566f",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1432,
+      "column": 25,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.#verifyStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "6729776477ad8c48baabbe6aee3a8048c1e1ceb60c5aeb3dce66e110da4c6937",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#verifyStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#verifyStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-ba1c3246da353ca663b4ac71",
+      "occurrence": 2,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1496,
+      "column": 33,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "6729776477ad8c48baabbe6aee3a8048c1e1ceb60c5aeb3dce66e110da4c6937",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-4b97e96c56be5935fee7c919",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1501,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "3253ad1a101e7f9f3f2256e5490d105486d9faed0b9292df142c047ba0effb74",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-5d55792ec49ac0eb48f125fc",
+      "occurrence": 2,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1513,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "3253ad1a101e7f9f3f2256e5490d105486d9faed0b9292df142c047ba0effb74",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-5af8a71e3d2fa08c0abcdc34",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1519,
+      "column": 15,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "rename",
+      "pathOperands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "normalizedNodeSha256": "ff171651773b253d14c9ad91b6ee0cd281171f1d5632ff0415f92e166b92b20c",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.rename",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-1aad2048831c9b6d96620497",
+      "occurrence": 3,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1522,
+      "column": 33,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "3253ad1a101e7f9f3f2256e5490d105486d9faed0b9292df142c047ba0effb74",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-ff3285eccecc95e70b6d8ae4",
+      "occurrence": 4,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1539,
+      "column": 37,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "3253ad1a101e7f9f3f2256e5490d105486d9faed0b9292df142c047ba0effb74",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-0ee93bd46905ffdc66117b9e",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1542,
+      "column": 19,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.#commitStreamingWrite",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "6be1ca904c9922e2d0af1a4beb167c2532efa86b078a85ef36c3f4ccf54d765d",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:node-fs.unlink",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#commitStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-1220ec26afc3982b474aa23e",
+      "occurrence": 3,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1579,
+      "column": 33,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.#cancelStreamingWrite",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "6729776477ad8c48baabbe6aee3a8048c1e1ceb60c5aeb3dce66e110da4c6937",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#cancelStreamingWrite:node-fs.lstat",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#cancelStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sink-077dc6d4c2f31b72da5d38a7",
+      "occurrence": 1,
+      "sourcePath": "src/path-policy.ts",
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1582,
+      "column": 15,
+      "nodeKind": "CallExpression",
+      "container": "PathPolicy.#cancelStreamingWrite",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "normalizedNodeSha256": "ce8cbc92e550c0db538c611613b9ef9c66eb73e8d4702c523ff77abaa1ac2a7b",
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.#cancelStreamingWrite:node-fs.unlink",
+        "evidenceIds": [
+          "download-streaming",
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "adapter-canonical-path",
+            "anchor": "src/path-policy.ts#PathPolicy.#cancelStreamingWrite:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "id": "sink-9b3f2a2f2b60f26b8d97367d",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1418,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1780,
       "column": 39,
       "nodeKind": "CallExpression",
       "container": "authorizeEvent",
@@ -4293,8 +4851,8 @@
       "id": "sink-80da13a0e97e59dbf5610599",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1434,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1796,
       "column": 44,
       "nodeKind": "CallExpression",
       "container": "authorizeEvent",
@@ -4326,8 +4884,8 @@
       "id": "sink-9fde321546e5855e056413c6",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1514,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1876,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.createDirectoryEnrollment",
@@ -4359,8 +4917,8 @@
       "id": "sink-cc26c9c6241404b868cb9ff5",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1533,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1895,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.createDirectoryEnrollment",
@@ -4392,8 +4950,8 @@
       "id": "sink-cde5e810d3ee12c466bbe598",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1569,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 1931,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.createDirectoryEnrollment",
@@ -4425,8 +4983,8 @@
       "id": "sink-45aafbf06f3ba6b4b432ca21",
       "occurrence": 3,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1676,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2038,
       "column": 34,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -4458,8 +5016,8 @@
       "id": "sink-e8bd7a921e275c2d076200c9",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1698,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2060,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -4491,8 +5049,8 @@
       "id": "sink-65f60948655b4d38e0a20418",
       "occurrence": 4,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1719,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2081,
       "column": 39,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -4524,8 +5082,8 @@
       "id": "sink-7ef54cffaaf1a40302646bf7",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1726,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2088,
       "column": 15,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.atomicCreateOrReplaceFile",
@@ -4563,8 +5121,8 @@
       "id": "sink-b6fb1447a514cafa9c331606",
       "occurrence": 5,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1764,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2126,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -4596,8 +5154,8 @@
       "id": "sink-f8da28023c86bcc1887e8d50",
       "occurrence": 3,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1778,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2140,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -4629,8 +5187,8 @@
       "id": "sink-d2a49869e474b75263232be7",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1820,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2182,
       "column": 17,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -4662,8 +5220,8 @@
       "id": "sink-3a5aaa9e86d75cfa3cf56745",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1842,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2204,
       "column": 30,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#createFileInternal",
@@ -4695,8 +5253,8 @@
       "id": "sink-912df4104abb57a812ffda61",
       "occurrence": 6,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1901,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2263,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.removeDirectory",
@@ -4728,8 +5286,8 @@
       "id": "sink-be81a48199e331f59cc3d5f7",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1925,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2287,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.removeDirectory",
@@ -4761,8 +5319,8 @@
       "id": "sink-03005ef383e11ebfab9e932d",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1926,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2288,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.removeDirectory",
@@ -4794,8 +5352,8 @@
       "id": "sink-a372b0061be747348b21f244",
       "occurrence": 7,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1948,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2310,
       "column": 32,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.removeFile",
@@ -4827,8 +5385,8 @@
       "id": "sink-0824ff9ad052f4bf02999c5e",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1972,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2334,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.removeFile",
@@ -4860,8 +5418,8 @@
       "id": "sink-cf72afa73f2160d61836a297",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 1973,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2335,
       "column": 13,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.removeFile",
@@ -4893,8 +5451,8 @@
       "id": "sink-62f6be76773c81c611392cc6",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 2023,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2385,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#replaceFileInternal",
@@ -4926,8 +5484,8 @@
       "id": "sink-d2b3bae251640d085de9f8fb",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 2254,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2616,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#probeDirectoryIdentity",
@@ -4959,8 +5517,8 @@
       "id": "sink-bc622822b78e0fae61abf411",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 2274,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2636,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#walkConfiguredRootNoRedirect",
@@ -4992,8 +5550,8 @@
       "id": "sink-b86b6e2c1b8be8f8ebde2a7e",
       "occurrence": 2,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 2328,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2690,
       "column": 26,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#walkNoRedirect",
@@ -5025,8 +5583,8 @@
       "id": "sink-50aa4bbe9ddb4d3050bd9030",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 2338,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2700,
       "column": 24,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#statIdentity",
@@ -5058,8 +5616,8 @@
       "id": "sink-e980b687cfd4c6b4479cd08a",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 2348,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2710,
       "column": 24,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#lstatIdentity",
@@ -5091,8 +5649,8 @@
       "id": "sink-d5c18a3016878722c5c3b799",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 2362,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2724,
       "column": 28,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -5124,8 +5682,8 @@
       "id": "sink-81e504409c0c68f6a0cf38cd",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 2371,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2733,
       "column": 56,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -5157,8 +5715,8 @@
       "id": "sink-e4b423b50f51232897635ec7",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 2372,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2734,
       "column": 20,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -5190,8 +5748,8 @@
       "id": "sink-9ff1eb6f05ac2ab782130c15",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 2377,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2739,
       "column": 15,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#rollbackCreated",
@@ -5223,8 +5781,8 @@
       "id": "sink-d765d63e87811019a1eb8af1",
       "occurrence": 1,
       "sourcePath": "src/path-policy.ts",
-      "fileSha256": "b8989794132a5ef73a037b11ba781df64d819cbeaa3791898af86d4b616a6ff0",
-      "line": 2387,
+      "fileSha256": "b0caf21a855e79cb63100b74beb4b6df76ddb7f80b5b2024362a94257403eed0",
+      "line": 2749,
       "column": 12,
       "nodeKind": "CallExpression",
       "container": "PathPolicy.#realpathOrDeny",
@@ -5646,5 +6204,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "6e84b4153069e36bc3daab9dfed775b45d909593568a970858925baa7c772638"
+  "canonicalPayloadSha256": "85d20d65f8625ea1e249b10f0b856d23f1292e010fd0ae7b022fd6f7228a8bb9"
 }

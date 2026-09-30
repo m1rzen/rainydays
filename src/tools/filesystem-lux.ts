@@ -3,6 +3,7 @@ import { throwIfCancelled } from "../run-cancellation.js";
 import { ToolArgumentsError } from "../tool-pipeline.js";
 import type { ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 import { parseDocumentIsolated } from "../document-parser.js";
+import { routeToSelectedWorker } from "../worker.js";
 import { readAttachmentDocument } from "../attachment-reader.js";
 
 const MAX_DOCUMENT_BYTES = 32 * 1024 * 1024;
@@ -103,6 +104,8 @@ export const readDef: ToolDefinition = {
 export const readExec: ToolExecutor = async (args, _env, invocationValue) => {
   const invocation = requireInvocation(invocationValue);
   if (typeof args.file_path === "string" && args.file_path.startsWith("attachment:")) return readAttachmentDocument(args, invocation);
+  const remote = await routeToSelectedWorker(invocation, "read", args);
+  if (remote !== null) return remote;
   const defaultRootId = requireRootId(invocation.path, "DATA_ROOT");
   const filePath = args.file_path as string;
   const extension = path.extname(filePath).toLowerCase();
@@ -144,6 +147,8 @@ export const writeDef: ToolDefinition = {
 
 export const writeExec: ToolExecutor = async (args, _env, invocationValue) => {
   const invocation = requireInvocation(invocationValue);
+  const remote = await routeToSelectedWorker(invocation, "write", args);
+  if (remote !== null) return remote;
   const defaultRootId = requireRootId(invocation.path, "OUTPUT_DIR");
   const bytes = Buffer.from(args.content as string, "utf8");
   if (bytes.length > MAX_TEXT_BYTES) throw new ToolArgumentsError("写入内容超过 8 MiB 上限");
@@ -188,6 +193,8 @@ function occurrenceCount(content: string, needle: string): number {
 
 export const editExec: ToolExecutor = async (args, _env, invocationValue) => {
   const invocation = requireInvocation(invocationValue);
+  const remote = await routeToSelectedWorker(invocation, "edit", args);
+  if (remote !== null) return remote;
   const defaultRootId = requireRootId(invocation.path, "OUTPUT_DIR");
   const filePath = args.file_path as string;
   const oldString = args.old_string as string;
@@ -253,6 +260,8 @@ export const globDef: ToolDefinition = {
 
 export const globExec: ToolExecutor = async (args, _env, invocationValue) => {
   const invocation = requireInvocation(invocationValue);
+  const remote = await routeToSelectedWorker(invocation, "glob", args);
+  if (remote !== null) return remote;
   const defaultRootId = requireRootId(invocation.path, "DATA_ROOT");
   const matcher = compileGlob(args.pattern);
   const basePath = typeof args.path === "string" ? args.path : "";

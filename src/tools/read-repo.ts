@@ -8,6 +8,7 @@ import { getBootstrapPathStore } from "../bootstrap-path-store.js";
 import type { ScopedPathGateway, ToolDefinition, ToolExecutor } from "../types.js";
 import { cancellationError, throwIfCancelled } from "../run-cancellation.js";
 import { createToolOutcome } from "../tool-pipeline.js";
+import { routeToSelectedWorker } from "../worker.js";
 
 const MAX_GIT_OUTPUT_BYTES = 8 * 1024 * 1024;
 const MAX_TRACKED_FILES = 10_000;
@@ -185,6 +186,8 @@ function repositoryOutput(level: string, displayRoot: string, selectionNote: str
 
 export const readRepoExec: ToolExecutor = async (args, _env, invocation) => {
   if (!invocation) throw new Error("Path gateway is required");
+  const remote = await routeToSelectedWorker(invocation, "read_repo", args);
+  if (remote !== null) return remote;
   throwIfCancelled(invocation.signal);
   const gateway = invocation.path;
   const rootId = gateway.rootIdForEnv("DATA_ROOT") ?? gateway.rootIdForEnv("WORKSPACE_ROOT");

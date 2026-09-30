@@ -28,7 +28,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "d2f5269d283b6cd1a163c01211d9e97bab1b74e512b1adec8541e7fe7decce54",
+      "sha256": "d0bdaec00be926cfa152b9786a0e0f2de7410013ddf2f7fdac2b115f983e86ba",
       "owner": "REL-03"
     },
     {
@@ -43,22 +43,22 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "0d913f3167364b53cf0f51101820b151d7d97b76167da57b8ec776b6baa644d5",
+      "sha256": "1722f8ba8571fd276466224fe3edb916cd3aec36246250c4295bffb1277e848a",
       "owner": "REL-03"
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "2749389342cc762ea859f98aa344fca159e5c4d6752d746ed6f70c8720b5995f",
+      "sha256": "df5f12e19f4132fe73b42934e63f6da38a696738bc32058d49524ebfbbb1d35b",
       "owner": "REL-03"
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "e206170c6c2661a4a9bd74467f492c459a9acf5a6ab4fa7d82adc3ea8e804c4b",
+      "sha256": "2a6dcd397ee4ffb6a82ff70838ed53785f6a049303bdd1bd99f4b418434375a2",
       "owner": "REL-03"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "36fc5f64811be861aa81ca8d69fb308de8039ee3e2400c4e2d4c8cdb57afe70e",
+      "sha256": "03f0ec3775a7a130a0cd6ace738166a0c58778f6d4dfc4a3c2eb28816dedded1",
       "owner": "REL-03"
     }
   ],
@@ -99,5 +99,5 @@
       "owner": "REL-03"
     }
   ],
-  "canonicalPayloadSha256": "76782223654420c2b81c50fb1e5d727316661d55f357318dd7c64667db31c1f6"
+  "canonicalPayloadSha256": "23891ebde9358b4af859b880e6009148b92cb3b5548376e103ec5eead60fd10e"
 }

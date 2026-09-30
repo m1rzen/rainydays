@@ -56,6 +56,13 @@ import {
   scriptDef, scriptExec,
 } from "./script.js";
 import {
+  routineSearchDef, routineSearchExec,
+  routineGetDef, routineGetExec,
+  routineCreateDef, routineCreateExec,
+  routineDeleteDef, routineDeleteExec,
+  routineRunDef, routineRunExec,
+} from "./routine-tools.js";
+import {
   getCurrentTimeDef, getCurrentTimeExec,
 } from "./system.js";
 import {
@@ -70,8 +77,37 @@ import {
 import { createConsolidateExec } from "./knowledge-tools.js";
 import { curateDef } from "./curate-tool.js";
 import { webSearchDef, webSearchExec } from "./search-tool.js";
-import { downloadDef, downloadExec } from "./download-tool.js";
+import {
+  downloadCancelDef, downloadCancelExec,
+  downloadDef, downloadExec,
+  downloadStatusDef, downloadStatusExec,
+  downloadWaitDef, downloadWaitExec,
+} from "./download-tool.js";
 import { askUserDef, askUserExec } from "./ask-user-tool.js";
+import {
+  bashDef, bashExec, bashKillDef, bashKillExec, bashListDef, bashListExec, bashOutputDef, bashOutputExec,
+  workerConnectDef, workerConnectExec, workerDisconnectDef, workerDisconnectExec,
+  workerDownloadDef, workerDownloadExec, workerListDef, workerListExec,
+  workerSelectDef, workerSelectExec, workerStatusDef, workerStatusExec, workerUploadDef, workerUploadExec,
+} from "./worker-tools.js";
+import {
+  browserBackDef, browserBackExec,
+  browserClickDef, browserClickExec,
+  browserCloseDef, browserCloseExec,
+  browserCloseTabDef, browserCloseTabExec,
+  browserEvalDef, browserEvalExec,
+  browserFetchDef, browserFetchExec,
+  browserFillDef, browserFillExec,
+  browserForwardDef, browserForwardExec,
+  browserNewTabDef, browserNewTabExec,
+  browserOpenDef, browserOpenExec,
+  browserPressDef, browserPressExec,
+  browserScreenshotDef, browserScreenshotExec,
+  browserScrollDef, browserScrollExec,
+  browserSnapshotDef, browserSnapshotExec,
+  browserTabsDef, browserTabsExec,
+  browserTypeDef, browserTypeExec,
+} from "./browser-tools.js";
 import {
   oracleQueryDef,
   oracleSaveDef, oracleSaveExec,
@@ -79,6 +115,9 @@ import {
   playbookListDef, playbookListExec,
   playbookCreateDef, playbookCreateExec,
   playbookStatusDef, playbookStatusExec,
+  playbookArchiveDef, playbookArchiveExec,
+  playbookUnarchiveDef, playbookUnarchiveExec,
+  playbookDeleteDef, playbookDeleteExec,
   linkDiscoverDef, linkDiscoverExec,
   linkPeekDef, linkPeekExec,
   linkPostDef, linkPostExec,
@@ -94,6 +133,13 @@ import {
   searchToolsDef, searchToolsExec, setNotifyCallback,
 } from "./phase1-tools.js";
 import { imageHelperDef, imageHelperExec } from "./image-helper.js";
+import {
+  generateImageDef, generateImageExec,
+  generateVideoDef, generateVideoExec,
+  mediaCancelDef, mediaCancelExec,
+  mediaHistoryDef, mediaHistoryExec,
+  mediaStatusDef, mediaStatusExec,
+} from "./media-tools.js";
 import { readRepoDef, readRepoExec } from "./read-repo.js";
 import { savePersonaDef, createSavePersonaExec } from "./save-persona.js";
 import type { CronJobRow } from "../db.js";
@@ -134,6 +180,17 @@ const rawStaticTools: Omit<RegisteredTool, "policy">[] = [
   { name: "shell_resize",    definition: shellResizeDef,      executor: shellResizeExec },
   { name: "shell_list",      definition: shellListDef,        executor: shellListExec },
   { name: "shell_kill",      definition: shellKillDef,        executor: shellKillExec },
+  { name: "bash",            definition: bashDef,              executor: bashExec },
+  { name: "bash_output",     definition: bashOutputDef,        executor: bashOutputExec },
+  { name: "bash_list",       definition: bashListDef,          executor: bashListExec },
+  { name: "bash_kill",       definition: bashKillDef,          executor: bashKillExec },
+  { name: "worker_list",     definition: workerListDef,        executor: workerListExec },
+  { name: "worker_status",   definition: workerStatusDef,      executor: workerStatusExec },
+  { name: "worker_select",   definition: workerSelectDef,      executor: workerSelectExec },
+  { name: "worker_connect",  definition: workerConnectDef,     executor: workerConnectExec },
+  { name: "worker_disconnect", definition: workerDisconnectDef, executor: workerDisconnectExec },
+  { name: "worker_upload",   definition: workerUploadDef,      executor: workerUploadExec },
+  { name: "worker_download", definition: workerDownloadDef,    executor: workerDownloadExec },
   { name: "fetch_markdown",  definition: fetchMarkdownDef,   executor: fetchMarkdownExec },
   { name: "fetch_url",       definition: fetchUrlDef,        executor: fetchUrlExec },
   { name: "remember",        definition: rememberDef,        executor: rememberExec },
@@ -145,18 +202,45 @@ const rawStaticTools: Omit<RegisteredTool, "policy">[] = [
   { name: "task_get",        definition: taskGetDef,         executor: taskGetExec },
   { name: "task_delete",     definition: taskDeleteDef,      executor: taskDeleteExec },
   { name: "script",          definition: scriptDef,           executor: scriptExec },
+  { name: "routine_search",  definition: routineSearchDef,    executor: routineSearchExec },
+  { name: "routine_get",     definition: routineGetDef,       executor: routineGetExec },
+  { name: "routine_create",  definition: routineCreateDef,    executor: routineCreateExec },
+  { name: "routine_delete",  definition: routineDeleteDef,    executor: routineDeleteExec },
+  { name: "routine_run",     definition: routineRunDef,       executor: routineRunExec },
   { name: "get_current_time", definition: getCurrentTimeDef,  executor: getCurrentTimeExec },
   { name: "cron_list",        definition: cronListDef,         executor: cronListExec },
   { name: "inspect",          definition: inspectDef,          executor: inspectExec },
   { name: "graph",            definition: graphDef,             executor: graphExec },
   { name: "web_search",       definition: webSearchDef,         executor: webSearchExec },
   { name: "download",         definition: downloadDef,          executor: downloadExec },
+  { name: "download_status",  definition: downloadStatusDef,    executor: downloadStatusExec },
+  { name: "download_wait",    definition: downloadWaitDef,      executor: downloadWaitExec },
+  { name: "download_cancel",  definition: downloadCancelDef,    executor: downloadCancelExec },
   { name: "ask_user",         definition: askUserDef,           executor: askUserExec },
+  { name: "browser_open",     definition: browserOpenDef,       executor: browserOpenExec },
+  { name: "browser_close",    definition: browserCloseDef,      executor: browserCloseExec },
+  { name: "browser_tabs",     definition: browserTabsDef,       executor: browserTabsExec },
+  { name: "browser_new_tab",  definition: browserNewTabDef,     executor: browserNewTabExec },
+  { name: "browser_close_tab", definition: browserCloseTabDef,   executor: browserCloseTabExec },
+  { name: "browser_snapshot", definition: browserSnapshotDef,   executor: browserSnapshotExec },
+  { name: "browser_click",    definition: browserClickDef,      executor: browserClickExec },
+  { name: "browser_fill",     definition: browserFillDef,       executor: browserFillExec },
+  { name: "browser_type",     definition: browserTypeDef,       executor: browserTypeExec },
+  { name: "browser_press",    definition: browserPressDef,      executor: browserPressExec },
+  { name: "browser_scroll",   definition: browserScrollDef,     executor: browserScrollExec },
+  { name: "browser_screenshot", definition: browserScreenshotDef, executor: browserScreenshotExec },
+  { name: "browser_eval",     definition: browserEvalDef,       executor: browserEvalExec },
+  { name: "browser_back",     definition: browserBackDef,       executor: browserBackExec },
+  { name: "browser_forward",  definition: browserForwardDef,    executor: browserForwardExec },
+  { name: "browser_fetch",    definition: browserFetchDef,      executor: browserFetchExec },
   { name: "oracle_save",      definition: oracleSaveDef,        executor: oracleSaveExec },
   { name: "oracle_status",    definition: oracleStatusDef,      executor: oracleStatusExec },
   { name: "playbook_list",    definition: playbookListDef,      executor: playbookListExec },
   { name: "playbook_create",  definition: playbookCreateDef,    executor: playbookCreateExec },
   { name: "playbook_status",  definition: playbookStatusDef,    executor: playbookStatusExec },
+  { name: "playbook_archive", definition: playbookArchiveDef,   executor: playbookArchiveExec },
+  { name: "playbook_unarchive", definition: playbookUnarchiveDef, executor: playbookUnarchiveExec },
+  { name: "playbook_delete",  definition: playbookDeleteDef,    executor: playbookDeleteExec },
   { name: "link_discover",    definition: linkDiscoverDef,      executor: linkDiscoverExec },
   { name: "link_peek",        definition: linkPeekDef,           executor: linkPeekExec },
   { name: "link_post",        definition: linkPostDef,           executor: linkPostExec },
@@ -170,6 +254,11 @@ const rawStaticTools: Omit<RegisteredTool, "policy">[] = [
   { name: "mascot_notify",    definition: mascotNotifyDef,        executor: mascotNotifyExec },
   { name: "search_tools",     definition: searchToolsDef,         executor: searchToolsExec },
   { name: "image_helper",     definition: imageHelperDef,         executor: imageHelperExec },
+  { name: "generate_image",   definition: generateImageDef,       executor: generateImageExec },
+  { name: "generate_video",   definition: generateVideoDef,       executor: generateVideoExec },
+  { name: "media_status",     definition: mediaStatusDef,         executor: mediaStatusExec },
+  { name: "media_cancel",     definition: mediaCancelDef,         executor: mediaCancelExec },
+  { name: "media_history",    definition: mediaHistoryDef,        executor: mediaHistoryExec },
   { name: "read_repo",        definition: readRepoDef,            executor: readRepoExec },
 ];
 
@@ -465,6 +554,18 @@ function invocationServices(
       signal: childSignal,
       assertActive: () => detachedLoopDetectors.has(context) && capabilityBroker.isContextActive(context),
     }),
+    registerDetachedResource: (context, closer) => {
+      if (!detachedLoopDetectors.has(context) || !capabilityBroker.isContextActive(context)) {
+        throw new Error("Detached resource context is unavailable");
+      }
+      return capabilityBroker.registerDetachedResource(executionContext, context, closer);
+    },
+    reserveDetachedStreamingFile: (context, input, options) => {
+      if (!detachedLoopDetectors.has(context) || !capabilityBroker.isContextActive(context)) {
+        throw new Error("Detached streaming context is unavailable");
+      }
+      return capabilityBroker.reserveDetachedStreamingFile(executionContext, context, inspected, input, options);
+    },
     getUnattendedChildToolNames: () => capabilityBroker.getUnattendedChildToolNames(
       capabilityBroker.getInvocationSourceContext(executionContext),
     ),

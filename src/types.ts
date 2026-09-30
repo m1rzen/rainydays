@@ -5,7 +5,7 @@
 import type { CapabilityContext, ChildCapabilityRequest, ToolPolicy } from "./capability-broker.js";
 import type { ResourceOwner } from "./resource-owner.js";
 import type { ScopedExecutionGateway } from "./execution-runtime.js";
-import type { ExecutionRootLease, PathCreateResult, PathDirectoryEntry, PathReadResult, PathReplaceResult, PathTransformResult, PathWatchEvent } from "./path-policy.js";
+import type { ExecutionRootLease, PathCreateResult, PathDirectoryEntry, PathReadResult, PathReplaceResult, PathStreamingWriteLease, PathTransformResult, PathWatchEvent } from "./path-policy.js";
 import type { SecurityAuditJournal } from "./security-audit-journal.js";
 
 /** 对话角色 */
@@ -196,6 +196,12 @@ export interface ToolInvocationServices {
     signal: AbortSignal,
   ) => Promise<string>;
   readonly createDetachedNetwork: (context: CapabilityContext, signal: AbortSignal) => ScopedNetworkGateway;
+  readonly registerDetachedResource: (context: CapabilityContext, closer: () => void | Promise<void>) => () => void;
+  readonly reserveDetachedStreamingFile: (
+    context: CapabilityContext,
+    input: string,
+    options: Readonly<{ defaultRootId?: string; maxBytes: number; resumeId: string; requiredExtension?: string }>,
+  ) => Promise<PathStreamingWriteLease>;
   readonly getUnattendedChildToolNames: () => readonly string[];
   readonly listCurrentToolDefinitions: () => ToolDefinition[];
   readonly getToolDefinitions: (context: CapabilityContext) => ToolDefinition[];

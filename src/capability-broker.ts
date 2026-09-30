@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { PathDeniedError, type ExecutionRootAccess, type PathAuthority, type PathOperation, type PathPolicy } from "./path-policy.js";
+import { PathDeniedError, type ExecutionRootAccess, type PathAuthority, type PathOperation, type PathPolicy, type PathStreamingWriteLease } from "./path-policy.js";
 import type { PersonaPermissionLevel, ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "./types.js";
 import {
   assertResourceOwner,
@@ -925,6 +925,137 @@ export class CapabilityBroker {
     } finally {
       this.revokeContext(attachedRecord);
     }
+  }
+
+  registerDetachedResource(
+    executionContext: CapabilityContext,
+    detachedContext: CapabilityContext,
+    closer: () => void | Promise<void>,
+  ): () => void {
+    const executionRecord = this.requireActiveContext(executionContext);
+    const detachedRecord = this.requireActiveContext(detachedContext);
+    const source = executionRecord.grant && executionRecord.parent ? executionRecord.parent : executionRecord;
+    if (detachedRecord.parent !== null || detachedContext.principal !== "subagent"
+      || detachedRecord.authority !== source.authority || detachedContext.sessionId !== source.context.sessionId) {
+      denied("CAPABILITY_CONTEXT_FORGED", "detached resource context differs");
+    }
+    return registerOwnedResource(this.getResourceOwner(detachedContext), closer);
+  }
+
+  async reserveDetachedStreamingFile(
+    executionContext: CapabilityContext,
+    detachedContext: CapabilityContext,
+    inspected: InspectedToolCall,
+    input: string,
+    options: Readonly<{ defaultRootId?: string; maxBytes: number; resumeId: string; requiredExtension?: string }>,
+  ): Promise<PathStreamingWriteLease> {
+    const executionRecord = this.requireActiveContext(executionContext);
+    const detachedRecord = this.requireActiveContext(detachedContext);
+    const inspectedRecord = this.requireInspectedCall(inspected);
+    const source = executionRecord.grant && executionRecord.parent ? executionRecord.parent : executionRecord;
+    if (detachedRecord.parent !== null || detachedContext.principal !== "subagent"
+      || detachedRecord.authority !== source.authority || detachedContext.sessionId !== source.context.sessionId
+      || inspectedRecord.source !== source) {
+      denied("CAPABILITY_CONTEXT_FORGED", "detached streaming context differs");
+    }
+    const binding = this.requireToolBinding(executionRecord, inspected.name);
+    if (binding !== inspectedRecord.binding || !binding.policy.pathOperations?.includes("create-file")
+      || !binding.policy.effects.includes("filesystem") || !binding.policy.riskClasses.includes("write")) {
+      denied("CAPABILITY_BINDING_MISMATCH", "detached streaming binding differs");
+    }
+    if (!options || !Number.isSafeInteger(options.maxBytes) || options.maxBytes < 1
+      || typeof options.resumeId !== "string") throw new TypeError("detached streaming options are invalid");
+    if (options.defaultRootId !== undefined && !detachedRecord.roots.has(options.defaultRootId)) {
+      denied("CAPABILITY_RISK_DENIED", "detached streaming root is unavailable");
+    }
+    const streamAuthority = this.pathPolicy.deriveAuthority(detachedRecord.pathAuthority, [...detachedRecord.roots]);
+    const owner = this.getResourceOwner(detachedContext);
+    const request = Object.freeze({
+      input,
+      operation: "create-file" as const,
+      defaultRootId: options.defaultRootId,
+      requiredExtension: options.requiredExtension,
+      auditIdentity: Object.freeze({
+        sessionId: detachedContext.sessionId,
+        runId: detachedContext.runId,
+        principal: detachedContext.principal,
+      }),
+    });
+    let lease: PathStreamingWriteLease | null = null;
+    let settled = false;
+    let unregisterOwned: () => void = () => undefined;
+    let finishInitialization: () => void = () => undefined;
+    const initialized = new Promise<void>(resolve => { finishInitialization = resolve; });
+    let closePromise: Promise<void> | null = null;
+    const releaseAuthority = () => {
+      unregisterOwned();
+      if (this.pathPolicy.isActive(streamAuthority)) this.pathPolicy.revoke(streamAuthority);
+    };
+    const ownerClose = (): Promise<void> => {
+      if (closePromise) return closePromise;
+      settled = true;
+      closePromise = (async () => {
+        await initialized;
+        try { await lease?.cancel(); }
+        finally { releaseAuthority(); }
+      })();
+      return closePromise;
+    };
+    let initializationError: unknown = null;
+    try {
+      unregisterOwned = registerOwnedResource(owner, ownerClose);
+      const preflight = await this.pathPolicy.preflightWrite(streamAuthority, request);
+      lease = await this.pathPolicy.beginStreamingWrite(streamAuthority, preflight, options.maxBytes, options.resumeId);
+    } catch (error) {
+      initializationError = error;
+    } finally {
+      finishInitialization();
+    }
+    if (initializationError) {
+      await ownerClose().catch(() => undefined);
+      throw initializationError;
+    }
+    if (closePromise) {
+      await closePromise;
+      denied("CAPABILITY_CONTEXT_STALE", "detached streaming lease closed during creation");
+    }
+    const requireOpen = () => {
+      if (settled || !lease) denied("CAPABILITY_CONTEXT_STALE", "detached streaming lease is closed");
+      return lease;
+    };
+    const terminal = async <T>(action: (activeLease: PathStreamingWriteLease) => Promise<T>): Promise<T> => {
+      const activeLease = requireOpen();
+      try {
+        const value = await action(activeLease);
+        settled = true;
+        releaseAuthority();
+        return value;
+      } catch (error) {
+        settled = true;
+        let cleanupError: unknown = null;
+        try { await activeLease.cancel(); } catch (cleanupFailure) { cleanupError = cleanupFailure; }
+        releaseAuthority();
+        if (cleanupError) throw new AggregateError([error, cleanupError], "detached streaming operation and cleanup failed", { cause: error });
+        throw error;
+      }
+    };
+    if (!lease) denied("CAPABILITY_CONTEXT_STALE", "detached streaming lease was not published");
+    const activeLease: PathStreamingWriteLease = lease;
+    const wrapped: PathStreamingWriteLease = {
+      rootId: activeLease.rootId,
+      snapshot: () => requireOpen().snapshot(),
+      write: (bytes: Uint8Array) => requireOpen().write(bytes),
+      reset: () => requireOpen().reset(),
+      commit: (expectedSha256?: string) => terminal(current => current.commit(expectedSha256)),
+      preserve: () => terminal(current => current.preserve()),
+      cancel: async () => {
+        if (settled) return;
+        settled = true;
+        try { await activeLease.cancel(); }
+        finally { releaseAuthority(); }
+      },
+    };
+    return Object.freeze(wrapped);
   }
 
   async finishDetachedContext(context: CapabilityContext, timeoutMs = 5_000): Promise<void> {

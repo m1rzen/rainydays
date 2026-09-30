@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "taskId": "MEDIA-04",
+  "baseline": {
+    "product": "Lux Desktop",
+    "version": "0.1.898",
+    "manifestSha256": "1126d7449fca392e64721d5e7e86169158bc8c72ea72f9d414fa0fe93ab445df"
+  },
+  "personaChain": ["architect", "developer", "debugger", "reviewer"],
+  "requirements": [
+    "vision-image-video-profiles",
+    "reference-image-validation-and-edit",
+    "asynchronous-image-video-jobs",
+    "provider-polling-and-cancellation",
+    "artifact-metadata-and-bounded-files",
+    "persistent-history-and-restart-recovery",
+    "capability-and-mime-detection"
+  ],
+  "runtimeFiles": [
+    "package.json",
+    "scripts/media04-governance.mjs",
+    "scripts/generate-media04-resolved-manifest.mjs",
+    "scripts/report-schema.mjs",
+    "src/config.ts",
+    "src/media.ts",
+    "src/runtime-paths.ts",
+    "src/settings-schema.ts",
+    "src/tool-policies.ts",
+    "src/tools/image-helper.ts",
+    "src/tools/media-tools.ts",
+    "src/tools/index.ts",
+    "personas/default.md",
+    "personas/general.md"
+  ],
+  "tests": [
+    { "exactCasePath": "tests/unit/media04-jobs.test.mjs", "layer": "unit" },
+    { "exactCasePath": "tests/integration/media04-provider.test.mjs", "layer": "integration" },
+    { "exactCasePath": "tests/contract/media04-governance.test.mjs", "layer": "contract" }
+  ]
+}
