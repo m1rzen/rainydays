@@ -38,6 +38,11 @@ const [httpPort, cdpPort] = await freeDistinctPorts(2);
 let child, client;
 const summary = { startedAt: new Date().toISOString(), approvedProfile: 'default', model: profile.model, tasks: [], usage: '未知', cost: '未知' };
 const persist = () => writeFile(path.join(runRoot, 'results.json'), JSON.stringify(summary, null, 2));
+async function removeFixtureCredentials() {
+  const relative = path.relative(path.join(projectRoot, 'test-results'), userData);
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('Credential cleanup target is outside the evaluation directory.');
+  await Promise.all(['config.json', 'credentials.vault.json', 'Local State'].map(name => unlink(path.join(userData, name)).catch(error => { if (error.code !== 'ENOENT') throw error; })));
+}
 console.log(JSON.stringify({ event: 'starting', runRoot, model: profile.model }));
 try {
   child = spawnManaged(path.join(projectRoot, 'node_modules/electron/dist/electron.exe'), [projectRoot, `--user-data-dir=${userData}`, `--remote-debugging-port=${cdpPort}`, '--disable-gpu'], { env: { ...process.env, PORT: String(httpPort), RAINYDAYS_E2E_USE_DIST: '1', RAINYDAYS_E2E_NODE_EXECUTABLE: process.execPath } });
@@ -99,9 +104,7 @@ try {
   client?.close();
   if (child) await terminateProcessTreeAsync(child);
   // Remove only our two credential-bearing fixture files after the owned process has exited.
-  const relative = path.relative(path.join(projectRoot, 'test-results'), userData);
-  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('Credential cleanup target is outside the evaluation directory.');
-  await Promise.all(['config.json', 'credentials.vault.json', 'Local State'].map(name => unlink(path.join(userData, name)).catch(error => { if (error.code !== 'ENOENT') throw error; })));
+  await removeFixtureCredentials();
   summary.endedAt = new Date().toISOString(); await persist();
   console.log(JSON.stringify({ event: 'finished', runRoot }));
 }
