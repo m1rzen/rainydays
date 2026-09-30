@@ -30,6 +30,24 @@
     const responseAnnouncerEl = document.getElementById("response-announcer");
     const baseDocumentTitle = document.title;
 
+    // All shell and generated controls share the same square SVG symbols.
+    function createUiIcon(name) {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("focusable", "false");
+      const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+      use.setAttribute("href", `#i-${name}`);
+      svg.appendChild(use);
+      return svg;
+    }
+    function iconMarkup(name) {
+      return createUiIcon(name).outerHTML;
+    }
+    function renderWelcomeState() {
+      if (messagesEl.querySelector(".msg, .welcome-state")) return;
+      messagesEl.prepend(document.getElementById("welcome-template").content.cloneNode(true));
+    }
+
     let currentSessionId = null;
     let sessionSelectionGeneration = 0;
     let sessionSelectionQueue = Promise.resolve();
@@ -85,6 +103,8 @@
     let subagentPollTimer = null;
     const dialogStack = [];
     const dialogReturnFocus = new WeakMap();
+    const sidebarEl = document.getElementById("sidebar");
+    const sidebarMedia = matchMedia("(max-width:720px)");
     const focusableSelector = [
       "button:not([disabled])", "a[href]", "input:not([disabled])", "select:not([disabled])",
       "textarea:not([disabled])", "[tabindex]:not([tabindex='-1'])",
@@ -104,9 +124,39 @@
       const active = dialogStack.at(-1) || null;
       for (const child of document.body.children) {
         if (child.tagName === "SCRIPT") continue;
-        child.inert = Boolean(active && child !== active);
+        const hiddenSidebar = child === sidebarEl && (sidebarMedia.matches
+          ? !document.body.classList.contains("sidebar-visible") : document.body.classList.contains("sidebar-collapsed"));
+        child.inert = Boolean(active && child !== active) || hiddenSidebar;
       }
     }
+
+    function syncSidebarPresentation() {
+      const narrow = sidebarMedia.matches;
+      if (!narrow && dialogStack.includes(sidebarEl)) {
+        document.body.classList.remove("sidebar-visible");
+        hideAccessibleDialog(sidebarEl);
+      }
+      const open = narrow ? document.body.classList.contains("sidebar-visible") : !document.body.classList.contains("sidebar-collapsed");
+      sidebarEl.setAttribute("aria-hidden", String(!open));
+      if (!narrow || !open) { sidebarEl.removeAttribute("role"); sidebarEl.removeAttribute("aria-modal"); }
+      document.querySelectorAll("[data-action='toggle-sidebar']").forEach(button => button.setAttribute("aria-expanded", String(open)));
+      syncDialogInertState();
+    }
+
+    function setSidebarOpen(open) {
+      if (sidebarMedia.matches) {
+        document.body.classList.toggle("sidebar-visible", open);
+        if (open) {
+          sidebarEl.setAttribute("role", "dialog"); sidebarEl.setAttribute("aria-modal", "true");
+          showAccessibleDialog(sidebarEl, ".sidebar-close");
+        } else hideAccessibleDialog(sidebarEl);
+      } else {
+        document.body.classList.toggle("sidebar-collapsed", !open);
+        if (!open) queueMicrotask(() => document.querySelector(".sidebar-open").focus());
+      }
+      syncSidebarPresentation();
+    }
+    sidebarMedia.addEventListener("change", syncSidebarPresentation);
 
     function showAccessibleDialog(modal, initialFocus) {
       const existingIndex = dialogStack.indexOf(modal);
@@ -430,7 +480,7 @@
         const res = await fetch(`/api/sessions/${currentSessionId}/pins`); const data = await res.json();
         if (data.pins && data.pins.length > 0) {
           pinArea.classList.add("visible");
-          pinArea.innerHTML = data.pins.map((p, i) => `<div class="pin-item" data-pin-id="${escapeHtml(p.id)}"><span class="pin-icon">📌</span><span>${escapeHtml(p.content)}</span><button class="pin-del" data-action="remove-pin" data-pin-index="${i + 1}" aria-label="移除固定指令">✕</button></div>`).join("");
+          pinArea.innerHTML = data.pins.map((p, i) => `<div class="pin-item" data-pin-id="${escapeHtml(p.id)}"><span class="pin-icon">${iconMarkup("pin")}</span><span>${escapeHtml(p.content)}</span><button class="pin-del" data-action="remove-pin" data-pin-index="${i + 1}" aria-label="移除固定指令">${iconMarkup("close")}</button></div>`).join("");
         } else pinArea.classList.remove("visible");
       } catch {}
     }
@@ -495,14 +545,14 @@
       return pane?.tabs.find(tab => tab.id === pane.activeTabId) || null;
     }
     function workbenchTabIcon(tab) {
-      if (tab.kind === "session") return isSessionRunning(tab.sessionId) ? "⏳" : "💬";
-      return { terminal: "⌨️", file: "📄", browser: "🌐", prism: "◇" }[tab.kind] || "•";
+      if (tab.kind === "session") return isSessionRunning(tab.sessionId) ? "loader" : "chat";
+      return { terminal: "terminal", file: "file", browser: "globe", prism: "sliders" }[tab.kind] || "file";
     }
     function workbenchPlaceholder(tab, reason) {
       const host = document.createElement("div");
       host.className = "workbench-placeholder";
       const icon = document.createElement("div");
-      icon.textContent = workbenchTabIcon(tab);
+      icon.appendChild(createUiIcon(workbenchTabIcon(tab)));
       const title = document.createElement("strong");
       title.textContent = tab.title;
       const detail = document.createElement("div");
@@ -531,7 +581,7 @@
         return split;
       }
       const pane = document.createElement("section");
-      pane.className = `workbench-pane ${node.id === workbenchLayout.focusedPaneId ? "focused" : ""} ${activeWorkbenchTab(node)?.kind === "session" ? "chat-only" : ""}`;
+      pane.className = `workbench-pane ${node.id === workbenchLayout.focusedPaneId ? "focused" : ""} ${node.tabs.length === 1 && workbenchPanes().length === 1 && activeWorkbenchTab(node)?.kind === "session" ? "chat-only" : ""}`;
       pane.dataset.workbenchPaneId = node.id;
       const strip = document.createElement("div");
       strip.className = "workbench-tabs";
@@ -562,7 +612,7 @@
         });
         const icon = document.createElement("span");
         icon.className = "workbench-tab-kind";
-        icon.textContent = workbenchTabIcon(tab);
+        icon.appendChild(createUiIcon(workbenchTabIcon(tab)));
         const title = document.createElement("span");
         title.className = "workbench-tab-title";
         title.textContent = tab.title;
@@ -578,7 +628,7 @@
       closeActive.dataset.action = "close-workbench-tab";
       closeActive.dataset.tabId = node.activeTabId;
       closeActive.setAttribute("aria-label", `关闭 ${activeWorkbenchTab(node).title}`);
-      closeActive.textContent = "×";
+      closeActive.appendChild(createUiIcon("close"));
       tools.appendChild(closeActive);
       for (const [direction, label] of [["horizontal", "左右分屏"], ["vertical", "上下分屏"]]) {
         const split = document.createElement("button");
@@ -587,7 +637,8 @@
         split.dataset.paneId = node.id;
         split.dataset.direction = direction;
         split.title = label;
-        split.textContent = direction === "horizontal" ? "↔" : "↕";
+        split.setAttribute("aria-label", label);
+        split.appendChild(createUiIcon(direction === "horizontal" ? "split-h" : "split-v"));
         tools.appendChild(split);
       }
       const restore = document.createElement("button");
@@ -595,7 +646,8 @@
       restore.dataset.action = "restore-workbench-tab";
       restore.dataset.paneId = node.id;
       restore.title = "恢复最近关闭的标签";
-      restore.textContent = "↶";
+      restore.setAttribute("aria-label", restore.title);
+      restore.appendChild(createUiIcon("undo"));
       restore.disabled = closedWorkbenchTabs.length === 0;
       tools.appendChild(restore);
       strip.appendChild(tools);
@@ -667,7 +719,13 @@
         button.classList.toggle("unread", sessionState.unread > 0);
         button.title = sessionState.unread > 0 ? `${sessionState.unread} 条未读` : "";
         const icon = button.querySelector(".workbench-tab-kind");
-        if (icon) icon.textContent = running ? "⏳" : sessionState.status === "error" ? "❌" : sessionState.unread > 0 ? `💬${sessionState.unread}` : "💬";
+        if (icon) {
+          icon.replaceChildren(createUiIcon(running ? "loader" : sessionState.status === "error" ? "alert" : "chat"));
+          if (sessionState.unread > 0) {
+            const badge = document.createElement("span"); badge.className = "workbench-unread-count";
+            badge.textContent = String(sessionState.unread); icon.appendChild(badge);
+          }
+        }
       });
     }
     async function loadWorkbenchLayout() {
@@ -1122,7 +1180,7 @@
       if (!fileEditing || !fileEditDirty) return false;
       const meta = document.getElementById("file-preview-meta");
       meta.classList.add("file-conflict");
-      meta.textContent = `⚠️ 当前文件有未保存修改；请先保存或从磁盘重载。\n${selectedAbsoluteFilePath || selectedFilePath}`;
+      meta.textContent = `当前文件有未保存修改；请先保存或从磁盘重载。\n${selectedAbsoluteFilePath || selectedFilePath}`;
       addSystemMessage("⚠️ 当前文件有未保存修改，已阻止导航。");
       return true;
     }
@@ -1198,7 +1256,7 @@
       for (const part of parts) {
         const separator = accumulated ? "\\" : "";
         accumulated += separator + part;
-        const divider = document.createElement("span"); divider.textContent = "›"; container.appendChild(divider);
+        container.appendChild(createUiIcon("chevron"));
         addCrumb(part, accumulated);
       }
     }
@@ -1218,7 +1276,7 @@
         row.className = `file-entry ${entry.path === selectedFilePath ? "active" : ""}`;
         if (entry.path === selectedFilePath) row.setAttribute("aria-current", "true");
         row.title = entry.path;
-        const icon = document.createElement("span"); icon.textContent = entry.type === "directory" ? "📁" : fileIcon(entry.extension);
+        const icon = createUiIcon(entry.type === "directory" ? "folder" : fileIcon(entry.extension));
         const name = document.createElement("span"); name.className = "file-entry-name"; name.textContent = entry.name;
         const meta = document.createElement("span"); meta.className = "file-entry-meta"; meta.textContent = entry.type === "file" ? formatBytes(entry.size) : "";
         row.append(icon, name, meta);
@@ -1231,14 +1289,12 @@
     }
 
     function fileIcon(ext) {
-      if ([".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"].includes(ext)) return "🖼️";
-      if (ext === ".pdf") return "📕";
-      if ([".docx", ".doc"].includes(ext)) return "📘";
-      if ([".xlsx", ".xls"].includes(ext)) return "📊";
-      if ([".md", ".markdown"].includes(ext)) return "📝";
-      if ([".mp3", ".m4a", ".wav", ".ogg", ".oga"].includes(ext)) return "🎵";
-      if ([".mp4", ".m4v", ".webm", ".ogv", ".mov"].includes(ext)) return "🎬";
-      return "📄";
+      if ([".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"].includes(ext)) return "image";
+      if ([".xlsx", ".xls", ".csv"].includes(ext)) return "table";
+      if ([".mp3", ".m4a", ".wav", ".ogg", ".oga"].includes(ext)) return "audio";
+      if ([".mp4", ".m4v", ".webm", ".ogv", ".mov"].includes(ext)) return "video";
+      if ([".js", ".ts", ".json", ".html", ".css", ".py"].includes(ext)) return "code";
+      return "file";
     }
 
     function formatBytes(value) {
@@ -1250,7 +1306,7 @@
 
     function showFileDirectoryError(message) {
       fileEntries = [];
-      document.getElementById("file-list").innerHTML = `<div class="file-list-message">⚠️ ${escapeHtml(message)}</div>`;
+      document.getElementById("file-list").innerHTML = `<div class="file-list-message">${iconMarkup("alert")} ${escapeHtml(message)}</div>`;
       document.getElementById("file-list-count").textContent = "加载失败";
       document.getElementById("file-load-more").hidden = true;
       clearFilePreview();
@@ -1336,7 +1392,7 @@
       fileEditConflict = true;
       const meta = document.getElementById("file-preview-meta");
       meta.classList.add("file-conflict");
-      meta.textContent = `⚠️ 文件已在外部修改，保存已锁定；请从磁盘重载。\n${selectedAbsoluteFilePath || relativePath}`;
+      meta.textContent = `文件已在外部修改，保存已锁定；请从磁盘重载。\n${selectedAbsoluteFilePath || relativePath}`;
       updateFilePreviewActions();
     }
 
@@ -1496,7 +1552,7 @@
         if (!fileEditConflict) {
           const meta = document.getElementById("file-preview-meta");
           meta.classList.add("file-conflict");
-          meta.textContent = `⚠️ 保存失败：${error.message}\n${operation.absolutePath || operation.path}`;
+          meta.textContent = `保存失败：${error.message}\n${operation.absolutePath || operation.path}`;
           addSystemMessage(`⚠️ 文件保存失败：${error.message}`);
         }
       } finally {
@@ -1562,7 +1618,7 @@
     function showFileError(message) {
       closeFileEvents();
       const content = document.getElementById("file-preview-content");
-      const error = document.createElement("div"); error.className = "file-preview-empty"; error.textContent = `⚠️ ${message}`;
+      const error = document.createElement("div"); error.className = "file-preview-empty"; error.append(createUiIcon("alert"), message);
       content.innerHTML = ""; content.appendChild(error);
       document.getElementById("file-preview-meta").textContent = selectedAbsoluteFilePath ? `预览失败\n${selectedAbsoluteFilePath}` : "预览失败";
       document.getElementById("file-preview-actions").hidden = !selectedAbsoluteFilePath;
@@ -1671,7 +1727,7 @@
         if (Array.from(container.querySelectorAll(".local-file-link")).some(link => link.dataset.path === absolutePath)) continue;
         if (replaceTextPathWithLink(container, absolutePath)) continue;
         const row = document.createElement("div"); row.className = "attachment-row";
-        const label = document.createElement("span"); label.textContent = "📎 ";
+        const label = createUiIcon("paperclip");
         const link = createLocalFileLink(absolutePath); link.dataset.path = absolutePath;
         row.append(label, link); container.appendChild(row);
       }
@@ -1688,7 +1744,7 @@
       document.getElementById("header-output-count").textContent = String(outputs.length);
       panel.querySelector("#document-output-count").textContent = outputs.length ? `（${outputs.length}）` : "";
       if (error) {
-        const row = document.createElement("div"); row.className = "document-output-row";
+        const row = document.createElement("div"); row.className = "document-output-row document-output-error";
         const text = document.createElement("span"); text.textContent = error;
         const retry = document.createElement("button"); retry.type = "button"; retry.textContent = "重试";
         retry.addEventListener("click", () => refreshDocumentOutputs(currentSessionId));
@@ -1698,9 +1754,14 @@
         const row = document.createElement("div"); row.className = "document-output-row";
         const type = document.createElement("span");
         type.className = `document-output-type ${output.format === "docx" || String(output.name).toLowerCase().endsWith(".docx") ? "docx" : "xlsx"}`;
-        type.textContent = String(output.name).toLowerCase().endsWith(".docx") ? "DOCX" : "XLSX";
+        type.appendChild(createUiIcon(type.classList.contains("docx") ? "file" : "table"));
         const link = createLocalFileLink(output.path); link.textContent = output.name; link.title = `预览：${output.path}`;
-        const open = document.createElement("button"); open.type = "button"; open.textContent = "打开";
+        const copy = document.createElement("div"); copy.className = "document-output-copy";
+        const meta = document.createElement("span"); meta.className = "document-output-meta";
+        meta.textContent = type.classList.contains("docx") ? "Word 文档" : "Excel 工作簿";
+        copy.append(link, meta);
+        const actions = document.createElement("div"); actions.className = "document-output-actions";
+        const open = document.createElement("button"); open.type = "button"; open.append("打开", createUiIcon("external"));
         open.setAttribute("aria-label", `打开 ${output.name}`);
         open.addEventListener("click", () => link.click());
         const revise = document.createElement("button"); revise.type = "button"; revise.textContent = "继续修改";
@@ -1711,7 +1772,7 @@
           inputEl.value = [inputEl.value.trim(), prompt].filter(Boolean).join("\n");
           inputEl.dispatchEvent(new Event("input")); inputEl.focus();
         });
-        row.append(type, link, open, revise); list.append(row);
+        actions.append(open, revise); row.append(type, copy, actions); list.append(row);
       }
       messagesEl.appendChild(panel);
     }
@@ -1845,10 +1906,13 @@
           panel.setAttribute("aria-labelledby", button.id);
           panel.tabIndex = 0;
         }
-        const label = document.createElement("span"); label.textContent = domain.label;
+        const labels = { common:"通用", profiles:"模型配置", mcp:"MCP 连接", wire:"资料来源", animas:"Animas", nous:"Nous", tts:"语音播报", asr:"语音输入", shell:"终端", relay:"远程连接", update:"更新" };
+        const icons = { common:"sliders", profiles:"chat", mcp:"code", wire:"file", animas:"circle", nous:"circle", tts:"volume-on", asr:"mic", shell:"terminal", relay:"globe", update:"download" };
+        const label = document.createElement("span"); label.textContent = labels[domain.id] || domain.label;
         const state = document.createElement("span"); state.className = "domain-state";
         state.textContent = domain.available ? (domain.applyMode === "immediate" ? "即时" : "重启") : "待接入";
-        button.append(label, state); nav.appendChild(button);
+        button.append(createUiIcon(icons[domain.id] || "settings"), label, state); nav.appendChild(button);
+        const heading = panel?.querySelector("h3"); if (heading) heading.textContent = label.textContent;
         const status = document.querySelector(`[data-domain-status="${domain.id}"]`);
         if (status) {
           status.className = `settings-domain-status ${domain.available ? domain.applyMode : "unavailable"}`;
@@ -2281,6 +2345,7 @@
     }
 
     async function init() {
+      renderWelcomeState();
       const initialSelectionGeneration = sessionSelectionGeneration;
       if (typeof window.electronAPI?.onNotificationClicked === "function") {
         removeDesktopNotificationClick = window.electronAPI.onNotificationClicked(queueDesktopNavigation);
@@ -2355,7 +2420,7 @@
         item.dataset.sessionId = session.id;
         const icon = document.createElement("span");
         icon.className = "icon";
-        icon.innerHTML = '<svg aria-hidden="true"><use href="#i-chat"/></svg>';
+        icon.appendChild(createUiIcon("chat"));
         const name = document.createElement("span");
         name.className = "name";
         name.textContent = session.title;
@@ -2373,7 +2438,7 @@
         remove.dataset.action = "delete-session";
         remove.dataset.sessionId = session.id;
         remove.setAttribute("aria-label", `删除对话 ${session.title}`);
-        remove.textContent = "✕";
+        remove.appendChild(createUiIcon("trash"));
         item.append(icon, name, status, badge);
         wrapper.append(item, remove);
         sessionListEl.appendChild(wrapper);
@@ -2385,6 +2450,7 @@
       if (data.session) {
         currentSessionId = data.session.id; currentTitleEl.textContent = data.session.title; messagesEl.innerHTML = ""; restoreDraft(data.session.id);
         renderDocumentOutputs([]);
+        renderWelcomeState();
         taskPanel.classList.remove("visible"); subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling();
         refreshRunControls(); refreshQuestionForCurrentSession(); await loadSessions(); await loadPins(); await loadAttachmentDrafts(data.session.id);
         if (workbenchLayout) await ensureWorkbenchTab({ id: workbenchId("tab"), kind: "session", title: data.session.title, sessionId: data.session.id });
@@ -2414,6 +2480,7 @@
       messagesEl.innerHTML = "";
       renderDocumentOutputs(mdata.outputs || []);
       for (const msg of mdata.messages) { if (msg.role === "user") addMessage("user", msg.content, msg.id, msg.attachments); else if (msg.role === "assistant" && msg.content) addMessage("assistant", msg.content, msg.id); }
+      renderWelcomeState();
       if (generation !== sessionSelectionGeneration || currentSessionId !== id) return;
       if (!document.hidden && document.hasFocus()) await markSessionNotificationsRead(id).catch(() => undefined);
       if (generation !== sessionSelectionGeneration || currentSessionId !== id) return;
@@ -2460,6 +2527,11 @@
     function refreshRunControls() {
       const running = isSessionRunning();
       submitBtn.disabled = running;
+      const cancel = document.getElementById("cancel-run");
+      const localRun = activeRunsBySession.get(currentSessionId);
+      cancel.hidden = !localRun;
+      cancel.disabled = Boolean(localRun?.cancelling);
+      submitBtn.hidden = Boolean(localRun);
       statusDot.className = running ? "status-dot busy" : "status-dot";
       statusText.textContent = running ? "思考中..." : "就绪";
       refreshWorkbenchTabStatus();
@@ -2478,6 +2550,7 @@
       const token = sessionId ? activeRunsBySession.get(sessionId) : null;
       if (!token || token.cancelling) return false;
       token.cancelling = true;
+      refreshRunControls();
       try {
         if (token.runId) {
           await fetch("/api/chat/cancel", {
@@ -2524,7 +2597,7 @@
         } else {
           const icon = document.createElement("span");
           icon.className = "attachment-icon";
-          icon.textContent = attachment.kind === "image" ? "🖼️" : "📄";
+          icon.appendChild(createUiIcon(attachment.kind === "image" ? "image" : "file"));
           chip.appendChild(icon);
         }
         const copy = document.createElement("div");
@@ -2557,7 +2630,8 @@
         action.type = "button";
         action.dataset.attachmentId = attachment.id;
         action.title = attachment.state === "uploading" ? "取消上传" : "移除附件";
-        action.textContent = attachment.state === "uploading" ? "■" : "✕";
+        action.setAttribute("aria-label", action.title);
+        action.appendChild(createUiIcon(attachment.state === "uploading" ? "stop" : "close"));
         chip.appendChild(action);
         attachmentDraftListEl.appendChild(chip);
       }
@@ -2674,7 +2748,8 @@
 
     function resizeMessageInput() {
       inputEl.rows = 1;
-      inputEl.rows = Math.min(5, Math.max(1, Math.ceil(inputEl.scrollHeight / 24)));
+      inputEl.style.setProperty("--input-height", "auto");
+      inputEl.style.setProperty("--input-height", `${Math.min(150, Math.max(43, inputEl.scrollHeight))}px`);
     }
 
     inputEl.addEventListener("input", () => {
@@ -2756,7 +2831,7 @@
           body: JSON.stringify({ sessionId: chatSessionId, message: text, attachmentIds: readyAttachments.map(attachment => attachment.id) }),
           signal: runToken.controller.signal,
         });
-        if (!response.ok) { const err = await response.json(); bubbleEl.innerHTML = ""; bubbleEl.textContent = "⚠️ " + (err.error || "请求失败"); completeAccessibleResponse(bubbleEl.textContent); return; }
+        if (!response.ok) { const err = await response.json(); bubbleEl.innerHTML = ""; bubbleEl.textContent = err.error || "请求失败"; completeAccessibleResponse(bubbleEl.textContent); return; }
         const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
         while (true) {
           const { done, value } = await reader.read(); if (done) break;
@@ -2791,12 +2866,12 @@
             else if (step.type === "task_created" || step.type === "task_update") { if (step.tasks && step.tasks.length > 0) renderTasks(step.tasks); }
             else if (step.type === "answer_done") { if (!streamingStarted && step.content) { bubbleEl.innerHTML = ""; fullText = step.content; bubbleEl.innerHTML = renderMarkdown(fullText); } else if (!streamingStarted && !step.content) { bubbleEl.innerHTML = ""; bubbleEl.textContent = "(无回复)"; } if (fullText) { speakText(fullText.slice(0, 200)); enhanceLocalFileLinks(bubbleEl, fullText); } completeAccessibleResponse(fullText || bubbleEl.textContent); }
             else if (step.type === "run_cancelled") { bubbleEl.innerHTML = ""; bubbleEl.textContent = "已中断"; completeAccessibleResponse(bubbleEl.textContent); }
-            else if (step.type === "error") { bubbleEl.innerHTML = renderMarkdown((fullText ? fullText + "\n\n" : "") + "⚠️ " + step.content); completeAccessibleResponse(bubbleEl.textContent); }
+            else if (step.type === "error") { bubbleEl.innerHTML = renderMarkdown((fullText ? fullText + "\n\n" : "") + "执行失败：" + step.content); completeAccessibleResponse(bubbleEl.textContent); }
           }
         }
       } catch (err) {
         bubbleEl.innerHTML = "";
-        bubbleEl.textContent = runToken.controller.signal.aborted || err?.name === "AbortError" ? "已中断" : (fullText ? fullText + "\n\n" : "") + "⚠️ 连接错误: " + err.message;
+        bubbleEl.textContent = runToken.controller.signal.aborted || err?.name === "AbortError" ? "已中断" : (fullText ? fullText + "\n\n" : "") + "连接错误: " + err.message;
         completeAccessibleResponse(bubbleEl.textContent);
       }
       finally { completeAccessibleResponse(bubbleEl.textContent); finishSessionRun(chatSessionId, runToken); if (currentSessionId === chatSessionId) inputEl.focus(); }
@@ -2806,6 +2881,7 @@
     });
 
     function addMessage(role, content, messageId, attachments = []) {
+      messagesEl.querySelector(".welcome-state")?.remove();
       const el = document.createElement("div");
       el.className = `msg msg-${role} message-relative`;
       const bubble = document.createElement("div");
@@ -2823,7 +2899,7 @@
             image.alt = attachment.name;
             image.src = attachmentContentUrl(currentSessionId, attachment.id);
             item.appendChild(image);
-          }
+          } else item.appendChild(createUiIcon("file"));
           const label = document.createElement("span");
           label.textContent = `${attachment.name} · ${attachmentSize(attachment.size)}`;
           item.appendChild(label);
@@ -2839,7 +2915,7 @@
         fork.className = "msg-action-btn";
         fork.dataset.action = "fork-message";
         fork.dataset.messageId = String(messageId);
-        fork.textContent = "🔱 Fork";
+        fork.append(createUiIcon("fork"), "分支对话");
         actions.appendChild(fork);
         el.appendChild(actions);
       }
@@ -2849,47 +2925,56 @@
       return el;
     }
     function addSystemMessage(text) {
+      messagesEl.querySelector(".welcome-state")?.remove();
       const el = document.createElement("div");
       el.className = "msg msg-assistant";
       const bubble = document.createElement("div");
       bubble.className = "bubble system-message";
-      bubble.textContent = text;
+      bubble.append(createUiIcon(text.startsWith("⚠") ? "alert" : "chat"), text.replace(/^[\p{Extended_Pictographic}\uFE0F\u200D]+\s*/u, ""));
       el.appendChild(bubble);
       messagesEl.insertBefore(el, documentOutputsEl.parentNode === messagesEl ? documentOutputsEl : null);
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
     function addToolCard(parent, step) {
-      const card = document.createElement("div");
+      const card = document.createElement("details");
       card.className = "tool-card";
+      card.dataset.status = "running";
+      const summary = document.createElement("summary");
       const icon = document.createElement("span");
       icon.className = "icon";
-      icon.textContent = "⚙";
+      icon.appendChild(createUiIcon("loader"));
       const body = document.createElement("div");
       body.className = "tool-card-body";
       const label = document.createElement("span");
       label.className = "label";
-      label.textContent = step.toolName;
+      const toolLabels = { read_file:"读取文件", write_file:"写入文件", create_docx:"生成 Word 文档", create_xlsx:"生成 Excel 工作簿", web_search:"搜索资料", web_fetch:"阅读网页", bash:"运行命令" };
+      label.textContent = toolLabels[step.toolName] || step.toolName;
+      label.title = step.toolName;
       const status = document.createElement("span");
       status.className = "tool-card-status";
-      status.textContent = " — 执行中...";
-      body.append(label, status);
+      status.textContent = "执行中";
+      const chevron = createUiIcon("chevron"); chevron.classList.add("disclosure-icon");
+      summary.append(icon, label, status, chevron);
       if (step.toolArgs) {
         const args = document.createElement("pre");
         args.textContent = Object.entries(step.toolArgs).map(([key, value]) => `  ${key}: ${value}`).join("\n");
         body.appendChild(args);
       }
-      card.append(icon, body);
+      card.append(summary, body);
       parent.appendChild(card);
     }
     function updateLastToolCard(parent, step) {
       const cards = parent.querySelectorAll(".tool-card"); const last = cards[cards.length - 1]; if (!last) return;
-      const s = last.querySelector("span:nth-child(2)"); if (s) s.textContent = step.toolStatus && step.toolStatus !== "success" ? " — 未完成" : " — 完成";
-      let displayContent = step.content;
+      const succeeded = !step.toolStatus || step.toolStatus === "success";
+      last.dataset.status = succeeded ? "success" : "error";
+      const s = last.querySelector(".tool-card-status"); if (s) s.textContent = succeeded ? "完成" : "未完成";
+      last.querySelector(".icon").replaceChildren(createUiIcon(succeeded ? "check" : "alert"));
+      let displayContent = String(step.content || "");
       if (["create_docx", "create_xlsx"].includes(step.toolName)) {
         try { const receipt = JSON.parse(step.content); if (receipt.type === "document_output") displayContent = receipt.message + "\n" + receipt.path; } catch { /* Historical plain-text response. */ }
       }
       const preview = displayContent.length > 300 ? displayContent.slice(0, 300) + "..." : displayContent;
-      const pre = document.createElement("pre"); pre.textContent = preview; last.querySelector("div").appendChild(pre);
+      const pre = document.createElement("pre"); pre.textContent = preview; last.querySelector(".tool-card-body").appendChild(pre);
       setTimeout(() => enhanceLocalFileLinks(pre, step.content), 0);
     }
     async function clearChat() {
@@ -2915,11 +3000,11 @@
       }
       taskPanel.classList.add("visible");
       taskListEl.innerHTML = tasks.map(t => {
-        const icon = t.status === "pending" && t.blocked ? "⛔" : ({ pending: "⏳", in_progress: "🔄", completed: "✅" }[t.status] || "?");
+        const icon = t.status === "pending" && t.blocked ? "alert" : ({ pending: "circle", in_progress: "loader", completed: "check" }[t.status] || "circle");
         const indicators = [t.blocked ? "[B]" : "", t.owner ? `[O:${escapeHtml(t.owner)}]` : ""].filter(Boolean).join(" ");
         const blockers = t.blockedBy && t.blockedBy.length > 0 ? ` blocked by ${t.blockedBy.map(escapeHtml).join(", ")}` : "";
         const detail = [indicators, t.activeForm ? escapeHtml(t.activeForm) : "", blockers].filter(Boolean).join(" · ");
-        return `<div class="task-item"><span class="t-icon">${icon}</span><span class="t-id">${escapeHtml(t.id)}</span><span class="t-subject">${escapeHtml(t.subject)}${detail ? ` <span class="t-active">${detail}</span>` : ""}</span></div>`;
+        return `<div class="task-item"><span class="t-icon">${iconMarkup(icon)}</span><span class="t-id">${escapeHtml(t.id)}</span><span class="t-subject">${escapeHtml(t.subject)}${detail ? ` <span class="t-active">${detail}</span>` : ""}</span></div>`;
       }).join("");
       taskProgressText.textContent = `${tasks.filter(t => t.status === "completed").length}/${tasks.length} 完成`;
     }
@@ -2942,13 +3027,13 @@
         stopSubagentPolling();
         return;
       }
-      const icons = { running: "🔄", completed: "✅", failed: "❌", aborted: "⏹" };
+      const icons = { running: "loader", completed: "check", failed: "alert", aborted: "stop" };
       for (const child of subagents) {
         const item = document.createElement("div");
         item.className = "subagent-item";
         const icon = document.createElement("span");
         icon.className = "sa-icon";
-        icon.textContent = icons[child.status] || "?";
+        icon.appendChild(createUiIcon(icons[child.status] || "circle"));
         const id = document.createElement("span");
         id.className = "sa-id";
         id.textContent = child.taskId;
@@ -2985,6 +3070,9 @@
         const data = await res.json();
         statusTokens.textContent = `${data.tokens} tokens · ${data.messageCount} msgs`;
         statusModel.textContent = `${data.profile || "--"} · ${data.model}`;
+        const composerModel = document.getElementById("composer-model");
+        composerModel.textContent = data.configured && data.model ? data.model : "配置模型";
+        composerModel.title = `${data.profile || "默认配置"} · ${data.model || "尚未配置模型"}\n点击打开模型配置`;
         statusPersona.textContent = data.persona || "未选择";
         const version = data.version;
         let versionMismatch = false;
@@ -3180,9 +3268,15 @@
     }
     const actionHandlers = Object.freeze({
       "toggle-sidebar": () => {
-        const open = document.body.classList.toggle("sidebar-visible");
-        document.querySelector(".sidebar-open")?.setAttribute("aria-expanded", String(open));
+        const open = sidebarMedia.matches ? document.body.classList.contains("sidebar-visible") : !document.body.classList.contains("sidebar-collapsed");
+        setSidebarOpen(!open);
       },
+      "compose-example": (_event, target) => {
+        inputEl.value = target.dataset.prompt || "";
+        inputEl.dispatchEvent(new Event("input")); inputEl.focus();
+      },
+      "cancel-run": () => cancelSessionRun(),
+      "open-model-settings": async () => { await openSettings(); switchSettingsDomain("profiles"); },
       "show-document-outputs": async () => {
         if (documentOutputsEl.hidden) return;
         if (!documentOutputsEl.closest(".workbench-pane-content") && currentSessionId) await selectSession(currentSessionId);
@@ -3269,12 +3363,16 @@
       if (typeof handler !== "function") return;
       if (event.type === "click") {
         target.closest(".utility-menu")?.removeAttribute("open");
-        if (["new-chat", "select-session"].includes(target.dataset.action)) document.body.classList.remove("sidebar-visible");
+        if (["new-chat", "select-session"].includes(target.dataset.action) && sidebarMedia.matches) setSidebarOpen(false);
       }
       Promise.resolve(handler(event, target)).catch(error => addSystemMessage(`⚠️ 操作失败: ${error instanceof Error ? error.message : String(error)}`));
     }
 
     document.addEventListener("click", dispatchAction);
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".utility-menu")) document.querySelector(".utility-menu")?.removeAttribute("open");
+      if (dialogStack.at(-1) === sidebarEl && !event.target.closest("#sidebar, .sidebar-open")) setSidebarOpen(false);
+    });
     document.addEventListener("change", dispatchAction);
     document.addEventListener("input", dispatchAction);
     document.addEventListener("dragstart", event => {
@@ -3389,6 +3487,15 @@
         closeSettings();
         return;
       }
+      if (event.key === "Escape" && document.querySelector(".utility-menu[open]")) {
+        event.preventDefault();
+        document.querySelector(".utility-menu").removeAttribute("open");
+        document.querySelector(".utility-menu > summary").focus();
+        return;
+      }
+      if (event.key === "Escape" && dialogStack.at(-1) === sidebarEl) {
+        event.preventDefault(); setSidebarOpen(false); return;
+      }
       if ((event.key === "Enter" || event.key === " ") && document.activeElement?.dataset?.action && document.activeElement.tagName !== "BUTTON") {
         event.preventDefault();
         document.activeElement.click();
@@ -3430,4 +3537,5 @@
     }, { once: true });
 
     installAccessibleNames();
+    syncSidebarPresentation();
     init();

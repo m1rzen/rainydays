@@ -1272,8 +1272,8 @@ test("DS-10 real Electron passes axe, keyboard focus, reflow and accessibility m
     assert.deepEqual(violations, []);
     const settingsAxTree = await client.send("Accessibility.getFullAXTree");
     const settingsAx = settingsAxTree.nodes.filter(node => !node.ignored).map(node => ({ role: node.role?.value, name: node.name?.value || "" }));
-    assert(settingsAx.some(node => node.role === "dialog" && node.name.includes("RainyDays Settings")), JSON.stringify(settingsAx));
-    const expectedSettingsTabs = ["Common", "Profiles", "MCP", "Wire", "Animas", "Nous", "TTS", "ASR", "Shell", "Relay", "Update"];
+    assert(settingsAx.some(node => node.role === "dialog" && node.name === "设置"), JSON.stringify(settingsAx));
+    const expectedSettingsTabs = ["通用", "模型配置", "MCP 连接", "资料来源", "Animas", "Nous", "语音播报", "语音输入", "终端", "远程连接", "更新"];
     assert(expectedSettingsTabs.every(label => settingsAx.some(node => node.role === "tab" && node.name.startsWith(label))), JSON.stringify(settingsAx));
 
     const focusTrap = await client.evaluate(`(()=>{
@@ -1324,7 +1324,7 @@ test("DS-10 real Electron passes axe, keyboard focus, reflow and accessibility m
     assert.deepEqual(await wcag21AaViolations(client), []);
     assert.equal(await client.evaluate("document.activeElement===document.getElementById('ask-input') && document.getElementById('settings-modal').inert"), true);
     const askAxTree = await client.send("Accessibility.getFullAXTree");
-    assert(askAxTree.nodes.some(node => !node.ignored && node.role?.value === "dialog" && String(node.name?.value).includes("Agent 需要你的回答")));
+    assert(askAxTree.nodes.some(node => !node.ignored && node.role?.value === "dialog" && String(node.name?.value).includes("RainyDays 需要你的回答")));
     await client.send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
     await client.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
     assert.equal(await client.evaluate("document.getElementById('settings-modal').classList.contains('visible') && document.getElementById('ask-modal').classList.contains('visible')"), true);
@@ -1357,6 +1357,24 @@ test("DS-10 real Electron passes axe, keyboard focus, reflow and accessibility m
       assert(reflow.inputWidth >= 40, JSON.stringify(reflow));
     }
     await client.send("Emulation.setDeviceMetricsOverride", { width: 320, height: 720, deviceScaleFactor: 1, mobile: false });
+    assert.equal(await client.evaluate("document.getElementById('sidebar').inert && document.querySelector('.sidebar-open').getAttribute('aria-expanded')==='false'"), true);
+    await client.evaluate("document.querySelector('.sidebar-open').focus();document.querySelector('.sidebar-open').click();true");
+    await waitFor(() => client.evaluate("Math.abs(document.getElementById('sidebar').getBoundingClientRect().left)<1"), { timeoutMs: 3000, label: "settled navigation drawer" });
+    assert.equal(await client.evaluate("!document.getElementById('sidebar').inert && document.getElementById('main').inert && document.getElementById('sidebar').contains(document.activeElement)"), true);
+    await client.evaluate("visibleFocusableElements(document.getElementById('sidebar')).at(-1).focus();true");
+    await client.send("Input.dispatchKeyEvent", { type:"keyDown", key:"Tab", code:"Tab", windowsVirtualKeyCode:9, nativeVirtualKeyCode:9 });
+    await client.send("Input.dispatchKeyEvent", { type:"keyUp", key:"Tab", code:"Tab", windowsVirtualKeyCode:9, nativeVirtualKeyCode:9 });
+    assert.equal(await client.evaluate("document.activeElement===visibleFocusableElements(document.getElementById('sidebar'))[0]"), true);
+    await client.send("Input.dispatchKeyEvent", { type:"keyDown", key:"Tab", code:"Tab", modifiers:8, windowsVirtualKeyCode:9, nativeVirtualKeyCode:9 });
+    await client.send("Input.dispatchKeyEvent", { type:"keyUp", key:"Tab", code:"Tab", modifiers:8, windowsVirtualKeyCode:9, nativeVirtualKeyCode:9 });
+    assert.equal(await client.evaluate("document.activeElement===visibleFocusableElements(document.getElementById('sidebar')).at(-1)"), true);
+    await client.evaluate("openSettings()");
+    assert.equal(await client.evaluate("document.getElementById('sidebar').inert && document.getElementById('main').inert && !document.getElementById('settings-modal').inert"), true);
+    await client.evaluate("closeSettings();true");
+    assert.equal(await client.evaluate("!document.getElementById('sidebar').inert && document.getElementById('main').inert && document.getElementById('sidebar').contains(document.activeElement)"), true);
+    await client.send("Input.dispatchKeyEvent", { type:"keyDown", key:"Escape", code:"Escape", windowsVirtualKeyCode:27, nativeVirtualKeyCode:27 });
+    await client.send("Input.dispatchKeyEvent", { type:"keyUp", key:"Escape", code:"Escape", windowsVirtualKeyCode:27, nativeVirtualKeyCode:27 });
+    assert.equal(await client.evaluate("document.getElementById('sidebar').inert && !document.getElementById('main').inert && document.activeElement===document.querySelector('.sidebar-open') && document.querySelector('.sidebar-open').getAttribute('aria-expanded')==='false'"), true);
     await client.evaluate("(async()=>{await openSettings();return true})()");
     const settingsReflow = await client.evaluate(`(()=>{
       const panel=document.getElementById('settings-panel');const rect=panel.getBoundingClientRect();
@@ -1391,7 +1409,7 @@ test("DS-10 real Electron passes axe, keyboard focus, reflow and accessibility m
     })()`);
     assert.equal(media.reduced, true);
     assert.equal(media.forced, true);
-    assert.match(media.animation, /^(?:0\.00001s|1e-05s|0\.01ms)$/u);
+    assert.match(media.animation, /^(?:0s|0\.00001s|1e-05s|0\.01ms)$/u);
     assert.equal(media.buttonBorder, "solid");
     assert.equal(media.selectedOutline, "solid");
     client.close(); client = null;

@@ -46,7 +46,8 @@ test("DS-06 media uses retained Session-scoped content URLs without online asset
   assert.match(renderer, /url\.searchParams\.set\("sessionId", activeFileOwnerSessionId \|\| ""\)/u);
   assert.match(service, /AUDIO_MIME\[extension\]/u);
   assert.match(service, /VIDEO_MIME\[extension\]/u);
-  const assetReferences = [...html.matchAll(/(?:src|href)="([^"]+)"/gu)].map(match => match[1]);
+  // SVG fragment references point inside this document; they are not online assets.
+  const assetReferences = [...html.matchAll(/(?:src|href)="([^"]+)"/gu)].map(match => match[1]).filter(value => !value.startsWith("#"));
   assert(assetReferences.length > 0);
   assert(assetReferences.every(value => value.startsWith("/")), JSON.stringify(assetReferences));
   const packageModel = JSON.parse(packageJson);
