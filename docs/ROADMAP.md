@@ -1,8 +1,8 @@
 ---
 workflow: project-workflow
 kind: roadmap
-updated: 2026-09-29
-status: R1/R2 verified; R3 partial; R4-R7 pending product validation
+updated: 2026-09-30
+status: R1/R2/R3 verified; R4 engineering reviewed, live validation blocked by provider quota; R5 in progress; R6/R7 pending
 ---
 
 # RainyDays：以真实任务完成为目标的产品规划

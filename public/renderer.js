@@ -1734,7 +1734,36 @@
     }
 
     let documentOutputGeneration = 0;
-    function renderDocumentOutputs(outputs, error = "") {
+    const researchSourcesEl = document.getElementById("research-sources");
+    function renderResearchSources(research = { sources: [], unreadLinks: [] }) {
+      const sources = research.sources || [], unreadLinks = research.unreadLinks || [];
+      researchSourcesEl.hidden = !sources.length && !unreadLinks.length;
+      researchSourcesEl.querySelector("#research-source-count").textContent = sources.length ? `（${sources.length}）` : "";
+      const list = researchSourcesEl.querySelector("#research-source-list"); list.replaceChildren();
+      for (const source of sources) {
+        const row = document.createElement("div"); row.className = "research-source-row";
+        const icon = createUiIcon("globe");
+        const text = document.createElement("div"); text.className = "research-source-copy";
+        const title = document.createElement("span"); title.className = "research-source-title"; title.textContent = source.title;
+        const url = document.createElement("span"); url.className = "research-source-url"; url.textContent = source.url; url.title = source.url;
+        const state = document.createElement("span"); state.className = "research-source-status";
+        state.textContent = { read: "已获取正文", partial: "部分读取", failed: "获取失败" }[source.status] || "未确认";
+        state.title = source.readAt ? `获取时间：${new Date(source.readAt).toLocaleString()}` : "";
+        if (source.status === "failed") state.title = source.error;
+        if (source.status === "partial") state.title = "只获取了部分内容，不能据此声称完整阅读。";
+        const copy = document.createElement("button"); copy.type = "button"; copy.textContent = "复制网址";
+        copy.setAttribute("aria-label", `复制来源网址：${source.title}`);
+        copy.addEventListener("click", async () => {
+          try { await navigator.clipboard.writeText(source.url); copy.textContent = "已复制"; }
+          catch { copy.textContent = "请选中网址复制"; }
+        });
+        text.append(title, url, state); row.append(icon, text, copy); list.append(row);
+      }
+      const warning = researchSourcesEl.querySelector("#research-link-warning"); warning.hidden = !unreadLinks.length;
+      warning.textContent = unreadLinks.length ? `回答含 ${unreadLinks.length} 个尚未读取的网页链接，请核对：${unreadLinks.join("、")}` : "";
+      messagesEl.appendChild(researchSourcesEl);
+    }
+    function renderDocumentOutputs(outputs, error = "", research) {
       documentOutputGeneration += 1;
       const panel = documentOutputsEl;
       const list = panel.querySelector("#document-output-list");
@@ -1775,6 +1804,7 @@
         actions.append(open, revise); row.append(type, copy, actions); list.append(row);
       }
       messagesEl.appendChild(panel);
+      renderResearchSources(research);
     }
     async function refreshDocumentOutputs(sessionId) {
       if (!sessionId) return;
@@ -1783,7 +1813,7 @@
         const res = await fetch(`/api/sessions/${sessionId}/messages`, { headers: sessionHeaders(sessionId) });
         if (!res.ok) throw new Error("成果列表加载失败");
         const data = await res.json();
-        if (currentSessionId === sessionId && generation === documentOutputGeneration) renderDocumentOutputs(data.outputs || []);
+        if (currentSessionId === sessionId && generation === documentOutputGeneration) renderDocumentOutputs(data.outputs || [], "", data.research);
       } catch {
         if (currentSessionId === sessionId && generation === documentOutputGeneration) renderDocumentOutputs([], "成果列表加载失败");
       }
@@ -2478,7 +2508,7 @@
       const mres = await fetch(`/api/sessions/${id}/messages`, { headers: sessionHeaders(id) }); const mdata = await mres.json();
       if (generation !== sessionSelectionGeneration) return;
       messagesEl.innerHTML = "";
-      renderDocumentOutputs(mdata.outputs || []);
+      renderDocumentOutputs(mdata.outputs || [], "", mdata.research);
       for (const msg of mdata.messages) { if (msg.role === "user") addMessage("user", msg.content, msg.id, msg.attachments); else if (msg.role === "assistant" && msg.content) addMessage("assistant", msg.content, msg.id); }
       renderWelcomeState();
       if (generation !== sessionSelectionGeneration || currentSessionId !== id) return;
@@ -2805,6 +2835,8 @@
       if (!currentSessionId) await newChat();
       const chatSessionId = currentSessionId;
       if (!chatSessionId || isSessionRunning(chatSessionId)) return;
+      // A pending initial restore must not replace the live response created below.
+      sessionSelectionGeneration += 1;
       const runToken = beginSessionRun(chatSessionId);
       addMessage("user", text, null, readyAttachments); inputEl.value = ""; inputEl.rows = 1; closeSlashMenu();
       historyNavIndex = -1; historyDraftBeforeNavigation = ""; saveDraft(chatSessionId, ""); pushSessionHistory(chatSessionId, text);
@@ -2860,6 +2892,7 @@
             else if (step.type === "tool_result") {
               updateLastToolCard(bubbleEl, step);
               if (["create_docx", "create_xlsx"].includes(step.toolName)) void refreshDocumentOutputs(chatSessionId);
+              if (step.toolName === "fetch_markdown") void refreshDocumentOutputs(chatSessionId);
             }
             else if (step.type === "task_created" || step.type === "task_update") { if (step.tasks && step.tasks.length > 0) renderTasks(step.tasks); }
             else if (step.type === "answer_done") { if (!streamingStarted && step.content) { bubbleEl.innerHTML = ""; fullText = step.content; bubbleEl.innerHTML = renderMarkdown(fullText); } else if (!streamingStarted && !step.content) { bubbleEl.innerHTML = ""; bubbleEl.textContent = "(无回复)"; } if (fullText) { speakText(fullText.slice(0, 200)); enhanceLocalFileLinks(bubbleEl, fullText); } completeAccessibleResponse(fullText || bubbleEl.textContent); }
@@ -2873,6 +2906,7 @@
         completeAccessibleResponse(bubbleEl.textContent);
       }
       finally { completeAccessibleResponse(bubbleEl.textContent); finishSessionRun(chatSessionId, runToken); if (currentSessionId === chatSessionId) inputEl.focus(); }
+      void refreshDocumentOutputs(chatSessionId);
       await loadSessions(); await loadPins(); await loadPersonas(); if (currentSessionId === chatSessionId) { await loadAttachmentDrafts(chatSessionId); await loadSessionSubagents(chatSessionId); }
       if (currentSessionId) { const sres = await fetch(`/api/sessions/${currentSessionId}/messages`, { headers: sessionHeaders(currentSessionId) }); const sdata = await sres.json(); if (sdata.session) currentTitleEl.textContent = sdata.session.title; }
       messagesEl.scrollTop = messagesEl.scrollHeight; updateStatus();
@@ -2945,7 +2979,7 @@
       body.className = "tool-card-body";
       const label = document.createElement("span");
       label.className = "label";
-      const toolLabels = { read_file:"读取文件", write_file:"写入文件", create_docx:"生成 Word 文档", create_xlsx:"生成 Excel 工作簿", web_search:"搜索资料", web_fetch:"阅读网页", bash:"运行命令" };
+      const toolLabels = { read_file:"读取文件", write_file:"写入文件", create_docx:"生成 Word 文档", create_xlsx:"生成 Excel 工作簿", web_search:"搜索资料", web_fetch:"阅读网页", fetch_markdown:"阅读网页", bash:"运行命令" };
       label.textContent = toolLabels[step.toolName] || step.toolName;
       label.title = step.toolName;
       const status = document.createElement("span");

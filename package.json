@@ -49,6 +49,7 @@
     "test:product:ui": "node --test tests/unit/ui-launch-entry.test.mjs tests/unit/ui-icon-contract.test.mjs tests/unit/electron-ipc-contract.test.mjs tests/unit/ds06-renderer-contract.test.mjs",
     "check:product": "npm run typecheck && npm run lint && npm run test:product && npm run test:product:ui",
     "test:product:desktop": "npm run build && node --test --test-concurrency=1 --test-name-pattern \"development desktop|R1 real Electron|R2 real Electron\" tests/electron/development-launch.test.mjs tests/electron/desktop-smoke.test.mjs",
+    "test:product:research": "npm run build && node --test tests/unit/tool05-fetch-runtime.test.mjs && node --test --test-name-pattern \"R4 real Electron\" tests/electron/desktop-smoke.test.mjs",
     "test:sec01:quick": "node scripts/run-tests.mjs --task SEC-01 --profile quick",
     "test:sec01": "node scripts/run-tests.mjs --task SEC-01 --profile full",
     "governance:sec02:generate": "node scripts/generate-sec02-resolved-manifest.mjs",

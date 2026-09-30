@@ -5,6 +5,8 @@
 
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 import { throwIfCancelled } from "../run-cancellation.js";
+import { collectResearchSources, researchUrl } from "../research-sources.js";
+import { loadSessionMessages } from "../session.js";
 
 const MAX_OFFICE_BYTES = 64 * 1024 * 1024;
 
@@ -34,6 +36,7 @@ export const createDocxDef: ToolDefinition = {
           items: { type: "string" },
           description: "正文段落数组。",
         },
+        sources: { type: "array", maxItems: 30, items: { type: "string" }, description: "研究报告的参考网址，必须是本会话 fetch_markdown 实际读取的最终 URL。自动追加参考资料与可点击链接。" },
       },
       required: ["path", "paragraphs"],
     },
@@ -43,6 +46,14 @@ export const createDocxDef: ToolDefinition = {
 export const createDocxExec: ToolExecutor = async (args, _env, invocation) => {
   if (!invocation) throw new Error("Tool invocation services are required");
   throwIfCancelled(invocation.signal);
+  const sourceUrls = args.sources as string[] | undefined;
+  const evidence = sourceUrls?.length ? collectResearchSources(loadSessionMessages(invocation.capabilityContext.sessionId)).sources : [];
+  const references = (sourceUrls ?? []).map(value => {
+    const url = researchUrl(value);
+    const source = evidence.find(item => item.url === url && item.status !== "failed");
+    if (!source) throw new Error("报告引用的来源尚未读取，请先用 fetch_markdown 读取后再生成报告。");
+    return source;
+  });
   const relativePath = args.path as string;
   const { gateway, rootId } = outputGateway(invocation);
   const reservation = await gateway.reserveFile(relativePath, {
@@ -51,7 +62,7 @@ export const createDocxExec: ToolExecutor = async (args, _env, invocation) => {
     requiredExtension: ".docx",
   });
   throwIfCancelled(invocation.signal);
-  const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import("docx");
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel, ExternalHyperlink } = await import("docx");
   const title = (args.title as string) || "";
   const paragraphs = (args.paragraphs as string[]) || [];
 
@@ -73,6 +84,14 @@ export const createDocxExec: ToolExecutor = async (args, _env, invocation) => {
         spacing: { after: 200 },
       })
     );
+  }
+
+  if (references.length) {
+    children.push(new Paragraph({ text: "参考资料", heading: HeadingLevel.HEADING_2 }));
+    for (const [index, source] of references.entries()) children.push(new Paragraph({ children: [
+      new TextRun(`[${index + 1}] ${source.title}${source.status === "partial" ? "（部分读取）" : ""} `),
+      new ExternalHyperlink({ link: source.url, children: [new TextRun({ text: source.url, style: "Hyperlink" })] }),
+    ] }));
   }
 
   const doc = new Document({ sections: [{ children }] });

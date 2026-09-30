@@ -170,25 +170,33 @@ function truncate(value: string, maximum: number): string {
   return `${value.slice(0, maximum - suffix.length).trimEnd()}${suffix}`;
 }
 
-export function renderFetchedContent(input: Readonly<{
+export function extractFetchedContent(input: Readonly<{
   bytes: Buffer;
   contentType: string;
   finalUrl: string;
   raw: boolean;
   maxLength: number;
-}>): string {
+}>): Readonly<{ content: string; title: string; partial: boolean }> {
   if (!isTextContentType(input.contentType)) throw new Error(`Unsupported content type: ${input.contentType || "unknown"}`);
   const text = decodeBody(input.bytes, input.contentType);
-  if (input.raw || !input.contentType.toLowerCase().includes("html")) return truncate(text, input.maxLength);
+  if (input.raw || !input.contentType.toLowerCase().includes("html")) {
+    if (!text.trim()) throw new Error("网页未提取到内容，请尝试其他来源。");
+    return { content: truncate(text, input.maxLength), title: new URL(input.finalUrl).hostname, partial: text.length > input.maxLength };
+  }
   const html = /<html(?:\s|>)/iu.test(text) ? text : `<!doctype html><html><body>${text}</body></html>`;
   const { document } = parseHTML(html);
   const article = new Readability(document as unknown as Document).parse();
   const content = article?.content ?? document.body?.innerHTML ?? document.documentElement?.innerHTML ?? "";
   const parsed = parseHTML(`<main>${content}</main>`).document;
   const markdown = nodeMarkdown(parsed.querySelector("main") as unknown as Node, input.finalUrl);
+  if (!markdown.trim()) throw new Error("网页未提取到内容，可能需要登录或不支持正文提取，请尝试其他来源。");
   const title = article?.title?.trim() || document.title?.trim();
   const output = `${title ? `# ${escapeMarkdown(title)}\n\n` : ""}Source: ${input.finalUrl}\n\n${normalizeMarkdown(markdown)}`.trim();
-  return truncate(output, input.maxLength);
+  return { content: truncate(output, input.maxLength), title: title || new URL(input.finalUrl).hostname, partial: output.length > input.maxLength };
+}
+
+export function renderFetchedContent(input: Parameters<typeof extractFetchedContent>[0]): string {
+  return extractFetchedContent(input).content;
 }
 
 function resultUrl(href: string): string | null {

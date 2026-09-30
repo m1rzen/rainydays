@@ -136,8 +136,11 @@ test("TOOL-05 executors honor status, max_length and provider source formatting"
   const html = `<article><h1>Title</h1><p>${"content ".repeat(80)}</p></article>`;
   const fetched = await fetchMarkdownExec({ url: "https://example.com/a", max_length: 120 }, {}, invocation(async () =>
     new Response(html, { status: 200, headers: { "content-type": "text/html; charset=utf-8" } })));
-  assert.equal(fetched.length, 120);
-  assert.match(fetched, /\[Content truncated\]$/u);
+  const receipt = JSON.parse(fetched);
+  assert.equal(receipt.type, "research_source");
+  assert.equal(receipt.content.length, 120);
+  assert.equal(receipt.partial, true);
+  assert.match(receipt.content, /\[Content truncated\]$/u);
   await assert.rejects(() => fetchMarkdownExec({ url: "https://example.com/private" }, {}, invocation(async () =>
     new Response("login required", { status: 401, statusText: "Unauthorized" }))), /HTTP 401 Unauthorized/u);
 

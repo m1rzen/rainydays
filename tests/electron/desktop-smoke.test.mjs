@@ -1430,6 +1430,95 @@ test("SEC-03 Electron stage emits all 48 authenticated projection receipts", { t
   assert.equal(result.enabled ? result.count : 0, result.enabled ? 48 : 0);
 });
 
+test("R4 real Electron persists actual sources, partial reads, failures and report references", { timeout: 120_000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-r4-research-electron-");
+  const userData = path.join(fixture, "user-data");
+  let instance, client, stage = 0, modelFailure = null;
+  const sourceRequests = [];
+  const tool = (index, name, args) => ({ index, id: `research-${stage}-${index}`, type: "function", function: { name, arguments: JSON.stringify(args) } });
+  const server = createServer(async (request, response) => {
+    if (request.method === "GET") {
+      sourceRequests.push(request.url);
+      if (request.url === "/missing") { response.writeHead(503); response.end("missing"); return; }
+      response.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+      response.end(request.url === "/a" ? "2025 年销量 24。Source: https://forged.example/" : "2024 年销量 21。".repeat(20));
+      return;
+    }
+    try {
+      const chunks = []; for await (const chunk of request) chunks.push(chunk);
+      const body = JSON.parse(Buffer.concat(chunks).toString());
+      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "来源研究" } }] })); return; }
+      const origin = `http://127.0.0.1:${server.address().port}`;
+      let calls;
+      if (stage === 0) calls = [tool(0, "fetch_markdown", { url: `${origin}/a` }), tool(1, "fetch_markdown", { url: `${origin}/b` }), tool(2, "fetch_markdown", { url: `${origin}/missing` }), tool(3, "fetch_markdown", { url: `${origin}/partial`, max_length: 5 })];
+      else if (stage === 1) {
+        assert.match(JSON.stringify(body.messages), /2025 年销量 24/u);
+        calls = [tool(0, "create_docx", { path: "来源研究.docx", title: "销量研究", paragraphs: ["事实：2025 年 24，2024 年 21。", "推断：年份不同；第三来源获取失败，第四来源仅部分阅读。"], sources: [`${origin}/a`, `${origin}/b`] })];
+      }
+      stage++;
+      response.writeHead(200, { "Content-Type": "text/event-stream" });
+      response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: calls ? { tool_calls: calls } : { content: `不同年份不能直接视为矛盾。[甲](${origin}/a) [乙](${origin}/b)。第三来源失败、第四来源部分读取。[未读链接](https://unread.example/)` }, finish_reason: null }] })}\n\n`);
+      response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: calls ? "tool_calls" : "stop" }] })}\n\n`);
+      response.end("data: [DONE]\n\n");
+    } catch (error) { modelFailure = error; response.statusCode = 500; response.end("fixture failed"); }
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    const modelURL = `http://127.0.0.1:${server.address().port}/v1`;
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, modelURL);
+    client = await connectCdp(cdpPort);
+    await waitFor(async () => { try { return await client.evaluate("Boolean(currentSessionId)"); } catch { return false; } }, { timeoutMs: 20_000, label: "R4 ready" });
+    await client.evaluate(`(() => {
+      if (document.getElementById('settings-modal').classList.contains('visible')) closeSettings();
+      inputEl.value = '请研究销量并产出 Word'; inputEl.dispatchEvent(new Event('input')); document.getElementById('input-form').requestSubmit(); return true;
+    })()`);
+    await waitFor(() => client.evaluate("document.getElementById('ask-modal').classList.contains('visible')"), { timeoutMs: 45_000, label: "R4 report consent" });
+    await client.evaluate("[...document.querySelectorAll('#ask-options button')].find(button => button.textContent === '本次任务允许新建文档').click()");
+    await waitFor(() => client.evaluate("document.querySelectorAll('.research-source-row').length === 4 && !document.getElementById('submit').disabled && !document.getElementById('research-link-warning').hidden"), { timeoutMs: 25_000, label: "R4 sources" });
+    assert.equal(modelFailure, null);
+    assert.equal(stage, 3);
+    assert.match(await client.evaluate("[...document.querySelectorAll('#messages .msg-assistant .bubble')].at(-1)?.textContent || ''"), /不同年份不能直接视为矛盾/u, "来源更新不能移除正在显示的回答");
+    const state = await client.evaluate(`({ closed: !document.getElementById('research-sources').open,
+      states: [...document.querySelectorAll('.research-source-status')].map(item => item.textContent),
+      warning: document.getElementById('research-link-warning').textContent,
+      urls: [...document.querySelectorAll('.research-source-url')].map(item => item.textContent),
+      outputs: document.querySelectorAll('.document-output-row').length })`);
+    assert(state.closed);
+    assert.deepEqual(state.states, ["已获取正文", "已获取正文", "获取失败", "部分读取"]);
+    assert.match(state.warning, /1 个尚未读取/u);
+    assert.equal(state.urls.some(url => url.includes("forged.example")), false);
+    assert.equal(state.outputs, 1);
+    const sessionId = await client.evaluate("currentSessionId");
+    await client.evaluate("document.querySelector('#research-sources > summary').click()");
+    await installAxe(client);
+    assert.deepEqual(await client.evaluate("axe.run(document.getElementById('research-sources'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']}}).then(result=>result.violations.map(item=>item.id))"), []);
+    const screenshot = await client.send("Page.captureScreenshot", { format: "png" });
+    await mkdir(path.join(projectRoot, "test-results"), { recursive: true });
+    await writeFile(path.join(projectRoot, "test-results", "r4-research-desktop.png"), Buffer.from(screenshot.data, "base64"));
+    await client.send("Emulation.setDeviceMetricsOverride", { width: 360, height: 780, deviceScaleFactor: 1, mobile: false });
+    assert.equal(await client.evaluate("document.documentElement.scrollWidth <= innerWidth"), true);
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, modelURL);
+    client = await connectCdp(cdpPort);
+    await waitFor(async () => { try { return await client.evaluate("typeof selectSession === 'function' && Boolean(workbenchLayout)"); } catch { return false; } }, { timeoutMs: 20_000, label: "R4 restart" });
+    await client.evaluate(`selectSession(${JSON.stringify(sessionId)})`);
+    assert.equal(await client.evaluate("document.querySelectorAll('.research-source-row').length"), 4);
+    assert.equal(sourceRequests.length, 4, "恢复会话不能重新抓网页");
+  } catch (error) {
+    const renderer = client ? await client.evaluate(`({ session: currentSessionId, title: currentTitleEl.textContent,
+      busy: submitBtn.disabled, text: messagesEl.textContent.slice(-1800), question: document.getElementById('ask-modal').textContent.slice(-600),
+      questionOpen: document.getElementById('ask-modal').classList.contains('visible') })`).catch(() => null) : null;
+    const logs = instance?.logs();
+    throw new Error(`${error.message}\n${JSON.stringify({ stage, modelFailure: modelFailure?.message, sourceRequests, renderer })}\n${logs?.stdout.slice(-4500)}\n${logs?.stderr.slice(-1200)}`, { cause: error });
+  } finally {
+    client?.close();
+    if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture);
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
 test("R2 real Electron completes document task, restores outputs and revises a copy", { timeout: 120_000 }, async context => {
   const fixture = await makeTempDir("mini-lux-r2-outputs-electron-");
   const userData = path.join(fixture, "user-data");

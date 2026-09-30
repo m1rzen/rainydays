@@ -8,6 +8,12 @@
 - 输入框使用浏览器 `field-sizing: content`，由 min/max-height 限制，替代 renderer 动态内联样式。依据：[MDN field-sizing](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/field-sizing)。安装的 Electron 中实际测量多行、清空和高度上限；不假设所有浏览器兼容。
 - 开发启动使用 npm Node 与 tsx loader，保留原 IPC 私有管道与 readiness 身份检查；安装模式仍使用现有编译入口。
 
+## R4（2026-09-30）
+
+复用 fetch-runtime.ts 的 Readability/有界读取与 network-policy.ts 重定向网关；fetch_markdown 返回宿主结构化回执，来源清单从现有 tool 历史投影。网络和执行许可不变。`marked` 的本地 lexer/walkTokens 与界面同源，用于显式链接、GFM 自动链接、参考式链接；代码片段不当作引用。
+
+Word 参考资料使用当前 docx 安装版本的 ExternalHyperlink/HeadingLevel；定义见 node_modules/docx/dist/index.d.ts，并以真实生成和解析验证。未引入额外 Office 库。正文获取状态与事实正确性明确分开，公开官方资料入口和人工预期见 R4-model-evaluation.md。
+
 ## R1
 
 - Node 24.14.1；TypeScript 5.7.3；tsx 4.23.0；OpenAI SDK 4.104.0；better-sqlite3 12.11.1。
