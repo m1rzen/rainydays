@@ -1,6 +1,12 @@
 # 当前切片技术依据
 
-更新：2026-09-28。只使用当前仓库及安装版本的资料。
+更新：2026-09-30。以当前仓库及安装版本为准，新增技术仅引用官方资料。
+
+## R3
+
+- 复用 Node 原生测试运行器与现有 helpers；npm 串联现有行为检查，不添加清单生成框架。依据：[Node 24 测试文档](https://nodejs.org/docs/latest-v24.x/api/test.html)。
+- 输入框使用浏览器 `field-sizing: content`，由 min/max-height 限制，替代 renderer 动态内联样式。依据：[MDN field-sizing](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/field-sizing)。安装的 Electron 中实际测量多行、清空和高度上限；不假设所有浏览器兼容。
+- 开发启动使用 npm Node 与 tsx loader，保留原 IPC 私有管道与 readiness 身份检查；安装模式仍使用现有编译入口。
 
 ## R1
 

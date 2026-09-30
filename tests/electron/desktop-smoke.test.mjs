@@ -936,7 +936,7 @@ test("R1 real Electron preserves partial answers on provider and transport error
         document.getElementById('input-form').requestSubmit(); return true;
       })()`);
       const text = await waitFor(async () => {
-        const state = await client.evaluate(`({ text: document.querySelector('#messages .msg-assistant:last-child .bubble')?.textContent, count: window.__r1ChatCount, busy: document.getElementById('submit').disabled })`);
+        const state = await client.evaluate(`({ text: [...document.querySelectorAll('#messages .msg-assistant .bubble')].at(-1)?.textContent, count: window.__r1ChatCount, busy: document.getElementById('submit').disabled })`);
         return state.count === index && !state.busy && state.text?.includes(expected) ? state.text : null;
       }, { timeoutMs: 15_000, label: `R1 error ${index}` });
       assert.match(text, /已生成的正文/u);

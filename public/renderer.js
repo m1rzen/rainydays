@@ -2748,8 +2748,6 @@
 
     function resizeMessageInput() {
       inputEl.rows = 1;
-      inputEl.style.setProperty("--input-height", "auto");
-      inputEl.style.setProperty("--input-height", `${Math.min(150, Math.max(43, inputEl.scrollHeight))}px`);
     }
 
     inputEl.addEventListener("input", () => {
