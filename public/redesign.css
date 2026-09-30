@@ -260,6 +260,14 @@ details:not([open]) > summary > .disclosure-icon { transform:rotate(-90deg); }
 .settings-section h3 { font-size:17px; font-weight:600; margin-bottom:8px; }
 .settings-domain-status { padding:0 0 18px; border:0; background:transparent; font-size:11px; color:var(--text-dim); line-height:1.7; }
 .settings-grid { gap:12px 15px; grid-template-columns:135px minmax(0,1fr); }
+.settings-grid[hidden] { display:none; }
+.settings-advanced { margin-top:20px; border-top:1px solid var(--border); padding-top:12px; }
+.settings-advanced > summary { font-size:12px; color:var(--text-dim); cursor:pointer; padding:5px 0; }
+.settings-advanced[open] > summary { margin-bottom:12px; }
+.settings-probe-note { font-size:11px; line-height:1.7; color:var(--text-dim); margin:14px 0 8px; }
+#provider-test-result { font-size:12px; line-height:1.7; overflow-wrap:anywhere; }
+#provider-test-result.success { color:#39734f; }
+#provider-test-result.error { color:#a43d35; }
 .settings-grid > label { font-size:12px; }
 .settings-input,.settings-select,.settings-profile-grid input { min-height:34px; padding:7px 9px; font-size:12px; border-radius:6px; background:#fbfaf7; }
 .settings-code-input { border-radius:6px; background:#eeece7; color:var(--text); font-size:12px; }
@@ -271,7 +279,8 @@ details:not([open]) > summary > .disclosure-icon { transform:rotate(-90deg); }
 .settings-new-provider svg { width:14px; height:14px; }
 .settings-provider-item { font-size:12px; }
 .settings-provider-item .badge { color:#8e432e; }
-.settings-actions { margin-top:22px; padding-top:16px; border-top:1px solid var(--border); gap:8px; }
+.settings-actions { margin-top:22px; padding-top:16px; border-top:1px solid var(--border); gap:8px; flex-wrap:wrap; }
+.settings-actions .settings-btn { white-space:nowrap; flex-shrink:0; }
 .settings-help { font-size:11px; line-height:1.6; }
 .settings-footer { padding:10px 20px; gap:8px; }
 #settings-message { font-size:11px; }
@@ -353,6 +362,7 @@ details:not([open]) > summary > .disclosure-icon { transform:rotate(-90deg); }
   .settings-content { padding:16px 12px; }
   .settings-grid { grid-template-columns:1fr; gap:8px; }
   .settings-help { grid-column:1; }
+  .settings-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
   .settings-grid > label { padding-top:6px; }
   .settings-profile-grid { grid-template-columns:1fr; }
 }

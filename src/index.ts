@@ -116,6 +116,7 @@ import { terminalFacade } from "./terminal-facade.js";
 import { FileEditConflictError, fileViewerService, type FileRootSnapshotInput } from "./file-viewer.js";
 import { collectDocumentOutputs } from "./document-outputs.js";
 import { collectResearchSources } from "./research-sources.js";
+import { probeProviderConnection } from "./model-connection.js";
 import { applyWorkbenchOperation, encodeWorkbenchLayout, parseWorkbenchLayout } from "./workbench-layout.js";
 import {
   AttachmentStoreError,
@@ -2693,6 +2694,20 @@ app.delete("/api/settings/providers/:name", async (req, res) => {
 
 app.get("/api/providers", (_req, res) => {
   res.json({ profiles: listProfiles() });
+});
+
+app.post("/api/providers/test", async (req, res) => {
+  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)
+    || Object.keys(req.body).join(",") !== "name" || typeof req.body.name !== "string") {
+    res.status(400).json({ error: "请选择一个已保存的模型配置。" }); return;
+  }
+  const name = req.body.name;
+  if (!Object.hasOwn(getConfigSnapshot().profiles, name)) { res.status(404).json({ error: "模型配置不存在，请先保存。" }); return; }
+  if (!getProviderProfile(name).apiKey) { res.json({ ok: false, code: "NOT_CONFIGURED", message: "请填写 API Key 并保存，再检测连接。" }); return; }
+  const controller = new AbortController();
+  res.once("close", () => { if (!res.writableEnded) controller.abort(); });
+  const result = await probeProviderConnection(createLlmClient(name), AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)]));
+  if (!res.destroyed) res.json(result);
 });
 
 app.post("/api/providers/switch", async (req, res) => {

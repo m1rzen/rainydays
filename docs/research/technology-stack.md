@@ -14,6 +14,14 @@
 
 Word 参考资料使用当前 docx 安装版本的 ExternalHyperlink/HeadingLevel；定义见 node_modules/docx/dist/index.d.ts，并以真实生成和解析验证。未引入额外 Office 库。正文获取状态与事实正确性明确分开，公开官方资料入口和人工预期见 R4-model-evaluation.md。
 
+## R5（2026-09-30）
+
+连接检测复用本地 OpenAI SDK chat.completions.create 和 AbortSignal；SDK maxRetries 已为 0，检测独立一次调用，不走 Agent/Memory。当前 Provider 只接通 OpenAI compatible 两类；不添加不支持的 Provider。读取受保护的 getProviderProfile 快照，现有 Base URL 校验和 HTTP 鉴权保持有效。
+
+设置可用性以 settings-schema.ts 的 domainManifest 与实际 AppSettings 为准；common 的内部 domain 未接通不代表工作/输出目录无效。新界面隐藏待接入设置，不修改存储 schema。impeccable onboard 依据用户既定“对话与成果”方向与已批准 DESIGN.md。
+
+独立模型验收需 Windows Chromium Local State 中 OS 保护配置密钥；依据 [Electron 43.1.1 源码](https://raw.githubusercontent.com/electron/electron/v43.1.1/shell/browser/electron_browser_main_parts.cc)，只复制必要字段并在退出后删除。
+
 ## R1
 
 - Node 24.14.1；TypeScript 5.7.3；tsx 4.23.0；OpenAI SDK 4.104.0；better-sqlite3 12.11.1。

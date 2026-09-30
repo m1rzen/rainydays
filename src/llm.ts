@@ -144,6 +144,16 @@ export class LLMClient {
     });
   }
 
+  /** Explicit settings check: one bounded request, with no agent history, tools or retries. */
+  async probe(signal: AbortSignal): Promise<void> {
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [{ role: "user", content: "Reply OK." }],
+      max_tokens: 16,
+    }, { signal });
+    if (response.choices?.[0]?.message?.role !== "assistant") throw new Error("Invalid provider response");
+  }
+
   /**
    * 发送对话请求（非流式），支持工具调用
    * 包含重试逻辑

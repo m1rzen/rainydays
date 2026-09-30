@@ -35,7 +35,7 @@ async function wcag21AaViolations(client) {
   return client.evaluate(`axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']},resultTypes:['violations']}).then(result=>result.violations.map(item=>({id:item.id,impact:item.impact,nodes:item.nodes.map(node=>({target:node.target,html:node.html,failureSummary:node.failureSummary}))})))`, 30_000);
 }
 
-async function startElectron(userData, httpPort, cdpPort, signal, modelBaseURL) {
+async function startElectron(userData, httpPort, cdpPort, signal, modelBaseURL, options = {}) {
   // Keep all three runtime roots distinct and fixture-local. Inheriting the host default
   // department root (for example an unavailable network drive) makes this smoke nondeterministic.
   const workspaceRoot = path.join(userData, "workspace");
@@ -53,7 +53,7 @@ async function startElectron(userData, httpPort, cdpPort, signal, modelBaseURL) 
     profiles: {
       default: {
         model: "electron-smoke-model",
-        apiKey: modelBaseURL ? "fixture-only-key" : "",
+        apiKey: modelBaseURL && !options.unconfigured ? "fixture-only-key" : "",
         baseURL: modelBaseURL || "https://provider.invalid/v1",
         providerType: "openai-compatible",
       },
@@ -1428,6 +1428,74 @@ test("SEC-03 Electron stage emits all 48 authenticated projection receipts", { t
     addonPath: path.join(projectRoot, ".electron-app", "dist", "native", "sandbox-launcher.node"),
   });
   assert.equal(result.enabled ? result.count : 0, result.enabled ? 48 : 0);
+});
+
+test("R5 real Electron first setup tests saved connection without sending history", { timeout: 120_000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-r5-setup-electron-");
+  const userData = path.join(fixture, "user-data");
+  let instance, client, quota = false;
+  const requests = [];
+  const server = createServer(async (request, response) => {
+    const chunks = []; for await (const chunk of request) chunks.push(chunk);
+    requests.push(JSON.parse(Buffer.concat(chunks).toString()));
+    response.writeHead(quota ? 403 : 200, { "Content-Type": "application/json" });
+    response.end(JSON.stringify(quota ? { error: { message: "monthly usage limit FIXTURE_SECRET", type: "quota" } }
+      : { choices: [{ message: { role: "assistant", content: "OK" } }] }));
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    const modelURL = `http://127.0.0.1:${server.address().port}/v1`;
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, modelURL, { unconfigured: true });
+    client = await connectCdp(cdpPort);
+    console.log("[R5] connected desktop");
+    await waitFor(() => client.evaluate("document.getElementById('settings-modal').classList.contains('visible') && activeSettingsDomain === 'profiles'"), { timeoutMs: 20_000, label: "R5 first model setup" });
+    console.log("[R5] first setup visible");
+    assert.deepEqual(await client.evaluate("[...document.querySelectorAll('.settings-domain-tab')].map(b=>b.dataset.domainId)"), ["common", "profiles", "tts", "asr"]);
+    assert.equal(await client.evaluate("document.getElementById('provider-model').getClientRects().length > 0 && !document.querySelector('[data-settings-domain=profiles] details').open && !document.getElementById('provider-proxy').getClientRects().length"), true);
+    await client.evaluate("document.getElementById('provider-api-key').value='fixture-only-key';document.getElementById('provider-api-key').dispatchEvent(new Event('input',{bubbles:true}));saveProvider()");
+    console.log("[R5] configuration saved");
+    assert.equal(await client.evaluate("document.getElementById('provider-api-key').value"), "");
+    const config = JSON.parse(await readFile(path.join(userData, "config.json"), "utf8"));
+    assert(config.profiles.default.credentialRef); assert.equal(config.profiles.default.apiKey, undefined);
+    assert.equal(requests.length, 0, "保存配置不自动花费模型额度");
+    const session = await client.evaluate("currentSessionId");
+    await client.evaluate("document.getElementById('provider-test-btn').click()");
+    await waitFor(() => client.evaluate("document.getElementById('provider-test-result').textContent.includes('连接成功')"), { timeoutMs: 20_000, label: "R5 connection success" });
+    console.log("[R5] successful connection tested");
+    assert.equal(requests.length, 1); assert.deepEqual(requests[0].messages, [{ role: "user", content: "Reply OK." }]);
+    assert.equal(requests[0].max_tokens, 16); assert.equal(requests[0].tools, undefined);
+    assert.equal(await client.evaluate("currentSessionId"), session);
+    quota = true;
+    await client.evaluate("document.getElementById('provider-test-btn').click()");
+    await waitFor(() => client.evaluate("document.getElementById('provider-test-result').textContent.includes('额度')"), { timeoutMs: 20_000, label: "R5 quota recovery hint" });
+    console.log("[R5] quota error tested");
+    assert.equal(requests.length, 2, "连接失败不自动重试");
+    assert.doesNotMatch(await client.evaluate("document.getElementById('provider-test-result').textContent"), /FIXTURE_SECRET/);
+    await installAxe(client);
+    assert.deepEqual(await client.evaluate("axe.run(document.getElementById('settings-modal'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']}}).then(r=>r.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})))"), []);
+    const screenshot = await client.send("Page.captureScreenshot", { format: "png" });
+    await mkdir(path.join(projectRoot, "test-results"), { recursive: true });
+    await writeFile(path.join(projectRoot, "test-results", "r5-setup-desktop.png"), Buffer.from(screenshot.data, "base64"));
+    await client.send("Emulation.setDeviceMetricsOverride", { width: 360, height: 780, deviceScaleFactor: 1, mobile: false });
+    assert.equal(await client.evaluate("document.documentElement.scrollWidth <= innerWidth && document.getElementById('provider-test-btn').getBoundingClientRect().right <= innerWidth"), true);
+    assert.equal(await client.evaluate("[...document.querySelectorAll('[data-settings-domain=profiles] .settings-actions button')].every(b=>b.offsetHeight<=36 && getComputedStyle(b).whiteSpace==='nowrap')"), true, "窄窗口按钮不能逐字竖排");
+    await client.evaluate("document.getElementById('provider-test-result').scrollIntoView({block:'nearest'})");
+    const narrow = await client.send("Page.captureScreenshot", { format: "png" });
+    await writeFile(path.join(projectRoot, "test-results", "r5-setup-narrow.png"), Buffer.from(narrow.data, "base64"));
+    await client.evaluate("switchSettingsDomain('common');document.getElementById('settings-tab-common').focus()");
+    await client.send("Input.dispatchKeyEvent", { type: "keyDown", key: "End", code: "End", windowsVirtualKeyCode: 35 });
+    assert.equal(await client.evaluate("activeSettingsDomain"), "asr");
+    assert.equal(await client.evaluate("document.getElementById('setting-asr-endpoint').getClientRects().length"), 0);
+    await client.evaluate("closeSettings()");
+    assert.equal(await client.evaluate("document.getElementById('input').getClientRects().length > 0"), true);
+  } catch (error) {
+    const state = client ? await client.evaluate("({domain:activeSettingsDomain,message:document.getElementById('settings-message').textContent,result:document.getElementById('provider-test-result').textContent})").catch(() => null) : null;
+    throw new Error(`${error.message}\n${JSON.stringify({ state, requests: requests.length })}\n${instance?.logs().stdout.slice(-1600)}`, { cause: error });
+  } finally {
+    client?.close(); if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+  }
 });
 
 test("R4 real Electron persists actual sources, partial reads, failures and report references", { timeout: 120_000 }, async context => {

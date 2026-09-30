@@ -212,13 +212,17 @@
           <div class="settings-section" data-settings-domain="common">
             <h3>Common</h3><div class="settings-domain-status" data-domain-status="common"></div>
             <div class="settings-grid">
-              <label>默认 Provider</label><select id="setting-default-profile" class="settings-select"></select>
-              <label>默认 Persona</label><select id="setting-default-persona" class="settings-select"></select>
-              <label>通用工作目录</label><div class="settings-path-row"><input id="setting-workspace-root" class="settings-input" /><button class="settings-btn" data-action="choose-settings-directory" data-path-target="setting-workspace-root">选择</button></div>
-              <div class="settings-help">非部门专属 persona 的默认 DATA_ROOT。</div>
-              <label>部门资料根目录</label><div class="settings-path-row"><input id="setting-department-root" class="settings-input" /><button class="settings-btn" data-action="choose-settings-directory" data-path-target="setting-department-root">选择</button></div>
-              <div class="settings-help">产品研发室 persona 的 DATA_ROOT，例如 Z:\\产品研发室。</div>
-              <label>默认输出目录</label><div class="settings-path-row"><input id="setting-output-dir" class="settings-input" /><button class="settings-btn" data-action="choose-settings-directory" data-path-target="setting-output-dir">选择</button></div>
+              <label for="setting-default-profile">默认模型配置</label><select id="setting-default-profile" class="settings-select"></select>
+              <label for="setting-workspace-root">工作目录</label><div class="settings-path-row"><input id="setting-workspace-root" class="settings-input" /><button class="settings-btn" data-action="choose-settings-directory" data-path-target="setting-workspace-root">选择</button></div>
+              <div class="settings-help">助手处理资料时使用的默认文件夹。</div>
+              <label for="setting-output-dir">成果目录</label><div class="settings-path-row"><input id="setting-output-dir" class="settings-input" /><button class="settings-btn" data-action="choose-settings-directory" data-path-target="setting-output-dir">选择</button></div>
+            </div>
+            <details class="settings-advanced"><summary>高级偏好</summary><div class="settings-grid">
+              <label for="setting-default-persona">默认助手</label><select id="setting-default-persona" class="settings-select"></select>
+              <label for="setting-department-root">部门资料目录</label><div class="settings-path-row"><input id="setting-department-root" class="settings-input" /><button class="settings-btn" data-action="choose-settings-directory" data-path-target="setting-department-root">选择</button></div>
+              <div class="settings-help">仅用于部门专属助手。</div>
+            </div></details>
+            <div class="settings-grid" hidden>
               <label>最大工具轮次</label><input id="setting-max-iterations" type="number" min="1" max="1000" class="settings-input" />
               <label>Canvas token 上限</label><input id="setting-max-canvas-tokens" type="number" min="4096" max="1000000" class="settings-input" />
               <label>Supervisor 默认规则</label><textarea id="setting-supervisor-rules" class="settings-code-input settings-code-compact"></textarea>
@@ -233,23 +237,30 @@
           <div class="settings-section" data-settings-domain="profiles" hidden>
             <h3>Profiles</h3><div class="settings-domain-status" data-domain-status="profiles"></div>
             <div class="settings-grid">
-              <label>Profile 名称</label><input id="provider-name" class="settings-input" placeholder="例如 deepseek" />
-              <label>模型</label><input id="provider-model" class="settings-input" placeholder="例如 deepseek-chat" />
-              <label>Base URL</label><input id="provider-base-url" class="settings-input" placeholder="https://api.deepseek.com" />
+              <label for="provider-name">配置名称</label><input id="provider-name" class="settings-input" placeholder="例如 工作模型" />
+              <label for="provider-model">模型名称</label><input id="provider-model" class="settings-input" placeholder="提供方给出的模型名称" />
+              <label for="provider-base-url">接口地址</label><input id="provider-base-url" class="settings-input" placeholder="提供方的 Base URL" />
+              <label for="provider-api-key">API Key</label><input id="provider-api-key" type="password" class="settings-input" autocomplete="new-password" placeholder="留空则保留现有密钥" />
+              <div id="provider-key-hint" class="settings-help"></div>
+            </div>
+            <details class="settings-advanced"><summary>高级连接设置</summary><div class="settings-grid">
               <label>Provider 类型</label><select id="provider-type" class="settings-select"><option value="openai-compatible">OpenAI compatible</option><option value="openai-compatible-vision">OpenAI compatible vision</option><option value="anthropic" disabled>Anthropic（待接入）</option><option value="gemini" disabled>Gemini（待接入）</option><option value="codex" disabled>Codex（待接入）</option></select>
+            </div></details>
+            <div class="settings-grid" hidden>
               <label>Codex transport</label><select id="provider-codex-transport" class="settings-select"><option value="auto">auto</option><option value="websocket">websocket</option><option value="http">http</option></select>
               <label>Proxy</label><input id="provider-proxy" class="settings-input" placeholder="可选 http(s)/socks5 URL" />
               <label>图片内容</label><label class="settings-inline-check"><input id="provider-strip-images" type="checkbox" /> 剥离图片</label>
               <label>知识注入上限</label><input id="provider-knowledge-max" type="number" min="0" max="1000" class="settings-input" />
               <label>Persona bindings</label><textarea id="provider-persona-bindings" class="settings-code-input settings-code-compact" placeholder='{"developer":"default"}'></textarea>
-              <label>API Key</label><input id="provider-api-key" type="password" class="settings-input" autocomplete="new-password" placeholder="留空则保留现有密钥" />
-              <div id="provider-key-hint" class="settings-help"></div>
             </div>
             <div class="settings-actions">
               <button id="provider-delete-btn" class="settings-btn danger" data-action="delete-provider">删除</button>
               <button id="provider-switch-btn" class="settings-btn" data-action="switch-provider">切换使用</button>
-              <button class="settings-btn primary" data-action="save-provider">保存 Provider</button>
+              <button class="settings-btn primary" data-action="save-provider">保存配置</button>
+              <button id="provider-test-btn" class="settings-btn" data-action="test-provider">检测连接</button>
             </div>
+            <p class="settings-probe-note">检测使用已保存的配置，发送一条短消息，可能产生少量模型费用。</p>
+            <div id="provider-test-result" role="status" aria-live="polite"></div>
           </div>
           <div class="settings-section" data-settings-domain="mcp" hidden><h3>MCP</h3><div class="settings-domain-status" data-domain-status="mcp"></div><label class="settings-block-label" for="setting-mcp-servers">Servers JSON</label><textarea id="setting-mcp-servers" class="settings-code-input"></textarea><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="mcp">保存 MCP</button></div></div>
           <div class="settings-section" data-settings-domain="wire" hidden><h3>Wire</h3><div class="settings-domain-status" data-domain-status="wire"></div><label class="settings-block-label" for="setting-wire-sources">Sources JSON</label><textarea id="setting-wire-sources" class="settings-code-input"></textarea><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="wire">保存 Wire</button></div></div>

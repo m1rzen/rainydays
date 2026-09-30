@@ -1824,6 +1824,7 @@
     let editingProviderName = null;
     let activeSettingsDomain = "common";
     let settingsRequestGeneration = 0;
+    let providerTestGeneration = 0;
     const settingsDirtyDomains = new Set();
 
     function showSettingsMessage(message, type = "") {
@@ -1881,7 +1882,7 @@
         if (!state) return;
         renderSettingsPreservingDirty();
         document.querySelector(".settings-domain-tab.active")?.focus();
-        showSettingsMessage(`配置文件: ${settingsState.configPath}`);
+        showSettingsMessage("");
       } catch (err) {
         showSettingsMessage(err.message, "error");
       }
@@ -1892,7 +1893,7 @@
     }
 
     function switchSettingsDomain(domainId) {
-      if (!settingsState?.domainManifest?.some(domain => domain.id === domainId)) return;
+      if (!visibleSettingsDomains().some(domain => domain.id === domainId)) return;
       activeSettingsDomain = domainId;
       document.querySelectorAll("[data-settings-domain]").forEach(panel => { panel.hidden = panel.dataset.settingsDomain !== domainId; });
       document.querySelectorAll(".settings-domain-tab").forEach(button => {
@@ -1906,10 +1907,28 @@
       document.querySelector(".settings-new-provider").hidden = !profilesVisible;
     }
 
+    function visibleSettingsDomains() {
+      return (settingsState?.domainManifest || []).filter(domain => domain.id === "common" || domain.available);
+    }
+
     function renderSettingsDomainNavigation() {
       const nav = document.getElementById("settings-domain-nav");
+      // Keep unsupported remote speech fields out of the form while preserving stored values.
+      for (const id of ["setting-asr-provider", "setting-asr-endpoint", "setting-asr-api-key", "setting-asr-clear-key"]) {
+        const control = document.getElementById(id);
+        control.hidden = true;
+        if (control.previousElementSibling?.tagName === "LABEL") control.previousElementSibling.hidden = true;
+      }
+      for (const label of document.querySelectorAll(".settings-grid > label")) {
+        if (label.htmlFor || label.querySelector("input,select,textarea")) continue;
+        const sibling = label.nextElementSibling;
+        const control = sibling?.matches("input,select,textarea") ? sibling : sibling?.querySelector("input,select,textarea");
+        if (control?.id) label.htmlFor = control.id;
+      }
       nav.replaceChildren();
-      for (const domain of settingsState.domainManifest || []) {
+      const visibleDomains = visibleSettingsDomains();
+      if (!visibleDomains.some(domain => domain.id === activeSettingsDomain)) activeSettingsDomain = "common";
+      for (const domain of visibleDomains) {
         const button = document.createElement("button");
         button.className = "settings-domain-tab";
         button.id = `settings-tab-${domain.id}`;
@@ -1922,7 +1941,7 @@
         button.addEventListener("keydown", event => {
           if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
           event.preventDefault();
-          const tabs = settingsState.domainManifest || [];
+          const tabs = visibleSettingsDomains();
           const index = tabs.findIndex(candidate => candidate.id === domain.id);
           const delta = event.key === "ArrowUp" || event.key === "ArrowLeft" ? -1 : 1;
           const targetIndex = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + delta + tabs.length) % tabs.length;
@@ -1940,14 +1959,17 @@
         const icons = { common:"sliders", profiles:"chat", mcp:"code", wire:"file", animas:"circle", nous:"circle", tts:"volume-on", asr:"mic", shell:"terminal", relay:"globe", update:"download" };
         const label = document.createElement("span"); label.textContent = labels[domain.id] || domain.label;
         const state = document.createElement("span"); state.className = "domain-state";
-        state.textContent = domain.available ? (domain.applyMode === "immediate" ? "即时" : "重启") : "待接入";
+        state.textContent = "";
         button.append(createUiIcon(icons[domain.id] || "settings"), label, state); nav.appendChild(button);
         const heading = panel?.querySelector("h3"); if (heading) heading.textContent = label.textContent;
         const status = document.querySelector(`[data-domain-status="${domain.id}"]`);
         if (status) {
           status.className = `settings-domain-status ${domain.available ? domain.applyMode : "unavailable"}`;
           const partial = domain.fields?.some(field => field.applyMode === "unavailable");
-          status.textContent = `${domain.description} · ${domain.available ? (partial ? "仅标记为即时的字段生效；其余待接入" : domain.applyMode === "immediate" ? "保存后即时生效" : "保存后重启生效") : "配置可保存，adapter 尚未启用"}`;
+          status.textContent = domain.id === "common" ? "选择工作资料和成果的默认位置。"
+            : domain.id === "profiles" ? "填写提供方的模型名称、接口地址与密钥，保存后检测连接。"
+            : domain.id === "asr" ? "使用浏览器语音输入；是否支持由当前系统决定。"
+            : partial ? "保存已接通的选项后生效。" : "保存后生效。";
         }
       }
       switchSettingsDomain(activeSettingsDomain);
@@ -2017,6 +2039,9 @@
     }
 
     function fillProviderEditor(profile) {
+      providerTestGeneration += 1;
+      document.getElementById("provider-test-btn").disabled = false;
+      document.getElementById("provider-test-result").textContent = "";
       editingProviderName = profile.name;
       document.getElementById("provider-name").value = profile.name;
       document.getElementById("provider-name").disabled = true;
@@ -2050,6 +2075,9 @@
     }
 
     function newProviderEditor(clearMessage = true) {
+      providerTestGeneration += 1;
+      document.getElementById("provider-test-btn").disabled = true;
+      document.getElementById("provider-test-result").textContent = "先保存配置，再检测连接。";
       editingProviderName = null;
       document.getElementById("provider-name").disabled = false;
       document.getElementById("provider-name").value = "";
@@ -2193,7 +2221,7 @@
         await ensureFileRoots(true);
         await loadPersonas();
         await updateStatus();
-        showSettingsMessage("Common 设置已原子保存；标记为重启生效。", "success");
+        showSettingsMessage("通用设置已保存。", "success");
       } catch (err) {
         if (generation === settingsRequestGeneration) showSettingsMessage(err.message, "error");
       }
@@ -2203,7 +2231,7 @@
       const generation = ++settingsRequestGeneration;
       try {
         const name = document.getElementById("provider-name").value.trim();
-        if (!name) throw new Error("请填写 Profile 名称");
+        if (!name) throw new Error("请填写配置名称");
         const body = {
           expectedRevision: settingsState.revision,
           model: document.getElementById("provider-model").value.trim(),
@@ -2228,7 +2256,7 @@
         settingsDirtyDomains.delete("profiles");
         renderSettingsPreservingDirty();
         await updateStatus();
-        showSettingsMessage(`Provider ${name} 已保存。`, "success");
+        showSettingsMessage(`配置 ${name} 已保存，可以检测连接。`, "success");
       } catch (err) {
         if (generation === settingsRequestGeneration) showSettingsMessage(err.message, "error");
       }
@@ -2247,6 +2275,27 @@
       } catch (err) {
         if (generation === settingsRequestGeneration) showSettingsMessage(err.message, "error");
       }
+    }
+
+    async function testCurrentProvider() {
+      const resultEl = document.getElementById("provider-test-result");
+      if (!editingProviderName || settingsDirtyDomains.has("profiles")) { resultEl.textContent = "请先保存当前修改，再检测连接。"; return; }
+      const generation = ++providerTestGeneration;
+      const button = document.getElementById("provider-test-btn");
+      button.disabled = true;
+      resultEl.textContent = "正在检测连接…";
+      resultEl.className = "";
+      try {
+        const response = await fetch("/api/providers/test", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: editingProviderName }), signal: AbortSignal.timeout(20_000) });
+        const result = await response.json();
+        if (generation !== providerTestGeneration) return;
+        resultEl.textContent = result.message || result.error || "检测失败，请检查网络后重试。";
+        resultEl.className = result.ok ? "success" : "error";
+        resultEl.scrollIntoView({ block: "nearest" });
+      } catch {
+        if (generation === providerTestGeneration) { resultEl.textContent = "连接失败或超时，请检查网络后重试。"; resultEl.className = "error"; }
+      } finally { if (generation === providerTestGeneration) button.disabled = false; }
     }
 
     async function deleteCurrentProvider() {
@@ -2397,8 +2446,8 @@
       for (const target of pendingDesktopNavigationTargets.splice(0)) queueDesktopNavigation(target);
       const initialStatus = await updateStatus();
       if (initialStatus && !initialStatus.configured) {
-        addSystemMessage("⚠️ 当前 Provider 尚未配置 API Key，请在 Settings 中完成配置后再开始对话。");
-        setTimeout(openSettings, 200);
+        addSystemMessage("添加模型配置后，就可以交给助手处理资料和生成文档。");
+        setTimeout(async () => { await openSettings(); switchSettingsDomain("profiles"); }, 200);
       }
       setInterval(updateStatus, 5000);
     }
@@ -3331,6 +3380,7 @@
       "restore-workbench-tab": (_event, target) => target.dataset.paneId
         ? restoreWorkbenchTab(target.dataset.paneId) : undefined,
       "open-settings": () => openSettings(),
+      "test-provider": () => testCurrentProvider(),
       "close-settings": () => closeSettings(),
       "select-settings-domain": (_event, target) => target.dataset.domainId ? switchSettingsDomain(target.dataset.domainId) : undefined,
       "save-settings-domain": (_event, target) => target.dataset.domainId ? saveSettingsDomain(target.dataset.domainId) : undefined,
