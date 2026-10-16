@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import {
@@ -93,3 +93,40 @@ test("development desktop uses npm Node, loads native storage and renders the wo
     await removeFixture(fixture);
   }
 });
+
+for (const launcher of ["simple", "powershell"]) {
+  test(`demo desktop ${launcher} launcher starts from a non-npm environment`, { timeout: 90_000 }, async () => {
+    const fixture = await makeTempDir("mini-lux-demo-launch-");
+    const userData = path.join(fixture, "user-data");
+    let child, client, logs = "";
+    try {
+      const [httpPort, cdpPort] = await freeDistinctPorts(2);
+      const settings = { workspaceRoot:path.join(userData,"workspace"), departmentDataRoot:path.join(userData,"department"), outputDir:path.join(userData,"output") };
+      await Promise.all(Object.values(settings).map(directory => mkdir(directory,{recursive:true})));
+      await writeFile(path.join(userData,"config.json"),JSON.stringify({defaultProfile:"default",profiles:{default:{model:"fixture-model",apiKey:"",baseURL:"https://provider.invalid/v1",providerType:"openai-compatible"}},settings:{...settings,defaultPersona:"general"}}));
+      const env={...process.env,PORT:String(httpPort),APPDATA:fixture};
+      for(const key of ["npm_node_execpath","RAINYDAYS_E2E_USE_DIST","RAINYDAYS_E2E_NODE_EXECUTABLE","ELECTRON_RUN_AS_NODE"])delete env[key];
+      const electronArgs=[`--user-data-dir=${userData}`,`--remote-debugging-port=${cdpPort}`,"--disable-gpu"];
+      if(launcher==="simple"){
+        const batch=path.join(projectRoot,"演示啟動（簡易）RainyDays.cmd");
+        const command=`"${batch}" ${electronArgs.map(argument=>`"${argument}"`).join(" ")}`;
+        child=spawnManaged("cmd.exe",["/d","/s","/c",`"${command}"`],{env,windowsVerbatimArguments:true});
+      }else{
+        assert.match(await readFile(path.join(projectRoot,"演示啟動 RainyDays.cmd"),"utf8"),/deliverables\\demo-tools\\start-demo\.ps1/u);
+        child=spawnManaged("powershell.exe",["-NoProfile","-ExecutionPolicy","Bypass","-File",path.join(projectRoot,"deliverables/demo-tools/start-demo.ps1"),...electronArgs],{env});
+      }
+      for(const stream of [child.stdout,child.stderr]){stream.setEncoding("utf8");stream.on("data",chunk=>{logs=(logs+chunk).slice(-12_000);});}
+      await waitFor(async()=>{
+        if(child.exitCode!==null)throw new Error(`Launcher exited: ${logs}`);
+        try{return(await boundedFetch(`http://127.0.0.1:${httpPort}/`,{signal:AbortSignal.timeout(1_000)})).ok;}catch{return false;}
+      },{timeoutMs:55_000,label:`${launcher} source service`});
+      client=await connectCdp(cdpPort);
+      await waitFor(async()=>{try{return await client.evaluate("Boolean(desktopNavigationReady && currentSessionId)");}catch{return false;}},{timeoutMs:15_000,label:"demo working UI"});
+      assert.equal(await client.evaluate("fetch('/api/sessions').then(r=>r.status)"),200);
+      assert.equal((await boundedFetch(`http://127.0.0.1:${httpPort}/api/sessions`)).status,401);
+      assert.doesNotMatch(logs,/NODE_MODULE_VERSION|ERR_DLOPEN_FAILED/u);
+    }finally{
+      client?.close();if(child)await terminateProcessTreeAsync(child);await removeFixture(fixture);
+    }
+  });
+}

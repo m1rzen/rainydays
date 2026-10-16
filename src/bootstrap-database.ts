@@ -239,8 +239,12 @@ function validateWalFile(walPath: string): void {
     const saltFirst = header.readUInt32BE(16);
     const saltSecond = header.readUInt32BE(20);
     const frame = Buffer.alloc(frameSize);
+    let atCommitBoundary = false;
     for (let position = header.length; position < fileSize; position += frameSize) {
       readExact(descriptor, frame, position);
+      // WAL reset reuses a larger file: frames from its previous generation remain
+      // after the current committed prefix. SQLite ignores that checkpointed tail.
+      if (atCommitBoundary && frame.readUInt32BE(8) !== saltFirst && frame.readUInt32BE(12) !== saltSecond) break;
       if (frame.readUInt32BE(0) === 0
         || frame.readUInt32BE(8) !== saltFirst
         || frame.readUInt32BE(12) !== saltSecond) {
@@ -251,6 +255,7 @@ function validateWalFile(walPath: string): void {
       if (checksum.first !== frame.readUInt32BE(16) || checksum.second !== frame.readUInt32BE(20)) {
         throw new Error("SQLite WAL frame checksum is invalid");
       }
+      atCommitBoundary = frame.readUInt32BE(4) !== 0;
     }
   } finally {
     fs.closeSync(descriptor);

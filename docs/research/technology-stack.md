@@ -2,6 +2,14 @@
 
 更新：2026-09-30。以当前仓库及安装版本为准，新增技术仅引用官方资料。
 
+## 演示修复（2026-10-16）
+
+当前 Node 的 better-sqlite3 ABI 137，Electron RunAsNode ABI 148；演示入口直接启动 Electron 会丢失 npm_node_execpath。复用现有 npm exec 注入开发 Node，保持既有 IPC 和用户目录行为。
+
+SQLite WAL reset 可以保留前代帧，盐值区分当前提交与旧尾部；不能把旧代尾部直接判为数据库损坏。依据：[SQLite WAL 格式与重置](https://sqlite.org/fileformat2.html#wal_reset)、[WAL checkpoint](https://sqlite.org/wal.html#checkpointing)。真实复现使用本机 better-sqlite3 生成，既有损坏校验不整体移除。
+
+会话恢复复用 session.ts 的 exportSession / importSession，包括消息、固定指令、任务、附件验证和 ID 映射；用 SQLite backup 产生一致副本。只追加缺失会话，不复制旧审计链、任务许可或覆盖当前配置。副本和实际结果分别核对，原库与恢复前快照保留在忽略的私有目录。
+
 ## R3
 
 - 复用 Node 原生测试运行器与现有 helpers；npm 串联现有行为检查，不添加清单生成框架。依据：[Node 24 测试文档](https://nodejs.org/docs/latest-v24.x/api/test.html)。
