@@ -1,11 +1,17 @@
 ---
 workflow: project-workflow
 kind: roadmap
-updated: 2026-09-30
+updated: 2026-10-18
 status: R1/R2/R3 verified; R4 engineering reviewed, live validation blocked by provider quota; R5 engineering verified, live/new-user validation pending; R6/R7 pending
 ---
 
 # RainyDays：以真实任务完成为目标的产品规划
+
+## 2026-10-18 同事版交付细化
+
+用户要求可由 Codex 连续执行的成熟产品研发手册，并确认参考的是本机 Lux Desktop v0.1.898。新增 [研发手册](agents/README.md)、[同事版规格](specs/colleague-delivery.md)、[D01–D18 任务图](work/colleague-delivery/plan.md)、[有界逆向计划](research/lux-reference-plan.md) 和 [验收/维护规则](agents/acceptance.md)。新增范围状态 proposed，未冒充已批准或已完成；本页下方保留原批准路线及历史时间估计，新工期推算以任务图为准。
+
+完整 Lux 复刻不再作为交付前提；Prism、钉钉明确排除。先修旧工作台运行问题，再补模型、长上下文、可靠任务状态、资料/成果、重复任务、当前安装包与真实同事试用。无模型额度时允许继续不依赖真实调用的工程，产品出口仍必须补齐 R4/R5 验收。固定安全基线保留，新增安全/治理投入受 [预算规则](agents/safety-budget.md) 限制。
 
 ## 定位与决策状态
 

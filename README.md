@@ -20,7 +20,7 @@
 
 ## 关于 RainyDays
 
-RainyDays 是一个以 **Lux Desktop v0.1.898** 为行为基线构建的微型 AI Agent 系统。它不是简单的聊天界面，而是一套能够管理会话、调用工具、处理文件、维护记忆、拆解任务、调度子 Agent，并在桌面环境中持续工作的 Agent Runtime。
+RainyDays 是面向少量同事的本地优先 AI 桌面助手，聚焦文件、公开资料研究、可编辑文档和重复任务。项目参考 **Lux Desktop v0.1.898** 的核心行为，复用现有 Agent Runtime，按真实工作结果决定交付范围。
 
 项目坚持三个核心方向：
 
@@ -29,9 +29,11 @@ RainyDays 是一个以 **Lux Desktop v0.1.898** 为行为基线构建的微型 A
 - **证据驱动**：功能完成度以契约、负向测试、真实环境回执和打包验证为准，而不是只看“代码能跑”。
 
 > [!IMPORTANT]
-> RainyDays 仍处于积极开发阶段。项目目标是逐步达到 Lux Desktop 的行为对齐，但当前不宣称已经完成 100% parity，也不建议将未审计构建直接用于高风险生产环境。
+> RainyDays 仍在开发，尚无通过本轮全部验收的同事版安装候选。当前状态见 [STATUS](docs/STATUS.md)；后续开发从 [Codex 研发手册](docs/agents/README.md) 和 [任务图](docs/work/colleague-delivery/plan.md) 进入。完整 Lux 复刻不作为交付门槛，Prism、钉钉不在范围内。
 
 ## 功能亮点
+
+以下包含已有工程模块，不能据此判断当前默认助手或安装版均已验收。首版支持与冻结范围以 [产品规格](docs/specs/colleague-delivery.md) 和 STATUS 为准。
 
 <table>
 <tr>
@@ -206,6 +208,8 @@ RainyDays 将安全约束作为运行时设计的一部分，而不是只依赖 
 
 ## 项目状态
 
+当前产品状态以 [docs/STATUS.md](docs/STATUS.md) 为准。以下保留历史模块记录，不能把其中全量 parity 或旧逐卡流程作为同事版的新增门槛。
+
 | 工作流 | 当前状态 |
 |---|---|
 | GOV-01～GOV-04 治理基础 | 已建立基线、版本、测试和发布治理框架 |
@@ -217,7 +221,7 @@ RainyDays 将安全约束作为运行时设计的一部分，而不是只依赖 
 | REL-04 Observability & Diagnostics | **WIP**：结构化脱敏日志与关联标识、`live` / `ready` / `degraded` 健康状态、固定维度聚合指标和不超过 256 KiB 的诊断包已实现；3 个 P1 已完成修复与定向验证，等待新的独立只读复审；P2 DB 全量 instrumentation 仍明确隔离 |
 | RT-10 Background Service & Crash Recovery | **WIP**：核心生命周期、LLM/DB/Terminal 三类中断恢复与 resolved governance 均已通过；独立复审基础设施连续两次无法创建 Session，已按反卡死纪律搁置 |
 | DS-01 Electron Main Lifecycle | **WIP**：窗口 bounds/maximized/fullscreen 状态存储、多显示器可达恢复、菜单、单实例 Session 参数、renderer crash 有界恢复和聚合安全退出已实现；治理与独立复审待收敛 |
-| Lux Desktop 全量 Parity | **进行中**，以 canonical execution spec 为唯一完成度依据 |
+| Lux Desktop 全量 Parity | **历史参考**，当前以同事任务、安装与试用结果验收；见研发手册 |
 
 ### 2026-08-28 开发快照
 
@@ -254,7 +258,11 @@ rainydays/
 
 ## 项目文档
 
-- [100% Parity 总执行规范](LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md)
+- [Codex 专用研发手册](docs/agents/README.md)
+- [同事版规格与 18 项任务](docs/work/colleague-delivery/plan.md)
+- [同事使用指南（随研发完善）](docs/user-guide.md)
+- [Lux 核心行为逆向计划](docs/research/lux-reference-plan.md)
+- [历史 100% Parity 总执行规范](LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md)
 - [历史差距分析](GAP-ANALYSIS.md)
 - [Lux Desktop 基线说明](parity/README.md)
 - [GOV-03 测试架构](parity/GOV-03-TEST-ARCHITECTURE.md)
@@ -262,15 +270,13 @@ rainydays/
 
 ## 贡献约定
 
-在提交改动前，请至少运行：
+修改应用代码后，日常反馈入口为：
 
 ```powershell
-npm run typecheck
-npm run lint
-npm run test:quick
+npm run check:product
 ```
 
-安全边界、路径策略、进程执行或发布链相关改动还必须更新对应契约、攻击矩阵与真实环境证据。不要提交 `.env`、`config.json`、数据库、模型文件、构建产物或包含真实用户数据的测试材料。
+纯文档变更核对链接、事实和任务依赖即可。受影响的安全边界、路径、进程执行需加对应行为回归；当前候选在发布阶段完成安装与恢复验证。尺度见 [执行流程](docs/agents/workflow.md)。不要提交 `.env`、`config.json`、数据库、模型文件、构建产物或包含真实用户数据的测试材料。
 
 ---
 
