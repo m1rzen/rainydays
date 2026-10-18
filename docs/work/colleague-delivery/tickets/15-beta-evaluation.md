@@ -1,5 +1,7 @@
 # D15 固定任务与 Beta 候选验收
 
+本票只验收基础工作流。完整通用Beta还需[通用验收](../../../agents/general-agent-acceptance.md)与A13，不能仅凭本票发布为完整Agent。
+
 Kind: implementation
 
 Status: proposed

@@ -20,7 +20,7 @@
 
 ## 关于 RainyDays
 
-RainyDays 是面向少量同事的本地优先 AI 桌面助手，聚焦文件、公开资料研究、可编辑文档和重复任务。项目参考 **Lux Desktop v0.1.898** 的核心行为，复用现有 Agent Runtime，按真实工作结果决定交付范围。
+RainyDays 是面向少量同事的本地优先 AI 桌面助手。完整产品规划覆盖文件、研究、文档与重复任务，以及代码修改与测试、CLI、MCP、浏览器和 Windows 应用操作。项目参考 **Lux Desktop v0.1.898** 的核心行为，复用现有 Agent Runtime，以真实工作结果验收；规划中的能力不代表当前已经可用。
 
 项目坚持三个核心方向：
 
@@ -29,11 +29,11 @@ RainyDays 是面向少量同事的本地优先 AI 桌面助手，聚焦文件、
 - **证据驱动**：功能完成度以契约、负向测试、真实环境回执和打包验证为准，而不是只看“代码能跑”。
 
 > [!IMPORTANT]
-> RainyDays 仍在开发，尚无通过本轮全部验收的同事版安装候选。当前状态见 [STATUS](docs/STATUS.md)；后续开发从 [Codex 研发手册](docs/agents/README.md) 和 [任务图](docs/work/colleague-delivery/plan.md) 进入。完整 Lux 复刻不作为交付门槛，Prism、钉钉不在范围内。
+> RainyDays 仍在开发，尚无通过本轮全部验收的同事版安装候选。当前状态见 [STATUS](docs/STATUS.md)；后续开发从 [Codex 研发手册](docs/agents/README.md) 和 [D+A 总任务图](docs/work/general-agent/plan.md) 进入。完整 Lux 复刻不作为交付门槛，Prism、钉钉不在范围内。
 
 ## 功能亮点
 
-以下包含已有工程模块，不能据此判断当前默认助手或安装版均已验收。首版支持与冻结范围以 [产品规格](docs/specs/colleague-delivery.md) 和 STATUS 为准。
+以下包含已有工程模块，不能据此判断当前默认助手或安装版均已验收。完整规划与冻结范围以 [通用规格](docs/specs/general-agent.md) 和 STATUS 为准。
 
 <table>
 <tr>
@@ -239,7 +239,7 @@ RainyDays 将安全约束作为运行时设计的一部分，而不是只依赖 
 - 安装候选在 REL-04 探针完成后，于既有 Session/卸载清理尾段报告范围外 `CLEANUP`；该问题以及隔离的 SEC-02 累计 Coverage 债务均未在本次 WIP 中宣称解决。
 - 本地 `deliverables/` 构建与诊断产物不纳入版本库。
 
-项目不会将“已实现”自动等同于“已完成”。只有源码、正式打包候选、负向测试、恢复场景与独立复核都满足冻结门禁后，工作项才可以提升状态。
+项目不会将“已实现”自动等同于“已完成”。当前按票据相关行为、真实任务与发布阶段的安装/恢复证据提升状态，执行尺度见研发手册；上述历史冻结门禁不自动成为每个新功能的前置。
 
 ## 项目结构
 
@@ -259,7 +259,8 @@ rainydays/
 ## 项目文档
 
 - [Codex 专用研发手册](docs/agents/README.md)
-- [同事版规格与 18 项任务](docs/work/colleague-delivery/plan.md)
+- [通用Agent规格与31项总任务](docs/work/general-agent/plan.md)
+- [基础工作流18项任务](docs/work/colleague-delivery/plan.md)
 - [同事使用指南（随研发完善）](docs/user-guide.md)
 - [Lux 核心行为逆向计划](docs/research/lux-reference-plan.md)
 - [历史 100% Parity 总执行规范](LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md)

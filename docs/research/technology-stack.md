@@ -4,6 +4,8 @@
 
 ## 同事版研发（2026-10-18）
 
+扩展代码、CLI、MCP、浏览器、Windows Computer Use、技能与有界子任务的官方依据和本机证据集中在[通用Agent技术研究](general-agent-stack.md)。A系列读取该文与[能力实现手册](../agents/general-agent-capabilities.md)，复用下述既有栈；不因参照Codex/Lux就自动迁移模型SDK或整个内核。
+
 规划基线 417039e；当前包入口和测试命令已从 package.json 核对。本轮不更换技术栈。D01–D18 对应代码、待研究问题与验收见 [任务图](../work/colleague-delivery/plan.md)，研究与代码位置导航见 [架构手册](../agents/architecture.md)。
 
 - Lux：用户已确认本机 Desktop 0.1.898；版本元数据、随包 Help、既有捕获基线与研究预算见 [定向逆向计划](lux-reference-plan.md)。没有重跑动态探针，不把说明文档当作全部运行证据。

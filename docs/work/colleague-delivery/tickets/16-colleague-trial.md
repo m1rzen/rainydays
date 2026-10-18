@@ -1,5 +1,7 @@
 # D16 三位同事独立使用一周
 
+本票是基础工作流试用，可提前发现问题。若希望复用于完整交付，必须在功能齐全候选上满足[通用试用覆盖](../../../agents/general-agent-acceptance.md)；否则A13需补完整窗口。
+
 Kind: implementation
 
 Status: proposed

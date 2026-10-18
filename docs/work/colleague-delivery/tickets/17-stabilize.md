@@ -1,5 +1,7 @@
 # D17 修复试用问题并达到稳定版门槛
 
+本票“稳定”指基础工作流里程碑；完整通用版由[A13](../../general-agent/tickets/13-general-delivery.md)与100次任务判定。保留本票缺陷修复与40次基础要求。
+
 Kind: implementation
 
 Status: proposed

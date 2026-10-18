@@ -1,5 +1,7 @@
 # D18 正式交付、操作说明与维护接手
 
+本票调整为基础工作流交付里程碑。可交付明确标注基础范围的版本；完整通用Agent须通过[A13](../../general-agent/tickets/13-general-delivery.md)。维护资料尽量复用，不重复建设发布体系。
+
 Kind: implementation
 
 Status: proposed

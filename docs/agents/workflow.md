@@ -1,6 +1,6 @@
 # Codex 执行流程
 
-适用于同事版 D 系列。产品定义见 [规格](../specs/colleague-delivery.md)，优先级见 [任务图](../work/colleague-delivery/plan.md)。流程服务于可交付结果，不增加逐卡角色仪式。
+适用于D系列基础任务与A系列通用能力。最新产品定义见[通用规格](../specs/general-agent.md)，优先级见[D+A任务图](../work/general-agent/plan.md)。流程服务于可交付结果，不增加逐卡角色仪式。基础验收与最终验收分开，A13是完整出口。
 
 ## 开始与恢复
 
