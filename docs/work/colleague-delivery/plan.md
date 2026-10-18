@@ -8,7 +8,7 @@ Status: approved
 
 | 任务 | 阻塞依赖 | 主要验收证据（完整条件见票据） | 状态 |
 |---|---|---|---|
-| [D01 稳定启动、旧数据与缺失目录](tickets/01-startup-and-old-data.md) | 无 | 干净目录和旧数据副本各连续启动 10 次，无卡死或未解释的服务退出。 | in-progress |
+| [D01 稳定启动、旧数据与缺失目录](tickets/01-startup-and-old-data.md) | 无 | 正常启动20/20、两项缺陷及后台恢复3/3；历史退出未知与并发性能观察已记录 | verified |
 | [D02 认证一个可靠模型配置](tickets/02-model-contract.md) | 无 | 连接检测不发送文件或旧历史，一次短请求，错误能给出下一步。 | ready |
 | [D03 完整请求预算与长对话取回](tickets/03-context-and-retrieval.md) | D02 | 用小上下文配置和动态发现工具强制触发超限，发送前即可处理，不能依靠服务端拒绝。 | ready |
 | [D04 任务完成、停止与中断一致](tickets/04-run-stop-and-recovery.md) | D01、D02 | 发送后 1 秒内有本地状态；取消 1 秒内反馈，受控工具/进程目标 5 秒内结束。 | ready |

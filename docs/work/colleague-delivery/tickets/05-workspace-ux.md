@@ -20,6 +20,8 @@ User stories: U02
 
 ## 先读与研究
 
+D01已确认本机缺失部门目录可降级；用户说明Z盘仅公司内网可达，旧配置曾为避免依赖Z盘而改到缺失目录。这里需补查可选公司资料源的启用/状态与真实断网时延；本机ENOENT测试不能证明断开的SMB请求不会等待。参见[D01诊断](../diagnostics/01-startup-and-file-roots.md)。
+
 src/config.ts、settings-schema.ts、path-runtime.ts、src/index.ts 文件接口、public/index.html 与 renderer。
 
 与 Lux 有直接对应且尚未解决的问题，按 [有界研究计划](../../../research/lux-reference-plan.md) 只研究本票需要的行为。已有材料足够就直接记录复用决定。外部库/API 有变化时读已安装定义与官方资料，不凭记忆更换技术栈。

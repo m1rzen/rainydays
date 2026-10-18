@@ -20,6 +20,8 @@ User stories: U01、U11
 
 ## 先读与研究
 
+D01的顺序20次启动通过，但源码开发测试并发时有一次20秒renderer初始化等待超时，原因未知；干净场景测得4.9–13.3秒，尚未认证冷启动性能。这里须在当前安装候选与参考机器测量启动、旧数据规模和负载影响，定位瓶颈后修最小问题，不通过放宽超时或删除保护过关。见[D01诊断](../diagnostics/01-startup-and-file-roots.md)。
+
 package.json、scripts/build-electron.mjs、after-pack.cjs、electron/main.cjs、tests/packaged；现有 NSIS。
 
 与 Lux 有直接对应且尚未解决的问题，按 [有界研究计划](../../../research/lux-reference-plan.md) 只研究本票需要的行为。已有材料足够就直接记录复用决定。外部库/API 有变化时读已安装定义与官方资料，不凭记忆更换技术栈。

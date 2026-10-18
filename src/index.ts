@@ -1827,6 +1827,10 @@ app.get("/api/files/roots", async (_req, res) => {
     const roots = await runDirectOperation("file:roots", {}, (_args, _owner, authority) => fileViewerService.roots(authority));
     res.json({ roots });
   } catch (err) {
+    if (err instanceof SessionPersonaChangedError) {
+      res.status(409).json({ code: err.code, error: err.message });
+      return;
+    }
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
   }
 });

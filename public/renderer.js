@@ -710,7 +710,7 @@
         Promise.resolve(ensureFileRoots().then(() => {
           if (directoryGeneration !== fileDirectoryGeneration || previewGeneration !== filePreviewGeneration) return;
           return openFileDirectory(currentFilePath, false);
-        })).catch(error => showFileError(error.message));
+        })).catch(error => showFileRootError(error));
       }
     }
     function refreshWorkbenchTabStatus() {
@@ -1153,14 +1153,21 @@
           id: workbenchId("tab"), kind: "file", title: "文件", sessionId: currentSessionId,
           rootId: currentFileRoot, path: currentFilePath || ".",
         });
-      } catch (err) { showFileError(err.message); }
+      } catch (err) { showFileRootError(err); }
     }
 
     async function ensureFileRoots(force = false) {
-      if (fileRoots.length > 0 && !force) return fileRoots;
+      if (fileRoots.length > 0 && !force) {
+        selectAvailableFileRoot();
+        return fileRoots;
+      }
       const res = await fetch("/api/files/roots", { headers: sessionHeaders(activeFileOwnerSessionId) });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "根目录加载失败");
+      if (!res.ok) {
+        const error = new Error(data.error || "根目录加载失败");
+        error.code = data.code;
+        throw error;
+      }
       fileRoots = data.roots || [];
       const select = document.getElementById("file-root-select");
       select.innerHTML = "";
@@ -1171,11 +1178,29 @@
         option.disabled = !root.available;
         select.appendChild(option);
       }
+      selectAvailableFileRoot();
+      return fileRoots;
+    }
+
+    function selectAvailableFileRoot() {
       if (!fileRoots.some(root => root.id === currentFileRoot && root.available)) {
         currentFileRoot = fileRoots.find(root => root.available)?.id || "workspace";
+        currentFilePath = "";
       }
-      select.value = currentFileRoot;
-      return fileRoots;
+      document.getElementById("file-root-select").value = currentFileRoot;
+    }
+
+    function showFileRootError(error) {
+      showFileDirectoryError(error.message);
+      showFileError(error.message);
+      if (error.code === "SESSION_PERSONA_CHANGED" && activeFileOwnerSessionId) {
+        const button = document.createElement("button");
+        button.className = "msg-action-btn";
+        button.dataset.action = "return-file-session";
+        button.dataset.sessionId = activeFileOwnerSessionId;
+        button.textContent = "打开原对话";
+        document.getElementById("file-preview-content").appendChild(button);
+      }
     }
 
     function blockDirtyFileNavigation() {
@@ -3435,6 +3460,7 @@
       "submit-ask-answer": () => submitAskAnswer(),
       "switch-persona": () => switchPersona(),
       "change-file-root": () => changeFileRoot(),
+      "return-file-session": (_event, target) => target.dataset.sessionId ? selectSession(target.dataset.sessionId) : undefined,
       "filter-files": () => renderFileEntries(),
       "import-session": event => importSession(event),
       "remove-pin": (_event, target) => {
