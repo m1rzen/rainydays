@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: proposed
+Status: in-progress
 
 Spec: [同事版交付规格](../../../specs/colleague-delivery.md)
 
@@ -43,7 +43,7 @@ src/index.ts 的 /api/files/roots、src/config.ts、session-runtime.ts、electro
 
 ## 执行记录
 
-尚未开始。实施时记录批准来源、起点提交、实际变更与偏离计划的理由；真实模型调用需核对已有授权。
+2026-10-18开始，起点71644f8。用户已明确批准D+A并要求从D01连续实施。已读目录/运行时/renderer入口、历史演示诊断及同事版技术研究；验证采用临时配置、合成旧会话与工作台、真实Electron及本地服务，不读取日常数据库或调用模型。先复现再决定修改边界。
 
 ## 审查与验证结果
 

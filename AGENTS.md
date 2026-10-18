@@ -4,7 +4,7 @@
 
 - 开始任务：先读 `docs/STATUS.md`、`docs/agents/README.md`，再读当前票据及其引用。
 - 当前顺序只由 `docs/work/general-agent/plan.md` 维护；`docs/ROADMAP.md` 仅导航，D系列索引仅维护D票依赖。旧R票、审查、devlog和archive是按需证据，不能形成另一条执行队列。
-- 最新范围见 `docs/specs/general-agent.md`，基础工作流见 `docs/specs/colleague-delivery.md`；原已批准部分继续有效。D/A 新规划票据保持 proposed，不能把计划当完成证据；整体批准后按 `docs/work/general-agent/plan.md` 依赖连续执行，无须逐票重复确认。
+- 最新范围见 `docs/specs/general-agent.md`，基础工作流见 `docs/specs/colleague-delivery.md`。用户于2026-10-18批准整套D+A路线，按 `docs/work/general-agent/plan.md` 依赖连续执行，无须逐票重复确认。状态只按实际证据推进，获批不等于完成。
 - 开发流程见 `docs/agents/workflow.md`；修改运行链前读 `docs/agents/architecture.md`；开发代码/CLI/MCP/Computer Use/技能/子任务时读 `docs/agents/general-agent-capabilities.md`；安全投入边界见 `docs/agents/safety-budget.md`。
 - Lux 仅作核心行为参考，按 `docs/research/lux-reference-plan.md` 研究。Prism、钉钉明确排除。旧 100% parity 规范与 68 卡为历史资料，不能重新成为普通功能前置门槛。
 - 默认搜索遵循 `.rgignore`，避开归档、旧全量规范、parity文档/报告与本地产物。当前票据确需历史契约时，用明确路径读取；资料用途见 `docs/archive/README.md`。parity中的现有实现边界仍按受影响行为验证。

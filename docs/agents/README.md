@@ -27,7 +27,7 @@
 
 可以在Codex中选择 **GPT-6.1 Sol / xhigh** 执行本路线，适合项目理解、复杂修改、诊断与跨工具任务。xhigh是支持的推理设置，不是质量保证；以每张票的实际结果决定完成。依据：[模型说明](https://developers.openai.com/api/docs/models/gpt-6.1-sol)、[Codex发布记录](https://learn.chatgpt.com/docs/changelog)。此建议针对开发时的Codex，不自动更换RainyDays的运行模型，也不代替D02/A08的产品模型认证。
 
-准备开始实施时，可向新的Codex会话发送：
+路线已于2026-10-18整体获批；后续会话读取STATUS继续，不再要求批准。原启动指令留作授权范围说明：
 
 > 我批准docs/specs/general-agent.md和docs/work/general-agent/plan.md的D+A研发路线。按AGENTS.md、STATUS与本手册，从D01起选择依赖满足的任务连续开发，尽早执行A01技术探针。每个切片实现、验证、更新状态并本地提交；沿用已有授权，不逐票重复询问。只加载当前任务需要的资料。旧R路线与68卡按需查询，不恢复为任务队列。模型额度或外部环境阻塞时推进独立工程，保留未验收项。
 

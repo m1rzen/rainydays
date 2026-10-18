@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: proposed
+Status: ready
 
 Spec: [通用Agent规格](../../../specs/general-agent.md)
 

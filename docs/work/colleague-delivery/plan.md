@@ -1,6 +1,6 @@
 # D系列基础工作流任务索引
 
-Status: proposed
+Status: approved
 
 本页只维护D01–D18的依赖与验收索引，不另设排期。完整执行顺序以[D+A总路线](../general-agent/plan.md)为准。基础行为见[规格](../../specs/colleague-delivery.md)，实际状态回填票据与[STATUS](../../STATUS.md)。D18是中间里程碑，完整出口为A13。
 
@@ -8,24 +8,24 @@ Status: proposed
 
 | 任务 | 阻塞依赖 | 主要验收证据（完整条件见票据） | 状态 |
 |---|---|---|---|
-| [D01 稳定启动、旧数据与缺失目录](tickets/01-startup-and-old-data.md) | 无 | 干净目录和旧数据副本各连续启动 10 次，无卡死或未解释的服务退出。 | proposed |
-| [D02 认证一个可靠模型配置](tickets/02-model-contract.md) | 无 | 连接检测不发送文件或旧历史，一次短请求，错误能给出下一步。 | proposed |
-| [D03 完整请求预算与长对话取回](tickets/03-context-and-retrieval.md) | D02 | 用小上下文配置和动态发现工具强制触发超限，发送前即可处理，不能依靠服务端拒绝。 | proposed |
-| [D04 任务完成、停止与中断一致](tickets/04-run-stop-and-recovery.md) | D01、D02 | 发送后 1 秒内有本地状态；取消 1 秒内反馈，受控工具/进程目标 5 秒内结束。 | proposed |
-| [D05 资料与成果目录可以独立使用](tickets/05-workspace-ux.md) | D01 | 无 Z 盘/无部门盘的新用户能完成本地文件读取和新建文档。 | proposed |
-| [D06 文件回答完整且能定位依据](tickets/06-file-evidence.md) | D03、D05 | F01–F05 的确定性解析和定位部分通过；关键中段可取回。 | proposed |
-| [D07 完成五项真实研究验收](tickets/07-research-live.md) | D02、D03、D05 | 五项真实研究全部满足既有人工预期，失败来源不被伪装已读。 | proposed |
-| [D08 可编辑成果达到交付质量](tickets/08-document-quality.md) | D06 | O01–O04 的内容和格式检查通过；至少在试用者实际使用的 WPS 或 Microsoft Office 中打开并编辑。 | proposed |
-| [D09 预览、执行和撤回文件整理](tickets/09-file-organization.md) | D04、D05 | 12 个文件含 2 个重名冲突的 O05 完整演示；冲突不覆盖，原内容不丢。 | proposed |
-| [D10 把成功任务保存为可编辑模板](tickets/10-save-task-template.md) | D04、D08 | 保存、重命名、编辑、删除/归档、重启读取模板可用；已有会话不被修改。 | proposed |
-| [D11 换输入重跑、校验与失败恢复](tickets/11-rerun-template.md) | D10 | T01–T05 工程流程成立，新输入不会混入上一次数值。 | proposed |
-| [D12 可行动错误与轻量诊断](tickets/12-errors-and-support.md) | D02、D04 | 额度、认证、断网、目录失效、解析失败、权限拒绝、应用故障都能从界面采取下一步。 | proposed |
-| [D13 尽早验证同事机器安装](tickets/13-installer.md) | D01、D05 | 至少两套干净 Windows 11 x64 环境，无 Node/npm/MSVC 也可用基本文件/文档流程。 | proposed |
-| [D14 普通用户可恢复的备份与升级](tickets/14-upgrade-and-restore.md) | D13 | 备份后新建任务，再恢复测试副本，能证明新数据被保护或可另行导入。 | proposed |
-| [D15 固定任务与 Beta 候选验收](tickets/15-beta-evaluation.md) | D03、D06、D07、D08、D09、D11、D12、D13、D14 | Beta ≥34/40、各类 ≥8/10 | proposed |
-| [D16 三位同事独立使用一周](tickets/16-colleague-trial.md) | D15 | 三人五日真实证据 | proposed |
-| [D17 修复试用问题并达到稳定版门槛](tickets/17-stabilize.md) | D15 | 试用问题修复、最终 ≥38/40 | proposed |
-| [D18 正式交付、操作说明与维护接手](tickets/18-handoff-and-maintenance.md) | D16、D17 | 维护者能依靠文档定位版本、诊断和恢复数据，无需回读聊天记录。 | proposed |
+| [D01 稳定启动、旧数据与缺失目录](tickets/01-startup-and-old-data.md) | 无 | 干净目录和旧数据副本各连续启动 10 次，无卡死或未解释的服务退出。 | in-progress |
+| [D02 认证一个可靠模型配置](tickets/02-model-contract.md) | 无 | 连接检测不发送文件或旧历史，一次短请求，错误能给出下一步。 | ready |
+| [D03 完整请求预算与长对话取回](tickets/03-context-and-retrieval.md) | D02 | 用小上下文配置和动态发现工具强制触发超限，发送前即可处理，不能依靠服务端拒绝。 | ready |
+| [D04 任务完成、停止与中断一致](tickets/04-run-stop-and-recovery.md) | D01、D02 | 发送后 1 秒内有本地状态；取消 1 秒内反馈，受控工具/进程目标 5 秒内结束。 | ready |
+| [D05 资料与成果目录可以独立使用](tickets/05-workspace-ux.md) | D01 | 无 Z 盘/无部门盘的新用户能完成本地文件读取和新建文档。 | ready |
+| [D06 文件回答完整且能定位依据](tickets/06-file-evidence.md) | D03、D05 | F01–F05 的确定性解析和定位部分通过；关键中段可取回。 | ready |
+| [D07 完成五项真实研究验收](tickets/07-research-live.md) | D02、D03、D05 | 五项真实研究全部满足既有人工预期，失败来源不被伪装已读。 | ready |
+| [D08 可编辑成果达到交付质量](tickets/08-document-quality.md) | D06 | O01–O04 的内容和格式检查通过；至少在试用者实际使用的 WPS 或 Microsoft Office 中打开并编辑。 | ready |
+| [D09 预览、执行和撤回文件整理](tickets/09-file-organization.md) | D04、D05 | 12 个文件含 2 个重名冲突的 O05 完整演示；冲突不覆盖，原内容不丢。 | ready |
+| [D10 把成功任务保存为可编辑模板](tickets/10-save-task-template.md) | D04、D08 | 保存、重命名、编辑、删除/归档、重启读取模板可用；已有会话不被修改。 | ready |
+| [D11 换输入重跑、校验与失败恢复](tickets/11-rerun-template.md) | D10 | T01–T05 工程流程成立，新输入不会混入上一次数值。 | ready |
+| [D12 可行动错误与轻量诊断](tickets/12-errors-and-support.md) | D02、D04 | 额度、认证、断网、目录失效、解析失败、权限拒绝、应用故障都能从界面采取下一步。 | ready |
+| [D13 尽早验证同事机器安装](tickets/13-installer.md) | D01、D05 | 至少两套干净 Windows 11 x64 环境，无 Node/npm/MSVC 也可用基本文件/文档流程。 | ready |
+| [D14 普通用户可恢复的备份与升级](tickets/14-upgrade-and-restore.md) | D13 | 备份后新建任务，再恢复测试副本，能证明新数据被保护或可另行导入。 | ready |
+| [D15 固定任务与 Beta 候选验收](tickets/15-beta-evaluation.md) | D03、D06、D07、D08、D09、D11、D12、D13、D14 | Beta ≥34/40、各类 ≥8/10 | ready |
+| [D16 三位同事独立使用一周](tickets/16-colleague-trial.md) | D15 | 三人五日真实证据 | ready |
+| [D17 修复试用问题并达到稳定版门槛](tickets/17-stabilize.md) | D15 | 试用问题修复、最终 ≥38/40 | ready |
+| [D18 正式交付、操作说明与维护接手](tickets/18-handoff-and-maintenance.md) | D16、D17 | 维护者能依靠文档定位版本、诊断和恢复数据，无需回读聊天记录。 | ready |
 
 ## 依赖例外与证据复用
 

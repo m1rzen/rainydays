@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: proposed
+Status: ready
 
 Spec: [同事版交付规格](../../../specs/colleague-delivery.md)
 

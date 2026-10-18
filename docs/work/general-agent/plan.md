@@ -1,8 +1,8 @@
 # RainyDays 通用 Agent 总研发路线
 
-Status: proposed
+Status: approved
 
-日期：2026-10-18。用户已要求将代码、CLI、MCP、强Computer Use纳入完整规划。详细规格与任务供执行前整体审阅；本次没有实施新功能。正式范围见 [通用规格](../../specs/general-agent.md)，实施入口见 [研发手册](../../agents/README.md)。
+批准：2026-10-18，用户明确要求“从D01开始按依赖连续研发，尽早执行A01”，每个切片实现、验证、更新状态并本地提交。正式范围见[通用规格](../../specs/general-agent.md)，实施入口见[研发手册](../../agents/README.md)。
 
 ## 1. 对上一版的修订
 
@@ -27,19 +27,19 @@ Status: proposed
 
 | 任务 | 阻塞依赖 | 可观察验收出口 | 状态 |
 |---|---|---|---|
-| [A01 可行性探针与能力接入契约](tickets/01-capability-feasibility.md) | 无 | 隔离CLI、真实MCP协议、浏览器和Windows测试窗口、图像传递五项工程探针；风险有决定 | proposed |
-| [A02 项目上下文与可检查代码编辑](tickets/02-repository-editing.md) | A01、D04、D05 | 多文件diff、已有修改/未跟踪文件保留、并发保存不覆盖 | proposed |
-| [A03 CLI与持久终端进入普通任务](tickets/03-cli-sessions.md) | A01、D04、D05 | 长任务、输入、输出分页、真实退出码、取消和依赖提示 | proposed |
-| [A04 代码修改—测试—修正循环](tickets/04-coding-loop.md) | A02、A03、D03 | JS/TS与Python真实任务完成，失败证据与最终差异准确 | proposed |
-| [A05 MCP本地接入与工具发现](tickets/05-mcp-local.md) | A03 | 设置添加stdio服务器→普通会话发现/调用→重启/取消 | proposed |
-| [A06 MCP远端认证与内容处理](tickets/06-mcp-remote.md) | A05 | HTTP/token/OAuth、资源和结构化内容；断线不重复写入 | proposed |
-| [A07 一个可用的交互浏览器后端](tickets/07-browser-control.md) | A01、D04、D05 | SPA真实输入、标签归属、上传下载、登录接管 | proposed |
-| [A08 工具图像进入视觉模型](tickets/08-visual-observations.md) | A01、D02、D03 | 真实模型识别非预置截图，尺寸/坐标/上下文预算正确 | proposed |
-| [A09 可打包的Windows观察与动作](tickets/09-windows-driver.md) | A01、D04、D13 | 普通用户安装包中UIA/截图/输入可用，DPI/焦点/清理通过 | proposed |
-| [A10 Computer Use任务循环与接管](tickets/10-computer-use-loop.md) | A07、A08、A09 | 浏览器/桌面真实观察操作验证，暂停停止和恢复有效 | proposed |
-| [A11 项目说明与技能按需使用](tickets/11-skills-and-instructions.md) | A02、D03 | scoped项目指令、SKILL.md参考按需加载、可开关 | proposed |
-| [A12 有界子任务与结果汇总](tickets/12-bounded-subagents.md) | A01、D03、D04 | 两个只读子任务、来源汇总、父取消传播、单写入者 | proposed |
-| [A13 通用任务、安装与同事交付](tickets/13-general-delivery.md) | A04、A06、A10、A11、A12、D18 | 固定100次和真实同事试用满足门槛，完整安装候选可交付 | proposed |
+| [A01 可行性探针与能力接入契约](tickets/01-capability-feasibility.md) | 无 | 隔离CLI、真实MCP协议、浏览器和Windows测试窗口、图像传递五项工程探针；风险有决定 | ready |
+| [A02 项目上下文与可检查代码编辑](tickets/02-repository-editing.md) | A01、D04、D05 | 多文件diff、已有修改/未跟踪文件保留、并发保存不覆盖 | ready |
+| [A03 CLI与持久终端进入普通任务](tickets/03-cli-sessions.md) | A01、D04、D05 | 长任务、输入、输出分页、真实退出码、取消和依赖提示 | ready |
+| [A04 代码修改—测试—修正循环](tickets/04-coding-loop.md) | A02、A03、D03 | JS/TS与Python真实任务完成，失败证据与最终差异准确 | ready |
+| [A05 MCP本地接入与工具发现](tickets/05-mcp-local.md) | A03 | 设置添加stdio服务器→普通会话发现/调用→重启/取消 | ready |
+| [A06 MCP远端认证与内容处理](tickets/06-mcp-remote.md) | A05 | HTTP/token/OAuth、资源和结构化内容；断线不重复写入 | ready |
+| [A07 一个可用的交互浏览器后端](tickets/07-browser-control.md) | A01、D04、D05 | SPA真实输入、标签归属、上传下载、登录接管 | ready |
+| [A08 工具图像进入视觉模型](tickets/08-visual-observations.md) | A01、D02、D03 | 真实模型识别非预置截图，尺寸/坐标/上下文预算正确 | ready |
+| [A09 可打包的Windows观察与动作](tickets/09-windows-driver.md) | A01、D04、D13 | 普通用户安装包中UIA/截图/输入可用，DPI/焦点/清理通过 | ready |
+| [A10 Computer Use任务循环与接管](tickets/10-computer-use-loop.md) | A07、A08、A09 | 浏览器/桌面真实观察操作验证，暂停停止和恢复有效 | ready |
+| [A11 项目说明与技能按需使用](tickets/11-skills-and-instructions.md) | A02、D03 | scoped项目指令、SKILL.md参考按需加载、可开关 | ready |
+| [A12 有界子任务与结果汇总](tickets/12-bounded-subagents.md) | A01、D03、D04 | 两个只读子任务、来源汇总、父取消传播、单写入者 | ready |
+| [A13 通用任务、安装与同事交付](tickets/13-general-delivery.md) | A04、A06、A10、A11、A12、D18 | 固定100次和真实同事试用满足门槛，完整安装候选可交付 | ready |
 
 D系列完整依赖以其任务表为准。所有依赖默认要求verified；D03/D04沿用D02“本地协议工程已验证即可”的例外。A08可在D02真实模型认证未完成时做图片传递工程，但最终验证仍要求D02及真实视觉配置；不得把未认证模型绕过去。A06的图片传输先做协议/投影验证，最终图片语义在A08及A13计分，不形成循环依赖。
 
@@ -59,4 +59,4 @@ A01先用2–3日回答五项工程问题；未解决的阻塞写明下一最小
 
 按[workflow](../../agents/workflow.md)处理票据。每票先读现有代码与研究资料，实施一个完整路径并留下可重复结果。任务过大时在该票内拆出明确子步骤与证据，必须保持正常产品入口能验证，不能整层“底座”开发数周。
 
-全部票据在本次保持proposed。用户批准这套扩展路线后按依赖连续执行，无需逐票重复确认；真实付费评估、外部账号和实际对外发送按相应授权核对。验收标准唯一入口为[通用验收](../../agents/general-agent-acceptance.md)，基础结果可以复用，不可替代新增能力。
+路线已整体批准；按依赖连续执行，无需逐票重复确认。票据状态以各文件为准，依赖未满足时不能因ready而跳过。真实付费评估、外部账号和实际对外发送仍按相应授权核对。验收标准唯一入口为[通用验收](../../agents/general-agent-acceptance.md)，基础结果可以复用，不可替代新增能力。

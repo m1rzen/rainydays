@@ -2,7 +2,7 @@
 workflow: project-workflow
 kind: roadmap
 updated: 2026-10-18
-status: proposed; document routing cleaned; implementation not started
+status: approved; implementation started at D01
 ---
 
 # RainyDays 当前研发路线
