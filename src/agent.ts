@@ -634,13 +634,14 @@ export class Agent {
           }
         }
       } catch (err) {
-        if (isRunCancellation(err) || signal.aborted) throw err;
-        const errorContent = `回答未完成，请重新发送或要求继续。LLM 请求失败: ${err instanceof Error ? err.message : String(err)}`;
+        const cancelled = isRunCancellation(err) || signal.aborted;
+        const errorContent = cancelled ? "运行已取消，以上内容未完成。" : `回答未完成，请重新发送或要求继续。LLM 请求失败: ${err instanceof Error ? err.message : String(err)}`;
         // 只保存已经向用户显示的正文，不保存或执行未完成的工具调用。
         if (streamedContent) {
           this.memory.add({ role: "assistant", content: `${streamedContent}\n\n⚠️ ${errorContent}` });
           touch(runSessionId);
         }
+        if (cancelled) throw err;
         yield {
           type: "error",
           content: errorContent,
@@ -736,11 +737,12 @@ export class Agent {
         });
         finalMessage = { ...finalMessage, tool_calls: toolCallsParsed.map(parsed => parsed.toolCall) };
 
-        for (const { toolName, toolArgs } of toolCallsParsed) {
+        for (const { toolCall, toolName, toolArgs } of toolCallsParsed) {
           yield {
             type: "tool_call",
             content: `调用工具: ${toolName}`,
             toolName,
+            toolCallId: toolCall.id,
             toolArgs: toolArgs ?? undefined,
             timestamp: Date.now(),
           };
@@ -896,6 +898,7 @@ export class Agent {
             content: outcome.content,
             toolName,
             toolStatus: outcome.status,
+            toolCallId: toolCallsParsed[ri].toolCall.id,
             toolCode: outcome.code,
             toolOutputBytes: outcome.outputBytes,
             toolOriginalOutputBytes: outcome.originalOutputBytes,

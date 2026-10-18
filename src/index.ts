@@ -3003,6 +3003,7 @@ app.post("/api/chat", async (req, res) => {
   activeRunInteractions.set(chatSessionId, identity);
   let streamOpen = true;
   let status: "idle" | "error" = "idle";
+  let hadToolFailure = false;
   const emit = (event: unknown) => {
     if (streamOpen && !res.writableEnded && !res.destroyed) res.write(`data: ${JSON.stringify(event)}\n\n`);
   };
@@ -3037,7 +3038,11 @@ app.post("/api/chat", async (req, res) => {
       let input: string | null = message;
       let attachments = initialAttachments;
       while (input !== null) {
-        for await (const step of runtime.agent.run(input, runId, claim.signal, attachments)) emit(step);
+        for await (const step of runtime.agent.run(input, runId, claim.signal, attachments)) {
+          if (step.type === "error") status = "error";
+          if (step.type === "tool_result" && step.toolStatus && step.toolStatus !== "success") hadToolFailure = true;
+          emit(step);
+        }
         attachments = Object.freeze([]);
         input = pendingPersonaSwitches.has(chatSessionId) ? null : takeActiveRunInjection(chatSessionId, claim.signal);
       }
@@ -3061,21 +3066,12 @@ app.post("/api/chat", async (req, res) => {
     res.off("close", closeInteraction);
     if (activeRunInteractions.get(chatSessionId) === identity) activeRunInteractions.delete(chatSessionId);
     clearActiveRunInjections(chatSessionId);
-    updateDesktopSessionStatus(chatSessionId, status);
-    if (!runCancelled) {
-      const sessionTitle = getSessionInfo(chatSessionId)?.title ?? "Session";
-      persistDesktopNotification({
-        sourceKey: `run:${runId}:settled`,
-        sessionId: chatSessionId,
-        kind: status === "error" ? "error" : "success",
-        title: status === "error" ? "运行失败" : "运行完成",
-        body: notificationText(sessionTitle, "Session", 240),
-        targetTab: "session",
-      });
-    }
     try { registry.releaseRun(claim, cancellationCleanupFailure); }
     catch (error) {
-      if (!(error instanceof SessionRuntimeLifecycleError) || error.code !== "SESSION_RUNTIME_CLAIM_STALE") throw error;
+      if (!(error instanceof SessionRuntimeLifecycleError) || error.code !== "SESSION_RUNTIME_CLAIM_STALE") {
+        status = "error";
+        emit({ type: "error", sessionId: chatSessionId, runId, content: "运行清理未完成，请重启应用后检查成果。", timestamp: Date.now() });
+      }
     }
     try {
       await completePendingPersonaSwitch(registry, chatSessionId);
@@ -3083,6 +3079,19 @@ app.post("/api/chat", async (req, res) => {
       status = "error";
       emit({ type: "error", sessionId: chatSessionId, runId, content: `Persona 切换失败: ${error instanceof Error ? error.message : String(error)}`, timestamp: Date.now() });
     }
+    updateDesktopSessionStatus(chatSessionId, status);
+    if (!runCancelled || status === "error") {
+      const sessionTitle = getSessionInfo(chatSessionId)?.title ?? "Session";
+      persistDesktopNotification({
+        sourceKey: `run:${runId}:settled`, sessionId: chatSessionId,
+        kind: status === "error" ? "error" : hadToolFailure ? "info" : "success",
+        title: status === "error" ? "运行失败" : hadToolFailure ? "运行结束，请检查失败的工具记录" : "运行完成",
+        body: notificationText(sessionTitle, "Session", 240), targetTab: "session",
+      });
+    }
+    emit({ type: "run_finished", sessionId: chatSessionId, runId,
+      outcome: status === "error" ? "failed" : runCancelled ? "cancelled" : hadToolFailure ? "partial" : "completed",
+      timestamp: Date.now() });
     if (streamOpen && !res.writableEnded) res.end();
   }
 });

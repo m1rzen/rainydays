@@ -2589,6 +2589,8 @@
       messagesEl.innerHTML = "";
       renderDocumentOutputs(mdata.outputs || [], "", mdata.research);
       for (const msg of mdata.messages) { if (msg.role === "user") addMessage("user", msg.content, msg.id, msg.attachments); else if (msg.role === "assistant" && msg.content) addMessage("assistant", msg.content, msg.id); }
+      const liveResponse = activeRunsBySession.get(id)?.messageEl;
+      if (liveResponse) messagesEl.appendChild(liveResponse);
       renderWelcomeState();
       if (unavailableSessionIds.has(id)) {
         const notice = document.createElement("div"); notice.className = "session-upgrade-message";
@@ -2652,7 +2654,7 @@
       cancel.disabled = Boolean(localRun?.cancelling);
       submitBtn.hidden = Boolean(localRun);
       statusDot.className = running ? "status-dot busy" : "status-dot";
-      statusText.textContent = running ? "思考中..." : unavailableSessionIds.has(currentSessionId) ? "旧对话只读" : "就绪";
+      statusText.textContent = localRun?.cancelling ? "正在停止..." : running ? "思考中..." : unavailableSessionIds.has(currentSessionId) ? "旧对话只读" : desktopSessionState(currentSessionId).status === "error" ? "本次未完成" : "就绪";
       refreshWorkbenchTabStatus();
     }
     function beginSessionRun(sessionId) {
@@ -2665,24 +2667,33 @@
       if (activeRunsBySession.get(sessionId) === token) activeRunsBySession.delete(sessionId);
       refreshRunControls();
     }
+    function showRunNotice(token, text) {
+      if (!token?.bubble) return;
+      token.bubble.querySelector(".typing")?.remove();
+      let note = token.bubble.querySelector(".run-status-note");
+      if (!note) { note = document.createElement("p"); note.className = "run-status-note"; token.bubble.appendChild(note); }
+      note.textContent = text;
+    }
     async function cancelSessionRun(sessionId = currentSessionId) {
       const token = sessionId ? activeRunsBySession.get(sessionId) : null;
       if (!token || token.cancelling) return false;
       token.cancelling = true;
       refreshRunControls();
+      showRunNotice(token, "正在停止，已生成的内容和文件会保留。");
       try {
         if (token.runId) {
-          await fetch("/api/chat/cancel", {
+          const response = await fetch("/api/chat/cancel", {
             method: "POST",
             headers: sessionHeaders(sessionId, true),
             body: JSON.stringify({ sessionId, runId: token.runId }),
+            signal: AbortSignal.timeout(6000),
           });
+          token.cancelConfirmed = response.ok || token.outcome === "cancelled";
         }
+      } catch {
+        token.cancelConfirmed = token.outcome === "cancelled";
       } finally {
-        if (token.bubble) {
-          token.bubble.innerHTML = "";
-          token.bubble.textContent = "已中断";
-        }
+        showRunNotice(token, token.cancelConfirmed ? "已中断，已生成的内容和文件已保留。" : "连接已中断，停止结果尚未确认。请检查任务和成果。");
         token.controller.abort(new DOMException("Run cancelled by the local user", "AbortError"));
       }
       return true;
@@ -2933,11 +2944,15 @@
       historyNavIndex = -1; historyDraftBeforeNavigation = ""; saveDraft(chatSessionId, ""); pushSessionHistory(chatSessionId, text);
       const assistantEl = addMessage("assistant", ""); const bubbleEl = assistantEl.querySelector(".bubble");
       runToken.bubble = bubbleEl;
+      runToken.messageEl = assistantEl;
+      const answerEl = document.createElement("div");
+      const renderRunText = text => { bubbleEl.querySelector(".typing")?.remove(); if (answerEl.parentNode !== bubbleEl) bubbleEl.appendChild(answerEl); answerEl.innerHTML = renderMarkdown(text); };
       bubbleEl.setAttribute("aria-live", "off");
       bubbleEl.setAttribute("aria-busy", "true");
       responseAnnouncerEl.textContent = "";
       let responseAnnouncementCompleted = false;
       const completeAccessibleResponse = text => {
+        if (currentSessionId !== chatSessionId) return;
         if (responseAnnouncementCompleted) return;
         responseAnnouncementCompleted = true;
         bubbleEl.setAttribute("aria-busy", "false");
@@ -2968,8 +2983,8 @@
               if (rememberAskQuestion(step, chatSessionId) && currentSessionId === chatSessionId) refreshQuestionForCurrentSession();
               continue;
             }
-            if (currentSessionId !== chatSessionId) continue;
             if (step.type === "notification") {
+              if (currentSessionId !== chatSessionId) continue;
               if (typeof window.electronAPI?.notify === "function") {
                 void window.electronAPI.notify({
                   id: `run-${step.runId}`, title: step.title, body: step.body,
@@ -2978,22 +2993,27 @@
               }
               continue;
             }
-            if (step.type === "answer_chunk") { if (!streamingStarted) { bubbleEl.innerHTML = ""; streamingStarted = true; } fullText += step.content; bubbleEl.innerHTML = renderMarkdown(fullText); messagesEl.scrollTop = messagesEl.scrollHeight; }
-            else if (step.type === "tool_call") { if (!streamingStarted) bubbleEl.innerHTML = ""; addToolCard(bubbleEl, step); }
+            if (step.type === "answer_chunk") { streamingStarted = true; fullText += step.content; renderRunText(fullText); if (currentSessionId === chatSessionId) messagesEl.scrollTop = messagesEl.scrollHeight; }
+            else if (step.type === "tool_call") { bubbleEl.querySelector(".typing")?.remove(); addToolCard(bubbleEl, step); }
             else if (step.type === "tool_result") {
               updateLastToolCard(bubbleEl, step);
               if (["create_docx", "create_xlsx"].includes(step.toolName)) void refreshDocumentOutputs(chatSessionId);
               if (step.toolName === "fetch_markdown") void refreshDocumentOutputs(chatSessionId);
             }
-            else if (step.type === "task_created" || step.type === "task_update") { if (step.tasks && step.tasks.length > 0) renderTasks(step.tasks); }
-            else if (step.type === "answer_done") { if (!streamingStarted && step.content) { bubbleEl.innerHTML = ""; fullText = step.content; bubbleEl.innerHTML = renderMarkdown(fullText); } else if (!streamingStarted && !step.content) { bubbleEl.innerHTML = ""; bubbleEl.textContent = "(无回复)"; } if (fullText) { speakText(fullText.slice(0, 200)); enhanceLocalFileLinks(bubbleEl, fullText); } completeAccessibleResponse(fullText || bubbleEl.textContent); }
-            else if (step.type === "run_cancelled") { bubbleEl.innerHTML = ""; bubbleEl.textContent = "已中断"; completeAccessibleResponse(bubbleEl.textContent); }
-            else if (step.type === "error") { bubbleEl.innerHTML = renderMarkdown((fullText ? fullText + "\n\n" : "") + "执行失败：" + step.content); completeAccessibleResponse(bubbleEl.textContent); }
+            else if (step.type === "task_created" || step.type === "task_update") { if (currentSessionId === chatSessionId && step.tasks?.length > 0) renderTasks(step.tasks); }
+            else if (step.type === "answer_done") { if (!streamingStarted && step.content) { fullText = step.content; renderRunText(fullText); } if (fullText) { if (currentSessionId === chatSessionId) speakText(fullText.slice(0, 200)); enhanceLocalFileLinks(answerEl, fullText); } completeAccessibleResponse(fullText || bubbleEl.textContent); }
+            else if (step.type === "run_cancelled") { runToken.outcome = "cancelled"; showRunNotice(runToken, "已中断，已生成的内容和文件已保留。"); completeAccessibleResponse(bubbleEl.textContent); }
+            else if (step.type === "run_finished") {
+              runToken.outcome = step.outcome;
+              if (step.outcome === "partial") showRunNotice(runToken, "部分步骤未完成，请检查工具记录和成果。");
+            }
+            else if (step.type === "error") { runToken.outcome = "failed"; renderRunText((fullText ? fullText + "\n\n" : "") + "执行失败：" + step.content); completeAccessibleResponse(bubbleEl.textContent); }
           }
         }
+        if (!runToken.outcome) showRunNotice(runToken, "连接已结束，任务结果尚未确认。请检查已生成的内容和成果。");
       } catch (err) {
-        bubbleEl.innerHTML = "";
-        bubbleEl.textContent = runToken.controller.signal.aborted || err?.name === "AbortError" ? "已中断" : (fullText ? fullText + "\n\n" : "") + "连接错误: " + err.message;
+        if (runToken.controller.signal.aborted || err?.name === "AbortError") showRunNotice(runToken, runToken.cancelConfirmed || runToken.outcome === "cancelled" ? "已中断，已生成的内容和文件已保留。" : "连接已中断，停止结果尚未确认。请检查任务和成果。");
+        else { runToken.outcome = "failed"; showRunNotice(runToken, "连接错误: " + err.message); }
         completeAccessibleResponse(bubbleEl.textContent);
       }
       finally { completeAccessibleResponse(bubbleEl.textContent); finishSessionRun(chatSessionId, runToken); if (currentSessionId === chatSessionId) inputEl.focus(); }
@@ -3062,6 +3082,8 @@
       const card = document.createElement("details");
       card.className = "tool-card";
       card.dataset.status = "running";
+      card.dataset.toolName = step.toolName;
+      if (step.toolCallId) card.dataset.toolCallId = step.toolCallId;
       const summary = document.createElement("summary");
       const icon = document.createElement("span");
       icon.className = "icon";
@@ -3087,7 +3109,10 @@
       parent.appendChild(card);
     }
     function updateLastToolCard(parent, step) {
-      const cards = parent.querySelectorAll(".tool-card"); const last = cards[cards.length - 1]; if (!last) return;
+      const cards = [...parent.querySelectorAll(".tool-card")];
+      const last = step.toolCallId ? cards.findLast(card => card.dataset.toolCallId === step.toolCallId && card.dataset.status === "running") || cards.findLast(card => card.dataset.toolCallId === step.toolCallId)
+        : cards.find(card => card.dataset.toolName === step.toolName && card.dataset.status === "running") || cards.at(-1);
+      if (!last) return;
       const succeeded = !step.toolStatus || step.toolStatus === "success";
       last.dataset.status = succeeded ? "success" : "error";
       const s = last.querySelector(".tool-card-status"); if (s) s.textContent = succeeded ? "完成" : "未完成";

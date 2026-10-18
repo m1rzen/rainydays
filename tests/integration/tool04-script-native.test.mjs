@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { waitFor } from "../helpers.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const fixture = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-tool04-native-"));
@@ -56,7 +57,7 @@ const [
 let authority;
 let rootContext;
 
-async function approvedScript(args) {
+async function approvedScript(args, signal) {
   const inspected = tools.inspectToolCall(rootContext, "script", args);
   const challenge = tools.capabilityBroker.createApprovalChallenge(rootContext, inspected);
   const grant = tools.capabilityBroker.resolveApprovalChallenge({
@@ -68,7 +69,7 @@ async function approvedScript(args) {
     responseChannel: "native-process",
   });
   assert(grant, "script approval grant must be issued");
-  try { return await tools.executeInspectedTool(grant, inspected); }
+  try { return await tools.executeInspectedTool(grant, inspected, null, signal); }
   finally { tools.capabilityBroker.finishContext(grant); }
 }
 
@@ -182,6 +183,28 @@ test("TOOL-04 preserves child failures that collide with native status codes", {
       return true;
     },
   );
+});
+
+test("D04 real native tool stops writes within five seconds of user cancellation", { timeout: 45_000 }, async () => {
+  const controller = new AbortController();
+  const heartbeat = path.join(nested, "cancel-heartbeat.json");
+  let executionError;
+  const pending = approvedScript({ lang: "node", cwd: "nested", timeout: 10_000,
+    code: `let tick=0;for(;;){await lux.writeJson("cancel-heartbeat.json",{tick:++tick,pid:process.pid});await new Promise(resolve=>setTimeout(resolve,25));}` }, controller.signal);
+  void pending.catch(error => { executionError = error; });
+  await waitFor(async () => { if (executionError) return true; try { return JSON.parse(await fs.readFile(heartbeat, "utf8")).tick > 0; } catch { return false; } }, { timeoutMs: 8000, label: "D04 actual native tool started" });
+  if (executionError) throw executionError;
+  const childPid = JSON.parse(await fs.readFile(heartbeat, "utf8")).pid;
+  const started = Date.now();
+  const stopped = assert.rejects(pending, error => error.code === "RUN_CANCELLED");
+  controller.abort(new Error("用户停止"));
+  await stopped;
+  assert(Date.now() - started < 5000, "native cancellation exceeded five seconds");
+  assert.throws(() => process.kill(childPid, 0), error => error.code === "ESRCH", "native child remained alive after cancellation settled");
+  const saved = await fs.readFile(heartbeat, "utf8");
+  await new Promise(resolve => setTimeout(resolve, 150));
+  assert.equal(await fs.readFile(heartbeat, "utf8"), saved, "native tool kept writing after cancellation settled");
+  assert.match(await approvedScript({ lang: "node", cwd: "nested", code: `console.log("after-cancel")` }), /after-cancel/);
 });
 
 test("TOOL-04 real E3 enforces timeout in the native Job and settles the tree", { timeout: 60_000 }, async () => {

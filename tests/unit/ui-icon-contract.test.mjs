@@ -67,4 +67,20 @@ test("tool receipts preserve arguments and results while their collapsed status 
   context.updateLastToolCard(host, { toolName:"read_file", toolStatus:"error", content:"Missing source" });
   assert.equal(card.querySelector(".tool-card-status").textContent, "未完成");
   assert.equal(card.querySelector(".icon use").getAttribute("href"), "#i-alert");
+
+  const paired = document.createElement("div");
+  context.addToolCard(paired, { toolName: "read", toolCallId: "first", toolArgs: { file_path: "one.txt" } });
+  context.addToolCard(paired, { toolName: "read", toolCallId: "second", toolArgs: { file_path: "two.txt" } });
+  context.updateLastToolCard(paired, { toolName: "read", toolCallId: "second", toolStatus: "error", content: "SECOND_FAILED" });
+  context.updateLastToolCard(paired, { toolName: "read", toolCallId: "first", toolStatus: "success", content: "FIRST_OK" });
+  const [first, second] = paired.querySelectorAll(".tool-card");
+  assert.match(first.textContent, /one.txt[\s\S]*FIRST_OK/);
+  assert.doesNotMatch(first.textContent, /SECOND_FAILED/);
+  assert.equal(first.dataset.status, "success");
+  assert.match(second.textContent, /two.txt[\s\S]*SECOND_FAILED/);
+  assert.equal(second.dataset.status, "error");
+  context.addToolCard(paired, { toolName: "read", toolCallId: "first", toolArgs: { file_path: "later.txt" } });
+  context.updateLastToolCard(paired, { toolName: "read", toolCallId: "first", toolStatus: "success", content: "LATER_OK" });
+  assert.doesNotMatch(first.textContent, /LATER_OK/);
+  assert.match(paired.querySelectorAll(".tool-card")[2].textContent, /later.txt[\s\S]*LATER_OK/);
 });

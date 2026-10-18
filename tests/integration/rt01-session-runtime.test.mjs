@@ -45,6 +45,7 @@ async function startFakeProvider() {
   const held = new Map();
   const aborted = new Set();
   const requests = [];
+  const turns = new Map();
   const server = http.createServer(async (request, response) => {
     if (request.method !== "POST" || request.url !== "/v1/chat/completions") {
       response.writeHead(404).end();
@@ -56,7 +57,29 @@ async function startFakeProvider() {
     const messages = body.messages || [];
     const user = [...messages].reverse().find(message => message.role === "user")?.content || "";
     const last = messages.at(-1);
-    requests.push({ user, model: body.model, messages });
+    requests.push({ user, model: body.model, messages, stream: body.stream === true });
+
+    if (!body.stream) {
+      response.setHeader("Content-Type", "application/json");
+      response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "测试任务" }, finish_reason: "stop" }] }));
+      return;
+    }
+    const turn = (turns.get(user) ?? 0) + 1;
+    turns.set(user, turn);
+    if (user === "d04-quota") {
+      response.writeHead(403, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ error: { message: "monthly usage limit" } }));
+      return;
+    }
+    if (user === "d04-tool-failure") {
+      if (last?.role === "tool") finishText(response, "文件无法读取，尚未完成。");
+      else finishTool(response, "read-missing", "read", { file_path: "missing-file.txt" });
+      return;
+    }
+    if (user === "d04-limit") {
+      finishTool(response, `read-step-${turn}`, "read", { file_path: `missing-${turn}.txt` });
+      return;
+    }
 
     if (user.startsWith("hold-")) {
       held.set(user, response);
@@ -238,6 +261,46 @@ async function stopProduct(product) {
   const logs = product.logs();
   assert.equal(termination.childExited, true, `server cleanup failed\nstdout=${logs.stdout}\nstderr=${logs.stderr}`);
 }
+
+test("D04 真实服务按错误事件结算，工具失败和限步不发送成功通知", { timeout: 90_000 }, async () => {
+  const fixture = await makeTempDir("rainydays-d04-outcomes-");
+  const token = "d04-fixture-token";
+  const provider = await startFakeProvider();
+  let product;
+  try {
+    product = await startProduct(fixture, provider.baseURL, token);
+    for (const [input, outcome, notificationKind] of [["d04-quota", "failed", "error"], ["d04-tool-failure", "partial", "info"], ["d04-limit", "failed", "error"]]) {
+      const created = await api(product.base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: input }) });
+      const sessionId = created.body.session.id;
+      const response = await fetch(`${product.base}/chat`, { method: "POST", headers: { "X-RainyDays-Token": token, "Content-Type": "application/json" }, body: JSON.stringify({ sessionId, message: input }) });
+      const events = await consumeSse(response).done;
+      const desktop = (await api(product.base, token, "/desktop/state")).body;
+      const notification = desktop.notifications.find(item => item.sessionId === sessionId);
+      assert.equal(notification.kind, notificationKind, `${input}: ${JSON.stringify(notification)}`);
+      assert.equal(desktop.sessions.find(item => item.id === sessionId).status, outcome === "failed" ? "error" : "idle");
+      assert.equal(events.at(-1).type, "run_finished");
+      assert.equal(events.at(-1).outcome, outcome);
+      if (input === "d04-limit") assert.match(events.find(event => event.type === "error").content, /最大循环/);
+    }
+    const created = await api(product.base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: "D04 waiting" }) });
+    const sessionId = created.body.session.id;
+    const response = await fetch(`${product.base}/chat`, { method: "POST", headers: { "X-RainyDays-Token": token, "Content-Type": "application/json" }, body: JSON.stringify({ sessionId, message: "ask-d04-cancel" }) });
+    const flow = consumeSse(response);
+    const started = await flow.waitForEvent(event => event.type === "run_started");
+    await flow.waitForEvent(event => event.type === "ask_user");
+    const cancelAt = Date.now();
+    const cancelled = await api(product.base, token, "/chat/cancel", { method: "POST", body: JSON.stringify({ sessionId, runId: started.runId }) });
+    assert.equal(cancelled.body.settled, true);
+    assert(Date.now() - cancelAt < 5000, "cancellation while waiting for permission must settle promptly");
+    assert.equal((await flow.done).at(-1).outcome, "cancelled");
+    const desktop = (await api(product.base, token, "/desktop/state")).body;
+    assert.equal(desktop.notifications.some(item => item.sessionId === sessionId && item.kind === "success"), false);
+  } finally {
+    if (product) await stopProduct(product);
+    await provider.close();
+    await removeFixture(fixture);
+  }
+});
 
 test("RT-01 real server isolates parallel Session runtimes and run-local interaction", { timeout: 120_000 }, async () => {
   const fixture = await makeTempDir("mini-lux-rt01-runtime-");
@@ -465,9 +528,10 @@ test("RT-01 real server isolates parallel Session runtimes and run-local interac
 
     const nextWorkspace = path.join(fixture, "workspace-v2");
     await fs.mkdir(nextWorkspace);
+    const expectedRevision = (await api(product.base, token, "/settings")).body.revision;
     const settingsUpdated = await api(product.base, token, "/settings/general", {
       method: "PUT",
-      body: JSON.stringify({ workspaceRoot: nextWorkspace }),
+      body: JSON.stringify({ workspaceRoot: nextWorkspace, expectedRevision }),
     });
     assert.equal(settingsUpdated.status, 200, JSON.stringify(settingsUpdated.body));
     for (const sessionId of [sessionA, sessionB]) {
@@ -478,7 +542,7 @@ test("RT-01 real server isolates parallel Session runtimes and run-local interac
 
     const providerUpdated = await api(product.base, token, "/settings/providers/default", {
       method: "PUT",
-      body: JSON.stringify({ model: "rt01-model-v2", baseURL: provider.baseURL, apiKey: "rt01-secret", providerType: "openai-compatible" }),
+      body: JSON.stringify({ model: "rt01-model-v2", baseURL: provider.baseURL, apiKey: "rt01-secret", providerType: "openai-compatible", expectedRevision: settingsUpdated.body.settings.revision }),
     });
     assert.equal(providerUpdated.status, 200, JSON.stringify(providerUpdated.body));
     const profileResponses = await Promise.all([sessionA, sessionB].map((sessionId, index) => fetch(`${product.base}/chat`, {
@@ -488,7 +552,7 @@ test("RT-01 real server isolates parallel Session runtimes and run-local interac
     })));
     const profileStreams = profileResponses.map(response => consumeSse(response));
     await Promise.all(profileStreams.map(stream => stream.done));
-    const profileRequests = provider.requests.filter(request => request.user.startsWith("profile-"));
+    const profileRequests = provider.requests.filter(request => request.stream && request.user.startsWith("profile-"));
     assert.equal(profileRequests.length, 2);
     assert(profileRequests.every(request => request.model === "rt01-model-v2"));
 

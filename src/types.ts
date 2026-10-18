@@ -262,6 +262,7 @@ export interface AgentStep {
     | "task_created" | "task_update";
   content: string;
   toolName?: string;
+  toolCallId?: string;
   toolArgs?: Record<string, unknown>;
   toolStatus?: ToolOutcomeStatus;
   toolCode?: string | null;

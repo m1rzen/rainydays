@@ -297,6 +297,7 @@ async function assertRendererSessionIsolation(client, restoreSessionId) {
       }
       if(url.pathname==='/api/chat/cancel'){
         state.cancels.push(JSON.parse(options.body));
+        await new Promise(resolve=>{state.releaseCancel=resolve;});
         return new Response('{}',{status:200,headers:{'Content-Type':'application/json'}});
       }
       if(url.pathname==='/api/ask-user/answer'){
@@ -310,7 +311,9 @@ async function assertRendererSessionIsolation(client, restoreSessionId) {
   const submit = async (sessionId, text) => {
     await selectRendererSession(client, sessionId);
     const before = await client.evaluate("window.__rt01RendererProbe.chats.length");
-    await client.evaluate(`(()=>{const input=document.getElementById('input');input.value=${JSON.stringify(text)};input.dispatchEvent(new Event('input',{bubbles:true}));document.getElementById('input-form').requestSubmit();return true})()`);
+    const feedback = await client.evaluate(`(()=>{const input=document.getElementById('input');input.value=${JSON.stringify(text)};input.dispatchEvent(new Event('input',{bubbles:true}));const started=performance.now();document.getElementById('input-form').requestSubmit();return {busy:document.getElementById('submit').disabled,elapsed:performance.now()-started}})()`);
+    assert.equal(feedback.busy, true, "sending must show local running state immediately");
+    assert(feedback.elapsed < 1000, "local sending feedback exceeded one second");
     await waitFor(async () => {
       try { return await client.evaluate(`window.__rt01RendererProbe.chats.length === ${before + 1}`); }
       catch { return false; }
@@ -345,6 +348,11 @@ async function assertRendererSessionIsolation(client, restoreSessionId) {
   assert.equal(backgroundState.messages.includes("A-BACKGROUND-CONTENT"), false);
   assert.equal(backgroundState.messages.includes("A-BACKGROUND-QUESTION"), false);
   assert.equal(backgroundState.busy, true);
+
+  await selectRendererSession(client, sessions.a);
+  assert.match(await client.evaluate("document.getElementById('messages').textContent"), /A-BACKGROUND-CONTENT/u, "Returning to an active run must restore its live response");
+  await selectRendererSession(client, sessions.b);
+  assert.doesNotMatch(await client.evaluate("document.getElementById('messages').textContent"), /A-BACKGROUND-CONTENT/u);
 
   await client.evaluate(`window.__rt01RendererProbe.controllers[${JSON.stringify(sessions.a)}].close();true`);
   await delay(150);
@@ -383,6 +391,7 @@ async function assertRendererSessionIsolation(client, restoreSessionId) {
   await client.evaluate(`(()=>{
     const state=window.__rt01RendererProbe;
     state.controllers[${JSON.stringify(sessions.b)}].enqueue(state.encoder.encode('data: '+JSON.stringify({type:'run_started',sessionId:${JSON.stringify(sessions.b)},runId:'run-cancel-b'})+'\\n\\n'));
+    state.controllers[${JSON.stringify(sessions.b)}].enqueue(state.encoder.encode('data: '+JSON.stringify({type:'answer_chunk',content:'B-PARTIAL-CONTENT'})+'\\n\\n'));
     return true;
   })()`);
   await waitFor(async () => {
@@ -404,6 +413,9 @@ async function assertRendererSessionIsolation(client, restoreSessionId) {
     window.__rt01RendererProbe.escapeDispatch={result,defaultPrevented:event.defaultPrevented,currentSessionId,running:isSessionRunning()};
     return true;
   })()`);
+  await waitFor(() => client.evaluate("window.__rt01RendererProbe.cancels.length === 1 && document.getElementById('status-text').textContent.includes('正在停止')"), { timeoutMs: 1000, label: "D04 immediate cancellation feedback before settlement" });
+  assert.match(await client.evaluate("document.getElementById('messages').textContent"), /B-PARTIAL-CONTENT/u);
+  await client.evaluate("window.__rt01RendererProbe.releaseCancel();true");
   try {
     await waitFor(async () => {
       try {
@@ -435,6 +447,7 @@ async function assertRendererSessionIsolation(client, restoreSessionId) {
     runId: "run-cancel-b",
   });
   assert.match(await client.evaluate("document.getElementById('messages').textContent"), /已中断/u);
+  assert.match(await client.evaluate("document.getElementById('messages').textContent"), /B-PARTIAL-CONTENT/u);
 
   await selectRendererSession(client, restoreSessionId);
   await client.evaluate("window.fetch=window.__rt01RendererProbe.originalFetch;delete window.__rt01RendererProbe;true");
@@ -657,12 +670,92 @@ test("RT-01 renderer source keeps runs and questions session-bound", async () =>
   assert.match(source, /questionsBySession\.get\(answerSessionId\)/u);
   assert.match(source, /question\.sessionId !== answerSessionId/u);
   const askBranch = source.indexOf('if (step.type === "ask_user")');
-  const currentSessionGate = source.indexOf("if (currentSessionId !== chatSessionId) continue;", askBranch);
   const notificationBranch = source.indexOf('if (step.type === "notification")', askBranch);
-  assert(askBranch >= 0 && currentSessionGate > askBranch && notificationBranch > currentSessionGate, "ask storage and notification visibility must remain behind the session boundary");
-  assert.match(source.slice(askBranch, currentSessionGate), /currentSessionId === chatSessionId/u);
+  assert(askBranch >= 0 && notificationBranch > askBranch, "ask storage must remain session-bound");
+  assert.match(source.slice(askBranch, notificationBranch), /currentSessionId === chatSessionId/u);
+  assert.match(source.slice(notificationBranch, notificationBranch + 150), /if \(currentSessionId !== chatSessionId\) continue;/u);
   assert.match(source, /async function deleteSession\(id\)[\s\S]*?if \(!response\.ok\)[\s\S]*?activeRunsBySession\.delete\(id\)/u);
   assert.match(source, /async function clearChat\(\)[\s\S]*?if \(!response\.ok\)[\s\S]*?if \(currentSessionId !== sessionId\) return;/u);
+});
+
+test("D04 real Electron restores active responses and shows cancellation before backend settlement", { timeout: 90_000 }, async context => {
+  const fixture = await makeTempDir("rainydays-d04-ui-");
+  const userData = path.join(fixture, "user-data");
+  const server = createServer((_request, response) => {
+    response.setHeader("Content-Type", "application/json");
+    response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "Fixture" }, finish_reason: "stop" }] }));
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  let instance; let client;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, `http://127.0.0.1:${server.address().port}/v1`);
+    client = await connectCdp(cdpPort);
+    await waitFor(async () => { try { return await client.evaluate("Boolean(currentSessionId)"); } catch { return false; } }, { timeoutMs: 20_000, label: "D04 renderer ready" });
+    const sessionId = await client.evaluate("currentSessionId");
+    await assertRendererSessionIsolation(client, sessionId);
+    client.close(); client = null;
+    await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    client?.close();
+    if (instance) await terminateProcessTreeAsync(instance.child);
+    server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+    await removeFixture(fixture);
+  }
+});
+
+test("D04 real Electron retains first output after interruption without replaying second", { timeout: 120_000 }, async context => {
+  const fixture = await makeTempDir("rainydays-d04-output-recovery-");
+  const userData = path.join(fixture, "user-data");
+  let instance; let client; let requests = 0;
+  const server = createServer(async (request, response) => {
+    const bytes = []; for await (const part of request) bytes.push(part);
+    const body = JSON.parse(Buffer.concat(bytes).toString("utf8"));
+    if (!body.stream) {
+      response.setHeader("Content-Type", "application/json");
+      response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "两份报告" }, finish_reason: "stop" }] }));
+      return;
+    }
+    requests++;
+    response.writeHead(200, { "Content-Type": "text/event-stream" });
+    const args = requests === 1 ? JSON.stringify({ path: "第一份已完成.docx", paragraphs: ["这是中断前成功保存的内容。"] }) : '{"path":"第二份未完成.docx",';
+    response.write(`data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [{ index: 0, id: `report-${requests}`, type: "function", function: { name: "create_docx", arguments: args } }] }, finish_reason: null }] })}\n\n`);
+    if (requests === 1) response.end(`data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: "tool_calls" }] })}\n\ndata: [DONE]\n\n`);
+    // The second tool's arguments remain incomplete until this owned service is interrupted.
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const modelURL = `http://127.0.0.1:${server.address().port}/v1`;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, modelURL);
+    client = await connectCdp(cdpPort);
+    await waitFor(async () => { try { return await client.evaluate("Boolean(currentSessionId)"); } catch { return false; } }, { timeoutMs: 20_000, label: "D04 output session" });
+    await client.evaluate(`(()=>{inputEl.value='生成两份报告';document.getElementById('input-form').requestSubmit();return true})()`);
+    await waitFor(() => client.evaluate("document.getElementById('ask-modal').classList.contains('visible')"), { timeoutMs: 20_000, label: "D04 create document permission" });
+    assert.equal(await client.evaluate(`(()=>{const button=[...document.querySelectorAll('#ask-options button')].find(button=>button.textContent==='本次任务允许新建文档');if(!button)return false;button.click();return true})()`), true);
+    await waitFor(() => client.evaluate("document.querySelectorAll('.document-output-row .local-file-link').length===1"), { timeoutMs: 20_000, label: "D04 first output visible" });
+    await waitFor(() => requests === 2, { timeoutMs: 10_000, label: "D04 second incomplete tool stream" });
+    const sessionId = await client.evaluate("currentSessionId");
+    const firstPath = path.join(userData, "output", "第一份已完成.docx");
+    const before = await readFile(firstPath);
+    client.close(); client = null;
+    assert.equal((await terminateProcessTreeAsync(instance.child)).childExited, true); instance = null;
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, modelURL);
+    client = await connectCdp(cdpPort);
+    await waitFor(async () => { try { return await client.evaluate("Boolean(currentSessionId) && Boolean(workbenchLayout)"); } catch { return false; } }, { timeoutMs: 20_000, label: "D04 restarted desktop" });
+    await client.evaluate(`selectSession(${JSON.stringify(sessionId)})`);
+    assert.equal(await client.evaluate("document.querySelectorAll('.document-output-row .local-file-link').length"), 1);
+    assert.deepEqual(await readFile(firstPath), before);
+    await assert.rejects(readFile(path.join(userData, "output", "第二份未完成.docx")), error => error.code === "ENOENT");
+    assert.equal(requests, 2, "restart must not send another model/tool request");
+    client.close(); client = null;
+    await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    client?.close();
+    if (instance) await terminateProcessTreeAsync(instance.child);
+    server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+    await removeFixture(fixture);
+  }
 });
 
 test("real Electron main, preload and renderer preserve identity and session across restart", { timeout: 300_000 }, async (context) => {

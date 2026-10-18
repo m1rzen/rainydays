@@ -116,6 +116,35 @@ test("Agent 断流后保存已显示文字和失败提示，重开会话可恢�
   assert.equal(restored.getAll().at(-1).tool_calls, undefined);
 });
 
+test("D04 用户停止后保留已显示正文，重开对话可见未完成说明", async () => {
+  const [{ Agent }, { createEffectivePersona }, { createSession }, { capabilityBroker }, { pathPolicy }, { cancellationError }] = await Promise.all([
+    import("../../src/agent.ts"), import("../../src/persona.ts"), import("../../src/session.ts"),
+    import("../../src/tools/index.ts"), import("../../src/path-runtime.ts"), import("../../src/run-cancellation.ts"),
+  ]);
+  const persona = createEffectivePersona({ name: "d04-cancel", displayName: "Fixture", description: "Fixture", tools: [], env: {}, allowedRoots: [fixture], networkPolicy: { mode: "deny" }, systemPrompt: "Fixture" });
+  const authority = capabilityBroker.createRuntimeAuthority({ ...persona, rootEnv: {},
+    pathAuthority: await pathPolicy.createAuthority([{ rootId: "workspace", role: "workspace", configuredPath: fixture, permissions: ["read-file"] }]) });
+  const controller = new AbortController();
+  const llm = { async chat() { return { role: "assistant", content: "Fixture" }; }, async *chatStream() {
+    yield { type: "delta", content: "保留这段已生成内容" };
+    throw cancellationError(controller.signal);
+  } };
+  try {
+    const memory = new ConversationMemory();
+    const session = createSession(persona, "Fixture");
+    const agent = new Agent(llm, memory, persona, authority); agent.setSession(session.id);
+    await assert.rejects(async () => {
+      for await (const step of agent.run("生成报告", "d04-cancel-run", controller.signal)) {
+        if (step.type === "answer_chunk") controller.abort(new Error("用户停止"));
+      }
+    }, error => error.code === "RUN_CANCELLED");
+    const restored = new ConversationMemory(); restored.loadFromDb(session.id);
+    assert.match(restored.getAll().at(-1).content, /保留这段已生成内容/);
+    assert.match(restored.getAll().at(-1).content, /已取消|已停止/);
+    assert.equal(restored.getAll().at(-1).tool_calls, undefined);
+  } finally { await capabilityBroker.retireAuthority(authority); }
+});
+
 test("文档附件保留原文，模型获得索引，读取工具分段取回且拒绝跨会话", async () => {
   const store = await import("../../src/attachment-store.ts");
   const { projectMessagesForProvider } = await import("../../src/llm.ts");
