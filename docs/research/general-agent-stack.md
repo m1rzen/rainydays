@@ -2,6 +2,8 @@
 
 更新：2026-10-18。此文记录静态材料与官方资料，不是运行验收。代码映射见 [能力手册](../agents/general-agent-capabilities.md)，工作顺序见 [任务图](../work/general-agent/plan.md)。
 
+本轮A01的实际运行结果另见[可行性实验](../work/general-agent/prototype.md)：临时官方MCP SDK1.32.1（Node≥18）通过stdio/Streamable HTTP协议往返；非管理员自建Windows窗口通过UIA/PrintWindow及自包含发布。CLI完整项目、浏览器真实键盘、工具图片投影均有失败复现，不能由下述静态资料推断产品已支持。
+
 ## 一、产品参照应怎样使用
 
 Codex官方CLI文档描述项目阅读、编辑、命令执行，以及技能、MCP与子任务等能力。这里采用这些能力类别及结果循环作为参照；不声称每个Codex界面或平台都提供同样的原生桌面控制。[Codex CLI](https://learn.chatgpt.com/docs/codex/cli)
@@ -20,6 +22,7 @@ Computer Use还需要驱动应用/浏览器、把观察交给模型，再执行�
 | MCP认证 | [2025-11-25认证规范](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization) | 复用SDK OAuth/PKCE与凭据存储；开发前核对所选服务/协议版本，不自写SSO |
 | Windows UI Automation | [Microsoft UIA](https://learn.microsoft.com/en-us/windows/win32/winauto/entry-uiauto-win32) | 优先读取可访问性控件及其操作；无可用树时才用视觉坐标 |
 | Windows输入 | [Microsoft SendInput](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput) | 注入受UIPI/完整性等级限制；普通用户工具不承诺操控提权窗口，修饰键状态需处理 |
+| .NET部署 | [Microsoft部署说明](https://learn.microsoft.com/en-us/dotnet/core/deploying/) | self-contained可包含运行时；A01实际发布约177MB，A09比较薄宿主与该方案后定生产选择 |
 
 引用2025-11-25是明确研究快照，不声称它永远最新。实施时记录SDK版本、协商协议和测试服务；升级只在实际兼容需求下进行。不得从官方资料推断第三方服务一定正确实现规范。
 

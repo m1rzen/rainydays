@@ -1,18 +1,20 @@
 # 当前开发状态
 
-更新：2026-10-18。代码基线：417039e。项目范围的详细判断见 [二次重构进度审计](audits/baseline-2026-09-29.md)；已完成修复见 [演示问题修复](devlog/2026-10-16-demo-repair.md)。
+更新：2026-10-18。代码基线：1b48b2c。项目范围的详细判断见 [二次重构进度审计](audits/baseline-2026-09-29.md)；已完成修复见 [演示问题修复](devlog/2026-10-16-demo-repair.md)。
 
 ## 通用Agent规划与恢复入口
 
 - 文档清理已完成：排期只由D+A总路线维护，旧多轮路线与差距表已归档；默认rg过滤历史规范/报告与本地产物。旧R证据按需查询，见[历史索引](archive/README.md)。
 
-- 当前阶段：implementation / D01 verified，A01探针进行中。2026-10-18用户已整体批准D+A路线并授权连续研发；Prism、钉钉排除。
-- 入口：[Codex研发手册](agents/README.md)、[通用规格](specs/general-agent.md)、[D+A总任务图](work/general-agent/plan.md)。31项整体获批，D01已验证，A01独立探针进行中；D18为中间里程碑，完整出口A13。
-- 当前动作：A01验证CLI/MCP/浏览器/图像/Windows接入，随后D02本地协议与模型认证；既有default五项真实研究授权不扩大，模型阻塞不暂停独立工程。
+- 当前阶段：implementation / D01、A01 verified。2026-10-18用户已整体批准D+A路线并授权连续研发；Prism、钉钉排除。
+- 入口：[Codex研发手册](agents/README.md)、[通用规格](specs/general-agent.md)、[D+A总任务图](work/general-agent/plan.md)。31项整体获批，D01已验证，A01调查已完成；D18为中间里程碑，完整出口A13。
+- 当前动作：D02本地协议与模型认证；既有default五项真实研究授权不扩大，模型阻塞不暂停独立工程。
 - 新确认差距：CLI/终端存在但默认助手未开放完整开发能力；MCP只有配置与关闭标志，未接客户端；浏览器有实现但缺完整真实验收；原生Windows工具和截图到模型的完整循环未形成可交付能力。详见[能力手册](agents/general-agent-capabilities.md)。
 - 当前D01使用隔离测试环境诊断，不修改日常用户数据库或调用真实模型。下述通过记录为已有证据，本轮新增结果回填对应票据。
 
 ## 已验证
+
+- A01：五项可行性调查完成；MCP stdio/HTTP真实协议、自建Windows窗口与自包含发布成功；确认CLI项目命令拒绝/模块导入EPERM、浏览器Enter/Tab与工具图片投影缺口。接口、支持限制与后续实验已交接A03/A05/A07/A08/A09；不代表这些能力已产品化。[证据](work/general-agent/prototype.md)
 
 - D01：修复旧定义文件标签的普通400/缺恢复入口，以及工作目录失效后遗留子路径；正常启动干净10次+旧数据10次通过，消息/附件可读、目录可换。两个缺陷及真实后台恢复3/3；路径相关回归3/3、supervisor6/6；完整产品检查26+15通过。历史单次退出未知，开发并发初始化超时留D13测量，真实断网资料源留D05。[证据](work/colleague-delivery/tickets/01-startup-and-old-data.md)
 

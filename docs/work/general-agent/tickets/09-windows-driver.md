@@ -18,6 +18,8 @@ User stories: G07
 
 ## 先读与研究
 
+A01已在非管理员进程中验证UIA输入/Invoke和PrintWindow，并实际发布176.7MB的self-contained helper。见[原型记录](../prototype.md)：该体积需与系统薄宿主比较后再选；96DPI自建窗口成功不代表Office/WPS、焦点、缩放与多显示器通过。
+
 Windows UIA/SendInput官方资料；现有工具/执行适配器、Electron打包与资源生命周期。目标窗口外操作与AppContainer不是同一边界。
 
 共同实现原则见[能力手册](../../../agents/general-agent-capabilities.md)。实施前查当前定义与官方资料，记录实际版本；不要凭旧文档猜接口。

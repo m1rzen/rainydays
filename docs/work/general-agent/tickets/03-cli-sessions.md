@@ -18,6 +18,8 @@ User stories: G03
 
 ## 先读与研究
 
+A01已实测E1 echo可用，但Node/Python项目命令被隔离通道拒绝；E3直接import项目文件因父目录lstat的EPERM失败。先按[A01原型记录](../prototype.md)复现，再设计最小运行时租约/模块解析所需目录元数据契约，验证Node和Python项目红→修复→绿；不得只接终端UI或全局放权。另需处理现有Windows stderr乱码，明确编码或保留原始字节。
+
 src/tools/shell.ts、terminal-tools.ts、script.ts及执行adapter；tests中的terminal-owner、terminal-interruption与script-native相关用例。
 
 共同实现原则见[能力手册](../../../agents/general-agent-capabilities.md)。实施前查当前定义与官方资料，记录实际版本；不要凭旧文档猜接口。

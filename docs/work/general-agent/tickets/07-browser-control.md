@@ -18,6 +18,8 @@ User stories: G06
 
 ## 先读与研究
 
+A01实测当前press Enter不会提交原生表单、Tab不会移动焦点，虽然旧CDP流程通过。按[原型记录](../prototype.md)用真实输入修复并验证，不能靠element事件调用成功判定。
+
 src/browser.ts、tools/browser-tools.ts、eco08-browser-session/cdp测试。评估当前element.click和合成KeyboardEvent的局限；截图语义接A08/A10。
 
 共同实现原则见[能力手册](../../../agents/general-agent-capabilities.md)。实施前查当前定义与官方资料，记录实际版本；不要凭旧文档猜接口。

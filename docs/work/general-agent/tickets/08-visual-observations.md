@@ -18,6 +18,8 @@ User stories: G07、G10
 
 ## 先读与研究
 
+A01确认用户图片可投影PNG data URI，但tool附件被当前投影明确拒绝。见[原型](../prototype.md)，补宿主工具观察适配到提供方实际支持的图像消息格式，保留tool call/目标/时刻/坐标关联；不直接发送SDK不支持的tool图片结构，也不把宿主观察当成新的用户权限。
+
 src/llm.ts、tools/image-helper.ts与工具结果投影；D02模型契约、D03预算。不能只把PNG路径拼进文本提示。
 
 共同实现原则见[能力手册](../../../agents/general-agent-capabilities.md)。实施前查当前定义与官方资料，记录实际版本；不要凭旧文档猜接口。

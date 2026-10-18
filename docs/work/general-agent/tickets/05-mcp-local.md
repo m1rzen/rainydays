@@ -18,6 +18,8 @@ User stories: G05、G10
 
 ## 先读与研究
 
+A01官方SDK1.32.1的stdio/HTTP往返成功，见[原型记录](../prototype.md)。生产stdio不能直接沿用SDK默认无受控spawn；用SDK Transport接口连接现有NativeExecutionHandle的原始write/output/terminate，必要时只补最小原始管道会话。ConPTY终端显示不能充当协议stdout，A03运行时租约问题须先解决。
+
 src/settings-schema.ts、version.ts、task-tools.ts、tools/index.ts与执行器；研究dossier的官方SDK/传输资料。
 
 共同实现原则见[能力手册](../../../agents/general-agent-capabilities.md)。实施前查当前定义与官方资料，记录实际版本；不要凭旧文档猜接口。
