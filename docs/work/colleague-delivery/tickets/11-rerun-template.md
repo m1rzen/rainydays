@@ -20,6 +20,8 @@ User stories: U09、U08
 
 ## 先读与研究
 
+D02发现旧RT-04 runtime中的两项Playbook fixture使用了过期接口（id无效/getPlaybook不存在），选取b2cda55原测试也能重现；见[D02诊断](../diagnostics/02-model-contract.md)。本票验证模板执行时检查/迁移该fixture，保留原行为断言，不恢复过期接口作为新产品要求。
+
 D10 模板接口、普通 session/run 与成果区、现有取消和任务授权。
 
 与 Lux 有直接对应且尚未解决的问题，按 [有界研究计划](../../../research/lux-reference-plan.md) 只研究本票需要的行为。已有材料足够就直接记录复用决定。外部库/API 有变化时读已安装定义与官方资料，不凭记忆更换技术栈。

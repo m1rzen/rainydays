@@ -22,6 +22,10 @@ User stories: U02
 
 D01已确认本机缺失部门目录可降级；用户说明Z盘仅公司内网可达，旧配置曾为避免依赖Z盘而改到缺失目录。这里需补查可选公司资料源的启用/状态与真实断网时延；本机ENOENT测试不能证明断开的SMB请求不会等待。参见[D01诊断](../diagnostics/01-startup-and-file-roots.md)。
 
+D02真实Agent协议验证发现并修复read的隐含依赖：已授权绝对路径也先require DATA_ROOT，导致没有部门根时读取失败；现在绝对路径交既有gateway按实际授权根选择，相对路径仍要求其默认根。已有集成用例覆盖无DATA_ROOT本地读取与越界拒绝。本票还需核对glob/grep/legacy工具的同类默认根假设、用户相对路径入口与断网时延，不能据read修复直接标全票通过。
+
+测试维护：旧TOOL-02 contract七项在worker路由处缺capabilityContext而失败，未进入文件逻辑；D02保存旧fixture对照结果，见[诊断](../diagnostics/02-model-contract.md)。本票修改文件工具时将fixture对齐当前公共调用链，保持原行为断言，不把这七项记为已通过。
+
 src/config.ts、settings-schema.ts、path-runtime.ts、src/index.ts 文件接口、public/index.html 与 renderer。
 
 与 Lux 有直接对应且尚未解决的问题，按 [有界研究计划](../../../research/lux-reference-plan.md) 只研究本票需要的行为。已有材料足够就直接记录复用决定。外部库/API 有变化时读已安装定义与官方资料，不凭记忆更换技术栈。

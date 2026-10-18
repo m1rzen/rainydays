@@ -1441,7 +1441,7 @@ test("R5 real Electron first setup tests saved connection without sending histor
     requests.push(JSON.parse(Buffer.concat(chunks).toString()));
     response.writeHead(quota ? 403 : 200, { "Content-Type": "application/json" });
     response.end(JSON.stringify(quota ? { error: { message: "monthly usage limit FIXTURE_SECRET", type: "quota" } }
-      : { choices: [{ message: { role: "assistant", content: "OK" } }] }));
+      : { choices: [{ message: { role: "assistant", content: "OK" }, finish_reason: "stop" }] }));
   });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   try {
@@ -1512,7 +1512,7 @@ test("R5 real Electron loads discovered tools for one task and resets the next",
     try {
       const chunks = []; for await (const chunk of request) chunks.push(chunk);
       const body = JSON.parse(Buffer.concat(chunks).toString());
-      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "Fixture" } }] })); return; }
+      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "Fixture" }, finish_reason: "stop" }] })); return; }
       const names = body.tools.map(tool => tool.function.name);
       toolSizes.push({ count: names.length, bytes: Buffer.byteLength(JSON.stringify(body.tools)), names });
       const stage = iteration++;
@@ -1566,7 +1566,7 @@ test("R5 real Electron restores changed-persona history read-only and continues 
     const body = JSON.parse(Buffer.concat(chunks).toString());
     if (!body.stream) {
       response.setHeader("Content-Type", "application/json");
-      response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "升级前的任务" } }] })); return;
+      response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "升级前的任务" }, finish_reason: "stop" }] })); return;
     }
     streamRequests++;
     response.writeHead(200, { "Content-Type": "text/event-stream" });
@@ -1655,7 +1655,7 @@ test("R4 real Electron persists actual sources, partial reads, failures and repo
     try {
       const chunks = []; for await (const chunk of request) chunks.push(chunk);
       const body = JSON.parse(Buffer.concat(chunks).toString());
-      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "来源研究" } }] })); return; }
+      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "来源研究" }, finish_reason: "stop" }] })); return; }
       const origin = `http://127.0.0.1:${server.address().port}`;
       let calls;
       if (stage === 0) calls = [tool(0, "fetch_markdown", { url: `${origin}/a` }), tool(1, "fetch_markdown", { url: `${origin}/b` }), tool(2, "fetch_markdown", { url: `${origin}/missing` }), tool(3, "fetch_markdown", { url: `${origin}/partial`, max_length: 5 })];
@@ -1736,7 +1736,7 @@ test("R2 real Electron completes document task, restores outputs and revises a c
     try {
       const chunks = []; for await (const chunk of request) chunks.push(chunk);
       const body = JSON.parse(Buffer.concat(chunks).toString());
-      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "文档任务" } }] })); return; }
+      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "文档任务" }, finish_reason: "stop" }] })); return; }
       let calls;
       if (stage === 0) {
         const attachment = /attachment:([a-zA-Z0-9_-]+)/u.exec(JSON.stringify(body.messages));

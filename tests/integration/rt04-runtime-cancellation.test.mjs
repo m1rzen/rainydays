@@ -78,7 +78,9 @@ test("RT-04 LLM client binds one signal through non-stream and stream state mach
     observed.push({ params, signal: options?.signal });
     return {
       choices: [{
+        finish_reason: "tool_calls",
         message: {
+          role: "assistant",
           content: "answer",
           tool_calls: [{ id: "call-1", function: { name: "fixture", arguments: "{\"ok\":true}" } }],
         },
@@ -392,12 +394,12 @@ test("RT-04 LLM retry classification remains cancellable across rate, server, ne
   const realWarn = console.warn;
   console.warn = () => undefined;
   try {
-    const llm = makeLlm(async () => ({ choices: [{ message: { content: null } }] }));
+    const llm = makeLlm(async () => ({ choices: [{ message: { role: "assistant", content: null }, finish_reason: "stop" }] }));
     let attempts = 0;
     llm.client.chat.completions.create = async () => {
       attempts += 1;
       if (attempts === 1) throw Object.assign(new Error("rate"), { status: 429 });
-      return { choices: [{ message: { content: null } }] };
+      return { choices: [{ message: { role: "assistant", content: null }, finish_reason: "stop" }] };
     };
     assert.deepEqual(await llm.chat([{ role: "user", content: "rate" }]), { role: "assistant", content: "", tool_calls: undefined });
     assert.equal(attempts, 2);
@@ -406,7 +408,7 @@ test("RT-04 LLM retry classification remains cancellable across rate, server, ne
     llm.client.chat.completions.create = async () => {
       attempts += 1;
       if (attempts === 1) throw Object.assign(new Error("server"), { status: 503 });
-      return { choices: [{ message: { content: "recovered" } }] };
+      return { choices: [{ message: { role: "assistant", content: "recovered" }, finish_reason: "stop" }] };
     };
     assert.equal((await llm.chat([{ role: "user", content: "server" }], undefined, NEVER_ABORT_SIGNAL)).content, "recovered");
 

@@ -106,8 +106,8 @@ export const readExec: ToolExecutor = async (args, _env, invocationValue) => {
   if (typeof args.file_path === "string" && args.file_path.startsWith("attachment:")) return readAttachmentDocument(args, invocation);
   const remote = await routeToSelectedWorker(invocation, "read", args);
   if (remote !== null) return remote;
-  const defaultRootId = requireRootId(invocation.path, "DATA_ROOT");
   const filePath = args.file_path as string;
+  const defaultRootId = path.isAbsolute(filePath) ? undefined : requireRootId(invocation.path, "DATA_ROOT");
   const extension = path.extname(filePath).toLowerCase();
   if (args.pages !== undefined && extension !== ".pdf") throw new ToolArgumentsError("pages 仅适用于 PDF 文件");
   const pdfPages = parsePdfPageRange(args.pages);

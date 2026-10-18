@@ -61,10 +61,57 @@ function isRetryableError(err: unknown): { retry: boolean; rateLimit?: boolean; 
 
 export type LLMFetchTransport = ScopedNetworkGateway["fetch"];
 
+export interface LLMUsage {
+  readonly prompt_tokens: number;
+  readonly completion_tokens: number;
+  readonly total_tokens: number;
+}
+
+/** Usage is response metadata, never conversation input. Missing means unknown. */
+export interface LLMReply extends Message {
+  readonly usage?: LLMUsage;
+}
+
+function providerUsage(usage: OpenAI.CompletionUsage | null | undefined): LLMUsage | undefined {
+  if (!usage) return undefined;
+  const { prompt_tokens, completion_tokens, total_tokens } = usage;
+  if (![prompt_tokens, completion_tokens, total_tokens].every(value => Number.isSafeInteger(value) && value >= 0)) return undefined;
+  return { prompt_tokens, completion_tokens, total_tokens };
+}
+
 export type AttachmentResolver = (
   sessionId: string,
   attachmentId: string,
 ) => Readonly<{ attachment: MessageAttachment; bytes: Buffer }>;
+
+/** A complete protocol reply is required before any caller can execute its tools. */
+function completedMessage(message: Message, finishReason: string | null | undefined): Message {
+  if (finishReason !== "stop" && finishReason !== "tool_calls") {
+    const reason = finishReason === "length" || finishReason === "content_filter" ? finishReason : "连接提前关闭或未知结束状态";
+    throw new Error(`回答未完整结束 (${reason})`);
+  }
+  if (message.role !== "assistant" || typeof message.content !== "string") {
+    throw new Error("模型返回了无效的回答结构");
+  }
+  const calls = message.tool_calls ?? [];
+  if ((calls.length > 0) !== (finishReason === "tool_calls")) {
+    throw new Error("工具调用与回答结束状态不一致");
+  }
+  const ids = new Set<string>();
+  for (const call of calls) {
+    if (!call.id || ids.has(call.id) || call.type !== "function" || !call.function?.name) {
+      throw new Error("模型返回了无效或重复的工具调用标识");
+    }
+    ids.add(call.id);
+    let args: unknown;
+    try { args = JSON.parse(call.function.arguments); }
+    catch { throw new Error("工具参数不是完整JSON，未执行工具"); }
+    if (args === null || typeof args !== "object" || Array.isArray(args)) {
+      throw new Error("工具参数必须是JSON对象，未执行工具");
+    }
+  }
+  return message;
+}
 
 export function projectMessagesForProvider(
   sessionId: string | null,
@@ -74,7 +121,13 @@ export function projectMessagesForProvider(
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
   let attachmentBytes = 0;
   return messages.map(message => {
-    const { attachments, ...base } = message;
+    const { attachments } = message;
+    // Whitelist protocol fields so response metadata cannot leak into later requests.
+    const base = {
+      role: message.role, content: message.content,
+      ...(message.tool_calls ? { tool_calls: message.tool_calls } : {}),
+      ...(message.tool_call_id ? { tool_call_id: message.tool_call_id } : {}),
+    };
     if (!attachments?.length) return base as OpenAI.Chat.ChatCompletionMessageParam;
     if (message.role !== "user") throw new TypeError("Only user messages may contain attachments");
     if (!sessionId || !resolveAttachment) throw new Error("Attachment Provider projection requires a Session-bound resolver");
@@ -165,7 +218,7 @@ export class LLMClient {
     transport?: LLMFetchTransport,
     attachmentSessionId: string | null = null,
     attachmentResolver: AttachmentResolver | null = null,
-  ): Promise<Message> {
+  ): Promise<LLMReply> {
     const client = transport ? this.createClient(transport) : this.client;
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.model,
@@ -186,10 +239,11 @@ export class LLMClient {
         if (signal) throwIfCancelled(signal);
         const response = await client.chat.completions.create(params, signal ? { signal } : undefined);
         const choice = response.choices[0];
+        if (!choice?.message) throw new Error("模型返回了空的回答结构");
         const message = choice.message;
 
-        const result = {
-          role: "assistant" as const,
+        const result = completedMessage({
+          role: message.role,
           content: message.content || "",
           tool_calls: message.tool_calls?.map((tc) => ({
             id: tc.id,
@@ -199,9 +253,10 @@ export class LLMClient {
               arguments: tc.function.arguments,
             },
           })),
-        };
+        }, choice.finish_reason);
         observation.finish("success", { bytesOut: Buffer.byteLength(result.content, "utf8") });
-        return result;
+        const usage = providerUsage(response.usage);
+        return { ...result, ...(usage ? { usage } : {}) };
       } catch (err) {
         if (signal?.aborted) {
           observation.finish("cancelled");
@@ -259,6 +314,7 @@ export class LLMClient {
       model: this.model,
       messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
       stream: true,
+      stream_options: { include_usage: true },
     };
 
     if (tools && tools.length > 0) {
@@ -281,10 +337,12 @@ export class LLMClient {
 
         let fullContent = "";
         let finishReason: string | null = null;
+        let usage: LLMUsage | undefined;
         const toolCallMap = new Map<number, { id: string; name: string; arguments: string }>();
 
         for await (const chunk of stream) {
           if (signal) throwIfCancelled(signal);
+          if (chunk.usage) usage = providerUsage(chunk.usage);
           if (chunk.choices[0]?.finish_reason) finishReason = chunk.choices[0].finish_reason;
           const delta = chunk.choices[0]?.delta;
           if (!delta) continue;
@@ -309,17 +367,12 @@ export class LLMClient {
         }
 
         if (signal) throwIfCancelled(signal);
-        if (finishReason !== "stop" && finishReason !== "tool_calls") {
-          throw new Error(`回答未完整结束 (${finishReason ?? "连接提前关闭"})`);
-        }
-
         // 构建最终 message
         const toolCalls = Array.from(toolCallMap.entries())
           .sort((a, b) => a[0] - b[0])
-          .map(([, tc]) => tc)
-          .filter((tc) => tc.name);
+          .map(([, tc]) => tc);
 
-        const finalMessage: Message = {
+        const finalMessage = completedMessage({
           role: "assistant",
           content: fullContent,
           tool_calls: toolCalls.length > 0
@@ -329,10 +382,10 @@ export class LLMClient {
                 function: { name: tc.name, arguments: tc.arguments },
               }))
             : undefined,
-        };
+        }, finishReason);
 
         observation.finish("success", { bytesOut: Buffer.byteLength(fullContent, "utf8") });
-        yield { type: "result", message: finalMessage };
+        yield { type: "result", message: finalMessage, ...(usage ? { usage } : {}) };
         return; // 成功，退出重试循环
 
       } catch (err) {
@@ -380,4 +433,4 @@ export class LLMClient {
 /** 流式事件类型 */
 export type StreamEvent =
   | { type: "delta"; content: string }
-  | { type: "result"; message: Message };
+  | { type: "result"; message: Message; usage?: LLMUsage };

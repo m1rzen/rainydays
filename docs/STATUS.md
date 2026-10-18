@@ -6,9 +6,9 @@
 
 - 文档清理已完成：排期只由D+A总路线维护，旧多轮路线与差距表已归档；默认rg过滤历史规范/报告与本地产物。旧R证据按需查询，见[历史索引](archive/README.md)。
 
-- 当前阶段：implementation / D01、A01 verified。2026-10-18用户已整体批准D+A路线并授权连续研发；Prism、钉钉排除。
+- 当前阶段：implementation / D01、A01 verified；D02本地工程已验证，真实模型认证blocked。2026-10-18用户已整体批准D+A路线并授权连续研发；Prism、钉钉排除。
 - 入口：[Codex研发手册](agents/README.md)、[通用规格](specs/general-agent.md)、[D+A总任务图](work/general-agent/plan.md)。31项整体获批，D01已验证，A01调查已完成；D18为中间里程碑，完整出口A13。
-- 当前动作：D02本地协议与模型认证；既有default五项真实研究授权不扩大，模型阻塞不暂停独立工程。
+- 当前动作：D04任务状态/停止/中断；D02本地协议依赖已满足，真实模型认证保留阻塞。既有default五项真实研究授权不扩大，模型阻塞不暂停独立工程。
 - 新确认差距：CLI/终端存在但默认助手未开放完整开发能力；MCP只有配置与关闭标志，未接客户端；浏览器有实现但缺完整真实验收；原生Windows工具和截图到模型的完整循环未形成可交付能力。详见[能力手册](agents/general-agent-capabilities.md)。
 - 当前D01使用隔离测试环境诊断，不修改日常用户数据库或调用真实模型。下述通过记录为已有证据，本轮新增结果回填对应票据。
 
@@ -27,6 +27,8 @@
 - 演示修复：两个新增入口使用正确开发 Node，原生启动 2/2；兼容 SQLite WAL 重置后的旧尾部，原损坏拒绝矩阵保持通过。实际找回 2 会话、1 消息、3 附件，当前新记录保持不变，恢复前快照保留；展示说明与任务授权一致。应用已正常重试启动。
 
 ## 开发中但未计为产品完成
+
+- D02本地工程：流/非流共享完整性校验、usage与请求投影、真实Agent串并行工具/取消通过，并修复绝对路径read对DATA_ROOT的隐含依赖。产品检查50+15、LLM取消3、观测8及源码Electron3项通过。真实模型/费用未认证，整票blocked；旧文件/Playbook fixture故障已交D05/D11。[证据](work/colleague-delivery/tickets/02-model-contract.md)
 
 - Playbook 8/8、Routine 8/8、Browser 6/6、Media 7/7 定向测试通过；这些能力仍缺普通用户入口、真实任务验收或首版必要性证明。
 - Download 的主要行为测试通过，但治理清单过期；Worker 持久 bash 输出仍有失败。

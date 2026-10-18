@@ -92,7 +92,7 @@ test("REL-04 LLM client records aggregate outcomes without retaining Provider pa
     chat: {
       completions: {
         async create() {
-          return { choices: [{ message: { content: "provider-result", tool_calls: [] } }] };
+          return { choices: [{ message: { role: "assistant", content: "provider-result", tool_calls: [] }, finish_reason: "stop" }] };
         },
       },
     },
