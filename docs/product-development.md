@@ -1,5 +1,7 @@
 # 产品开发的短反馈路径
 
+本文只说明测试入口与已知限制；执行顺序见[D+A总路线](work/general-agent/plan.md)，当前事实见[STATUS](STATUS.md)。
+
 在项目根目录运行：
 
 ```powershell
@@ -25,6 +27,6 @@ npm run test:product:desktop
 | `check:product` | 日常核心反馈；也可单跑 `test:product` / `test:product:ui` |
 | `test:product:desktop` | 修改桌面、附件、成果、模型流后运行 |
 | `test` / `test:quick` / `governance:*` | 旧全库/任务卡证明路径，继续保留；结果须区分行为缺陷与历史清单债务 |
-| `dist` / `test:package` | 安装候选构建与打包检查，另需 R7 清洁安装、恢复、取消、凭据和真实任务验收 |
+| `dist` / `test:package` | 安装候选构建与打包检查，另需D13–D18/A13的干净安装、恢复、取消与真实任务验收 |
 
-源码开发基线为 bf3a7e4，见 [既有 WIP 保存边界](audits/wip-baseline-2026-09-30.md)。其保存不表示冻结能力验收完成。默认首版不扩展 Media/Worker/双浏览器；R5 收敛工具入口。
+bf3a7e4是[历史WIP保存点](audits/wip-baseline-2026-09-30.md)，当前源码事实以STATUS为准。保存提交不表示所有模块已验收；新增能力按D/A当前票据补充相关检查，不把旧证明清单作为普通功能的统一前置。

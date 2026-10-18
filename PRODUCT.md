@@ -10,11 +10,11 @@ Windows 桌面应用中的 Electron Web 界面；现有界面使用 HTML、CSS �
 
 ## Users
 
-用户已确认：少量熟悉的同事或朋友，使用通用桌面助手处理文件、资料研究、文档与重复任务。
+用户已确认：少量熟悉的同事或朋友。通用Agent完整规划覆盖文件、资料研究、文档、重复任务，以及代码/CLI、MCP、浏览器和Windows应用操作；具体已完成范围由STATUS记录。
 
 ## Product Purpose
 
-把用户的资料与目标变成可检查、可打开、可继续修改的工作成果。成功以完整任务的完成质量衡量。
+把用户的资料与目标变成可检查、可继续修改的文件、代码差异或应用结果。成功以完整任务的完成质量衡量，界面围绕对话、进展和成果展开。
 
 ## Operating Context
 
@@ -34,7 +34,7 @@ Windows 桌面应用中的 Electron Web 界面；现有界面使用 HTML、CSS �
 
 ## Evidence on Hand
 
-产品路线：docs/ROADMAP.md。当前完成范围：docs/STATUS.md。已有真实桌面流程截图位于 test-results/r2-output-desktop.png 与 r2-output-narrow.png；截图内容是合成测试资料。
+完整范围：docs/specs/general-agent.md。唯一研发顺序：docs/work/general-agent/plan.md。当前完成范围：docs/STATUS.md。已有真实桌面流程截图位于test-results/r2-output-desktop.png与r2-output-narrow.png；截图内容是合成测试资料。
 
 ## Product Principles
 

@@ -1,6 +1,6 @@
 # RainyDays：Codex 专用研发手册
 
-日期：2026-10-18。源码依据417039e，上一版规划提交5ee1580。用户确认参照本机Lux Desktop v0.1.898，并进一步要求代码、CLI、MCP和强Computer Use。本次扩展规划保持proposed；已有R1–R5授权与证据继续有效，计划不等于实现完成。
+更新：2026-10-18。本手册是新会话入口。源码事实见STATUS，规划状态见总任务图；已有授权与证据继续有效，计划不等于实现完成。参照对象为用户确认的本机Lux Desktop v0.1.898。
 
 **最终目标：同事安装后，用一个默认助手完成文件与研究、可编辑文档、代码修改与测试、CLI、MCP、浏览器和Windows应用操作，并能停止、接管、恢复和检查成果。** 技能与有限子任务帮助完成这些工作。Prism、钉钉排除。
 
@@ -13,6 +13,23 @@
 5. 进入发布时读[通用验收](general-agent-acceptance.md)和[发布维护](release.md)；给同事的材料为[指南](../user-guide.md)。
 
 修改运行链看[架构](architecture.md)；开发代码/CLI/MCP/浏览器/桌面/技能/子任务看[能力手册](general-agent-capabilities.md)和[技术依据](../research/general-agent-stack.md)；权限或执行边界变化看[安全预算](safety-budget.md)。不必每次加载全部文档或历史parity报告。
+
+## 文档的使用边界
+
+- 当前用户要求、通用/基础规格定义行为；总任务图维护唯一执行顺序，当前票据记录本项验收与实际状态。
+- ROADMAP只是导航；D系列索引只维护基础依赖。两处不另设工期、阶段或下一步。
+- PRODUCT.md与DESIGN.md用于产品/界面任务；已通过的界面方向继续采用，开发CLI/MCP不需要重走设计探索。
+- R系列旧规格/票据、reviews、diagnostics、audits和devlog用于查询当时事实；当前D/A明确引用时只读相关部分。旧勾选和建议不能覆盖当前状态。
+- 历史规范、归档和parity文档见[历史索引](../archive/README.md)。旧全量规范被构建身份引用而保留原路径；仅按需查具体契约。
+- 默认rg搜索已过滤历史材料和本地产物。需要研究时传明确路径并使用`--no-ignore`；不把整个仓库文档一口气加载到新会话。
+
+## 开发模型与启动指令
+
+可以在Codex中选择 **GPT-6.1 Sol / xhigh** 执行本路线，适合项目理解、复杂修改、诊断与跨工具任务。xhigh是支持的推理设置，不是质量保证；以每张票的实际结果决定完成。依据：[模型说明](https://developers.openai.com/api/docs/models/gpt-6.1-sol)、[Codex发布记录](https://learn.chatgpt.com/docs/changelog)。此建议针对开发时的Codex，不自动更换RainyDays的运行模型，也不代替D02/A08的产品模型认证。
+
+准备开始实施时，可向新的Codex会话发送：
+
+> 我批准docs/specs/general-agent.md和docs/work/general-agent/plan.md的D+A研发路线。按AGENTS.md、STATUS与本手册，从D01起选择依赖满足的任务连续开发，尽早执行A01技术探针。每个切片实现、验证、更新状态并本地提交；沿用已有授权，不逐票重复询问。只加载当前任务需要的资料。旧R路线与68卡按需查询，不恢复为任务队列。模型额度或外部环境阻塞时推进独立工程，保留未验收项。
 
 ## 二、何时算交付
 

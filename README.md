@@ -263,11 +263,7 @@ rainydays/
 - [基础工作流18项任务](docs/work/colleague-delivery/plan.md)
 - [同事使用指南（随研发完善）](docs/user-guide.md)
 - [Lux 核心行为逆向计划](docs/research/lux-reference-plan.md)
-- [历史 100% Parity 总执行规范](LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md)
-- [历史差距分析](GAP-ANALYSIS.md)
-- [Lux Desktop 基线说明](parity/README.md)
-- [GOV-03 测试架构](parity/GOV-03-TEST-ARCHITECTURE.md)
-- [GOV-04 CI 与发布架构](parity/GOV-04-CI-ARCHITECTURE.md)
+- [历史资料索引（按需查询）](docs/archive/README.md)
 
 ## 贡献约定
 

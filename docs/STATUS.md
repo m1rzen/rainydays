@@ -4,6 +4,8 @@
 
 ## 通用Agent规划与恢复入口
 
+- 文档清理：当前排期只由D+A总路线维护；ROADMAP改为导航，旧多轮路线与Lux差距表已归档。默认rg过滤历史规范/报告和本地产物；旧R票与诊断仍供当前票据按需查询。见[历史索引](archive/README.md)。这次仅清理研发资料，没有开始D/A实现或更换模型配置。
+
 - 当前阶段：adopt-existing / planning-expanded。用户进一步要求代码、CLI、MCP与强Computer Use；上一版办公范围不足，已扩为通用Agent规划。参照对象仍是本机Lux Desktop v0.1.898；Prism、钉钉排除。
 - 入口：[Codex研发手册](agents/README.md)、[通用规格](specs/general-agent.md)、[D+A总任务图](work/general-agent/plan.md)。18项D基础任务加13项A新增任务，均为proposed；原R1–R5批准范围与证据有效。D18是中间里程碑，完整出口A13。
 - 建议下一步：路线获批后D01定位旧工作台/目录/服务问题，A01尽早用2–3日验证CLI/MCP/视觉/桌面接入，再按依赖推进；D13安装试验提前。模型阻塞不暂停独立工程，最终必须补齐100次真实任务和综合试用。

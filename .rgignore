@@ -1,0 +1,7 @@
+# Keep historical instructions and local artifacts out of routine code searches.
+# Use an explicit path with --no-ignore when a current ticket needs these records.
+/docs/archive/
+/LUX-DESKTOP-100-PARITY-EXECUTION-SPEC.md
+/parity/*.md
+/parity/reports/
+/deliverables/
