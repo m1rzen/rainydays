@@ -765,6 +765,29 @@ test("SEC-03 E4 limits match the frozen profile maxima", () => {
   }
 });
 
+test("A03 persistent output retains the actual completion code and distinguishes native failure", async () => {
+  for (const failed of [false, true]) {
+    const now = 1_900_000_250_000, resourceOwner = owner();
+    const completion = deferred(), fake = fakeBridge({ completion: completion.promise });
+    const service = new ExecutionIsolationService(fake.bridge, { now: () => now });
+    const approved = request(resourceOwner, now, "E2");
+    const lease = await service.launchPersistent(service.issueExecutionGrant(approved), resourceOwner, approved);
+    try {
+      assert.equal(service.readOutput(lease, resourceOwner).running, true);
+      if (failed) completion.reject(new Error("native channel closed"));
+      else completion.resolve({ exitCode: 7, reason: "child-failed" });
+      await new Promise(resolve => setImmediate(resolve));
+      const output = service.readOutput(lease, resourceOwner);
+      assert.equal(output.running, false);
+      assert.equal(output.exitCode, failed ? null : 7);
+      assert.equal(output.reason, failed ? "native-failed" : "child-failed");
+    } finally {
+      await service.shutdown();
+      await retireResourceOwner(resourceOwner);
+    }
+  }
+});
+
 test("DS-04 persistent PTY output remains live after retained-window rollover and resize stays owner-bound", async () => {
   const now = 1_900_000_225_000;
   const resourceOwner = owner();

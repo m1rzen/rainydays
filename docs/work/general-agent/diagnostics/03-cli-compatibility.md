@@ -43,3 +43,9 @@ E1改CREATE_NO_WINDOW单变量后，实际版本输出测试red→green（2.006�
 真实同一命令中的cmd echo中文先出现替代符，Node中文stdout/stderr正确，确认OEM/UTF-8混合。仅chcp65001显示设置成功，当前cmd却仍按旧页转换；加嵌套cmd虽令中文通过，却在直接引用中文/空格可执行路径、复杂参数时破坏引号并返回255，因此两种shell前缀方案均弃用。
 
 最终不追加/重解析shell文本：launcher原CREATE_NO_WINDOW给host私有隐藏console，在host用SetConsoleCP/SetConsoleOutputCP设65001，E1继承它，E3仍detached。依据微软[console code pages](https://learn.microsoft.com/en-us/windows/console/console-code-pages)与[创建标志](https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags)，实际验证中文混合输出、版本、保留锁、直接引用可执行文件/参数、中文空格cwd及退出7共4/4；E1原网络/数据/环境负向1/1，真实停止1/1（1.696秒）。源码构建0.1.0+local.d8ed84e25321。D04测试曾第二次读取被写中的heartbeat而JSON空，改为使用waitFor已验证的同一快照；5秒、PID消失及停止后不写断言保持，未增加等待上限。
+
+## 持久终端结果与尚未闭合的观察测试
+
+原服务丢弃handle.completed结果，facade把所有native非running投影exited/null。新增公共service/facade结果用例先red；现保存真实exitCode/reason，终止等待结算，区分0/7/限制/native-failed。相关公共边界11/11、产品74+UI15通过；真实长任务64.292秒，stdin正确、另一Session误投拒绝、1600行连续分页取回且末行一次、exit7；真实父子写入进程停止<5秒，独立进程存活。旧truncated包含“尚有后页”，工具文案现与实际保留窗口分开，不扩展全局输出上限。
+
+同时完整运行execution-isolation与terminal-owner两文件60项，57通过、3失败：manual runtime denial observation、direct terminal denial observation、terminal owner denial observation，均EXEC_NATIVE_EVIDENCE_UNAVAILABLE。manual用原命名单独执行仍失败，不能归为并发；native已接受request_valid后未生成认证观察，尚未定位到具体步骤。真实执行/停止证明与此不同，不能互相代替。未清除journal/密钥、未修改身份/签名验证、未降级成未认证证据。相关11项聚焦通过只覆盖输出/输入/所有者/取消，不表示这3项已恢复，保留为A03/D13整体验证缺口。

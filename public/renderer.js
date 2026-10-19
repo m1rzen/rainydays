@@ -1029,9 +1029,9 @@
           if (info) { info.cols = data.cols; info.rows = data.rows; }
         } else if (data.type === "status") {
           const info = terminalSessions.find(candidate => candidate.id === id);
-          if (info) { info.status = data.status; info.exitCode = data.exitCode; }
+          if (info) { info.status = data.status; info.exitCode = data.exitCode; info.completionReason = data.completionReason; }
           renderTerminalTabs(); updateTerminalInputState();
-          appendTerminalOutput(`\r\n\x1b[2m[进程状态: ${data.status}${data.exitCode === null ? "" : `, exit ${data.exitCode}`} ]\x1b[0m\r\n`);
+          appendTerminalOutput(`\r\n\x1b[2m[进程状态: ${data.status}${data.exitCode === null ? "" : `, exit ${data.exitCode}`}${data.completionReason ? `, ${data.completionReason}` : ""} ]\x1b[0m\r\n`);
         }
       };
       terminalEvents.onerror = () => {

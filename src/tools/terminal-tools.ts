@@ -105,7 +105,10 @@ export const shellOutputExec: ToolExecutor = async (args, _env, invocation) => {
     typeof args.offset === "number" ? args.offset : undefined,
     typeof args.limit === "number" ? args.limit : 20000
   );
-  return `终端: ${result.info.id} (${result.info.status})\n范围: ${result.start}-${result.nextOffset}, nextOffset=${result.nextOffset}${result.truncated ? "，输出有截断" : ""}\n\n${result.data || "(暂无输出)"}`;
+  const completion = result.info.status === "running" ? "" : `\n退出码: ${result.info.exitCode ?? "未知"}\n结束原因: ${result.info.completionReason ?? result.info.status}`;
+  const remaining = result.nextOffset < result.info.outputEnd ? "，还有后续输出" : "";
+  const retained = result.info.outputStart > 0 ? `\n保留窗口: ${result.info.outputStart}-${result.info.outputEnd}，更早输出已超出保留上限` : "";
+  return `终端: ${result.info.id} (${result.info.status})${completion}\n范围: ${result.start}-${result.nextOffset}, nextOffset=${result.nextOffset}${remaining}${retained}\n\n${result.data || "(暂无输出)"}`;
 };
 
 export const shellResizeDef: ToolDefinition = {

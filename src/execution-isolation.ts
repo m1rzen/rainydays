@@ -95,6 +95,8 @@ export interface SessionOutput {
   readonly stderrEnd: number;
   readonly outputTruncated: boolean;
   readonly running: boolean;
+  readonly exitCode: number | null;
+  readonly reason: string | null;
 }
 
 export type ExecutionDenialCode =
@@ -183,6 +185,7 @@ interface SessionRecord {
   unregister: () => void;
   state: "running" | "terminating" | "closed";
   termination: Promise<void> | null;
+  completion: Readonly<{ exitCode: number | null; reason: string }> | null;
 }
 
 const HEX_64 = /^[a-f0-9]{64}$/u;
@@ -536,13 +539,14 @@ export class ExecutionIsolationService {
         unregister: () => undefined,
         state: "running",
         termination: null,
+        completion: null,
       };
       session.unregister = registerOwnedResource(owner, () => this.#terminateSession(session, "owner-retired"));
       this.#leases.set(token, session);
       this.#sessions.add(session);
       void handle.completed.then(
-        () => this.#closeSession(session),
-        () => this.#closeSession(session)
+        completion => { session.completion = Object.freeze({ exitCode: completion.exitCode, reason: completion.reason }); this.#closeSession(session); },
+        () => { session.completion = Object.freeze({ exitCode: null, reason: "native-failed" }); this.#closeSession(session); }
       );
       if (signal.aborted) {
         const cancelled = cancellationError(signal, "Persistent execution launch was cancelled");
@@ -691,7 +695,9 @@ export class ExecutionIsolationService {
       stderrStart: session.output.stderrStart,
       stderrEnd: session.output.stderrEnd,
       outputTruncated: session.output.truncated,
-      running: session.state === "running",
+      running: session.state !== "closed",
+      exitCode: session.completion?.exitCode ?? null,
+      reason: session.completion?.reason ?? null,
     });
   }
 

@@ -28,6 +28,7 @@ export interface TerminalInfo {
   pid: number | null;
   status: TerminalStatus;
   exitCode: number | null;
+  completionReason: string | null;
   createdAt: string;
   updatedAt: string;
   outputStart: number;
@@ -40,7 +41,7 @@ export interface TerminalInfo {
 export type TerminalEvent =
   | { type: "output"; terminalId: string; data: string; start: number; end: number; timestamp: number }
   | { type: "resize"; terminalId: string; cols: number; rows: number; timestamp: number }
-  | { type: "status"; terminalId: string; status: TerminalStatus; exitCode: number | null; timestamp: number };
+  | { type: "status"; terminalId: string; status: TerminalStatus; exitCode: number | null; completionReason: string | null; timestamp: number };
 
 interface TerminalSession extends TerminalInfo {
   owner: TerminalOwner;
@@ -100,6 +101,7 @@ export interface TerminalIsolationBackend {
     stdout: string; stderr: string; stdoutBytes: Uint8Array; stderrBytes: Uint8Array;
     stdoutStart: number; stdoutEnd: number; stderrStart: number; stderrEnd: number;
     outputTruncated: boolean; running: boolean;
+    exitCode: number | null; reason: string | null;
   }>;
   readonly terminate: (lease: IsolatedTerminalLease, owner: ResourceOwner, reason: string) => Promise<void>;
   readonly resize?: (lease: IsolatedTerminalLease, owner: ResourceOwner, cols: number, rows: number) => Promise<void>;
@@ -141,6 +143,7 @@ class TerminalManager {
       pid: null,
       status: "running",
       exitCode: null,
+      completionReason: null,
       createdAt: now,
       updatedAt: now,
       outputStart: 0,
@@ -316,7 +319,11 @@ class TerminalManager {
       const native = this.#isolation.read(session.isolationLease, session.owner);
       this.#consumeNativeStream(session, "stdout", native.stdoutBytes, native.stdoutStart, native.stdoutEnd);
       this.#consumeNativeStream(session, "stderr", native.stderrBytes, native.stderrStart, native.stderrEnd);
-      if (!native.running && session.status === "running") this.#updateStatus(session, "exited", null);
+      if (!native.running && session.status === "running") {
+        const status = native.reason === "completed" || native.reason === "child-failed" ? "exited" : "error";
+        this.#appendOutput(session, session.stdoutDecoder.end() + session.stderrDecoder.end());
+        this.#updateStatus(session, status, native.exitCode, native.reason);
+      }
     } catch (error) {
       if (session.status === "running") {
         this.#appendOutput(session, `\r\n[terminal error] ${error instanceof Error ? error.message : String(error)}\r\n`);
@@ -365,16 +372,17 @@ class TerminalManager {
     for (const subscriber of session.subscribers) subscriber(event);
   }
 
-  #updateStatus(session: TerminalSession, status: TerminalStatus, exitCode: number | null): void {
-    if (session.status === status && session.exitCode === exitCode) return;
+  #updateStatus(session: TerminalSession, status: TerminalStatus, exitCode: number | null, completionReason: string | null = null): void {
+    if (session.status === status && session.exitCode === exitCode && session.completionReason === completionReason) return;
     session.status = status;
     session.exitCode = exitCode;
+    session.completionReason = completionReason;
     session.updatedAt = new Date().toISOString();
     if (status !== "running" && session.poller) {
       clearInterval(session.poller);
       session.poller = null;
     }
-    const event: TerminalEvent = { type: "status", terminalId: session.id, status, exitCode, timestamp: Date.now() };
+    const event: TerminalEvent = { type: "status", terminalId: session.id, status, exitCode, completionReason, timestamp: Date.now() };
     for (const subscriber of session.subscribers) subscriber(event);
   }
 
@@ -382,6 +390,7 @@ class TerminalManager {
     return {
       id: session.id, name: session.name, shell: session.shell, cwd: session.cwd, pid: session.pid,
       status: session.status, exitCode: session.exitCode, createdAt: session.createdAt, updatedAt: session.updatedAt,
+      completionReason: session.completionReason,
       outputStart: session.outputStart, outputEnd: session.outputEnd,
       cols: session.cols, rows: session.rows, pty: session.pty,
     };

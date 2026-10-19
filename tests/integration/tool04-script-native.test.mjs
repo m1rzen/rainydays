@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { waitFor } from "../helpers.mjs";
+import { spawnManaged, terminateProcessTreeAsync, waitFor } from "../helpers.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const fixture = await fs.mkdtemp(path.join(os.tmpdir(), "mini-lux-tool04-native-"));
@@ -56,15 +56,17 @@ const [
 
 let authority;
 let rootContext;
+let nativePersona;
 
-async function approvedInvocation(name, args, signal) {
-  const inspected = tools.inspectToolCall(rootContext, name, args);
-  const challenge = tools.capabilityBroker.createApprovalChallenge(rootContext, inspected);
+async function approvedInvocation(name, args, signal, context = rootContext) {
+  const inspected = tools.inspectToolCall(context, name, args);
+  if (inspected.policy.approval === "none") return tools.executeInspectedTool(context, inspected, null, signal);
+  const challenge = tools.capabilityBroker.createApprovalChallenge(context, inspected);
   const grant = tools.capabilityBroker.resolveApprovalChallenge({
     challengeId: challenge.challengeId,
     choice: "approve",
-    sessionId: rootContext.sessionId,
-    runId: rootContext.runId,
+    sessionId: context.sessionId,
+    runId: context.runId,
     responsePrincipal: "local-user-api",
     responseChannel: "native-process",
   });
@@ -80,12 +82,13 @@ test.before(async () => {
     name: "tool04-native",
     displayName: "TOOL-04 Native",
     description: "isolated script runtime fixture",
-    tools: ["script", "execute_command"],
+    tools: ["script", "execute_command", "shell_start", "shell_input", "shell_output", "shell_list", "shell_resize", "shell_kill"],
     env: { WORKSPACE_ROOT: workspace },
     allowedRoots: [workspace],
     networkPolicy: { mode: "unrestricted" },
     systemPrompt: "TOOL-04 native fixture",
   });
+  nativePersona = persona;
   const pathAuthority = await pathRuntime.pathPolicy.createAuthority([{
     rootId: "workspace",
     role: "workspace",
@@ -156,6 +159,78 @@ test("A03 real E1 preserves quoted executable arguments, Unicode cwd and a nonze
     assert.match(error.message, /\[execution child-failed; exit 7\]/u);
     return true;
   });
+});
+
+test("A03 real persistent terminal routes stdin, retains paged output beyond sixty seconds and reports exit seven", { timeout: 110_000 }, async () => {
+  const executable = path.join(workspace, "node-long.exe"), startedFile = path.join(workspace, "long-started.txt"), completedFile = path.join(workspace, "long-completed.txt"), inputFile = path.join(workspace, "terminal-input.txt");
+  await fs.copyFile(process.execPath, executable);
+  const { terminalFacade } = await import("../../dist/terminal-facade.js");
+  const owner = tools.capabilityBroker.getResourceOwner(rootContext);
+  const created = await approvedInvocation("shell_start", { name: "A03 long task", shell: "cmd" });
+  const terminalId = /ID: (term_[a-f0-9-]+)/u.exec(created)?.[1];
+  assert(terminalId, created);
+  const input = "A03_USER_INPUT_7284";
+  try {
+    await approvedInvocation("shell_input", { terminalId, input: "set /p A03_VALUE=INPUT_READY:" });
+    await waitFor(async () => (await approvedInvocation("shell_output", { terminalId, offset: 0 })).includes("INPUT_READY:"), { timeoutMs: 5000 });
+    const otherSession = sessionModule.createSession(nativePersona, "other terminal owner");
+    const otherAuthority = tools.capabilityBroker.createRuntimeAuthority({ ...nativePersona, rootEnv: { WORKSPACE_ROOT: "workspace" }, pathAuthority: await pathRuntime.pathPolicy.createAuthority([{ rootId: "workspace", role: "workspace", configuredPath: workspace, permissions: ["initial-cwd"] }]) });
+    const otherRun = tools.capabilityBroker.beginAgentRun(otherAuthority, otherSession.id);
+    try {
+      await assert.rejects(approvedInvocation("shell_input", { terminalId, input: "WRONG_SESSION" }, undefined, otherRun), /终端不存在/u);
+    } finally { tools.capabilityBroker.finishContext(otherRun); await tools.capabilityBroker.retireAuthority(otherAuthority); }
+    await approvedInvocation("shell_input", { terminalId, input });
+    await approvedInvocation("shell_input", { terminalId, input: "echo %A03_VALUE%>terminal-input.txt" });
+    await waitFor(async () => { try { return (await fs.readFile(inputFile, "utf8")).trim() === input; } catch { return false; } }, { timeoutMs: 5000 });
+    const command = `"${executable}" -e "const fs=require('node:fs');fs.writeFileSync('long-started.txt','running');for(let i=0;i<1600;i++)console.log('A03_PAGE_'+i+':'+'.'.repeat(70));setTimeout(()=>{fs.writeFileSync('long-completed.txt','done');console.log('A03_LONG_FINISHED')},61000)" & exit 7`;
+    const startedAt = Date.now();
+    await approvedInvocation("shell_input", { terminalId, input: command });
+    await waitFor(async () => { try { return await fs.readFile(startedFile, "utf8") === "running"; } catch { return false; } }, { timeoutMs: 8000 });
+    const first = terminalFacade.output(owner, terminalId, 0, 1000);
+    assert.equal(first.info.status, "running");
+    const second = terminalFacade.output(owner, terminalId, first.nextOffset, 1000);
+    assert.equal(second.start, first.nextOffset);
+    assert(second.data.length > 0);
+    const final = await waitFor(async () => { const info = terminalFacade.get(owner, terminalId); return info.status === "running" ? false : info; }, { timeoutMs: 80_000, intervalMs: 100 });
+    assert(Date.now() - startedAt >= 60_000);
+    assert.equal(await fs.readFile(completedFile, "utf8"), "done");
+    assert.equal(final.exitCode, 7); assert.equal(final.completionReason, "child-failed");
+    assert.equal(final.outputStart, 0, "output was dropped before paging");
+    let offset = 0, all = "";
+    while (offset < final.outputEnd) { const page = terminalFacade.output(owner, terminalId, offset, 3000); assert.equal(page.start, offset); assert.equal(page.truncated, page.nextOffset < final.outputEnd); assert(page.nextOffset > offset); all += page.data; offset = page.nextOffset; }
+    assert.equal((all.match(/A03_PAGE_1599:/gu) ?? []).length, 1);
+    assert.match(all, /A03_LONG_FINISHED/u);
+    const outcome = await approvedInvocation("shell_output", { terminalId, offset: 0, limit: 1000 });
+    assert.match(outcome, /退出码: 7/u); assert.match(outcome, /结束原因: child-failed/u);
+  } finally {
+    await terminalFacade.close(owner, terminalId);
+  }
+});
+
+test("A03 stopping a real terminal settles its writing descendant tree without killing an unrelated process", { timeout: 35_000 }, async () => {
+  const executable = path.join(workspace, "node-stop.exe"), heartbeat = path.join(workspace, "terminal-descendant.json");
+  await fs.copyFile(process.execPath, executable);
+  await fs.writeFile(path.join(workspace, "terminal-child.mjs"), "import fs from 'node:fs';let tick=0;setInterval(()=>fs.writeFileSync('terminal-descendant.json',JSON.stringify({tick:++tick,pid:process.pid})),30);");
+  await fs.writeFile(path.join(workspace, "terminal-parent.mjs"), "import fs from 'node:fs';import{spawn}from'node:child_process';fs.writeFileSync('terminal-parent.json',JSON.stringify({pid:process.pid}));spawn(process.execPath,['--preserve-symlinks','--preserve-symlinks-main','terminal-child.mjs'],{stdio:'inherit'});setInterval(()=>{},1000);");
+  const unrelated = spawnManaged(process.execPath, ["-e", "setInterval(()=>{},1000)"], { cwd: fixture });
+  const { terminalFacade } = await import("../../dist/terminal-facade.js"), owner = tools.capabilityBroker.getResourceOwner(rootContext);
+  const created = await approvedInvocation("shell_start", { name: "A03 stop tree", shell: "cmd" }), terminalId = /ID: (term_[a-f0-9-]+)/u.exec(created)?.[1];
+  assert(terminalId, created);
+  try {
+    await approvedInvocation("shell_input", { terminalId, input: `"${executable}" --preserve-symlinks --preserve-symlinks-main terminal-parent.mjs` });
+    const child = await waitFor(async () => { try { const value=JSON.parse(await fs.readFile(heartbeat,"utf8"));return value.tick>0 ? value : false; } catch { return false; } }, { timeoutMs: 8000 });
+    const parent = JSON.parse(await fs.readFile(path.join(workspace, "terminal-parent.json"), "utf8"));
+    const startedAt=Date.now();
+    await approvedInvocation("shell_kill", { terminalId });
+    assert(Date.now()-startedAt<5000, "terminal stop did not settle within five seconds");
+    for (const pid of [parent.pid, child.pid]) assert.throws(()=>process.kill(pid,0),error=>error.code==="ESRCH");
+    process.kill(unrelated.pid, 0);
+    const saved=await fs.readFile(heartbeat,"utf8");await new Promise(resolve=>setTimeout(resolve,150));assert.equal(await fs.readFile(heartbeat,"utf8"),saved);
+    assert.equal(terminalFacade.get(owner,terminalId).status,"killed");
+  } finally {
+    await terminalFacade.close(owner, terminalId);
+    await terminateProcessTreeAsync(unrelated);
+  }
 });
 
 test("TOOL-04 real E3 runs Node ESM JSON/regex with explicit cwd and lux bridge", { timeout: 60_000 }, async () => {

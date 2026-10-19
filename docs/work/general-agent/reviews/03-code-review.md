@@ -31,3 +31,11 @@ Spec：真实type先因sharing violation失败，当前1/1通过；相关E3拒�
 固定范围e1f648b至本轮native console编码与真实回归。Standards：继承launcher给host的私有隐藏console，先设置65001，保留原命令文本、单次cmd解析、标准句柄列表、AppContainer/Job、路径和网络。额外cmd包装曾破坏引号，已撤回；未改全局console或SDK。原E1边界1/1及停止1/1保持。D04 fixture使用已观察heartbeat快照，避免第二次读落在截断写入之间，原停止时限/进程不存在/不再写入断言不变。
 
 Spec：中文cmd与外部stdout/stderr真实red→green；引用路径/参数、中文空格cwd和exit7按实际内容与状态核对，版本及文件保留回归共4/4。类型/lint、产品74/74及UI15/15通过。源码构建0.1.0+local.d8ed84e25321；不是当前安装候选、不是任意编码自动识别。本切片可验证，A03继续。
+
+## 持久终端结果切片
+
+固定范围a52d08a至当前ExecutionIsolationService/Terminal、原工具/面板结果与真实测试。按Standards→Spec复核，无委派。
+
+Standards：实际native completion码/原因只经原服务保存，不从输出文本猜退出码；终止中等到closed才报结束。原owner、输入grant/lease、字节窗口、Job清理均保持；当前run与另一Session真实输入误投被拒绝。UI只增加状态原因，未开放HTTP写终端或跨principal控制。产品74+UI15、相关公共边界11/11通过。全文件60项实际57/60，三项fixed-production denial observation为EXEC_NATIVE_EVIDENCE_UNAVAILABLE，其中manual observation单独复现，原因尚未确定；不可因只跑聚焦子集而称全套通过，不删除认证断言或改为未认证证据。
+
+Spec：两个公共结果用例先red，修改后实际exit0/7、执行限制与native通道失败可区分。真实原生长终端1/1（64.292秒，合计68.496秒），完成stdin、跨会话拒绝、超过60秒、1600行分页、无早期丢失、最后一行只出现一次及exit7。首轮失败源于把旧truncated（包含“还有后页”）当输出丢失，现断言起点连续、outputStart=0及末行不重不漏；工具文案区分后页与超出保留窗口。真实停止1/1（执行3.368秒，含启动/检查，不代表纯停止耗时），断言停止<5秒、父子PID消失、心跳不再变化、独立进程仍存活。源码f55eb60e828c。当前切片已验证；A03整票、默认入口/SDK与原生观察失败仍未完成。

@@ -23,7 +23,7 @@ function harness() {
       return {
         stdout: state.stdout, stderr: state.stderr, stdoutBytes, stderrBytes,
         stdoutStart: 0, stdoutEnd: stdoutBytes.length, stderrStart: 0, stderrEnd: stderrBytes.length,
-        outputTruncated: false, running: state.running,
+        outputTruncated: false, running: state.running, exitCode: state.exitCode ?? null, reason: state.reason ?? null,
       };
     },
     async terminate(lease, _owner, reason) {
@@ -69,6 +69,9 @@ function harness() {
       if (!state || (stream !== "stdout" && stream !== "stderr")) throw new Error("unknown synthetic stream");
       state[stream] += text;
     },
+    finish(terminalId, exitCode, reason) {
+      Object.assign(statesByTerminal.get(terminalId), { running: false, exitCode, reason });
+    },
   };
 }
 
@@ -82,6 +85,24 @@ function startOptions(execution, overrides = {}) {
     ...overrides,
   };
 }
+
+test("A03 Terminal exposes real exit codes and distinguishes failure from completion", async () => {
+  const resourceOwner = owner("terminal-completion");
+  const { facade, execution, finish } = harness();
+  try {
+    for (const [code, reason, status] of [[0, "completed", "exited"], [7, "child-failed", "exited"], [80, "EXEC_LIMIT_WALL", "error"], [null, "native-failed", "error"]]) {
+      const terminal = await facade.start(resourceOwner, startOptions(execution));
+      finish(terminal.id, code, reason);
+      const output = facade.output(resourceOwner, terminal.id);
+      assert.equal(output.info.status, status);
+      assert.equal(output.info.exitCode, code);
+      assert.equal(output.info.completionReason, reason);
+    }
+  } finally {
+    await retireResourceOwner(resourceOwner);
+    await facade.disposeAllForShutdown();
+  }
+});
 
 test("SEC-01/SEC-03 A13 Terminal projection keeps opaque leases Session/principal-owned", async () => {
   const localOwner = owner("session-a");

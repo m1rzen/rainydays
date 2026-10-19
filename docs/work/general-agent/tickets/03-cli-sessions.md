@@ -94,3 +94,12 @@ E3真实模块子切片已实现、按[审查](../reviews/03-code-review.md)分�
 - 原E1真实AppContainer/Job、数据/环境/网络负向1/1；D04停止1/1、1.696秒。修复测试重复读取正在写的JSON竞争，只复用已观察快照，不放宽断言或上限。
 - `npm run check:product`：类型/lint、产品74/74、UI/IPC15/15通过。按审查记录闭合；临时chcp/嵌套cmd方案未保留，无额外shell进程或命令改写。
 
+### 持久终端结果切片（子切片已验证）
+
+起点a52d08a。使用原ExecutionIsolationService/Terminal facade接真实native completion；当前投影把结束码丢成null，不能满足L02/L05。保留exitCode和完成原因，区分自然退出/非零退出/执行限制/通道失败；原owner、输入绑定、分页与清理不变。先测公共readOutput与facade，再跑真实cmd长任务、stdin及结束码，不新增终端实现。
+
+- 公共结果2项red→green；原输入/grant/PTY窗口/owner/退休共相关11/11。完整两文件60项实际57/60；三项fixed-production native denial observation仍失败，单独复现且未定位，详见诊断，不能视为全套通过。
+- `node --test --test-name-pattern 'A03 real persistent terminal' tests/integration/tool04-script-native.test.mjs`：1/1，64.292秒；正确stdin、跨Session拒绝、1600行分页完整取回、>60秒与exit7通过。首轮旧truncated语义误判已改为起点连续/无早期丢失/末行仅一次，不降低真实覆盖。
+- `node --test --test-name-pattern 'A03 stopping a real terminal' tests/integration/tool04-script-native.test.mjs`：1/1；停止<5秒、写入父子PID消失/不再写、独立进程未杀。
+- 原build与check:product通过，源码0.1.0+local.f55eb60e828c，产品74/74、UI15/15。按审查闭合子切片；未勾整票，默认入口/SDK与原生观察失败继续。
+

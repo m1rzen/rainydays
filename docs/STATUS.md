@@ -36,7 +36,7 @@
 
 ## 开发中但未计为产品完成
 
-- A03：E3模块、E1 stdout/文件共享/中文编码已修复；引用路径与参数、中文空格cwd及exit7真实核对，原范围/网络/取消保持。产品74+UI15通过。临时Python项目真正断言→修正→unittest通过；默认Node测试因上游libuv AppContainer pipe问题仍超时。运行时产品接入、长终端和普通入口继续；整票in-progress，不把临时SDK复制当已交付。[证据](work/general-agent/tickets/03-cli-sessions.md)
+- A03：E3模块、E1 stdout/文件共享/中文编码已修复；持久终端保留真实退出码/原因，64秒任务、stdin/误投拒绝、1600行分页、停止父子进程且不杀独立进程通过。产品74+UI15与相关11项通过；完整原生服务两文件57/60，三项认证拒绝观察单独仍失败，未闭合。临时Python项目断言→修正→unittest通过；默认Node测试受上游libuv pipe缺陷阻塞。运行时产品/普通入口继续；整票in-progress。[证据](work/general-agent/tickets/03-cli-sessions.md)
 
 - D13：SQL物化结果遍历的808次额外文件检查已消除，15项数据库/审计/恢复负向保持；R2完整Electron预览与另存回归1/1通过。修复staging缺vendor；43新增/2过期已按实际边界分类，只登记3项核实调用、移除2项过期，40处仍被原gate拒绝。移除前置方案遭自动审批拒绝，已撤回且隔离未执行产物9c4ee25f908c。两套干净Windows、当前安装/凭据/恢复未验收；无有效新候选。[证据](work/colleague-delivery/tickets/13-installer.md)
 
