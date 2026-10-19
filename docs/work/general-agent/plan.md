@@ -28,7 +28,7 @@ Status: approved
 | 任务 | 阻塞依赖 | 可观察验收出口 | 状态 |
 |---|---|---|---|
 | [A01 可行性探针与能力接入契约](tickets/01-capability-feasibility.md) | 无 | 隔离CLI、真实MCP协议、浏览器和Windows测试窗口、图像传递五项工程探针；风险有决定 | verified |
-| [A02 项目上下文与可检查代码编辑](tickets/02-repository-editing.md) | A01、D04、D05 | 多文件diff、已有修改/未跟踪文件保留、并发保存不覆盖 | in-progress |
+| [A02 项目上下文与可检查代码编辑](tickets/02-repository-editing.md) | A01、D04、D05 | 真实默认会话多文件/完整diff/重启撤回、已有工作与竞争保存保护通过；模型编码质量留A04 | verified |
 | [A03 CLI与持久终端进入普通任务](tickets/03-cli-sessions.md) | A01、D04、D05 | 长任务、输入、输出分页、真实退出码、取消和依赖提示 | ready |
 | [A04 代码修改—测试—修正循环](tickets/04-coding-loop.md) | A02、A03、D03 | JS/TS与Python真实任务完成，失败证据与最终差异准确 | ready |
 | [A05 MCP本地接入与工具发现](tickets/05-mcp-local.md) | A03 | 设置添加stdio服务器→普通会话发现/调用→重启/取消 | ready |

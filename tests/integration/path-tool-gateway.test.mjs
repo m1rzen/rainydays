@@ -247,6 +247,7 @@ function gateway(overrides = {}) {
 
 function invocation(pathGateway) {
   return Object.freeze({
+    capabilityContext: Object.freeze({ sessionId: "path-tool-gateway-fixture" }),
     path: pathGateway,
     network: Object.freeze({ fetch: (url, init) => globalThis.fetch(url, init) }),
     signal: NEVER_ABORT_SIGNAL,
@@ -343,13 +344,13 @@ test("SEC-02 search_files reauthorizes the tree on every invocation", async () =
   if (searchRecorder.enabled) await searchRecorder.positive("SEC02-POS-search");
 });
 
-test("SEC-02 write_file sends unsanitized input to create-or-replace gateway", async () => {
+test("SEC-02 write_file sends unsanitized input to create-only gateway", async () => {
   let call;
   const output = await writeFileExec(
     { path: "reports/summary.md", content: "hello" },
     {},
     invocation(gateway({
-      writeFile: async (input, bytes, options) => {
+      createFile: async (input, bytes, options) => {
         call = { input, content: bytes.toString(), options };
         return { rootId: "output", identity: {}, bytesWritten: bytes.length, createdDirectories: 1 };
       },

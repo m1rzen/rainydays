@@ -49,7 +49,7 @@ const BODY_MODES: Readonly<Record<string, ToolBodyMode>> = Object.freeze({
 const HOST_BOUND_TOOLS = new Set([
   "read", "write", "edit", "replace", "glob", "grep",
   "list_directory", "read_file", "search_files", "write_file", "edit_file",
-  "execute_command", "script", "read_repo",
+  "execute_command", "script", "read_repo", "edit_files", "undo_edits",
 ]);
 
 const TOOL_TIMEOUTS: Readonly<Record<string, number>> = Object.freeze({

@@ -2607,7 +2607,21 @@
       if (generation !== sessionSelectionGeneration) return;
       messagesEl.innerHTML = "";
       renderDocumentOutputs(mdata.outputs || [], "", mdata.research);
-      for (const msg of mdata.messages) { if (msg.role === "user") addMessage("user", msg.content, msg.id, msg.attachments); else if (msg.role === "assistant" && msg.content) addMessage("assistant", msg.content, msg.id); }
+      const savedToolCalls = new Map();
+      for (const msg of mdata.messages) {
+        if (msg.role === "user") addMessage("user", msg.content, msg.id, msg.attachments);
+        else if (msg.role === "assistant") {
+          savedToolCalls.clear();
+          try { for (const call of (Array.isArray(msg.tool_calls) ? msg.tool_calls : JSON.parse(msg.tool_calls || "[]"))) savedToolCalls.set(call.id, call.function.name); } catch { /* Older malformed calls are not change receipts. */ }
+          if (msg.content) addMessage("assistant", msg.content, msg.id);
+        } else if (msg.role === "tool" && ["edit_files", "undo_edits"].includes(savedToolCalls.get(msg.tool_call_id))) {
+          savedToolCalls.delete(msg.tool_call_id);
+          try {
+            const outcome = JSON.parse(msg.content), receipt = JSON.parse(outcome.content);
+            if (!outcome.truncated && isCodeChanges(receipt)) renderCodeChanges(addMessage("assistant", "").querySelector(".bubble"), receipt);
+          } catch { /* Other historical tool text stays in its original record. */ }
+        }
+      }
       const liveResponse = activeRunsBySession.get(id)?.messageEl;
       if (liveResponse) messagesEl.appendChild(liveResponse);
       renderWelcomeState();
@@ -2666,6 +2680,7 @@
     }
     function refreshRunControls() {
       const running = isSessionRunning();
+      for (const button of messagesEl.querySelectorAll('[data-action="undo-code-change"]')) button.disabled = running || button.dataset.undone === "true" || unavailableSessionIds.has(currentSessionId);
       submitBtn.disabled = running || unavailableSessionIds.has(currentSessionId);
       const cancel = document.getElementById("cancel-run");
       const localRun = activeRunsBySession.get(currentSessionId);
@@ -3127,6 +3142,36 @@
       card.append(summary, body);
       parent.appendChild(card);
     }
+    function isCodeChanges(receipt) {
+      return receipt?.type === "code_changes" && /^[a-f0-9-]{36}$/.test(receipt.changeId) && Array.isArray(receipt.changes) && receipt.changes.length <= 8
+        && receipt.changes.every(change => typeof change.path === "string" && typeof change.diff === "string");
+    }
+    function renderCodeChanges(parent, receipt) {
+      const section = document.createElement("details"); section.className = "code-changes"; section.dataset.changeId = receipt.changeId;
+      const heading = document.createElement("summary");
+      const labels = { complete: "已完成", partial: "部分完成", blocked: "未保存", cancelled: "已停止" };
+      heading.textContent = `${receipt.undoOf ? "撤回修改" : "代码修改"} · ${receipt.changes.length} 个文件 · ${labels[receipt.status] || "请检查"}`;
+      section.appendChild(heading);
+      const states = { written: "已保存", conflict: "有冲突", failed: "未完成", not_started: "未执行" };
+      for (const change of receipt.changes) {
+        const item = document.createElement("details"); item.className = "code-change-file"; item.dataset.status = change.status;
+        const title = document.createElement("summary"); title.textContent = `${states[change.status] || "请检查"} · ${change.path}`; item.appendChild(title);
+        if (change.message) { const message = document.createElement("p"); message.textContent = change.message; item.appendChild(message); }
+        if (change.diff) {
+          const label = document.createElement("p"); label.textContent = change.status === "written" ? "本次保存的片段差异" : "计划差异（尚未保存）"; item.appendChild(label);
+          const pre = document.createElement("pre"); pre.className = "code-change-diff"; pre.textContent = change.diff; item.appendChild(pre);
+        }
+        section.appendChild(item);
+      }
+      if (receipt.changes.some(change => change.status === "written")) {
+        const undo = document.createElement("button"); undo.className = "msg-action-btn"; undo.dataset.action = "undo-code-change"; undo.dataset.changeId = receipt.changeId;
+        undo.append(createUiIcon("undo"), "撤回这组修改"); undo.disabled = isSessionRunning() || unavailableSessionIds.has(currentSessionId); section.appendChild(undo);
+      }
+      parent.appendChild(section);
+      if (receipt.status === "complete" && /^[a-f0-9-]{36}$/.test(receipt.undoOf || "")) {
+        for (const button of messagesEl.querySelectorAll(`[data-action="undo-code-change"][data-change-id="${receipt.undoOf}"]`)) { button.dataset.undone = "true"; button.disabled = true; button.textContent = "已撤回"; }
+      }
+    }
     function updateLastToolCard(parent, step) {
       const cards = [...parent.querySelectorAll(".tool-card")];
       const last = step.toolCallId ? cards.findLast(card => card.dataset.toolCallId === step.toolCallId && card.dataset.status === "running") || cards.findLast(card => card.dataset.toolCallId === step.toolCallId)
@@ -3137,6 +3182,9 @@
       const s = last.querySelector(".tool-card-status"); if (s) s.textContent = succeeded ? "完成" : "未完成";
       last.querySelector(".icon").replaceChildren(createUiIcon(succeeded ? "check" : "alert"));
       let displayContent = String(step.content || "");
+      if (["edit_files", "undo_edits"].includes(step.toolName)) {
+        try { const receipt = JSON.parse(step.content); if (isCodeChanges(receipt)) { renderCodeChanges(last.querySelector(".tool-card-body"), receipt); return; } } catch { /* Failed calls keep their original message. */ }
+      }
       if (["create_docx", "create_xlsx"].includes(step.toolName)) {
         try { const receipt = JSON.parse(step.content); if (receipt.type === "document_output") displayContent = receipt.message + "\n" + receipt.path; } catch { /* Historical plain-text response. */ }
       }
@@ -3527,6 +3575,9 @@
       "fork-message": (_event, target) => {
         const messageId = Number(target.dataset.messageId);
         if (Number.isSafeInteger(messageId) && messageId > 0) return forkCurrentSession(messageId);
+      },
+      "undo-code-change": (_event, target) => {
+        if (!isSessionRunning() && /^[a-f0-9-]{36}$/.test(target.dataset.changeId || "")) sendMessage(`请撤回这组代码修改，保留任何后续外部改动。修改记录：${target.dataset.changeId}`);
       },
     });
 

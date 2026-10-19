@@ -10,12 +10,13 @@ process.env.RAINYDAYS_USER_DATA_DIR = fixture;
 process.env.RAINYDAYS_DATA_DIR = path.join(fixture, "data");
 await fs.mkdir(process.env.RAINYDAYS_DATA_DIR, { recursive: true });
 
-const [lux, grepModule, parsers, resourceOwners, cancellation] = await Promise.all([
+const [lux, grepModule, parsers, resourceOwners, cancellation, { closeDb }] = await Promise.all([
   import("../../dist/tools/filesystem-lux.js"),
   import("../../dist/tools/filesystem-grep.js"),
   import("../../dist/tools/parsers.js"),
   import("../../dist/resource-owner.js"),
   import("../../dist/run-cancellation.js"),
+  import("../../dist/db.js"),
 ]);
 const owner = resourceOwners.issueResourceOwner({
   authorityId: "tool02-contract",
@@ -52,6 +53,7 @@ function invocation(pathGateway) {
 
 test.after(async () => {
   await resourceOwners.retireResourceOwner(owner);
+  await closeDb();
   await removeFixture(fixture);
 });
 

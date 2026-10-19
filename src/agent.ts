@@ -27,6 +27,7 @@ import { readMessageAttachmentForSession } from "./attachment-store.js";
 import { requestNativeProcessConsent } from "./native-process-consent.js";
 import type { SecurityAuditJournal } from "./security-audit-journal.js";
 import { cancellationError, isRunCancellation, isRunSettlementFailure, NEVER_ABORT_SIGNAL, throwIfCancelled } from "./run-cancellation.js";
+import { describeCodeEditOperation } from "./tools/code-editing.js";
 import { beginObservation, updateObservabilityContext } from "./observability.js";
 import {
   makeAuthorizationAuditPayload,
@@ -393,7 +394,7 @@ export class Agent {
             allowNewOutputs = answer === "本次任务允许新建文档";
             approved = allowNewOutputs || answer === "仅这一次";
           } else {
-            const question = `${requiresGrant ? "此工具需要用户批准" : "Supervisor 请求用户确认"}。\n\n工具: ${toolName}\n参数: ${JSON.stringify(inspected.args, null, 2).slice(0, 1000)}\n原因: ${advice.reason}\n\n请选择是否执行。`;
+            const question = describeCodeEditOperation(toolName, inspected.args, runSessionId) ?? `${requiresGrant ? "此工具需要用户批准" : "Supervisor 请求用户确认"}。\n\n工具: ${toolName}\n参数: ${JSON.stringify(inspected.args, null, 2).slice(0, 1000)}\n原因: ${advice.reason}\n\n请选择是否执行。`;
             const confirmation = await askUserConfirm(question, signal);
             approved = confirmation.approved;
             answer = confirmation.answer;
@@ -436,9 +437,9 @@ export class Agent {
       trace.record("policy", "passed");
       await audit?.execution(true);
       const outcome = await preparedExecution.execute();
-      trace.record("execute", "passed");
+      trace.record("execute", outcome.status === "success" ? "passed" : "error", outcome.code);
       trace.record("output", outcome.truncated ? "truncated" : "passed", outcome.truncated ? "TOOL_OUTPUT_TRUNCATED" : null);
-      await audit?.result(outcome.content, Date.now() - toolStart, "success", null, outcome.outputBytes, outcome.truncated);
+      await audit?.result(outcome.content, Date.now() - toolStart, outcome.status, outcome.code, outcome.outputBytes, outcome.truncated);
       trace.record("audit", "passed");
       return settled(outcome);
     } catch (error) {

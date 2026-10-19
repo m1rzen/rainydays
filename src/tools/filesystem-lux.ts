@@ -6,6 +6,7 @@ import { parseDocumentIsolated } from "../document-parser.js";
 import { routeToSelectedWorker } from "../worker.js";
 import { readAttachmentDocument } from "../attachment-reader.js";
 import { readHistory } from "../history-reader.js";
+import { createHash } from "node:crypto";
 
 const MAX_DOCUMENT_BYTES = 32 * 1024 * 1024;
 const MAX_TEXT_BYTES = 8 * 1024 * 1024;
@@ -128,14 +129,15 @@ export const readExec: ToolExecutor = async (args, _env, invocationValue) => {
   } else throw new ToolArgumentsError(`读取失败: ${parsed.error ?? "不支持的二进制格式"}`);
   const pageSummary = extension === ".pdf" && parsed.pageCount
     ? `\nPDF: ${parsed.pageCount} 页；已读取 ${parsed.renderedPages?.join(", ") || "全部页面"}` : "";
-  return `文件: ${filePath}${pageSummary}\n\n${numberedLines(text, args.offset, args.limit)}`;
+  const revision = createHash("sha256").update(authorized.bytes).digest("hex");
+  return `文件: ${filePath}${pageSummary}\n版本: ${revision}\n\n${numberedLines(text, args.offset, args.limit)}`;
 };
 
 export const writeDef: ToolDefinition = {
   type: "function",
   function: {
     name: "write",
-    description: "创建或完整覆盖文本文件；父目录由受管 Path gateway 创建。修改局部内容应使用 edit。",
+    description: "原子创建文本文件，不覆盖已有内容。修改项目代码先read取得版本，再发现edit_files。其他局部文本修改可用edit。",
     parameters: {
       type: "object",
       properties: {
@@ -151,11 +153,11 @@ export const writeExec: ToolExecutor = async (args, _env, invocationValue) => {
   const invocation = requireInvocation(invocationValue);
   const remote = await routeToSelectedWorker(invocation, "write", args);
   if (remote !== null) return remote;
-  const defaultRootId = requireRootId(invocation.path, "OUTPUT_DIR");
+  const defaultRootId = path.isAbsolute(args.file_path as string) ? undefined : requireRootId(invocation.path, "OUTPUT_DIR");
   const bytes = Buffer.from(args.content as string, "utf8");
   if (bytes.length > MAX_TEXT_BYTES) throw new ToolArgumentsError("写入内容超过 8 MiB 上限");
   throwIfCancelled(invocation.signal);
-  await invocation.path.writeFile(args.file_path as string, bytes, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
+  await invocation.path.createFile(args.file_path as string, bytes, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
   return `✅ 文件已生成: ${args.file_path as string}`;
 };
 

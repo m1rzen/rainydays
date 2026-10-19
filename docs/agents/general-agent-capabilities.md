@@ -9,7 +9,7 @@
 | 能力 | 现有入口 | 已有部分 | 必须补齐 |
 |---|---|---|---|
 | 默认能力发现 | personas/general.md、src/task-tools.ts、src/tools/index.ts | 少量初始工具与允许列表内发现 | 默认助手按任务启用开发、MCP、浏览器/桌面；能力可用性与权限分开 |
-| 项目与编辑 | src/tools/read-repo.ts、filesystem-lux.ts | Git文件树、文本读写/精确替换 | 未跟踪文件、已有修改、项目指令、并发编辑冲突、可查看差异 |
+| 项目与编辑 | src/tools/read-repo.ts、filesystem-lux.ts、code-editing.ts | A02已验证工作树/脚本、read版本、多文件差异及重启撤回，默认助手按需发现 | 项目指令作用域留A11，真实编码/测试循环留A04；批保存不是跨文件事务 |
 | 命令与终端 | src/tools/shell.ts、terminal-tools.ts、script.ts | 短命令、持久终端、增量输出、受控执行 | 普通会话接通、退出码/输入/中断、依赖提示、真实项目修复循环 |
 | MCP | src/settings-schema.ts、version.ts | 存储配置；mcp available=false，协议enabled=false | 实际SDK客户端、发现/调用/认证、工具注册、结果和取消、真实能力标志 |
 | 浏览器 | src/browser.ts、src/tools/browser-tools.ts | CDP/扩展接口、DOM引用、截图文件 | 一个生产后端的真实输入、焦点/标签页、上传下载、失效引用与任务验证 |

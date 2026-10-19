@@ -154,6 +154,14 @@ header { height:56px; min-height:56px; padding:0 26px; gap:12px; background:var(
 details:not([open]) > summary > .disclosure-icon { transform:rotate(-90deg); }
 .tool-card-body { padding:0 10px 8px; border-top:1px solid var(--border); }
 .tool-card .tool-card-body pre { min-height:0; max-height:160px; margin:8px 0 0; padding:8px; border:0; background:#eeece7; color:var(--text-dim); font-size:11px; line-height:1.6; }
+.code-changes { margin:10px 0; border:1px solid var(--border); border-radius:7px; font-size:12px; }
+.code-changes summary { padding:9px 11px; cursor:pointer; overflow-wrap:anywhere; }
+.code-change-file { margin:0 8px 8px; border-top:1px solid var(--border); }
+.code-change-file > summary { padding:8px 3px; }
+.code-change-file[data-status="conflict"] > summary,.code-change-file[data-status="failed"] > summary { color:var(--danger); }
+.code-change-file p { margin:4px 3px; color:var(--text-dim); font-size:11px; }
+.code-changes .code-change-diff,.tool-card .tool-card-body .code-change-diff { max-height:360px; margin:7px 0; padding:10px; overflow:auto; white-space:pre; background:var(--bg); color:var(--text); line-height:1.65; }
+.code-changes > .msg-action-btn { margin:0 10px 10px; }
 
 #document-outputs { width:100%; max-width:var(--reading-width); margin:0 auto 8px; padding:0 0 0 34px; border:0; background:transparent; }
 #document-outputs > summary { display:flex; align-items:center; gap:7px; padding:2px 0 10px; list-style:none; font-size:11px; font-weight:500; color:var(--text-dim); }

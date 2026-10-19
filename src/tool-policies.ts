@@ -40,6 +40,8 @@ function parallelReadPolicy(
 
 export const STATIC_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Object.freeze({
   read: parallelReadPolicy(["read"], ["filesystem"], ["read-file"]),
+  edit_files: policy(["read", "write"], "user", ["filesystem"], ["read-file", "replace-file"]),
+  undo_edits: policy(["read", "write"], "user", ["filesystem"], ["read-file", "replace-file"]),
   write: policy(["write"], "user", ["filesystem"], ["create-file", "replace-file"]),
   edit: policy(["read", "write"], "user", ["filesystem"], ["replace-file"]),
   replace: policy(["read", "write"], "user", ["filesystem"], ["replace-file"]),

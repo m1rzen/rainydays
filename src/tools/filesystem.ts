@@ -162,7 +162,7 @@ export const writeFileDef: ToolDefinition = {
   function: {
     name: "write_file",
     description:
-      "将文本内容写入文件。支持 txt/md/csv/log/json 格式。文件会保存到输出目录。如文件已存在会被覆盖。",
+      "原子新建文本文件，支持 txt/md/csv/log/json。保存到输出目录，已有文件不覆盖；项目修改先read并使用edit_files。",
     parameters: {
       type: "object",
       properties: {

@@ -141,6 +141,7 @@ import {
   mediaStatusDef, mediaStatusExec,
 } from "./media-tools.js";
 import { readRepoDef, readRepoExec } from "./read-repo.js";
+import { editFilesDef, editFilesExec, undoEditsDef, undoEditsExec, codeEditingOutcome } from "./code-editing.js";
 import { savePersonaDef, createSavePersonaExec } from "./save-persona.js";
 import type { CronJobRow } from "../db.js";
 import type { SecurityAuditJournal } from "../security-audit-journal.js";
@@ -164,6 +165,8 @@ const rawStaticTools: Omit<RegisteredTool, "policy">[] = [
   { name: "write",           definition: writeDef,           executor: writeExec },
   { name: "edit",            definition: editDef,            executor: editExec },
   { name: "replace",         definition: replaceDef,         executor: replaceExec },
+  { name: "edit_files",      definition: editFilesDef,       executor: editFilesExec },
+  { name: "undo_edits",      definition: undoEditsDef,       executor: undoEditsExec },
   { name: "glob",            definition: globDef,            executor: globExec },
   { name: "grep",            definition: grepDef,            executor: grepExec },
   { name: "list_directory",  definition: listDirectoryDef,  executor: listDirectoryExec },
@@ -671,6 +674,7 @@ export function prepareInspectedToolExecution(
       // signal raced with its final acknowledgement.
       const result = await invokeWithCancellationSettlement(context, inspected, invocation, cancellation.signal);
       if (typeof result !== "string") throw new ToolExecutionError(name, new TypeError("Tool executor returned a non-string result"));
+      if (name === "edit_files" || name === "undo_edits") return codeEditingOutcome(result);
       return createToolOutcome("success", result);
     } catch (error) {
       if (isRunCancellation(error) || isRunSettlementFailure(error)) throw error;

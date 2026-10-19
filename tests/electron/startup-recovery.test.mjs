@@ -318,6 +318,51 @@ test("A02 real Electron default conversation discovers project context including
   finally { if(desktop) await desktop.close(); server.closeAllConnections(); await new Promise(resolve=>server.close(resolve)); }
 });
 
+test("A02 real Electron edits multiple files, restores complete diffs and undoes from original receipts after restart", { timeout: 150_000 }, async () => {
+  let desktop,streams=0,failure=null,changeId,targets,before;
+  const server=createServer(async(request,response)=>{
+    try {
+      const chunks=[];for await(const chunk of request)chunks.push(chunk);const body=JSON.parse(Buffer.concat(chunks).toString());
+      if(!body.stream){response.setHeader('Content-Type','application/json');response.end(JSON.stringify({choices:[{message:{role:'assistant',content:'项目修改'},finish_reason:'stop'}]}));return;}
+      const step=++streams;let calls,content;
+      const call=(id,name,args,index=0)=>({index,id,type:'function',function:{name,arguments:JSON.stringify(args)}});
+      if(step===1)calls=[call('find-edits','search_tools',{keywords:'edit_files undo_edits'})];
+      else if(step===2)calls=targets.map((target,index)=>call(`read-${index}`,'read',{file_path:target},index));
+      else if(step===3){
+        const results=body.messages.filter(message=>message.role==='tool').slice(-2).map(message=>JSON.parse(message.content).content);
+        const versions=results.map((result,index)=>{assert.match(result,/用户/);const value=/版本: ([a-f0-9]{64})/.exec(result)?.[1];assert.equal(value,createHash('sha256').update(before[index]).digest('hex'));return value;});
+        calls=[call('edit-batch','edit_files',{files:targets.map((target,index)=>({file_path:target,expected_revision:versions[index],edits:index===0?[{old_string:'value = 1',new_string:'value = 2'},{old_string:'// 文件结束',new_string:'// '+ '完整差异'.repeat(120)+' DIFF_END_649'}]:[{old_string:'value = 1',new_string:'value = 2'}]}))})];
+      }else if(step===4){const outcome=JSON.parse(body.messages.at(-1).content),receipt=JSON.parse(outcome.content);assert.equal(outcome.status,'success');assert.equal(receipt.changes.length,2);changeId=receipt.changeId;content='两个文件已修改，用户原有内容保留，请展开查看本次差异。';}
+      else if(step===5){assert(JSON.stringify(body.messages.filter(message=>message.role==='user').at(-1)).includes(changeId));calls=[call('find-undo','search_tools',{keywords:'undo_edits'})];}
+      else if(step===6)calls=[call('undo-batch','undo_edits',{change_id:changeId})];
+      else{assert.equal(step,7);const outcome=JSON.parse(body.messages.at(-1).content),receipt=JSON.parse(outcome.content);assert.equal(outcome.status,'success');assert.equal(receipt.undoOf,changeId);content='已撤回这组修改，用户原始改动与未跟踪文件保留。';}
+      response.writeHead(200,{'Content-Type':'text/event-stream'});response.end(`data: ${JSON.stringify({choices:[{delta:calls?{tool_calls:calls}:{content},finish_reason:calls?'tool_calls':'stop'}]})}\n\ndata: [DONE]\n\n`);
+    }catch(error){failure=error;response.statusCode=500;response.end(String(error));}
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  try{
+    desktop=await fixtureDesktop({}, {apiKey:'fixture-only',baseURL:`http://127.0.0.1:${server.address().port}/v1`});
+    const root=desktop.settings.workspaceRoot;targets=[path.join(root,'已有 改动.ts'),path.join(root,'未跟踪.py')];
+    const git=process.platform==='win32'?execFileSync(path.join(process.env.SystemRoot,'System32','where.exe'),['git.exe'],{encoding:'utf8',windowsHide:true}).split(/\r?\n/u).find(Boolean):'/usr/bin/git';
+    await writeFile(targets[0],'export const value = 1;\n// 文件结束\n');execFileSync(git,['init','--quiet'],{cwd:root,windowsHide:true});execFileSync(git,['add','--','.'],{cwd:root,windowsHide:true});
+    before=['// 用户已有改动\nexport const value = 1;\n// 文件结束\n','# 用户未跟踪文件\nvalue = 1\n'];for(let index=0;index<2;index++)await writeFile(targets[index],before[index]);
+    const gitBefore=execFileSync(git,['status','--porcelain=v1','-z','--untracked-files=all'],{cwd:root,windowsHide:true,encoding:'utf8'});
+    let client=await desktop.start();const session=await client.evaluate('currentSessionId');
+    await client.evaluate("(() => { inputEl.value='将项目中两个文件的value从1改为2，并补充说明，保留我已有的改动；展示差异，不要提交。'; inputEl.dispatchEvent(new Event('input')); document.getElementById('input-form').requestSubmit(); return true; })()");
+    const approve=async()=>{await waitFor(()=>client.evaluate("[...document.querySelectorAll('#ask-options button')].some(button=>button.textContent==='确认执行')"),{timeoutMs:15000,label:'A02 one batch confirmation'});const question=await client.evaluate("document.getElementById('ask-question-text').textContent");assert(question.includes(targets[0])&&question.includes(targets[1]),question);await client.evaluate("[...document.querySelectorAll('#ask-options button')].find(button=>button.textContent==='确认执行').click()");};
+    await approve();await waitFor(()=>client.evaluate("!isSessionRunning() && messagesEl.textContent.includes('两个文件已修改')"),{timeoutMs:15000,label:'A02 code edit completed'});
+    assert.equal(failure,null);assert.equal(streams,4);assert.match(await readFile(targets[0],'utf8'),/用户已有改动/);assert.match(await client.evaluate("document.querySelector('.code-changes').textContent"),/DIFF_END_649/);
+    await desktop.stop();client=await desktop.start();assert.equal(await client.evaluate('currentSessionId'),session);
+    await waitFor(()=>client.evaluate("Boolean(document.querySelector('.code-changes [data-action=undo-code-change]:not(:disabled)'))"),{timeoutMs:10000,label:'A02 restored complete diff and undo'});
+    assert.match(await client.evaluate("document.querySelector('.code-changes').textContent"),/DIFF_END_649/);
+    await client.evaluate("document.querySelector('.code-changes [data-action=undo-code-change]').click()");await approve();
+    await waitFor(()=>client.evaluate("!isSessionRunning() && messagesEl.textContent.includes('已撤回这组修改')"),{timeoutMs:15000,label:'A02 undo after process restart'});
+    assert.equal(failure,null);assert.equal(streams,7);for(let index=0;index<2;index++)assert.equal(await readFile(targets[index],'utf8'),before[index]);
+    assert.equal(execFileSync(git,['status','--porcelain=v1','-z','--untracked-files=all'],{cwd:root,windowsHide:true,encoding:'utf8'}),gitBefore);
+  }catch(error){throw new Error(`${error.message}\nstreams=${streams}, model=${failure?.message||'ok'}\n${desktop?.logs()||''}`,{cause:error});}
+  finally{if(desktop)await desktop.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+});
+
 test("D03 real Electron saves per-model request limits and restores them after restart", { timeout: 120_000 }, async () => {
   const desktop = await fixtureDesktop();
   try {
