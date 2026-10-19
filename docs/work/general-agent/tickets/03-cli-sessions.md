@@ -116,3 +116,13 @@ E3真实模块子切片已实现、按[审查](../reviews/03-code-review.md)分�
 
 收尾：类型/lint、产品74/74与UI/IPC15/15通过；完整Broker32/32通过。当前切片按Standards/Spec审查闭合并本地提交，后续继续A03兼容实验，不把A04/A05前置标为已满足。
 
+### 上游Node管道修复实验（进行中）
+
+起点4653916。2026-10-20复查Node release/nightly索引，均未含libuv1.53，升级现成官方二进制不是已证实解法。比较等待上游、升级全部libuv、自建仅36行上游pipe补丁；先选临时构建Node24.14.1+libuv官方commit 2cadaa40167050baf7c6905ac897e6fb57afb2c6中的pipe.c变更，保持应用构建Node不变。不移植其CI/其他系统修复，不安装到用户项目，不改隔离或测试参数。
+
+最高验证接口仍为A03现有E1原型的默认node --test，先确认真实断言→修正→TAP/退出码；只有通过后才讨论运行时产品接入及维护成本。原型构建目录在C盘Temp，因F仅余约1.8GiB、C约105GiB；下载原始源码以官方SHASUMS核对，临时路径/日志记录到忽略的test-results。不清理用户文件腾空间，不把临时或未签名运行时称可发布依赖。
+
+实验结果：官方源码SHA256 `7822507713f202cf2a551899d250259643f477b671706db421a6fb55c4aa0991`核对通过；只移植pipe.c的上游补丁，git apply --check通过。Windows tar不能处理源码内三项中文copy测试名，改用Python3.14 tarfile data filter并明确省略非编译用Node/V8测试及docs；没有省略本项目Agent回归。vcbuild在编译前退出1：Node24要求ClangCL，当前VS2022未安装Clang/LLVM组件，三个标准clang-cl路径均不存在。未安装系统组件、未修改应用Node、未生成可用二进制，故默认Node测试仍未通过。临时源码保留，可在具备工具链后--resume；当前不继续为此临时实验扩建SDK安装器。
+
+等待工具链/兼容决定期间，按唯一总路线选择下一项前置已满足的D06（D03、D05 verified）做独立文件依据工程；A04/A05仍保留A03前置未满足，未调整依赖。
+

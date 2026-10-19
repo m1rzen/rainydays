@@ -46,6 +46,8 @@ Computer Use还需要驱动应用/浏览器、把观察交给模型，再执行�
 
 本机Node24.14.1；对应官方tag的[CLI说明](https://raw.githubusercontent.com/nodejs/node/v24.14.1/doc/api/cli.md)、[permission说明](https://raw.githubusercontent.com/nodejs/node/v24.14.1/doc/api/permissions.md)已查。preserve-symlinks改变模块解析时是否解引用真实路径，主入口有单独选项；目录read许可可能扩为整个子树，不能为解决祖先lstat直接把卷根作为read目录。Node许可不代替OS隔离，原native AppContainer/Job/范围与链接负向保持。先由诊断中区分实验验证最小兼容选项，不仅据文档宣称可用；当前Node/Python完整CLI仍失败。
 
+增量核对2026-10-20：[Node issue66374](https://github.com/nodejs/node/issues/66374)与[libuv commit 2cadaa4](https://github.com/libuv/libuv/commit/2cadaa40167050baf7c6905ac897e6fb57afb2c6)定位AppContainer子进程pipe命名空间，官方[release索引](https://nodejs.org/dist/index.json)/[nightly索引](https://nodejs.org/download/nightly/index.json)均未见uv≥1.53；[Node PR66282](https://github.com/nodejs/node/pull/66282)仍open。不能声称升级现有release可修复。按[BUILDING v24.14.1](https://raw.githubusercontent.com/nodejs/node/v24.14.1/BUILDING.md)执行的临时仅pipe补丁构建已在本机重现ClangCL工具链缺失，未产生runtime；不改变app构建依赖。证据与后续由A03票据维护。
+
 | 问题 | 最小实验/产物 | 对应任务 | 退出条件 |
 |---|---|---|---|
 | 常用CLI在现有执行器能否构建/测试 | 临时JS/Python小项目，带退出码/长输出/取消的记录 | A01、A03 | 一个真实开发循环，识别必要依赖及隔离差异 |
