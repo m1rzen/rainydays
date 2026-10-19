@@ -48,8 +48,8 @@ export const listDirectoryDef: ToolDefinition = {
 
 export const listDirectoryExec: ToolExecutor = async (args, _env, invocation) => {
   const gateway = requirePathGateway(invocation);
-  const defaultRootId = requireRootId(gateway, "DATA_ROOT");
   const inputPath = typeof args.path === "string" ? args.path : "";
+  const defaultRootId = path.isAbsolute(inputPath) ? undefined : requireRootId(gateway, "DATA_ROOT");
   const entries = await gateway.listDirectory(inputPath, { defaultRootId, maxEntries: MAX_DIRECTORY_ENTRIES });
   const items = entries.map((entry) => `${entry.type === "directory" ? "📁" : "📄"} ${entry.name}`);
   if (items.length === 0) return `目录为空: ${inputPath || "(根目录)"}`;
@@ -120,9 +120,9 @@ export const searchFilesDef: ToolDefinition = {
 
 export const searchFilesExec: ToolExecutor = async (args, _env, invocation) => {
   const gateway = requirePathGateway(invocation);
-  const defaultRootId = requireRootId(gateway, "DATA_ROOT");
   const keyword = String(args.keyword || "").toLowerCase();
   const searchPath = typeof args.path === "string" ? args.path : "";
+  const defaultRootId = path.isAbsolute(searchPath) ? undefined : requireRootId(gateway, "DATA_ROOT");
 
   const results: string[] = [];
   const startTime = Date.now();

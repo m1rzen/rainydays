@@ -123,7 +123,7 @@ test("SEC-02 Settings candidates validate paths before managed persistence", asy
   assert.throws(() => config.prepareAppSettingsUpdate({ outputDir: "  " }), /不能为空/);
   await assert.rejects(() => config.updateAppSettings({ workspaceRoot: "relative-root" }), /PATH_INPUT_INVALID|Path operation denied/);
   assert.equal(config.getConfigRevisionDigest(), before);
-  await assert.rejects(() => config.updateAppSettings({ departmentDataRoot: `C:\\bad\0root` }), /PATH_INPUT_INVALID|Path operation denied/);
+  await assert.rejects(() => config.updateAppSettings({ departmentDataRoot: `C:\\bad\0root`, departmentEnabled: true }), /PATH_INPUT_INVALID|Path operation denied/);
   assert.equal(config.getConfigRevisionDigest(), before);
 
   const workspace = path.join(fixture, "workspace");
@@ -140,6 +140,7 @@ test("SEC-02 Settings candidates validate paths before managed persistence", asy
     defaultPersona: "developer",
     workspaceRoot: workspace,
     departmentDataRoot: department,
+    departmentEnabled: false,
     outputDir: output,
   });
   const disk = JSON.parse(await fs.readFile(path.join(fixture, "config.json"), "utf8"));

@@ -29,6 +29,7 @@ export interface AppSettings {
   defaultPersona: string;
   workspaceRoot: string;
   departmentDataRoot: string;
+  departmentEnabled: boolean;
   outputDir: string;
 }
 
@@ -74,7 +75,8 @@ function defaultSettings(): AppSettings {
   return {
     defaultPersona: process.env.DEFAULT_PERSONA || "general",
     workspaceRoot: process.env.WORKSPACE_ROOT || DEFAULT_WORKSPACE_DIR,
-    departmentDataRoot: process.env.DEPARTMENT_DATA_ROOT || "Z:\\产品研发室",
+    departmentDataRoot: process.env.DEPARTMENT_DATA_ROOT || "",
+    departmentEnabled: false,
     outputDir: process.env.OUTPUT_DIR || path.join(USER_DATA_DIR, "output"),
   };
 }
@@ -127,15 +129,27 @@ function normalizeConfig(value: Partial<Config>): Config {
       workspaceRoot: typeof rawSettings.workspaceRoot === "string" && rawSettings.workspaceRoot
         ? rawSettings.workspaceRoot
         : defaults.workspaceRoot,
-      departmentDataRoot: typeof rawSettings.departmentDataRoot === "string" && rawSettings.departmentDataRoot
+      departmentDataRoot: typeof rawSettings.departmentDataRoot === "string"
         ? rawSettings.departmentDataRoot
         : defaults.departmentDataRoot,
+      departmentEnabled: rawSettings.departmentEnabled === true,
       outputDir: typeof rawSettings.outputDir === "string" && rawSettings.outputDir
         ? rawSettings.outputDir
         : defaults.outputDir,
     },
     domains: value.domains === undefined ? defaultSettingsDomains() : parseSettingsDomains(value.domains),
   };
+}
+
+function validateAppSettingsShape(settings: Record<string, unknown>): void {
+  const strings = ["defaultPersona", "workspaceRoot", "departmentDataRoot", "outputDir"];
+  const allowed = new Set([...strings, "departmentEnabled"]);
+  if (Object.keys(settings).some(key => !allowed.has(key))
+    || strings.some(key => typeof settings[key] !== "string" || (key !== "departmentDataRoot" && !settings[key]))
+    || (settings.departmentEnabled !== undefined && typeof settings.departmentEnabled !== "boolean")
+    || (settings.departmentEnabled === true && !String(settings.departmentDataRoot).trim())) {
+    throw new TypeError("App settings Schema 无效；启用部门资料需要填写目录");
+  }
 }
 
 export function validatePersistedConfigBytes(bytes: Buffer, options: Readonly<{ allowLegacyPlaintext?: boolean }> = {}): readonly string[] {
@@ -191,11 +205,7 @@ export function validatePersistedConfigBytes(bytes: Buffer, options: Readonly<{ 
   validateProfileName(root.defaultProfile);
   if (!Object.hasOwn(root.profiles as Record<string, unknown>, root.defaultProfile)) throw new Error("Default profile is missing");
   const settings = root.settings as Record<string, unknown>;
-  const expectedSettings = ["defaultPersona", "workspaceRoot", "departmentDataRoot", "outputDir"];
-  if (Object.keys(settings).sort().join("\0") !== [...expectedSettings].sort().join("\0")
-    || expectedSettings.some(key => typeof settings[key] !== "string" || !(settings[key] as string))) {
-    throw new Error("App settings Schema 无效");
-  }
+  validateAppSettingsShape(settings);
   if (!legacy) {
     const domains = parseSettingsDomains(root.domains);
     assertDomainProfileReferences(domains, root.profiles as Record<string, ProviderProfile>);
@@ -504,19 +514,25 @@ export function prepareAppSettingsUpdate(
 
   for (const key of ["defaultPersona", "workspaceRoot", "departmentDataRoot", "outputDir"] as const) {
     if (input[key] !== undefined) {
-      const value = input[key]?.trim();
-      if (!value) throw new Error(`${key} 不能为空`);
+      if (typeof input[key] !== "string") throw new TypeError(`${key} 必须是文本`);
+      const value = input[key].trim();
+      if (!value && key !== "departmentDataRoot") throw new Error(`${key} 不能为空`);
       candidate.settings[key] = value;
     }
   }
 
+  if (input.departmentEnabled !== undefined) {
+    if (typeof input.departmentEnabled !== "boolean") throw new TypeError("departmentEnabled 必须是布尔值");
+    candidate.settings.departmentEnabled = input.departmentEnabled;
+  }
+  if (candidate.settings.departmentEnabled && !candidate.settings.departmentDataRoot) throw new Error("启用部门资料需要填写目录");
   return normalizeConfig(candidate);
 }
 
 export async function validateAppSettingsPaths(settings: AppSettings, auditIdentity?: PathAuditIdentity): Promise<void> {
   await pathPolicy.validateConfigurationRoots([
     { rootId: "workspace", configuredPath: settings.workspaceRoot },
-    { rootId: "department", configuredPath: settings.departmentDataRoot },
+    ...(settings.departmentEnabled ? [{ rootId: "department", configuredPath: settings.departmentDataRoot }] : []),
     { rootId: "output", configuredPath: settings.outputDir },
   ], auditIdentity);
 }
@@ -658,9 +674,7 @@ export function prepareSettingsImport(value: unknown, base: Config = getConfigSn
   validateProfileName(bundle.defaultProfile);
   if (!Object.hasOwn(profiles, bundle.defaultProfile)) throw new TypeError("Imported default Profile 不存在");
   const settings = bundle.settings as Record<string, unknown>;
-  const expectedSettings = ["defaultPersona", "workspaceRoot", "departmentDataRoot", "outputDir"];
-  if (Object.keys(settings).sort().join("\0") !== expectedSettings.sort().join("\0")
-    || expectedSettings.some(key => typeof settings[key] !== "string" || !(settings[key] as string))) throw new TypeError("Imported app settings 无效");
+  validateAppSettingsShape(settings);
   const rawDomains = JSON.parse(JSON.stringify(bundle.domains)) as SettingsDomains;
   rawDomains.asr.credentialRef = current.domains.asr.credentialRef;
   rawDomains.relay.credentialRef = current.domains.relay.credentialRef;
@@ -669,7 +683,7 @@ export function prepareSettingsImport(value: unknown, base: Config = getConfigSn
     revision: current.revision,
     defaultProfile: bundle.defaultProfile,
     profiles,
-    settings: settings as unknown as AppSettings,
+    settings: { ...settings, departmentEnabled: settings.departmentEnabled === true } as unknown as AppSettings,
     domains: parseSettingsDomains(rawDomains),
   };
   assertDomainProfileReferences(candidate.domains, candidate.profiles);

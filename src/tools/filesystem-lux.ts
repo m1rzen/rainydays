@@ -262,9 +262,9 @@ export const globExec: ToolExecutor = async (args, _env, invocationValue) => {
   const invocation = requireInvocation(invocationValue);
   const remote = await routeToSelectedWorker(invocation, "glob", args);
   if (remote !== null) return remote;
-  const defaultRootId = requireRootId(invocation.path, "DATA_ROOT");
   const matcher = compileGlob(args.pattern);
   const basePath = typeof args.path === "string" ? args.path : "";
+  const defaultRootId = path.isAbsolute(basePath) ? undefined : requireRootId(invocation.path, "DATA_ROOT");
   const matches: string[] = [];
   const started = Date.now();
   let timedOut = false;

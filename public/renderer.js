@@ -1161,7 +1161,7 @@
         selectAvailableFileRoot();
         return fileRoots;
       }
-      const res = await fetch("/api/files/roots", { headers: sessionHeaders(activeFileOwnerSessionId) });
+      const res = await fetch("/api/files/roots", { headers: sessionHeaders(activeFileOwnerSessionId || currentSessionId) });
       const data = await res.json();
       if (!res.ok) {
         const error = new Error(data.error || "根目录加载失败");
@@ -1174,7 +1174,7 @@
       for (const root of fileRoots) {
         const option = document.createElement("option");
         option.value = root.id;
-        option.textContent = `${root.name}${root.available ? "" : "（不可用）"}`;
+        option.textContent = `${root.name}${root.available || root.name.includes("未启用") ? "" : "（不可用，请在设置中重选）"}`;
         option.disabled = !root.available;
         select.appendChild(option);
       }
@@ -1332,6 +1332,7 @@
     }
 
     function showFileDirectoryError(message) {
+      message = filePathErrorMessage(message);
       fileEntries = [];
       document.getElementById("file-list").innerHTML = `<div class="file-list-message">${iconMarkup("alert")} ${escapeHtml(message)}</div>`;
       document.getElementById("file-list-count").textContent = "加载失败";
@@ -1579,8 +1580,9 @@
         if (!fileEditConflict) {
           const meta = document.getElementById("file-preview-meta");
           meta.classList.add("file-conflict");
-          meta.textContent = `保存失败：${error.message}\n${operation.absolutePath || operation.path}`;
-          addSystemMessage(`⚠️ 文件保存失败：${error.message}`);
+          const message = filePathErrorMessage(error.message);
+          meta.textContent = `保存失败：${message}\n${operation.absolutePath || operation.path}`;
+          addSystemMessage(`⚠️ 文件保存失败：${message}`);
         }
       } finally {
         if (fileSaveToken === operation) {
@@ -1642,7 +1644,15 @@
       inputEl.focus();
     }
 
+    function filePathErrorMessage(message) {
+      const code = /PATH_[A-Z_]+/.exec(String(message))?.[0] || (message === "Path operation denied" ? "PATH_OPERATION_DENIED" : null);
+      if (!code) return message;
+      if (code === "PATH_NOT_FOUND" || code === "PATH_ROOT_UNAVAILABLE") return `文件或目录已不可用。请检查网络，或在设置中重新选择目录。（${code}）`;
+      return `无法访问此文件或目录。请检查读写权限和已选工作范围，或在设置中重新选择目录。（${code}）`;
+    }
+
     function showFileError(message) {
+      message = filePathErrorMessage(message);
       closeFileEvents();
       const content = document.getElementById("file-preview-content");
       const error = document.createElement("div"); error.className = "file-preview-empty"; error.append(createUiIcon("alert"), message);
@@ -2057,6 +2067,7 @@
       defaultPersona.value = settingsState.settings.defaultPersona;
       document.getElementById("setting-workspace-root").value = settingsState.settings.workspaceRoot || "";
       document.getElementById("setting-department-root").value = settingsState.settings.departmentDataRoot || "";
+      document.getElementById("setting-department-enabled").checked = settingsState.settings.departmentEnabled === true;
       document.getElementById("setting-output-dir").value = settingsState.settings.outputDir || "";
 
       if (!editingProviderName && profiles.length > 0) editingProviderName = settingsState.currentProfile || profiles[0].name;
@@ -2150,7 +2161,7 @@
         maxIterations: settingsNumber("setting-max-iterations"), maxCanvasTokens: settingsNumber("setting-max-canvas-tokens"), defaultSupervisorRules: document.getElementById("setting-supervisor-rules").value, worker: { enabled: settingsChecked("setting-worker-enabled"), target: settingsText("setting-worker-target") },
         orgMode: settingsChecked("setting-org-mode"), yoloMode: settingsChecked("setting-yolo-mode"), supervisorEnabled: settingsChecked("setting-supervisor-enabled"),
         supervisorProfile: settingsText("setting-supervisor-profile"), curatorProfile: settingsText("setting-curator-profile"), consolidationProfile: settingsText("setting-consolidation-profile"),
-        oracleProfile: settingsText("setting-oracle-profile"), imageProfile: settingsText("setting-image-profile"), videoProfile: settingsText("setting-video-profile"),
+        oracleProfile: settingsText("setting-oracle-profile"), visionProfile: settingsState.domains.common.visionProfile || "", imageProfile: settingsText("setting-image-profile"), videoProfile: settingsText("setting-video-profile"),
         autoRename: settingsChecked("setting-auto-rename"), renameProfile: settingsText("setting-rename-profile"), pinRenderMode: settingsText("setting-pin-render-mode"), pinRenderInterval: settingsNumber("setting-pin-render-interval"),
       };
       if (domainId === "mcp") return { servers: JSON.parse(document.getElementById("setting-mcp-servers").value) };
@@ -2229,6 +2240,7 @@
           defaultPersona: document.getElementById("setting-default-persona").value,
           workspaceRoot: document.getElementById("setting-workspace-root").value.trim(),
           departmentDataRoot: document.getElementById("setting-department-root").value.trim(),
+          departmentEnabled: document.getElementById("setting-department-enabled").checked,
           outputDir: document.getElementById("setting-output-dir").value.trim(),
           common: readSettingsDomain("common"),
         };
@@ -2248,9 +2260,10 @@
         await ensureFileRoots(true);
         await loadPersonas();
         await updateStatus();
-        showSettingsMessage("通用设置已保存。", "success");
+        const unavailable = fileRoots.filter(root => !root.available && !root.name.includes("未启用"));
+        showSettingsMessage(unavailable.length ? `设置已保存。${unavailable.map(root => root.name).join("、")}不可用；请检查网络和目录权限，或重新选择本地目录。` : "通用设置已保存。", unavailable.length ? "error" : "success");
       } catch (err) {
-        if (generation === settingsRequestGeneration) showSettingsMessage(err.message, "error");
+        if (generation === settingsRequestGeneration) showSettingsMessage(filePathErrorMessage(err.message), "error");
       }
     }
 
@@ -3222,6 +3235,12 @@
         composerModel.textContent = data.configured && data.model ? data.model : "配置模型";
         composerModel.title = `${data.profile || "默认配置"} · ${data.model || "尚未配置模型"}\n点击打开模型配置`;
         statusPersona.textContent = data.persona || "未选择";
+        const scope = document.getElementById("composer-scope");
+        if (scope && data.paths) {
+          const basename = value => String(value || "").split(/[\\/]/).filter(Boolean).at(-1) || value;
+          scope.textContent = `资料 ${basename(data.paths.workspaceRoot)} · 成果 ${basename(data.paths.outputDir)}`;
+          scope.title = `工作目录：${data.paths.workspaceRoot}\n成果目录：${data.paths.outputDir}\n部门资料：${data.paths.departmentEnabled ? data.paths.departmentDataRoot : "未启用"}\n点击更改工作范围`;
+        }
         const version = data.version;
         let versionMismatch = false;
         if (version) {

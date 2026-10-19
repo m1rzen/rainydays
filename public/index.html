@@ -131,7 +131,7 @@
             <label class="sr-only" for="input">消息</label><textarea id="input" rows="1" role="combobox" aria-haspopup="listbox" aria-controls="slash-menu" aria-autocomplete="list" aria-expanded="false" placeholder="描述你想完成的事，或添加文件…" autofocus></textarea>
             <div class="composer-toolbar"><div class="composer-tools"><button type="button" class="attachment-btn" title="添加附件 (Alt+V)" aria-label="添加附件" data-action="choose-attachments"><svg aria-hidden="true"><use href="#i-plus"/></svg></button><button type="button" class="voice-btn" id="mic-btn" title="语音输入" aria-label="语音输入" data-action="toggle-asr"><svg aria-hidden="true"><use href="#i-mic"/></svg></button><span class="composer-divider" aria-hidden="true"></span><div class="persona-selector"><label class="sr-only" for="persona-select">助手模式</label><select id="persona-select" data-action="switch-persona" data-event="change"><option value="">加载中...</option></select></div></div><div class="composer-end"><button id="composer-model" type="button" data-action="open-model-settings" title="配置使用的模型">配置模型</button><button type="button" id="cancel-run" class="icon-only" data-action="cancel-run" aria-label="停止生成" title="停止生成" hidden><svg aria-hidden="true"><use href="#i-stop"/></svg></button><button type="submit" id="submit" aria-label="发送"><svg aria-hidden="true"><use href="#i-send"/></svg><span class="sr-only">发送</span></button></div></div>
           </form>
-          <div class="composer-hint"><span id="composer-persona" class="sr-only">通用助手</span><span>Enter 发送<span class="hint-secondary"> · Shift + Enter 换行</span></span></div>
+          <div class="composer-hint"><button type="button" id="composer-scope" data-action="open-settings" aria-label="查看和更改工作范围">工作范围</button><span id="composer-persona" class="sr-only">通用助手</span><span>Enter 发送<span class="hint-secondary"> · Shift + Enter 换行</span></span></div>
           <input id="attachment-file-input" class="hidden-control" type="file" multiple accept="image/png,text/plain,text/markdown,text/csv,application/json,.md,.markdown,.json,.csv,.txt,.pdf,.docx,.xlsx">
         </div>
       </section>
@@ -219,8 +219,9 @@
             </div>
             <details class="settings-advanced"><summary>高级偏好</summary><div class="settings-grid">
               <label for="setting-default-persona">默认助手</label><select id="setting-default-persona" class="settings-select"></select>
+              <label for="setting-department-enabled">公司资料源</label><div class="settings-check-row"><label><input id="setting-department-enabled" type="checkbox" /> 启用部门资料</label></div>
               <label for="setting-department-root">部门资料目录</label><div class="settings-path-row"><input id="setting-department-root" class="settings-input" /><button class="settings-btn" data-action="choose-settings-directory" data-path-target="setting-department-root">选择</button></div>
-              <div class="settings-help">仅用于部门专属助手。</div>
+              <div class="settings-help">可选，只读接入。关闭后保留路径，不连接公司网络盘；离线时仍可处理本地资料。</div>
             </div></details>
             <div class="settings-grid" hidden>
               <label>最大工具轮次</label><input id="setting-max-iterations" type="number" min="1" max="1000" class="settings-input" />

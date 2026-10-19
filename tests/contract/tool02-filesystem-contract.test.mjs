@@ -42,6 +42,7 @@ function gateway(overrides = {}) {
 
 function invocation(pathGateway) {
   return Object.freeze({
+    capabilityContext: Object.freeze({ sessionId: "tool02-contract" }),
     path: pathGateway,
     network: Object.freeze({ fetch: (...args) => globalThis.fetch(...args) }),
     signal: cancellation.NEVER_ABORT_SIGNAL,
@@ -75,6 +76,26 @@ test("TOOL-02 canonical definitions expose the complete frozen field contracts",
   assert.deepEqual(lux.readDef.function.parameters.required, ["file_path"]);
   assert.deepEqual(lux.writeDef.function.parameters.required, ["file_path", "content"]);
   assert.deepEqual(lux.editDef.function.parameters.required, ["file_path", "old_string", "new_string"]);
+});
+
+test("D05 absolute glob and grep do not depend on an unavailable DATA_ROOT", async () => {
+  const root = path.join(fixture, "本地 资料");
+  const scope = gateway({
+    rootIdForEnv: () => null,
+    searchDirectory: async (input, options) => {
+      assert.equal(input, root);
+      assert.equal(options.defaultRootId, undefined);
+      return [{ name: "说明.txt", type: "file" }];
+    },
+    searchFile: async (_input, options) => {
+      assert.equal(options.defaultRootId, undefined);
+      return { bytes: Buffer.from("本地资料42"), rootId: "workspace" };
+    },
+  });
+  assert.match(await lux.globExec({ path: root, pattern: "*.txt" }, {}, invocation(scope)), /说明.txt/);
+  assert.match(await grepModule.grepExec({ path: root, pattern: "42" }, {}, invocation(scope)), /说明.txt/);
+  await assert.rejects(() => lux.globExec({ pattern: "*.txt" }, {}, invocation(scope)), /DATA_ROOT/);
+  await assert.rejects(() => grepModule.grepExec({ pattern: "42" }, {}, invocation(scope)), /DATA_ROOT/);
 });
 
 test("TOOL-02 read paginates large UTF-8 text without its former 6000-character cut", async () => {

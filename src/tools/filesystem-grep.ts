@@ -131,7 +131,7 @@ function scanText(file: string, text: string, regex: RegExp, multiline: boolean)
 async function candidateFiles(input: Readonly<{
   invocation: ToolInvocationServices;
   searchPath: string;
-  defaultRootId: string;
+  defaultRootId: string | undefined;
   globMatcher: RegExp | null;
   extensions: ReadonlySet<string> | null;
   deadline: number;
@@ -221,8 +221,9 @@ export const grepExec: ToolExecutor = async (args, _env, invocationValue) => {
     head_limit: args.head_limit,
   });
   if (remote !== null) return remote;
-  const defaultRootId = invocation.path.rootIdForEnv("DATA_ROOT");
-  if (!defaultRootId) throw new Error("Path root is unavailable: DATA_ROOT");
+  const searchPath = typeof args.path === "string" ? args.path : "";
+  const defaultRootId = path.isAbsolute(searchPath) ? undefined : invocation.path.rootIdForEnv("DATA_ROOT") ?? undefined;
+  if (!path.isAbsolute(searchPath) && !defaultRootId) throw new Error("Path root is unavailable: DATA_ROOT");
   const pattern = args.pattern as string;
   const dialect = typeof args.regex_dialect === "string" ? args.regex_dialect : "auto";
   const multiline = args.multiline === true;
@@ -246,7 +247,7 @@ export const grepExec: ToolExecutor = async (args, _env, invocationValue) => {
   const deadline = Date.now() + SEARCH_TIME_BUDGET_MS;
   const candidates = await candidateFiles({
     invocation,
-    searchPath: typeof args.path === "string" ? args.path : "",
+    searchPath,
     defaultRootId,
     globMatcher,
     extensions,

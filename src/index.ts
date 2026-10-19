@@ -99,7 +99,7 @@ import { museDef } from "./tools/phase1-tools.js";
 import { capabilityBroker, getAllToolNames, registerDynamicTool } from "./tools/index.js";
 import { CapabilityDeniedError, type CapabilityContext, type RuntimeAuthority } from "./capability-broker.js";
 import { PathDeniedError, type PathAuditIdentity, type PathAuthority, type PathDirectoryEnrollmentLease, type PathOperation, type PathRootInput } from "./path-policy.js";
-import { pathPolicy } from "./path-runtime.js";
+import { createRuntimePathAuthority, DirectoryConnectionTimeoutError, pathPolicy } from "./path-runtime.js";
 import { playbookExecuteDef, createPlaybookExecuteExec, playbookAbortDef, playbookAbortExec } from "./playbook.js";
 import { savePersonaDef, createSavePersonaExec } from "./tools/save-persona.js";
 import {
@@ -1078,16 +1078,16 @@ function applyRuntimeSettings(persona: PersonaDefinition, settings: AppSettings 
   const env = {
     ...persona.env,
     WORKSPACE_ROOT: settings.workspaceRoot,
-    DEPARTMENT_DATA_ROOT: settings.departmentDataRoot,
+    DEPARTMENT_DATA_ROOT: settings.departmentEnabled ? settings.departmentDataRoot : "",
     OUTPUT_DIR: settings.outputDir,
     DATA_ROOT: persona.name === "rds-assistant"
-      ? settings.departmentDataRoot
+      ? (settings.departmentEnabled ? settings.departmentDataRoot : "")
       : settings.workspaceRoot,
   };
   return createEffectivePersona({
     ...persona,
     env,
-    allowedRoots: [settings.workspaceRoot, settings.departmentDataRoot, settings.outputDir],
+    allowedRoots: [settings.workspaceRoot, ...(settings.departmentEnabled ? [settings.departmentDataRoot] : []), settings.outputDir],
   });
 }
 
@@ -1113,23 +1113,32 @@ async function prepareRuntimePathAuthority(persona: PersonaDefinition, settings:
   await bootstrapStore.ensureUserDataDescendantDirectory(settings.workspaceRoot);
   await bootstrapStore.ensureUserDataDescendantDirectory(settings.outputDir);
   const permissions = runtimeRootPermissions(persona);
-  const candidates: Array<{ input: PathRootInput; optional: boolean }> = [
-    { input: { rootId: "workspace", role: "workspace", configuredPath: settings.workspaceRoot, permissions }, optional: true },
-    { input: { rootId: "department", role: "department", configuredPath: settings.departmentDataRoot, permissions }, optional: true },
-    { input: { rootId: "output", role: "output", configuredPath: settings.outputDir, permissions }, optional: false },
+  const candidates: PathRootInput[] = [
+    { rootId: "workspace", role: "workspace", configuredPath: settings.workspaceRoot, permissions },
+    { rootId: "output", role: "output", configuredPath: settings.outputDir, permissions },
   ];
-  const available: PathRootInput[] = [];
-  for (const candidate of candidates) {
-    try {
-      const probe = await pathPolicy.createAuthority([candidate.input]);
-      pathPolicy.revoke(probe);
-      available.push(candidate.input);
-    } catch (error) {
-      if (candidate.optional && error instanceof PathDeniedError && error.code === "PATH_ROOT_UNAVAILABLE") continue;
-      throw error;
+  if (settings.departmentEnabled) candidates.push({ rootId: "department", role: "department", configuredPath: settings.departmentDataRoot, permissions: readOnlyRuntimeRootPermissions });
+  const unavailable = (error: unknown) => error instanceof PathDeniedError && ["PATH_ROOT_UNAVAILABLE", "PATH_ROOT_UNSUPPORTED"].includes(error.code);
+  const probeAvailable = async (roots: readonly PathRootInput[]) => {
+    const result: PathRootInput[] = [];
+    for (const root of roots) {
+      try {
+        const probe = await createRuntimePathAuthority([root]);
+        pathPolicy.revoke(probe);
+        result.push(root);
+      } catch (error) { if (!unavailable(error)) throw error; }
     }
+    return result;
+  };
+  let available = await probeAvailable(candidates);
+  let pathAuthority: PathAuthority;
+  try { pathAuthority = await createRuntimePathAuthority(available, 1500 * Math.max(1, available.length)); }
+  catch (error) {
+    if (!unavailable(error)) throw error;
+    // Reprobe each source so a disconnected workspace does not discard a healthy output root.
+    available = await probeAvailable(available);
+    pathAuthority = await createRuntimePathAuthority(available, 1500 * Math.max(1, available.length));
   }
-  const pathAuthority = await pathPolicy.createAuthority(available);
   const availableIds = new Set(pathAuthority.rootIds);
   const dataRootId = persona.name === "rds-assistant" ? "department" : "workspace";
   return {
@@ -1142,7 +1151,7 @@ async function prepareRuntimePathAuthority(persona: PersonaDefinition, settings:
     }),
     fileRoots: Object.freeze([
       { id: "workspace", name: "工作目录", configuredPath: settings.workspaceRoot, available: availableIds.has("workspace") },
-      { id: "department", name: "部门资料", configuredPath: settings.departmentDataRoot, available: availableIds.has("department") },
+      { id: "department", name: settings.departmentEnabled ? "部门资料" : "部门资料（未启用）", configuredPath: settings.departmentDataRoot, available: availableIds.has("department") },
       { id: "output", name: "输出目录", configuredPath: settings.outputDir, available: availableIds.has("output") },
     ]),
   };
@@ -1365,11 +1374,11 @@ async function prepareOutputEnrollmentLease(
     permissions: codingRuntimeRootPermissions,
   };
   try {
-    const probe = await pathPolicy.createAuthority([outputRoot]);
+    const probe = await createRuntimePathAuthority([outputRoot]);
     pathPolicy.revoke(probe);
     return null;
   } catch (error) {
-    if (!(error instanceof PathDeniedError) || error.code !== "PATH_ROOT_UNAVAILABLE") throw error;
+    if (error instanceof DirectoryConnectionTimeoutError || !(error instanceof PathDeniedError) || error.code !== "PATH_ROOT_UNAVAILABLE") throw error;
   }
   if (!previousAuthority) throw new PathDeniedError("PATH_ROOT_UNAVAILABLE", "Missing output root has no enrolled writable parent");
   return fileViewerService.prepareRootEnrollment(previousAuthority, Object.freeze({
@@ -2646,6 +2655,7 @@ app.put("/api/settings/general", async (req, res) => {
       defaultPersona,
       workspaceRoot: req.body?.workspaceRoot,
       departmentDataRoot: req.body?.departmentDataRoot,
+      departmentEnabled: req.body?.departmentEnabled,
       outputDir: req.body?.outputDir,
     }, req.body?.common, req.body?.expectedRevision);
     res.json({ success: true, settings: getPublicConfig() });
@@ -2852,6 +2862,7 @@ app.get("/api/status", (_req, res) => {
     provider: profile.baseURL,
     profile: getCurrentProfileName(),
     configured: Boolean(profile.apiKey),
+    paths: getAppSettings(),
     tokens: runtime?.memory.getTokenEstimate() ?? 0,
     messageCount: runtime?.memory.getMessageCount() ?? 0,
     hasSummary: runtime?.memory.hasSummary() ?? false,

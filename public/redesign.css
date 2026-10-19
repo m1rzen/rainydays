@@ -231,6 +231,8 @@ details:not([open]) > summary > .disclosure-icon { transform:rotate(-90deg); }
 .attachment-action svg { width:12px; height:12px; }
 .attachment-action:hover { background:var(--hover-bg); }
 .composer-hint { max-width:var(--reading-width); margin:6px auto 0; display:flex; justify-content:flex-end; align-items:center; color:var(--text-dim); font-size:10px; }
+#composer-scope { margin-right:auto; min-width:0; max-width:58%; padding:2px 0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border:0; background:none; color:inherit; font:inherit; cursor:pointer; }
+#composer-scope:hover { color:var(--text); }
 #status-bar { min-height:25px; padding:0 32px 6px; background:var(--bg); border:0; color:var(--text-dim); font-size:10px; }
 #status-bar #status-tokens,#status-bar #status-model,#status-bar #status-persona { display:none; }
 #slash-menu { bottom:118px; width:min(400px,calc(100% - 48px)); box-shadow:0 8px 24px #352f271f; border-radius:8px; }

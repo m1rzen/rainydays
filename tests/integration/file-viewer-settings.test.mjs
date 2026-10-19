@@ -127,6 +127,7 @@ function configFor(workspaceRoot, departmentDataRoot, outputDir) {
       defaultPersona: "general",
       workspaceRoot,
       departmentDataRoot,
+      departmentEnabled: true,
       outputDir,
     },
   };
@@ -282,6 +283,7 @@ test("SEC-02 HTTP File Viewer and Settings root enrollment are one authority tra
       defaultPersona: "general",
       workspaceRoot: newWorkspace,
       departmentDataRoot: newDepartment,
+      departmentEnabled: true,
       outputDir: generatedOutput,
     });
     assert.deepEqual((await fs.readdir(fixture)).filter(name => name.startsWith(".mini-lux-") && name.endsWith(".tmp")), []);

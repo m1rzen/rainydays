@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: ready
+Status: verified
 
 Spec: [同事版交付规格](../../../specs/colleague-delivery.md)
 
@@ -32,10 +32,10 @@ src/config.ts、settings-schema.ts、path-runtime.ts、src/index.ts 文件接口
 
 ## 验收条件
 
-- [ ] 无 Z 盘/无部门盘的新用户能完成本地文件读取和新建文档。
-- [ ] 中文、空格、只读目录、目录被删除时错误具体，用户无需编辑 JSON。
-- [ ] 只改输出目录不会获得其他目录写入权；原资料不被自动移动。
-- [ ] 重启后路径选择与显示一致，离线网络盘不冻结界面。
+- [x] 无 Z 盘/无部门盘的新用户能完成本地文件读取和新建文档。
+- [x] 中文、空格、只读目录、目录被删除时错误具体，用户无需编辑 JSON。
+- [x] 只改输出目录不会获得其他目录写入权；原资料不被自动移动。
+- [x] 重启后路径选择与显示一致，离线网络盘不冻结界面。
 
 ## 验证接口与证据
 
@@ -49,8 +49,20 @@ src/config.ts、settings-schema.ts、path-runtime.ts、src/index.ts 文件接口
 
 ## 执行记录
 
-尚未开始。实施时记录批准来源、起点提交、实际变更与偏离计划的理由；真实模型调用需核对已有授权。
+2026-10-20，沿用整套路线授权；起点 a6f980e。首先复现空部门目录配置拒绝和绝对路径搜索依赖DATA_ROOT，再验证真实Electron的本地任务、设置持久化与离线源。
+
+## Test and design seam
+
+通过配置公开函数、现有ScopedPathGateway、HTTP设置/文件接口和隔离Electron验证。运行链复用PathPolicy，目录准备增加有界等待并撤销迟到authority；不改授权选择规则。配置采用显式departmentEnabled开关，缺失时关闭但保留旧路径，避免升级后继续访问旧Z盘。详细决定见规格D05段。
 
 ## 审查与验证结果
 
-尚未审查/验证。完成后写具体命令、结果、人工核对、未测项、回退方式和终点提交；全部满足才改为 verified。
+已按[审查](../reviews/05-code-review.md)顺序检查Standards与Spec并修复范围内发现，详见[诊断](../diagnostics/05-workspace-settings.md)。
+
+- `node --test tests/unit/workspace-settings.test.mjs tests/unit/workspace-path-timeout.test.mjs tests/contract/tool02-filesystem-contract.test.mjs tests/contract/config-managed-store.test.mjs`：22/22。包括旧路径保留/关闭、空源、严格开关、迟到授权撤销、绝对搜索与相对默认根、原七项文件契约、配置负向与凭据事务。
+- `node --test --test-name-pattern 'D05 real Electron' tests/electron/startup-recovery.test.mjs`：目录切换/原资料保留/部门只读/禁用后保留路径/删除外部成果目录/重启重选用例通过（31.7秒）；最终只读提示补修后定向第二项再次通过（20.5秒）。真实loopback SMB缺失共享的界面启动12.5秒；真实NTFS ACL拒绝创建/覆盖时原文保持、UI给权限及重选提示。未连接公司Z盘，不代表公司VPN/服务器兼容性认证。
+- `node --test --test-name-pattern 'HTTP File Viewer' tests/integration/file-viewer-settings.test.mjs`：1/1，45.995秒。根变更、旧范围拒绝、命名空间/ADS/相对根/重复根拒绝、成果子目录受管创建、持久化和重启通过。fixture显式开启部门源并补充新字段断言，原断言保持。
+- `npm run check:product`：typecheck、lint、产品51/51、UI/IPC15/15。产品真实Agent在仅OUTPUT_DIR范围新建DOCX/XLSX，解析实际落盘文档并核对原文、覆盖拒绝、下一任务重新确认均通过；源码Electron本地读取已另测。
+- `npm run build`与元数据一致性检查通过，源码构建`0.1.0+local.e1ed7adfed2c`（645输入）。独立R2完整Electron回归在预览阶段等待失败，不能记录通过；两份成果已实际生成，性能问题交D13。没有真实模型费用或日常数据变更。
+
+回退：只反向应用本票本地提交；新开关先关闭仍保留路径，原文件不迁移。终点为包含本记录的`fix: make local workspaces independent of company drives`提交。安装包、干净机器、真实模型质量不在本票计为完成。

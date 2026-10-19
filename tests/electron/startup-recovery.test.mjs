@@ -1,20 +1,22 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdir, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { execFileSync } from "node:child_process";
 import Database from "better-sqlite3";
 import {
   boundedFetch, connectCdp, freeDistinctPorts, makeTempDir, projectRoot,
   removeFixture, spawnManaged, terminateProcessTreeAsync, waitFor, waitForChildExit,
 } from "../helpers.mjs";
 
-async function fixtureDesktop() {
+async function fixtureDesktop(options = {}) {
   const root = await makeTempDir("rainydays-d01-");
   const userData = path.join(root, "中文 user data");
   const settings = {
     defaultPersona: "general", workspaceRoot: path.join(root, "资料 workspace"),
     departmentDataRoot: path.join(root, "missing-department"), outputDir: path.join(userData, "output"),
+    ...options,
   };
   await Promise.all([userData, settings.workspaceRoot, settings.outputDir].map(dir => mkdir(dir, { recursive: true })));
   await mkdir(path.join(settings.workspaceRoot, "旧目录"));
@@ -159,4 +161,93 @@ test("D01 moved workspace restores the file tab at an available root and can cha
     assert.equal(await client.evaluate("fileRoots.find(root=>root.id==='workspace').available"), true);
     assert.doesNotMatch(desktop.logs(), /"failure":"unexpected-exit"|EPIPE/u);
   } finally { await desktop.close(); }
+});
+
+test("D05 real Electron saves local scope, keeps company source optional and recovers deleted output", { timeout: 150_000 }, async () => {
+  const desktop = await fixtureDesktop();
+  try {
+    let client = await desktop.start();
+    await waitFor(() => client.evaluate("activeSettingsDomain==='profiles' && document.getElementById('settings-modal').classList.contains('visible') && document.getElementById('provider-model').value==='fixture-model'"), { timeoutMs: 8000, label: "D05 first-use settings ready" });
+    await client.evaluate(`(() => { const original=fetch; window.__d05SettingsReplies=[]; window.fetch=async(...args)=>{const response=await original(...args); if(String(args[0]).endsWith('/api/settings/general')) {const body=await response.clone().json(); window.__d05SettingsReplies.push({status:response.status,error:body.error});} return response;}; return true; })()`);
+    await client.evaluate("openSettings().then(()=>true)");
+    await client.evaluate("switchSettingsDomain('common'); true");
+    await waitFor(() => client.evaluate("Boolean(settingsState?.revision)"), { timeoutMs: 8000, label: "D05 settings" });
+    assert.equal(await client.evaluate("document.getElementById('setting-department-enabled').checked"), false);
+    assert.equal(await client.evaluate("document.getElementById('setting-department-root').value"), desktop.settings.departmentDataRoot);
+    const nextWorkspace = path.join(desktop.root, "新的 中文资料");
+    const nextOutput = path.join(desktop.root, "新的 中文成果");
+    const department = path.join(desktop.root, "可选 只读部门");
+    await Promise.all([nextWorkspace, nextOutput, department].map(dir => mkdir(dir)));
+    await writeFile(path.join(nextWorkspace, "本地.txt"), "D05本地资料42");
+    await writeFile(path.join(department, "原资料.txt"), "部门原文");
+    await client.evaluate(`(() => {
+      document.getElementById('setting-workspace-root').value=${JSON.stringify(nextWorkspace)};
+      document.getElementById('setting-output-dir').value=${JSON.stringify(nextOutput)};
+      document.getElementById('setting-output-dir').dispatchEvent(new Event('input',{bubbles:true}));
+      document.querySelector('[data-action=save-general-settings]').click(); return true;
+    })()`);
+    try {
+      await waitFor(() => client.evaluate(`settingsState.settings.outputDir===${JSON.stringify(nextOutput)} && document.getElementById('composer-scope').title.includes(${JSON.stringify(nextWorkspace)})`), { timeoutMs: 12000, label: "D05 saved local scope" });
+    } catch (error) {
+      const state = await client.evaluate("({settings:settingsState.settings,scope:document.getElementById('composer-scope').title,message:document.getElementById('settings-message').textContent,roots:fileRoots})").catch(reason=>({error:reason.message}));
+      throw new Error(`${error.message}\n${JSON.stringify(state)}\n${desktop.logs()}`, {cause:error});
+    }
+    assert.equal(await readFile(path.join(desktop.settings.workspaceRoot, "旧目录", "说明.txt"), "utf8"), "隔离测试文件");
+    const preview = await client.evaluate("fetch('/api/files/preview?root=workspace&path='+encodeURIComponent('本地.txt'),{headers:sessionHeaders()}).then(async r=>({status:r.status,...await r.json()}))");
+    assert.equal(preview.status, 200, JSON.stringify(preview));
+    assert.match(JSON.stringify(preview), /D05本地资料42/);
+    await client.evaluate(`(() => { document.getElementById('setting-department-root').value=${JSON.stringify(department)}; document.getElementById('setting-department-enabled').checked=true; document.querySelector('[data-action=save-general-settings]').click(); return true; })()`);
+    try { await waitFor(() => client.evaluate("fileRoots.some(root=>root.id==='department' && root.available)"), { timeoutMs: 12000, label: "D05 company source explicitly enabled" }); }
+    catch(error) { throw new Error(`${error.message}\n${JSON.stringify(await client.evaluate("({replies:window.__d05SettingsReplies,settings:settingsState.settings,roots:fileRoots,message:document.getElementById('settings-message').textContent})"))}\n${desktop.logs()}`,{cause:error}); }
+    // Direct editor cannot gain write access to the read-only department root.
+    const denied = await client.evaluate("fetch('/api/files/content',{method:'PUT',headers:{...sessionHeaders(),'Content-Type':'application/json'},body:JSON.stringify({root:'department',path:'原资料.txt',expectedRevision:'fixture',encoding:'utf-8',text:'不应覆盖'})}).then(async r=>({status:r.status,...await r.json()}))");
+    assert.equal(denied.status, 400, JSON.stringify(denied));
+    assert.equal(await readFile(path.join(department, "原资料.txt"), "utf8"), "部门原文");
+    await client.evaluate("document.getElementById('setting-department-enabled').checked=false; document.querySelector('[data-action=save-general-settings]').click(); true");
+    await waitFor(() => client.evaluate("settingsState.settings.departmentEnabled===false && fileRoots.some(root=>root.id==='department' && !root.available)"), { timeoutMs: 12000, label: "D05 disabled source" });
+    await desktop.stop();
+    await rename(nextOutput, `${nextOutput}-moved`);
+    client = await desktop.start();
+    await waitFor(() => client.evaluate("activeSettingsDomain==='profiles' && document.getElementById('settings-modal').classList.contains('visible') && document.getElementById('provider-model').value==='fixture-model'"), { timeoutMs: 8000, label: "D05 restarted settings ready" });
+    await client.evaluate("openSettings().then(()=>true)");
+    await waitFor(() => client.evaluate("Boolean(settingsState?.revision)"), { timeoutMs: 8000, label: "D05 settings after restart" });
+    assert.equal(await client.evaluate("document.getElementById('setting-output-dir').value"), nextOutput);
+    assert.equal(await client.evaluate("document.getElementById('setting-department-root').value"), department);
+    assert.equal(await client.evaluate("document.getElementById('setting-department-enabled').checked"), false);
+    await client.evaluate("ensureFileRoots(true).then(()=>true)");
+    assert.equal(await client.evaluate("fileRoots.find(root=>root.id==='output').available"), false);
+    await client.evaluate(`document.getElementById('setting-output-dir').value=${JSON.stringify(`${nextOutput}-moved`)}; document.querySelector('[data-action=save-general-settings]').click(); true`);
+    await waitFor(() => client.evaluate("fileRoots.some(root=>root.id==='output' && root.available)"), { timeoutMs: 12000, label: "D05 reselected deleted output" });
+    assert.doesNotMatch(desktop.logs(), /"failure":"unexpected-exit"|EPIPE/);
+  } finally { await desktop.close(); }
+});
+
+test("D05 real Electron stays usable with an unavailable network source and a read-only local directory", { timeout: 120_000, skip: process.platform !== "win32" }, async () => {
+  const desktop = await fixtureDesktop({ departmentEnabled: true, departmentDataRoot: "\\\\127.0.0.1\\rainydays-d05-absent-share" });
+  const directory = path.resolve(desktop.settings.workspaceRoot, "只读 目录");
+  assert(directory.startsWith(path.resolve(desktop.root) + path.sep));
+  const icacls = path.join(process.env.SystemRoot, "System32", "icacls.exe");
+  const whoami = path.join(process.env.SystemRoot, "System32", "whoami.exe");
+  const sid = execFileSync(whoami, ["/user", "/fo", "csv", "/nh"], { windowsHide: true, encoding: "utf8" }).match(/S-1-[\d-]+/)[0];
+  let denied = false;
+  try {
+    await mkdir(directory);
+    await writeFile(path.join(directory, "说明.txt"), "只读目录中的原文");
+    execFileSync(icacls, [directory, "/deny", `*${sid}:(OI)(CI)(WD,AD)`], { windowsHide: true, stdio: "pipe" }); denied = true;
+    const started = Date.now();
+    const client = await desktop.start();
+    console.log(`[D05] unavailable loopback SMB source: workbench ready in ${Date.now()-started}ms`);
+    await client.evaluate("toggleFileViewer(true).then(()=>true)");
+    assert.equal(await client.evaluate("fileRoots.find(root=>root.id==='department').available"), false);
+    assert.equal(await client.evaluate("fileRoots.find(root=>root.id==='workspace').available && fileRoots.find(root=>root.id==='output').available"), true);
+    await client.evaluate(`previewFile('只读 目录/说明.txt',1,${JSON.stringify(path.join(directory, "说明.txt"))},'workspace').then(()=>true)`);
+    assert.match(await client.evaluate("document.getElementById('file-preview-content').textContent"), /只读目录中的原文/);
+    await client.evaluate("(() => { editSelectedFile(); const editor=document.querySelector('.file-editor'); editor.value='不能覆盖'; editor.dispatchEvent(new Event('input',{bubbles:true})); return true; })()");
+    await client.evaluate("saveSelectedFile().then(()=>true)");
+    assert.match(await client.evaluate("document.getElementById('file-preview-meta').textContent"), /保存失败.*检查读写权限/);
+    assert.equal(await readFile(path.join(directory, "说明.txt"), "utf8"), "只读目录中的原文");
+  } finally {
+    if (denied) execFileSync(icacls, [directory, "/remove:d", `*${sid}`], { windowsHide: true, stdio: "pipe" });
+    await desktop.close();
+  }
 });

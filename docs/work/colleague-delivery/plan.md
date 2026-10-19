@@ -12,7 +12,7 @@ Status: approved
 | [D02 认证一个可靠模型配置](tickets/02-model-contract.md) | 无 | 本地协议已验证；真实参考配置尚待可用额度与具体授权。 | blocked |
 | [D03 完整请求预算与长对话取回](tickets/03-context-and-retrieval.md) | D02 | 用小上下文配置和动态发现工具强制触发超限，发送前即可处理，不能依靠服务端拒绝。 | ready |
 | [D04 任务完成、停止与中断一致](tickets/04-run-stop-and-recovery.md) | D01、D02本地工程 | 本地状态/取消反馈、结算和成果中断恢复已验证。 | verified |
-| [D05 资料与成果目录可以独立使用](tickets/05-workspace-ux.md) | D01 | 无 Z 盘/无部门盘的新用户能完成本地文件读取和新建文档。 | ready |
+| [D05 资料与成果目录可以独立使用](tickets/05-workspace-ux.md) | D01 | 无 Z 盘/无部门盘的新用户能完成本地文件读取和新建文档。 | verified |
 | [D06 文件回答完整且能定位依据](tickets/06-file-evidence.md) | D03、D05 | F01–F05 的确定性解析和定位部分通过；关键中段可取回。 | ready |
 | [D07 完成五项真实研究验收](tickets/07-research-live.md) | D02、D03、D05 | 五项真实研究全部满足既有人工预期，失败来源不被伪装已读。 | ready |
 | [D08 可编辑成果达到交付质量](tickets/08-document-quality.md) | D06 | O01–O04 的内容和格式检查通过；至少在试用者实际使用的 WPS 或 Microsoft Office 中打开并编辑。 | ready |
