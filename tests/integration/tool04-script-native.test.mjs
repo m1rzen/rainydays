@@ -57,8 +57,8 @@ const [
 let authority;
 let rootContext;
 
-async function approvedScript(args, signal) {
-  const inspected = tools.inspectToolCall(rootContext, "script", args);
+async function approvedInvocation(name, args, signal) {
+  const inspected = tools.inspectToolCall(rootContext, name, args);
   const challenge = tools.capabilityBroker.createApprovalChallenge(rootContext, inspected);
   const grant = tools.capabilityBroker.resolveApprovalChallenge({
     challengeId: challenge.challengeId,
@@ -72,6 +72,7 @@ async function approvedScript(args, signal) {
   try { return await tools.executeInspectedTool(grant, inspected, null, signal); }
   finally { tools.capabilityBroker.finishContext(grant); }
 }
+const approvedScript = (args, signal) => approvedInvocation("script", args, signal);
 
 test.before(async () => {
   await config.initializeConfig();
@@ -79,7 +80,7 @@ test.before(async () => {
     name: "tool04-native",
     displayName: "TOOL-04 Native",
     description: "isolated script runtime fixture",
-    tools: ["script"],
+    tools: ["script", "execute_command"],
     env: { WORKSPACE_ROOT: workspace },
     allowedRoots: [workspace],
     networkPolicy: { mode: "unrestricted" },
@@ -112,6 +113,13 @@ test.after(async () => {
   await executionRuntime.shutdownExecutionRuntime().catch(() => undefined);
   dbModule.closeDb();
   await fs.rm(fixture, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+});
+
+test("A03 real E1 captures an external runtime's actual version output", { timeout: 45_000 }, async () => {
+  const executable = path.join(workspace, "node-cli.exe");
+  await fs.copyFile(process.execPath, executable);
+  const output = await approvedInvocation("execute_command", { command: `call "${executable}" --version` });
+  assert(output.includes(process.version), `exit success without runtime stdout is insufficient: ${output}`);
 });
 
 test("TOOL-04 real E3 runs Node ESM JSON/regex with explicit cwd and lux bridge", { timeout: 60_000 }, async () => {

@@ -36,7 +36,7 @@
 
 ## 开发中但未计为产品完成
 
-- A03：E3已能在原隔离内导入真实项目相对模块，先报项目断言、改依赖后通过；原cwd/根、junction/hardlink/外部读取负向4项与真实取消1项保持，产品74+UI15通过。Node解析选项修复未扩大ACL/read范围；E1/Python外部命令、编码、长终端和普通入口仍在继续，整票in-progress。[证据](work/general-agent/tickets/03-cli-sessions.md)
+- A03：E3相对模块已通过真实断言/修正及原范围/取消负向；E1外部命令exit0却丢stdout已修复，版本与原AppContainer/Job/网络/数据边界1+1通过，产品74+UI15保持。默认Node测试进程隔离、Python读取、运行时产品接入、编码、长终端和普通入口继续；整票in-progress，不把临时SDK复制当已交付。[证据](work/general-agent/tickets/03-cli-sessions.md)
 
 - D13：SQL物化结果遍历的808次额外文件检查已消除，15项数据库/审计/恢复负向保持；R2完整Electron预览与另存回归1/1通过。修复staging缺vendor；43新增/2过期已按实际边界分类，只登记3项核实调用、移除2项过期，40处仍被原gate拒绝。移除前置方案遭自动审批拒绝，已撤回且隔离未执行产物9c4ee25f908c。两套干净Windows、当前安装/凭据/恢复未验收；无有效新候选。[证据](work/colleague-delivery/tickets/13-installer.md)
 

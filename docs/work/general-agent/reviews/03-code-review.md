@@ -9,3 +9,11 @@ Standards：只增加两个Node解析选项，未改协议/宿主鉴权、JS rea
 Spec：新增相对依赖真实导入先遇到项目断言错误，改代码后检查通过；与A01的祖先EPERM有明确red/green。内联ESM、require和范围负向共4/4通过。只解决E3模块加载，E1外部Node/Python、编码、长终端、默认助手接入尚未完成，不能标A03 verified。收尾继续原取消用例和产品检查。
 
 验证闭合：原D04真实native取消回归1/1（1.412秒，5秒内停止写入）保持；check:product类型/lint、74/74与UI/IPC15/15通过。源码构建0.1.0+local.ea857b6096fc；E3子切片已验证，整票继续。
+
+## E1后代进程标准输出切片
+
+固定范围b07cf7d至本轮工作树的E1创建console标志与版本回归、临时区分原型；Standards/Spec顺序检查，无委派。
+
+Standards：只对E1改用CREATE_NO_WINDOW，E3与持久PTY方式保持；原显式标准句柄列表、悬停/Job/令牌检查和ACL不变。真实E1基础负向仍验证外部文件、ambient env和实际loopback网络请求拒绝，没有无隔离回退。探针persona unrestricted仅用于通过原execute_command网络risk声明，native仍network:deny；deny baseline的CAPABILITY_RISK_DENIED保留，未把这条路径认证为可用。
+
+Spec：版本命令exit0而stdout缺失有独立red；修改后实际v24.14.1出现，不能用宿主SEC03_EVIDENCE代替用户输出。临时Node脚本真实断言/修正标记可核对；Python失败与默认Node test runner超时保持明示，原型复制不作为生产缓存实现。build原命令通过，E1边界1/1、版本1/1及完整产品74+UI15通过；源码构建0.1.0+local.ae6f013acc5e。本子切片已验证，A03整票继续。

@@ -65,3 +65,14 @@ E3真实模块子切片已实现、按[审查](../reviews/03-code-review.md)分�
 
 没有数据库迁移、付费调用或用户环境变更，D13 gate保持。回退本切片仅移除固定解析参数与对应回归，不回退用户项目。切片终点为`fix: load scoped project modules in isolated Node scripts`提交。后续继续运行时租约/依赖与真实CLI，不用E3子切片代替整票。
 
+### E1标准输出切片
+
+起点b07cf7d。原生E1 detached cmd启动外部runtime可exit0但stdout消失，独立版本用例先red；改为CREATE_NO_WINDOW后实际版本输出通过。E3/PTY、句柄列表、AppContainer/Job/ACL及生产网络策略保持。
+
+- `node --test --test-name-pattern 'A03 real E1 captures' tests/integration/tool04-script-native.test.mjs`：red→green，1/1、2.006秒。
+- `node --test --test-name-pattern 'native E1 uses real AppContainer/Job' tests/integration/sec03-native-host.test.mjs`：1/1，2.845秒；外部文件、ambient env、真实网络拒绝保持。
+- `npm run build`和`npm run check:product`：当前native/源码构建0.1.0+local.ae6f013acc5e，类型/lint、74/74与UI/IPC15/15通过。
+- `node docs/work/general-agent/prototypes/a03-runtime-probe.mjs`：仅区分实验；deny在native前CAPABILITY_RISK_DENIED，unrestricted persona下native仍deny网络。版本exit0输出真实；Node直接脚本及显式--test-isolation=none可断言失败后修正通过，默认--test超时、Python仍失败。不能标完整CLI已通过；细节见诊断，不部署原型的SDK复制方式。
+
+子切片按审查已验证；终点为`fix: capture external CLI output without detached consoles`提交。后续继续现有文件句柄兼容、运行时产品接入、编码、终端和普通会话。
+
