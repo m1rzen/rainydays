@@ -18,6 +18,8 @@ import { isRunCancellation, throwIfCancelled } from "./run-cancellation.js";
 import { insertMessage, getMessagesBySession, withTransaction } from "./db.js";
 import { bindMessageAttachments, getMessageAttachmentMap } from "./attachment-store.js";
 import { messageAttachmentTokenText } from "./attachment.js";
+import { ContextBudgetExceededError } from "./request-budget.js";
+export { ContextBudgetExceededError } from "./request-budget.js";
 
 // --- 常量 ---
 
@@ -52,15 +54,6 @@ function totalTokens(messages: Message[]): number {
 }
 
 /** 近期资料不能在预算内完整提供时，让调用方明确告知用户。 */
-export class ContextBudgetExceededError extends Error {
-  readonly code = "CONTEXT_BUDGET_EXCEEDED";
-
-  constructor() {
-    super("当前资料超过上下文容量，尚未继续生成回答。请在新会话中缩小读取范围或分段读取；原始会话记录仍保留。");
-    this.name = "ContextBudgetExceededError";
-  }
-}
-
 function assertContextBudget(messages: Message[]): void {
   if (totalTokens(messages) > MAX_CONTEXT_TOKENS) throw new ContextBudgetExceededError();
 }

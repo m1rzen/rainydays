@@ -11,8 +11,9 @@ import { pathPolicy } from "./path-runtime.js";
 import type { PathAuditIdentity } from "./path-policy.js";
 import { CONFIG_PATH, DEFAULT_WORKSPACE_DIR, USER_DATA_DIR } from "./runtime-paths.js";
 import { cloneSettingsDomains, defaultSettingsDomains, parseSettingsDomains, publicSettingsDomains, settingsDomainManifest, type SettingsDomainId, type SettingsDomains } from "./settings-schema.js";
+import { resolveRequestBudget, type RequestBudget } from "./request-budget.js";
 
-export interface ProviderProfile {
+export interface ProviderProfile extends RequestBudget {
   model: string;
   apiKey: string;
   credentialRef?: string;
@@ -42,7 +43,7 @@ export interface Config {
   domains: SettingsDomains;
 }
 
-export interface PublicProviderProfile {
+export interface PublicProviderProfile extends RequestBudget {
   name: string;
   model: string;
   baseURL: string;
@@ -83,6 +84,7 @@ function defaultSettings(): AppSettings {
 
 function normalizeProfile(value: Partial<ProviderProfile> | undefined): ProviderProfile {
   const profile: ProviderProfile = {
+    ...resolveRequestBudget(value),
     model: typeof value?.model === "string" ? value.model : "deepseek-chat",
     apiKey: typeof value?.apiKey === "string" ? value.apiKey : "",
     baseURL: typeof value?.baseURL === "string" ? value.baseURL : "https://api.deepseek.com",
@@ -179,7 +181,7 @@ export function validatePersistedConfigBytes(bytes: Buffer, options: Readonly<{ 
     validateProfileName(name);
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Provider profile Schema 无效");
     const profile = value as Record<string, unknown>;
-    const legacyAllowed = new Set(["model", "credentialRef", "baseURL", "providerType", ...(options.allowLegacyPlaintext ? ["apiKey"] : [])]);
+    const legacyAllowed = new Set(["model", "credentialRef", "baseURL", "providerType", "contextWindowTokens", "outputReserveTokens", ...(options.allowLegacyPlaintext ? ["apiKey"] : [])]);
     const currentAllowed = new Set([...legacyAllowed, "codexTransport", "proxy", "stripImages", "knowledgeMaxCount", "personaProfileBindings"]);
     const allowed = legacy ? legacyAllowed : currentAllowed;
     const invalidLegacy = legacy && profile.providerType !== undefined && typeof profile.providerType !== "string";
@@ -193,6 +195,7 @@ export function validatePersistedConfigBytes(bytes: Buffer, options: Readonly<{ 
       || (profile.apiKey !== undefined && (!options.allowLegacyPlaintext || !legacy || typeof profile.apiKey !== "string" || Boolean(profile.credentialRef)))) {
       throw new Error("Provider profile Schema 无效");
     }
+    resolveRequestBudget(profile);
     validateBaseURL(profile.baseURL);
     if (!legacy) {
       validateProviderType(profile.providerType);
@@ -317,6 +320,7 @@ async function persistConfig(value: Config): Promise<void> {
     revision: value.revision,
     defaultProfile: value.defaultProfile,
     profiles: Object.fromEntries(Object.entries(value.profiles).map(([name, profile]) => [name, {
+      ...resolveRequestBudget(profile),
       model: profile.model,
       credentialRef: profile.credentialRef,
       baseURL: profile.baseURL,
@@ -358,6 +362,7 @@ export function listProfiles(): PublicProviderProfile[] {
   const cfg = loadConfig();
   const current = getCurrentProfileName();
   return Object.entries(cfg.profiles).map(([name, profile]) => ({
+    ...resolveRequestBudget(profile),
     name,
     model: profile.model,
     baseURL: profile.baseURL,
@@ -443,7 +448,7 @@ function validatePersonaProfileBindings(value: unknown): asserts value is Record
 
 export async function upsertProfile(
   name: string,
-  input: { model?: string; baseURL?: string; apiKey?: string; providerType?: string; codexTransport?: string; proxy?: string; stripImages?: boolean; knowledgeMaxCount?: number; personaProfileBindings?: Record<string, string> },
+  input: { model?: string; baseURL?: string; apiKey?: string; providerType?: string; codexTransport?: string; proxy?: string; stripImages?: boolean; knowledgeMaxCount?: number; personaProfileBindings?: Record<string, string>; contextWindowTokens?: number; outputReserveTokens?: number },
   deferCredentialCleanup = false
 ): Promise<void> {
   validateProfileName(name);
@@ -468,6 +473,7 @@ export async function upsertProfile(
   validatePersonaProfileBindings(personaProfileBindings);
 
   cfg.profiles[name] = {
+    ...resolveRequestBudget({ contextWindowTokens: input.contextWindowTokens !== undefined ? input.contextWindowTokens : existing?.contextWindowTokens, outputReserveTokens: input.outputReserveTokens !== undefined ? input.outputReserveTokens : existing?.outputReserveTokens }),
     model,
     baseURL: baseURL.replace(/\/$/, ""),
     apiKey: typeof input.apiKey === "string" && input.apiKey.length > 0
@@ -615,7 +621,7 @@ export interface SettingsExportBundle {
   schemaVersion: 1;
   kind: "rainydays-settings";
   defaultProfile: string;
-  profiles: Record<string, Pick<ProviderProfile, "model" | "baseURL" | "providerType" | "codexTransport" | "proxy" | "stripImages" | "knowledgeMaxCount" | "personaProfileBindings">>;
+  profiles: Record<string, Pick<ProviderProfile, "model" | "baseURL" | "providerType" | "codexTransport" | "proxy" | "stripImages" | "knowledgeMaxCount" | "personaProfileBindings" | "contextWindowTokens" | "outputReserveTokens">>;
   settings: AppSettings;
   domains: SettingsDomains;
 }
@@ -630,6 +636,7 @@ export function exportSettings(): SettingsExportBundle {
     kind: "rainydays-settings",
     defaultProfile: snapshot.defaultProfile,
     profiles: Object.fromEntries(Object.entries(snapshot.profiles).map(([name, profile]) => [name, {
+      ...resolveRequestBudget(profile),
       model: profile.model, baseURL: profile.baseURL, providerType: profile.providerType || "openai-compatible", codexTransport: profile.codexTransport,
       proxy: profile.proxy, stripImages: profile.stripImages, knowledgeMaxCount: profile.knowledgeMaxCount, personaProfileBindings: { ...profile.personaProfileBindings },
     }])),
@@ -653,7 +660,9 @@ export function prepareSettingsImport(value: unknown, base: Config = getConfigSn
     validateProfileName(name);
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new TypeError("Imported Provider 无效");
     const profile = raw as Record<string, unknown>;
-    if (Object.keys(profile).sort().join("\0") !== ["model", "baseURL", "providerType", "codexTransport", "proxy", "stripImages", "knowledgeMaxCount", "personaProfileBindings"].sort().join("\0")
+    const requiredFields = ["model", "baseURL", "providerType", "codexTransport", "proxy", "stripImages", "knowledgeMaxCount", "personaProfileBindings"];
+    const allowedFields = new Set([...requiredFields, "contextWindowTokens", "outputReserveTokens"]);
+    if (Object.keys(profile).some(key => !allowedFields.has(key)) || requiredFields.some(key => !Object.hasOwn(profile, key))
       || typeof profile.model !== "string" || !profile.model || typeof profile.baseURL !== "string" || typeof profile.providerType !== "string"
       || !["auto", "websocket", "http"].includes(String(profile.codexTransport)) || typeof profile.proxy !== "string" || typeof profile.stripImages !== "boolean"
       || !Number.isSafeInteger(profile.knowledgeMaxCount) || !profile.personaProfileBindings || typeof profile.personaProfileBindings !== "object" || Array.isArray(profile.personaProfileBindings)) {
@@ -665,6 +674,7 @@ export function prepareSettingsImport(value: unknown, base: Config = getConfigSn
     validateProxy(profile.proxy);
     validatePersonaProfileBindings(profile.personaProfileBindings);
     profiles[name] = {
+      ...resolveRequestBudget(profile),
       model: profile.model, baseURL: profile.baseURL.replace(/\/$/u, ""), providerType: profile.providerType,
       codexTransport: profile.codexTransport as "auto" | "websocket" | "http", proxy: profile.proxy, stripImages: profile.stripImages,
       knowledgeMaxCount: Number(profile.knowledgeMaxCount), personaProfileBindings: { ...(profile.personaProfileBindings as Record<string, string>) },

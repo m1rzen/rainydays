@@ -18,6 +18,8 @@
 
 D02本地协议研究（2026-10-18）：已读已安装OpenAI SDK4.104.0的chat/completions类型和streaming实现。finish_reason区分stop/tool_calls与length/content_filter；stream_options.include_usage可在最终空choices块携带usage，断流可缺失。沿用该版本和Chat Completions，不新增API。provider兼容性、实际模型版本、费用仍未知，留真实认证；fixture只验证应用契约。
 
+D03预算资料（2026-10-20）：已核对[Kimi官方模型说明](https://www.kimi.com/en/help/kimi-code/models)与[CLI配置说明](https://www.kimi.com/code/docs/en/kimi-code-cli/configuration/config-files)。模型别名可原地升级，模型页面写最高1M而示例配置仍保留262144；不能凭kimi-for-coding名称替用户认定实际可用窗口。沿用现有SDK的max_tokens与usage类型，不迁移协议；按profile设置保守工作预算，真实容量和估算误差另验。官方资料查询不调用用户模型或密钥。
+
 ## 演示修复（2026-10-16）
 
 当前 Node 的 better-sqlite3 ABI 137，Electron RunAsNode ABI 148；演示入口直接启动 Electron 会丢失 npm_node_execpath。复用现有 npm exec 注入开发 Node，保持既有 IPC 和用户目录行为。

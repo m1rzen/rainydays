@@ -233,6 +233,8 @@ export interface LLMConfig {
   baseURL: string;
   model: string;
   providerType?: string;
+  contextWindowTokens?: number;
+  outputReserveTokens?: number;
 }
 
 export type ToolPipelineStage = "schema" | "capability" | "loop" | "approval" | "policy" | "execute" | "output" | "audit";

@@ -76,6 +76,8 @@ test("SEC-02 config coverage recovery exercises normalization and profile edge c
     settings: {},
   });
   assert.deepEqual(normalized.profiles.broken, {
+    contextWindowTokens: 32768,
+    outputReserveTokens: 4096,
     model: "deepseek-chat",
     apiKey: "",
     baseURL: "https://api.deepseek.com",
@@ -248,6 +250,33 @@ test("DS-09 credential rollback preserves the original reference identity", asyn
   assert.equal(Object.hasOwn(vault.entries, oldReference), true);
   assert.equal(Object.hasOwn(vault.entries, stagedReference), false);
   await config.deleteProfile("rollback");
+});
+
+test("D03 per-profile budgets persist and import old bundles without changing credentials", async () => {
+  await config.upsertProfile("budget", { model: "fixture", baseURL: "https://provider.invalid", contextWindowTokens: 2048, outputReserveTokens: 256 });
+  const profile = config.listProfiles().find(item => item.name === "budget");
+  assert.equal(profile.contextWindowTokens, 2048); assert.equal(profile.outputReserveTokens, 256);
+  const disk = JSON.parse(await fs.readFile(path.join(fixture, "config.json"), "utf8"));
+  assert.equal(disk.profiles.budget.contextWindowTokens, 2048);
+  assert.equal(disk.profiles.budget.outputReserveTokens, 256);
+  const bundle = config.exportSettings();
+  // An earlier scenario added a loopback provider under this explicit fixture mode.
+  const priorLoopback = process.env.RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER;
+  try {
+    process.env.RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER = "1";
+    const imported = config.prepareSettingsImport(bundle);
+    assert.equal(imported.profiles.budget.contextWindowTokens, 2048);
+    delete bundle.profiles.budget.contextWindowTokens; delete bundle.profiles.budget.outputReserveTokens;
+    const legacy = config.prepareSettingsImport(bundle);
+    assert.equal(legacy.profiles.budget.contextWindowTokens, 32768);
+    assert.equal(legacy.profiles.budget.outputReserveTokens, 4096);
+  } finally {
+    if (priorLoopback === undefined) delete process.env.RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER;
+    else process.env.RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER = priorLoopback;
+  }
+  await assert.rejects(config.upsertProfile("budget", { contextWindowTokens: 1024, outputReserveTokens: 1024 }), /回复预留/);
+  assert.equal(config.getProviderProfile("budget").contextWindowTokens, 2048);
+  await config.deleteProfile("budget");
 });
 
 test("DS-09 credential vault bounds writes and reconciles its persistent cleanup ledger", async () => {

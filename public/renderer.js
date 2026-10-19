@@ -2084,6 +2084,8 @@
       document.getElementById("provider-name").value = profile.name;
       document.getElementById("provider-name").disabled = true;
       document.getElementById("provider-model").value = profile.model || "";
+      document.getElementById("provider-context-window").value = profile.contextWindowTokens ?? 32768;
+      document.getElementById("provider-output-reserve").value = profile.outputReserveTokens ?? 4096;
       document.getElementById("provider-base-url").value = profile.baseURL || "";
       document.getElementById("provider-type").value = profile.providerType || "openai-compatible";
       document.getElementById("provider-codex-transport").value = profile.codexTransport || "auto";
@@ -2120,6 +2122,8 @@
       document.getElementById("provider-name").disabled = false;
       document.getElementById("provider-name").value = "";
       document.getElementById("provider-model").value = "";
+      document.getElementById("provider-context-window").value = 32768;
+      document.getElementById("provider-output-reserve").value = 4096;
       document.getElementById("provider-base-url").value = "";
       document.getElementById("provider-type").value = "openai-compatible";
       document.getElementById("provider-codex-transport").value = "auto";
@@ -2281,6 +2285,8 @@
           proxy: document.getElementById("provider-proxy").value.trim(),
           stripImages: document.getElementById("provider-strip-images").checked,
           knowledgeMaxCount: Number(document.getElementById("provider-knowledge-max").value),
+          contextWindowTokens: Number(document.getElementById("provider-context-window").value),
+          outputReserveTokens: Number(document.getElementById("provider-output-reserve").value),
           personaProfileBindings: JSON.parse(document.getElementById("provider-persona-bindings").value || "{}"),
           apiKey: document.getElementById("provider-api-key").value.trim(),
         };

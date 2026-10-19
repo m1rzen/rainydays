@@ -197,6 +197,8 @@ function createLlmClient(profileName = ""): LLMClient {
     baseURL: profile.baseURL,
     model: profile.model,
     providerType: profile.providerType || "openai-compatible",
+    contextWindowTokens: profile.contextWindowTokens,
+    outputReserveTokens: profile.outputReserveTokens,
   });
 }
 
@@ -2687,6 +2689,8 @@ app.put("/api/settings/providers/:name", async (req, res) => {
         stripImages: req.body?.stripImages,
         knowledgeMaxCount: req.body?.knowledgeMaxCount,
         personaProfileBindings: req.body?.personaProfileBindings,
+        contextWindowTokens: req.body?.contextWindowTokens,
+        outputReserveTokens: req.body?.outputReserveTokens,
       }, true);
     }, rebuild);
     res.json({ success: true, settings: getPublicConfig() });
@@ -2863,6 +2867,7 @@ app.get("/api/status", (_req, res) => {
     profile: getCurrentProfileName(),
     configured: Boolean(profile.apiKey),
     paths: getAppSettings(),
+    requestBudget: llm.getBudgetReport(),
     tokens: runtime?.memory.getTokenEstimate() ?? 0,
     messageCount: runtime?.memory.getMessageCount() ?? 0,
     hasSummary: runtime?.memory.hasSummary() ?? false,

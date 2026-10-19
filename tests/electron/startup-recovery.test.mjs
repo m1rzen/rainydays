@@ -222,6 +222,19 @@ test("D05 real Electron saves local scope, keeps company source optional and rec
   } finally { await desktop.close(); }
 });
 
+test("D03 real Electron saves per-model request limits and restores them after restart", { timeout: 120_000 }, async () => {
+  const desktop = await fixtureDesktop();
+  try {
+    let client = await desktop.start();
+    await waitFor(() => client.evaluate("activeSettingsDomain==='profiles' && document.getElementById('provider-context-window').value==='32768'"), { timeoutMs: 8000, label: "D03 budget form" });
+    await client.evaluate("(() => { document.getElementById('provider-context-window').value='2048'; document.getElementById('provider-output-reserve').value='256'; document.getElementById('provider-output-reserve').dispatchEvent(new Event('input',{bubbles:true})); return saveProvider(); })()");
+    assert.equal(await client.evaluate("settingsState.profiles.find(profile=>profile.name==='default').contextWindowTokens"), 2048);
+    await desktop.stop(); client = await desktop.start();
+    await waitFor(() => client.evaluate("activeSettingsDomain==='profiles' && document.getElementById('provider-context-window').value==='2048'"), { timeoutMs: 8000, label: "D03 restored budget form" });
+    assert.equal(await client.evaluate("document.getElementById('provider-output-reserve').value"), "256");
+  } finally { await desktop.close(); }
+});
+
 test("D05 real Electron stays usable with an unavailable network source and a read-only local directory", { timeout: 120_000, skip: process.platform !== "win32" }, async () => {
   const desktop = await fixtureDesktop({ departmentEnabled: true, departmentDataRoot: "\\\\127.0.0.1\\rainydays-d05-absent-share" });
   const directory = path.resolve(desktop.settings.workspaceRoot, "只读 目录");

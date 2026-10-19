@@ -6,7 +6,7 @@
 
 - 文档清理已完成：排期只由D+A总路线维护，旧多轮路线与差距表已归档；默认rg过滤历史规范/报告与本地产物。旧R证据按需查询，见[历史索引](archive/README.md)。
 
-- 当前阶段：implementation / D01、A01、D04、D05 verified；D02本地工程已验证，真实模型认证blocked。2026-10-18用户已整体批准D+A路线并授权连续研发；Prism、钉钉排除。
+- 当前阶段：implementation / D01、A01、D04、D05 verified；D03预算切片已验证、历史/压缩继续；D02真实模型认证和D13构建/机器blocked。2026-10-18用户已整体批准D+A路线并授权连续研发；Prism、钉钉排除。
 - 入口：[Codex研发手册](agents/README.md)、[通用规格](specs/general-agent.md)、[D+A总任务图](work/general-agent/plan.md)。31项整体获批，D01已验证，A01调查已完成；D18为中间里程碑，完整出口A13。
 - 下一项：D03完整请求预算与长对话取回；D13保留审计与干净机器阻塞。D03/D04的D02本地协议依赖已满足，真实模型认证保留阻塞。既有default五项真实研究授权不扩大，模型阻塞不暂停独立工程。
 - 新确认差距：CLI/终端存在但默认助手未开放完整开发能力；MCP只有配置与关闭标志，未接客户端；浏览器有实现但缺完整真实验收；原生Windows工具和截图到模型的完整循环未形成可交付能力。详见[能力手册](agents/general-agent-capabilities.md)。
@@ -31,6 +31,8 @@
 - 演示修复：两个新增入口使用正确开发 Node，原生启动 2/2；兼容 SQLite WAL 重置后的旧尾部，原损坏拒绝矩阵保持通过。实际找回 2 会话、1 消息、3 附件，当前新记录保持不变，恢复前快照保留；展示说明与任务授权一致。应用已正常重试启动。
 
 ## 开发中但未计为产品完成
+
+- D03：最终模型请求已计算系统/历史/附件/工具schemas与输出预留；profile可配置、重启保留，记录估算与真实usage偏差，并发配对正确。预算/协议25、配置9、真实设置Electron1、产品55+UI15通过。历史取回、压缩边界和20轮恢复仍在实施，整票未完成。[证据](work/colleague-delivery/tickets/03-context-and-retrieval.md)
 
 - D13：SQL物化结果遍历的808次额外文件检查已消除，15项数据库/审计/恢复负向保持；R2完整Electron预览与另存回归1/1通过。修复staging缺vendor，但原审计gate仍报未绑定调用（43新增/2过期）；移除前置的方案遭自动审批拒绝，已撤回且隔离未执行产物9c4ee25f908c。两套干净Windows、当前安装/凭据/恢复未验收；无有效新候选。独立工程继续。[证据](work/colleague-delivery/tickets/13-installer.md)
 

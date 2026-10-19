@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: ready
+Status: in-progress
 
 Spec: [同事版交付规格](../../../specs/colleague-delivery.md)
 
@@ -43,8 +43,19 @@ src/memory.ts、agent.ts、task-tools.ts、attachment-reader.ts；ConversationMe
 
 ## 执行记录
 
-尚未开始。实施时记录批准来源、起点提交、实际变更与偏离计划的理由；真实模型调用需核对已有授权。
+2026-10-20，沿用整套路线授权；起点0ef7f4b。D02本地依赖满足，D13阻塞不影响本票。先处理最终请求预算与按配置调整的公开入口，再处理压缩和原文取回；只使用隔离模型fixture，不扩大既有真实模型授权。
+
+## Test and design seam
+
+通过真实LLMClient→本地HTTP模型接口验证完整投影与工具schemas在发送前受预算约束；通过真实Agent、ConversationMemory与数据库恢复验证压缩/取回。采用profile工作预算与输出预留、最终LLM请求强制检查、Agent在所有动态注入后触发压缩，避免仅检查memory正文的盲点。原始历史保留；摘要失败不得静默删除后继续。规格D03段维护此决定。
 
 ## 审查与验证结果
 
-尚未审查/验证。完成后写具体命令、结果、人工核对、未测项、回退方式和终点提交；全部满足才改为 verified。
+预算子切片已实现并按[审查](../reviews/03-code-review.md)核对；整票仍in-progress，历史取回/压缩尚待完成。
+
+- `node --import tsx --test tests/product/request-budget.test.mjs tests/product/model-contract.test.mjs`：预算/并发4项（最初3项均red）与协议21项通过。低预算时流/非流均在HTTP前拒绝、动态schemas重新核算、输出预留写入请求、实际usage偏差和共享Client并发配对已验证。
+- `node --test tests/contract/config-managed-store.test.mjs`：9/9。profile预算持久化、旧bundle默认、非法预留拒绝，原凭据断言保持。
+- `node --test --test-name-pattern 'D03 real Electron' tests/electron/startup-recovery.test.mjs`：1/1，24.397秒；真实设置保存与重启读回2048/256，无模型调用。
+- `npm run check:product`：typecheck、lint、产品55/55、UI/IPC15/15。未调用真实模型或改日常配置。真实容量和长对话内容质量尚未认证。
+
+本预算切片终点为`feat: enforce configurable budgets on complete model requests`提交；后续继续本票，不将本记录视作完整D03验收。

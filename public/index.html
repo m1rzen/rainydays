@@ -245,6 +245,9 @@
               <div id="provider-key-hint" class="settings-help"></div>
             </div>
             <details class="settings-advanced"><summary>高级连接设置</summary><div class="settings-grid">
+              <label for="provider-context-window">总请求预算（tokens）</label><input id="provider-context-window" type="number" min="512" max="2000000" step="1" class="settings-input" />
+              <label for="provider-output-reserve">回复预留（tokens）</label><input id="provider-output-reserve" type="number" min="16" step="1" class="settings-input" />
+              <div class="settings-help">按服务商确认的模型容量设置，预算包含资料、工具和回复。默认32k是保守工作预算，实际容量仍需认证。</div>
               <label>Provider 类型</label><select id="provider-type" class="settings-select"><option value="openai-compatible">OpenAI compatible</option><option value="openai-compatible-vision">OpenAI compatible vision</option><option value="anthropic" disabled>Anthropic（待接入）</option><option value="gemini" disabled>Gemini（待接入）</option><option value="codex" disabled>Codex（待接入）</option></select>
             </div></details>
             <div class="settings-grid" hidden>

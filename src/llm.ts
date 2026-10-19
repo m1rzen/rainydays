@@ -9,6 +9,7 @@ import type { LLMConfig, Message, MessageAttachment, ScopedNetworkGateway, ToolD
 import { abortableDelay, cancellationError, cancellationFailure, throwIfCancelled } from "./run-cancellation.js";
 import { MAX_DRAFT_ATTACHMENT_BYTES, INLINE_ATTACHMENT_BYTES, isDocumentMime } from "./attachment.js";
 import { beginObservation } from "./observability.js";
+import { ContextBudgetExceededError, estimateProjectedRequestTokens, resolveRequestBudget, type RequestBudget, type RequestBudgetReport } from "./request-budget.js";
 
 /** 最大重试次数 */
 const MAX_RETRIES = 3;
@@ -168,12 +169,32 @@ export class LLMClient {
   private model: string;
   private config: Readonly<LLMConfig>;
   private imageInput: "none" | "data-uri";
+  readonly requestBudget: RequestBudget;
+  private budgetReport: RequestBudgetReport | null = null;
 
   constructor(config: LLMConfig) {
+    this.requestBudget = resolveRequestBudget(config);
     this.config = Object.freeze({ ...config });
     this.client = this.createClient();
     this.model = config.model;
     this.imageInput = config.providerType === "openai-compatible-vision" ? "data-uri" : "none";
+  }
+
+  getBudgetReport(): RequestBudgetReport | null { return this.budgetReport ? { ...this.budgetReport } : null; }
+
+  estimateRequest(messages: Message[], tools?: ToolDefinition[], attachmentSessionId: string | null = null, attachmentResolver: AttachmentResolver | null = null): RequestBudgetReport {
+    return { ...this.requestBudget, estimatedInputTokens: estimateProjectedRequestTokens(projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput), tools) };
+  }
+
+  private checkBudget(messages: unknown, tools?: ToolDefinition[]): RequestBudgetReport {
+    const report = { ...this.requestBudget, estimatedInputTokens: estimateProjectedRequestTokens(messages, tools) };
+    this.budgetReport = report;
+    if (report.estimatedInputTokens + report.outputReserveTokens > report.contextWindowTokens) throw new ContextBudgetExceededError(report);
+    return report;
+  }
+
+  private recordUsage(report: RequestBudgetReport, usage: LLMUsage | undefined): void {
+    this.budgetReport = { ...report, ...(usage ? { actualPromptTokens: usage.prompt_tokens, estimationErrorTokens: report.estimatedInputTokens - usage.prompt_tokens } : {}) };
   }
 
   private createClient(transport?: LLMFetchTransport): OpenAI {
@@ -223,6 +244,7 @@ export class LLMClient {
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.model,
       messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
+      max_tokens: this.requestBudget.outputReserveTokens,
     };
 
     if (tools && tools.length > 0) {
@@ -230,6 +252,7 @@ export class LLMClient {
       params.tool_choice = "auto";
     }
 
+    const budget = this.checkBudget(params.messages, tools);
     let lastError: unknown = null;
     const observation = beginObservation("llm");
 
@@ -256,6 +279,7 @@ export class LLMClient {
         }, choice.finish_reason);
         observation.finish("success", { bytesOut: Buffer.byteLength(result.content, "utf8") });
         const usage = providerUsage(response.usage);
+        this.recordUsage(budget, usage);
         return { ...result, ...(usage ? { usage } : {}) };
       } catch (err) {
         if (signal?.aborted) {
@@ -315,6 +339,7 @@ export class LLMClient {
       messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
       stream: true,
       stream_options: { include_usage: true },
+      max_tokens: this.requestBudget.outputReserveTokens,
     };
 
     if (tools && tools.length > 0) {
@@ -322,6 +347,7 @@ export class LLMClient {
       params.tool_choice = "auto";
     }
 
+    const budget = this.checkBudget(params.messages, tools);
     let lastError: unknown = null;
     const observation = beginObservation("llm");
     let fallbackOutcome: "cancelled" | "error" = "cancelled";
@@ -385,6 +411,7 @@ export class LLMClient {
         }, finishReason);
 
         observation.finish("success", { bytesOut: Buffer.byteLength(fullContent, "utf8") });
+        this.recordUsage(budget, usage);
         yield { type: "result", message: finalMessage, ...(usage ? { usage } : {}) };
         return; // 成功，退出重试循环
 
