@@ -7,6 +7,8 @@ import { routeToSelectedWorker } from "../worker.js";
 import { readAttachmentDocument } from "../attachment-reader.js";
 import { readHistory } from "../history-reader.js";
 import { createHash } from "node:crypto";
+import { documentTextPage, documentWarnings, parsePdfPageRange } from "../document-pagination.js";
+export { parsePdfPageRange } from "../document-pagination.js";
 
 const MAX_DOCUMENT_BYTES = 32 * 1024 * 1024;
 const MAX_TEXT_BYTES = 8 * 1024 * 1024;
@@ -55,24 +57,6 @@ function imageMime(filePath: string, bytes: Buffer): string | null {
   return mime;
 }
 
-export function parsePdfPageRange(value: unknown): readonly number[] | null {
-  if (value === undefined) return null;
-  if (typeof value !== "string" || value.length < 1 || value.length > 256) throw new ToolArgumentsError("pages 必须是 PDF 页码或页码范围");
-  const pages = new Set<number>();
-  for (const token of value.split(",")) {
-    const match = /^\s*(\d+)(?:\s*-\s*(\d+))?\s*$/u.exec(token);
-    if (!match) throw new ToolArgumentsError(`PDF pages 无效: ${value}`);
-    const first = Number(match[1]);
-    const last = Number(match[2] ?? match[1]);
-    if (!Number.isSafeInteger(first) || !Number.isSafeInteger(last) || first < 1 || last < first || last > 100_000) {
-      throw new ToolArgumentsError(`PDF pages 无效: ${value}`);
-    }
-    if (last - first + 1 + pages.size > 100) throw new ToolArgumentsError("单次最多读取 100 个 PDF 页面");
-    for (let pageNumber = first; pageNumber <= last; pageNumber += 1) pages.add(pageNumber);
-  }
-  return Object.freeze([...pages].sort((left, right) => left - right));
-}
-
 function numberedLines(text: string, offsetValue: unknown, limitValue: unknown): string {
   const offset = positiveInteger(offsetValue, 1, "offset")!;
   const limit = positiveInteger(limitValue, null, "limit");
@@ -89,13 +73,13 @@ export const readDef: ToolDefinition = {
   type: "function",
   function: {
     name: "read",
-    description: "读取文本、文档、图片或 PDF。文本按 1-based offset/limit 分页并返回行号；PDF 可用 pages 选择页面。",
+    description: "读取文本、文档、图片或 PDF。代码按原始行；文档与长TXT/MD按提取行分页并保留页/段/单元格依据。PDF（包括附件）可用pages选择原页面。只据实际展示范围回答，读取说明中的缺失/缓存不代表已经核实。",
     parameters: {
       type: "object",
       properties: {
         file_path: { type: "string", description: "绝对路径、相对于 DATA_ROOT 的路径，或当前会话的 attachment:ID。history:列历史索引、history:消息ID取回原文。附件/历史最多12个提取行，按下一页offset继续。" },
         offset: { type: "integer", minimum: 1, description: "起始行（1-based），默认 1。" },
-        limit: { type: "integer", minimum: 1, description: "最多返回的行数；省略则读取全部。" },
+        limit: { type: "integer", minimum: 1, description: "最多返回的行数；文档/附件/长TXT/MD每次最多12个提取行，按下一页offset继续；其他文本省略则读取全部。" },
         pages: { type: "string", description: "PDF 页码范围，如 1-5、3、1-3,8。" },
       },
       required: ["file_path"],
@@ -120,7 +104,8 @@ export const readExec: ToolExecutor = async (args, _env, invocationValue) => {
     if (args.offset !== undefined || args.limit !== undefined || args.pages !== undefined) throw new ToolArgumentsError("图片读取不支持 offset、limit 或 pages");
     return `[Image: ${filePath}]\nMIME: ${mime}\nBytes: ${authorized.bytes.length}\nUse image_helper with the same authorized path for visual analysis.`;
   }
-  const parsed = await parseDocumentIsolated(filePath, authorized.bytes, invocation.resourceOwner, invocation.signal, { pdfPages });
+  const evidenceDocument = [".pdf", ".docx", ".xlsx", ".xls"].includes(extension);
+  const parsed = await parseDocumentIsolated(filePath, authorized.bytes, invocation.resourceOwner, invocation.signal, { pdfPages, includeEvidence: evidenceDocument });
   let text: string;
   if (parsed.success) text = parsed.text;
   else if (parsed.error?.startsWith("不支持的文件格式:")) {
@@ -128,9 +113,11 @@ export const readExec: ToolExecutor = async (args, _env, invocationValue) => {
     catch { throw new ToolArgumentsError(`读取失败: ${parsed.error}`); }
   } else throw new ToolArgumentsError(`读取失败: ${parsed.error ?? "不支持的二进制格式"}`);
   const pageSummary = extension === ".pdf" && parsed.pageCount
-    ? `\nPDF: ${parsed.pageCount} 页；已读取 ${parsed.renderedPages?.join(", ") || "全部页面"}` : "";
+    ? `\nPDF: ${parsed.pageCount} 页；本次解析页面 ${parsed.renderedPages?.join(", ") || "未知"}，展示范围见下方分页` : "";
   const revision = createHash("sha256").update(authorized.bytes).digest("hex");
-  return `文件: ${filePath}${pageSummary}\n版本: ${revision}\n\n${numberedLines(text, args.offset, args.limit)}`;
+  const longText = [".txt", ".md", ".markdown", ".csv", ".log"].includes(extension) && (text.length > 16000 || text.split(/\r?\n/u).some(line => line.length > 500));
+  const page = evidenceDocument || longText ? documentTextPage(text, args.offset as number | undefined, args.limit as number | undefined, parsed.locations) : numberedLines(text, args.offset, args.limit);
+  return `文件: ${filePath}${pageSummary}\n版本: ${revision}${documentWarnings(parsed.warnings)}\n\n${page}`;
 };
 
 export const writeDef: ToolDefinition = {

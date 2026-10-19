@@ -199,7 +199,8 @@ test("文档附件保留原文，模型获得索引，读取工具分段取回�
           allPages.push(page);
         }
         assert.match(allPages.join("\n"), /末尾事实必须读到/);
-        assert.equal(allPages.join("\n").split("正文").length - 1, 12000);
+        const contentLines = allPages.flatMap(value => value.split("\n").filter(line => /^\d+ \| /u.test(line))).join("\n");
+        assert.equal(contentLines.split("正文").length - 1, 12000);
       } else if (name.endsWith("pdf")) assert.match(first, /PDF Page 1/);
       else assert.match(first, /42/);
       await assert.rejects(() => readExec({ file_path: `attachment:${ready.id}` }, {}, { ...invocation, capabilityContext: { sessionId: "another-session" } }), /不存在|does not exist/);

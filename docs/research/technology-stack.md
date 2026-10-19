@@ -50,6 +50,10 @@ Word 参考资料使用当前 docx 安装版本的 ExternalHyperlink/HeadingLeve
 
 独立模型验收需 Windows Chromium Local State 中 OS 保护配置密钥；依据 [Electron 43.1.1 源码](https://raw.githubusercontent.com/electron/electron/v43.1.1/shell/browser/electron_browser_main_parts.cc)，只复制必要字段并在退出后删除。
 
+### D06 文件位置与公式依据（2026-10-20）
+
+本机SheetJS0.20.3的types含cellFormula、cellDates、sheetStubs、encode/decode_cell、format_cell；[官方cell对象](https://docs.sheetjs.com/docs/csf/cell/)区分t/v/w/f/F，日期不携带可靠时区，格式值不等于原始值。[公式说明](https://docs.sheetjs.com/docs/csf/features/formulae/)与当前库均未提供本项目可直接依赖的通用重算能力，读取只能明确缓存/缺失。Mammoth当前raw-text实现对每个paragraph追加两个换行，[官方raw text说明](https://github.com/mwilliamson/mammoth.js#extracting-raw-text)亦说明忽略格式；因此只能给提取段落序号，不能推断物理页。实现只加read证据投影，原预览不重写。
+
 ## R1
 
 - Node 24.14.1；TypeScript 5.7.3；tsx 4.23.0；OpenAI SDK 4.104.0；better-sqlite3 12.11.1。
