@@ -17,3 +17,11 @@ Spec：新增相对依赖真实导入先遇到项目断言错误，改代码后�
 Standards：只对E1改用CREATE_NO_WINDOW，E3与持久PTY方式保持；原显式标准句柄列表、悬停/Job/令牌检查和ACL不变。真实E1基础负向仍验证外部文件、ambient env和实际loopback网络请求拒绝，没有无隔离回退。探针persona unrestricted仅用于通过原execute_command网络risk声明，native仍network:deny；deny baseline的CAPABILITY_RISK_DENIED保留，未把这条路径认证为可用。
 
 Spec：版本命令exit0而stdout缺失有独立red；修改后实际v24.14.1出现，不能用宿主SEC03_EVIDENCE代替用户输出。临时Node脚本真实断言/修正标记可核对；Python失败与默认Node test runner超时保持明示，原型复制不作为生产缓存实现。build原命令通过，E1边界1/1、版本1/1及完整产品74+UI15通过；源码构建0.1.0+local.ae6f013acc5e。本子切片已验证，A03整票继续。
+
+## 已有文件读取与保留句柄切片
+
+固定范围182db0e至当前native保留普通文件access、真实读取/重命名回归及诊断；按Standards、Spec顺序复核，无委派。
+
+Standards：普通文件保留句柄以FILE_READ_DATA替代DELETE，继续READ_CONTROL/WRITE_DAC/FILE_READ_ATTRIBUTES及不共享删除。只读数据访问使Windows共享保留实际生效；目录、ACL授权、身份校验、Job/网络和恢复契约未变。只去DELETE的中间候选未能拒绝ren，已弃用，没有删除失败断言。当前方案实际验证原文件内容及dev/ino保持、目标不存在；原E3范围/链接拒绝、J5外部对象无SID和E1数据/环境/真实网络负向保持。探针与测试共用全局native恢复目录，不适合并行；串行执行，不清空journal。
+
+Spec：真实type先因sharing violation失败，当前1/1通过；相关E3拒绝1/1、原生E1/J5共2/2通过。Python临时项目真正断言失败、修正后unittest成功；仅支持因果实验，不代表生产运行时已接入。默认Node --test仍超时，上游libuv命名管道兼容缺陷另记；不静默改变测试语义或用源码证据代替安装。该子切片可验证，A03整票继续。

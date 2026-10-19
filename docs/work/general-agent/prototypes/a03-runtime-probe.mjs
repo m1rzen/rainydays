@@ -36,7 +36,7 @@ try{
   authority=tools.capabilityBroker.createRuntimeAuthority({...persona,rootEnv:{WORKSPACE_ROOT:"workspace"},pathAuthority:await pathPolicy.createAuthority([{rootId:"workspace",role:"workspace",configuredPath:workspace,permissions:["initial-cwd"]}])});
   context=tools.capabilityBroker.beginAgentRun(authority,sessions.createSession(persona,"A03 runtimes").id);
   const invoke=async command=>{const inspected=tools.inspectToolCall(context,"execute_command",{command}),challenge=tools.capabilityBroker.createApprovalChallenge(context,inspected),grant=tools.capabilityBroker.resolveApprovalChallenge({challengeId:challenge.challengeId,choice:"approve",sessionId:context.sessionId,runId:context.runId,responsePrincipal:"local-user-api",responseChannel:"native-process"});assert(grant);try{return await tools.executeInspectedTool(grant,inspected);}finally{tools.capabilityBroker.finishContext(grant);}};
-  const nodeCommand='call "'+path.join(workspace,"node.exe")+'" --preserve-symlinks --preserve-symlinks-main --test --test-isolation=none calc.test.mjs';
+  const nodeCommand='call "'+path.join(workspace,"node.exe")+'" --preserve-symlinks --preserve-symlinks-main --test calc.test.mjs';
   const pythonCommand='call "'+path.join(python,"python.exe")+'" -I -m unittest discover -s . -p test_calc.py -v';
   const results={};
   for(const [name,command]of [["node-version",'call "'+path.join(workspace,"node.exe")+'" --version'],["python-version",'call "'+path.join(python,"python.exe")+'" --version']]){
@@ -45,6 +45,7 @@ try{
   }
   for(const [name,command,target,fixed]of [["node",nodeCommand,"calc.mjs","export const add=(a,b)=>a+b;\n"],["python",pythonCommand,"calc.py","def add(a,b): return a+b\n"]]){
     let red="",green="",error="",redCode;try{await invoke(command);}catch(caught){red=caught.message;redCode=caught.code;}
+    if (!/ERR_ASSERTION|AssertionError/u.test(red)) { results[name]={realAssertion:false,correctedPass:false,redCode,red:red.slice(-1600),error:"未进入项目断言，停止该运行时的重复修正测试"};console.log(JSON.stringify({stage:name,result:results[name]}));continue; }
     await fs.writeFile(path.join(workspace,target),fixed);try{green=await invoke(command);}catch(caught){error=caught.message;}
     results[name]={realAssertion:/ERR_ASSERTION|AssertionError/u.test(red),correctedPass:!!green && (name==='node'?green.includes('A03_NODE_CHECK_PASSED'):/Ran 1 test|\bOK\b/u.test(green)),redCode,red:red.slice(-1100),green:green.slice(-1100),error:error.slice(-1600)};
     console.log(JSON.stringify({stage:name,result:results[name]}));

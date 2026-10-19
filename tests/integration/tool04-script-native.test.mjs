@@ -122,6 +122,18 @@ test("A03 real E1 captures an external runtime's actual version output", { timeo
   assert(output.includes(process.version), `exit success without runtime stdout is insufficient: ${output}`);
 });
 
+test("A03 authorized existing files remain readable while replacement locks remain active", { timeout: 45_000 }, async () => {
+  const input = path.join(workspace, "crt-readable.txt"), moved = path.join(workspace, "crt-moved.txt");
+  await fs.writeFile(input, "A03_EXISTING_FILE_READ\n");
+  const beforeIdentity = await fs.stat(input, { bigint: true });
+  assert.match(await approvedInvocation("execute_command", { command: `type "${input}"` }), /A03_EXISTING_FILE_READ/u);
+  await assert.rejects(approvedInvocation("execute_command", { command: 'ren "crt-readable.txt" "crt-moved.txt"' }), /child-failed/u);
+  assert.equal(await fs.readFile(input, "utf8"), "A03_EXISTING_FILE_READ\n");
+  const afterIdentity = await fs.stat(input, { bigint: true });
+  assert.equal(afterIdentity.ino, beforeIdentity.ino); assert.equal(afterIdentity.dev, beforeIdentity.dev);
+  await assert.rejects(fs.readFile(moved), error => error.code === "ENOENT");
+});
+
 test("TOOL-04 real E3 runs Node ESM JSON/regex with explicit cwd and lux bridge", { timeout: 60_000 }, async () => {
   const output = await approvedScript({
     lang: "node",

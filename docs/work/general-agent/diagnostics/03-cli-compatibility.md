@@ -27,3 +27,13 @@
 E1改CREATE_NO_WINDOW单变量后，实际版本输出测试red→green（2.006秒）；原E1 AppContainer/Job、外部文件/父环境/网络拒绝1/1保持，产品74+UI15通过。Node/Python版本均实际输出且exit0，Node直接脚本的ERR_ASSERTION与修正成功标记可见。
 
 同一临时SDK打包在隔离外import unittest成功，不是可发布运行时。隔离内Node默认--test仍达到30秒墙钟限制；仅实验指定--test-isolation=none后真实断言→修正→TAP1/1通过，不能据此认证默认测试进程隔离或静默改用户测试语义。Python ZIP启动仍缺encodings；增加未压缩encodings后定位为读取其__init__.py的PermissionError，childExit1。下一步核对现有保留文件句柄的DELETE访问与CRT share-delete兼容，仍无生产网络策略变更。
+
+## 已授权普通文件读失败的最小复现
+
+新增真实E1 `type` 读取自建已有文件，预期返回ASCII标记，实际childExit1、sharing violation（中文原始输出被旧UTF-8解码破坏）。这不依赖Python打包或ZIP。native保留文件句柄请求READ_CONTROL/WRITE_DAC/DELETE/FILE_READ_ATTRIBUTES且不共享删除；CRT新读句柄不共享删除，因既有句柄的DELETE访问而冲突。最小修复移除保留句柄不使用的DELETE访问，继续不共享FILE_SHARE_DELETE；测试同时检查可读和ren仍被阻止。
+
+单纯移除DELETE后，type确实可读，但ren返回成功且未满足预期拒绝；当次在状态断言前停止，不能据退出码单独认证物理保护。该仅元数据访问方案已弃用、未提交。改为FILE_READ_DATA（只读数据访问）使共享保留有效，并继续不共享删除后，读取通过、ren实际child-failed，原文件内容保持且目标不存在；随后补核对dev/ino不变。原保护断言保留。
+
+当前方案串行验证2/2：已有文件可读，重命名拒绝、内容/文件身份不变、目标不存在；原E3 cwd/根/链接/hardlink拒绝保持。原生E1环境/文件/网络与J5不向外部hardlink/reparse目标传播SID共2/2保持。一次与运行时探针重叠的测试遇到全局恢复锁EXEC_ACL_RECOVERY_REQUIRED，探针正常清理后按相同断言串行通过；未删除journal或放宽恢复条件。源码构建0.1.0+local.768e8d13e4fe。
+
+相同临时Python依赖在现有E1下真正运行unittest：错误代码AssertionError，修正后Ran 1 test / OK，退出0。默认Node --test仍30秒墙钟终止。查到对应[Node上游问题66374](https://github.com/nodejs/node/issues/66374)与[libuv修复5181](https://github.com/libuv/libuv/pull/5181)：AppContainer中的旧libuv创建子进程pipe/IPC使用非LOCAL命名空间，在ERROR_ACCESS_DENIED循环重试；不是增加项目读权限能解决。2026-10-20核对官方dist索引最新v26.12.0仍uv1.52.1，不能假设升级已发布Node就能修好。保留该阻塞，不能静默注入--test-isolation=none、取消隔离或把临时SDK复制称为产品支持。

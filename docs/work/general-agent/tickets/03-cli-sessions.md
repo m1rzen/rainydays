@@ -76,3 +76,13 @@ E3真实模块子切片已实现、按[审查](../reviews/03-code-review.md)分�
 
 子切片按审查已验证；终点为`fix: capture external CLI output without detached consoles`提交。后续继续现有文件句柄兼容、运行时产品接入、编码、终端和普通会话。
 
+### 已有文件共享兼容切片
+
+起点182db0e。已有文件type被宿主DELETE保留句柄阻挡，真实red。最终用FILE_READ_DATA替代DELETE且继续不共享删除；仅移除DELETE的候选未保持ren拒绝，已弃用。当前源码构建0.1.0+local.768e8d13e4fe。
+
+- `node --test --test-name-pattern 'authorized existing files remain readable|lux bridge and Node permission model reject' tests/integration/tool04-script-native.test.mjs`：串行2/2，读取/内容/身份/目标不存在与原范围负向通过。
+- `node --test --test-name-pattern 'locks prevent implicit SID propagation|native E1 uses real AppContainer/Job' tests/integration/sec03-native-host.test.mjs`：2/2，不扩大链接/外部文件/父环境/网络权限。
+- `node docs/work/general-agent/prototypes/a03-runtime-probe.mjs`：Python真实unittest断言→修正→通过；Node默认--test仍超时，对应上游libuv AppContainer pipe缺陷见诊断。没有改系统SDK、网络策略、journal或D13 gate。
+
+按审查闭合当前子切片；整票保持in-progress，继续生产运行时/依赖提示、编码、长终端与默认会话。Node pipe问题不能靠静默改测试参数掩盖。
+
