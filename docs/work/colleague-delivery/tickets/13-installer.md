@@ -63,3 +63,7 @@ package.json、scripts/build-electron.mjs、after-pack.cjs、electron/main.cjs�
 - `tests/packaged/local-documents.test.mjs`已准备真实包内读文件→生成DOCX→重启→worker预览/模型取回流程，去掉开发PATH并从System32启动；尚未执行。现有SEC-05凭据fixture改为合法路径格式，未削弱密钥断言，仍需当前包运行。
 
 解除阻塞：在保留既有gate下实际核对并维护相关绑定，生成通过同一验证的当前候选，再执行包内/安装测试及两套干净机器要求。本机标准用户但有开发工具，不能顶替。D03不依赖本票，按总计划继续。只回退本票本地提交可撤销本次工程修复；不恢复或分发被隔离产物。终点为本记录所在的`fix: remove redundant filesystem checks from database snapshots`提交。
+
+### 后续有界核对（2026-10-20）
+
+[43项差异分类](../diagnostics/13-sink-classification.md)已按实际文件/函数核对，区分固定模块、受管bootstrap启动、Browser、Media、Playbook、Worker。只登记已核实的node:url、受管server spawn与固定附件模块3项，并移除2项无现代码的旧绑定；159条登记、40处仍未认证。原gate实际继续拒绝browser.ts:168；原新增/未解析/过期拒绝及ASAR篡改拒绝2/2通过。没有生成通过的inventory，扫描器和构建前置保持。现存资源祖先/进程归属与Playbook宿主import等缺口逐项写在分类表，不能笼统视作过期文本。

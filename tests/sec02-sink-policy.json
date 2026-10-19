@@ -60,6 +60,34 @@
       }
     },
     {
+      "siteId": "sink-95fc4d50a74e30b32f251631",
+      "sourcePath": "electron/main.cjs",
+      "normalizedNodeSha256": "79e27362ff1605e363b8302692890a9a2389cd1261d33fe17cde59a3df17ecab",
+      "container": "<top-level>",
+      "family": "module-loader",
+      "api": "require",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "electron/main.cjs#<top-level>:module-loader.require",
+        "evidenceIds": [
+          "electron-source",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "electron/main.cjs#<top-level>:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "siteId": "sink-96545976fb3945998517b6bd",
       "sourcePath": "electron/main.cjs",
       "normalizedNodeSha256": "c708865fa8059572110bc7974a96a090eaf5f7a15dd8253a1ed0ee113e8b974f",
@@ -368,9 +396,9 @@
       }
     },
     {
-      "siteId": "sink-c83e73b470e1688c7a07d1a7",
+      "siteId": "sink-7aa0d16801fc47c432aef929",
       "sourcePath": "electron/main.cjs",
-      "normalizedNodeSha256": "41b55db2374f75d35fa94a868f8c7b796eeaa542061d2ed549c89204e44364c1",
+      "normalizedNodeSha256": "1cbfaffd19a548073d01e6f04e01e122f73ba9924c46aaeaee7bc3301c2256b0",
       "container": "startServerProcess",
       "family": "child-process",
       "api": "spawn",
@@ -1217,6 +1245,34 @@
             "selector": "argument:1",
             "classification": "electron-derived-user-data-path",
             "anchor": "electron/user-data-migration.cjs#migrateLegacyUserData:argument:1"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-c691894b8a78d43cc10f7266",
+      "sourcePath": "src/attachment-reader.ts",
+      "normalizedNodeSha256": "cf7667c1e23c37a1ca0d1cf9ef6ef54b2951b9e002c431d25487da07061f2408",
+      "container": "readAttachmentDocument",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/attachment-reader.ts#readAttachmentDocument:module-loader.import",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/attachment-reader.ts#readAttachmentDocument:argument:0"
           }
         ]
       }
@@ -4290,33 +4346,6 @@
       }
     },
     {
-      "siteId": "sink-9bcf1e99e867cc31003dd4cf",
-      "sourcePath": "src/tools/image-helper.ts",
-      "normalizedNodeSha256": "16a9a1f6092d37d3e3c4393138afd797e8161af7114b51c2afaeab6ace08bc7b",
-      "container": "imageHelperExec",
-      "family": "module-loader",
-      "api": "import",
-      "pathOperands": [
-        "argument:0"
-      ],
-      "executionClass": "product-runtime",
-      "packageExpectation": "compiled-to-asar",
-      "binding": {
-        "kind": "static-module-loader",
-        "anchor": "src/tools/image-helper.ts#imageHelperExec:module-loader.import",
-        "evidenceIds": [
-          "packaged-asar"
-        ],
-        "operands": [
-          {
-            "selector": "argument:0",
-            "classification": "reviewed-static-module-specifier",
-            "anchor": "src/tools/image-helper.ts#imageHelperExec:argument:0"
-          }
-        ]
-      }
-    },
-    {
       "siteId": "sink-bd60572b2a17bf75235f3352",
       "sourcePath": "src/tools/image-helper.ts",
       "normalizedNodeSha256": "9e15942308d68390fce2d4af7d8e076603796767930eac31ff77919f40605436",
@@ -4579,5 +4608,5 @@
       }
     }
   ],
-  "canonicalPayloadSha256": "e9f9773821caae72fea9d048a42a81f7ddc4b8234a6a07eea2ba66459b921f2e"
+  "canonicalPayloadSha256": "1366680bf9458489db797a64289f4f6718bcccd3a1ebd25b563a22e1fb2327e4"
 }

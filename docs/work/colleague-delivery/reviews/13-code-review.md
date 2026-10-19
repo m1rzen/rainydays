@@ -18,3 +18,5 @@
 ## 结论
 
 性能与依赖修复可单独本地提交。构建与环境门槛需保留，详见[诊断](../diagnostics/13-runtime-and-packaging.md)及票据。独立研发继续D03，不把内部打包问题误记成模型凭证阻塞。
+
+后续登记差异已按[分类表](../diagnostics/13-sink-classification.md)顺序复核：仅3个固定ID核实登记/2个固定ID过期移除，main spawn操作数仍是原bootstrap-adapter。policy摘要按原算法更新，扫描器/校验器没有修改。其余40仍被拒绝，无批量豁免。负向策略与ASAR投影用例2/2保持。

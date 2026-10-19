@@ -34,7 +34,7 @@
 
 - D03：最终模型请求已计算系统/历史/附件/工具schemas与输出预留；profile可配置、重启保留，记录估算与真实usage偏差，并发配对正确。预算/协议25、配置9、真实设置Electron1、产品55+UI15通过。历史取回、压缩边界和20轮恢复仍在实施，整票未完成。[证据](work/colleague-delivery/tickets/03-context-and-retrieval.md)
 
-- D13：SQL物化结果遍历的808次额外文件检查已消除，15项数据库/审计/恢复负向保持；R2完整Electron预览与另存回归1/1通过。修复staging缺vendor，但原审计gate仍报未绑定调用（43新增/2过期）；移除前置的方案遭自动审批拒绝，已撤回且隔离未执行产物9c4ee25f908c。两套干净Windows、当前安装/凭据/恢复未验收；无有效新候选。独立工程继续。[证据](work/colleague-delivery/tickets/13-installer.md)
+- D13：SQL物化结果遍历的808次额外文件检查已消除，15项数据库/审计/恢复负向保持；R2完整Electron预览与另存回归1/1通过。修复staging缺vendor；43新增/2过期已按实际边界分类，只登记3项核实调用、移除2项过期，40处仍被原gate拒绝。移除前置方案遭自动审批拒绝，已撤回且隔离未执行产物9c4ee25f908c。两套干净Windows、当前安装/凭据/恢复未验收；无有效新候选。[证据](work/colleague-delivery/tickets/13-installer.md)
 
 - D02本地工程：流/非流共享完整性校验、usage与请求投影、真实Agent串并行工具/取消通过，并修复绝对路径read对DATA_ROOT的隐含依赖。产品检查50+15、LLM取消3、观测8及源码Electron3项通过。真实模型/费用未认证，整票blocked；旧文件/Playbook fixture故障已交D05/D11。[证据](work/colleague-delivery/tickets/02-model-contract.md)
 
