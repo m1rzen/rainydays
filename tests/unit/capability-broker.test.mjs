@@ -797,6 +797,22 @@ test("SEC02 Broker binds one-invocation PathGateway to the authentic tool policy
   broker.finishContext(root);
 });
 
+test("A03 Agent run cleanup preserves direct user resources until Session retirement", async () => {
+  const { broker, authority } = fixture();
+  broker.registerDirectOperation("manual:read", readPolicy);
+  const manual = broker.issueLocalApiContext({ authority, principal: broker.createLocalApiPrincipal(), sessionId: "session-a", operation: "manual:read", args: {} });
+  const manualOwner = broker.getResourceOwner(manual), root = broker.beginAgentRun(authority, "session-a"), agentOwner = broker.getResourceOwner(root);
+  let manualClosed = 0, agentClosed = 0;
+  registerOwnedResource(manualOwner, () => { manualClosed++; }); registerOwnedResource(agentOwner, () => { agentClosed++; });
+  try {
+    await broker.retireAgentRunResources(root);
+    assert.equal(agentClosed, 1); assert.equal(manualClosed, 0); assertResourceOwner(manualOwner);
+    assert.throws(() => assertResourceOwner(agentOwner), error => error.code === "PATH_AUTHORITY_STALE");
+    await assert.rejects(broker.retireAgentRunResources({ ...root }), error => error.code === "CAPABILITY_CONTEXT_FORGED");
+    await broker.retireSessionResources(authority, "session-a"); assert.equal(manualClosed, 1);
+  } finally { broker.finishContext(root); broker.finishContext(manual); await broker.retireAuthority(authority); }
+});
+
 test("SEC03 Broker resource owner is run-scoped and each run drains before authority retirement", async () => {
   const { broker, authority } = fixture();
   const firstContext = broker.beginAgentRun(authority, "session-a");

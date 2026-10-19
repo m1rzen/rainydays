@@ -39,3 +39,11 @@ Spec：中文cmd与外部stdout/stderr真实red→green；引用路径/参数、
 Standards：实际native completion码/原因只经原服务保存，不从输出文本猜退出码；终止中等到closed才报结束。原owner、输入grant/lease、字节窗口、Job清理均保持；当前run与另一Session真实输入误投被拒绝。UI只增加状态原因，未开放HTTP写终端或跨principal控制。产品74+UI15、相关公共边界11/11通过。全文件60项实际57/60，三项fixed-production denial observation为EXEC_NATIVE_EVIDENCE_UNAVAILABLE，其中manual observation单独复现，原因尚未确定；不可因只跑聚焦子集而称全套通过，不删除认证断言或改为未认证证据。
 
 Spec：两个公共结果用例先red，修改后实际exit0/7、执行限制与native通道失败可区分。真实原生长终端1/1（64.292秒，合计68.496秒），完成stdin、跨会话拒绝、超过60秒、1600行分页、无早期丢失、最后一行只出现一次及exit7。首轮失败源于把旧truncated（包含“还有后页”）当输出丢失，现断言起点连续、outputStart=0及末行不重不漏；工具文案区分后页与超出保留窗口。真实停止1/1（执行3.368秒，含启动/检查，不代表纯停止耗时），断言停止<5秒、父子PID消失、心跳不再变化、独立进程仍存活。源码f55eb60e828c。当前切片已验证；A03整票、默认入口/SDK与原生观察失败仍未完成。
+
+## 默认助手与只读终端切片
+
+固定范围a07adb1至当前persona、Agent只读投影、原HTTP/renderer入口及Agent结束资源范围。Standards→Spec顺序复核，无委派。
+
+Standards：CLI仍按需发现，首轮不常驻schemas，原native-process精确授权保持，工程fixture仅在tests中注册私有批准handler。只读视图绑定当前Agent上下文，返回list/get/output/subscribe/isCurrent，不返回owner/lease/写入方法；原Session/direct-operation校验内选择该视图。先用当前owner列表匹配ID，未捕获任意认证错误做fallback。原手动输入/kill通道保持；UI禁用助手输入/控制及resize调度与延迟回调。Agent普通结束改用经真实root context绑定的现有资源清理，保留active local-user-api资源；会话退休、poison和authority关闭仍全范围清理，原失败封锁保持。相关清理red→green4项及完整Broker32/32通过。
+
+Spec：普通默认Agent真实执行中文cmd→终端→退出7，工具发现从缺失red到真实6步成功，精确四次native授权，旧视图结束失效；2.144秒。Electron renderer连接真实daemon/本地合成模型，助手输出/只读按钮、越界Session404、退回手动视图、Agent结束后旧视图404且手动记录200通过（35.726秒，合计45.314秒）。该窗口使用test独立Electron壳及测试认证注入，resize在实际renderer用窄spy验证；不是原生确认UI/正式main/安装包验收。活动手动host时第二lease仍EXEC_ACL_RECOVERY_REQUIRED，面板测试明确先结束手动进程，只验证保留视图共存，不冒充活动进程并发。源码69ed8d83d46b；A03整票继续，SDK、并发、Node pipe与三项观察失败未闭合。

@@ -1,6 +1,6 @@
 # 当前开发状态
 
-更新：2026-10-20。代码基线：D05提交3a7e9f2、D13性能切片0ef7f4b、D03预算9f34ac5及长对话源码构建0.1.0+local.983aaf2fcaa4已验证；D13整票仍blocked，无有效安装候选。项目范围的详细判断见 [二次重构进度审计](audits/baseline-2026-09-29.md)；已完成修复见 [演示问题修复](devlog/2026-10-16-demo-repair.md)。
+更新：2026-10-20。D05、D03、A02已验证；A03当前源码构建0.1.0+local.69ed8d83d46b已有普通CLI与只读终端证据，整票仍in-progress。D13整票blocked，无有效安装候选。项目范围的详细判断见 [二次重构进度审计](audits/baseline-2026-09-29.md)；已完成修复见 [演示问题修复](devlog/2026-10-16-demo-repair.md)。
 
 ## 通用Agent规划与恢复入口
 
@@ -8,7 +8,7 @@
 
 - 当前阶段：implementation / A03 in-progress；D01、A01、D03、D04、D05、A02 verified；D02真实模型认证和D13构建/机器blocked。2026-10-18用户已整体批准D+A路线并授权连续研发；Prism、钉钉排除。
 - 入口：[Codex研发手册](agents/README.md)、[通用规格](specs/general-agent.md)、[D+A总任务图](work/general-agent/plan.md)。31项整体获批，D01已验证，A01调查已完成；D18为中间里程碑，完整出口A13。
-- 下一项：A03 CLI与持久终端，先解决A01已复现的Node/Python项目隔离兼容和乱码，再进入普通会话。D13保留审计与干净机器阻塞。D03/D04的D02本地协议依赖已满足，真实模型认证保留阻塞。既有default五项真实研究授权不扩大，模型阻塞不暂停独立工程。
+- 下一项：继续A03兼容修复，优先Node上游pipe修复的有界运行时实验、活动host租约冲突与原生拒绝观察诊断；SDK未接入产品。A04/A05仍依赖A03，不能因面板通过而当依赖已满足。D13保留审计/干净机器阻塞，D02本地协议可用但真实模型未认证。既有default五项研究授权不扩大，模型阻塞不暂停独立工程。
 - 新确认差距：CLI/终端存在但默认助手未开放完整开发能力；MCP只有配置与关闭标志，未接客户端；浏览器有实现但缺完整真实验收；原生Windows工具和截图到模型的完整循环未形成可交付能力。详见[能力手册](agents/general-agent-capabilities.md)。
 - D01–D05新增验证均使用隔离环境和合成模型，不修改日常用户数据库或调用真实模型；具体命令和结果见对应票据。
 
@@ -36,7 +36,7 @@
 
 ## 开发中但未计为产品完成
 
-- A03：E3模块、E1 stdout/文件共享/中文编码已修复；持久终端保留真实退出码/原因，64秒任务、stdin/误投拒绝、1600行分页、停止父子进程且不杀独立进程通过。产品74+UI15与相关11项通过；完整原生服务两文件57/60，三项认证拒绝观察单独仍失败，未闭合。临时Python项目断言→修正→unittest通过；默认Node测试受上游libuv pipe缺陷阻塞。运行时产品/普通入口继续；整票in-progress。[证据](work/general-agent/tickets/03-cli-sessions.md)
+- A03：默认助手已按需发现CLI并真实执行，64秒/1600行/输入/退出7/停止进程树通过；实际Electron renderer只读面板及手动记录保留、跨Session拒绝通过，Broker32/32。原生两文件57/60，三项认证拒绝观察失败；活动host阻挡新执行租约已最小复现，窗口通过不代表活动进程并发。Node pipe与SDK产品接入继续；整票in-progress。[证据](work/general-agent/tickets/03-cli-sessions.md)
 
 - D13：SQL物化结果遍历的808次额外文件检查已消除，15项数据库/审计/恢复负向保持；R2完整Electron预览与另存回归1/1通过。修复staging缺vendor；43新增/2过期已按实际边界分类，只登记3项核实调用、移除2项过期，40处仍被原gate拒绝。移除前置方案遭自动审批拒绝，已撤回且隔离未执行产物9c4ee25f908c。两套干净Windows、当前安装/凭据/恢复未验收；无有效新候选。[证据](work/colleague-delivery/tickets/13-installer.md)
 

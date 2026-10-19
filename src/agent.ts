@@ -25,6 +25,7 @@ import { buildToolExecutionBatches } from "./tool-scheduler.js";
 import { askUserConfirm, askUserQuestion } from "./tools/ask-user-tool.js";
 import { readMessageAttachmentForSession } from "./attachment-store.js";
 import { requestNativeProcessConsent } from "./native-process-consent.js";
+import { terminalFacade, type TerminalEvent } from "./terminal-facade.js";
 import type { SecurityAuditJournal } from "./security-audit-journal.js";
 import { cancellationError, isRunCancellation, isRunSettlementFailure, NEVER_ABORT_SIGNAL, throwIfCancelled } from "./run-cancellation.js";
 import { describeCodeEditOperation } from "./tools/code-editing.js";
@@ -219,6 +220,7 @@ export class Agent {
   private auditJournal: SecurityAuditJournal | null;
   private sessionId: string | null = null;
   private running = false;
+  private terminalContext: CapabilityContext | null = null;
 
   constructor(llm: LLMClient, memory: ConversationMemory, persona: PersonaDefinition, authority: RuntimeAuthority, auditJournal: SecurityAuditJournal | null = null) {
     this.llm = llm;
@@ -227,6 +229,21 @@ export class Agent {
     this.authority = authority;
     this.auditJournal = auditJournal;
     this.memory.setSystemPrompt(persona.systemPrompt);
+  }
+
+  getTerminalReader() {
+    const context = this.terminalContext;
+    if (!context || !capabilityBroker.isContextActive(context)) return null;
+    const owner = capabilityBroker.getResourceOwner(context);
+    const isCurrent = () => this.terminalContext === context && capabilityBroker.isContextActive(context);
+    const requireCurrent = () => { if (!isCurrent()) throw new Error("助手终端所属任务已结束或失效"); };
+    return Object.freeze({
+      isCurrent,
+      list: () => isCurrent() ? terminalFacade.list(owner) : [],
+      get: (id: string) => isCurrent() ? terminalFacade.get(owner, id) : undefined,
+      output: (id: string, offset?: number, limit?: number) => { requireCurrent(); return terminalFacade.output(owner, id, offset, limit); },
+      subscribe: (id: string, callback: (event: TerminalEvent) => void) => { requireCurrent(); return terminalFacade.subscribe(owner, id, callback); },
+    });
   }
 
   setSession(sessionId: string): void {
@@ -551,6 +568,7 @@ export class Agent {
     }
 
     this.running = true;
+    this.terminalContext = capabilityContext;
     try {
       throwIfCancelled(signal);
       const isFirstMessage = this.memory.getAll().filter((m) => m.role === "user").length === 0;
@@ -965,8 +983,9 @@ export class Agent {
       };
     } finally {
       this.running = false;
+      this.terminalContext = null;
       try {
-        await capabilityBroker.retireSessionResources(runAuthority, runSessionId);
+        await capabilityBroker.retireAgentRunResources(capabilityContext);
       } finally {
         if (capabilityBroker.isContextActive(capabilityContext)) capabilityBroker.finishContext(capabilityContext);
       }

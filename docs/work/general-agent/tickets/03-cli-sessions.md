@@ -103,3 +103,16 @@ E3真实模块子切片已实现、按[审查](../reviews/03-code-review.md)分�
 - `node --test --test-name-pattern 'A03 stopping a real terminal' tests/integration/tool04-script-native.test.mjs`：1/1；停止<5秒、写入父子PID消失/不再写、独立进程未杀。
 - 原build与check:product通过，源码0.1.0+local.f55eb60e828c，产品74/74、UI15/15。按审查闭合子切片；未勾整票，默认入口/SDK与原生观察失败继续。
 
+### 默认助手与只读终端入口（子切片已验证）
+
+起点a07adb1。默认助手按需发现现有CLI工具；以真实Broker/原生执行验证中文cmd、持久终端与退出7。Agent仅向宿主暴露当前run的只读投影，原HTTP Session鉴权内合并到既有终端列表/输出/SSE；面板标注助手终端只读，原输入/清理/kill通道不扩大，取消仍走停止任务。读取视图绑定原run，结束/替换即失效；无需另一套终端、身份或权限体系。
+
+- `node --test tests/integration/agent-cli.test.mjs`：发现allowlist缺失red→green；普通Agent真实6步、中文cmd与exit7，四项精确native确认、只读owner与旧视图失效通过（2.144秒）。没有扩大search_tools暴露上限。
+- `node --test tests/electron/agent-cli-view.test.mjs`：真实daemon+合成模型+隔离Electron renderer1/1，35.726秒；当前会话输出/SSE、只读控件/resize、跨Session404、手动视图及结束后失效通过。使用测试壳/认证及resize spy，不代替正式Electron main原生确认或安装候选。
+- 原活动手动进程+Agent并发启动真实失败，最小addon openLease断言EXEC_ACL_RECOVERY_REQUIRED已保留；窗口通过只覆盖手动进程结束后的保留视图共存，不说明两个活动进程可并行。
+- Agent清理范围新回归red→green，相关4项、完整Broker32/32通过；手动资源保留，Session/authority/poison仍原全清理。原build通过，源码0.1.0+local.69ed8d83d46b；check:product结果见收尾记录。
+
+整票仍in-progress：生产SDK租约与依赖提示、默认Node pipe、活动host并发及三项原生认证观察失败尚待解决。当前源码slice不作为安装交付承诺。
+
+收尾：类型/lint、产品74/74与UI/IPC15/15通过；完整Broker32/32通过。当前切片按Standards/Spec审查闭合并本地提交，后续继续A03兼容实验，不把A04/A05前置标为已满足。
+

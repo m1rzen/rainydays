@@ -900,12 +900,13 @@
 
     function scheduleTerminalResize(cols, rows) {
       if (!activeTerminalId || currentSessionId !== activeTerminalOwnerSessionId || typeof window.electronAPI?.terminalResize !== "function") return;
+      if (terminalSessions.find(terminal => terminal.id === activeTerminalId)?.readOnly) return;
       if (terminalResizeTimer) clearTimeout(terminalResizeTimer);
       const terminalId = activeTerminalId;
       const ownerSessionId = activeTerminalOwnerSessionId;
       terminalResizeTimer = setTimeout(() => {
         terminalResizeTimer = null;
-        if (terminalId !== activeTerminalId || ownerSessionId !== activeTerminalOwnerSessionId) return;
+        if (terminalId !== activeTerminalId || ownerSessionId !== activeTerminalOwnerSessionId || terminalSessions.find(terminal => terminal.id === terminalId)?.readOnly) return;
         Promise.resolve(window.electronAPI.terminalResize({ id: terminalId, cols, rows }))
           .then(data => updateTerminalInfo(data?.terminal))
           .catch(() => undefined);
@@ -975,7 +976,8 @@
         const dot = document.createElement("span");
         dot.className = `term-dot ${terminal.status === "running" ? "" : "stopped"}`;
         const name = document.createElement("span");
-        name.textContent = terminal.name;
+        name.textContent = terminal.readOnly ? `助手 · ${terminal.name}` : terminal.name;
+        tab.title = terminal.readOnly ? "助手正在使用此终端；可查看输出，用停止任务结束运行" : terminal.cwd;
         tab.append(dot, name);
         tabs.appendChild(tab);
       }
@@ -1057,8 +1059,12 @@
 
     function updateTerminalInputState() {
       const terminal = terminalSessions.find(candidate => candidate.id === activeTerminalId);
+      for (const action of ["clear-terminal", "kill-terminal", "close-terminal"]) {
+        const button = document.querySelector(`[data-action="${action}"]`);
+        if (button) { button.disabled = Boolean(terminal?.readOnly); button.title = terminal?.readOnly ? "助手终端只读，请使用停止任务" : { "clear-terminal": "清屏", "kill-terminal": "终止进程树", "close-terminal": "关闭终端" }[action]; }
+      }
       if (!xtermTerminal) return;
-      xtermTerminal.options.disableStdin = !terminal || terminal.status !== "running" || currentSessionId !== activeTerminalOwnerSessionId;
+      xtermTerminal.options.disableStdin = !terminal || terminal.readOnly || terminal.status !== "running" || currentSessionId !== activeTerminalOwnerSessionId;
     }
 
     function sendTerminalInput(data) {
@@ -3031,6 +3037,7 @@
             else if (step.type === "tool_call") { bubbleEl.querySelector(".typing")?.remove(); addToolCard(bubbleEl, step); }
             else if (step.type === "tool_result") {
               updateLastToolCard(bubbleEl, step);
+              if (step.toolName === "shell_start" && currentSessionId === chatSessionId && activeTerminalOwnerSessionId === chatSessionId) void loadTerminals();
               if (["create_docx", "create_xlsx"].includes(step.toolName)) void refreshDocumentOutputs(chatSessionId);
               if (step.toolName === "fetch_markdown") void refreshDocumentOutputs(chatSessionId);
             }

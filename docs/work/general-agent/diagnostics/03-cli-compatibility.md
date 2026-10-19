@@ -49,3 +49,11 @@ E1改CREATE_NO_WINDOW单变量后，实际版本输出测试red→green（2.006�
 原服务丢弃handle.completed结果，facade把所有native非running投影exited/null。新增公共service/facade结果用例先red；现保存真实exitCode/reason，终止等待结算，区分0/7/限制/native-failed。相关公共边界11/11、产品74+UI15通过；真实长任务64.292秒，stdin正确、另一Session误投拒绝、1600行连续分页取回且末行一次、exit7；真实父子写入进程停止<5秒，独立进程存活。旧truncated包含“尚有后页”，工具文案现与实际保留窗口分开，不扩展全局输出上限。
 
 同时完整运行execution-isolation与terminal-owner两文件60项，57通过、3失败：manual runtime denial observation、direct terminal denial observation、terminal owner denial observation，均EXEC_NATIVE_EVIDENCE_UNAVAILABLE。manual用原命名单独执行仍失败，不能归为并发；native已接受request_valid后未生成认证观察，尚未定位到具体步骤。真实执行/停止证明与此不同，不能互相代替。未清除journal/密钥、未修改身份/签名验证、未降级成未认证证据。相关11项聚焦通过只覆盖输出/输入/所有者/取消，不表示这3项已恢复，保留为A03/D13整体验证缺口。
+
+## 默认入口与真实并发阻塞
+
+默认persona原无CLI工具，ordinary Agent新回归red；按需加入后，现有精确native确认下中文cmd、终端、输入与退出7真实通过，旧读取视图结束失效。API只读投影与原手动输出一起进面板，不开放手动操作Agent终端。清理发现原retireSessionResources会连同手动资源一起回收；新增Agent结束范围复用原清理，只保留active local-user-api，Session/authority退休与poison仍清理全部；Broker32/32保持。
+
+真实窗口首次同时保留活动手动E4和启动Agent E2，shell_start实际TOOL_EXECUTION_FAILED / Native persistent execution failed closed，没有terminalId；缺失ID是下游症状，不能把输入发到undefined或误称仅fixture参数错误。最小区分：活动cmd实际输出Windows后，直接用当前manifest匹配的addon openExclusiveHostLease，确实EXEC_ACL_RECOVERY_REQUIRED。源码RecoverJournals在同版本、连续合法journal解析后，对OwnedHostAlive返回false；每次launch都调用它，因此活动host阻挡新执行租约。未换目录、跳过恢复或删journal使该并发场景变绿。
+
+随后窗口验收显式结束手动进程，只检验其保留视图与活动Agent视图共存；活动进程并发仍未完成。窗口启动竞态改为等待当前Session/title加载后操作；HTML /sessions/:id错误测试路由改为现有sessions列表，未加产品路由。实际API/renderer证据与限制见审查。进一步实施须比较最小兼容方案与实际用户收益，不为通过面板测试重写整套ACL/审计平台。

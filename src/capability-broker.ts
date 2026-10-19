@@ -1381,12 +1381,26 @@ export class CapabilityBroker {
   }
 
   async retireSessionResources(authority: RuntimeAuthority, sessionId: string, timeoutMs = 5_000): Promise<void> {
+    return this.retireResources(authority, sessionId, timeoutMs, false);
+  }
+
+  async retireAgentRunResources(context: CapabilityContext, timeoutMs = 5_000): Promise<void> {
+    const record = context && this.contextRecords.get(context);
+    if (!record || record.context !== context || record.context.principal !== "agent" || record.parent) denied("CAPABILITY_CONTEXT_FORGED", "Agent root context is unavailable for cleanup");
+    return this.retireResources(record.authority.authority, context.sessionId, timeoutMs, true);
+  }
+
+  private async retireResources(authority: RuntimeAuthority, sessionId: string, timeoutMs: number, preserveLocalApi: boolean): Promise<void> {
     const record = authority && this.authorityRecords.get(authority);
     if (!record || record.authority !== authority) denied("CAPABILITY_CONTEXT_FORGED", "runtime authority is unavailable");
     if (!sessionId) throw new TypeError("sessionId is invalid");
     const owners: { key: string; owner: ResourceOwner }[] = [];
     for (const [key, owner] of record.resourceOwners) {
       if (!key.startsWith(`${sessionId}\u0000`)) continue;
+      if (preserveLocalApi) {
+        try { if (assertResourceOwner(owner).principal === "local-user-api") continue; }
+        catch (error) { if (!(error instanceof PathDeniedError) || error.code !== "PATH_AUTHORITY_STALE") throw error; }
+      }
       owners.push({ key, owner });
     }
     if (owners.length > 0) record.pendingResourceSessions.add(sessionId);

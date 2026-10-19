@@ -2094,9 +2094,27 @@ app.get("/api/files/content", async (req, res) => {
 // Persistent Terminal API
 // ===========================================
 
+function terminalReaderFor(id: string, owner: TerminalOwner, authority: RuntimeAuthority, sessionId: string) {
+  const runtime = runtimeRegistry?.get(sessionId);
+  if (!runtime || runtime.authority !== authority) throw new Error("终端所属会话已失效");
+  const agentReader = runtime.agent.getTerminalReader();
+  if (agentReader?.list().some(terminal => terminal.id === id)) return { ...agentReader, readOnly: true };
+  return {
+    readOnly: false,
+    isCurrent: () => runtimeRegistry?.get(sessionId) === runtime,
+    get: (terminalId: string) => terminalFacade.get(owner, terminalId),
+    output: (terminalId: string, offset?: number, limit?: number) => terminalFacade.output(owner, terminalId, offset, limit),
+    subscribe: (terminalId: string, callback: (event: import("./terminal-facade.js").TerminalEvent) => void) => terminalFacade.subscribe(owner, terminalId, callback),
+  };
+}
+
 app.get("/api/terminals", async (_req, res) => {
   try {
-    const terminals = await runDirectOperation("terminal:list", {}, (_args, owner) => terminalFacade.list(owner));
+    const terminals = await runDirectOperation("terminal:list", {}, (_args, owner, authority, context) => {
+      const runtime = runtimeRegistry?.get(context.sessionId);
+      if (!runtime || runtime.authority !== authority) throw new Error("终端所属会话已失效");
+      return [...terminalFacade.list(owner).map(info => ({ ...info, readOnly: false })), ...(runtime.agent.getTerminalReader()?.list() ?? []).map(info => ({ ...info, readOnly: true }))];
+    });
     res.json({ terminals });
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
@@ -2121,14 +2139,11 @@ app.get("/api/terminals/:id/output", async (req, res) => {
     const limit = req.query.limit === undefined ? 20000 : Number(req.query.limit);
     if (offset !== undefined && !Number.isFinite(offset)) throw new Error("offset 必须是数字");
     if (!Number.isFinite(limit)) throw new Error("limit 必须是数字");
-    const result = await runDirectOperation("terminal:output", { id: req.params.id, offset: offset ?? null, limit }, (authorized, owner) =>
-      terminalFacade.output(
-        owner,
-        String(authorized.id),
-        authorized.offset === null ? undefined : Number(authorized.offset),
-        Number(authorized.limit)
-      )
-    );
+    const result = await runDirectOperation("terminal:output", { id: req.params.id, offset: offset ?? null, limit }, (authorized, owner, authority, context) => {
+      const reader = terminalReaderFor(String(authorized.id), owner, authority, context.sessionId);
+      const output = reader.output(String(authorized.id), authorized.offset === null ? undefined : Number(authorized.offset), Number(authorized.limit));
+      return { ...output, info: { ...output.info, readOnly: reader.readOnly } };
+    });
     res.json(result);
   } catch (err) {
     res.status(404).json({ error: err instanceof Error ? err.message : String(err) });
@@ -2167,9 +2182,11 @@ app.get("/api/terminals/:id/events", async (req, res) => {
     await runDirectOperation("terminal:subscribe", { id: req.params.id }, (authorized, owner, authority, context) => {
       const id = String(authorized.id);
       const ownerSessionId = context.sessionId;
-      const info = terminalFacade.get(owner, id);
+      const reader = terminalReaderFor(id, owner, authority, ownerSessionId);
+      const info = reader.get(id);
       if (!info) throw new Error(`终端不存在: ${id}`);
-      const initial = terminalFacade.output(owner, id, undefined, 50000);
+      const output = reader.output(id, undefined, 50000);
+      const initial = { ...output, info: { ...output.info, readOnly: reader.readOnly } };
       let ready = false;
       let closed = false;
       const pendingEvents: unknown[] = [];
@@ -2185,8 +2202,8 @@ app.get("/api/terminals/:id/events", async (req, res) => {
         if (!res.writableEnded) res.end();
       };
 
-      unsubscribe = terminalFacade.subscribe(owner, id, (event) => {
-        if (isShuttingDown || runtimeRegistry?.get(ownerSessionId)?.authority !== authority) {
+      unsubscribe = reader.subscribe(id, (event) => {
+        if (isShuttingDown || runtimeRegistry?.get(ownerSessionId)?.authority !== authority || !reader.isCurrent()) {
           closeTracked();
           return;
         }
@@ -2206,7 +2223,7 @@ app.get("/api/terminals/:id/events", async (req, res) => {
       for (const event of pendingEvents) res.write(`data: ${JSON.stringify(event)}\n\n`);
 
       heartbeat = setInterval(() => {
-        if (isShuttingDown || runtimeRegistry?.get(ownerSessionId)?.authority !== authority) {
+        if (isShuttingDown || runtimeRegistry?.get(ownerSessionId)?.authority !== authority || !reader.isCurrent()) {
           closeTracked();
           return;
         }
