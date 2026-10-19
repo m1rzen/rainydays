@@ -27,6 +27,8 @@ export interface Message {
   tool_call_id?: string;
   tool_calls?: ToolCall[];
   attachments?: readonly MessageAttachment[];
+  /** Host-only reference into the current session's immutable original history. */
+  historyId?: number;
 }
 
 /** 工具调用 */

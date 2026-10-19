@@ -27,6 +27,7 @@ test.after(async () => {
 });
 
 const call = id => ({ id, type: "function", function: { name: "read", arguments: "{}" } });
+const protocolMessages = messages => messages.map(message => { const copy={...message}; delete copy.historyId; return copy; });
 test("完整资料进入上下文，恢复会话后仍保留单行和多行原文", async () => {
   const now = new Date().toISOString();
   insertSession({ id: "product-memory", persona_name: "product", title: "fixture", created_at: now, updated_at: now });
@@ -39,11 +40,11 @@ test("完整资料进入上下文，恢复会话后仍保留单行和多行原�
     ...payloads.map((content, index) => ({ role: "tool", content, tool_call_id: index ? "b" : "a" })),
   ];
   memory.addMany(messages);
-  assert.deepEqual(memory.getAll(), messages);
+  assert.deepEqual(protocolMessages(memory.getAll()), messages);
   assert.equal(await memory.compact({ chat: () => assert.fail("预算内不应摘要") }), false);
   const restored = new ConversationMemory();
   restored.loadFromDb("product-memory");
-  assert.deepEqual(restored.getAll(), messages);
+  assert.deepEqual(protocolMessages(restored.getAll()), messages);
 });
 
 test("最近资料超预算时明确停止且不丢原文", async () => {
@@ -57,23 +58,26 @@ test("最近资料超预算时明确停止且不丢原文", async () => {
 test("摘要边界保留整组工具结果，不遗漏第二个结果", async () => {
   const memory = new ConversationMemory();
   memory.addMany([
-    { role: "user", content: "旧记录".repeat(25000) },
+    { role: "assistant", content: "旧记录".repeat(25000) },
     { role: "assistant", content: "", tool_calls: [call("a"), call("b")] },
     { role: "tool", tool_call_id: "a", content: "结果甲" },
     { role: "tool", tool_call_id: "b", content: "结果乙" },
     ...Array.from({ length: 6 }, (_, i) => ({ role: "user", content: `后续 ${i}` })),
   ]);
+  const summaryParts = [];
   await memory.compact({ chat: async messages => {
-    assert.match(messages[1].content, /结果甲/);
-    assert.match(messages[1].content, /结果乙/);
+    summaryParts.push(messages[1].content);
     return { role: "assistant", content: "已记录甲乙" };
   } });
+  assert(summaryParts.length > 0);
+  assert.deepEqual(memory.getAll().filter(message => message.role === "tool").map(message => message.content), ["结果甲", "结果乙"]);
+  assert.deepEqual(memory.getAll().find(message=>message.tool_calls?.length).tool_calls.map(call=>call.id), ["a","b"]);
   assert(memory.hasSummary());
 });
 
 test("摘要后仍超预算时保留原上下文，不提交不合格摘要", async () => {
   const memory = new ConversationMemory();
-  memory.addMany(Array.from({ length: 18 }, () => ({ role: "user", content: "x".repeat(5000) })));
+  memory.addMany(Array.from({ length: 18 }, () => ({ role: "assistant", content: "x".repeat(5000) })));
   const before = memory.getAll();
   await assert.rejects(() => memory.compact({ chat: async () => ({ role: "assistant", content: "x".repeat(80000) }) }), error => error.code === "CONTEXT_BUDGET_EXCEEDED");
   assert.deepEqual(memory.getAll(), before);

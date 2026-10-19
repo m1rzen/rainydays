@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: in-progress
+Status: verified
 
 Spec: [同事版交付规格](../../../specs/colleague-delivery.md)
 
@@ -26,10 +26,10 @@ src/memory.ts、agent.ts、task-tools.ts、attachment-reader.ts；ConversationMe
 
 ## 验收条件
 
-- [ ] 用小上下文配置和动态发现工具强制触发超限，发送前即可处理，不能依靠服务端拒绝。
-- [ ] 跨 20 轮及重启后的早期关键事实可通过原始资料/历史定位核对。
-- [ ] 摘要超时、空结果、用户取消都能结束；不把静默删掉上下文后猜测的答案当正常成功。
-- [ ] 工具调用/结果成对；已产生成果路径和用户禁止事项不因压缩遗失。
+- [x] 用小上下文配置和动态发现工具强制触发超限，发送前即可处理，不能依靠服务端拒绝。
+- [x] 跨 20 轮及重启后的早期关键事实可通过原始资料/历史定位核对。
+- [x] 摘要超时、空结果、用户取消都能结束；不把静默删掉上下文后猜测的答案当正常成功。
+- [x] 工具调用/结果成对；已产生成果路径和用户禁止事项不因压缩遗失。
 
 ## 验证接口与证据
 
@@ -51,7 +51,7 @@ src/memory.ts、agent.ts、task-tools.ts、attachment-reader.ts；ConversationMe
 
 ## 审查与验证结果
 
-预算子切片已实现并按[审查](../reviews/03-code-review.md)核对；整票仍in-progress，历史取回/压缩尚待完成。
+预算子切片及历史/压缩切片均已实现，按[审查](../reviews/03-code-review.md)依次核对Standards与Spec，整票工程验收通过。真实模型语义质量按本票原定义留F04/D15，未调用真实服务。
 
 - `node --import tsx --test tests/product/request-budget.test.mjs tests/product/model-contract.test.mjs`：预算/并发4项（最初3项均red）与协议21项通过。低预算时流/非流均在HTTP前拒绝、动态schemas重新核算、输出预留写入请求、实际usage偏差和共享Client并发配对已验证。
 - `node --test tests/contract/config-managed-store.test.mjs`：9/9。profile预算持久化、旧bundle默认、非法预留拒绝，原凭据断言保持。
@@ -59,3 +59,14 @@ src/memory.ts、agent.ts、task-tools.ts、attachment-reader.ts；ConversationMe
 - `npm run check:product`：typecheck、lint、产品55/55、UI/IPC15/15。未调用真实模型或改日常配置。真实容量和长对话内容质量尚未认证。
 
 本预算切片终点为`feat: enforce configurable budgets on complete model requests`提交；后续继续本票，不将本记录视作完整D03验收。
+
+### 历史与压缩收尾
+
+起点2eb9199；先复现静默数量裁剪、摘要失败删除与缺历史入口，再实现当前会话read URI、不可丢弃的用户原文/成果锚点/最新完整工具组、原子有界摘要。一次压缩最多8次请求，每次30秒且可取消；摘要请求按自己的完整预算分块，最终候选仍须通过Agent完整schemas预算。小窗口可减少较早的近期回答，保留不了关键内容就明确停止。
+
+- `node --import tsx --test tests/product/conversation.test.mjs tests/product/long-context.test.mjs`：18/18。含当前会话历史分页/跨会话拒绝、软数量阈值、成果/禁止事项、摘要失败/空/忽略abort超时和取消、12个并行工具结果整组保留、超长用户要求显式拒绝。
+- `node --import tsx --test --test-name-pattern 'RT-04 memory' tests/integration/rt04-runtime-cancellation.test.mjs`：2/2。原持久化、工具边界与provider清理失败仍验证；旧静默删除期望改为失败且原文不变。未扩大到已交D11的旧Playbook fixture问题。
+- `npm run check:product`：typecheck、lint、产品63/63、UI/IPC15/15通过。
+- `node --test --test-name-pattern '20 rounds and process restart' tests/electron/startup-recovery.test.mjs`：真实Electron完成20轮、13次预算内摘要、正常退出及新进程恢复，早期唯一事实不在压缩请求中，普通Agent实际调用read(history:2)取回后回答。末次交互51.357秒，完整源码构建0.1.0+local.983aaf2fcaa4；仅使用隔离本地HTTP fixture。
+
+风险/回退：保守估算并非真实token计量；图像预算留A08。所有用户要求原样保留，极长要求仍可能达到容量并明确停止；不得通过静默删除规避。无数据库迁移，原始记录未改；按本切片提交回退代码，不覆盖用户数据库。D13原构建gate保持，源码Electron证据不代表安装验收。终点为`feat: retain and retrieve long conversations within request budgets`提交。

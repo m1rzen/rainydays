@@ -171,7 +171,7 @@ test("RT-04 LLM adapter accepts only the SDK's signal-bound abort as cooperative
   );
 });
 
-test("RT-04 memory compaction is atomic across success, fallback, and cancellation", async () => {
+test("RT-04 memory compaction is atomic across success, summary failure, and cancellation", async () => {
   const populate = memory => {
     memory.setSystemPrompt("runtime fixture");
     for (let index = 0; index < 18; index += 1) {
@@ -182,17 +182,19 @@ test("RT-04 memory compaction is atomic across success, fallback, and cancellati
   const compacted = new ConversationMemory(100);
   populate(compacted);
   assert.equal(await compacted.compact({ chat: async (_messages, _tools, signal) => {
-    assert.equal(signal, NEVER_ABORT_SIGNAL);
+    assert(signal instanceof AbortSignal);
+    assert.equal(signal.aborted, false);
     return { role: "assistant", content: "governed summary" };
   } }, NEVER_ABORT_SIGNAL), true);
   assert.equal(compacted.hasSummary(), true);
   assert(compacted.getTokenEstimate() < 28_000);
 
-  const fallback = new ConversationMemory(100);
-  populate(fallback);
-  assert.equal(await fallback.compact({ chat: async () => { throw new Error("summary unavailable"); } }, NEVER_ABORT_SIGNAL), true);
-  assert.equal(fallback.hasSummary(), false);
-  assert(fallback.getTokenEstimate() <= 28_000);
+  const failed = new ConversationMemory(100);
+  populate(failed);
+  const failedBefore = failed.getAll();
+  await assert.rejects(failed.compact({ chat: async () => { throw new Error("summary unavailable"); } }, NEVER_ABORT_SIGNAL), error => error.code === "CONTEXT_COMPACTION_FAILED");
+  assert.equal(failed.hasSummary(), false);
+  assert.deepEqual(failed.getAll(), failedBefore);
 
   const unchanged = new ConversationMemory(100);
   populate(unchanged);
@@ -221,7 +223,8 @@ test("RT-04 memory compaction is atomic across success, fallback, and cancellati
   assert.equal(restored.getAll()[1].tool_calls[0].function.name, "fixture");
   restored.setSystemPrompt("restored system");
   for (let index = 0; index < 10; index += 1) restored.add({ role: "user", content: `bounded-${index}` });
-  assert(restored.getMessageCount() <= 6);
+  assert.equal(restored.getMessageCount(), 15);
+  assert(restored.getAll().some(message => message.content === "persisted user"));
   restored.clear();
   assert.deepEqual(restored.getAll(), [{ role: "system", content: "restored system" }]);
   restored.reset();
@@ -499,7 +502,11 @@ test("RT-04 memory and subagent reject malformed persisted and child-turn states
     { role: "tool", content: "x".repeat(2_000), tool_call_id: "orphan" },
     { role: "user", content: "recent" },
   ]);
-  assert.deepEqual(orphan.getAll(), [{ role: "user", content: "recent" }]);
+  assert.deepEqual(orphan.getAll(), [
+    { role: "user", content: "old" },
+    { role: "tool", content: "x".repeat(2_000), tool_call_id: "orphan" },
+    { role: "user", content: "recent" },
+  ]);
 
   const summaryMerge = new ConversationMemory(100);
   summaryMerge.add({ role: "system", content: "## 对话摘要\nold" });
@@ -510,10 +517,13 @@ test("RT-04 memory and subagent reject malformed persisted and child-turn states
         ? { role: "tool", content: "edge-result", tool_call_id: "edge" }
         : { role: "user", content: `recent-${index}` });
   }
+  summaryMerge.add({ role: "assistant", content: "recent answer after the older tool group" });
+  const mergedParts = [];
   assert.equal(await summaryMerge.compact({ chat: async messages => {
-    assert.match(messages[1].content, /## 对话摘要\nold/u);
+    mergedParts.push(messages[1].content);
     return { role: "assistant", content: "merged" };
   } }), true);
+  assert.match(mergedParts.join("\n"), /## 对话摘要\nold/u);
 
   const large = "x".repeat(75_000);
   const tooFew = new ConversationMemory(100);
@@ -527,40 +537,43 @@ test("RT-04 memory and subagent reject malformed persisted and child-turn states
     { role: "tool", content: "paired", tool_call_id: "edge" },
     { role: "tool", content: "orphan", tool_call_id: "orphan" },
     ...Array.from({ length: 6 }, (_, index) => ({ role: "user", content: `recent-${index}` })),
+    { role: "assistant", content: "recent answer after the older boundary" },
   ]);
+  const boundaryParts = [];
   assert.equal(await boundary.compact({ chat: async messages => {
-    assert.match(messages[1].content, /x{20}/u);
-    assert.match(messages[1].content, /tool boundary/u);
-    assert.match(messages[1].content, /paired/u);
+    boundaryParts.push(messages[1].content);
     return { role: "assistant", content: "boundary summary" };
   } }), true);
+  assert.match(boundaryParts.join("\n"), /x{20}/u);
+  assert.match(boundaryParts.join("\n"), /tool boundary/u);
+  assert.match(boundaryParts.join("\n"), /paired/u);
   assert.equal(boundary.getAll().some(message => message.content === "orphan"), false);
 
   const emptySummary = new ConversationMemory(100);
-  emptySummary.addMany([{ role: "user", content: large }, ...Array.from({ length: 9 }, (_, index) => ({ role: "user", content: `empty-${index}` }))]);
-  assert.equal(await emptySummary.compact({ chat: async () => ({ role: "assistant", content: "" }) }), true);
+  emptySummary.addMany([{ role: "assistant", content: large }, ...Array.from({ length: 9 }, (_, index) => ({ role: "user", content: `empty-${index}` }))]);
+  emptySummary.add({ role: "assistant", content: "recent answer" });
+  const emptyBefore = emptySummary.getAll();
+  await assert.rejects(emptySummary.compact({ chat: async () => ({ role: "assistant", content: "" }) }), error => error.code === "CONTEXT_COMPACTION_FAILED");
+  assert.deepEqual(emptySummary.getAll(), emptyBefore);
 
   const primitiveFallback = new ConversationMemory(100);
   primitiveFallback.addMany([
-    { role: "user", content: large },
+    { role: "assistant", content: large },
     { role: "tool", content: "fallback orphan", tool_call_id: "fallback" },
     ...Array.from({ length: 8 }, (_, index) => ({ role: "user", content: `fallback-${index}` })),
+    { role: "assistant", content: "recent answer" },
   ]);
-  const originalError = console.error;
-  console.error = () => undefined;
-  try {
-    assert.equal(await primitiveFallback.compact({ chat: async () => { throw "primitive summary failure"; } }), true);
-  } finally {
-    console.error = originalError;
-  }
-  assert.equal(primitiveFallback.getAll().some(message => message.content === "fallback orphan"), false);
+  const primitiveBefore = primitiveFallback.getAll();
+  await assert.rejects(primitiveFallback.compact({ chat: async () => { throw "primitive summary failure"; } }), error => error.code === "CONTEXT_COMPACTION_FAILED");
+  assert.deepEqual(primitiveFallback.getAll(), primitiveBefore);
 
   const cancelledSummary = new ConversationMemory(100);
-  cancelledSummary.addMany([{ role: "user", content: large }, ...Array.from({ length: 9 }, (_, index) => ({ role: "user", content: `cancel-${index}` }))]);
+  cancelledSummary.addMany([{ role: "assistant", content: large }, ...Array.from({ length: 9 }, (_, index) => ({ role: "user", content: `cancel-${index}` }))]);
+  cancelledSummary.add({ role: "assistant", content: "recent answer" });
   const summaryController = new AbortController();
   await assert.rejects(
     () => cancelledSummary.compact({ chat: async () => { summaryController.abort(new Error("summary cancelled")); throw new Error("provider cleanup failed"); } }, summaryController.signal),
-    /provider cleanup failed/u,
+    error => error.code === "RUN_SETTLEMENT_FAILED" && /provider cleanup failed/u.test(String(error.errors?.[1])),
   );
 
   const child = { sessionId: "session-edge", runId: "run-edge" };

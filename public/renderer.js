@@ -3235,7 +3235,7 @@
       try {
         const res = await fetch("/api/status");
         const data = await res.json();
-        statusTokens.textContent = `${data.tokens} tokens · ${data.messageCount} msgs`;
+        statusTokens.textContent = `≈${data.tokens} tokens · ${data.messageCount} msgs`;
         statusModel.textContent = `${data.profile || "--"} · ${data.model}`;
         const composerModel = document.getElementById("composer-model");
         composerModel.textContent = data.configured && data.model ? data.model : "配置模型";

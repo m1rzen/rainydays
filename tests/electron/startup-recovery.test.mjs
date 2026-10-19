@@ -4,13 +4,14 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { execFileSync } from "node:child_process";
+import { createServer } from "node:http";
 import Database from "better-sqlite3";
 import {
   boundedFetch, connectCdp, freeDistinctPorts, makeTempDir, projectRoot,
   removeFixture, spawnManaged, terminateProcessTreeAsync, waitFor, waitForChildExit,
 } from "../helpers.mjs";
 
-async function fixtureDesktop(options = {}) {
+async function fixtureDesktop(options = {}, profile = {}) {
   const root = await makeTempDir("rainydays-d01-");
   const userData = path.join(root, "中文 user data");
   const settings = {
@@ -22,7 +23,7 @@ async function fixtureDesktop(options = {}) {
   await mkdir(path.join(settings.workspaceRoot, "旧目录"));
   await writeFile(path.join(settings.workspaceRoot, "旧目录", "说明.txt"), "隔离测试文件");
   await writeFile(path.join(userData, "config.json"), JSON.stringify({ defaultProfile: "default", profiles: {
-    default: { model: "fixture-model", apiKey: "", baseURL: "https://provider.invalid/v1", providerType: "openai-compatible" },
+    default: { model: "fixture-model", apiKey: "", baseURL: "https://provider.invalid/v1", providerType: "openai-compatible", ...profile },
   }, settings }));
   const [httpPort, cdpPort] = await freeDistinctPorts(2);
   let child, client, logs = "";
@@ -42,7 +43,7 @@ async function fixtureDesktop(options = {}) {
   }
   async function start() {
     logs = "";
-    const env = { ...process.env, npm_node_execpath: process.execPath, PORT: String(httpPort) };
+    const env = { ...process.env, npm_node_execpath: process.execPath, PORT: String(httpPort), ...(String(profile.baseURL || "").startsWith("http://127.0.0.1:") ? { RAINYDAYS_ALLOW_LOOPBACK_HTTP_PROVIDER: "1" } : {}) };
     delete env.ELECTRON_RUN_AS_NODE;
     delete env.RAINYDAYS_E2E_USE_DIST;
     delete env.RAINYDAYS_E2E_NODE_EXECUTABLE;
@@ -220,6 +221,58 @@ test("D05 real Electron saves local scope, keeps company source optional and rec
     await waitFor(() => client.evaluate("fileRoots.some(root=>root.id==='output' && root.available)"), { timeoutMs: 12000, label: "D05 reselected deleted output" });
     assert.doesNotMatch(desktop.logs(), /"failure":"unexpected-exit"|EPIPE/);
   } finally { await desktop.close(); }
+});
+
+test("D03 real Electron retrieves early facts through Agent read after 20 rounds and process restart", { timeout: 180_000 }, async () => {
+  let streams = 0, summaries = 0, retrievedId, failure = null, desktop;
+  const server = createServer(async (request, response) => {
+    try {
+      const chunks=[]; for await (const chunk of request) chunks.push(chunk);
+      const body=JSON.parse(Buffer.concat(chunks).toString());
+      if (!body.stream) {
+        const summary=body.messages[0]?.content.includes('对话摘要器'); if(summary) summaries++;
+        response.setHeader('Content-Type','application/json');
+        response.end(JSON.stringify({choices:[{message:{role:'assistant',content:summary?'已收起早期资料；具体事实请取回原文核对。':'长对话核对'},finish_reason:'stop'}]})); return;
+      }
+      streams++;
+      let calls, content;
+      if(streams<=20) content=`ROUND_${streams} ${streams===1?'唯一早期事实EARLY_F57。':''}${'日常资料x'.repeat(500)}`;
+      else if(streams===21) {
+        assert.equal(JSON.stringify(body.messages).includes('EARLY_F57'),false,'early fact must be retrieved from original history');
+        const match=/来源范围history:(\d+)/u.exec(JSON.stringify(body.messages)); assert(match,'compacted context must expose its original history reference'); retrievedId=Number(match[1]);
+        calls=[{index:0,id:'recover-original',type:'function',function:{name:'read',arguments:JSON.stringify({file_path:`history:${retrievedId}`,offset:1,limit:12})}}];
+      } else {
+        assert.equal(streams,22);
+        assert.match(JSON.stringify(body.messages.filter(message=>message.role==='tool').at(-1)),/EARLY_F57/);
+        content=`找回早期事实EARLY_F57，依据history:${retrievedId}原文。`;
+      }
+      response.writeHead(200,{'Content-Type':'text/event-stream'});
+      response.write(`data: ${JSON.stringify({choices:[{delta:calls?{tool_calls:calls}:{content},finish_reason:null}]})}\n\n`);
+      response.end(`data: ${JSON.stringify({choices:[{delta:{},finish_reason:calls?'tool_calls':'stop'}]})}\n\ndata: [DONE]\n\n`);
+    } catch(error) { failure=error; response.statusCode=500; response.end(String(error)); }
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  try {
+    desktop=await fixtureDesktop({}, {apiKey:'fixture-only',baseURL:`http://127.0.0.1:${server.address().port}/v1`,contextWindowTokens:16384,outputReserveTokens:1024});
+    let client=await desktop.start();
+    const session=await client.evaluate('currentSessionId');
+    const send=async text=>client.evaluate(`(() => { inputEl.value=${JSON.stringify(text)}; inputEl.dispatchEvent(new Event('input')); document.getElementById('input-form').requestSubmit(); return true; })()`);
+    for(let index=1;index<=20;index++) {
+      await send(`第${index}轮：只整理本轮资料，不要覆盖原文件。`);
+      await waitFor(()=>client.evaluate(`!isSessionRunning() && [...document.querySelectorAll('#messages .msg-assistant .bubble')].at(-1)?.textContent.includes('ROUND_${index} ')`),{timeoutMs:15000,label:`D03 round ${index}`});
+    }
+    assert.equal(streams,20); assert.equal(failure,null);
+    await desktop.stop(); client=await desktop.start();
+    assert.equal(await client.evaluate('currentSessionId'),session);
+    await send('请找回最早那项事实，必须取回原文核对，不要覆盖原文件。');
+    await waitFor(()=>client.evaluate("!isSessionRunning() && [...document.querySelectorAll('#messages .msg-assistant .bubble')].at(-1)?.textContent.includes('找回早期事实EARLY_F57')"),{timeoutMs:30000,label:'D03 restored Agent history read'});
+    assert.equal(failure,null); assert.equal(streams,22); assert(summaries>0);
+    const messages=await client.evaluate(`fetch('/api/sessions/${session}/messages',{headers:sessionHeaders()}).then(r=>r.json())`);
+    assert.match(JSON.stringify(messages),/唯一早期事实EARLY_F57/);
+    assert.match(await client.evaluate('messagesEl.textContent'),/history:/);
+    console.log(`[D03] 20 rounds, ${summaries} bounded summaries, process restart and real Agent read(history:${retrievedId}) passed`);
+  } catch(error) { throw new Error(`${error.message}\nstreams=${streams}, summaries=${summaries}, model=${failure?.message||'ok'}\n${desktop?.logs()||''}`,{cause:error}); }
+  finally { if(desktop) await desktop.close(); server.closeAllConnections(); await new Promise(resolve=>server.close(resolve)); }
 });
 
 test("D03 real Electron saves per-model request limits and restores them after restart", { timeout: 120_000 }, async () => {

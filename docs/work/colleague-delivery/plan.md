@@ -10,7 +10,7 @@ Status: approved
 |---|---|---|---|
 | [D01 稳定启动、旧数据与缺失目录](tickets/01-startup-and-old-data.md) | 无 | 正常启动20/20、两项缺陷及后台恢复3/3；历史退出未知与并发性能观察已记录 | verified |
 | [D02 认证一个可靠模型配置](tickets/02-model-contract.md) | 无 | 本地协议已验证；真实参考配置尚待可用额度与具体授权。 | blocked |
-| [D03 完整请求预算与长对话取回](tickets/03-context-and-retrieval.md) | D02 | 用小上下文配置和动态发现工具强制触发超限，发送前即可处理，不能依靠服务端拒绝。 | ready |
+| [D03 完整请求预算与长对话取回](tickets/03-context-and-retrieval.md) | D02本地工程 | 完整请求/摘要预算、20轮后进程重启与Agent原文取回、取消/失败原子性通过；真实模型语义留F04。 | verified |
 | [D04 任务完成、停止与中断一致](tickets/04-run-stop-and-recovery.md) | D01、D02本地工程 | 本地状态/取消反馈、结算和成果中断恢复已验证。 | verified |
 | [D05 资料与成果目录可以独立使用](tickets/05-workspace-ux.md) | D01 | 无 Z 盘/无部门盘的新用户能完成本地文件读取和新建文档。 | verified |
 | [D06 文件回答完整且能定位依据](tickets/06-file-evidence.md) | D03、D05 | F01–F05 的确定性解析和定位部分通过；关键中段可取回。 | ready |

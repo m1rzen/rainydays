@@ -1745,6 +1745,16 @@ export function getMessagesBySession(sessionId: string): MessageRow[] {
   ).all(sessionId) as MessageRow[];
 }
 
+/** History tool pages stay session-bound; index pages avoid loading full message bodies. */
+export function getSessionHistoryPage(sessionId: string, offset: number, limit: number): Pick<MessageRow, "id" | "role" | "content" | "created_at">[] {
+  return db.prepare("SELECT id, role, substr(content,1,160) AS content, created_at FROM messages WHERE session_id = ? ORDER BY id ASC LIMIT ? OFFSET ?")
+    .all(sessionId, limit, offset) as Pick<MessageRow, "id" | "role" | "content" | "created_at">[];
+}
+
+export function getSessionHistoryMessage(sessionId: string, messageId: number): MessageRow | undefined {
+  return db.prepare("SELECT * FROM messages WHERE session_id = ? AND id = ?").get(sessionId, messageId) as MessageRow | undefined;
+}
+
 /** 删除会话的所有消息 */
 export function deleteMessagesBySession(sessionId: string): void {
   db.prepare(`DELETE FROM messages WHERE session_id = ?`).run(sessionId);

@@ -576,10 +576,8 @@ export class Agent {
       throwIfCancelled(signal);
       const iterStart = Date.now();
 
-      // 每轮调 LLM 前检查上下文预算，必要时压缩
-      const compactStart = Date.now();
-      await this.memory.compact(this.llm, signal);
-      const compactMs = Date.now() - compactStart;
+      // Replace transient guidance each round; it must not accumulate as immutable system history.
+      this.refreshSystemPrompt(runSessionId, orgModeEnabled ? renderBodyToolInstructions(toolSelection.protocols()) : "");
 
       // 任务驱动：如果有 pending 任务，注入当前任务状态引导 LLM 执行下一个
     if (taskMode) {
@@ -612,13 +610,28 @@ export class Agent {
       }
     }
 
+      // Check after task guidance and dynamic schemas have reached their final request shape.
+      const schemas = toolSelection.protocols().map(protocol => protocol.schema);
+      const assess = typeof this.llm.estimateRequest === "function"
+        ? (messages: Message[]) => this.llm.estimateRequest(messages, schemas, runSessionId, readMessageAttachmentForSession) : undefined;
+      const compactStart = Date.now();
+      try {
+        const report = assess?.(this.memory.getAll());
+        if (report && report.estimatedInputTokens + report.outputReserveTokens > report.contextWindowTokens) yield { type: "thinking", content: "正在整理较长的对话，原始记录仍保留，可随时停止。", timestamp: Date.now() };
+        await this.memory.compact(this.llm, signal, undefined, { assess });
+      } catch (error) {
+        if (isRunCancellation(error) || signal.aborted) throw error;
+        yield { type: "error", content: error instanceof Error ? error.message : "整理历史失败，原始记录仍保留。", timestamp: Date.now() };
+        return;
+      }
+      const compactMs = Date.now() - compactStart;
       let finalMessage: Message | null = null;
       let hasStreamedContent = false;
       let streamedContent = "";
 
       const llmStart = Date.now();
       try {
-        for await (const event of this.llm.chatStream(this.memory.getAll(), toolSelection.protocols().map(protocol => protocol.schema), signal, runSessionId, readMessageAttachmentForSession)) {
+        for await (const event of this.llm.chatStream(this.memory.getAll(), schemas, signal, runSessionId, readMessageAttachmentForSession)) {
           if (event.type === "delta") {
             if (!orgModeEnabled) {
               hasStreamedContent = true;

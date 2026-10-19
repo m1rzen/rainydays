@@ -78,7 +78,7 @@ test("D02 非流式返回真实usage，下一次请求不包含宿主元数据",
   }, async (client, requests) => {
     const reply = await client.chat(prompt);
     assert.deepEqual(reply.usage, usage);
-    await client.chat([...prompt, reply]);
+    await client.chat([...prompt, { ...reply, historyId: 47 }]);
     assert.deepEqual(requests[1].messages[1], { role: "assistant", content: "完成" });
   });
 });
