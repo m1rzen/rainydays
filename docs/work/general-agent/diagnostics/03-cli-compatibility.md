@@ -37,3 +37,9 @@ E1改CREATE_NO_WINDOW单变量后，实际版本输出测试red→green（2.006�
 当前方案串行验证2/2：已有文件可读，重命名拒绝、内容/文件身份不变、目标不存在；原E3 cwd/根/链接/hardlink拒绝保持。原生E1环境/文件/网络与J5不向外部hardlink/reparse目标传播SID共2/2保持。一次与运行时探针重叠的测试遇到全局恢复锁EXEC_ACL_RECOVERY_REQUIRED，探针正常清理后按相同断言串行通过；未删除journal或放宽恢复条件。源码构建0.1.0+local.768e8d13e4fe。
 
 相同临时Python依赖在现有E1下真正运行unittest：错误代码AssertionError，修正后Ran 1 test / OK，退出0。默认Node --test仍30秒墙钟终止。查到对应[Node上游问题66374](https://github.com/nodejs/node/issues/66374)与[libuv修复5181](https://github.com/libuv/libuv/pull/5181)：AppContainer中的旧libuv创建子进程pipe/IPC使用非LOCAL命名空间，在ERROR_ACCESS_DENIED循环重试；不是增加项目读权限能解决。2026-10-20核对官方dist索引最新v26.12.0仍uv1.52.1，不能假设升级已发布Node就能修好。保留该阻塞，不能静默注入--test-isolation=none、取消隔离或把临时SDK复制称为产品支持。
+
+## E1中文输出与命令语义
+
+真实同一命令中的cmd echo中文先出现替代符，Node中文stdout/stderr正确，确认OEM/UTF-8混合。仅chcp65001显示设置成功，当前cmd却仍按旧页转换；加嵌套cmd虽令中文通过，却在直接引用中文/空格可执行路径、复杂参数时破坏引号并返回255，因此两种shell前缀方案均弃用。
+
+最终不追加/重解析shell文本：launcher原CREATE_NO_WINDOW给host私有隐藏console，在host用SetConsoleCP/SetConsoleOutputCP设65001，E1继承它，E3仍detached。依据微软[console code pages](https://learn.microsoft.com/en-us/windows/console/console-code-pages)与[创建标志](https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags)，实际验证中文混合输出、版本、保留锁、直接引用可执行文件/参数、中文空格cwd及退出7共4/4；E1原网络/数据/环境负向1/1，真实停止1/1（1.696秒）。源码构建0.1.0+local.d8ed84e25321。D04测试曾第二次读取被写中的heartbeat而JSON空，改为使用waitFor已验证的同一快照；5秒、PID消失及停止后不写断言保持，未增加等待上限。

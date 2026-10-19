@@ -86,3 +86,11 @@ E3真实模块子切片已实现、按[审查](../reviews/03-code-review.md)分�
 
 按审查闭合当前子切片；整票保持in-progress，继续生产运行时/依赖提示、编码、长终端与默认会话。Node pipe问题不能靠静默改测试参数掩盖。
 
+### E1编码切片（子切片已验证）
+
+起点e1f648b。以同一次E1中的中文cmd echo及外部Node stdout/stderr作为真实接口，先复现混合OEM/UTF-8输出。最终只在宿主自己隐藏console中设置UTF-8，E1继承console并保持原命令/标准句柄；不修改用户console，不猜测系统语言。E3与ConPTY保持原UTF-8；不承诺自动识别任意二进制/其他自行指定编码。
+
+- 原build通过，源码构建0.1.0+local.d8ed84e25321。中文/版本/保留文件/直接引用路径与空格参数及cwd/exit7定向4/4；实际非零退出没有变成功。
+- 原E1真实AppContainer/Job、数据/环境/网络负向1/1；D04停止1/1、1.696秒。修复测试重复读取正在写的JSON竞争，只复用已观察快照，不放宽断言或上限。
+- `npm run check:product`：类型/lint、产品74/74、UI/IPC15/15通过。按审查记录闭合；临时chcp/嵌套cmd方案未保留，无额外shell进程或命令改写。
+

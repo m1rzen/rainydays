@@ -134,6 +134,30 @@ test("A03 authorized existing files remain readable while replacement locks rema
   await assert.rejects(fs.readFile(moved), error => error.code === "ENOENT");
 });
 
+test("A03 real E1 preserves Chinese cmd and external runtime output in UTF-8", { timeout: 45_000 }, async () => {
+  const executable = path.join(workspace, "node-unicode.exe");
+  await fs.copyFile(process.execPath, executable);
+  const output = await approvedInvocation("execute_command", { command: `chcp & echo 中文目录与资料 & call "${executable}" -e "process.stdout.write('文档完成');process.stderr.write('错误详情')"` });
+  assert.match(output, /中文目录与资料/u);
+  assert.match(output, /文档完成/u);
+  assert.match(output, /错误详情/u);
+  assert.equal(output.includes("\ufffd"), false);
+});
+
+test("A03 real E1 preserves quoted executable arguments, Unicode cwd and a nonzero exit", { timeout: 45_000 }, async () => {
+  const folder = path.join(workspace, "中文 项目");
+  await fs.mkdir(folder, { recursive: true });
+  const executable = path.join(folder, "node 工具.exe");
+  await fs.copyFile(process.execPath, executable);
+  await fs.writeFile(path.join(folder, "资料.txt"), "CURRENT_DIRECTORY_READ");
+  const command = `"${executable}" -e "process.stdout.write(process.argv[1]+'|'+require('node:fs').readFileSync('资料.txt','utf8'));process.exit(7)" "带 空格参数"`;
+  await assert.rejects(approvedInvocation("execute_command", { command, cwd: folder }), error => {
+    assert.match(error.message, /带 空格参数\|CURRENT_DIRECTORY_READ/u);
+    assert.match(error.message, /\[execution child-failed; exit 7\]/u);
+    return true;
+  });
+});
+
 test("TOOL-04 real E3 runs Node ESM JSON/regex with explicit cwd and lux bridge", { timeout: 60_000 }, async () => {
   const output = await approvedScript({
     lang: "node",
@@ -221,9 +245,9 @@ test("D04 real native tool stops writes within five seconds of user cancellation
   const pending = approvedScript({ lang: "node", cwd: "nested", timeout: 10_000,
     code: `let tick=0;for(;;){await lux.writeJson("cancel-heartbeat.json",{tick:++tick,pid:process.pid});await new Promise(resolve=>setTimeout(resolve,25));}` }, controller.signal);
   void pending.catch(error => { executionError = error; });
-  await waitFor(async () => { if (executionError) return true; try { return JSON.parse(await fs.readFile(heartbeat, "utf8")).tick > 0; } catch { return false; } }, { timeoutMs: 8000, label: "D04 actual native tool started" });
+  const observedHeartbeat = await waitFor(async () => { if (executionError) return true; try { const value = JSON.parse(await fs.readFile(heartbeat, "utf8")); return value.tick > 0 ? value : false; } catch { return false; } }, { timeoutMs: 8000, label: "D04 actual native tool started" });
   if (executionError) throw executionError;
-  const childPid = JSON.parse(await fs.readFile(heartbeat, "utf8")).pid;
+  const childPid = observedHeartbeat.pid;
   const started = Date.now();
   const stopped = assert.rejects(pending, error => error.code === "RUN_CANCELLED");
   controller.abort(new Error("用户停止"));

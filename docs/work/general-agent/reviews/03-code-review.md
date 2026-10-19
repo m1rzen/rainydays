@@ -25,3 +25,9 @@ Spec：版本命令exit0而stdout缺失有独立red；修改后实际v24.14.1出
 Standards：普通文件保留句柄以FILE_READ_DATA替代DELETE，继续READ_CONTROL/WRITE_DAC/FILE_READ_ATTRIBUTES及不共享删除。只读数据访问使Windows共享保留实际生效；目录、ACL授权、身份校验、Job/网络和恢复契约未变。只去DELETE的中间候选未能拒绝ren，已弃用，没有删除失败断言。当前方案实际验证原文件内容及dev/ino保持、目标不存在；原E3范围/链接拒绝、J5外部对象无SID和E1数据/环境/真实网络负向保持。探针与测试共用全局native恢复目录，不适合并行；串行执行，不清空journal。
 
 Spec：真实type先因sharing violation失败，当前1/1通过；相关E3拒绝1/1、原生E1/J5共2/2通过。Python临时项目真正断言失败、修正后unittest成功；仅支持因果实验，不代表生产运行时已接入。默认Node --test仍超时，上游libuv命名管道兼容缺陷另记；不静默改变测试语义或用源码证据代替安装。该子切片可验证，A03整票继续。
+
+## E1编码切片
+
+固定范围e1f648b至本轮native console编码与真实回归。Standards：继承launcher给host的私有隐藏console，先设置65001，保留原命令文本、单次cmd解析、标准句柄列表、AppContainer/Job、路径和网络。额外cmd包装曾破坏引号，已撤回；未改全局console或SDK。原E1边界1/1及停止1/1保持。D04 fixture使用已观察heartbeat快照，避免第二次读落在截断写入之间，原停止时限/进程不存在/不再写入断言不变。
+
+Spec：中文cmd与外部stdout/stderr真实red→green；引用路径/参数、中文空格cwd和exit7按实际内容与状态核对，版本及文件保留回归共4/4。类型/lint、产品74/74及UI15/15通过。源码构建0.1.0+local.d8ed84e25321；不是当前安装候选、不是任意编码自动识别。本切片可验证，A03继续。
