@@ -152,9 +152,9 @@ if (!/^[a-f0-9]{64}$/.test(buildInfo.candidateId)
 await verifyFreshCompilation();
 await verifyDistIntegrity(buildInfo);
 
-await fs.rm(stageDir, { recursive: true, force: true });
+await fs.rm(stageDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 await fs.mkdir(stageDir, { recursive: true });
-await Promise.all(["dist", "electron", "public", "personas", "skills", "models", "scripts", "build"].map(copyDirectory));
+await Promise.all(["dist", "electron", "public", "personas", "skills", "models", "scripts", "build", "vendor"].map(copyDirectory));
 await compareDirectoryBytes(path.join(projectRoot, "dist", "native"), path.join(stageDir, "dist", "native"), "SEC-03 staged native projection");
 await fs.copyFile(path.join(projectRoot, "package-lock.json"), path.join(stageDir, "package-lock.json"));
 await fs.copyFile(path.join(projectRoot, "build-info.json"), path.join(stageDir, "build-info.json"));

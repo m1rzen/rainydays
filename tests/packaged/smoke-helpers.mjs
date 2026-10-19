@@ -8,8 +8,8 @@ export function classifyInstallerResult(result, timedOut = false) {
   return "non-zero";
 }
 
-export function launchTracked(command, args, { env, timeoutMs, label, readyProbe }) {
-  const child = spawnManaged(command, args, { env });
+export function launchTracked(command, args, { env, cwd, timeoutMs, label, readyProbe }) {
+  const child = spawnManaged(command, args, { env, cwd });
   let stdout = "";
   let stderr = "";
   child.stdout?.setEncoding("utf8");

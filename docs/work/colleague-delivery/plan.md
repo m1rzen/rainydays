@@ -20,7 +20,7 @@ Status: approved
 | [D10 把成功任务保存为可编辑模板](tickets/10-save-task-template.md) | D04、D08 | 保存、重命名、编辑、删除/归档、重启读取模板可用；已有会话不被修改。 | ready |
 | [D11 换输入重跑、校验与失败恢复](tickets/11-rerun-template.md) | D10 | T01–T05 工程流程成立，新输入不会混入上一次数值。 | ready |
 | [D12 可行动错误与轻量诊断](tickets/12-errors-and-support.md) | D02、D04 | 额度、认证、断网、目录失效、解析失败、权限拒绝、应用故障都能从界面采取下一步。 | ready |
-| [D13 尽早验证同事机器安装](tickets/13-installer.md) | D01、D05 | 至少两套干净 Windows 11 x64 环境，无 Node/npm/MSVC 也可用基本文件/文档流程。 | ready |
+| [D13 尽早验证同事机器安装](tickets/13-installer.md) | D01、D05 | 至少两套干净 Windows 11 x64 环境，无 Node/npm/MSVC 也可用基本文件/文档流程。 | blocked |
 | [D14 普通用户可恢复的备份与升级](tickets/14-upgrade-and-restore.md) | D13 | 备份后新建任务，再恢复测试副本，能证明新数据被保护或可另行导入。 | ready |
 | [D15 固定任务与 Beta 候选验收](tickets/15-beta-evaluation.md) | D03、D06、D07、D08、D09、D11、D12、D13、D14 | Beta ≥34/40、各类 ≥8/10 | ready |
 | [D16 三位同事独立使用一周](tickets/16-colleague-trial.md) | D15 | 三人五日真实证据 | ready |

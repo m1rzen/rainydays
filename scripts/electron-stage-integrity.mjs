@@ -6,7 +6,7 @@ import { collectSourceFiles, sourceDigest, toPosix, validateSec03NativeProjectio
 import { validateSec02SinkInventory } from "./sec02-sink-inventory.mjs";
 
 export const electronStageManifestName = "electron-stage-integrity.json";
-const projectedDirectories = Object.freeze(["build", "dist", "electron", "models", "personas", "public", "scripts", "skills"]);
+const projectedDirectories = Object.freeze(["build", "dist", "electron", "models", "personas", "public", "scripts", "skills", "vendor"]);
 const projectedRootFiles = Object.freeze(["build-info.json", "dist-integrity.json", "package-lock.json"]);
 const sha256Pattern = /^[a-f0-9]{64}$/u;
 

@@ -54,6 +54,6 @@ test("DS-06 media uses retained Session-scoped content URLs without online asset
   const packageModel = JSON.parse(packageJson);
   assert(packageModel.build.files.includes("public/**/*"));
   assert(packageModel.build.asarUnpack.includes("public/**/*"));
-  assert.match(prepareElectron, /\["dist", "electron", "public", "personas", "skills", "models", "scripts", "build"\]\.map\(copyDirectory\)/u);
+  assert.match(prepareElectron, /\["dist", "electron", "public", "personas", "skills", "models", "scripts", "build", "vendor"\]\.map\(copyDirectory\)/u);
   assert.equal(projectRoot.endsWith("mini-lux"), true);
 });

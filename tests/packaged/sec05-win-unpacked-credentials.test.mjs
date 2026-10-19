@@ -58,7 +58,7 @@ test("SEC-05 win-unpacked migrates with safeStorage and decrypts after restart w
   await fs.writeFile(path.join(userData, "config.json"), JSON.stringify({
     defaultProfile: "default",
     profiles: { default: { model: "m", apiKey: secret, baseURL: "https://provider.example" } },
-    settings: {},
+    settings: { defaultPersona: "general", workspaceRoot: path.join(userData, "workspace"), departmentDataRoot: "", outputDir: path.join(userData, "output") },
   }, null, 2));
   try {
     for (let launchIndex = 0; launchIndex < 2; launchIndex++) {

@@ -161,6 +161,12 @@ function guardDatabaseObject<T extends object>(target: T, guard: SqlitePathGuard
   if (existing) return existing as T;
   const wrapReturned = (returned: unknown): unknown => {
     if (returned && typeof (returned as PromiseLike<unknown>).then === "function") return returned;
+    if (returned && typeof returned === "object") {
+      const prototype = Object.getPrototypeOf(returned);
+      // Materialized SQLite rows are snapshots. Their iteration cannot access the database.
+      // Native statements/iterators retain their distinct prototypes and guarded I/O methods.
+      if (Array.isArray(returned) || Buffer.isBuffer(returned) || prototype === Object.prototype || prototype === null) return returned;
+    }
     if ((typeof returned === "object" && returned !== null) || typeof returned === "function") {
       return guardDatabaseObject(returned as object, guard, cache);
     }
