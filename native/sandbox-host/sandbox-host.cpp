@@ -935,7 +935,7 @@ int Run() {
   std::wstring command_line = persistent ? L"\"" + executable + L"\" /d /q" : L"\"" + executable + L"\" /d /s /c \"" + command + L"\"";
   if (is_fixed_adversary) command_line = L"\"" + executable + L"\" --sec03-fixed-child " + fixed_spec->mode;
   if (is_e3) {
-    command_line = L"\"" + executable + L"\" --permission --no-addons --no-global-search-paths";
+    command_line = L"\"" + executable + L"\" --permission --no-addons --no-global-search-paths --preserve-symlinks --preserve-symlinks-main";
     for (const auto& grant : grants) {
       const std::wstring node_path = grant.cwd_path.rfind(L"\\\\?\\", 0) == 0 ? grant.cwd_path.substr(4) : grant.cwd_path;
       const std::wstring descendant_pattern = node_path + L"\\*";

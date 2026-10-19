@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: ready
+Status: in-progress
 
 Spec: [通用Agent规格](../../../specs/general-agent.md)
 
@@ -46,9 +46,22 @@ src/tools/shell.ts、terminal-tools.ts、script.ts及执行adapter；tests中的
 
 ## 执行记录
 
-尚未开始。获批后记录起点提交、修改边界、实际决定与偏离理由、调用授权、未完成条件；按[执行流程](../../../agents/workflow.md)推进。
+2026-10-20，沿用整套授权，起点09ad4e9。A01/D04/D05及A02工程均已验证。先复现隔离中Node/Python项目失败与E3父目录元数据EPERM，读取实际native/runtime契约后做最小兼容设计；再接普通会话与长输出/输入/取消。只使用自建临时项目，不调用真实模型、不改用户开发环境或D13 gate。
+
+## Test and design seam
+
+真实Broker→现有script/execute_command→native AppContainer/Job，临时Node/Python项目验证红→修改→绿，stdout/exit及取消为可观察结果。优先E3模块解析最小实验，同时保留现有root/cwd、链接和hardlink负向；实际决定见规格，区分证据见[诊断](../diagnostics/03-cli-compatibility.md)。E1运行时、终端长任务与编码随后独立处理，不新增执行内核。
 
 ## 审查与验证结果
 
-尚未审查/验证。完成时记录具体命令、实际结果、人工核对、未测项、回退和终点提交。全部条件有证据才改为verified；依赖例外以[总任务图](../plan.md)为准。
+E3真实模块子切片已实现、按[审查](../reviews/03-code-review.md)分别检查Standards/Spec并验证；整票in-progress，E1/Python/长终端/编码/默认会话尚待完成。
+
+- `node docs/work/general-agent/prototypes/a01-cli.mjs`：再次确认echo可用，Node/Python外部命令拒绝，E3祖先EPERM，未把失败记为通过。
+- `node --test --test-name-pattern 'A03 real E3 imports' tests/integration/tool04-script-native.test.mjs`：最初red，期望ERR_ASSERTION却先遇到C:\祖先lstat EPERM。
+- `npm run build`：原native构建/TypeScript/产物完整性通过，源码构建0.1.0+local.ea857b6096fc。仅固定E3 Node解析参数增preserve-symlinks/main；未加祖先ACL或扩大read根。
+- `node --test --test-name-pattern 'A03 real E3 imports|lux bridge and Node permission model reject|real E3 runs Node ESM|real E3 runs node-cjs' tests/integration/tool04-script-native.test.mjs`：4/4。真正进入项目断言失败，改依赖后通过；ESM/require及root/cwd、junction/hardlink/外部文件拒绝保持。
+- `node --test --test-name-pattern 'D04 real native tool stops' tests/integration/tool04-script-native.test.mjs`：1/1，1.412秒，原5秒停止写入目标保持。
+- `npm run check:product`：类型/lint、74/74和UI/IPC15/15通过。
+
+没有数据库迁移、付费调用或用户环境变更，D13 gate保持。回退本切片仅移除固定解析参数与对应回归，不回退用户项目。切片终点为`fix: load scoped project modules in isolated Node scripts`提交。后续继续运行时租约/依赖与真实CLI，不用E3子切片代替整票。
 

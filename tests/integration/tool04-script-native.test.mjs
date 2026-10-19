@@ -136,6 +136,15 @@ console.log("bridge-result", JSON.stringify({ selected, reread: await lux.readJs
   assert.deepEqual(JSON.parse(await fs.readFile(path.join(nested, "bridge.json"), "utf8")).selected, [3, 8, 13]);
 });
 
+test("A03 real E3 imports relative project modules and reports a real failing then passing check", { timeout: 60_000 }, async () => {
+  await fs.writeFile(path.join(nested, "project-dep.mjs"), "export const sum=(a,b)=>a-b;\n");
+  await fs.writeFile(path.join(nested, "project-check.mjs"), "import assert from 'node:assert/strict';import{sum}from'./project-dep.mjs';assert.equal(sum(3,5),8);console.log('PROJECT_MODULE_PASSED');\n");
+  const args = { lang: "node", cwd: "nested", code: "await import('./project-check.mjs');" };
+  await assert.rejects(approvedScript(args), /ERR_ASSERTION/u);
+  await fs.writeFile(path.join(nested, "project-dep.mjs"), "export const sum=(a,b)=>a+b;\n");
+  assert.match(await approvedScript(args), /PROJECT_MODULE_PASSED/u);
+});
+
 test("TOOL-04 real E3 runs node-cjs require in the same sandbox", { timeout: 60_000 }, async () => {
   const output = await approvedScript({
     lang: "node-cjs",
