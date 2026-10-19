@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: ready
+Status: in-progress
 
 Spec: [通用Agent规格](../../../specs/general-agent.md)
 
@@ -43,9 +43,21 @@ src/tools/read-repo.ts、filesystem-lux.ts、现有文件授权与成果呈现�
 
 ## 执行记录
 
-尚未开始。获批后记录起点提交、修改边界、实际决定与偏离理由、调用授权、未完成条件；按[执行流程](../../../agents/workflow.md)推进。
+2026-10-20，沿用整套路线授权，起点22e1897。A01/D04/D05及D03工程依赖满足；先完成项目上下文切片，再处理读后写校验、差异与撤回。只使用临时仓库和本地fixture，不调用真实模型或修改日常项目内容。
+
+## Test and design seam
+
+比较新建代码工作台/第二套仓库索引与增强现有read_repo/read/edit工具，采用后者。read_repo用固定只读Git命令识别根和工作目录、状态与未跟踪文件，所有实际内容仍走现有Path gateway；忽略规则遵循Git，删除项单独标明。默认助手按需发现read_repo，不常驻全部项目内容。临时含中文/空格的Git仓库验证未跟踪、已改/已删、脚本与筛选，真实默认会话验证发现入口。随后在原编辑接口加读取版本前提和可见差异，撤回也受当前版本校验；不调用Git写入/重置来撤回。
 
 ## 审查与验证结果
 
-尚未审查/验证。完成时记录具体命令、实际结果、人工核对、未测项、回退和终点提交。全部条件有证据才改为verified；依赖例外以[总任务图](../plan.md)为准。
+项目上下文切片已实现，并按[审查](../reviews/02-code-review.md)完成Standards/Spec检查。整票保持in-progress；读后写冲突、多文件差异与撤回待后续切片。
+
+- `node --import tsx --test tests/product/repository-context.test.mjs`：3/3。先复现未允许read_repo、已删文件导致整读失败、无开发环境变量无法检测Git，再补齐。临时Git仓库含中文/空格、未提交修改、未跟踪/忽略/已删文件、子目录筛选、项目脚本；原内容/Git状态保持。使用内置general允许列表与真实Agent工具发现/执行。
+- `node --test --test-name-pattern 'read_repo uses fixed Git' tests/integration/repo-oracle-path.test.mjs`：1/1；原cwd越界零进程、hardlink/junction/恶意文件名拒绝、长内容预算行为保持，未改原断言。
+- `node --test --test-name-pattern 'A02 real Electron' tests/electron/startup-recovery.test.mjs`：1/1，交互20.962秒、完整37.515秒。实际默认会话按需发现→读取summary→读取all，模型HTTP fixture核对真实工具结果后回答；无开发Git路径覆盖，用户原修改与未跟踪内容保留。不是实际模型能力认证或安装证据。
+
+无数据迁移，不运行Git写入/项目脚本；测试中的init/add/config仅限自建临时仓库。回退仅针对本切片代码/Persona提交，不恢复或覆盖用户仓库。
+
+`npm run check:product`：typecheck、lint、产品66/66与UI/IPC15/15通过。只更新runGitQuery的单一已核实execFile登记；原拒绝新/未解析/过期及ASAR篡改负向2/2通过，scanner199/binding159、未认证40、过期0，D13仍blocked。切片终点为`feat: discover real project context from the default assistant`提交；后续继续A02编辑验收。
 

@@ -4508,10 +4508,10 @@
       }
     },
     {
-      "siteId": "sink-fbebe1312d594532f0d822df",
+      "siteId": "sink-b8c178a4d8f83a7f4502dcda",
       "sourcePath": "src/tools/read-repo.ts",
-      "normalizedNodeSha256": "9ff512892597771dcbfb07f6a34ddf321cbfe666afb565af40abd4189b18e5a5",
-      "container": "runGitLsFiles",
+      "normalizedNodeSha256": "3e885432b1991ba1e282c2a5b3e9ff10e7c35ad8d06a73168c2f63e65eae1c68",
+      "container": "runGitQuery",
       "family": "child-process",
       "api": "execFile",
       "pathOperands": [
@@ -4524,7 +4524,7 @@
       "packageExpectation": "compiled-to-asar",
       "binding": {
         "kind": "runtime-canary",
-        "anchor": "src/tools/read-repo.ts#runGitLsFiles:child-process.execFile",
+        "anchor": "src/tools/read-repo.ts#runGitQuery:child-process.execFile",
         "evidenceIds": [
           "repo-oracle",
           "packaged-asar"
@@ -4533,22 +4533,22 @@
           {
             "selector": "argument:0",
             "classification": "runtime-executable-lease",
-            "anchor": "src/tools/read-repo.ts#runGitLsFiles:argument:0"
+            "anchor": "src/tools/read-repo.ts#runGitQuery:argument:0"
           },
           {
             "selector": "argument:1",
             "classification": "fixed-reviewed-argv",
-            "anchor": "src/tools/read-repo.ts#runGitLsFiles:argument:1"
+            "anchor": "src/tools/read-repo.ts#runGitQuery:argument:1"
           },
           {
             "selector": "argument:2.cwd",
             "classification": "authority-canonical-cwd",
-            "anchor": "src/tools/read-repo.ts#runGitLsFiles:argument:2.cwd"
+            "anchor": "src/tools/read-repo.ts#runGitQuery:argument:2.cwd"
           },
           {
             "selector": "argument:2.shell",
             "classification": "fixed-shell-false",
-            "anchor": "src/tools/read-repo.ts#runGitLsFiles:argument:2.shell"
+            "anchor": "src/tools/read-repo.ts#runGitQuery:argument:2.shell"
           }
         ]
       }
@@ -4608,5 +4608,5 @@
       }
     }
   ],
-  "canonicalPayloadSha256": "1366680bf9458489db797a64289f4f6718bcccd3a1ebd25b563a22e1fb2327e4"
+  "canonicalPayloadSha256": "084cb3f41d60af325a2f23ad80323461e6723398d6251c88b4825728370b6cf8"
 }

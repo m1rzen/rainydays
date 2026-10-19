@@ -31,3 +31,9 @@
 仅增加固定ID的3项登记、移除固定ID的2项过期绑定；159条登记对应199个实际调用。`sec02-sink-inventory.mjs --check`仍按原语义拒绝，下一处为browser.ts:168，而非放行全部源码。原“新/未解析/过期拒绝”和“ASAR新增文件/同路径调用篡改拒绝”用例2/2通过；inventory本体未生成或标绿。
 
 后续按上述现有边界逐组处理，优先附件/浏览器受管资源与Worker已有执行接口；Media仅修必要存储，Playbook按D11产品入口改造。当前仍是本地工程阻塞，不是模型密钥或干净机器阻塞。外部机器门槛另保留。
+
+## A02受影响登记维护（2026-10-20）
+
+read_repo把runGitLsFiles扩为固定四种只读查询runGitQuery；该execFile从sink-fbebe1312d594532f0d822df变为sink-b8c178a4d8f83a7f4502dcda。仅替换这一条已核实登记及对应anchor，继续使用runtime-executable-lease、fixed-reviewed-argv、authority-canonical-cwd、shell:false。查询关闭可选索引锁和fsmonitor，实际路径仍经原gateway；原repo-oracle负向1/1、真实默认Electron1/1已通过。新/未解析/过期拒绝与ASAR篡改拒绝2/2保持。
+
+当前scanner199、binding159、未认证40、过期0；未注册其他调用，未修改scanner、验证器或打包gate，也未把旧inventory重生成为通过状态。

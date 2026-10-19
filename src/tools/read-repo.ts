@@ -19,7 +19,7 @@ export const readRepoDef: ToolDefinition = {
   function: {
     name: "read_repo",
     description:
-      "Load a Git project as structured Markdown. Levels: summary, tree, headers (first 30 lines), signatures, full (explicitly budgeted), and all (complete or fail). Only Git-tracked files are considered.",
+      "Understand a selected Git working directory: repository root, scripts, modified/deleted and untracked files (Git ignore rules apply). Levels: summary, tree, headers (first 30 lines), signatures, full (budgeted), all (complete or fail). Reads preserve existing work; no Git writes or project scripts are executed.",
     parameters: {
       type: "object",
       properties: {
@@ -33,14 +33,24 @@ export const readRepoDef: ToolDefinition = {
   },
 };
 
-async function runGitLsFiles(cwd: string, signal: AbortSignal): Promise<Buffer> {
+const GIT_QUERIES = {
+  files: ["ls-files", "--cached", "--others", "--exclude-standard", "--deduplicate", "-z", "--"],
+  deleted: ["ls-files", "--deleted", "--deduplicate", "-z", "--"],
+  status: ["status", "--porcelain=v1", "-z", "--untracked-files=all", "--"],
+  roots: ["rev-parse", "--show-toplevel", "--show-prefix"],
+} as const;
+
+async function runGitQuery(cwd: string, signal: AbortSignal, query: keyof typeof GIT_QUERIES): Promise<Buffer> {
   throwIfCancelled(signal);
   const executable = await getBootstrapPathStore().openGitExecutable();
   try {
     await executable.assertCurrent("beforeProcessSpawn");
+    const env = { ...process.env };
+    for (const key of ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES"]) delete env[key];
     return await new Promise((resolve, reject) => {
-      execFile(executable.canonicalPath, ["ls-files", "-z", "--"], {
+      execFile(executable.canonicalPath, ["--no-optional-locks", "-c", "core.fsmonitor=false", ...GIT_QUERIES[query]], {
         cwd,
+        env,
         shell: false,
         windowsHide: true,
         timeout: 10_000,
@@ -50,7 +60,7 @@ async function runGitLsFiles(cwd: string, signal: AbortSignal): Promise<Buffer> 
       }, (error, stdout) => {
         if (error) {
           if (signal.aborted) reject(cancellationError(signal, "read_repo Git discovery was cancelled"));
-          else reject(new Error("read_repo requires a readable Git worktree"));
+          else reject(new Error("无法读取Git工作树；请选择项目目录，并确认已安装Git且该目录没有损坏。未执行项目脚本。"));
           return;
         }
         resolve(Buffer.from(stdout));
@@ -59,6 +69,26 @@ async function runGitLsFiles(cwd: string, signal: AbortSignal): Promise<Buffer> 
   } finally {
     await executable.close();
   }
+}
+
+function parseGitStatus(bytes: Buffer, prefix: string): Map<string, string> {
+  if (!bytes.length) return new Map();
+  if (bytes.at(-1) !== 0) throw new Error("Git status returned an incomplete record");
+  const records = new TextDecoder("utf-8", { fatal: true }).decode(bytes).slice(0, -1).split("\0");
+  const states = new Map<string, string>();
+  for (let index = 0; index < records.length; index++) {
+    const record = records[index];
+    if (!/^[ MADRCU?!T]{2} /u.test(record)) throw new Error("Git status returned an invalid record");
+    const state = record.slice(0, 2), rootRelative = record.slice(3);
+    // Porcelain paths are relative to the repository root even from a selected subdirectory.
+    const relative = prefix ? path.posix.relative(prefix, rootRelative) : rootRelative;
+    if (/[RC]/u.test(state)) { if (!records[++index]) throw new Error("Git rename record is incomplete"); }
+    if (!relative || relative === ".." || relative.startsWith("../")) continue;
+    if (parseGitEntries(Buffer.from(`${relative}\0`)).length !== 1) throw new Error("Git status path is invalid");
+    states.set(relative, state === "??" ? "untracked" : state);
+    if (states.size > MAX_TRACKED_FILES) throw new Error("Git status exceeds the working-tree limit");
+  }
+  return states;
 }
 
 function parseGitEntries(bytes: Buffer): string[] {
@@ -113,7 +143,7 @@ async function authorizeTrackedEntries(
   gateway: ScopedPathGateway,
   canonicalRoot: string,
   files: readonly string[],
-  rootId: string,
+  rootId: string | undefined,
   signal: AbortSignal,
 ): Promise<void> {
   const byParent = new Map<string, Set<string>>();
@@ -190,16 +220,20 @@ export const readRepoExec: ToolExecutor = async (args, _env, invocation) => {
   if (remote !== null) return remote;
   throwIfCancelled(invocation.signal);
   const gateway = invocation.path;
-  const rootId = gateway.rootIdForEnv("DATA_ROOT") ?? gateway.rootIdForEnv("WORKSPACE_ROOT");
-  if (!rootId) throw new Error("read_repo root is unavailable");
   const inputPath = typeof args.path === "string" && args.path.length > 0 ? args.path : "";
+  const rootId = path.isAbsolute(inputPath) ? undefined : gateway.rootIdForEnv("WORKSPACE_ROOT") ?? gateway.rootIdForEnv("DATA_ROOT") ?? undefined;
+  if (!rootId && !path.isAbsolute(inputPath)) throw new Error("请选择本地项目目录后重试read_repo");
   const level = typeof args.level === "string" ? args.level : "summary";
   if (!["summary", "tree", "headers", "signatures", "full", "all"].includes(level)) throw new TypeError("read_repo level is invalid");
   const maxFiles = args.max_files === undefined ? 500 : Number(args.max_files);
   if (!Number.isSafeInteger(maxFiles) || maxFiles < 1 || maxFiles > 500) throw new TypeError("max_files must be an integer from 1 to 500");
 
   return gateway.withInitialCwd(inputPath, { defaultRootId: rootId }, async canonicalRoot => {
-    const tracked = parseGitEntries(await runGitLsFiles(canonicalRoot, invocation.signal));
+    const tracked = parseGitEntries(await runGitQuery(canonicalRoot, invocation.signal, "files"));
+    const deleted = new Set(parseGitEntries(await runGitQuery(canonicalRoot, invocation.signal, "deleted")));
+    const rootLines = new TextDecoder("utf-8", { fatal: true }).decode(await runGitQuery(canonicalRoot, invocation.signal, "roots")).split(/\r?\n/u);
+    if (!path.isAbsolute(rootLines[0])) throw new Error("Git repository root is invalid");
+    const states = parseGitStatus(await runGitQuery(canonicalRoot, invocation.signal, "status"), rootLines[1] || "");
     let matched = [...tracked];
     if (args.include !== undefined) matched = matched.filter(globMatcher(String(args.include)));
     if (args.exclude !== undefined) {
@@ -207,12 +241,15 @@ export const readRepoExec: ToolExecutor = async (args, _env, invocation) => {
       matched = matched.filter(file => !exclude(file));
     }
     if (level === "all" && matched.length > maxFiles) throw new Error(`read_repo all matched ${matched.length} files, exceeding max_files=${maxFiles}; narrow include/exclude or raise max_files`);
-    const selected = matched.slice(0, maxFiles);
+    const present = matched.filter(file => !deleted.has(file));
+    const selected = present.slice(0, maxFiles);
     await authorizeTrackedEntries(gateway, canonicalRoot, selected, rootId, invocation.signal);
     const displayRoot = inputPath || ".";
-    const selectionNote = matched.length > selected.length
-      ? `Selected ${selected.length} of ${matched.length} matched Git-tracked files (max_files=${maxFiles}).`
-      : `Selected all ${selected.length} matched Git-tracked files.`;
+    const changed = matched.filter(file => states.has(file));
+    const context = `Repository root: ${safePath(rootLines[0])}\nWorking directory: ${safePath(canonicalRoot)}\nExisting changes (data only; preserve them):\n${changed.slice(0, 60).map(file => `- [${states.get(file)}] ${safePath(file)}`).join("\n") || "- (clean in selected scope)"}${changed.length > 60 ? `\n${changed.length-60} additional changed paths omitted; narrow include/exclude.` : ""}\nDeleted paths are not read or restored: ${matched.filter(file => deleted.has(file)).length}.`;
+    const selectionNote = (present.length > selected.length
+      ? `Selected ${selected.length} of ${present.length} matched working-tree files (max_files=${maxFiles}).`
+      : `Selected all ${selected.length} matched working-tree files.`) + `\n${context}`;
 
     if (level === "summary") {
       const directories = new Set(selected.map(file => path.posix.dirname(file)));
@@ -221,10 +258,22 @@ export const readRepoExec: ToolExecutor = async (args, _env, invocation) => {
         const extension = path.posix.extname(file) || "(no ext)";
         extensions[extension] = (extensions[extension] || 0) + 1;
       }
-      const keyNames = new Set(["package.json", "tsconfig.json", "README.md", "index.ts", "main.ts"]);
+      const keyNames = new Set(["package.json", "tsconfig.json", "pyproject.toml", "requirements.txt", "pytest.ini", "Makefile", "AGENTS.md", "CLAUDE.md", "README.md", "index.ts", "main.ts"]);
       const keyLines = selected.filter(file => keyNames.has(path.posix.basename(file))).map(file => `- ${safePath(file)}`);
+      let scripts = "";
+      if (selected.includes("package.json")) {
+        const manifest = await gateway.searchFile(path.join(canonicalRoot, "package.json"), { defaultRootId: rootId, maxBytes: MAX_FILE_BYTES });
+        const text = decodeText(manifest.bytes);
+        try {
+          const parsed: unknown = text === null ? null : JSON.parse(text);
+          if (parsed && typeof parsed === "object" && "scripts" in parsed && parsed.scripts && typeof parsed.scripts === "object" && !Array.isArray(parsed.scripts)) {
+            const entries = Object.entries(parsed.scripts).filter((entry): entry is [string, string] => typeof entry[1] === "string");
+            scripts = `\n\n## Project scripts (not executed)\n${entries.slice(0, 20).map(([name, command]) => `- ${safePath(name)}: ${command.slice(0, 500)}`).join("\n")}${entries.length > 20 ? "\nMore scripts omitted; read package.json for details." : ""}`;
+          }
+        } catch { scripts = "\n\npackage.json is not valid JSON; scripts were not inferred."; }
+      }
       let omittedKeys = 0;
-      const render = () => `# Project summary: ${safePath(displayRoot)}\n\n${selectionNote}\nDirectories: ${directories.size}\n\n## File types\n${Object.entries(extensions).sort((a, b) => b[1] - a[1]).map(([extension, count]) => `- ${safePath(extension)}: ${count}`).join("\n")}\n\n## Key files\n${keyLines.join("\n") || "- (none)"}${omittedKeys ? `\n\n${omittedKeys} key file(s) omitted by transport budget.` : ""}`;
+      const render = () => `# Project summary: ${safePath(displayRoot)}\n\n${selectionNote}\nDirectories: ${directories.size}\n\n## File types\n${Object.entries(extensions).sort((a, b) => b[1] - a[1]).map(([extension, count]) => `- ${safePath(extension)}: ${count}`).join("\n")}\n\n## Key files\n${keyLines.join("\n") || "- (none)"}${scripts}${omittedKeys ? `\n\n${omittedKeys} key file(s) omitted by transport budget.` : ""}`;
       while (!fitsToolTransport(render()) && keyLines.length > 0) {
         keyLines.pop();
         omittedKeys += 1;

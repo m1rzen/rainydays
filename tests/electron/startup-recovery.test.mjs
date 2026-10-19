@@ -275,6 +275,49 @@ test("D03 real Electron retrieves early facts through Agent read after 20 rounds
   finally { if(desktop) await desktop.close(); server.closeAllConnections(); await new Promise(resolve=>server.close(resolve)); }
 });
 
+test("A02 real Electron default conversation discovers project context including existing and untracked work", { timeout: 120_000 }, async () => {
+  let desktop, streams=0, failure=null;
+  const server=createServer(async (request,response)=>{
+    try {
+      const chunks=[]; for await(const chunk of request) chunks.push(chunk);
+      const body=JSON.parse(Buffer.concat(chunks).toString());
+      if(!body.stream) { response.setHeader('Content-Type','application/json'); response.end(JSON.stringify({choices:[{message:{role:'assistant',content:'项目资料'},finish_reason:'stop'}]})); return; }
+      let call,content='已识别脚本 node --test、用户改动与未跟踪资料，未修改项目。';
+      const step=++streams;
+      if(step===1) call={name:'search_tools',arguments:JSON.stringify({keywords:'read_repo 项目仓库'})};
+      else if(step===2) {
+        assert(body.tools.some(tool=>tool.function.name==='read_repo'));
+        call={name:'read_repo',arguments:JSON.stringify({path:desktop.settings.workspaceRoot,level:'summary'})};
+      } else if(step===3) {
+        const result=JSON.stringify(body.messages.filter(message=>message.role==='tool').at(-1));
+        assert.match(result,/node --test/); assert.match(result,/untracked/);
+        call={name:'read_repo',arguments:JSON.stringify({path:desktop.settings.workspaceRoot,level:'all',include:'*.ts'})};
+      } else { assert.equal(step,4); const result=JSON.stringify(body.messages.at(-1)); assert.match(result,/USER_NEW/); assert.match(result,/用户改动/); }
+      response.writeHead(200,{'Content-Type':'text/event-stream'});
+      response.end(`data: ${JSON.stringify({choices:[{delta:call?{tool_calls:[{index:0,id:`project-${step}`,type:'function',function:call}]}:{content},finish_reason:call?'tool_calls':'stop'}]})}\n\ndata: [DONE]\n\n`);
+    } catch(error) { failure=error; response.statusCode=500; response.end(String(error)); }
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  try {
+    desktop=await fixtureDesktop({}, {apiKey:'fixture-only',baseURL:`http://127.0.0.1:${server.address().port}/v1`});
+    const root=desktop.settings.workspaceRoot;
+    const git=process.platform==='win32'?execFileSync(path.join(process.env.SystemRoot,'System32','where.exe'),['git.exe'],{encoding:'utf8',windowsHide:true}).split(/\r?\n/u).find(Boolean):'/usr/bin/git';
+    await writeFile(path.join(root,'package.json'),JSON.stringify({scripts:{test:'node --test'}}));
+    await writeFile(path.join(root,'原始 文件.ts'),'export const value = 1;\n');
+    execFileSync(git,['init','--quiet'],{cwd:root,windowsHide:true}); execFileSync(git,['add','--','.'],{cwd:root,windowsHide:true});
+    await writeFile(path.join(root,'原始 文件.ts'),'export const value = 1;\n// 用户改动\n');
+    await writeFile(path.join(root,'新资料.ts'),"export const note = 'USER_NEW';\n");
+    const client=await desktop.start();
+    await client.evaluate("(() => { inputEl.value='理解当前项目，给出脚本和已有改动，保留未跟踪文件，不要修改或提交。'; inputEl.dispatchEvent(new Event('input')); document.getElementById('input-form').requestSubmit(); return true; })()");
+    await waitFor(()=>client.evaluate("!isSessionRunning() && messagesEl.textContent.includes('已识别脚本 node --test')"),{timeoutMs:30000,label:'A02 default project conversation'});
+    assert.equal(failure,null); assert.equal(streams,4);
+    assert.match(await readFile(path.join(root,'原始 文件.ts'),'utf8'),/用户改动/);
+    assert.match(await readFile(path.join(root,'新资料.ts'),'utf8'),/USER_NEW/);
+    assert.match(await client.evaluate('messagesEl.textContent'),/read_repo/);
+  } catch(error) { throw new Error(`${error.message}\nstreams=${streams}, model=${failure?.message||'ok'}\n${desktop?.logs()||''}`,{cause:error}); }
+  finally { if(desktop) await desktop.close(); server.closeAllConnections(); await new Promise(resolve=>server.close(resolve)); }
+});
+
 test("D03 real Electron saves per-model request limits and restores them after restart", { timeout: 120_000 }, async () => {
   const desktop = await fixtureDesktop();
   try {

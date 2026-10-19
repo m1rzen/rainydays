@@ -232,7 +232,23 @@ export class BootstrapPathStore {
   }
 
   async openGitExecutable(): Promise<BootstrapRuntimeFileLease> {
-    return this.#openExternalRuntimeFile(executableCandidate("git"), "runtime-git");
+    const configured = process.env.RAINYDAYS_GIT_EXECUTABLE;
+    const candidates = configured || process.platform !== "win32" ? [executableCandidate("git")] : [
+      ...[process.env.ProgramFiles, process.env["ProgramFiles(x86)"]].filter((value): value is string => !!value).map(value => path.join(value, "Git", "cmd", "git.exe")),
+      ...(process.env.LOCALAPPDATA ? [path.join(process.env.LOCALAPPDATA, "Programs", "Git", "cmd", "git.exe")] : []),
+      ...(process.env.PATH ?? "").split(path.delimiter).map(value => value.replace(/^"|"$/gu, "")).filter(value => path.isAbsolute(value)).slice(0, 64).map(value => path.join(value, "git.exe")),
+    ];
+    for (const candidate of new Set(candidates)) {
+      try { return await this.#openExternalRuntimeFile(candidate, "runtime-git"); }
+      catch (error) {
+        if (!(error instanceof PathDeniedError)) throw error;
+        const unavailable = ["PATH_NOT_FOUND", "PATH_ROOT_UNAVAILABLE"].includes(error.code);
+        const rejectedAutomaticCandidate = !configured && ["PATH_REDIRECT_DENIED", "PATH_ROOT_UNSUPPORTED", "PATH_ROOT_DENIED", "PATH_INPUT_INVALID", "PATH_OPERATION_DENIED"].includes(error.code);
+        // A rejected PATH candidate is never followed or executed; try the next qualified installation.
+        if (!unavailable && !rejectedAutomaticCandidate) throw error;
+      }
+    }
+    throw new PathDeniedError("PATH_ROOT_UNAVAILABLE", "未找到可用Git。请安装Git for Windows并重启RainyDays；若设置过Git路径，请检查该配置。普通文件读取仍可使用。");
   }
 
   async openDocumentParserWorker(): Promise<BootstrapRuntimeFileLease> {

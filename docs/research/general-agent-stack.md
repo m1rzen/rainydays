@@ -38,6 +38,10 @@ Computer Use还需要驱动应用/浏览器、把观察交给模型，再执行�
 
 ## 四、定向研究清单
 
+### A02 Git接口核对（2026-10-20）
+
+本机Git2.53.0.windows.2。核对[ls-files官方文档](https://git-scm.com/docs/git-ls-files)、[status官方文档](https://git-scm.com/docs/git-status)、[rev-parse官方文档](https://git-scm.com/docs/git-rev-parse)：cached与others结合并启用exclude-standard获取未忽略工作树，NUL分隔保留中文/空格；porcelain v1 -z状态的重命名有额外原路径，路径以仓库根为基准；show-toplevel/show-prefix区分根与选定子目录。固定参数、有限输出/超时、现有Git executable lease及Path gateway保持，状态检测禁用可选索引锁，不运行hook/项目脚本或任何Git写命令。项目脚本只展示，A03才负责执行。
+
 | 问题 | 最小实验/产物 | 对应任务 | 退出条件 |
 |---|---|---|---|
 | 常用CLI在现有执行器能否构建/测试 | 临时JS/Python小项目，带退出码/长输出/取消的记录 | A01、A03 | 一个真实开发循环，识别必要依赖及隔离差异 |
