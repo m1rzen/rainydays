@@ -6,6 +6,8 @@
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 import type { TerminalOwner, TerminalShell } from "../terminal.js";
 import { terminalFacade } from "../terminal-facade.js";
+import { isDeveloperModeEnabled } from "../developer-execution.js";
+import { developerTerminalGateway } from "../developer-terminal.js";
 
 function terminalOwner(invocation?: ToolInvocationServices): TerminalOwner {
   if (!invocation) throw new Error("终端工具缺少Broker签发的resource owner");
@@ -28,7 +30,7 @@ export const shellStartDef: ToolDefinition = {
   type: "function",
   function: {
     name: "shell_start",
-    description: "创建一个持久 Shell 会话。后续用 shell_input 发送命令，CWD 和环境变量会跨命令保留。",
+    description: "创建一个持久 Shell 会话。后续用 shell_input 发送命令，CWD 和环境变量会跨命令保留。开发模式下以用户身份、管道方式运行（不支持全屏交互程序与调整尺寸）。",
     parameters: {
       type: "object",
       properties: {
@@ -51,7 +53,9 @@ export const shellStartExec: ToolExecutor = async (args, env, invocation) => {
       shell: (args.shell as TerminalShell | undefined) || "cmd",
       authorizedCwd,
       executionRootLease,
-      execution: invocation.execution,
+      execution: isDeveloperModeEnabled()
+        ? developerTerminalGateway(invocation.execution, terminalOwner(invocation), () => authorizedCwd, invocation.signal)
+        : invocation.execution,
     })
   );
   return `✅ 持久终端已创建\nID: ${info.id}\n名称: ${info.name}\nShell: ${info.shell}\n初始目录: ${info.cwd}\nPID: ${info.pid}`;
@@ -77,7 +81,10 @@ export const shellInputDef: ToolDefinition = {
 export const shellInputExec: ToolExecutor = async (args, _env, invocation) => {
   const terminalId = args.terminalId as string;
   if (!invocation) throw new Error("终端工具缺少Broker签发的调用服务");
-  await terminalFacade.input(terminalOwner(invocation), terminalId, args.input as string, args.appendNewline !== false, invocation.execution);
+  const execution = isDeveloperModeEnabled()
+    ? developerTerminalGateway(invocation.execution, terminalOwner(invocation), () => { throw new Error("输入不能启动终端"); }, invocation.signal)
+    : invocation.execution;
+  await terminalFacade.input(terminalOwner(invocation), terminalId, args.input as string, args.appendNewline !== false, execution);
   return `✅ 已向 ${terminalId} 发送输入`;
 };
 

@@ -14,6 +14,7 @@ import {
   type ResourceOwner,
 } from "./resource-owner.js";
 import { logger } from "./logger.js";
+import { isDeveloperTerminalLease, readDeveloperShell, terminateDeveloperShell } from "./developer-terminal.js";
 import { beginObservation } from "./observability.js";
 
 export type TerminalShell = "cmd" | "powershell";
@@ -439,11 +440,15 @@ function facadeFor(manager: TerminalManager) {
   });
 }
 
-const productionIsolation: TerminalIsolationBackend = Object.freeze({
-  read: readIsolatedTerminal,
-  terminate: terminateIsolatedTerminal,
-  resize: resizeIsolatedTerminal,
-  retire: retireIsolatedTerminal,
+// A15：开发模式终端（用户身份、管道）与原生隔离终端共用同一投影，按 lease 类型路由。
+const productionIsolation: TerminalIsolationBackend = Object.freeze<TerminalIsolationBackend>({
+  read: (lease, owner) => isDeveloperTerminalLease(lease) ? readDeveloperShell(lease, owner) : readIsolatedTerminal(lease, owner),
+  terminate: (lease, owner, reason) => isDeveloperTerminalLease(lease) ? terminateDeveloperShell(lease, owner, reason) : terminateIsolatedTerminal(lease, owner, reason),
+  resize: async (lease, owner, cols, rows) => {
+    if (isDeveloperTerminalLease(lease)) throw new Error("开发模式终端为管道模式，不支持调整尺寸");
+    await resizeIsolatedTerminal(lease, owner, cols, rows);
+  },
+  retire: (lease, owner, reason) => isDeveloperTerminalLease(lease) ? terminateDeveloperShell(lease, owner, reason) : retireIsolatedTerminal(lease, owner, reason),
   observeOwnerDenial: observeTerminalOwnerDenial,
 });
 

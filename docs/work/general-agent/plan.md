@@ -42,7 +42,7 @@ Status: approved
 | [A11 项目说明与技能按需使用](tickets/11-skills-and-instructions.md) | A02、D03 | scoped项目指令、SKILL.md参考按需加载、可开关 | ready |
 | [A12 有界子任务与结果汇总](tickets/12-bounded-subagents.md) | A01、D03、D04 | 两个只读子任务、来源汇总、父取消传播、单写入者 | ready |
 | [A14 长任务Agent循环](tickets/14-agent-loop.md) | 无 | 可配置迭代上限、计划、运行中追加指令、开发模式核心工具常驻 | ready |
-| [A15 开发模式：以用户身份执行命令](tickets/15-developer-mode.md) | 无 | 显式开启后用户工具链真实跑node/python/git/npm，任务级授权、取消清理；同事模式隔离不变 | ready |
+| [A15 开发模式：以用户身份执行命令](tickets/15-developer-mode.md) | 无 | 显式开启后用户工具链真实跑node/python/git/npm，任务级授权、取消清理；同事模式隔离不变 | verified |
 | [A13 通用任务、安装与同事交付](tickets/13-general-delivery.md) | A04、A06、A10、A11、A12、A14、A15、D18 | 固定100次和真实同事试用满足门槛，完整安装候选可交付 | ready |
 
 D系列完整依赖以其任务表为准。所有依赖默认要求verified；D03/D04沿用D02“本地协议工程已验证即可”的例外。A08可在D02真实模型认证未完成时做图片传递工程，但最终验证仍要求D02及真实视觉配置；不得把未认证模型绕过去。A06的图片传输先做协议/投影验证，最终图片语义在A08及A13计分，不形成循环依赖。

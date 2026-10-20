@@ -412,10 +412,12 @@ export class Agent {
           });
         } else if (developerCommand) {
           const cwdText = typeof inspected.args.cwd === "string" && inspected.args.cwd ? inspected.args.cwd : "当前工作目录";
-          answer = await askUserQuestion(`开发模式：助手请求以你的 Windows 身份运行命令（不在隔离环境中）。
-
-命令: ${String(inspected.args.command).slice(0, 2000)}
-目录: ${cwdText}`, ["本次任务允许运行命令", "仅这一次", "拒绝执行"], 300000, signal);
+          const detail = toolName === "shell_input"
+            ? `终端 ${String(inspected.args.terminalId)} 输入: ${String(inspected.args.input).slice(0, 2000)}`
+            : toolName === "shell_start"
+              ? `启动持久终端: ${inspected.args.shell === "powershell" ? "PowerShell" : "cmd"}\n目录: ${cwdText}`
+              : `命令: ${String(inspected.args.command).slice(0, 2000)}\n目录: ${cwdText}`;
+          answer = await askUserQuestion(`开发模式：助手请求以你的 Windows 身份运行命令（不在隔离环境中）。\n\n${detail}`, ["本次任务允许运行命令", "仅这一次", "拒绝执行"], 300000, signal);
           allowDeveloperCommands = answer === "本次任务允许运行命令" && advice.decision === "approve";
           approved = answer === "本次任务允许运行命令" || answer === "仅这一次";
         } else {

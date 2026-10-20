@@ -145,3 +145,77 @@ test("A15 default Agent asks in-app once per task, runs commands as the user and
     await setDeveloperMode(false);
   }
 });
+
+test("A15 persistent terminal runs as the user, receives stdin, reports the real exit code and is cleaned up", { timeout: 60_000 }, async () => {
+  const [{ Agent }, { ConversationMemory }, { createEffectivePersona, getPersona }, { createSession }, { capabilityBroker }, { pathPolicy }, interaction, { waitFor }] = await Promise.all([
+    import("../../src/agent.ts"), import("../../src/memory.ts"), import("../../src/persona.ts"), import("../../src/session.ts"),
+    import("../../src/tools/index.ts"), import("../../src/path-runtime.ts"), import("../../src/tools/ask-user-tool.ts"), import("../helpers.mjs"),
+  ]);
+  await setDeveloperMode(true);
+  const builtin = await getPersona("general"); assert(builtin);
+  const persona = createEffectivePersona({ ...builtin, tools: ["shell_start", "shell_input", "shell_output"], env: { WORKSPACE_ROOT: workspace }, allowedRoots: [workspace] });
+  const authority = capabilityBroker.createRuntimeAuthority({ ...persona, rootEnv: { WORKSPACE_ROOT: "workspace" }, pathAuthority: await pathPolicy.createAuthority([{ rootId: "workspace", role: "workspace", configuredPath: workspace, permissions: ["initial-cwd", "read-file", "read-directory"] }]) });
+  let round = 0, terminalId, reader;
+  const call = (name, args) => ({ role: "assistant", content: "", tool_calls: [{ id: `term-${round}`, type: "function", function: { name, arguments: JSON.stringify(args) } }] });
+  const llm = {
+    async chat() { return { role: "assistant", content: "终端" }; },
+    async *chatStream(messages) {
+      const last = messages.at(-1).content;
+      let message;
+      switch (round++) {
+        case 0: message = call("shell_start", { shell: "cmd", cwd: workspace }); break;
+        case 1: terminalId = /ID: (term_[a-f0-9]+)/u.exec(last)?.[1]; assert(terminalId); reader = agent.getTerminalReader();
+          message = call("shell_input", { terminalId, input: "echo 中文内建 && node -e \"console.log('READY', process.argv[1]); process.stdin.once('data', d => { console.log('收到:' + d.toString().trim()); process.exit(0) })\" 参数值" }); break;
+        case 2: await waitFor(() => /READY/u.test(reader.output(terminalId, 0, 20000).data), { timeoutMs: 15_000, label: "node ready" }).catch(error => { throw new Error(JSON.stringify(reader.output(terminalId, 0, 20000))); });
+          message = call("shell_input", { terminalId, input: "张三" }); break;
+        case 3: await waitFor(() => /收到:张三/u.test(reader.output(terminalId, 0, 20000).data), { timeoutMs: 15_000, label: "stdin echoed" });
+          message = call("shell_input", { terminalId, input: "exit 7" }); break;
+        case 4: await waitFor(() => reader.get(terminalId)?.status !== "running", { timeoutMs: 10_000, label: "terminal exit" });
+          message = call("shell_output", { terminalId, offset: 0 }); break;
+        default: assert.match(last, /中文内建/u); assert.match(last, /READY 参数值/u); assert(!last.includes("]9;rd"), "prompt sentinel is removed"); assert.match(last, /收到:张三/u); assert.match(last, /退出码: 7/u); assert.match(last, /child-failed/u);
+          message = { role: "assistant", content: "完成" };
+      }
+      yield { type: "result", message };
+    },
+  };
+  const agent = new Agent(llm, new ConversationMemory(), persona, authority);
+  const session = createSession(persona, "开发终端"); agent.setSession(session.id);
+  const questions = [];
+  try {
+    const events = await interaction.runWithInteractionChannel({ sessionId: session.id, runId: "dev-terminal" }, { emit(event) {
+      if (event.type !== "ask_user") return;
+      questions.push(event); assert(interaction.submitAnswer(session.id, "dev-terminal", event.questionId, "本次任务允许运行命令"));
+    } }, async () => { const out = []; for await (const event of agent.run("用终端运行", "dev-terminal")) out.push(event); return out; });
+    assert.equal(events.some(event => event.type === "error"), false, JSON.stringify(events.filter(event => event.type === "error")));
+    assert.deepEqual(events.filter(event => event.type === "tool_result").map(event => event.toolStatus), ["success", "success", "success", "success", "success"]);
+    assert.equal(questions.length, 1); assert.match(questions[0].question, /启动持久终端: cmd/u);
+    assert.equal(agent.getTerminalReader(), null, "agent terminal view ends with the run");
+  } finally {
+    await capabilityBroker.retireAuthority(authority);
+    await setDeveloperMode(false);
+  }
+});
+
+test("A15 owner retirement terminates a running developer terminal and its child processes", { timeout: 30_000 }, async () => {
+  const { issueResourceOwner, retireResourceOwner } = await import("../../src/resource-owner.ts");
+  const { terminalFacade } = await import("../../src/terminal-facade.ts");
+  const { developerTerminalGateway } = await import("../../src/developer-terminal.ts");
+  const { waitFor } = await import("../helpers.mjs");
+  const owner = issueResourceOwner({ authorityId: "a15-owner", authorityEpoch: 1, sessionId: "a15-session", principal: "agent", rootIds: ["workspace"] });
+  const denied = () => { throw new Error("isolated gateway must not be used"); };
+  const base = { executeCommand: denied, executeScript: denied, executeHttps: denied, startShell: denied, writeShell: denied };
+  const signal = new AbortController().signal;
+  const gateway = developerTerminalGateway(base, owner, () => workspace, signal);
+  const info = await terminalFacade.start(owner, { shell: "cmd", authorizedCwd: workspace, executionRootLease: {}, execution: gateway });
+  await terminalFacade.input(owner, info.id, "node -e \"console.log('CHILD_PID=' + process.pid); setInterval(() => {}, 1000)\"", true, gateway);
+  const pid = Number(await waitFor(() => /CHILD_PID=(\d+)/u.exec(terminalFacade.output(owner, info.id, 0).data)?.[1], { timeoutMs: 15_000, label: "child pid" }));
+  const alive = id => { try { process.kill(id, 0); return true; } catch { return false; } };
+  assert(alive(pid));
+  const other = issueResourceOwner({ authorityId: "a15-other", authorityEpoch: 1, sessionId: "a15-other", principal: "agent", rootIds: ["workspace"] });
+  await assert.rejects(terminalFacade.input(other, info.id, "echo stolen", true, developerTerminalGateway(base, other, () => workspace, signal)), /终端不存在/u);
+  const started = Date.now();
+  await retireResourceOwner(owner);
+  await retireResourceOwner(other);
+  assert(Date.now() - started < 5000);
+  await waitFor(() => !alive(pid), { timeoutMs: 5000, label: "child gone" });
+});
