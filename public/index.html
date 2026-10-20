@@ -222,6 +222,8 @@
               <label for="setting-department-enabled">公司资料源</label><div class="settings-check-row"><label><input id="setting-department-enabled" type="checkbox" /> 启用部门资料</label></div>
               <label for="setting-department-root">部门资料目录</label><div class="settings-path-row"><input id="setting-department-root" class="settings-input" /><button class="settings-btn" data-action="choose-settings-directory" data-path-target="setting-department-root">选择</button></div>
               <div class="settings-help">可选，只读接入。关闭后保留路径，不连接公司网络盘；离线时仍可处理本地资料。</div>
+              <label for="setting-developer-mode">开发模式</label><div class="settings-check-row"><label><input id="setting-developer-mode" type="checkbox" data-action="toggle-developer-mode" data-event="change" /> 以我的身份运行命令</label></div>
+              <div class="settings-help">开启后，助手运行的命令不再隔离：使用你的 PATH、开发工具和网络，可访问你能访问的文件。首次运行仍会询问，可只允许本次任务。立即生效，任务运行中不能切换。</div>
             </div></details>
             <div class="settings-grid" hidden>
               <label>最大工具轮次</label><input id="setting-max-iterations" type="number" min="1" max="1000" class="settings-input" />

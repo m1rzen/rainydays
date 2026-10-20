@@ -688,6 +688,8 @@ export function prepareSettingsImport(value: unknown, base: Config = getConfigSn
   const rawDomains = JSON.parse(JSON.stringify(bundle.domains)) as SettingsDomains;
   rawDomains.asr.credentialRef = current.domains.asr.credentialRef;
   rawDomains.relay.credentialRef = current.domains.relay.credentialRef;
+  // Developer mode only changes through the local settings form, never through an imported bundle.
+  if (rawDomains.shell && typeof rawDomains.shell === "object") rawDomains.shell.developerMode = current.domains.shell.developerMode;
   const candidate: Config = {
     schemaVersion: 2,
     revision: current.revision,

@@ -44,7 +44,7 @@ export interface SettingsDomains {
   nous: { enabled: boolean; autoTriggerThreshold: number; cooldownMinutes: number; profile: string };
   tts: { enabled: boolean; voice: string; language: string; rate: number };
   asr: { provider: "browser" | "volcengine"; language: string; endpoint: string; credentialRef?: string };
-  shell: { defaultShell: "auto" | "powershell" | "cmd"; initializationScript: string };
+  shell: { defaultShell: "auto" | "powershell" | "cmd"; initializationScript: string; developerMode: boolean };
   relay: { enabled: boolean; url: string; credentialRef?: string };
   update: { channel: "stable" | "beta"; autoCheck: boolean; autoDownload: boolean };
 }
@@ -97,7 +97,7 @@ export function defaultSettingsDomains(): SettingsDomains {
     nous: { enabled: false, autoTriggerThreshold: 80, cooldownMinutes: 30, profile: "" },
     tts: { enabled: false, voice: "", language: "zh-CN", rate: 1 },
     asr: { provider: "browser", language: "zh-CN", endpoint: "" },
-    shell: { defaultShell: "auto", initializationScript: "" },
+    shell: { defaultShell: "auto", initializationScript: "", developerMode: false },
     relay: { enabled: false, url: "" },
     update: { channel: "stable", autoCheck: true, autoDownload: false },
   };
@@ -195,7 +195,7 @@ export function parseSettingsDomains(value: unknown): SettingsDomains {
   const nous = record(root.nous, "Nous settings"); exact(nous, ["enabled", "autoTriggerThreshold", "cooldownMinutes", "profile"], "Nous settings");
   const tts = record(root.tts, "TTS settings"); exact(tts, ["enabled", "voice", "language", "rate"], "TTS settings");
   const asr = record(root.asr, "ASR settings"); exact(asr, ["provider", "language", "endpoint", ...(Object.hasOwn(asr, "credentialRef") ? ["credentialRef"] : [])], "ASR settings");
-  const shell = record(root.shell, "Shell settings"); exact(shell, ["defaultShell", "initializationScript"], "Shell settings");
+  const shell = record(root.shell, "Shell settings"); exact(shell, ["defaultShell", "initializationScript", ...(Object.hasOwn(shell, "developerMode") ? ["developerMode"] : [])], "Shell settings");
   const relay = record(root.relay, "Relay settings"); exact(relay, ["enabled", "url", ...(Object.hasOwn(relay, "credentialRef") ? ["credentialRef"] : [])], "Relay settings");
   const update = record(root.update, "Update settings"); exact(update, ["channel", "autoCheck", "autoDownload"], "Update settings");
   const asrReference = optionalReference(asr.credentialRef, "ASR credential");
@@ -216,7 +216,7 @@ export function parseSettingsDomains(value: unknown): SettingsDomains {
     nous: { enabled: bool(nous.enabled, "Nous enabled"), autoTriggerThreshold: integer(nous.autoTriggerThreshold, "Nous threshold", 1, 100), cooldownMinutes: integer(nous.cooldownMinutes, "Nous cooldown", 1, 1440), profile: profile(nous.profile, "Nous profile") },
     tts: { enabled: bool(tts.enabled, "TTS enabled"), voice: text(tts.voice, "TTS voice", 128), language: text(tts.language, "TTS language", 35, false), rate: numberValue(tts.rate, "TTS rate", 0.5, 2) },
     asr: { provider: choice(asr.provider, "ASR provider", ["browser", "volcengine"] as const), language: text(asr.language, "ASR language", 35, false), endpoint: asr.endpoint === "" ? "" : secureUrl(asr.endpoint, "ASR endpoint", ["https:"]), ...(asrReference ? { credentialRef: asrReference } : {}) },
-    shell: { defaultShell: choice(shell.defaultShell, "defaultShell", ["auto", "powershell", "cmd"] as const), initializationScript: text(shell.initializationScript, "Shell initialization", 8192) },
+    shell: { defaultShell: choice(shell.defaultShell, "defaultShell", ["auto", "powershell", "cmd"] as const), initializationScript: text(shell.initializationScript, "Shell initialization", 8192), developerMode: Object.hasOwn(shell, "developerMode") ? bool(shell.developerMode, "developerMode") : false },
     relay: { enabled: bool(relay.enabled, "Relay enabled"), url: relay.url === "" ? "" : secureUrl(relay.url, "Relay URL", ["wss:"]), ...(relayReference ? { credentialRef: relayReference } : {}) },
     update: { channel: choice(update.channel, "Update channel", ["stable", "beta"] as const), autoCheck: bool(update.autoCheck, "Update autoCheck"), autoDownload: bool(update.autoDownload, "Update autoDownload") },
   };

@@ -5,6 +5,7 @@
 
 import type { ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 import { isRunCancellation } from "../run-cancellation.js";
+import { formatDeveloperResult, isDeveloperModeEnabled, parseDeveloperTimeout, runDeveloperCommand } from "../developer-execution.js";
 
 function initialCwd(
   args: Readonly<Record<string, unknown>>,
@@ -34,12 +35,13 @@ export const executeCommandDef: ToolDefinition = {
   function: {
     name: "execute_command",
     description:
-      "执行系统 Shell 命令（如 git、npm、dir 等）。初始工作目录必须位于当前能力允许的根内；进程启动后的隔离由系统安全策略负责。返回 stdout 和 stderr，超时 30 秒。",
+      "执行一条 cmd 命令（如 git、npm、python、dir）。工作目录必须位于授权根内。返回 stdout/stderr 与真实退出码。同事模式在系统隔离中运行、限时30秒；开发模式以用户身份和用户工具链运行，timeout 可设（默认120秒，最长600秒），stdin 关闭。",
     parameters: {
       type: "object",
       properties: {
         command: { type: "string", description: "要执行的命令，如 'git status'。" },
         cwd: { type: "string", description: "初始工作目录（可选），必须位于受权根内。" },
+        timeout: { type: "number", description: "开发模式下的超时秒数（可选，默认120，最长600）；同事模式忽略。" },
       },
       required: ["command"],
     },
@@ -50,6 +52,18 @@ export const executeCommandExec: ToolExecutor = async (args, env, invocation) =>
   const command = args.command as string;
   const cwd = initialCwd(args, env, invocation);
   if (!invocation) throw new Error("Execution gateway is required");
+
+  if (isDeveloperModeEnabled()) {
+    const timeoutSeconds = parseDeveloperTimeout(args.timeout);
+    const result = await cwd.gateway.withExecutionRoot(
+      cwd.input,
+      { defaultRootId: cwd.defaultRootId },
+      (canonicalCwd) => runDeveloperCommand({ command, cwd: canonicalCwd, timeoutSeconds, signal: invocation.signal, owner: invocation.resourceOwner })
+    );
+    const formatted = formatDeveloperResult(result, timeoutSeconds);
+    if (formatted.failed) throw new Error(formatted.text);
+    return formatted.text;
+  }
 
   try {
     const { stdout, stderr, reason, exitCode } = await cwd.gateway.withExecutionRoot(

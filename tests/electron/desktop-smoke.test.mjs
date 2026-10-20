@@ -50,7 +50,8 @@ async function startElectron(userData, httpPort, cdpPort, signal, modelBaseURL, 
   ]);
   // Electron intentionally strips root env variables before spawning the daemon. Seed the
   // managed config instead so both launches use the same self-contained path identities.
-  await writeFile(path.join(userData, "config.json"), JSON.stringify({
+  // keepConfig lets a restart observe settings the app itself saved on the previous launch.
+  if (!options.keepConfig) await writeFile(path.join(userData, "config.json"), JSON.stringify({
     defaultProfile: "default",
     profiles: {
       default: {
@@ -986,6 +987,46 @@ test("R2 real Electron uploads PDF from the document picker and preserves origin
     assert.equal(downloaded, pdf.toString("base64"));
     client.close(); client = null;
     await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    client?.close(); if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture);
+  }
+});
+
+test("A15 real Electron developer mode is switched only from local settings and survives restart", { timeout: 120_000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-a15-electron-");
+  const userData = path.join(fixture, "user-data");
+  let instance; let client;
+  const developerMode = () => client.evaluate("fetch('/api/settings').then(response => response.json()).then(data => data.domains.shell.developerMode)");
+  const openAdvanced = async () => {
+    await client.evaluate("openSettings()");
+    await waitFor(() => client.evaluate("Boolean(settingsState) && document.getElementById('settings-message').textContent === ''"), { timeoutMs: 15_000, label: "A15 settings loaded" });
+    await client.evaluate("document.getElementById('setting-developer-mode').closest('details').open = true");
+  };
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal);
+    client = await connectCdp(cdpPort);
+    await waitFor(async () => { try { return await client.evaluate("Boolean(currentSessionId)"); } catch { return false; } }, { timeoutMs: 20_000, label: "A15 ready" });
+    assert.equal(await developerMode(), false);
+    await openAdvanced();
+    assert.equal(await client.evaluate("document.getElementById('setting-developer-mode').checked"), false);
+    const box = await client.evaluate("(() => { const rect = document.getElementById('setting-developer-mode').getBoundingClientRect(); return { width: rect.width, height: rect.height }; })()");
+    assert(box.width > 0 && box.height > 0, "developer mode control is visible in advanced preferences");
+    await client.evaluate("document.getElementById('setting-developer-mode').click()");
+    await waitFor(async () => await developerMode() === true, { timeoutMs: 10_000, label: "A15 enabled" });
+    assert.match(await client.evaluate("document.getElementById('settings-message').textContent"), /开发模式已开启/u);
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
+
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, undefined, { keepConfig: true });
+    client = await connectCdp(cdpPort);
+    await waitFor(async () => { try { return await client.evaluate("Boolean(currentSessionId)"); } catch { return false; } }, { timeoutMs: 20_000, label: "A15 restarted" });
+    assert.equal(await developerMode(), true);
+    await openAdvanced();
+    assert.equal(await client.evaluate("document.getElementById('setting-developer-mode').checked"), true);
+    await client.evaluate("document.getElementById('setting-developer-mode').click()");
+    await waitFor(async () => await developerMode() === false, { timeoutMs: 10_000, label: "A15 disabled" });
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
   } finally {
     client?.close(); if (instance) await terminateProcessTreeAsync(instance.child);
     await removeFixture(fixture);

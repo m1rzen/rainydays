@@ -2074,6 +2074,7 @@
       document.getElementById("setting-workspace-root").value = settingsState.settings.workspaceRoot || "";
       document.getElementById("setting-department-root").value = settingsState.settings.departmentDataRoot || "";
       document.getElementById("setting-department-enabled").checked = settingsState.settings.departmentEnabled === true;
+      document.getElementById("setting-developer-mode").checked = settingsState.domains.shell?.developerMode === true;
       document.getElementById("setting-output-dir").value = settingsState.settings.outputDir || "";
 
       if (!editingProviderName && profiles.length > 0) editingProviderName = settingsState.currentProfile || profiles[0].name;
@@ -2180,7 +2181,7 @@
       if (domainId === "nous") return { enabled: settingsChecked("setting-nous-enabled"), autoTriggerThreshold: settingsNumber("setting-nous-threshold"), cooldownMinutes: settingsNumber("setting-nous-cooldown"), profile: settingsText("setting-nous-profile") };
       if (domainId === "tts") return { enabled: settingsChecked("setting-tts-enabled"), voice: settingsText("setting-tts-voice"), language: settingsText("setting-tts-language"), rate: settingsNumber("setting-tts-rate") };
       if (domainId === "asr") return { provider: settingsText("setting-asr-provider"), language: settingsText("setting-asr-language"), endpoint: settingsText("setting-asr-endpoint"), apiKey: document.getElementById("setting-asr-api-key").value.trim(), clearCredential: settingsChecked("setting-asr-clear-key") };
-      if (domainId === "shell") return { defaultShell: settingsText("setting-shell-default"), initializationScript: document.getElementById("setting-shell-init").value };
+      if (domainId === "shell") return { defaultShell: settingsText("setting-shell-default"), initializationScript: document.getElementById("setting-shell-init").value, developerMode: settingsState.domains.shell?.developerMode === true };
       if (domainId === "relay") return { enabled: settingsChecked("setting-relay-enabled"), url: settingsText("setting-relay-url"), accessToken: document.getElementById("setting-relay-token").value.trim(), clearCredential: settingsChecked("setting-relay-clear-token") };
       if (domainId === "update") return { channel: settingsText("setting-update-channel"), autoCheck: settingsChecked("setting-update-check"), autoDownload: settingsChecked("setting-update-download") };
       throw new Error(`未知 Settings domain: ${domainId}`);
@@ -2205,6 +2206,29 @@
         renderSettingsPreservingDirty();
         showSettingsMessage(`${domainId} 设置已保存。`, "success");
       } catch (error) {
+        if (generation === settingsRequestGeneration) showSettingsMessage(error.message, "error");
+      }
+    }
+
+    async function saveDeveloperMode(control) {
+      const enabled = control.checked;
+      const shell = settingsState.domains.shell || {};
+      const generation = ++settingsRequestGeneration;
+      try {
+        const res = await fetch("/api/settings/domains/shell", {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ expectedRevision: settingsState.revision, value: { defaultShell: shell.defaultShell || "auto", initializationScript: shell.initializationScript || "", developerMode: enabled } }),
+        });
+        const data = await res.json();
+        if (generation !== settingsRequestGeneration) return;
+        if (!res.ok) {
+          if (res.status === 409 && data.settings) settingsState = data.settings;
+          throw new Error(data.error || "保存失败");
+        }
+        settingsState = data.settings;
+        showSettingsMessage(enabled ? "开发模式已开启：命令将以你的身份运行。" : "开发模式已关闭：命令回到隔离环境。", "success");
+      } catch (error) {
+        control.checked = settingsState.domains.shell?.developerMode === true;
         if (generation === settingsRequestGeneration) showSettingsMessage(error.message, "error");
       }
     }
@@ -3536,6 +3560,7 @@
       "export-settings": () => exportSettingsBundle(),
       "choose-settings-import": () => document.getElementById("settings-import-file").click(),
       "import-settings": event => importSettingsBundle(event),
+      "toggle-developer-mode": (_event, target) => saveDeveloperMode(target),
       "export-session": () => exportCurrentSession(),
       "choose-import": () => document.getElementById("import-file").click(),
       "choose-attachments": () => attachmentFileInputEl.click(),

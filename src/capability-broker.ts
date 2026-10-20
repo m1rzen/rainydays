@@ -1,4 +1,5 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { isDeveloperCommandTool } from "./developer-execution.js";
 import { PathDeniedError, type ExecutionRootAccess, type PathAuthority, type PathOperation, type PathPolicy, type PathStreamingWriteLease } from "./path-policy.js";
 import type { PersonaPermissionLevel, ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "./types.js";
 import {
@@ -423,6 +424,7 @@ export class CapabilityBroker {
   private readonly boundPathAuthorities = new WeakSet<PathAuthority>();
   private readonly challenges = new Map<string, ChallengeRecord>();
   private readonly newOutputApprovals = new WeakSet<CapabilityContext>();
+  private readonly developerCommandApprovals = new WeakSet<CapabilityContext>();
 
   constructor(options: CapabilityBrokerOptions) {
     if (!options?.pathPolicy) throw new TypeError("CapabilityBroker requires PathPolicy");
@@ -1122,6 +1124,15 @@ export class CapabilityBroker {
       responseChannel: "ask-user", allowNewOutputs: true });
   }
 
+  /** A15：开发模式下用户已在本次任务内允许运行命令时，为同类命令签发单次授权。 */
+  reuseDeveloperCommandApproval(parent: CapabilityContext, inspected: InspectedToolCall): CapabilityContext | null {
+    if (!this.developerCommandApprovals.has(parent) || !isDeveloperCommandTool(inspected.name)) return null;
+    const challenge = this.createApprovalChallenge(parent, inspected);
+    return this.resolveApprovalChallenge({ challengeId: challenge.challengeId, choice: "approve",
+      sessionId: parent.sessionId, runId: parent.runId, responsePrincipal: "local-user-api",
+      responseChannel: "ask-user", allowDeveloperCommands: true });
+  }
+
   createApprovalChallenge(parent: CapabilityContext, inspected: InspectedToolCall, ttlMs = 60_000): ApprovalChallenge {
     const parentRecord = this.requireActiveContext(parent);
     const inspectedRecord = this.requireInspectedCall(inspected);
@@ -1142,7 +1153,7 @@ export class CapabilityBroker {
       registrationId: binding.registrationId,
       toolName: binding.name,
       responsePrincipal: "local-user-api" as const,
-      responseChannel: binding.policy.effects.includes("process") ? "native-process" as const : "ask-user" as const,
+      responseChannel: binding.policy.effects.includes("process") && !isDeveloperCommandTool(binding.name) ? "native-process" as const : "ask-user" as const,
       argumentsDigest: inspectedRecord.argumentsDigest,
       expiresAt: new Date(expiresAtMs).toISOString(),
     });
@@ -1165,6 +1176,7 @@ export class CapabilityBroker {
     responsePrincipal: "local-user-api";
     responseChannel: "ask-user" | "native-process";
     allowNewOutputs?: boolean;
+    allowDeveloperCommands?: boolean;
   }): CapabilityContext | null {
     const challenge = this.challenges.get(input.challengeId);
     if (!challenge || challenge.consumed || this.now() > challenge.expiresAtMs) denied("CAPABILITY_APPROVAL_CHALLENGE_INVALID", "approval challenge is unavailable");
@@ -1180,6 +1192,10 @@ export class CapabilityBroker {
     const outputRootId = input.allowNewOutputs ? this.newOutputRoot(challenge.parent, challenge.binding) : null;
     if (input.allowNewOutputs && !outputRootId) denied("CAPABILITY_GRANT_INVALID", "tool cannot receive a new-output scope");
     if (outputRootId) this.newOutputApprovals.add(challenge.parent.context);
+    if (input.allowDeveloperCommands) {
+      if (!isDeveloperCommandTool(challenge.binding.name)) denied("CAPABILITY_GRANT_INVALID", "tool cannot receive a developer command scope");
+      this.developerCommandApprovals.add(challenge.parent.context);
+    }
 
     const grant: GrantRecord = {
       grantId: randomBytes(32).toString("hex"),

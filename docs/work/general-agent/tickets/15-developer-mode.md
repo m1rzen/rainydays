@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: ready
+Status: in-progress
 
 Spec: [通用Agent规格](../../../specs/general-agent.md#7-2026-10-20路线修订开发模式与agent循环)
 
@@ -31,7 +31,14 @@ User stories: G02、G03、G04、G05
 
 ## 执行记录
 
-尚未开始。
+2026-10-20起点4a3b020。设计：设置沿用shell域加可选developerMode（旧配置缺省false，导入包不能开启，任务运行中不能修改）；通用设置“高级偏好”提供开关。执行：新增developer-execution，execute_command在开发模式下经Path gateway取得授权根内cwd后，以用户环境（去除RAINYDAYS_/ELECTRON_/NODE_TEST_CONTEXT）在cmd中运行，chcp 65001、stdin关闭、超时/取消/run资源回收都终止进程树、保留输出尾部。审批：broker对开发模式命令改用应用内渠道，“本次任务允许运行命令”记在当前run上下文，后续命令单次签发授权，下一任务重新询问。script仍在E3隔离中；持久终端尚未切换（下一子切片）。
+
+### 子切片1：execute_command（已验证）
+
+- `node --import tsx --test tests/product/developer-mode.test.mjs`：5/5。默认关/旧配置/导入不能开启；中文、cwd、退出码7、长输出保留尾部；**`node --test`与`python -m unittest`在临时项目真实red→green**，git/npm可用；1秒超时与运行中取消均在5秒内结束；默认助手应用内一次确认覆盖同任务两条命令，退出码3如实为error，下一任务重新询问并拒绝，未触发原生隔离确认，系统提示含开发模式说明。
+- `npm run check:product`：类型/lint、产品88/88、UI/IPC15/15。
+- `npm run build`后，同事模式原回归：`tests/integration/agent-cli.test.mjs` 1/1、`sec03-native-host` E1真实AppContainer/Job 1/1，隔离路径不受影响。
+- `node --test --test-name-pattern "A15 real Electron" tests/electron/desktop-smoke.test.mjs`：真实Electron开关可见、开启/重启保留/关闭1/1（测试壳新增keepConfig以保留应用自身保存的配置）。
 
 ## 审查与验证结果
 
