@@ -1,18 +1,20 @@
 # 当前开发状态
 
-更新：2026-10-20。D05、D03、A02已验证；A03当前源码构建0.1.0+local.69ed8d83d46b已有普通CLI与只读终端证据，整票仍in-progress。D13整票blocked，无有效安装候选。项目范围的详细判断见 [二次重构进度审计](audits/baseline-2026-09-29.md)；已完成修复见 [演示问题修复](devlog/2026-10-16-demo-repair.md)。
+更新：2026-10-20。D05、D03、A02、D06、D08已验证；A03当前源码构建0.1.0+local.69ed8d83d46b已有普通CLI与只读终端证据，整票仍in-progress。D13整票blocked，无有效安装候选。项目范围的详细判断见 [二次重构进度审计](audits/baseline-2026-09-29.md)；已完成修复见 [演示问题修复](devlog/2026-10-16-demo-repair.md)。
 
 ## 通用Agent规划与恢复入口
 
 - 文档清理已完成：排期只由D+A总路线维护，旧多轮路线与差距表已归档；默认rg过滤历史规范/报告与本地产物。旧R证据按需查询，见[历史索引](archive/README.md)。
 
-- 当前阶段：implementation / D06 verified，接续D08；A03兼容与工具链缺口保留；D01、A01、D03、D04、D05、A02 verified；D02真实模型认证和D13构建/机器blocked。2026-10-18用户已整体批准D+A路线并授权连续研发；Prism、钉钉排除。
+- 当前阶段：implementation / D08 verified，接续D09；A03兼容与工具链缺口保留；D01、A01、D03、D04、D05、D06、A02 verified；D02真实模型认证和D13构建/机器blocked。2026-10-18用户已整体批准D+A路线并授权连续研发；Prism、钉钉排除。
 - 入口：[Codex研发手册](agents/README.md)、[通用规格](specs/general-agent.md)、[D+A总任务图](work/general-agent/plan.md)。31项整体获批，D01已验证，A01调查已完成；D18为中间里程碑，完整出口A13。
-- 下一项：D06工程已验证，按依赖推进D08文档质量。A03临时Node构建被ClangCL缺失阻挡，未产生运行时；活动host租约与三项认证观察仍未解决，A04/A05保留A03前置。D13保留审计/干净机器阻塞，D02真实模型未认证。既有default五项研究授权不扩大。
+- 下一项：D08已验证，按依赖推进D09文件整理（D10也已解除D08前置）。A03临时Node构建被ClangCL缺失阻挡，未产生运行时；活动host租约与三项认证观察仍未解决，A04/A05保留A03前置。D13保留审计/干净机器阻塞，D02真实模型未认证。既有default五项研究授权不扩大。
 - 新确认差距：CLI/终端存在但默认助手未开放完整开发能力；MCP只有配置与关闭标志，未接客户端；浏览器有实现但缺完整真实验收；原生Windows工具和截图到模型的完整循环未形成可交付能力。详见[能力手册](agents/general-agent-capabilities.md)。
 - D01–D05新增验证均使用隔离环境和合成模型，不修改日常用户数据库或调用真实模型；具体命令和结果见对应票据。
 
 ## 已验证
+
+- D08：writer兼容增加Word标题/列表/原生表格blocks与Excel columnFormats（日期/数值/文本），生成后字节复读才登记成功；R2真实Electron双成果一次确认、重启恢复、另存原件不变通过，Word/Excel 16.0真实打开并编辑副本。产品83+UI15、Electron4项通过；WPS、安装包与模型内容质量未测。[证据](work/colleague-delivery/tickets/08-document-quality.md)
 
 - D06：文件/附件PDF真实页、DOCX提取段落、XLSX原表行/单元格与公式缓存说明接入read；长Unicode原文、混合损坏、摘要/分支/新进程续读通过。产品80+UI15、契约11、定向16通过；真实回答质量留D15，非安装包证据。[证据](work/colleague-delivery/tickets/06-file-evidence.md)
 

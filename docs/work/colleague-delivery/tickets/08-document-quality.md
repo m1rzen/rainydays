@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: ready
+Status: verified
 
 Spec: [同事版交付规格](../../../specs/colleague-delivery.md)
 
@@ -26,10 +26,10 @@ tools/writer.ts、document-outputs.ts、file-viewer.ts、src/index.ts 成果接�
 
 ## 验收条件
 
-- [ ] O01–O04 的内容和格式检查通过；至少在试用者实际使用的 WPS 或 Microsoft Office 中打开并编辑。
-- [ ] 一次请求生成两个文件仅一次新建范围审批；第二次修改请求按新任务处理。
-- [ ] 另存修改保留原文件字节；同名冲突不会静默覆盖。
-- [ ] 不存在的文件不能出现为成功成果；部分生成失败保留已成功项。
+- [x] O01–O04 的内容和格式检查通过；至少在试用者实际使用的 WPS 或 Microsoft Office 中打开并编辑。
+- [x] 一次请求生成两个文件仅一次新建范围审批；第二次修改请求按新任务处理。
+- [x] 另存修改保留原文件字节；同名冲突不会静默覆盖。
+- [x] 不存在的文件不能出现为成功成果；部分生成失败保留已成功项。
 
 ## 验证接口与证据
 
@@ -43,8 +43,19 @@ tools/writer.ts、document-outputs.ts、file-viewer.ts、src/index.ts 成果接�
 
 ## 执行记录
 
-尚未开始。实施时记录批准来源、起点提交、实际变更与偏离计划的理由；真实模型调用需核对已有授权。
+2026-10-20，沿用整套D+A授权；起点38a2105，D06已verified。复用现有writer/成果/预览/审批链，只补正文结构与表格类型，不替换Office引擎，不调用真实模型。Microsoft Word与Excel16.0.20430.20182均已真实打开/编辑合成成果，具体证据见下文。
+
+## 设计与验证接口
+
+比较另建文档引擎与扩展当前writer，选择当前工具的小幅兼容扩展：DOCX保留title/paragraphs/sources，增可选blocks，支持实际标题/列表/表格；采用统一A4、中文字体、段落间距、重复表头与页内宽度。XLSX保留二维data，增可选columnFormats表达日期/数值/文本；计算列宽，保留真实类型，不从字符串猜数字，不声称公式重算。格式逻辑留writer私有函数，仍从原gateway提交。生成字节复读关键内容/类型后才登记成功，视觉与编辑另由实际Office验证。
+
+公共create_docx/create_xlsx为测试缝；现有普通Agent双成果/一次新建审批、覆盖拒绝、下一任务新许可与重启恢复测试复用。补充结构/类型、无效日期/数值和真实另存数据检查；最终对合成成果做Word/Excel打开和编辑，源码证据与安装包区分。
 
 ## 审查与验证结果
 
-尚未审查/验证。完成后写具体命令、结果、人工核对、未测项、回退方式和终点提交；全部满足才改为 verified。
+审查见[D08代码审查](../reviews/08-code-review.md)，无未处理阻塞发现。
+
+- 自动：typecheck、lint通过；`test:product` 83/83（含D08定向3项）、`test:product:ui` 15/15；`test:product:desktop` 构建后真实Electron 4/4，其中R2双成果一次新建确认、重启恢复、另存修改原件字节不变及Word结构/Excel数值1500、日期格式复读通过（2026-10-20）。
+- 人工：Microsoft Word/Excel 16.0.20430.20182打开合成成果无修复提示、无裁切；Word副本写入D08_EDIT_OK、Excel副本B2改为1300后复读类型与编号/日期保持，两原件SHA256不变。
+- 未测：WPS、当前安装包、真实模型内容质量（留D15）；复杂版式无损编辑、宏、OCR、公式重算不在本票。
+- 回退：单独revert本票提交；不涉及数据库结构或用户数据。

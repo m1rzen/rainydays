@@ -16,6 +16,8 @@
 
 每票开始前只补它需要的官方 API/版本事实；本节是已知输入与未知项清单，不将未来研究标为 research-complete。涉及外部模型新用法时先检索其对应官方资料再实现。
 
+D08文档格式（2026-10-20）：复用安装的docx9.7.1与SheetJS0.20.3，已核对本机ITableOptions/ITableRowPropertiesOptions/IDefaultStylesOptions类型。Word的样式、原生表格和列表由[docx官方API](https://docx.js.org/api/)生成；不引用比安装版本更新的表格行为作为保证。Excel使用[!cols列宽及cellStyles导出](https://docs.sheetjs.com/docs/csf/features/colprops/)、[原始日期序号](https://docs.sheetjs.com/docs/csf/features/dates/)与number format；CE不承诺Pro的任意单元格样式，不新装引擎。日期严格年月日并处理Excel 1900日期系统；字节复读只核对内容/类型，目标Office实际打开、编辑另验。
+
 D02本地协议研究（2026-10-18）：已读已安装OpenAI SDK4.104.0的chat/completions类型和streaming实现。finish_reason区分stop/tool_calls与length/content_filter；stream_options.include_usage可在最终空choices块携带usage，断流可缺失。沿用该版本和Chat Completions，不新增API。provider兼容性、实际模型版本、费用仍未知，留真实认证；fixture只验证应用契约。
 
 D03预算资料（2026-10-20）：已核对[Kimi官方模型说明](https://www.kimi.com/en/help/kimi-code/models)与[CLI配置说明](https://www.kimi.com/code/docs/en/kimi-code-cli/configuration/config-files)。模型别名可原地升级，模型页面写最高1M而示例配置仍保留262144；不能凭kimi-for-coding名称替用户认定实际可用窗口。沿用现有SDK的max_tokens与usage类型，不迁移协议；按profile设置保守工作预算，真实容量和估算误差另验。官方资料查询不调用用户模型或密钥。

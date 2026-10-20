@@ -15,7 +15,7 @@ Status: approved
 | [D05 资料与成果目录可以独立使用](tickets/05-workspace-ux.md) | D01 | 无 Z 盘/无部门盘的新用户能完成本地文件读取和新建文档。 | verified |
 | [D06 文件回答完整且能定位依据](tickets/06-file-evidence.md) | D03、D05 | F01–F05确定性依据、公式缓存、长文中段与摘要/分支/新进程续读通过；模型质量留D15。 | verified |
 | [D07 完成五项真实研究验收](tickets/07-research-live.md) | D02、D03、D05 | 五项真实研究全部满足既有人工预期，失败来源不被伪装已读。 | ready |
-| [D08 可编辑成果达到交付质量](tickets/08-document-quality.md) | D06 | O01–O04 的内容和格式检查通过；至少在试用者实际使用的 WPS 或 Microsoft Office 中打开并编辑。 | ready |
+| [D08 可编辑成果达到交付质量](tickets/08-document-quality.md) | D06 | O01–O04 的内容和格式检查通过；至少在试用者实际使用的 WPS 或 Microsoft Office 中打开并编辑。 | verified |
 | [D09 预览、执行和撤回文件整理](tickets/09-file-organization.md) | D04、D05 | 12 个文件含 2 个重名冲突的 O05 完整演示；冲突不覆盖，原内容不丢。 | ready |
 | [D10 把成功任务保存为可编辑模板](tickets/10-save-task-template.md) | D04、D08 | 保存、重命名、编辑、删除/归档、重启读取模板可用；已有会话不被修改。 | ready |
 | [D11 换输入重跑、校验与失败恢复](tickets/11-rerun-template.md) | D10 | T01–T05 工程流程成立，新输入不会混入上一次数值。 | ready |

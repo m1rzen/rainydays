@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import { execFileSync } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import { emitSec03ProjectionReceipts } from "../sec03-projection-receipts.mjs";
+import { wordBrief, salesWorkbook } from "../fixtures/office-quality-data.mjs";
 import {
   boundedFetch,
   connectCdp,
@@ -1837,13 +1838,16 @@ test("R2 real Electron completes document task, restores outputs and revises a c
         calls = [tool("desktop-read", "read", { file_path: `attachment:${attachment[1]}` })];
       } else if (stage === 1) {
         assert.match(JSON.stringify(body.messages), /FIRST_PAGE/);
-        calls = [tool("desktop-word", "create_docx", { path: "成果报告.docx", title: "资料报告", paragraphs: ["来源：资料.pdf，第 1 页。FIRST_PAGE"] }),
-          { ...tool("desktop-sheet", "create_xlsx", { path: "成果数据.xlsx", sheets: [{ name: "核对", data: [["来源", "事实"], ["资料.pdf", "FIRST_PAGE"]] }] }), index: 1 }];
+        const definitions = body.tools.map(item => item.function);
+        assert(definitions.find(item => item.name === "create_docx").parameters.properties.blocks);
+        assert(definitions.find(item => item.name === "create_xlsx").parameters.properties.sheets.items.properties.columnFormats);
+        calls = [tool("desktop-word", "create_docx", { ...wordBrief, path: "成果报告.docx", paragraphs: ["来源：资料.pdf，第 1 页。FIRST_PAGE"] }),
+          { ...tool("desktop-sheet", "create_xlsx", { ...salesWorkbook, path: "成果数据.xlsx" }), index: 1 }];
       } else if (stage === 3) {
         calls = [tool("desktop-revise-read", "read", { file_path: path.join(userData, "output", "成果报告.docx") })];
       } else if (stage === 4) {
         assert.match(JSON.stringify(body.messages.filter(message => message.role === "tool").at(-1)), /FIRST_PAGE/);
-        calls = [tool("desktop-revision", "create_docx", { path: "成果报告-修改版.docx", paragraphs: ["已按要求补充结论。来源：资料.pdf，第 1 页。FIRST_PAGE"] })];
+        calls = [tool("desktop-revision", "create_docx", { path: "成果报告-修改版.docx", title: "经营简报修订版", paragraphs: ["摘要：销售额合计1,500元。", "反馈：下期补充地区投入情况。", "来源：资料.pdf，第 1 页。FIRST_PAGE"] })];
       }
       stage++;
       response.writeHead(200, { "Content-Type": "text/event-stream" });
@@ -1878,6 +1882,11 @@ test("R2 real Electron completes document task, restores outputs and revises a c
     assert.equal(modelFailure, null);
     assert.equal(stage, 3);
     const original = await readFile(path.join(userData, "output", "成果报告.docx"));
+    const { parseFileBuffer } = await import("../../src/tools/parsers.ts");
+    assert.match((await parseFileBuffer("成果报告.docx", original)).text, /客户编号[\s\S]*0007[\s\S]*2026-10-01/u);
+    const XLSXModule = await import("xlsx"), XLSX = XLSXModule.default ?? XLSXModule;
+    const workbook = XLSX.read(await readFile(path.join(userData, "output", "成果数据.xlsx")), { type: "buffer", cellNF: true });
+    assert.equal(workbook.Sheets["季度汇总"].B4.v, 1500); assert.equal(workbook.Sheets["季度汇总"].D2.z, "yyyy-mm-dd");
     const sessionId = await client.evaluate("currentSessionId");
     // Restart the actual desktop: outputs come from persisted tool receipts.
     client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
@@ -1924,6 +1933,9 @@ test("R2 real Electron completes document task, restores outputs and revises a c
     await waitFor(() => client.evaluate("document.querySelectorAll('.document-output-row .local-file-link').length === 3 && !document.getElementById('submit').disabled"), { timeoutMs: 25_000, label: "R2 revised output" });
     assert.equal(modelFailure, null); assert.equal(stage, 6);
     assert.deepEqual(await readFile(path.join(userData, "output", "成果报告.docx")), original);
+    const revision = await parseFileBuffer("成果报告-修改版.docx", await readFile(path.join(userData, "output", "成果报告-修改版.docx")));
+    assert.match(revision.text, /摘要：销售额合计1,500元。/u); assert.match(revision.text, /反馈：下期补充地区投入情况。/u);
+    assert.doesNotMatch(revision.text, /本季度销售额为 1,500 元，东部贡献/u);
     const visibleControls = `(() => {
       const area = document.getElementById('workbench').getBoundingClientRect();
       const heading = document.querySelector('#document-outputs summary').getBoundingClientRect();
