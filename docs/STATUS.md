@@ -1,19 +1,21 @@
 # 当前开发状态
 
-更新：2026-10-20。D05、D03、A02、D06、D08已验证；A03当前源码构建0.1.0+local.69ed8d83d46b已有普通CLI与只读终端证据，整票仍in-progress。D13整票blocked，无有效安装候选。项目范围的详细判断见 [二次重构进度审计](audits/baseline-2026-09-29.md)；已完成修复见 [演示问题修复](devlog/2026-10-16-demo-repair.md)。
+更新：2026-10-21。D05、D03、A02、D06、D08已验证；A03当前源码构建0.1.0+local.69ed8d83d46b已有普通CLI与只读终端证据，整票仍in-progress。D13整票blocked，无有效安装候选。项目范围的详细判断见 [二次重构进度审计](audits/baseline-2026-09-29.md)；已完成修复见 [演示问题修复](devlog/2026-10-16-demo-repair.md)。
 
 ## 通用Agent规划与恢复入口
 
 - 文档清理已完成：排期只由D+A总路线维护，旧多轮路线与差距表已归档；默认rg过滤历史规范/报告与本地产物。旧R证据按需查询，见[历史索引](archive/README.md)。
 
 - 2026-10-20路线修订（用户批准）：增加开发模式A15与长任务Agent循环A14，优先于A03收尾；见[规格§7](specs/general-agent.md#7-2026-10-20路线修订开发模式与agent循环)。
-- 当前阶段：implementation / A15开发模式verified，接续A14 Agent循环；D08 verified；A03兼容与工具链缺口保留；D01、A01、D03、D04、D05、D06、A02 verified；D02真实模型认证和D13构建/机器blocked。2026-10-18用户已整体批准D+A路线并授权连续研发；Prism、钉钉排除。
+- 当前阶段：implementation / A15开发模式、A14 Agent循环verified，接续A03收尾（开发模式路径）；D08 verified；A03兼容与工具链缺口保留；D01、A01、D03、D04、D05、D06、A02 verified；D02真实模型认证和D13构建/机器blocked。2026-10-18用户已整体批准D+A路线并授权连续研发；Prism、钉钉排除。
 - 入口：[Codex研发手册](agents/README.md)、[通用规格](specs/general-agent.md)、[D+A总任务图](work/general-agent/plan.md)。31项整体获批，D01已验证，A01调查已完成；D18为中间里程碑，完整出口A13。
-- 下一项：A14 Agent循环→A03收尾（开发模式路径）→A04；D09文件整理并行候选。真实编码模型配置与预算仍待用户提供。A03临时Node构建被ClangCL缺失阻挡，未产生运行时；活动host租约与三项认证观察仍未解决，A04/A05保留A03前置。D13保留审计/干净机器阻塞，D02真实模型未认证。既有default五项研究授权不扩大。
+- 下一项：A03收尾（开发模式路径）→A04（约20项真实模型评测）；D09文件整理并行候选。真实编码模型配置与预算仍待用户提供。A03临时Node构建被ClangCL缺失阻挡，未产生运行时；活动host租约与三项认证观察仍未解决，A04/A05保留A03前置。D13保留审计/干净机器阻塞，D02真实模型未认证。既有default五项研究授权不扩大。
 - 新确认差距：CLI/终端存在但默认助手未开放完整开发能力；MCP只有配置与关闭标志，未接客户端；浏览器有实现但缺完整真实验收；原生Windows工具和截图到模型的完整循环未形成可交付能力。详见[能力手册](agents/general-agent-capabilities.md)。
 - D01–D05新增验证均使用隔离环境和合成模型，不修改日常用户数据库或调用真实模型；具体命令和结果见对应票据。
 
 ## 已验证
+
+- A14：迭代上限改读`common.maxIterations`（默认200），到上限如实说明未完成；运行中可从输入框追加指令，下一轮模型请求生效、不重放工具，`/api/chat/steer`绑定当前run；开发模式下编码与计划工具首轮常驻，同事模式不变。产品93+UI15、desktop4、A14真实Electron追加1/1通过；R5 Electron工具发现用例回退前后均失败，另查。真实模型未测。[证据](work/general-agent/tickets/14-agent-loop.md)
 
 - A15：设置中显式开启的开发模式。execute_command与持久终端以用户身份、用户PATH/工具链和网络运行，cwd仍限授权根；应用内确认可授权到本次任务结束。`node --test`与`python -m unittest`真实red→green，git/npm可用；超时/取消/run结束5秒内清理进程树；cmd中文参数/内建输出/程序stdin正确。同事模式隔离回归保持。产品90+UI15、Electron开关与终端视图通过；安装包与真实模型未测。[证据](work/general-agent/tickets/15-developer-mode.md)
 

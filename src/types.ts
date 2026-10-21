@@ -263,7 +263,7 @@ export interface ToolExecutionOutcome {
 /** agent 运行中的一步 */
 export interface AgentStep {
   type: "thinking" | "tool_call" | "tool_result" | "answer_chunk" | "answer_done" | "error"
-    | "task_created" | "task_update";
+    | "task_created" | "task_update" | "steer";
   content: string;
   toolName?: string;
   toolCallId?: string;

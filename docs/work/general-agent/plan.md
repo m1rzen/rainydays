@@ -41,7 +41,7 @@ Status: approved
 | [A10 Computer Use任务循环与接管](tickets/10-computer-use-loop.md) | A07、A08、A09 | 浏览器/桌面真实观察操作验证，暂停停止和恢复有效 | ready |
 | [A11 项目说明与技能按需使用](tickets/11-skills-and-instructions.md) | A02、D03 | scoped项目指令、SKILL.md参考按需加载、可开关 | ready |
 | [A12 有界子任务与结果汇总](tickets/12-bounded-subagents.md) | A01、D03、D04 | 两个只读子任务、来源汇总、父取消传播、单写入者 | ready |
-| [A14 长任务Agent循环](tickets/14-agent-loop.md) | 无 | 可配置迭代上限、计划、运行中追加指令、开发模式核心工具常驻 | ready |
+| [A14 长任务Agent循环](tickets/14-agent-loop.md) | 无 | 可配置迭代上限、计划、运行中追加指令、开发模式核心工具常驻 | verified |
 | [A15 开发模式：以用户身份执行命令](tickets/15-developer-mode.md) | 无 | 显式开启后用户工具链真实跑node/python/git/npm，任务级授权、取消清理；同事模式隔离不变 | verified |
 | [A13 通用任务、安装与同事交付](tickets/13-general-delivery.md) | A04、A06、A10、A11、A12、A14、A15、D18 | 固定100次和真实同事试用满足门槛，完整安装候选可交付 | ready |
 

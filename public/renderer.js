@@ -2711,12 +2711,14 @@
     function refreshRunControls() {
       const running = isSessionRunning();
       for (const button of messagesEl.querySelectorAll('[data-action="undo-code-change"]')) button.disabled = running || button.dataset.undone === "true" || unavailableSessionIds.has(currentSessionId);
-      submitBtn.disabled = running || unavailableSessionIds.has(currentSessionId);
       const cancel = document.getElementById("cancel-run");
       const localRun = activeRunsBySession.get(currentSessionId);
+      // A14：本窗口的运行中可追加文字指令；其他窗口的运行仍只读。
+      submitBtn.disabled = (running && !(localRun?.runId && !localRun.cancelling)) || unavailableSessionIds.has(currentSessionId);
       cancel.hidden = !localRun;
       cancel.disabled = Boolean(localRun?.cancelling);
-      submitBtn.hidden = Boolean(localRun);
+      submitBtn.setAttribute("aria-label", localRun ? "追加指令" : "发送");
+      submitBtn.title = localRun ? "追加到当前任务，下一步生效" : "";
       statusDot.className = running ? "status-dot busy" : "status-dot";
       statusText.textContent = localRun?.cancelling ? "正在停止..." : running ? "思考中..." : unavailableSessionIds.has(currentSessionId) ? "旧对话只读" : desktopSessionState(currentSessionId).status === "error" ? "本次未完成" : "就绪";
       refreshWorkbenchTabStatus();
@@ -2990,10 +2992,44 @@
       inputEl.setAttribute("aria-activedescendant", `slash-option-${slashSelectedIdx}`);
     }
 
+    function showSteerNote(token, text, state) {
+      if (!token?.bubble) return null;
+      const note = document.createElement("p");
+      note.className = "run-steer-note";
+      note.dataset.state = state;
+      note.textContent = `${state === "applied" ? "已加入对话" : "已追加，下一步处理"}：${text}`;
+      token.bubble.appendChild(note);
+      return note;
+    }
+    async function steerSessionRun(sessionId, token, text) {
+      try {
+        const response = await fetch("/api/chat/steer", {
+          method: "POST",
+          headers: sessionHeaders(sessionId, true),
+          body: JSON.stringify({ sessionId, runId: token.runId, message: text }),
+          signal: AbortSignal.timeout(6000),
+        });
+        if (!response.ok) { addSystemMessage("当前任务已结束或正在停止，追加内容未送达，请重新发送。"); return false; }
+        (token.steerNotes ??= []).push(showSteerNote(token, text, "queued"));
+        return true;
+      } catch { addSystemMessage("追加内容未送达，请重新发送。"); return false; }
+    }
+
     formEl.addEventListener("submit", async (e) => {
       e.preventDefault();
       const text = inputEl.value.trim();
       const readyAttachments = attachmentDrafts.filter(attachment => attachment.state === "ready");
+      const steerToken = currentSessionId ? activeRunsBySession.get(currentSessionId) : null;
+      if (steerToken) {
+        if (!steerToken.runId || steerToken.cancelling || !text) return;
+        if (readyAttachments.length > 0 || text.startsWith("/")) { addSystemMessage("任务运行中只能追加文字指令；附件和命令请在任务结束后发送。"); return; }
+        const steerSessionId = currentSessionId;
+        if (await steerSessionRun(steerSessionId, steerToken, text)) {
+          if (currentSessionId === steerSessionId) { inputEl.value = ""; inputEl.rows = 1; saveDraft(steerSessionId, ""); }
+          pushSessionHistory(steerSessionId, text);
+        }
+        return;
+      }
       if ((!text && readyAttachments.length === 0) || isSessionRunning()) return;
       if (unavailableSessionIds.has(currentSessionId)) { addSystemMessage("请点击“使用新版助手继续”，在保留资料的副本中开始任务。"); return; }
       if (attachmentDrafts.some(attachment => attachment.state === "uploading")) { addSystemMessage("⚠️ 请等待附件上传完成或取消上传"); return; }
@@ -3040,7 +3076,7 @@
             if (!line.startsWith("data: ")) continue;
             const step = JSON.parse(line.slice(6));
             if (step.type === "run_started") {
-              if (activeRunsBySession.get(chatSessionId) === runToken && step.sessionId === chatSessionId && typeof step.runId === "string") runToken.runId = step.runId;
+              if (activeRunsBySession.get(chatSessionId) === runToken && step.sessionId === chatSessionId && typeof step.runId === "string") { runToken.runId = step.runId; refreshRunControls(); }
               continue;
             }
             if (step.type === "ask_user") {
@@ -3064,6 +3100,10 @@
               if (step.toolName === "shell_start" && currentSessionId === chatSessionId && activeTerminalOwnerSessionId === chatSessionId) void loadTerminals();
               if (["create_docx", "create_xlsx"].includes(step.toolName)) void refreshDocumentOutputs(chatSessionId);
               if (step.toolName === "fetch_markdown") void refreshDocumentOutputs(chatSessionId);
+            }
+            else if (step.type === "steer") {
+              const note = runToken.steerNotes?.shift();
+              if (note) { note.dataset.state = "applied"; note.textContent = `已加入对话：${step.content}`; } else showSteerNote(runToken, step.content, "applied");
             }
             else if (step.type === "task_created" || step.type === "task_update") { if (currentSessionId === chatSessionId && step.tasks?.length > 0) renderTasks(step.tasks); }
             else if (step.type === "answer_done") { if (!streamingStarted && step.content) { fullText = step.content; renderRunText(fullText); } if (fullText) { if (currentSessionId === chatSessionId) speakText(fullText.slice(0, 200)); enhanceLocalFileLinks(answerEl, fullText); } completeAccessibleResponse(fullText || bubbleEl.textContent); }

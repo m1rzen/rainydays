@@ -2989,6 +2989,36 @@ app.post("/api/chat/cancel", async (req, res) => {
   }
 });
 
+// A14：运行中追加指令，绑定当前 run identity，下一次模型请求前进入对话。
+app.post("/api/chat/steer", async (req, res) => {
+  const body = req.body as Record<string, unknown> | null;
+  if (!body || typeof body !== "object" || Array.isArray(body)
+    || Object.keys(body).some(key => !new Set(["sessionId", "runId", "message"]).has(key))
+    || typeof body.message !== "string" || !body.message.trim() || body.message.length > 32_000) {
+    res.status(400).json({ error: "Steer request is invalid" });
+    return;
+  }
+  let sessionId: string;
+  try {
+    sessionId = resolveBodySessionIdentity(body.sessionId, true)!;
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    return;
+  }
+  const runId = body.runId;
+  if (typeof runId !== "string" || runId.length < 1 || runId.length > 256 || runId.trim() !== runId) {
+    res.status(400).json({ error: "Run identity 无效" });
+    return;
+  }
+  const active = activeRunInteractions.get(sessionId);
+  const runtime = active?.runId === runId ? runtimeRegistry?.get(sessionId) : undefined;
+  if (!active || active.runId !== runId || !runtime || !runtime.agent.steer(runId, body.message)) {
+    res.status(409).json({ error: "Run 已结束或 identity 不匹配，请重新发送" });
+    return;
+  }
+  res.status(202).json({ accepted: true, sessionId, runId });
+});
+
 app.post("/api/chat", async (req, res) => {
   const body = req.body as Record<string, unknown> | null;
   if (!body || typeof body !== "object" || Array.isArray(body)
@@ -3077,7 +3107,9 @@ app.post("/api/chat", async (req, res) => {
           emit(step);
         }
         attachments = Object.freeze([]);
-        input = pendingPersonaSwitches.has(chatSessionId) ? null : takeActiveRunInjection(chatSessionId, claim.signal);
+        const leftoverSteers = runtime.agent.takePendingSteers();
+        input = pendingPersonaSwitches.has(chatSessionId) || claim.signal.aborted ? null
+          : leftoverSteers.length > 0 ? leftoverSteers.join("\n\n") : takeActiveRunInjection(chatSessionId, claim.signal);
       }
     });
   } catch (error) {

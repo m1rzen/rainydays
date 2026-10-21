@@ -399,7 +399,7 @@ async function assertRendererSessionIsolation(client, restoreSessionId) {
   await waitFor(async () => {
     try {
       return await client.evaluate(`window.__rt01RendererProbe.cancels.length === 0
-        && document.getElementById('submit').disabled
+        && document.getElementById('submit').getAttribute('aria-label') === '追加指令'
         && activeRunsBySession.get(${JSON.stringify(sessions.b)})?.runId === 'run-cancel-b'`);
     } catch { return false; }
   }, { timeoutMs: 10_000, label: "RT-04 renderer run identity" });
@@ -1030,6 +1030,59 @@ test("A15 real Electron developer mode is switched only from local settings and 
   } finally {
     client?.close(); if (instance) await terminateProcessTreeAsync(instance.child);
     await removeFixture(fixture);
+  }
+});
+
+test("A14 real Electron steers a running task from the composer into the next model request", { timeout: 120_000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-a14-steer-");
+  let instance, client, iteration = 0, modelFailure = null, releaseHeld;
+  const held = new Promise(resolve => { releaseHeld = resolve; });
+  const server = createServer(async (request, response) => {
+    try {
+      const chunks = []; for await (const chunk of request) chunks.push(chunk);
+      const body = JSON.parse(Buffer.concat(chunks).toString());
+      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "Fixture" }, finish_reason: "stop" }] })); return; }
+      const stage = iteration++;
+      let calls;
+      if (stage === 0) calls = [{ index: 0, id: "steer-time-1", type: "function", function: { name: "get_current_time", arguments: "{}" } }];
+      else if (stage === 1) {
+        await held; // The model request stays open while the user steers from the composer.
+        calls = [{ index: 0, id: "steer-time-2", type: "function", function: { name: "get_current_time", arguments: "{}" } }];
+      } else {
+        const last = body.messages.at(-1);
+        assert.equal(last.role, "user"); assert.equal(last.content, "改为只给出日期");
+        assert.equal(body.messages.filter(message => message.role === "tool").length, 2);
+      }
+      response.writeHead(200, { "Content-Type": "text/event-stream" });
+      response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: calls ? { tool_calls: calls } : { content: "已按追加要求完成。" }, finish_reason: null }] })}\n\n`);
+      response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: calls ? "tool_calls" : "stop" }] })}\n\n`);
+      response.end("data: [DONE]\n\n");
+    } catch (error) { modelFailure = error; response.writeHead(400); response.end("fixture assertion failed"); }
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(path.join(fixture, "user-data"), httpPort, cdpPort, context.signal, `http://127.0.0.1:${server.address().port}/v1`);
+    client = await connectCdp(cdpPort);
+    await waitFor(() => client.evaluate("Boolean(desktopNavigationReady && currentSessionId)"), { timeoutMs: 20_000, label: "A14 ready" });
+    await client.evaluate("if(document.getElementById('settings-modal').classList.contains('visible'))closeSettings();inputEl.value='查两次时间';document.getElementById('input-form').requestSubmit()");
+    await waitFor(() => iteration === 2, { timeoutMs: 20_000, label: "A14 second model request held" });
+    await waitFor(() => client.evaluate("isSessionRunning() && !submitBtn.disabled && submitBtn.getAttribute('aria-label')==='追加指令' && !document.getElementById('cancel-run').hidden"), { timeoutMs: 10_000, label: "A14 composer accepts steering" });
+    const cross = await client.evaluate("fetch('/api/chat/steer',{method:'POST',headers:sessionHeaders(currentSessionId,true),body:JSON.stringify({sessionId:currentSessionId,runId:'not-this-run',message:'x'})}).then(r=>r.status)");
+    assert.equal(cross, 409, "steer is bound to the active run identity");
+    await client.evaluate("inputEl.value='改为只给出日期';document.getElementById('input-form').requestSubmit()");
+    await waitFor(() => client.evaluate("document.querySelector('.run-steer-note[data-state=\"queued\"]')?.textContent.includes('改为只给出日期') && inputEl.value===''"), { timeoutMs: 10_000, label: "A14 steer queued" });
+    releaseHeld();
+    await waitFor(() => client.evaluate("!isSessionRunning() && [...document.querySelectorAll('#messages .msg-assistant .bubble')].at(-1)?.textContent.includes('已按追加要求完成')"), { timeoutMs: 30_000, label: "A14 steered task finished" });
+    assert.equal(modelFailure, null); assert.equal(iteration, 3);
+    assert.equal(await client.evaluate("document.querySelector('.run-steer-note').dataset.state"), "applied");
+    assert.equal(await client.evaluate("submitBtn.getAttribute('aria-label')"), "发送");
+    client.close(); client = null;
+    await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally {
+    releaseHeld();
+    client?.close(); if (instance) await terminateProcessTreeAsync(instance.child);
+    await removeFixture(fixture); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
   }
 });
 

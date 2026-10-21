@@ -125,6 +125,8 @@ header { height:56px; min-height:56px; padding:0 26px; gap:12px; background:var(
 .msg-assistant .bubble.system-message { font-size:12px; font-style:normal; }
 .system-message > svg { margin-right:7px; width:15px; height:15px; color:var(--text-dim); }
 .run-status-note { margin:12px 0 0; color:var(--text-dim); font-size:12px; line-height:1.6; }
+.run-steer-note { margin:10px 0 0; padding-left:10px; border-left:2px solid var(--border); color:var(--text-dim); font-size:12px; line-height:1.6; white-space:pre-wrap; }
+.run-steer-note[data-state="applied"] { color:var(--text); }
 .local-file-link { color:var(--text); text-decoration-color:#b9b3a9; text-decoration-style:solid; }
 .local-file-link:hover { color:var(--accent); }
 

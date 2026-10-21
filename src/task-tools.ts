@@ -1,6 +1,8 @@
 import type { ToolExecutionOutcome, ToolProtocolDescriptor } from "./types.js";
 
 const commonTools = new Set(["glob", "read", "grep", "write", "edit", "get_current_time", "ask_user", "web_search", "fetch_markdown", "create_docx", "create_xlsx", "search_tools"]);
+// A14：开发模式下编码核心工具与计划工具首轮常驻；仍只取人格允许列表内的工具。
+const developerTools = new Set(["read_repo", "edit_files", "undo_edits", "execute_command", "shell_start", "shell_input", "shell_output", "shell_list", "shell_kill", "task_create", "task_update", "task_list", "task_get"]);
 
 /** One run's visible schemas; the authentic Broker remains the authority for every execution. */
 export class TaskToolSelection {
@@ -8,10 +10,11 @@ export class TaskToolSelection {
   readonly #loaded: Set<string>;
   readonly enabled: boolean;
 
-  constructor(personaName: string, allowed: readonly ToolProtocolDescriptor[]) {
+  constructor(personaName: string, allowed: readonly ToolProtocolDescriptor[], options: Readonly<{ developerMode?: boolean }> = {}) {
     this.#allowed = new Map(allowed.map(protocol => [protocol.name, protocol]));
     this.enabled = personaName === "general" && this.#allowed.has("search_tools");
-    this.#loaded = new Set(allowed.filter(protocol => !this.enabled || commonTools.has(protocol.name)).map(protocol => protocol.name));
+    const resident = (name: string) => commonTools.has(name) || (options.developerMode === true && developerTools.has(name));
+    this.#loaded = new Set(allowed.filter(protocol => !this.enabled || resident(protocol.name)).map(protocol => protocol.name));
   }
 
   has(name: string): boolean { return this.#loaded.has(name); }

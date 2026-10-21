@@ -40,8 +40,18 @@ import {
   type SecurityAuditResultStatus,
 } from "./security-audit.js";
 
-const MAX_ITERATIONS = 25;
-const DEVELOPER_MODE_PROMPT = "## 开发模式\n用户已开启开发模式：execute_command 以用户身份运行，可使用用户 PATH 中的 git、node、npm、python 等工具和网络；工作目录仍限于授权根。上文“命令通道离线、仅系统工具”的限制在开发模式下不适用。测试/构建按需设置 timeout（秒，最长600）；stdin 关闭，避免交互式命令。安装依赖、git 提交/推送、删除文件等改变环境或对外的操作先向用户说明并获同意。以真实退出码判断结果。";
+const DEFAULT_MAX_ITERATIONS = 200;
+const MAX_STEER_LENGTH = 32_000;
+const MAX_PENDING_STEERS = 20;
+
+/** A14：迭代上限来自 common.maxIterations；隔离夹具没有全局配置时使用默认值。 */
+export function resolveMaxIterations(): number {
+  try {
+    const value = getConfigSnapshot().domains.common.maxIterations;
+    return Number.isInteger(value) && value >= 1 ? value : DEFAULT_MAX_ITERATIONS;
+  } catch { return DEFAULT_MAX_ITERATIONS; }
+}
+const DEVELOPER_MODE_PROMPT = "## 开发模式\n用户已开启开发模式：execute_command 以用户身份运行，可使用用户 PATH 中的 git、node、npm、python 等工具和网络；工作目录仍限于授权根。上文“命令通道离线、仅系统工具”的限制在开发模式下不适用。测试/构建按需设置 timeout（秒，最长600）；stdin 关闭，避免交互式命令。安装依赖、git 提交/推送、删除文件等改变环境或对外的操作先向用户说明并获同意。以真实退出码判断结果。read_repo、edit_files、execute_command、shell_*与task_*已直接可用，无需先search_tools；多步任务先用task_create列出计划，并随进展task_update。";
 
 const SERIAL_SCHEDULING_POLICY: ToolPolicy = Object.freeze({
   riskClasses: Object.freeze(["read"] as const),
@@ -223,6 +233,8 @@ export class Agent {
   private sessionId: string | null = null;
   private running = false;
   private terminalContext: CapabilityContext | null = null;
+  private activeRunId: string | null = null;
+  private pendingSteers: string[] = [];
 
   constructor(llm: LLMClient, memory: ConversationMemory, persona: PersonaDefinition, authority: RuntimeAuthority, auditJournal: SecurityAuditJournal | null = null) {
     this.llm = llm;
@@ -275,6 +287,22 @@ export class Agent {
 
   isRunning(): boolean {
     return this.running;
+  }
+
+  /** A14：运行中追加的用户指令，下一次模型请求前进入对话；只接受当前 run。 */
+  steer(runId: string, content: string): boolean {
+    const text = content.trim();
+    if (!this.running || !this.activeRunId || runId !== this.activeRunId) return false;
+    if (!text || text.length > MAX_STEER_LENGTH || this.pendingSteers.length >= MAX_PENDING_STEERS) return false;
+    this.pendingSteers.push(text);
+    return true;
+  }
+
+  /** 取出 run 结束前未进入模型请求的追加指令，由调用方作为下一次输入继续。 */
+  takePendingSteers(): string[] {
+    const pending = this.pendingSteers;
+    this.pendingSteers = [];
+    return pending;
   }
 
   /** 每次 run 都从当前 persona、跨会话记忆和 Pin 重建唯一主 system prompt。 */
@@ -586,6 +614,8 @@ export class Agent {
 
     this.running = true;
     this.terminalContext = capabilityContext;
+    this.activeRunId = runId ?? capabilityContext.runId;
+    this.pendingSteers = [];
     try {
       throwIfCancelled(signal);
       const isFirstMessage = this.memory.getAll().filter((m) => m.role === "user").length === 0;
@@ -599,7 +629,7 @@ export class Agent {
       }
 
       const toolProtocols = getToolProtocolDescriptors(capabilityContext);
-      const toolSelection = new TaskToolSelection(this.persona.name, toolProtocols);
+      const toolSelection = new TaskToolSelection(this.persona.name, toolProtocols, { developerMode: isDeveloperModeEnabled() });
       let orgModeEnabled = false;
       try { orgModeEnabled = getConfigSnapshot().domains.common.orgMode; } catch { /* isolated Agent fixtures have no global config */ }
       this.refreshSystemPrompt(runSessionId, orgModeEnabled ? renderBodyToolInstructions(toolSelection.protocols()) : "");
@@ -608,9 +638,17 @@ export class Agent {
       let taskMode = getTasksBySession(runSessionId).some(task => task.status !== "completed");
       const toolLoopDetector = new ToolLoopDetector();
 
-    for (let i = 0; i < MAX_ITERATIONS; i++) {
+      const maxIterations = resolveMaxIterations();
+    for (let i = 0; i < maxIterations; i++) {
       throwIfCancelled(signal);
       const iterStart = Date.now();
+
+      // A14：运行中追加的指令在本轮模型请求前作为用户消息提交，已执行的工具不重放。
+      for (const steer of this.takePendingSteers()) {
+        this.memory.add({ role: "user", content: steer });
+        touch(runSessionId);
+        yield { type: "steer", content: steer, timestamp: Date.now() };
+      }
 
       // Replace transient guidance each round; it must not accumulate as immutable system history.
       this.refreshSystemPrompt(runSessionId, orgModeEnabled ? renderBodyToolInstructions(toolSelection.protocols()) : "");
@@ -990,17 +1028,20 @@ export class Agent {
         content: hasStreamedContent ? "" : finalMessage.content,
         timestamp: Date.now(),
       };
+      // 回答期间用户追加了指令：继续同一 run，而不是等任务结束。
+      if (this.pendingSteers.length > 0) continue;
       return;
     }
 
       yield {
         type: "error",
-        content: "处理过程过长，已达到最大循环次数。请尝试简化你的请求。",
+        content: `已达到本次任务的最大循环次数（${maxIterations}），任务尚未完成；已执行的步骤和成果已保留。可回复“继续”接着处理，或在设置中调高“最大迭代次数”。`,
         timestamp: Date.now(),
       };
     } finally {
       this.running = false;
       this.terminalContext = null;
+      this.activeRunId = null;
       try {
         await capabilityBroker.retireAgentRunResources(capabilityContext);
       } finally {
