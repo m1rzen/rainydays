@@ -43,6 +43,9 @@ test("A15 developer mode defaults off, accepts legacy settings and cannot be ena
   assert.equal(developer.isDeveloperModeEnabled(), false);
   const env = developer.developerEnvironment({ PATH: "C:\\tools", RAINYDAYS_SECRET: "x", ELECTRON_RUN_AS_NODE: "1", GIT_AUTHOR_NAME: "me" });
   assert.deepEqual(Object.keys(env).sort(), ["GIT_AUTHOR_NAME", "PATH", "PYTHONIOENCODING"]);
+  const { getToolTimeoutMs } = await import("../../src/tool-protocol.ts");
+  assert(getToolTimeoutMs("execute_command") > developer.DEVELOPER_MAX_TIMEOUT_SECONDS * 1000, "tool pipeline must not cut developer commands short");
+  assert.equal(developer.parseDeveloperTimeout(undefined), 120); assert.equal(developer.parseDeveloperTimeout(9999), 600);
 });
 
 test("A15 user toolchain runs in the chosen directory with Unicode output and the real exit code", async () => {

@@ -46,7 +46,7 @@ test("TOOL-01 unified descriptors bind schema, body, policy, effects, routing, c
   assert.equal(write.timeoutMs, 30_000);
   assert.equal(getToolTimeoutMs("glob"), 10_000);
   assert.equal(getToolTimeoutMs("grep"), 10_000);
-  assert.equal(byName.get("execute_command").timeoutMs, 60_000);
+  assert.equal(byName.get("execute_command").timeoutMs, 610_000);
   const script = byName.get("script");
   assert.equal(script.timeoutMs, 60_000);
   assert.deepEqual(script.invocation.body.headers, [

@@ -42,7 +42,7 @@ const BODY_MODES: Readonly<Record<string, ToolBodyMode>> = Object.freeze({
     { blockName: "OLD_STRING", parameter: "old_string" },
     { blockName: "NEW_STRING", parameter: "new_string" },
   ], [header("path", "path", true), header("replace_all", "replace_all")]),
-  execute_command: rawBody("BASH", "command", [header("cwd", "cwd")]),
+  execute_command: rawBody("BASH", "command", [header("cwd", "cwd"), header("timeout", "timeout")]),
   script: rawBody("SCRIPT", "code", [header("lang", "lang"), header("cwd", "cwd"), header("timeout", "timeout")]),
 });
 
@@ -55,7 +55,8 @@ const HOST_BOUND_TOOLS = new Set([
 const TOOL_TIMEOUTS: Readonly<Record<string, number>> = Object.freeze({
   glob: 10_000,
   grep: 10_000,
-  execute_command: 60_000,
+  // 同事模式E1自身30秒结束；开发模式按参数最长600秒，管道上限须覆盖它（A15）。
+  execute_command: 610_000,
   script: 60_000,
   fetch_markdown: 125_000,
 });

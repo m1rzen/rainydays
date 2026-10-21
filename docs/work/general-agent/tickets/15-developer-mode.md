@@ -48,6 +48,10 @@ User stories: G02、G03、G04、G05
 - `npm run check:product`：类型/lint、产品90/90、UI/IPC15/15。
 - build后同事模式回归：agent-cli 1/1、rt10-terminal-interruption 1/1、sec01-terminal-owner 2/2、真实Electron agent-cli-view 1/1。
 
+### 补丁：长命令不被工具管道截断（2026-10-21）
+
+开发模式execute_command按timeout参数最长600秒，但工具管道统一超时仍是60秒，会提前中止测试/构建。管道上限改为610秒（同事模式E1仍自身30秒结束），body协议execute_command增加timeout头。developer-mode产品7/7（新增管道上限>600秒、默认120秒/上限600秒断言）；tool-protocol单元断言更新为610000（隔离数据目录下8/8子测试通过，进程因既有句柄需外部结束）。
+
 ## 审查与验证结果
 
 按Standards/Spec顺序自审，未委派。Standards：设置仅本机界面可改、导入包保留现值、运行中锁定；审批经原broker challenge/grant，开发模式只换渠道与任务级复用，supervisor升级时不给任务级授权；同事模式执行/终端代码路径未改，原负向回归通过；无数据库迁移。Spec：六项验收均有上文证据。
