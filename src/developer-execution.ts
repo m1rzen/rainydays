@@ -5,7 +5,7 @@
 // ===========================================
 
 import { spawn } from "node:child_process";
-import { StringDecoder } from "node:string_decoder";
+import { MixedOutputTranscoder, systemOemCodepage } from "./command-encoding.js";
 import { getConfigSnapshot } from "./config.js";
 import { terminateProcessTree } from "./process-tree.js";
 import { registerOwnedResource, type ResourceOwner } from "./resource-owner.js";
@@ -61,10 +61,10 @@ export interface DeveloperCommandResult {
 class TailBuffer {
   private text = "";
   omitted = 0;
-  private readonly decoder = new StringDecoder("utf8");
+  private readonly decoder = new MixedOutputTranscoder(systemOemCodepage());
   constructor(private readonly limit: number) {}
-  push(chunk: Buffer | string): void { this.append(typeof chunk === "string" ? chunk : this.decoder.write(chunk)); }
-  end(): string { this.append(this.decoder.end()); return this.text; }
+  push(chunk: Buffer | string): void { this.append(typeof chunk === "string" ? chunk : this.decoder.push(chunk).toString("utf8")); }
+  end(): string { this.append(this.decoder.end().toString("utf8")); return this.text; }
   private append(value: string): void {
     if (!value) return;
     this.text += value;
@@ -156,6 +156,9 @@ export function formatDeveloperResult(result: DeveloperCommandResult, timeoutSec
     parts.push(result.stderr);
   }
   const failed = result.reason !== "completed" || result.exitCode !== 0;
+  if (result.reason === "completed" && result.exitCode !== 0 && /不是内部或外部命令|is not recognized as an internal or external command/iu.test(result.stderr)) {
+    parts.push("[环境依赖 · 命令未找到：请检查命令名称、项目声明的运行时和 PATH。若已安装，请确认已加入 PATH 并重启应用；若需安装，请先选择所需工具及版本并确认安装。未自动安装或运行成功。]");
+  }
   const status = result.reason === "timeout"
     ? `[开发模式 · 超过 ${timeoutSeconds} 秒，已终止进程树]`
     : `[开发模式 · 退出码 ${result.exitCode ?? "未知"} · ${(result.durationMs / 1000).toFixed(1)} 秒]`;

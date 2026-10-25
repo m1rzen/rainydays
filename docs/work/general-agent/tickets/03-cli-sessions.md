@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: in-progress
+Status: verified
 
 Spec: [通用Agent规格](../../../specs/general-agent.md)
 
@@ -18,6 +18,8 @@ User stories: G03
 
 ## 先读与研究
 
+**现行收尾范围（2026-10-25）**：用户已批准的[规格§7](../../../specs/general-agent.md#7-2026-10-20路线修订开发模式与agent循环)优先于下列早期隔离方案。A03以显式开发模式下的用户工具链完成标准项目命令；同事模式仍保留隔离，不作静默回退。自建Node、生产SDK复制/租约、活动native host并发与三项原生认证观察失败保留为隔离模式后续项，不把旧失败改写为通过。真实模型能力由A04/A13验收，安装由D13/A13验收。
+
 A01已实测E1 echo可用，但Node/Python项目命令被隔离通道拒绝；E3直接import项目文件因父目录lstat的EPERM失败。先按[A01原型记录](../prototype.md)复现，再设计最小运行时租约/模块解析所需目录元数据契约，验证Node和Python项目红→修复→绿；不得只接终端UI或全局放权。另需处理现有Windows stderr乱码，明确编码或保留原始字节。
 
 src/tools/shell.ts、terminal-tools.ts、script.ts及执行adapter；tests中的terminal-owner、terminal-interruption与script-native相关用例。
@@ -26,11 +28,11 @@ src/tools/shell.ts、terminal-tools.ts、script.ts及执行adapter；tests中的
 
 ## 验收条件
 
-- [ ] L01–L05工程场景通过；长于60秒与大输出不因短命令默认超时丢结果。
-- [ ] stdin只进本run所属会话，实际退出码/错误/分页内容可核对。
-- [ ] 取消反馈≤1秒，目标5秒内回收受控进程树；不杀用户原有进程。
-- [ ] 普通无开发环境用户得到缺依赖提示；项目所需工具和安装选择明确，不自动扩大执行权限。
-- [ ] 标准构建/测试在现有隔离契约下可用，阻挡点有最小兼容修复及针对性验证。
+- [x] L01–L05工程场景通过；长于60秒与大输出不因短命令默认超时丢结果。
+- [x] stdin只进本run所属会话，实际退出码/错误/分页内容可核对。
+- [x] 取消反馈≤1秒，目标5秒内回收受控进程树；不杀用户原有进程。
+- [x] 缺依赖命令给出名称/PATH/运行时与安装选择提示，不自动安装；普通文件工作不要求开发环境。
+- [x] 按批准的§7修订，开发模式使用用户工具链运行标准Node/Python测试；同事模式保持现有隔离契约与明示限制。早期隔离兼容问题转后续项。
 
 ## 验证接口与证据
 
@@ -116,7 +118,7 @@ E3真实模块子切片已实现、按[审查](../reviews/03-code-review.md)分�
 
 收尾：类型/lint、产品74/74与UI/IPC15/15通过；完整Broker32/32通过。当前切片按Standards/Spec审查闭合并本地提交，后续继续A03兼容实验，不把A04/A05前置标为已满足。
 
-### 上游Node管道修复实验（进行中）
+### 上游Node管道修复实验（历史，按§7转后续项）
 
 起点4653916。2026-10-20复查Node release/nightly索引，均未含libuv1.53，升级现成官方二进制不是已证实解法。比较等待上游、升级全部libuv、自建仅36行上游pipe补丁；先选临时构建Node24.14.1+libuv官方commit 2cadaa40167050baf7c6905ac897e6fb57afb2c6中的pipe.c变更，保持应用构建Node不变。不移植其CI/其他系统修复，不安装到用户项目，不改隔离或测试参数。
 
@@ -125,4 +127,20 @@ E3真实模块子切片已实现、按[审查](../reviews/03-code-review.md)分�
 实验结果：官方源码SHA256 `7822507713f202cf2a551899d250259643f477b671706db421a6fb55c4aa0991`核对通过；只移植pipe.c的上游补丁，git apply --check通过。Windows tar不能处理源码内三项中文copy测试名，改用Python3.14 tarfile data filter并明确省略非编译用Node/V8测试及docs；没有省略本项目Agent回归。vcbuild在编译前退出1：Node24要求ClangCL，当前VS2022未安装Clang/LLVM组件，三个标准clang-cl路径均不存在。未安装系统组件、未修改应用Node、未生成可用二进制，故默认Node测试仍未通过。临时源码保留，可在具备工具链后--resume；当前不继续为此临时实验扩建SDK安装器。
 
 等待工具链/兼容决定期间，按唯一总路线选择下一项前置已满足的D06（D03、D05 verified）做独立文件依据工程；A04/A05仍保留A03前置未满足，未调整依赖。
+
+### 开发模式完整路径收尾（2026-10-25）
+
+起点6dede8f。重新核对§7及A15：不继续扩建临时Node/ClangCL。默认助手组合补测发现缺依赖命令只有普通失败且cmd中文诊断乱码；复用终端既有OEM/UTF-8解码，在短命令中正确保留诊断，并在Windows中英文“命令不存在”诊断出现且退出非零时给出检查名称/PATH/项目运行时及安装选择的提示。原始stderr和真实退出码保留，普通退出7不误标成缺依赖。没有安装依赖、调用真实模型或修改日常配置。
+
+- `node --import tsx --test --test-name-pattern 'distinguishes missing|cancelling' tests/integration/agent-developer-cli.test.mjs`：2/2。默认general工具集（仅省略index.ts的无关persona管理hooks），一次应用内任务授权；不存在的命令与普通断言退出7区分。真实Agent取消回收终端、Node父子进程，心跳停止、后续命令未执行，独立进程仍存活；总用例2.387秒（非纯取消耗时），取消至结算断言<5秒。
+- 同文件`--test-name-pattern '61 second'`：1/1，64.144秒；中文空格cwd、活动终端同时execute_command、另一Session输入被拒且结束不影响原终端、中文stdin、1600行按nextOffset完整不重不漏分页，超过60秒后实际exit7/child-failed，run结束只读视图失效。
+- `npm run check:product`：类型/lint、产品93/93、UI/IPC15/15；`npm run build`：原native复用、源码`0.1.0+local.46bb74a2c029`通过。
+
+审查：按Standards→Spec顺序自审，无委派。只共享已有输出解码与增加失败提示，不改变权限、审批渠道、cwd、资源归属或清理实现。提示依据进程真实诊断；不以单独退出码猜测缺依赖。工程模型为可控桩、命令与进程为真实，不能计入真实模型任务分数。新场景的早期失败包括fixture未注册persona hooks、复用PathAuthority、嵌套interaction上下文、JSON结果未解包与分页数估计；均已修测试设置，保留1600行/归属/取消/退出码断言，没有放宽产品契约。
+
+- 真实Electron renderer：`node --test --test-name-pattern 'developer mode' tests/electron/agent-cli-view.test.mjs` 1/1，29.494秒。输入框发起默认助手任务→点击“本次任务允许运行命令”→真实用户终端输出/只读面板/跨Session404/exit7→助手视图失效；同时活动的隔离手动终端在任务结束后仍运行。该测试壳使用真实renderer/daemon与可控模型，手动终端确认由fixture handler批准，resize使用spy；不代表正式Electron main原生确认或安装包。fixture最初只重定向输出，隔离PTY会回显输入、开发管道不回显；改为实际echo输出后通过，不改变产品来迎合回显假设。同事模式同文件1/1（38.757秒）；仍记录活动native host拒绝新lease，先结束手动进程才运行隔离助手。
+- 同事模式回归：`node --test tests/integration/agent-cli.test.mjs tests/integration/rt10-terminal-interruption.test.mjs tests/integration/sec01-terminal-owner.test.mjs` 4/4（33.653秒），默认发现/真实执行、服务崩溃清理及会话owner拒绝保持；最终lint与diff空白检查通过。
+- 最终统一fixture复验`node --test tests/electron/agent-cli-view.test.mjs`：同事/开发两种模式2/2（30.552秒、30.759秒）；缺命令场景另加原始中文/英文诊断与无替换乱码字符断言，1/1通过。
+
+依据批准的§7，现行A03工程范围verified，A04/A05依赖可继续。未测边界：实际编码模型、当前安装候选/干净机器、任意CLI/TUI及任意编码。PowerShell管道不承诺子程序stdin交互，交互使用cmd；开发模式不是文件沙箱。回退仅revert本收尾提交，关闭开发模式回到原隔离路径。终点为`fix: complete developer CLI workflows and dependency diagnostics`本地提交。
 

@@ -16,7 +16,7 @@ function childRequest(child, input) {
   });
 }
 
-test("A03 real Electron renderer reads live Agent and retained manual terminal views without cross-session control", { timeout: 90_000 }, async () => {
+for (const developerMode of [false, true]) test(`A03 real Electron renderer reads live Agent and manual terminal views in ${developerMode ? "developer" : "colleague"} mode without cross-session control`, { timeout: 90_000 }, async () => {
   const fixture = await makeTempDir("rainydays-cli-view-"), workspace = path.join(fixture, "中文 项目"), token = "cli-view-fixture-token";
   await fs.mkdir(workspace);
   const [port, cdpPort] = await freeDistinctPorts(2), base = `http://127.0.0.1:${port}`;
@@ -37,7 +37,7 @@ test("A03 real Electron renderer reads live Agent and retained manual terminal v
     let calls;
     if (stage++ === 0) calls = call("search_tools", { keywords: "shell_start shell_input shell_output" });
     else if (stage === 2) calls = call("shell_start", { name: "助手实时输出", cwd: workspace });
-    else if (stage === 3) { terminalId = /ID: (term_[a-f0-9-]+)/u.exec(body.messages.at(-1).content)?.[1]; assert(terminalId, `shell_start did not return a terminal: ${lastTool}`); calls = call("shell_input", { terminalId, input: "echo HTTP_CLI_LIVE>http-live.txt" }); }
+    else if (stage === 3) { terminalId = /ID: (term_[a-f0-9-]+)/u.exec(body.messages.at(-1).content)?.[1]; assert(terminalId, `shell_start did not return a terminal: ${lastTool}`); calls = call("shell_input", { terminalId, input: "echo HTTP_CLI_LIVE & echo HTTP_CLI_LIVE>http-live.txt" }); }
     else if (stage === 4) { blocked = true; await gate; calls = call("shell_input", { terminalId, input: "exit 7" }); }
     else if (stage === 5) {
       await waitFor(async () => (await api("/terminals")).body.terminals.some(item => item.id === terminalId && item.status !== "running"), { timeoutMs: 5000 });
@@ -55,6 +55,11 @@ test("A03 real Electron renderer reads live Agent and retained manual terminal v
   let logs = ""; daemon.stdout.on("data", bytes => { logs += bytes; }); daemon.stderr.on("data", bytes => { logs += bytes; });
   try {
     await waitFor(async () => { if (daemon.exitCode !== null) throw new Error(`Test daemon exited ${daemon.exitCode}`); try { return (await api("/status")).status === 200; } catch { return false; } }, { timeoutMs: 30000 });
+    if (developerMode) {
+      const settings = (await api("/settings")).body;
+      const updated = await api("/settings/domains/shell", "PUT", { expectedRevision: settings.revision, value: { ...settings.domains.shell, developerMode: true } });
+      assert.equal(updated.status, 200, JSON.stringify(updated.body));
+    }
     selected = (await api("/sessions", "POST", { title: "CLI owner" })).body.session.id;
     assert.equal((await api(`/sessions/${selected}/select`, "POST", {})).status, 200);
     const challenge = await childRequest(daemon, { type: "rt01-manual-consent-prepare", operation: "terminal-start", request: { shell: "cmd" } });
@@ -68,12 +73,24 @@ test("A03 real Electron renderer reads live Agent and retained manual terminal v
     const host = artifacts.find(item => item.path.endsWith("sandbox-host.exe")), launcher = artifacts.find(item => item.path.endsWith("sandbox-launcher.node"));
     const addon = createRequire(import.meta.url)(path.join(projectRoot, "dist/native/sandbox-launcher.node"));
     assert.throws(() => addon.openExclusiveHostLease(host.sha256, host.bytes, launcher.sha256), error => error.code === "EXEC_ACL_RECOVERY_REQUIRED");
-    await childRequest(daemon, { type: "ds04-interactive-input", request: { id: manual.terminal.id, input: "exit 0\r", appendNewline: false } });
-    await waitFor(async () => (await api("/terminals")).body.terminals.some(item => item.id === manual.terminal.id && item.status === "exited"), { timeoutMs: 5000 });
-    chat = fetch(`${base}/api/chat`, { method: "POST", signal: chatAbort.signal, headers: { "X-RainyDays-Token": token, "Content-Type": "application/json", "X-RainyDays-Session": selected }, body: JSON.stringify({ sessionId: selected, message: "运行终端检查" }) }).then(async response => { assert.equal(response.status, 200); return response.text(); });
+    if (!developerMode) {
+      await childRequest(daemon, { type: "ds04-interactive-input", request: { id: manual.terminal.id, input: "exit 0\r", appendNewline: false } });
+      await waitFor(async () => (await api("/terminals")).body.terminals.some(item => item.id === manual.terminal.id && item.status === "exited"), { timeoutMs: 5000 });
+    }
+    renderer = spawnManaged(path.join(projectRoot, "node_modules/electron/dist/electron.exe"), [path.join(projectRoot, "tests/fixtures/cli-view-electron.cjs"), `--remote-debugging-port=${cdpPort}`], { env: { ...process.env, RAINYDAYS_CLI_VIEW_URL: base, RAINYDAYS_CLI_VIEW_FIXTURE: fixture, RAINYDAYS_CLI_VIEW_TOKEN: token } });
+    renderer.stdout.resume(); renderer.stderr.resume();
+    client = await connectCdp(cdpPort);
+    const expectedTitle = (await api("/sessions")).body.sessions.find(item => item.id === selected).title;
+    await waitFor(async () => client.evaluate(`document.querySelector('.session-item.active[data-session-id="${selected}"]')!==null && document.getElementById('current-title').textContent===${JSON.stringify(expectedTitle)}`), { timeoutMs: 15000 });
+    if (developerMode) await client.evaluate(`inputEl.value='运行终端检查';document.getElementById('input-form').requestSubmit()`);
+    else chat = fetch(`${base}/api/chat`, { method: "POST", signal: chatAbort.signal, headers: { "X-RainyDays-Token": token, "Content-Type": "application/json", "X-RainyDays-Session": selected }, body: JSON.stringify({ sessionId: selected, message: "运行终端检查" }) }).then(async response => { assert.equal(response.status, 200); return response.text(); });
+    if (developerMode) {
+      await waitFor(() => client.evaluate(`document.querySelector('#ask-options button')!==null`), { timeoutMs: 15000 });
+      assert.equal(await client.evaluate(`(() => { const button = [...document.querySelectorAll('#ask-options button')].find(button => button.textContent === '本次任务允许运行命令'); if (!button) return false; button.click(); return true; })()`), true);
+    }
     await waitFor(async () => blocked && (await fs.readFile(path.join(workspace, "http-live.txt"), "utf8").catch(() => "")).trim() === "HTTP_CLI_LIVE", { timeoutMs: 15000 });
     const listed = await api("/terminals"); assert.equal(listed.status, 200);
-    console.log("[A03 view] live Agent and retained manual terminal views coexist");
+    console.log(`[A03 view] live Agent and ${developerMode ? "live" : "retained"} manual terminal views coexist`);
     assert(listed.body.terminals.some(item => item.id === manual.terminal.id && item.readOnly === false));
     assert(listed.body.terminals.some(item => item.id === terminalId && item.readOnly === true));
     assert.equal((await api(`/terminals/${manual.terminal.id}/output`)).status, 200);
@@ -81,12 +98,7 @@ test("A03 real Electron renderer reads live Agent and retained manual terminal v
     const other = (await api("/sessions", "POST", { title: "other owner" })).body.session.id;
     assert.equal((await api(`/terminals/${terminalId}/output`, "GET", undefined, other)).status, 404);
     assert.equal((await api(`/sessions/${selected}/select`, "POST", {})).status, 200);
-    renderer = spawnManaged(path.join(projectRoot, "node_modules/electron/dist/electron.exe"), [path.join(projectRoot, "tests/fixtures/cli-view-electron.cjs"), `--remote-debugging-port=${cdpPort}`], { env: { ...process.env, RAINYDAYS_CLI_VIEW_URL: base, RAINYDAYS_CLI_VIEW_FIXTURE: fixture, RAINYDAYS_CLI_VIEW_TOKEN: token } });
-    renderer.stdout.resume(); renderer.stderr.resume();
-    client = await connectCdp(cdpPort);
     console.log("[A03 view] real Electron renderer connected");
-    const expectedTitle = (await api("/sessions")).body.sessions.find(item => item.id === selected).title;
-    await waitFor(async () => client.evaluate(`document.querySelector('.session-item.active[data-session-id="${selected}"]')!==null && document.getElementById('current-title').textContent===${JSON.stringify(expectedTitle)}`), { timeoutMs: 15000 });
     await client.evaluate(`window.__cliResizeCalls=[];window.electronAPI={terminalResize:request=>{window.__cliResizeCalls.push(request);return Promise.resolve({})}}`);
     await client.evaluate(`document.querySelector('[data-action="toggle-terminal"]').click()`);
     await waitFor(async () => client.evaluate(`document.getElementById('terminal-tab-${terminalId}')!==null`), { timeoutMs: 10000 });
@@ -103,9 +115,13 @@ test("A03 real Electron renderer reads live Agent and retained manual terminal v
     await client.evaluate(`window.dispatchEvent(new Event('resize'))`);
     await waitFor(async () => client.evaluate(`window.__cliResizeCalls.some(request=>request.id==='${manual.terminal.id}')`), { timeoutMs: 5000 });
     release();
-    assert.match(await chat, /退出码: 7/u);
+    if (developerMode) {
+      await waitFor(() => client.evaluate(`!isSessionRunning() && messagesEl.textContent.includes('终端已核对，实际退出7。')`), { timeoutMs: 15000 });
+      assert.match(lastTool, /退出码: 7/u);
+    } else assert.match(await chat, /退出码: 7/u);
     assert.equal((await api(`/terminals/${terminalId}/output`)).status, 404);
     assert.equal((await api(`/terminals/${manual.terminal.id}/output`)).status, 200);
+    if (developerMode) assert((await api("/terminals")).body.terminals.some(item => item.id === manual.terminal.id && item.status === "running"), "Agent completion must preserve the live manual process");
   } catch (error) {
     const snapshot = terminalId ? await api(`/terminals/${terminalId}/output?offset=0`).catch(() => null) : null;
     throw new Error(`${error.message}\nFixture stage=${stage}; lastTool=${lastTool}\nterminal=${JSON.stringify(snapshot)}\n${logs.slice(-1500)}`, { cause: error });
