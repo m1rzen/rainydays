@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { makeTempDir, projectRoot, removeFixture } from "../helpers.mjs";
+import { estimateProjectedRequestTokens } from "../../dist/request-budget.js";
 import {
   appendSecurityAuditEvent,
   createSecurityAuditCommitment,
@@ -22,6 +23,10 @@ class FakeLlm {
   seenTools = [];
   seenMessages = [];
   queue(...responses) { this.responses.push(...responses); }
+  // This fixture deliberately retains several maximum-size output envelopes.
+  // Give the synthetic model an explicit work budget, preserving real estimates
+  // and the original per-result transport/UTF-8/audit assertions below.
+  estimateRequest(messages, tools) { return { contextWindowTokens: 262144, outputReserveTokens: 4096, estimatedInputTokens: estimateProjectedRequestTokens(messages, tools) }; }
   async chat() { throw new Error("unexpected non-streaming LLM call"); }
   async *chatStream(messages, tools) {
     this.seenMessages.push(messages.map(message => ({ ...message })));
@@ -231,22 +236,23 @@ test("RT-05 production Agent enforces the eight-stage tool pipeline", async () =
       assistant("", [toolCall("rt05-loop-2", "supervise", "{}")]),
       assistant("", [toolCall("rt05-loop-3", "supervise", "{}")]),
       assistant("", [toolCall("rt05-loop-4", "supervise", "{}")]),
-      assistant("loop denial observed"),
     );
     const loopEvents = await collect(agent, "repeat an identical tool call");
     const loopResults = loopEvents.filter(event => event.type === "tool_result" && event.toolName === "supervise");
     assert.deepEqual(loopResults.map(event => event.toolStatus), ["success", "success", "success", "denied"]);
     assert.equal(loopResults.at(-1)?.toolCode, "TOOL_LOOP_DETECTED");
     assert.equal(loopResults.at(-1)?.toolStages.find(stage => stage.stage === "approval")?.state, "skipped");
+    assert(loopEvents.some(event => event.type === "error" && /重复|无进展/u.test(event.content)));
+    assert.equal(llm.responses.length, 0, "loop detection ends the run without another model request");
 
     llm.queue(
       assistant("", [toolCall("rt05-nested-loop", "subagent", JSON.stringify({ value: "nested-loop" }))]),
-      assistant("nested loop denial observed"),
     );
     const nestedEvents = await collect(agent, "repeat an identical nested tool call");
     const nestedResult = nestedEvents.find(event => event.type === "tool_result");
     assert.equal(nestedResult?.toolStatus, "denied");
     assert.equal(nestedResult?.toolCode, "TOOL_LOOP_DETECTED");
+    assert(nestedEvents.some(event => event.type === "error" && /重复|无进展/u.test(event.content)));
     assert.equal(executorCalls, 1);
 
     llm.queue(
@@ -349,7 +355,7 @@ test("RT-05 production Agent enforces the eight-stage tool pipeline", async () =
     );
     const denialEvents = await collect(agent, "audit a bounded user denial");
     const denialResult = denialEvents.find(event => event.type === "tool_result");
-    assert.equal(denialResult?.toolStatus, "denied");
+    assert.equal(denialResult?.toolStatus, "denied", JSON.stringify(denialEvents));
     assert.equal(denialResult?.toolOriginalOutputBytes, Buffer.byteLength(`⛔ 用户拒绝执行（${deniedAnswer}）`, "utf8"));
     assert.equal(denialResult?.toolOutputBytes, Buffer.byteLength(denialResult?.content ?? "", "utf8"));
     assert.equal(denialResult?.toolOutputTruncated, true);

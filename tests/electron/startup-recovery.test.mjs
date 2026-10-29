@@ -275,6 +275,64 @@ test("D03 real Electron retrieves early facts through Agent read after 20 rounds
   finally { if(desktop) await desktop.close(); server.closeAllConnections(); await new Promise(resolve=>server.close(resolve)); }
 });
 
+test("A04 real Electron default assistant edits, runs real tests and displays remaining dependency failure", { timeout: 120_000 }, async () => {
+  let desktop, stage = 0, failure = null, revision;
+  const server = createServer(async (request, response) => {
+    try {
+      const bytes = []; for await (const part of request) bytes.push(part);
+      const body = JSON.parse(Buffer.concat(bytes).toString());
+      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "代码验证" }, finish_reason: "stop" }] })); return; }
+      const root = desktop.settings.workspaceRoot, target = path.join(root, "sum.mjs");
+      const last = body.messages.at(-1), outcome = last.role === "tool" ? JSON.parse(last.content) : null;
+      let call;
+      switch (++stage) {
+        case 1: call = { name: "read_repo", arguments: JSON.stringify({ path: root, level: "summary" }) }; break;
+        case 2: assert.match(outcome.content, /untracked/u); call = { name: "read", arguments: JSON.stringify({ file_path: target }) }; break;
+        case 3:
+          revision = /版本: ([a-f0-9]{64})/u.exec(outcome.content)?.[1]; assert(revision);
+          call = { name: "execute_command", arguments: JSON.stringify({ command: "node --test", cwd: root }) }; break;
+        case 4:
+          assert.equal(outcome.status, "error"); assert.match(outcome.content, /退出码 1/u);
+          call = { name: "edit_files", arguments: JSON.stringify({ files: [{ file_path: target, expected_revision: revision, edits: [{ old_string: "a - b", new_string: "a + b" }] }] }) }; break;
+        case 5:
+          assert.equal(outcome.status, "success"); assert.match(JSON.parse(outcome.content).changes[0].diff, /\+a \+ b/u);
+          call = { name: "execute_command", arguments: JSON.stringify({ command: "node --test", cwd: root }) }; break;
+        case 6:
+          assert.equal(outcome.status, "success"); assert.match(outcome.content, /退出码 0/u); assert.match(outcome.content, /pass 1/u);
+          call = { name: "execute_command", arguments: JSON.stringify({ command: "rainydays_a04_missing_cli_1d72 --version", cwd: root }) }; break;
+        default: assert.equal(stage, 7); assert.equal(outcome.status, "error"); assert.match(outcome.content, /命令未找到/u);
+      }
+      response.writeHead(200, { "Content-Type": "text/event-stream" });
+      response.end(`data: ${JSON.stringify({ choices: [{ delta: call ? { tool_calls: [{ index: 0, id: `coding-${stage}`, type: "function", function: call }] } : { content: "node --test 实际退出0。缺依赖检查仍失败，未安装软件；差异见代码修改记录。" }, finish_reason: call ? "tool_calls" : "stop" }] })}\n\ndata: [DONE]\n\n`);
+    } catch (error) { failure = error; response.statusCode = 500; response.end(String(error)); }
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  try {
+    desktop = await fixtureDesktop({}, { apiKey: "fixture-only", baseURL: `http://127.0.0.1:${server.address().port}/v1` });
+    const root = desktop.settings.workspaceRoot;
+    await writeFile(path.join(root, "sum.mjs"), "export const sum = (a, b) => a - b;\n");
+    await writeFile(path.join(root, "sum.test.mjs"), "import test from 'node:test'; import assert from 'node:assert/strict'; import {sum} from './sum.mjs'; test('sum',()=>assert.equal(sum(2,3),5));\n");
+    const git = execFileSync(path.join(process.env.SystemRoot, "System32/where.exe"), ["git.exe"], { encoding: "utf8", windowsHide: true }).split(/\r?\n/u).find(Boolean);
+    execFileSync(git, ["init", "-q"], { cwd: root, windowsHide: true }); execFileSync(git, ["add", "--", "."], { cwd: root, windowsHide: true });
+    await writeFile(path.join(root, "sum.mjs"), "export const sum = (a, b) => a - b;\n// USER_DIRTY_KEEP\n");
+    await writeFile(path.join(root, "user-note.txt"), "USER_UNTRACKED_KEEP\n");
+    const client = await desktop.start();
+    assert.equal(await client.evaluate(`(async () => { const settings = await fetch('/api/settings').then(r => r.json()); return fetch('/api/settings/domains/shell', {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({expectedRevision:settings.revision,value:{...settings.domains.shell,developerMode:true}})}).then(r => r.status); })()`), 200);
+    await client.evaluate("inputEl.value='修复项目，运行测试并区分缺依赖失败，保留我的改动。';document.getElementById('input-form').requestSubmit()");
+    for (const answer of ["本次任务允许运行命令", "确认执行"]) {
+      await waitFor(() => client.evaluate(`document.getElementById('ask-modal').classList.contains('visible') && [...document.querySelectorAll('#ask-options button')].some(button => button.textContent === ${JSON.stringify(answer)})`), { timeoutMs: 20000, label: `A04 ${answer}` });
+      await client.evaluate(`[...document.querySelectorAll('#ask-options button')].find(button => button.textContent === ${JSON.stringify(answer)}).click()`);
+    }
+    await waitFor(() => client.evaluate("!isSessionRunning() && messagesEl.textContent.includes('缺依赖检查仍失败')"), { timeoutMs: 30000, label: "A04 coding task complete" });
+    assert.equal(failure, null); assert.equal(stage, 7);
+    assert.match(await readFile(path.join(root, "sum.mjs"), "utf8"), /a \+ b;\n\/\/ USER_DIRTY_KEEP/u);
+    assert.equal(await readFile(path.join(root, "user-note.txt"), "utf8"), "USER_UNTRACKED_KEEP\n");
+    assert.equal(await client.evaluate("Boolean(document.querySelector('.code-changes'))"), true);
+    assert.match(await client.evaluate("document.querySelector('.code-changes').textContent"), /a \+ b/u);
+  } catch (error) { throw new Error(`${error.message}\nstage=${stage}, model=${failure?.message || 'ok'}\n${desktop?.logs() || ''}`, { cause: error }); }
+  finally { if (desktop) await desktop.close(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+});
+
 test("A02 real Electron default conversation discovers project context including existing and untracked work", { timeout: 120_000 }, async () => {
   let desktop, streams=0, failure=null;
   const server=createServer(async (request,response)=>{

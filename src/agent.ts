@@ -43,6 +43,16 @@ import {
 const DEFAULT_MAX_ITERATIONS = 200;
 const MAX_STEER_LENGTH = 32_000;
 const MAX_PENDING_STEERS = 20;
+const MAX_CODE_REPAIR_ROUNDS = 3;
+
+function wroteCode(result: AgentToolResult): boolean {
+  if (result.toolName !== "edit_files" || result.outcome.status !== "success") return false;
+  try {
+    const receipt = JSON.parse(result.outcome.content);
+    return receipt.type === "code_changes" && Array.isArray(receipt.changes)
+      && receipt.changes.some((change: { status?: string; beforeRevision?: string; afterRevision?: string }) => change.status === "written" && change.afterRevision !== change.beforeRevision);
+  } catch { return false; }
+}
 
 /** A14：迭代上限来自 common.maxIterations；隔离夹具没有全局配置时使用默认值。 */
 export function resolveMaxIterations(): number {
@@ -380,6 +390,10 @@ export class Agent {
       if (!inspected || !toolArgs) {
         throw new ToolArgumentsError(planned.parseError ?? "工具参数不是合法 JSON");
       }
+      // Observe at execution time so a preceding code write in the same serial
+      // batch can make a repeated project check meaningful again.
+      loopDetector.observe(inspected.name, inspected.argumentsDigest);
+      trace.record("loop", "passed");
       policyDigest = this.auditJournal?.commit(inspected.policy) ?? null;
       const advice = await approveToolCall(toolName, inspected.args as Record<string, unknown>, signal);
       if (advice.decision === "deny") {
@@ -637,6 +651,8 @@ export class Agent {
       // 任务驱动模式：新建 DAG 或重启后已有未完成 DAG 都会选择未阻塞任务。
       let taskMode = getTasksBySession(runSessionId).some(task => task.status !== "completed");
       const toolLoopDetector = new ToolLoopDetector();
+      let failingCommand: string | null = null;
+      let codeRepairRounds = 0;
 
       const maxIterations = resolveMaxIterations();
     for (let i = 0; i < maxIterations; i++) {
@@ -850,8 +866,6 @@ export class Agent {
               inspected = inspectToolCall(capabilityContext, parsed.toolName, parsed.toolArgs);
               trace.record("schema", "passed");
               trace.record("capability", "passed");
-              toolLoopDetector.observe(inspected.name, inspected.argumentsDigest);
-              trace.record("loop", "passed");
             } catch (error) {
               planningError = error;
             }
@@ -868,15 +882,33 @@ export class Agent {
         const batches = buildToolExecutionBatches(plannedCalls);
         const results: AgentToolResult[] = new Array(plannedCalls.length);
         let batchCancellation: ReturnType<typeof cancellationError> | null = null;
-        const executePlanned = (planned: PlannedAgentToolCall) => this.executePlannedToolCall({
-          planned,
-          capabilityContext,
-          runAuthority,
-          runSessionId,
-          signal,
-          loopDetector: toolLoopDetector,
-          bodyToolsEnabled: orgModeEnabled,
-        });
+        let repairLimitReached = false, toolLoopStopped = false;
+        const executePlanned = async (planned: PlannedAgentToolCall) => {
+          const limit = repairLimitReached || toolLoopStopped
+            || (planned.toolName === "edit_files" && failingCommand && codeRepairRounds >= MAX_CODE_REPAIR_ROUNDS);
+          const settled = await this.executePlannedToolCall({
+            planned: limit && !planned.planningError
+              ? { ...planned, planningError: new ToolLoopError("已达到重复调用或本轮3次自动修正上限，后续工具未执行。") }
+              : planned,
+            capabilityContext, runAuthority, runSessionId, signal,
+            loopDetector: toolLoopDetector, bodyToolsEnabled: orgModeEnabled,
+          });
+          const result = settled.result, digest = planned.inspected?.argumentsDigest;
+          if (wroteCode(result)) {
+            toolLoopDetector.noteCodeChange();
+            if (failingCommand) codeRepairRounds++;
+          }
+          if (result.toolName === "execute_command" && digest) {
+            if (result.outcome.status === "error") {
+              failingCommand ??= digest;
+              if (digest === failingCommand && codeRepairRounds >= MAX_CODE_REPAIR_ROUNDS) repairLimitReached = true;
+            } else if (result.outcome.status === "success" && digest === failingCommand) {
+              failingCommand = null; codeRepairRounds = 0;
+            }
+          }
+          if (result.outcome.code === "TOOL_LOOP_DETECTED") toolLoopStopped = true;
+          return settled;
+        };
 
         try {
           for (const batch of batches) {
@@ -997,6 +1029,13 @@ export class Agent {
           console.log(`   └ ${toolName} (${toolMs}ms)`);
         }
 
+        if (repairLimitReached || results.some(result => result.outcome.code === "TOOL_LOOP_DETECTED")) {
+          const content = repairLimitReached
+            ? "已完成本轮3次自动修正，检查仍未通过；任务尚未完成。代码差异、实际命令输出与退出结果已保留，可核对后回复“继续”。"
+            : "检测到重复调用或修正无进展，已停止本次循环；任务尚未完成。已执行步骤与成果已保留，请核对工具结果后调整要求或回复“继续”。";
+          yield { type: "error", content, timestamp: Date.now() };
+          return;
+        }
         if (results.some(result => result.toolName === "switch_persona" && result.outcome.status === "success")) return;
         continue;
       }

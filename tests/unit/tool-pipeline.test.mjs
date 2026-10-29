@@ -67,6 +67,18 @@ test("RT-05 loop detector bounds adversarial call diversity", () => {
   );
 });
 
+test("A04 a code change resets command repetition without clearing reads or the diversity budget", () => {
+  const detector = new ToolLoopDetector(), command = "a".repeat(64), read = "b".repeat(64);
+  for (let index = 0; index < 3; index++) { detector.observe("execute_command", command); detector.observe("read", read); }
+  detector.noteCodeChange();
+  detector.observe("execute_command", command);
+  assert.throws(() => detector.observe("read", read), error => error.code === "TOOL_LOOP_DETECTED");
+  for (let index = 0; index < 254; index++) detector.observe("read", index.toString(16).padStart(64, "0"));
+  detector.noteCodeChange();
+  detector.observe("execute_command", command);
+  assert.throws(() => detector.observe("read", "f".repeat(64)), error => error.code === "TOOL_LOOP_DETECTED");
+});
+
 test("RT-05 output control preserves small results and safely truncates UTF-8", () => {
   assert.deepEqual(createToolOutcome("success", "ok"), {
     status: "success",

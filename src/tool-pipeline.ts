@@ -65,10 +65,18 @@ export class ToolExecutionError extends Error {
 export class ToolLoopDetector {
   readonly #counts = new Map<string, number>();
 
+  /** A real code write permits checking the changed project again. Keep the
+   * distinct-call entries so code changes do not erase the run's diversity cap. */
+  noteCodeChange(): void {
+    for (const key of this.#counts.keys()) {
+      if (key.startsWith("execute_command:")) this.#counts.set(key, 0);
+    }
+  }
+
   observe(toolName: string, argumentsDigest: string): void {
     const key = `${toolName}:${argumentsDigest}`;
     const previous = this.#counts.get(key) ?? 0;
-    if (previous === 0 && this.#counts.size >= MAX_DISTINCT_TOOL_CALLS_PER_RUN) {
+    if (!this.#counts.has(key) && this.#counts.size >= MAX_DISTINCT_TOOL_CALLS_PER_RUN) {
       throw new ToolLoopError("Tool call diversity exceeded the per-run loop budget");
     }
     const count = previous + 1;
