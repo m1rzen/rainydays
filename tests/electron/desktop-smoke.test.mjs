@@ -59,6 +59,7 @@ async function startElectron(userData, httpPort, cdpPort, signal, modelBaseURL, 
         apiKey: modelBaseURL && !options.unconfigured ? "fixture-only-key" : "",
         baseURL: modelBaseURL || "https://provider.invalid/v1",
         providerType: "openai-compatible",
+        ...(options.requestBudget ? { contextWindowTokens: options.requestBudget.contextWindowTokens, outputReserveTokens: options.requestBudget.outputReserveTokens } : {}),
       },
     },
     settings: {
@@ -1721,7 +1722,9 @@ test("R5 real Electron loads discovered tools for one task and resets the next",
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   try {
     const [httpPort, cdpPort] = await freeDistinctPorts(2);
-    instance = await startElectron(path.join(fixture, "user-data"), httpPort, cdpPort, context.signal, `http://127.0.0.1:${server.address().port}/v1`);
+    // Compare the full historical schemas under one explicit synthetic-model budget.
+    // D03 correctly rejects that large request under the default 32K profile.
+    instance = await startElectron(path.join(fixture, "user-data"), httpPort, cdpPort, context.signal, `http://127.0.0.1:${server.address().port}/v1`, { requestBudget: { contextWindowTokens: 65536, outputReserveTokens: 4096 } });
     client = await connectCdp(cdpPort);
     await waitFor(() => client.evaluate("Boolean(desktopNavigationReady && currentSessionId)"), { timeoutMs: 20_000, label: "R5 task ready" });
     await client.evaluate("if(document.getElementById('settings-modal').classList.contains('visible'))closeSettings();inputEl.value='检查当前记忆';document.getElementById('input-form').requestSubmit()");
@@ -1739,6 +1742,9 @@ test("R5 real Electron loads discovered tools for one task and resets the next",
     const metrics = { initial: toolSizes[0], discovered: toolSizes[1], next: toolSizes[3], previousAllowlistWithCurrentSchemas: toolSizes[4] };
     await mkdir(path.join(projectRoot, "test-results"), { recursive: true });
     await writeFile(path.join(projectRoot, "test-results", "r5-task-tool-sizes.json"), JSON.stringify(metrics, null, 2));
+  } catch (error) {
+    const state = client ? await client.evaluate("({running:isSessionRunning(),messages:messagesEl.textContent.slice(-5000)})").catch(() => null) : null;
+    throw new Error(`${error.message}\nR5 fixture: ${JSON.stringify({ iteration, modelFailure: modelFailure?.message, toolSizes, state })}\n${instance?.logs().stdout.slice(-4000) || ''}`, { cause: error });
   } finally {
     client?.close(); if (instance) await terminateProcessTreeAsync(instance.child);
     await removeFixture(fixture); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
