@@ -4,6 +4,7 @@
 // ===========================================
 
 import Ajv, { type ValidateFunction } from "ajv";
+import { mcpToolOutcome } from "../mcp/runtime.js";
 import type { RegisteredTool, ToolDefinition, ToolExecutionOutcome, ToolExecutor, ToolInvocationServices, ToolProtocolDescriptor } from "../types.js";
 import { CapabilityBroker, CapabilityDeniedError, type CapabilityContext, type InspectedToolCall, type RuntimeAuthority } from "../capability-broker.js";
 import { DIRECT_OPERATION_POLICIES, RUNTIME_TOOL_POLICIES, STATIC_TOOL_POLICIES } from "../tool-policies.js";
@@ -646,6 +647,7 @@ export function prepareInspectedToolExecution(
   bodyToolsEnabled = false,
 ): PreparedToolExecution {
   const name = inspected.name;
+  const mcpTool = name === "mcp_read_result" || capabilityBroker.getMcpServer(context, inspected) !== null;
   const timeoutMs = getToolTimeoutMs(name);
   throwIfCancelled(parentSignal);
   const cancellation = timeoutSignal(parentSignal, timeoutMs, `Tool ${name}`);
@@ -675,6 +677,7 @@ export function prepareInspectedToolExecution(
       const result = await invokeWithCancellationSettlement(context, inspected, invocation, cancellation.signal);
       if (typeof result !== "string") throw new ToolExecutionError(name, new TypeError("Tool executor returned a non-string result"));
       if (name === "edit_files" || name === "undo_edits") return codeEditingOutcome(result);
+      if (mcpTool) return mcpToolOutcome(result);
       return createToolOutcome("success", result);
     } catch (error) {
       if (isRunCancellation(error) || isRunSettlementFailure(error)) throw error;

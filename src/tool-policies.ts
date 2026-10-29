@@ -167,6 +167,7 @@ export const RUNTIME_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Objec
 });
 
 export const DIRECT_OPERATION_POLICIES: Readonly<Record<string, ToolPolicy>> = Object.freeze({
+  "mcp:test": policy(["read", "write", "network", "process", "control"], "none", ["filesystem", "network", "process", "control"], ["initial-cwd"], "read-write"),
   "terminal:list": policy(["read", "control"], "none", ["control"]),
   "terminal:start": policy(["read", "write", "process", "control"], "none", ["filesystem", "process", "control"], ["initial-cwd"], "read-write"),
   "terminal:output": policy(["read", "process", "control"], "none", ["process", "control"]),

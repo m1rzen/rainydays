@@ -12,6 +12,7 @@ import type { PathAuditIdentity } from "./path-policy.js";
 import { CONFIG_PATH, DEFAULT_WORKSPACE_DIR, USER_DATA_DIR } from "./runtime-paths.js";
 import { cloneSettingsDomains, defaultSettingsDomains, parseSettingsDomains, publicSettingsDomains, settingsDomainManifest, type SettingsDomainId, type SettingsDomains } from "./settings-schema.js";
 import { resolveRequestBudget, type RequestBudget } from "./request-budget.js";
+import { prepareMcpSettings, mcpEnvironmentValues } from "./mcp/settings.js";
 
 export interface ProviderProfile extends RequestBudget {
   model: string;
@@ -574,6 +575,10 @@ export function prepareSettingsDomainUpdate(domainId: string, input: unknown, ba
   const candidate = normalizeConfig(base);
   const domains = cloneSettingsDomains(candidate.domains);
   const value = { ...(input as Record<string, unknown>) };
+  if (domainId === "mcp") {
+    delete value.envValues;
+    value.servers = prepareMcpSettings(value, candidate.domains.mcp.servers);
+  }
   if (domainId === "asr") {
     delete value.apiKey;
     delete value.clearCredential;
@@ -594,6 +599,18 @@ export async function updateSettingsDomain(domainId: string, input: unknown): Pr
   const request = input && typeof input === "object" && !Array.isArray(input) ? input as Record<string, unknown> : {};
   const candidate = prepareSettingsDomainUpdate(domainId, request);
   const current = loadConfig();
+  if (domainId === "mcp") {
+    const created: string[] = [];
+    const values = mcpEnvironmentValues(request.envValues, candidate.domains.mcp.servers);
+    try {
+      for (const { server, key, value } of values) { const ref = await storeCredential(value); created.push(ref); server.env[key] = ref; server.tools = []; server.protocolVersion = ""; }
+      const live = new Set(candidate.domains.mcp.servers.flatMap(server => Object.values(server.env)));
+      await stageCredentialRetirements(current.domains.mcp.servers.flatMap(server => Object.values(server.env)).filter(ref => ref && !live.has(ref)));
+      await saveConfig(candidate);
+    } catch (error) { return failCredentialMutation(error, created, current); }
+    await finalizeCredentialChanges();
+    return;
+  }
   const secretField = domainId === "asr" ? "apiKey" : domainId === "relay" ? "accessToken" : null;
   const oldReference = domainId === "asr" ? current.domains.asr.credentialRef : domainId === "relay" ? current.domains.relay.credentialRef : undefined;
   const clearCredential = request.clearCredential === true;
@@ -631,6 +648,7 @@ export function exportSettings(): SettingsExportBundle {
   const domains = cloneSettingsDomains(snapshot.domains);
   delete domains.asr.credentialRef;
   delete domains.relay.credentialRef;
+  for (const server of domains.mcp.servers) server.env = Object.fromEntries(Object.keys(server.env).map(key => [key, ""]));
   return {
     schemaVersion: 1,
     kind: "rainydays-settings",
@@ -690,6 +708,8 @@ export function prepareSettingsImport(value: unknown, base: Config = getConfigSn
   rawDomains.relay.credentialRef = current.domains.relay.credentialRef;
   // Developer mode only changes through the local settings form, never through an imported bundle.
   if (rawDomains.shell && typeof rawDomains.shell === "object") rawDomains.shell.developerMode = current.domains.shell.developerMode;
+  // Imported documents cannot add, replace or enable executable MCP connections.
+  rawDomains.mcp = cloneSettingsDomains(current.domains).mcp;
   const candidate: Config = {
     schemaVersion: 2,
     revision: current.revision,
@@ -707,6 +727,7 @@ function configCredentialReferences(value: Config): string[] {
     ...Object.values(value.profiles).map(profile => profile.credentialRef),
     value.domains.asr.credentialRef,
     value.domains.relay.credentialRef,
+    ...value.domains.mcp.servers.flatMap(server => Object.values(server.env)).filter(Boolean),
   ].filter((reference): reference is string => typeof reference === "string");
   return [...new Set(references.map(validateCredentialReference))].sort();
 }

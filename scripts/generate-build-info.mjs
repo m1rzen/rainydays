@@ -104,7 +104,7 @@ async function main() {
       protocols: {
         link: { version: 1, enabled: true, transport: "in-process" },
         worker: { version: null, enabled: false, transport: null },
-        mcp: { version: null, enabled: false, transport: null },
+        mcp: { version: 1, enabled: true, transport: "stdio" },
       },
       luxBaseline: {
         schemaVersion: baseline.schemaVersion,

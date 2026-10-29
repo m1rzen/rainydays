@@ -1,14 +1,8 @@
+import { parseMcpServers, type McpServerSetting } from "./mcp/settings.js";
+export type { McpServerSetting } from "./mcp/settings.js";
+
 export type SettingsApplyMode = "immediate" | "restart-required" | "unavailable";
 export type SettingsDomainId = "common" | "profiles" | "mcp" | "wire" | "animas" | "nous" | "tts" | "asr" | "shell" | "relay" | "update";
-
-export interface McpServerSetting {
-  name: string;
-  enabled: boolean;
-  transport: "stdio" | "http";
-  command: string;
-  args: string[];
-  url: string;
-}
 
 export interface WireSourceSetting {
   name: string;
@@ -61,7 +55,7 @@ export interface SettingsDomainManifest {
 const DOMAIN_MANIFEST: readonly SettingsDomainManifest[] = Object.freeze([
   domain("common", "Common", "基础配置、运行限制和默认行为", "restart-required", false, ["maxIterations", "maxCanvasTokens", "defaultSupervisorRules", "worker", "orgMode", "yoloMode", "supervisorEnabled", "supervisorProfile", "curatorProfile", "consolidationProfile", "oracleProfile", "visionProfile", "imageProfile", "videoProfile", "autoRename", "renameProfile", "pinRenderMode", "pinRenderInterval"], [], { yoloMode: "unavailable" }),
   domain("profiles", "Profiles", "Provider 配置集和运行时切换", "immediate", true, ["model", "apiKey", "baseURL", "providerType", "codexTransport", "proxy", "stripImages", "knowledgeMaxCount", "personaProfileBindings"], ["apiKey"]),
-  domain("mcp", "MCP", "MCP Server 启用和连接配置", "restart-required", false, ["servers"]),
+  domain("mcp", "MCP", "开发模式下的本地stdio工具；测试后新会话可用", "restart-required", true, ["servers"]),
   domain("wire", "Wire", "Wire 外部事件源配置", "restart-required", false, ["sources"]),
   domain("animas", "Animas", "Anima 默认身份配置", "restart-required", false, ["defaultAnima"]),
   domain("nous", "Nous", "Muse/Nous 自动触发、冷却和独立 Profile", "restart-required", false, ["enabled", "autoTriggerThreshold", "cooldownMinutes", "profile"]),
@@ -144,26 +138,6 @@ function optionalReference(value: unknown, label: string): string | undefined {
   return text(value, label, 160, false);
 }
 
-function parseMcpServers(value: unknown): McpServerSetting[] {
-  if (!Array.isArray(value) || value.length > 32) throw new TypeError("MCP servers 无效");
-  const seen = new Set<string>();
-  return value.map((entry, index) => {
-    const item = record(entry, `MCP server ${index}`);
-    exact(item, ["name", "enabled", "transport", "command", "args", "url"], `MCP server ${index}`);
-    const name = text(item.name, "MCP name", 64, false);
-    if (seen.has(name)) throw new TypeError("MCP name 重复");
-    seen.add(name);
-    const transport = choice(item.transport, "MCP transport", ["stdio", "http"] as const);
-    if (!Array.isArray(item.args) || item.args.length > 64) throw new TypeError("MCP args 无效");
-    const args = item.args.map((arg, argumentIndex) => text(arg, `MCP arg ${argumentIndex}`, 1024));
-    const command = text(item.command, "MCP command", 2048);
-    const url = item.url === "" ? "" : secureUrl(item.url, "MCP URL", ["https:"]);
-    if (transport === "stdio" && !command) throw new TypeError("stdio MCP 缺少 command");
-    if (transport === "http" && !url) throw new TypeError("http MCP 缺少 URL");
-    return { name, enabled: bool(item.enabled, "MCP enabled"), transport, command, args, url };
-  });
-}
-
 function parseWireSources(value: unknown): WireSourceSetting[] {
   if (!Array.isArray(value) || value.length > 32) throw new TypeError("Wire sources 无效");
   const seen = new Set<string>();
@@ -232,5 +206,6 @@ export function publicSettingsDomains(value: SettingsDomains): Record<string, un
   const relayConfigured = typeof clone.relay.credentialRef === "string";
   delete clone.asr.credentialRef;
   delete clone.relay.credentialRef;
+  clone.mcp.servers = value.mcp.servers.map(server => ({ ...server, env: Object.fromEntries(Object.keys(server.env).map(key => [key, ""])) }));
   return { ...clone, credentials: { asrConfigured, relayConfigured } };
 }

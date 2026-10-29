@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { isDeveloperCommandTool } from "./developer-execution.js";
+import { isDeveloperCommandTool, isDeveloperModeEnabled } from "./developer-execution.js";
 import { PathDeniedError, type ExecutionRootAccess, type PathAuthority, type PathOperation, type PathPolicy, type PathStreamingWriteLease } from "./path-policy.js";
 import type { PersonaPermissionLevel, ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "./types.js";
 import {
@@ -39,6 +39,7 @@ export interface CapabilityToolRegistration {
   readonly definition: ToolDefinition;
   readonly executor: ToolExecutor;
   readonly policy: ToolPolicy;
+  readonly mcpServer?: Readonly<{ key: string; name: string }>;
 }
 
 /** Immutable context projection; executors and registration identities never leave the Broker. */
@@ -297,6 +298,7 @@ interface BindingRecord {
   readonly policy: ToolPolicy;
   readonly policyDigest: string;
   readonly executor: ToolExecutor;
+  readonly mcpServer?: Readonly<{ key: string; name: string }>;
 }
 
 interface PersonaSnapshot {
@@ -425,6 +427,7 @@ export class CapabilityBroker {
   private readonly challenges = new Map<string, ChallengeRecord>();
   private readonly newOutputApprovals = new WeakSet<CapabilityContext>();
   private readonly developerCommandApprovals = new WeakSet<CapabilityContext>();
+  private readonly mcpApprovals = new WeakMap<CapabilityContext, Set<string>>();
 
   constructor(options: CapabilityBrokerOptions) {
     if (!options?.pathPolicy) throw new TypeError("CapabilityBroker requires PathPolicy");
@@ -528,6 +531,8 @@ export class CapabilityBroker {
     for (const name of record.persona.tools) {
       const binding = record.runtimeBindings.get(name) ?? this.staticBindings.get(name);
       if (!binding) denied("CAPABILITY_TOOL_DENIED", `persona references unavailable tool: ${name}`);
+      // Settings may switch an existing Session back to colleague mode between runs.
+      if ((binding.mcpServer || name === "mcp_read_result") && !isDeveloperModeEnabled()) continue;
       const minimum = binding.policy.minimumPermissionLevel ?? inferredMinimumLevel(binding.policy.riskClasses);
       if (permissionRank(record.persona.permissionLevel) < permissionRank(minimum)) {
         denied("CAPABILITY_TOOL_DENIED", `persona permission level cannot include tool: ${name}`);
@@ -1133,6 +1138,23 @@ export class CapabilityBroker {
       responseChannel: "ask-user", allowDeveloperCommands: true });
   }
 
+  getMcpServer(parent: CapabilityContext, inspected: InspectedToolCall): Readonly<{ key: string; name: string }> | null {
+    const record = this.requireActiveContext(parent), call = this.requireInspectedCall(inspected);
+    if (call.source !== record && !(record.grant && record.parent === call.source)) denied("CAPABILITY_BINDING_MISMATCH", "MCP call belongs to another context");
+    return call.binding.mcpServer ?? null;
+  }
+  getMcpToolSource(context: CapabilityContext, name: string): string | undefined {
+    return this.requireActiveContext(context).bindings.get(name)?.mcpServer?.name;
+  }
+
+  reuseMcpApproval(parent: CapabilityContext, inspected: InspectedToolCall): CapabilityContext | null {
+    const server = this.getMcpServer(parent, inspected);
+    if (!isDeveloperModeEnabled() || !server || !this.mcpApprovals.get(parent)?.has(server.key)) return null;
+    const challenge = this.createApprovalChallenge(parent, inspected);
+    return this.resolveApprovalChallenge({ challengeId: challenge.challengeId, choice: "approve", sessionId: parent.sessionId,
+      runId: parent.runId, responsePrincipal: "local-user-api", responseChannel: "ask-user", allowMcpServer: true });
+  }
+
   createApprovalChallenge(parent: CapabilityContext, inspected: InspectedToolCall, ttlMs = 60_000): ApprovalChallenge {
     const parentRecord = this.requireActiveContext(parent);
     const inspectedRecord = this.requireInspectedCall(inspected);
@@ -1153,7 +1175,7 @@ export class CapabilityBroker {
       registrationId: binding.registrationId,
       toolName: binding.name,
       responsePrincipal: "local-user-api" as const,
-      responseChannel: binding.policy.effects.includes("process") && !isDeveloperCommandTool(binding.name) ? "native-process" as const : "ask-user" as const,
+      responseChannel: binding.policy.effects.includes("process") && !isDeveloperCommandTool(binding.name) && !(binding.mcpServer && isDeveloperModeEnabled()) ? "native-process" as const : "ask-user" as const,
       argumentsDigest: inspectedRecord.argumentsDigest,
       expiresAt: new Date(expiresAtMs).toISOString(),
     });
@@ -1177,6 +1199,7 @@ export class CapabilityBroker {
     responseChannel: "ask-user" | "native-process";
     allowNewOutputs?: boolean;
     allowDeveloperCommands?: boolean;
+    allowMcpServer?: boolean;
   }): CapabilityContext | null {
     const challenge = this.challenges.get(input.challengeId);
     if (!challenge || challenge.consumed || this.now() > challenge.expiresAtMs) denied("CAPABILITY_APPROVAL_CHALLENGE_INVALID", "approval challenge is unavailable");
@@ -1195,6 +1218,11 @@ export class CapabilityBroker {
     if (input.allowDeveloperCommands) {
       if (!isDeveloperCommandTool(challenge.binding.name)) denied("CAPABILITY_GRANT_INVALID", "tool cannot receive a developer command scope");
       this.developerCommandApprovals.add(challenge.parent.context);
+    }
+    if (input.allowMcpServer) {
+      if (!isDeveloperModeEnabled() || !challenge.binding.mcpServer) denied("CAPABILITY_GRANT_INVALID", "tool cannot receive an MCP server scope");
+      const scopes = this.mcpApprovals.get(challenge.parent.context) ?? new Set<string>();
+      scopes.add(challenge.binding.mcpServer.key); this.mcpApprovals.set(challenge.parent.context, scopes);
     }
 
     const grant: GrantRecord = {
@@ -1456,6 +1484,7 @@ export class CapabilityBroker {
       policy,
       policyDigest: canonicalDigest(policy),
       executor: registration.executor,
+      ...(registration.mcpServer ? { mcpServer: frozenCopy(registration.mcpServer, "MCP server scope") } : {}),
     });
   }
 

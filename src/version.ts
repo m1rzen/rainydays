@@ -128,7 +128,7 @@ function validateBuildInfo(value: unknown): BuildInfo {
   const protocols = info.versions.protocols;
   if (protocols.link.version !== 1 || !protocols.link.enabled || protocols.link.transport !== "in-process"
     || protocols.worker.version !== null || protocols.worker.enabled || protocols.worker.transport !== null
-    || protocols.mcp.version !== null || protocols.mcp.enabled || protocols.mcp.transport !== null) {
+      || protocols.mcp.version !== 1 || !protocols.mcp.enabled || protocols.mcp.transport !== "stdio") {
     throw new Error("build-info protocol capability registry is unsupported");
   }
   const baseline = info.versions.luxBaseline;

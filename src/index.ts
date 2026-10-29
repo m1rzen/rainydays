@@ -13,6 +13,8 @@ import { fileURLToPath } from "url";
 import { LLMClient } from "./llm.js";
 import { ConversationMemory } from "./memory.js";
 import { Agent } from "./agent.js";
+import { mcpRuntimeToolNames, registerMcpTools } from "./mcp/runtime.js";
+import { registerMcpRoutes } from "./mcp/routes.js";
 import { createEffectivePersona, listPersonas, reloadPersonas, getPersona, listAvailableSkills, loadSkillContent, personaPermissionLevel } from "./persona.js";
 import {
   createSession,
@@ -1088,6 +1090,7 @@ function applyRuntimeSettings(persona: PersonaDefinition, settings: AppSettings 
   };
   return createEffectivePersona({
     ...persona,
+    tools: [...new Set([...persona.tools, ...(personaPermissionLevel(persona) === "full" ? mcpRuntimeToolNames() : [])])],
     env,
     allowedRoots: [settings.workspaceRoot, ...(settings.departmentEnabled ? [settings.departmentDataRoot] : []), settings.outputDir],
   });
@@ -2600,6 +2603,21 @@ app.post("/api/sessions/import", sessionImportJsonBodyParser, async (req, res) =
 // Settings / Provider API
 // ===========================================
 
+registerMcpRoutes(app, {
+  busy: () => runtimeMutationReservations > 0 || requireRuntimeRegistry().hasRunningSessions(),
+  mutate: action => withRuntimeMutation(async () => { ensureRuntimeAccepting(); if (requireRuntimeRegistry().hasRunningSessions()) throw new Error("请等待任务结束后重新测试"); await action(); }),
+  probe: (name, signal) => runDirectOperation("mcp:test", { name }, async (_args, owner, _authority, context) => {
+    const server = getConfigSnapshot().domains.mcp.servers.find(item => item.name === name);
+    if (!server) throw new Error("MCP服务器不存在");
+    return capabilityBroker.withDirectExecutionRoot(context, "mcp:test", server.cwd || ".", "WORKSPACE_ROOT", async cwd => {
+      const { McpConnection } = await import("./mcp/client.js");
+      const connection = new McpConnection(server);
+      try { await connection.open(cwd, owner, signal); return { tools: await connection.listTools(signal), protocolVersion: connection.protocolVersion }; }
+      finally { await connection.close(); }
+    });
+  }),
+});
+
 /** 查询设置。敏感值与 secret-derived hint 永不回显，只返回 configured boolean。 */
 app.get("/api/settings", (_req, res) => {
   res.json(getPublicConfig());
@@ -3573,6 +3591,7 @@ function registerDynamicTools(
   subagents: SubagentRegistry,
   settings: AppSettings,
 ): void {
+  registerMcpTools(capabilityBroker, authority, persona.tools);
   registerDynamicToolCron(authority);
 
   const subagentExecutors = createSubagentExecutors({

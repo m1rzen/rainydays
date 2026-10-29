@@ -416,17 +416,20 @@ export class Agent {
       const requiresGrant = inspected.policy.approval === "user";
       if (requiresGrant && advice.decision === "approve") {
         grantContext = await capabilityBroker.reuseNewOutputApproval(capabilityContext, inspected)
-          ?? capabilityBroker.reuseDeveloperCommandApproval(capabilityContext, inspected);
+          ?? capabilityBroker.reuseDeveloperCommandApproval(capabilityContext, inspected)
+          ?? capabilityBroker.reuseMcpApproval(capabilityContext, inspected);
       }
       const requiresConfirmation = (requiresGrant && !grantContext) || advice.decision === "escalate";
       let approvalKind: "none" | "user" | "native-process" = grantContext ? "user" : "none";
       if (requiresConfirmation) {
         const developerCommand = isDeveloperCommandTool(toolName);
-        const requiresNativeProcessConsent = inspected.policy.effects.includes("process") && !developerCommand;
+        const mcpServer = capabilityBroker.getMcpServer(capabilityContext, inspected);
+        const requiresNativeProcessConsent = inspected.policy.effects.includes("process") && !developerCommand && !(mcpServer && isDeveloperModeEnabled());
         approvalKind = requiresNativeProcessConsent ? "native-process" : "user";
         let approved = false;
         let allowNewOutputs = false;
         let allowDeveloperCommands = false;
+        let allowMcpServer = false;
         let answer = "原生进程确认被拒绝或不可用";
         if (requiresNativeProcessConsent) {
           approved = await requestNativeProcessConsent({
@@ -452,6 +455,10 @@ export class Agent {
               && this.sessionId === runSessionId && capabilityBroker.isContextActive(capabilityContext),
             signal,
           });
+        } else if (mcpServer) {
+          answer = await askUserQuestion(`开发模式：允许 MCP 服务器“${mcpServer.name}”以你的 Windows 身份运行？\n它可以使用你的文件和网络权限；工作目录检查不会隔离第三方进程。\n工具：${toolName}`, ["本次任务允许此服务器", "仅这一次", "拒绝执行"], 300000, signal);
+          allowMcpServer = answer === "本次任务允许此服务器" && advice.decision === "approve";
+          approved = answer === "本次任务允许此服务器" || answer === "仅这一次";
         } else if (developerCommand) {
           const cwdText = typeof inspected.args.cwd === "string" && inspected.args.cwd ? inspected.args.cwd : "当前工作目录";
           const detail = toolName === "shell_input"
@@ -488,6 +495,7 @@ export class Agent {
             responseChannel: requiresNativeProcessConsent ? "native-process" : "ask-user",
             allowNewOutputs,
             allowDeveloperCommands,
+            allowMcpServer,
           });
         }
         if (!approved || (requiresGrant && !grantContext)) {
@@ -843,6 +851,7 @@ export class Agent {
         for (const { toolCall, toolName, toolArgs } of toolCallsParsed) {
           yield {
             type: "tool_call",
+            toolSource: capabilityBroker.getMcpToolSource(capabilityContext, toolName),
             content: `调用工具: ${toolName}`,
             toolName,
             toolCallId: toolCall.id,

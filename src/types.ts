@@ -266,6 +266,7 @@ export interface AgentStep {
     | "task_created" | "task_update" | "steer";
   content: string;
   toolName?: string;
+  toolSource?: string;
   toolCallId?: string;
   toolArgs?: Record<string, unknown>;
   toolStatus?: ToolOutcomeStatus;
