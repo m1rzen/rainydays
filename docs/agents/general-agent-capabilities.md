@@ -11,7 +11,7 @@
 | 默认能力发现 | personas/general.md、src/task-tools.ts、src/tools/index.ts | 少量初始工具与允许列表内发现 | 默认助手按任务启用开发、MCP、浏览器/桌面；能力可用性与权限分开 |
 | 项目与编辑 | src/tools/read-repo.ts、filesystem-lux.ts、code-editing.ts | A02已验证工作树/脚本、read版本、多文件差异及重启撤回，默认助手按需发现 | 项目指令作用域留A11，真实编码/测试循环留A04；批保存不是跨文件事务 |
 | 命令与终端 | src/tools/shell.ts、terminal-tools.ts、script.ts | 短命令、持久终端、增量输出、受控执行 | 普通会话接通、退出码/输入/中断、依赖提示、真实项目修复循环 |
-| MCP | src/settings-schema.ts、version.ts | 存储配置；mcp available=false，协议enabled=false | 实际SDK客户端、发现/调用/认证、工具注册、结果和取消、真实能力标志 |
+| MCP | src/mcp/、settings-schema.ts、version.ts | A05開發stdio SDK/按需目錄/每run授權/typed結果與分頁/Job清理已verified；available=true，協議v1/stdio；同事模式停用 | A06遠端/認證/內容投影；隔離stdio與A13實際模型/安裝驗收 |
 | 浏览器 | src/browser.ts、src/tools/browser-tools.ts | CDP/扩展接口、DOM引用、截图文件 | 一个生产后端的真实输入、焦点/标签页、上传下载、失效引用与任务验证 |
 | 图像反馈 | src/llm.ts、src/tools/image-helper.ts | 用户图像消息和视觉辅助入口 | 工具图像→模型消息的投影与预算；不要只返回PNG路径 |
 | 原生 Windows | 当前无完整产品工具组 | Lux材料可参考；RainyDays安全宿主不是桌面驱动 | 窗口/UIA/截图/输入helper、打包、DPI与接管、观察动作循环 |
@@ -46,6 +46,8 @@ A03/A15增量（2026-10-25）：按批准的规格§7，开发模式使用用户
 - 最终给出改动摘要、差异入口、检查命令/退出结果和未验证项。代码默认在用户所选仓库编辑，Office成果默认另存；两种行为不混淆。
 
 ## 4. MCP：真正的协议接入
+
+A05增量（2026-10-30）：[本地stdio票據](../work/general-agent/tickets/05-mcp-local.md)已verified，SDK1.32.1；設定測試後新會話按需發現schema，首次獲Broker任務授權才啟動。Windows Job使用者管道後端沿用root資格與owner，取消/崩潰/app退出均有真實程序清理fixture。這不代表同事隔離stdio、遠端認證或安裝/真實模型已驗收。
 
 采用官方 TypeScript SDK，实施时锁定兼容版本并测试。先stdio，再Streamable HTTP；不另写JSON-RPC协议栈。配置界面、客户端生命周期和真实工具目录一起交付，更新version/capability元数据与相应测试。
 

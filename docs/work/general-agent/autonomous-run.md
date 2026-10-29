@@ -4,7 +4,7 @@
 
 ## 目前位置
 
-目前：A05本地MCP接入。R5回歸已驗證並提交84c95b9，先完成本次推送，再做MCP設定/客戶端與普通會話的完整切片。
+目前：A05已verified，程式碼1e0a09e與08f31b9；本次文件提交後推送，再接續A06。完整五組檢查均通過。
 
 ## 票據與提交
 
@@ -13,7 +13,7 @@
 | R5 Electron修復 | verified | 84c95b9；產品99/99、UI15/15、桌面5/5 |
 | A03 | verified（既有） | 34294c5；本輪不重做 |
 | A04 | blocked（既有） | fc9f745；工程產品99/99、UI15/15、20題樣例自檢20/20；真實模型未授權 |
-| A05 | in-progress | 起點84c95b9；依A03已verified |
+| A05 | verified | 1e0a09e、08f31b9；產品109/109、UI15/15、桌面6/6 |
 | A06 | 未開始 | 依A05 |
 | A11 | 未開始 | 依A02/D03已verified |
 | A12 | 未開始 | 依A01/D03/D04已verified |
@@ -23,12 +23,13 @@
 
 ## 本輪測試
 
-R5完成：typecheck與lint通過，test:product 99/99、test:product:ui 15/15、test:product:desktop 5/5（新增R5，不刪原四項）。每個完整切片執行typecheck、lint、test:product、test:product:ui、test:product:desktop；結果與精確數量附在對應票據。
+A05最終：typecheck與lint通過，test:product 109/109、test:product:ui 15/15、test:product:desktop 6/6（新增A05，不刪原五項，132.957秒）。額外Broker/設定/管道42/42；DS09 renderer舊regex額外3/4見下文。每個完整切片執行相同五組，具體證據附在對應票據。
 
 ## 待我確認的決定
 
 - 自主輪次先處理使用者指定的R5回歸，再沿plan.md修訂順序推進；D系列按依賴穿插。進度檔不另建平行排期。
 - 同事模式的MCP若尚無可用的既有隔離stdio契約，保持停用；開發模式下可實作受run/owner管理的使用者程序，不作靜默回退。
+- A05以Windows Job受控原始管道承載開發stdio，沒有修改SEC-03 C++；設定顯示使用者檔案/網路權限。工具目錄明確測試後由新會話取得，活動schema不熱改。
 - 有界子任務先保持最多兩個、無遞迴、唯讀工具，主任務持有寫入權；不擴成一般多寫入者。
 - 所有模型與服務均使用本地確定性fixture；無真實API、帳號或費用授權時保留相關驗收未完成，繼續可獨立工程。
 
@@ -46,3 +47,13 @@ R5完成：typecheck與lint通過，test:product 99/99、test:product:ui 15/15�
 
 5. R5完整檢查全綠；原測試斷言全部保留。準備精確提交與祕密/路徑檢查，完成後推送目前分支。
 6. R5提交84c95b9。暫存路徑無.env/deliverables/資料庫/憑據；差異祕密模式唯一命中為task/ask名稱中的sk-，人工核對是識別字，不是金鑰。
+7. A05新增官方SDK精確版本1.32.1（stdio協議與工具schema的必要依賴，無全域安裝）。舊設定/匯入防注入兩項先red再green；加入vault環境值與匯出保密共3/3，typecheck通過。SDK安裝報告既有依賴樹15個audit項，尚未將其當成本輪修復範圍或執行自動升級。
+8. A05真實SDK fixture提供echo/fail/hang三工具，tools/list分頁、stdio/stderr分離、目錄變更、崩潰/逾時/取消和後代PID清理已實跑。首次3項中2過1敗：JSON-RPC工具異常被錯分類為斷線，現修正分類後重驗；未使用模型API。
+9. SDK stdio 3/3 green；Agent普通search_tools→MCP成功/具類型錯誤→同run一次同server授權、次run再確認通過。加入12k字元分頁、跨run結果拒讀、父run取消5秒內清理。設定頁新增/測試/停用、vault環境值與重啟保留的真實Electron切片通過，納入完整桌面回歸。
+10. 原taskkill方法在root崩潰後無法證明後代清理，改為開發模式專用Windows Job管道host，啟動payload之前先讓host加入kill-on-close Job；SDK仍管理協議，owner/PathPolicy/Broker不變，SEC-03 C++未改。修正spawn事件註冊競爭與.NET管道flush後，真正的root崩潰/子程序和app突然退出清理5/5通過。
+11. 首輪完整check:product為106/106＋UI15/15；後續新增兩server隔離、app意外退出與設定變更目錄失效（先red再green，設定4/4）。順序自審發現並修正：避免工具成功發布後再次驗證context改寫結果、MCP草稿刷新保留、字典原型名稱、狀態Map有界與設定摘要綁定；驗證全套最新結果中。
+12. npm官方audit回報20項（3moderate/17high），SDK本體無直接advisory；未自動升級無關既有依賴。先前預設mirror不支援audit，其失敗不計通過。
+13. runtime切片提交1e0a09e，精確暫存23項，無.env/deliverables/資料庫/憑據；祕密模式只命中ask-user等識別字。UI/桌面與紀錄留下一切片，不在票完成前推送半份工作。
+14. 最新完整check:product109/109＋UI15/15；完整桌面已兩輪6/6。首次並行高負載出現開發原生確認握手期EPIPE，保留斷言；SDK改按需import，空白啟動不載SDK。加連線實際數量與同事模式舊Session不可見後，凍結程式碼再重驗。
+15. 額外既有邊界用例45/46，唯一DS09 source-regex不接受R5既存optional chaining（00c7e9b已存在），未弱化斷言；Broker32/32、設定3/3、工具管道7/7通過。完整五組要求的檢查另列，不把此額外失敗藏起來。
+16. A05最終凍結後整套check:product109/109＋UI15/15，test:product:desktop6/6；額外最新邊界42/42。UI切片08f31b9（7項精確暫存，祕密模式只命中ask-modal字樣）。票/plan/STATUS與能力手冊同步verified，準備推送後立刻接A06。

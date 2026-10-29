@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: ready
+Status: verified
 
 Spec: [通用Agent规格](../../../specs/general-agent.md)
 
@@ -26,11 +26,11 @@ src/settings-schema.ts、version.ts、task-tools.ts、tools/index.ts与执行器
 
 ## 验收条件
 
-- [ ] M01/M02工程流程由真实stdio协议与普通会话完成；两个同名工具不混淆。
-- [ ] 进程stdout协议与stderr日志分离；协议错误、超时、退出和应用关闭可恢复/清理。
-- [ ] 停用后不能新调用；重启配置保留，凭据仅引用现有vault。
-- [ ] 动态工具schema不全部常驻提示；工具变更后不沿用失效参数定义。
-- [ ] 第三方进程通过现有受控执行接口，说明实际文件/网络权限，不误称工具路径检查能限制其全部行为。
+- [x] M01/M02工程流程由真实stdio协议与普通会话完成；两个同名工具不混淆。
+- [x] 进程stdout协议与stderr日志分离；协议错误、超时、退出和应用关闭可恢复/清理。
+- [x] 停用后不能新调用；重启配置保留，凭据仅引用现有vault。
+- [x] 动态工具schema不全部常驻提示；工具变更后不沿用失效参数定义。
+- [x] 第三方进程通过现有受控执行接口，说明实际文件/网络权限，不误称工具路径检查能限制其全部行为。
 
 ## 验证接口与证据
 
@@ -46,9 +46,27 @@ src/settings-schema.ts、version.ts、task-tools.ts、tools/index.ts与执行器
 
 ## 执行记录
 
-尚未开始。获批后记录起点提交、修改边界、实际决定与偏离理由、调用授权、未完成条件；按[执行流程](../../../agents/workflow.md)推进。
+2026-10-30，起點00c7e9b；R5已修復並推送。依自主授權連續開發，模型/帳號均用本地fixture。選擇與界面見[ADR](../../../adr/0001-mcp-runtime.md)：設定明確測試目錄、普通run固定schema、首次調用才啟動server；不為發現工具提前無授權啟動程序。使用者身份傳輸只在開發模式；同事模式保持停用，待已有隔離stdio可用再接，無靜默回退。
+
+## Test and design seam
+
+設定API→官方SDK真實stdio→命名空間schema→原Broker/Agent→具類型工具結果與owner收回。將設定/傳輸/目錄/結果放src/mcp，UI放獨立script；主文件只接線。比較啟動時批量連線與設定測試後快照，採後者保留現有不可變Capability邊界。每個子切片先經公共介面red，再實作green；不靠直接調私有方法或另造Agent驗收。
 
 ## 审查与验证结果
 
-尚未审查/验证。完成时记录具体命令、实际结果、人工核对、未测项、回退和终点提交。全部条件有证据才改为verified；依赖例外以[总任务图](../plan.md)为准。
+審查範圍：00c7e9b至本票工作樹，按倉庫規則/正確性及票據/spec兩軸順序自審，未宣稱獨立人員審查。依使用者要求，只在本票記錄，不新增治理清單或證明腳本。
+
+已修正發現：設定啟動參數或vault環境值變更時清除舊schema（先red再green）；工具已成功發布後不再追加context檢查而改寫結果；MCP表單草稿刷新保留；環境字典原型名稱；連線狀態依配置摘要綁定且Map有界。既有Session切回同事模式後，Broker在下一run亦移除MCP工具。
+
+實作：官方SDK精確1.32.1；自訂SDK Transport只接原始管道，initialize/list分頁/call/通知由SDK處理。開發模式的Windows Job host先加入Job再啟動payload，原Broker run/單次grant、PathPolicy execution-root與owner收回均沿用。錯誤為typed MCP結果，1MiB保留上限、12k字元分頁（每run最多8份），無隱藏截斷或工具自動重放。設定CRUD/明確測試/啟停/連線狀態/數量在獨立UI模組，對話卡片顯示原server名稱。公開/匯出無環境值或credential引用，匯入保留本機整個MCP清單。
+
+最終驗證：2026-10-30，`npm run check:product`的typecheck/lint通過、產品109/109、UI15/15；緊接`npm run test:product:desktop` 6/6（132.957秒，新增A05，原五項不減）。額外最新Broker/設定/管道42/42。stdio fixture工程包含雙server同名、分頁/變更、isError/協議錯誤、崩潰連帶子程序、逾時、父run取消和app被強制結束；普通假模型Agent驗證成功、每server每run授權、分頁跨run拒讀。提交1e0a09e（runtime/授權/產品fixture）、08f31b9（設定UI/來源標籤/重啟/桌面入口），兩者構成已測程式碼；本節更新僅為文件。
+
+額外邊界檢查45/46：Broker32/32、設定3/3、工具管道7/7、DS09 renderer3/4。唯一失敗是舊source-regex要求`settingsState.domainManifest`，R5基線已使用`settingsState?.domainManifest`，與本票無關；核對00c7e9b已存在，保留原測試，不修改斷言來冒充通過。首輪桌面5/6曾在開發啟動出現EPIPE/握手失敗，串行再跑6/6；SDK已改成實際測試/調用時才載入，未調大握手時限或吞錯。
+
+必要的既有斷言更新三處：settings-schema的MCP available由false改true，因現在確有產品adapter；R5首次設定的可用分頁增加MCP，其他項目順序保持；version-model diagnostics改斷言完整`{version:1,enabled:true,transport:"stdio"}`，取代未實作時的null。沒有跳過、停用或刪除舊用例。
+
+偏差/決定：票據原NativeExecutionHandle建議沒有現成可用的開發模式原始stdio契約；採A15使用者模式的獨立Windows Job管道後端，仍受原Broker/路徑/owner管理，SEC-03 C++與同事隔離未改。與提示詞要求「不碰SEC-03」一致。同事MCP預設停用待隔離通道；目錄更新於明確測試後供新會話使用，活動快照不熱改。SDK安裝只新增必要本地依賴；官方npm audit回報既有樹20項（3 moderate/17 high），SDK本體無直接advisory，未擅自升級其他套件。
+
+未驗：真實模型語義、外部server帳號、目前安裝包及受管電腦禁用Add-Type時的可用性；本票僅確認本機工程路徑，A13仍是完整出口。回退本票提交會移除MCP adapter，舊空清單仍相容；不動任何使用者資料。
 

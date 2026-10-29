@@ -35,7 +35,7 @@ Status: approved
 | [A02 项目上下文与可检查代码编辑](tickets/02-repository-editing.md) | A01、D04、D05 | 真实默认会话多文件/完整diff/重启撤回、已有工作与竞争保存保护通过；模型编码质量留A04 | verified |
 | [A03 CLI与持久终端进入普通任务](tickets/03-cli-sessions.md) | A01、D04、D05 | 开发模式普通助手长任务、输入/分页/退出码、取消和依赖提示；旧隔离兼容限制保留 | verified |
 | [A04 代码修改—测试—修正循环](tickets/04-coding-loop.md) | A02、A03、D03 | JS/Python工程与20题样例通过；真实编码模型配置/预算待授权 | blocked |
-| [A05 MCP本地接入与工具发现](tickets/05-mcp-local.md) | A03 | 设置添加stdio服务器→普通会话发现/调用→重启/取消 | ready |
+| [A05 MCP本地接入与工具发现](tickets/05-mcp-local.md) | A03 | 设置添加stdio服务器→普通会话发现/调用→重启/取消 | verified |
 | [A06 MCP远端认证与内容处理](tickets/06-mcp-remote.md) | A05 | HTTP/token/OAuth、资源和结构化内容；断线不重复写入 | ready |
 | [A07 一个可用的交互浏览器后端](tickets/07-browser-control.md) | A01、D04、D05 | SPA真实输入、标签归属、上传下载、登录接管 | ready |
 | [A08 工具图像进入视觉模型](tickets/08-visual-observations.md) | A01、D02、D03 | 真实模型识别非预置截图，尺寸/坐标/上下文预算正确 | ready |
