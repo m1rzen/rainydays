@@ -913,7 +913,7 @@ async function main() {
       assert.equal(diagnostics.runtime.electron, "33.4.11");
       assert.equal(diagnostics.protocols.worker.version, null);
       assert.equal(diagnostics.protocols.worker.enabled, false);
-      assert.equal(diagnostics.protocols.mcp.version, null);
+      assert.deepEqual(diagnostics.protocols.mcp, { version: 1, enabled: true, transport: "stdio" });
       const serialized = JSON.stringify(diagnostics);
       assert(!serialized.includes(server.token));
       assert(!serialized.includes(serverRoot));

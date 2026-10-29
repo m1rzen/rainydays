@@ -2031,7 +2031,7 @@
       for (const [id, key] of [["setting-max-iterations", "maxIterations"], ["setting-max-canvas-tokens", "maxCanvasTokens"], ["setting-supervisor-rules", "defaultSupervisorRules"], ["setting-pin-render-mode", "pinRenderMode"], ["setting-pin-render-interval", "pinRenderInterval"], ["setting-supervisor-profile", "supervisorProfile"], ["setting-curator-profile", "curatorProfile"], ["setting-consolidation-profile", "consolidationProfile"], ["setting-oracle-profile", "oracleProfile"], ["setting-image-profile", "imageProfile"], ["setting-video-profile", "videoProfile"], ["setting-rename-profile", "renameProfile"]]) setSettingsControl(id, common[key]);
       for (const [id, key] of [["setting-org-mode", "orgMode"], ["setting-yolo-mode", "yoloMode"], ["setting-supervisor-enabled", "supervisorEnabled"], ["setting-auto-rename", "autoRename"]]) setSettingsControl(id, common[key], true);
       setSettingsControl("setting-worker-enabled", common.worker?.enabled, true); setSettingsControl("setting-worker-target", common.worker?.target);
-      setSettingsControl("setting-mcp-servers", JSON.stringify(domains.mcp?.servers || [], null, 2));
+      window.McpSettings.render(settingsState, { headers: () => sessionHeaders(currentSessionId, true), dirty: () => settingsDirtyDomains.has("mcp"), saved: value => { settingsState = value; renderSettingsDomains(); } });
       setSettingsControl("setting-wire-sources", JSON.stringify(domains.wire?.sources || [], null, 2));
       setSettingsControl("setting-anima-default", domains.animas?.defaultAnima);
       setSettingsControl("setting-nous-enabled", domains.nous?.enabled, true); setSettingsControl("setting-nous-threshold", domains.nous?.autoTriggerThreshold); setSettingsControl("setting-nous-cooldown", domains.nous?.cooldownMinutes); setSettingsControl("setting-nous-profile", domains.nous?.profile);
@@ -2175,7 +2175,7 @@
         oracleProfile: settingsText("setting-oracle-profile"), visionProfile: settingsState.domains.common.visionProfile || "", imageProfile: settingsText("setting-image-profile"), videoProfile: settingsText("setting-video-profile"),
         autoRename: settingsChecked("setting-auto-rename"), renameProfile: settingsText("setting-rename-profile"), pinRenderMode: settingsText("setting-pin-render-mode"), pinRenderInterval: settingsNumber("setting-pin-render-interval"),
       };
-      if (domainId === "mcp") return { servers: JSON.parse(document.getElementById("setting-mcp-servers").value) };
+      if (domainId === "mcp") return window.McpSettings.collect();
       if (domainId === "wire") return { sources: JSON.parse(document.getElementById("setting-wire-sources").value) };
       if (domainId === "animas") return { defaultAnima: settingsText("setting-anima-default") };
       if (domainId === "nous") return { enabled: settingsChecked("setting-nous-enabled"), autoTriggerThreshold: settingsNumber("setting-nous-threshold"), cooldownMinutes: settingsNumber("setting-nous-cooldown"), profile: settingsText("setting-nous-profile") };
@@ -3198,7 +3198,7 @@
       const label = document.createElement("span");
       label.className = "label";
       const toolLabels = { read_file:"读取文件", write_file:"写入文件", create_docx:"生成 Word 文档", create_xlsx:"生成 Excel 工作簿", web_search:"搜索资料", web_fetch:"阅读网页", fetch_markdown:"阅读网页", bash:"运行命令" };
-      label.textContent = toolLabels[step.toolName] || step.toolName;
+      label.textContent = `${step.toolSource ? `${step.toolSource} · ` : ""}${toolLabels[step.toolName] || step.toolName}`;
       label.title = step.toolName;
       const status = document.createElement("span");
       status.className = "tool-card-status";

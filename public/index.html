@@ -268,7 +268,7 @@
             <p class="settings-probe-note">检测使用已保存的配置，发送一条短消息，可能产生少量模型费用。</p>
             <div id="provider-test-result" role="status" aria-live="polite"></div>
           </div>
-          <div class="settings-section" data-settings-domain="mcp" hidden><h3>MCP</h3><div class="settings-domain-status" data-domain-status="mcp"></div><label class="settings-block-label" for="setting-mcp-servers">Servers JSON</label><textarea id="setting-mcp-servers" class="settings-code-input"></textarea><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="mcp">保存 MCP</button></div></div>
+          <div class="settings-section" data-settings-domain="mcp" hidden><h3>MCP 工具服务器</h3><div class="settings-domain-status" data-domain-status="mcp"></div><p>本地 stdio 仅在开发模式可用。测试会以你的 Windows 身份启动服务器，它可使用你的文件与网络权限。保存并测试后，在新会话中按需发现工具。</p><div id="mcp-server-list"></div><div class="settings-actions"><button type="button" class="settings-btn" id="mcp-add-server">添加服务器</button><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="mcp">保存 MCP</button></div></div>
           <div class="settings-section" data-settings-domain="wire" hidden><h3>Wire</h3><div class="settings-domain-status" data-domain-status="wire"></div><label class="settings-block-label" for="setting-wire-sources">Sources JSON</label><textarea id="setting-wire-sources" class="settings-code-input"></textarea><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="wire">保存 Wire</button></div></div>
           <div class="settings-section" data-settings-domain="animas" hidden><h3>Animas</h3><div class="settings-domain-status" data-domain-status="animas"></div><div class="settings-grid"><label>默认 Anima</label><input id="setting-anima-default" class="settings-input" /></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="animas">保存 Animas</button></div></div>
           <div class="settings-section" data-settings-domain="nous" hidden><h3>Nous</h3><div class="settings-domain-status" data-domain-status="nous"></div><div class="settings-grid"><label>启用</label><input id="setting-nous-enabled" type="checkbox" /><label>自动触发阈值</label><input id="setting-nous-threshold" type="number" min="1" max="100" class="settings-input" /><label>冷却（分钟）</label><input id="setting-nous-cooldown" type="number" min="1" max="1440" class="settings-input" /><label>独立 Profile</label><input id="setting-nous-profile" class="settings-input" /></div><div class="settings-actions"><button class="settings-btn primary" data-action="save-settings-domain" data-domain-id="nous">保存 Nous</button></div></div>
@@ -302,6 +302,7 @@
   <script src="/vendor/xterm.js"></script>
   <script src="/vendor/xterm-addon-fit.js"></script>
   <script src="/keyboard-shortcuts.js"></script>
+  <script src="/mcp-settings.js"></script>
   <script src="/renderer.js"></script>
 </body>
 </html>

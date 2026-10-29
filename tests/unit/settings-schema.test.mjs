@@ -21,7 +21,7 @@ test("DS-09 Settings manifest matches the frozen Lux tab order and effect surfac
   assert.equal(asr.fields.find(field => field.key === "provider").applyMode, "unavailable");
   assert.equal(asr.fields.find(field => field.key === "endpoint").applyMode, "unavailable");
   assert.equal(asr.fields.find(field => field.key === "apiKey").applyMode, "unavailable");
-  assert.equal(manifest.find(domain => domain.id === "mcp").available, false);
+  assert.equal(manifest.find(domain => domain.id === "mcp").available, true);
   assert.equal(manifest.find(domain => domain.id === "tts").applyMode, "immediate");
 });
 

@@ -23,6 +23,65 @@ import {
 
 const electronExecutable = path.join(projectRoot, "node_modules", "electron", "dist", process.platform === "win32" ? "electron.exe" : "electron");
 
+test("A05 real Electron manages and tests MCP, then calls it in an ordinary chat", { timeout: 120000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-a05-electron-"), userData = path.join(fixture, "user-data");
+  let instance, client, stage = 0, modelFailure;
+  const model = createServer(async (request, response) => {
+    try {
+      const chunks = []; for await (const chunk of request) chunks.push(chunk);
+      const body = JSON.parse(Buffer.concat(chunks).toString());
+      if (!body.stream) { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: "MCP fixture" }, finish_reason: "stop" }] })); return; }
+      let call;
+      if (stage++ === 0) { assert(!body.tools.some(tool => tool.function.name.startsWith("mcp__"))); call = { name: "search_tools", arguments: JSON.stringify({ keywords: "MCP DesktopFixture" }) }; }
+      else if (stage === 2) { const tool = body.tools.find(tool => tool.function.name.startsWith("mcp__desktopfixture__echo_")); assert(tool); call = { name: tool.function.name, arguments: JSON.stringify({ text: "桌面MCP完成" }) }; }
+      else assert(body.messages.some(message => message.role === "tool" && message.content.includes("桌面MCP完成")));
+      response.writeHead(200, { "Content-Type": "text/event-stream" });
+      const calls = call ? [{ index: 0, id: `desktop-mcp-${stage}`, type: "function", function: call }] : undefined;
+      response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: calls ? { tool_calls: calls } : { content: "桌面MCP任务已完成。" }, finish_reason: null }] })}\n\n`);
+      response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: calls ? "tool_calls" : "stop" }] })}\n\n`); response.end("data: [DONE]\n\n");
+    } catch (error) { modelFailure = error; response.writeHead(400); response.end("fixture failed"); }
+  });
+  await new Promise(resolve => model.listen(0, "127.0.0.1", resolve));
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, `http://127.0.0.1:${model.address().port}/v1`);
+    client = await connectCdp(cdpPort);
+    await waitFor(() => client.evaluate("Boolean(currentSessionId && desktopNavigationReady)"), { timeoutMs: 20000, label: "A05 ready" });
+    await client.evaluate("(async()=>{await openSettings();switchSettingsDomain('common');document.getElementById('setting-developer-mode').click()})()");
+    await waitFor(() => client.evaluate("settingsState.domains.shell.developerMode"), { timeoutMs: 10000, label: "A05 developer mode" });
+    const formResult = await client.evaluate(`(()=>{try {switchSettingsDomain('mcp');document.getElementById('mcp-add-server').click(); const row=document.querySelector('.mcp-server');
+      for(const [key,value] of Object.entries(${JSON.stringify({ name: "DesktopFixture", command: process.execPath, args: path.join(projectRoot, "tests/fixtures/mcp-server.mjs"), cwd: path.join(userData, "workspace") })})) { row.querySelector('[data-mcp-field="'+key+'"]').value=value; }
+      [...row.querySelectorAll('button')].find(button=>button.textContent==='添加环境变量').click();
+      row.querySelector('[data-mcp-field=env-key]').value='FIXTURE_MARKER'; row.querySelector('[data-mcp-field=env-value]').value='obviously-fake-desktop-env';
+      row.querySelector('[data-mcp-field=enabled]').checked=true; return saveSettingsDomain('mcp'); } catch(error) { return { error: error.message, module:typeof window.McpSettings, state: document.getElementById('settings-message')?.textContent }; }})()`);
+    assert.equal(formResult?.error, undefined, JSON.stringify(formResult));
+    await waitFor(() => client.evaluate("settingsState.domains.mcp.servers.length===1"), { timeoutMs: 10000, label: "A05 saved server" });
+    assert.equal(await client.evaluate("document.querySelector('[data-mcp-field=env-value]').value"), "");
+    await client.evaluate("[...document.querySelectorAll('.mcp-server button')].find(button=>button.textContent==='测试已保存的设置').click()");
+    await waitFor(() => client.evaluate("settingsState.domains.mcp.servers[0].tools.length===3"), { timeoutMs: 30000, label: "A05 tested catalog" }).catch(error => { throw new Error(`${error.message}: ${JSON.stringify(instance.logs())}`); });
+    assert.match(await client.evaluate("document.querySelector('[data-mcp-status]').textContent"), /3 个工具/u);
+    await client.evaluate("closeSettings();newChat()");
+    await client.evaluate("inputEl.value='使用MCP工具';document.getElementById('input-form').requestSubmit()");
+    await waitFor(() => client.evaluate("document.getElementById('ask-modal').classList.contains('visible')"), { timeoutMs: 20000, label: "A05 server consent" });
+    assert.match(await client.evaluate("document.getElementById('ask-question-text').textContent"), /DesktopFixture/u);
+    await client.evaluate("[...document.querySelectorAll('#ask-options button')].find(button=>button.textContent==='本次任务允许此服务器').click()");
+    await waitFor(() => client.evaluate("!isSessionRunning() && messagesEl.textContent.includes('桌面MCP任务已完成。')"), { timeoutMs: 30000, label: "A05 chat completion" });
+    assert.equal(modelFailure, undefined); assert.equal(stage, 3);
+    assert.match(await client.evaluate("messagesEl.textContent"), /mcp__desktopfixture/u);
+    assert.match(await client.evaluate("[...document.querySelectorAll('.tool-card .label')].map(label=>label.textContent).join('\\n')"), /DesktopFixture · mcp__/u);
+    await client.evaluate("openSettings();switchSettingsDomain('mcp');document.querySelector('[data-mcp-field=enabled]').checked=false;saveSettingsDomain('mcp')");
+    await waitFor(() => client.evaluate("settingsState.domains.mcp.servers[0].enabled===false"), { timeoutMs: 10000, label: "A05 disabled" });
+    const persisted = JSON.parse(await readFile(path.join(userData, "config.json"), "utf8")); assert.equal(persisted.domains.mcp.servers[0].enabled, false); assert.equal(persisted.domains.mcp.servers[0].tools.length, 3);
+    assert.match(persisted.domains.mcp.servers[0].env.FIXTURE_MARKER, /^cred_/u); assert(!JSON.stringify(persisted).includes("obviously-fake-desktop-env"));
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, `http://127.0.0.1:${model.address().port}/v1`, { keepConfig: true });
+    client = await connectCdp(cdpPort);
+    const restored = await waitFor(async () => { try { return await client.evaluate("fetch('/api/settings').then(r=>r.json()).then(value=>value.domains.mcp.servers[0])"); } catch { return null; } }, { timeoutMs: 20000, label: "A05 persisted catalog" });
+    assert.equal(restored.enabled, false); assert.equal(restored.tools.length, 3); assert.equal(restored.env.FIXTURE_MARKER, "");
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally { client?.close(); if (instance) await terminateProcessTreeAsync(instance.child); await new Promise(resolve => model.close(resolve)); await removeFixture(fixture); }
+});
+
 function expectedUi(buildInfo) {
   const shortBuild = String(buildInfo.buildId).split(".").at(-1).slice(0, 8);
   return `v${buildInfo.appVersion}${shortBuild ? ` · ${shortBuild}` : ""}`;
@@ -1641,7 +1700,7 @@ test("R5 real Electron first setup tests saved connection without sending histor
     console.log("[R5] connected desktop");
     await waitFor(() => client.evaluate("document.getElementById('settings-modal').classList.contains('visible') && activeSettingsDomain === 'profiles'"), { timeoutMs: 20_000, label: "R5 first model setup" });
     console.log("[R5] first setup visible");
-    assert.deepEqual(await client.evaluate("[...document.querySelectorAll('.settings-domain-tab')].map(b=>b.dataset.domainId)"), ["common", "profiles", "tts", "asr"]);
+    assert.deepEqual(await client.evaluate("[...document.querySelectorAll('.settings-domain-tab')].map(b=>b.dataset.domainId)"), ["common", "profiles", "mcp", "tts", "asr"]);
     assert.equal(await client.evaluate("document.getElementById('provider-model').getClientRects().length > 0 && !document.querySelector('[data-settings-domain=profiles] details').open && !document.getElementById('provider-proxy').getClientRects().length"), true);
     await client.evaluate("document.getElementById('provider-api-key').value='fixture-only-key';document.getElementById('provider-api-key').dispatchEvent(new Event('input',{bubbles:true}));saveProvider()");
     console.log("[R5] configuration saved");

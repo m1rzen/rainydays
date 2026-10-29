@@ -10,6 +10,12 @@
       --sidebar-bg: #161820; --hover-bg: #222531;
       --danger:#e0556b; --success:#4caf50; --accent-fill:#5947c6;
     }
+
+    #mcp-server-list .mcp-server { min-width:0; margin:16px 0; padding:16px; border:1px solid var(--border, #d8d5cf); border-radius:8px; }
+    #mcp-server-list .settings-block-label { display:grid; gap:6px; margin:10px 0; }
+    #mcp-server-list input, #mcp-server-list textarea { box-sizing:border-box; max-width:100%; width:100%; }
+    #mcp-server-list input[type="checkbox"] { width:auto; justify-self:start; }
+    #mcp-server-list button { margin:4px 8px 4px 0; }
     body {
       font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
       background: var(--bg); color: var(--text);
