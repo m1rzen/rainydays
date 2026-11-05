@@ -18,6 +18,7 @@ import {
   type EntityRow,
   type MemoryRow,
 } from "../db.js";
+import { inspectKnowledgeEntryById, expandKnowledgeGraphById } from "../lux-cloud-runtime.js";
 
 // ===========================================
 // inspect —— 展开实体详情
@@ -27,11 +28,11 @@ export const inspectDef: ToolDefinition = {
   function: {
     name: "inspect",
     description:
-      "查看知识图谱中某个实体的详情，包括属性和所有关系。传入实体名称或 ID。用于深入了解某个项目、人物、概念等的关联信息。",
+      "查看知识图谱中某个实体或短 ID 条目 (n_/e_/t_) 的详情，包括属性和所有关系。传入实体短 ID、数字 ID 或名称。",
     parameters: {
       type: "object",
       properties: {
-        id: { type: "number", description: "实体 ID" },
+        id: { type: ["number", "string"], description: "实体 ID 或短 ID (n_/e_/t_)" },
         name: { type: "string", description: "实体名称（和 id 二选一）" },
       },
     },
@@ -40,13 +41,19 @@ export const inspectDef: ToolDefinition = {
 
 export const inspectExec: ToolExecutor = async (args) => {
   let entity: EntityRow | undefined;
-  const id = args.id as number | undefined;
+  const rawId = args.id as number | string | undefined;
   const name = args.name as string | undefined;
 
+  if (typeof rawId === "string" && /^(?:n_|e_|t_)/.test(rawId)) {
+    const triplet = inspectKnowledgeEntryById(rawId);
+    if (triplet) return JSON.stringify(triplet, null, 2);
+  }
+
+  const id = typeof rawId === "number" ? rawId : typeof rawId === "string" && /^\d+$/.test(rawId) ? Number(rawId) : undefined;
   if (id) {
     entity = getEntity(id);
-  } else if (name) {
-    entity = getEntityByName(name);
+  } else if (name || typeof rawId === "string") {
+    entity = getEntityByName((name ?? String(rawId)));
   }
 
   if (!entity) {
@@ -92,9 +99,10 @@ export const graphDef: ToolDefinition = {
     parameters: {
       type: "object",
       properties: {
-        id: { type: "number", description: "中心实体 ID" },
+        id: { type: ["number", "string"], description: "中心实体 ID 或短 ID (n_...)" },
         name: { type: "string", description: "中心实体名称（和 id 二选一）" },
         depth: { type: "number", description: "展开深度（默认 1，最大 3）" },
+        edge_type: { type: "string", description: "可选关系类型过滤" },
       },
     },
   },
@@ -102,12 +110,19 @@ export const graphDef: ToolDefinition = {
 
 export const graphExec: ToolExecutor = async (args) => {
   let entity: EntityRow | undefined;
-  const id = args.id as number | undefined;
+  const rawId = args.id as number | string | undefined;
   const name = args.name as string | undefined;
   const depth = Math.min((args.depth as number) || 1, 3);
+  const edgeType = args.edge_type as string | undefined;
 
+  if (typeof rawId === "string" && rawId.startsWith("n_")) {
+    const subgraph = expandKnowledgeGraphById(rawId, depth, edgeType);
+    if (subgraph) return JSON.stringify(subgraph, null, 2);
+  }
+
+  const id = typeof rawId === "number" ? rawId : typeof rawId === "string" && /^\d+$/.test(rawId) ? Number(rawId) : undefined;
   if (id) entity = getEntity(id);
-  else if (name) entity = getEntityByName(name);
+  else if (name || typeof rawId === "string") entity = getEntityByName((name ?? String(rawId)));
 
   if (!entity) {
     return `未找到实体: ${id || name}`;

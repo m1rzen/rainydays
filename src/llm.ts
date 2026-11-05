@@ -9,7 +9,7 @@ import type { LLMConfig, Message, MessageAttachment, ScopedNetworkGateway, ToolD
 import { abortableDelay, cancellationError, cancellationFailure, throwIfCancelled } from "./run-cancellation.js";
 import { MAX_DRAFT_ATTACHMENT_BYTES, INLINE_ATTACHMENT_BYTES, isDocumentMime } from "./attachment.js";
 import { beginObservation } from "./observability.js";
-import { ContextBudgetExceededError, estimateProjectedRequestTokens, resolveRequestBudget, type RequestBudget, type RequestBudgetReport } from "./request-budget.js";
+import { ContextBudgetExceededError, estimateProjectedRequestTokens, resolveProviderReasoningEffort, resolveRequestBudget, type RequestBudget, type RequestBudgetReport } from "./request-budget.js";
 
 /** 最大重试次数 */
 const MAX_RETRIES = 3;
@@ -18,7 +18,20 @@ const MAX_RETRIES = 3;
 const BASE_BACKOFF_MS = 1000;
 
 /** 请求超时（毫秒） */
-const REQUEST_TIMEOUT_MS = 30000;
+const REQUEST_TIMEOUT_MS = 120000;
+
+function normalizeOpenAIBaseURL(rawBaseURL: string): string {
+  const trimmed = rawBaseURL.trim().replace(/\/+$/u, "");
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.pathname === "" || parsed.pathname === "/") {
+      return `${trimmed}/v1`;
+    }
+  } catch {
+    // keep raw
+  }
+  return trimmed;
+}
 
 /** 速率限制等待时间（毫秒） */
 const RATE_LIMIT_WAIT_MS = 5000;
@@ -211,7 +224,7 @@ export class LLMClient {
       : undefined;
     return new OpenAI({
       apiKey: this.config.apiKey,
-      baseURL: this.config.baseURL,
+      baseURL: normalizeOpenAIBaseURL(this.config.baseURL),
       timeout: REQUEST_TIMEOUT_MS,
       maxRetries: 0, // 我们自己管理重试
       ...(scopedFetch ? { fetch: scopedFetch } : {}),
@@ -241,10 +254,12 @@ export class LLMClient {
     attachmentResolver: AttachmentResolver | null = null,
   ): Promise<LLMReply> {
     const client = transport ? this.createClient(transport) : this.client;
+    const reasoningEffort = attachmentSessionId ? resolveProviderReasoningEffort(attachmentSessionId) : undefined;
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.model,
       messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
       max_tokens: this.requestBudget.outputReserveTokens,
+      ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
     };
 
     if (tools && tools.length > 0) {
@@ -264,10 +279,13 @@ export class LLMClient {
         const choice = response.choices[0];
         if (!choice?.message) throw new Error("模型返回了空的回答结构");
         const message = choice.message;
+        const reasoningText = typeof (message as unknown as { reasoning_content?: unknown }).reasoning_content === "string"
+          ? (message as unknown as { reasoning_content: string }).reasoning_content
+          : "";
 
         const result = completedMessage({
           role: message.role,
-          content: message.content || "",
+          content: message.content || (message.tool_calls?.length ? "" : reasoningText),
           tool_calls: message.tool_calls?.map((tc) => ({
             id: tc.id,
             type: "function" as const,
@@ -334,12 +352,14 @@ export class LLMClient {
     attachmentSessionId: string | null = null,
     attachmentResolver: AttachmentResolver | null = null,
   ): AsyncGenerator<StreamEvent> {
+    const reasoningEffort = attachmentSessionId ? resolveProviderReasoningEffort(attachmentSessionId) : undefined;
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.model,
       messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
       stream: true,
       stream_options: { include_usage: true },
       max_tokens: this.requestBudget.outputReserveTokens,
+      ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
     };
 
     if (tools && tools.length > 0) {
@@ -362,6 +382,7 @@ export class LLMClient {
         streamEstablished = true;
 
         let fullContent = "";
+        let reasoningContent = "";
         let finishReason: string | null = null;
         let usage: LLMUsage | undefined;
         const toolCallMap = new Map<number, { id: string; name: string; arguments: string }>();
@@ -372,6 +393,11 @@ export class LLMClient {
           if (chunk.choices[0]?.finish_reason) finishReason = chunk.choices[0].finish_reason;
           const delta = chunk.choices[0]?.delta;
           if (!delta) continue;
+
+          const reasoningDelta = (delta as unknown as { reasoning_content?: unknown }).reasoning_content;
+          if (typeof reasoningDelta === "string" && reasoningDelta.length > 0) {
+            reasoningContent += reasoningDelta;
+          }
 
           if (delta.content) {
             fullContent += delta.content;
@@ -397,6 +423,11 @@ export class LLMClient {
         const toolCalls = Array.from(toolCallMap.entries())
           .sort((a, b) => a[0] - b[0])
           .map(([, tc]) => tc);
+
+        if (!fullContent && toolCalls.length === 0 && reasoningContent) {
+          fullContent = reasoningContent;
+          yield { type: "delta", content: fullContent };
+        }
 
         const finalMessage = completedMessage({
           role: "assistant",

@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "66eec398d4c51529e40a54b189c4961de2e7c40f22eab215d2e1cc4e336fc27a",
+      "sha256": "67d02541bf34585a9cc03bc1199cde6753a39f34cba8d987d50c347dfe989ea2",
       "owner": "DS-01"
     },
     {
@@ -18,7 +18,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "d0bdaec00be926cfa152b9786a0e0f2de7410013ddf2f7fdac2b115f983e86ba",
+      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
       "owner": "DS-01"
     },
     {
@@ -33,7 +33,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "1722f8ba8571fd276466224fe3edb916cd3aec36246250c4295bffb1277e848a",
+      "sha256": "e23e72b230a2efb1da04bf62447829c29726c4fb72aebea7ac7c715bf7cd8641",
       "owner": "DS-01"
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "03f0ec3775a7a130a0cd6ace738166a0c58778f6d4dfc4a3c2eb28816dedded1",
+      "sha256": "e66b4650ee26064c40975b58397fe6d7078a75586eb3f085f4f8e7ca8098c819",
       "owner": "DS-01"
     }
   ],
@@ -76,7 +76,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "sha256": "d650202d3436c38e3f4a9fd3fb8e90dc9229f6c6e00ec0127dacd008e476a10a",
       "kind": "test",
       "layer": "electron",
       "owner": "DS-01"
@@ -89,5 +89,5 @@
       "owner": "DS-01"
     }
   ],
-  "canonicalPayloadSha256": "eee7955d0b30b5d4054ca8ae2ef1b60fc6a7a6c2411641a0d6979ededb2a5543"
+  "canonicalPayloadSha256": "0ae0f4f1a37ed66ccca8992f77df6f84443bb545462f2e0652f76723f9e04ac5"
 }

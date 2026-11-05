@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: ready
+Status: in-progress
 
 Spec: [通用Agent规格](../../../specs/general-agent.md)
 
@@ -44,7 +44,13 @@ User stories: G05
 
 ## 执行记录
 
-尚未开始。获批后记录起点提交、修改边界、实际决定与偏离理由、调用授权、未完成条件；按[执行流程](../../../agents/workflow.md)推进。
+2026-10-30，起點6b01449；A05已verified並推送。只用真實loopback SDK HTTP/OAuth fixture與確定性模型，不用外部帳號。沿用SDK1.32.1、A05設定/vault、命名空間、Broker每run每server授權和結果/取消鏈，擴充獨立src/mcp模組。比較另建遠端registry與擴充同一adapter，選後者，保留本地/遠端一致的schema與任務歸屬。外部已批准兼容服務尚無帳號/地址，其真實服務驗收保留未完成。
+
+## Test and design seam
+
+設定/API→官方StreamableHTTP（JSON與SSE回應）/必要的SDK舊SSE adapter→token/OAuth provider vault→原Agent工具鏈。官方SDK負責認證協議與PKCE，應用只管理callback狀態、現有憑據引用及使用者登入入口。網路遵循父context且不把token轉送到跨origin重導；取消/丟回應不重放工具。fixture先測red再green，外部模型/帳號不以fixture充當已驗。
+
+依據：[傳輸](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports)、[認證](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization)與已安裝SDK實際client/auth、streamableHttp型別；不採GitHub main的v2 API。
 
 ## 审查与验证结果
 

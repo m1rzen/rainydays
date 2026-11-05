@@ -25,6 +25,7 @@ import {
   bufferToVector,
   type ScoredMemory,
 } from "../embedding.js";
+import { searchKnowledgeTriplets } from "../lux-cloud-runtime.js";
 
 // ===========================================
 // remember —— 记录一条知识
@@ -51,6 +52,11 @@ export const rememberDef: ToolDefinition = {
           type: "array",
           items: { type: "string" },
           description: "标签列表，便于后续检索。如 ['偏好', 'git'] 或 ['项目X', '数据库']",
+        },
+        scope: {
+          type: "string",
+          enum: ["project", "global"],
+          description: "记忆作用域：project 或 global（默认 project）。",
         },
       },
       required: ["content"],
@@ -98,6 +104,16 @@ export const recallDef: ToolDefinition = {
           type: "number",
           description: "最多返回几条（默认 5）",
         },
+        scope: {
+          type: "string",
+          enum: ["current", "global"],
+          description: "检索范围：current 或 global",
+        },
+        type: {
+          type: "string",
+          enum: ["node", "edge", "note"],
+          description: "可选知识三元组过滤类型：node | edge | note",
+        },
       },
       required: ["query"],
     },
@@ -105,8 +121,15 @@ export const recallDef: ToolDefinition = {
 };
 
 export const recallExec: ToolExecutor = async (args) => {
-  const query = args.query as string;
+  const query = (args.query as string) ?? "";
   const limit = (args.limit as number) || 5;
+  const type = args.type as "node" | "edge" | "note" | undefined;
+  const scope = args.scope as "current" | "global" | undefined;
+
+  if (type) {
+    const triplets = searchKnowledgeTriplets({ query, type, scope, limit });
+    return JSON.stringify({ query, type, scope: scope ?? "current", results: triplets }, null, 2);
+  }
 
   // 尝试向量检索
   if (isEmbeddingAvailable()) {

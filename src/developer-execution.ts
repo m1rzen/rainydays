@@ -12,7 +12,17 @@ import { registerOwnedResource, type ResourceOwner } from "./resource-owner.js";
 import { throwIfCancelled } from "./run-cancellation.js";
 
 /** 开发模式下改为应用内确认、以用户身份执行的工具。 */
-export const DEVELOPER_COMMAND_TOOLS: ReadonlySet<string> = new Set(["execute_command", "shell_start", "shell_input"]);
+export const DEVELOPER_COMMAND_TOOLS: ReadonlySet<string> = new Set([
+  "execute_command",
+  "shell_start",
+  "shell_input",
+  "shell_kill",
+  "bash",
+  "bash_kill",
+  "browser_open",
+  "browser_close",
+  "computer_use",
+]);
 
 export const DEVELOPER_DEFAULT_TIMEOUT_SECONDS = 120;
 export const DEVELOPER_MAX_TIMEOUT_SECONDS = 600;

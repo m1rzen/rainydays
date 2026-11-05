@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "d0bdaec00be926cfa152b9786a0e0f2de7410013ddf2f7fdac2b115f983e86ba",
+      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
       "owner": "PERS-01"
     },
     {
@@ -23,12 +23,12 @@
     },
     {
       "exactCasePath": "personas/debugger.md",
-      "sha256": "e980ea60ff097df4615bcc5509b8ae8c1748a351febd3b374215614d5fe5119a",
+      "sha256": "76192b6fe47a904dd27a381a0935cc94ab0d2ffac43533f99e4adc3119498844",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "personas/developer.md",
-      "sha256": "5d91a4f1561bd2879ff7fc2cbbfc55d6f960bba65c5454717b50688f9866db88",
+      "sha256": "dae5408dc12b81f740e369e30e78e430b1b5eae248ed3aee122a6186c5cff326",
       "owner": "PERS-01"
     },
     {
@@ -38,7 +38,7 @@
     },
     {
       "exactCasePath": "personas/general.md",
-      "sha256": "1db6e30d9fb751fdc043a83064ecec97bccbae7414362c28af6517713880eb01",
+      "sha256": "73f4f23961d2b3fc4cd0311be509fab2f009ffb1731e6abd4c5b9fdf24f3319a",
       "owner": "PERS-01"
     },
     {
@@ -73,7 +73,7 @@
     },
     {
       "exactCasePath": "personas/default.md",
-      "sha256": "ab5cfbf8d7cbdf5b59e14ee7cc587ebf1d78ef10042afcf3c1b93dd7682deda1",
+      "sha256": "12c1a5c6ac96508aa5ab3d11dd9027c7e919c6d6dcd1534b015443c3bb944567",
       "owner": "PERS-01"
     },
     {
@@ -93,12 +93,12 @@
     },
     {
       "exactCasePath": "personas/playbook.md",
-      "sha256": "9101d1bdf85f6327a0973f669571efb86f99d7315de62bee33bc90bf2a47280d",
+      "sha256": "8b398f0736975a945213ab3ca444c65ceeb9ebe2d14df96337a3c2f2e17e9e43",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "personas/routine.md",
-      "sha256": "9e1af04eb1a56a429af54e49508035f2aa4d21435e082211a6fa360e1453587e",
+      "sha256": "a77473c380fda2d09e8ae6c5269b1b5979fe297f0102753518f08edebe34f3e2",
       "owner": "PERS-01"
     },
     {
@@ -108,17 +108,17 @@
     },
     {
       "exactCasePath": "scripts/generate-build-info.mjs",
-      "sha256": "e760c870cad60a5e6733bcab36b61cffae4b72c9b775189476872bfddc33eb76",
+      "sha256": "c54d22679f569e36da074eef03f89d3db93c7f9feda32d6e2a909a4b8f22f61d",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "f610a92a3a825d93f0cdf96e3b7fffab3c591a1215e05f607163e5eef728b348",
+      "sha256": "ec121de3878bb41e7297b218f6f025d91d8d141e45eaac18ec8a2056ce81375e",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "scripts/test-version-model.mjs",
-      "sha256": "49ed033a96f217ee0421476218a58894a7809c6c57358a295e59f45e3d8713e8",
+      "sha256": "ada3bd93b119b196a928fbf5bac9d751515daf0c7cc2b9c890e8e2133f5df0eb",
       "owner": "PERS-01"
     },
     {
@@ -128,7 +128,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "1722f8ba8571fd276466224fe3edb916cd3aec36246250c4295bffb1277e848a",
+      "sha256": "e23e72b230a2efb1da04bf62447829c29726c4fb72aebea7ac7c715bf7cd8641",
       "owner": "PERS-01"
     },
     {
@@ -143,22 +143,22 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "sha256": "3bfbeb374a8d3230e2a900b272f34d255fb60b9386e9675546bcaa725230560c",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "src/capability-broker.ts",
-      "sha256": "28a2eadfbd65171e88559309c3ea4ae50a9aaf3f149c6f548903b047e8909fbb",
+      "sha256": "d6e1a6e81700e57f34c1341c14b488171e63b0324e47c4b3a0ac3d71675cce09",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
+      "sha256": "1e2e7d79f024f8890a07d53a3e3023da6560345b7c72cd836d9f9d90d19a8259",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "66e6dc01044271f687f58748a1bfcdc765539292b1be78cca65fdcc924463e15",
+      "sha256": "54ac0c7e279c4dc66de636b812bc530392b911357fe25263b597367bbc3c7a79",
       "owner": "PERS-01"
     },
     {
@@ -168,12 +168,12 @@
     },
     {
       "exactCasePath": "src/session.ts",
-      "sha256": "ddee52bb93efe1c0a8ade1c5443d47f1d38e826ca3c269d232d7ed2f6f05924d",
+      "sha256": "89bf09c9fb72ff224d6c20ea2a1f30f5eddf6c3e1be19313f5a9ad02d106bac5",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "b02ad6940f8c77ac634a9b9c022eb660425d85120dba2cadd87f14d20fbdef0d",
+      "sha256": "36517715129d97a1c909bef4e15bf0d0c58671aae9808656af659a2abc44271c",
       "owner": "PERS-01"
     },
     {
@@ -188,12 +188,12 @@
     },
     {
       "exactCasePath": "src/types.ts",
-      "sha256": "6ae065f4fe3647fc777de9435965894ff03e5428c9753b79df16cdf08dcece88",
+      "sha256": "bedb1a57504f8d615fc349d14afad8dce0221c509d239295e8c73ee7511e3fb4",
       "owner": "PERS-01"
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "88d58ae37f27f624eee647775c6f54ff792d1097ed52cf9ab81898f52fb06655",
+      "sha256": "fe6a2c2cef39e0d91213c0ca060265239b68d69e870e7fc8ff696931f5eab7e0",
       "owner": "PERS-01"
     },
     {
@@ -235,5 +235,5 @@
       "owner": "PERS-01"
     }
   ],
-  "canonicalPayloadSha256": "f72fe79bcacf85d19488966be7eb5818d41097ace81b4d035a0a8e4618be84fb"
+  "canonicalPayloadSha256": "1f9433cb948b5d98e54d275705e47452c634f057be95ae3ec52e36fee54bd73d"
 }

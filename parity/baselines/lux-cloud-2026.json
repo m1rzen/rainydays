@@ -1,0 +1,945 @@
+{
+  "$schema": "../schema/lux-cloud-baseline.schema.json",
+  "schemaVersion": 2,
+  "target": {
+    "product": "Lux-Cloud",
+    "version": "2026.10",
+    "lineage": [
+      "pi-coding-agent (minimal tool loop, exact edit, prefix-cache discipline, thinking_effort)",
+      "lux-desktop-0.1.898 (local workbench, SQLite sessions, MCP, worker attach)",
+      "lux-cloud-2026 (4-daemon base, frozen prefix + 50/90 Scribe/AgentMap, cold/hot canvas, store-backed skills, persistent subagent sessions)"
+    ]
+  },
+  "architecture": {
+    "services": {
+      "sessiond": "Session lifecycle, wake queue, status transitions (streaming|idle|error|interrupted), 5-minute snapshot pagination, session_folders display organization",
+      "core": "Per-session reasoning engine & state machine launched via launch.json (anima_root, knowledge_path, prompts_root, data_dir, iam_url)",
+      "coordinator": "Session-scoped transfer store (/data/base/coordinator/transfers) and multi-node gateway routing",
+      "worker": "Tool execution plane supporting managed Base Worker (/workspace) and paired user Workers (origin=user) with per-call worker_id routing"
+    },
+    "executionMode": {
+      "mode": "YOLO",
+      "humanApprovalQueue": false,
+      "supervisorGate": false,
+      "userDecisionTool": "ask_user"
+    },
+    "contextEngine": {
+      "frozenPrefix": {
+        "components": [
+          "Anima 4-part constitution (identity, working-principles, memory-salience, voice)",
+          "Memory cues (<memory> recent notes/entities)",
+          "Agent Map global navigation projection",
+          "Environment snapshot (<env> with hour-granularity timestamp to preserve Provider Prefix Cache)"
+        ],
+        "midSessionMutationRule": "New pins, Map updates, memories, and loaded Skills appear as tool results in the conversation stream first, and are merged into the frozen prefix only at the next compaction/replacement boundary."
+      },
+      "watermarks": {
+        "prepare": 0.5,
+        "replace": 0.9,
+        "description": "At 50% context pressure, Scribe prepares summary and Map updates asynchronously without invalidating the main frozen prefix. At 90% pressure, hot window replacement and prefix refresh occur atomically at a turn boundary."
+      },
+      "roles": {
+        "main": "Primary action-oriented assistant with full toolset",
+        "scribe": "Background context cartographer reading immutable frozen Canvas slices and updating Agent Map + ~1024-token cumulative continuity",
+        "muse": "Restricted independent reflection peer reading bounded action snapshot via muse_snapshot, optionally updating Map structure, and finishing with muse_inject or muse_noop"
+      }
+    },
+    "animaLayout": {
+      "root": "/data/base/animas/<anima-id>/",
+      "metadata": "anima.json (id, revision, official)",
+      "constitution": [
+        "constitution/identity.md",
+        "constitution/working-principles.md",
+        "constitution/memory-salience.md",
+        "constitution/voice.md"
+      ],
+      "knowledgeStore": "knowledge.sqlite3 (isolated per anima)"
+    }
+  },
+  "contracts": {
+    "tools": [
+      {
+        "name": "read",
+        "subsystem": "worker-fs",
+        "description": "Execute the Worker-owned read capability. Supports 1-based line pagination (offset/limit) and bounded UTF-8 byte-range reads (byte_offset/max_bytes).",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "file_path": { "type": "string", "description": "Absolute or Worker-CWD-relative file path." },
+            "offset": { "type": "integer", "minimum": 1, "description": "Starting line number (1-based)." },
+            "limit": { "type": "integer", "minimum": 0, "description": "Maximum number of lines to return." },
+            "byte_offset": { "type": "integer", "minimum": 0, "description": "Optional UTF-8 byte offset for bounded range reads." },
+            "max_bytes": { "type": "integer", "minimum": 1, "maximum": 10240, "description": "Maximum bytes to return in byte-range mode (default 8192, max 10240)." },
+            "worker_id": { "type": "string", "description": "Optional online authorized Worker ID, personal alias, or unique display name for this call only." }
+          },
+          "required": ["file_path"]
+        }
+      },
+      {
+        "name": "write",
+        "subsystem": "worker-fs",
+        "description": "Execute the Worker-owned write capability.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "file_path": { "type": "string", "description": "Absolute or Worker-CWD-relative file path." },
+            "content": { "type": "string", "description": "Complete file content." },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["file_path", "content"]
+        }
+      },
+      {
+        "name": "edit",
+        "subsystem": "worker-fs",
+        "description": "Execute the Worker-owned edit capability.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "file_path": { "type": "string" },
+            "old_string": { "type": "string", "description": "Exact text to replace." },
+            "new_string": { "type": "string", "description": "Replacement text." },
+            "replace_all": { "type": "boolean", "description": "Replace every occurrence." },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["file_path", "old_string", "new_string"]
+        }
+      },
+      {
+        "name": "glob",
+        "subsystem": "worker-fs",
+        "description": "Execute the Worker-owned glob capability.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "pattern": { "type": "string" },
+            "path": { "type": "string" },
+            "head_limit": { "type": "integer", "minimum": 0, "default": 500 },
+            "max_depth": { "type": "integer", "minimum": 0 },
+            "timeout": { "type": "number", "minimum": 1, "default": 10000 },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["pattern"]
+        }
+      },
+      {
+        "name": "grep",
+        "subsystem": "worker-fs",
+        "description": "Execute the Worker-owned grep capability.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "pattern": { "type": "string" },
+            "path": { "type": "string" },
+            "glob": { "type": "string" },
+            "type": { "type": "string" },
+            "output_mode": { "type": "string", "enum": ["content", "files_with_matches", "count"], "default": "files_with_matches" },
+            "regex_dialect": { "type": "string", "enum": ["auto", "ripgrep", "grep-basic"], "default": "auto" },
+            "-i": { "type": "boolean" },
+            "-n": { "type": "boolean" },
+            "-A": { "type": "integer", "minimum": 0 },
+            "-B": { "type": "integer", "minimum": 0 },
+            "-C": { "type": "integer", "minimum": 0 },
+            "context": { "type": "integer", "minimum": 0 },
+            "multiline": { "type": "boolean" },
+            "head_limit": { "type": "integer", "minimum": 0 },
+            "offset": { "type": "integer", "minimum": 0 },
+            "timeout": { "type": "number", "minimum": 1, "default": 10000 },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["pattern"]
+        }
+      },
+      {
+        "name": "bash",
+        "subsystem": "worker-exec",
+        "description": "Execute the Worker-owned bash capability. Supports one-shot shell override and persistent named shell sessions.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "command": { "type": "string" },
+            "cwd": { "type": "string" },
+            "description": { "type": "string" },
+            "env": { "type": "object" },
+            "session": { "type": "string", "description": "Optional persistent shell session name." },
+            "shell": { "type": "string", "enum": ["bash", "sh", "powershell", "pwsh", "cmd"] },
+            "timeout": { "type": "number", "minimum": 0, "default": 30000 },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["command"]
+        }
+      },
+      {
+        "name": "bash_output",
+        "subsystem": "worker-exec",
+        "description": "Read output of a persistent shell session.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "session": { "type": "string" },
+            "tail": { "type": "integer", "minimum": 0 },
+            "wait": { "type": "number", "minimum": 0 },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["session"]
+        }
+      },
+      {
+        "name": "bash_list",
+        "subsystem": "worker-exec",
+        "description": "List persistent shell sessions.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "worker_id": { "type": "string" }
+          }
+        }
+      },
+      {
+        "name": "bash_kill",
+        "subsystem": "worker-exec",
+        "description": "Terminate a persistent shell session and its process tree.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "session": { "type": "string" },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["session"]
+        }
+      },
+      {
+        "name": "script",
+        "subsystem": "worker-exec",
+        "description": "Execute the Worker-owned script capability (defaults to Node.js ES module + top-level await).",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string" },
+            "cwd": { "type": "string" },
+            "lang": { "type": "string" },
+            "timeout": { "type": "number", "minimum": 0, "default": 120000 },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["code"]
+        }
+      },
+      {
+        "name": "worker_list",
+        "subsystem": "worker-plane",
+        "description": "List Workers this user can access, with canonical IDs, personal aliases, platform, native cwd and online/selected status.",
+        "parameters": { "type": "object", "properties": {} }
+      },
+      {
+        "name": "worker_select",
+        "subsystem": "worker-plane",
+        "description": "Explicitly select an authorized online Worker for this Session without restarting Core. MUST be the only tool call in the response.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "worker_id": { "type": "string" }
+          },
+          "required": ["worker_id"]
+        }
+      },
+      {
+        "name": "worker_pairing_claim",
+        "subsystem": "worker-plane",
+        "description": "Claim a device-generated Worker pairing code for this Core's bound user only.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string" }
+          },
+          "required": ["code"]
+        }
+      },
+      {
+        "name": "worker_file_upload",
+        "subsystem": "worker-plane",
+        "description": "Upload a file to the Session-scoped transfer store.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "file_path": { "type": "string" },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["file_path"]
+        }
+      },
+      {
+        "name": "worker_file_download",
+        "subsystem": "worker-plane",
+        "description": "Download a Session-scoped transfer file onto this Worker.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "file_id": { "type": "string" },
+            "output_path": { "type": "string" },
+            "overwrite": { "type": "boolean", "default": false },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["file_id", "output_path"]
+        }
+      },
+      {
+        "name": "preview_web",
+        "subsystem": "worker-plane",
+        "description": "Temporarily publish one to four local Web ports from an owned managed Worker as expiring HTTPS capability links.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "ports": { "type": "array", "items": { "type": "integer", "minimum": 1024, "maximum": 65535 }, "minItems": 1, "maxItems": 4 },
+            "ttl_seconds": { "type": "integer", "minimum": 60, "maximum": 3600, "default": 3600 },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["ports"]
+        }
+      },
+      {
+        "name": "preview_list",
+        "subsystem": "worker-plane",
+        "description": "List active preview mappings for the selected or specified owned managed Worker.",
+        "parameters": {
+          "type": "object",
+          "properties": { "worker_id": { "type": "string" } }
+        }
+      },
+      {
+        "name": "preview_close",
+        "subsystem": "worker-plane",
+        "description": "Revoke a preview group and close all its connections.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "worker_id": { "type": "string" }
+          },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "context_usage",
+        "subsystem": "canvas-context",
+        "description": "Current context usage (measured at the latest model request) and tokens left before automatic compaction.",
+        "parameters": { "type": "object", "properties": {} }
+      },
+      {
+        "name": "compact_context",
+        "subsystem": "canvas-context",
+        "description": "Run an isolated curator agent that progressively inspects and summarizes the completed working context, then continue with its replacement window.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "focus": { "type": "string", "description": "What the next stage needs: facts, decisions, constraints and evidence to retain." }
+          }
+        }
+      },
+      {
+        "name": "pin",
+        "subsystem": "canvas-context",
+        "description": "Persist Session-only context constraint.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "content": { "type": "string" }
+          },
+          "required": ["content"]
+        }
+      },
+      {
+        "name": "unpin",
+        "subsystem": "canvas-context",
+        "description": "List pins with no selector ({} or null selectors). Remove one with blockId or 1-based index, or all:true.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "blockId": { "type": "string", "nullable": true },
+            "index": { "type": "integer", "minimum": 1, "nullable": true },
+            "all": { "type": "boolean", "nullable": true }
+          }
+        }
+      },
+      {
+        "name": "tool_result_read",
+        "subsystem": "canvas-context",
+        "description": "Read a saved tool-result block from this Session only, including oversized results represented by previews.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "blockId": { "type": "string" },
+            "offset": { "type": "integer", "minimum": 0 },
+            "maxChars": { "type": "integer", "minimum": 1, "maximum": 12000 }
+          },
+          "required": ["blockId"]
+        }
+      },
+      {
+        "name": "canvas_history_overview",
+        "subsystem": "canvas-context",
+        "description": "Cold-only indexed page, after?:ordinal, limit?:int; never rehydrates hot context.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "after": { "type": "integer", "minimum": 0 },
+            "limit": { "type": "integer", "minimum": 0 }
+          }
+        }
+      },
+      {
+        "name": "canvas_history_search",
+        "subsystem": "canvas-context",
+        "description": "Cold-only bounded scan query:string, after?:ordinal, limit?:int. Continue using next_after.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": { "type": "string" },
+            "after": { "type": "integer", "minimum": 0 },
+            "limit": { "type": "integer", "minimum": 0 }
+          },
+          "required": ["query"]
+        }
+      },
+      {
+        "name": "canvas_history_inspect",
+        "subsystem": "canvas-context",
+        "description": "Cold-only blockId:string, offset?:character offset, maxChars?:int; private payload excluded.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "blockId": { "type": "string" },
+            "offset": { "type": "integer", "minimum": 0 },
+            "maxChars": { "type": "integer", "minimum": 1, "maximum": 12000 }
+          },
+          "required": ["blockId"]
+        }
+      },
+      {
+        "name": "prompt_inspect",
+        "subsystem": "canvas-context",
+        "description": "Inspect compiled external prompt and budgets, role?:main|scribe|muse.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "role": { "type": "string", "enum": ["main", "scribe", "muse"] }
+          }
+        }
+      },
+      {
+        "name": "map_view",
+        "subsystem": "agent-map",
+        "description": "Read exploration tree: nodeId?, depth?, includeNotes?, cursor?. Not a task state machine.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "nodeId": { "type": "string", "nullable": true },
+            "depth": { "type": "integer", "minimum": 0, "nullable": true },
+            "includeNotes": { "type": "boolean", "nullable": true },
+            "cursor": { "type": ["string", "integer"], "nullable": true }
+          }
+        }
+      },
+      {
+        "name": "map_search",
+        "subsystem": "agent-map",
+        "description": "Search Session Map nodes and referenced Notes.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": { "type": "string" },
+            "limit": { "type": "integer", "minimum": 0, "nullable": true },
+            "cursor": { "type": ["string", "integer"], "nullable": true }
+          },
+          "required": ["query"]
+        }
+      },
+      {
+        "name": "map_update",
+        "subsystem": "agent-map",
+        "description": "Atomic node CAS: expectedMapId:null|string, operations:array; each existing target node requires expectedLastActionSeq from map_view/search.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "expectedMapId": { "type": "string", "nullable": true },
+            "operations": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 100,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "op": {
+                    "type": "string",
+                    "enum": [
+                      "add_node",
+                      "update_node",
+                      "move_node",
+                      "remove_node",
+                      "focus_node",
+                      "clear_focus",
+                      "create_note",
+                      "attach_note",
+                      "detach_note",
+                      "update_note",
+                      "refresh_projection"
+                    ]
+                  },
+                  "ref": { "type": "string", "nullable": true },
+                  "nodeId": { "type": "string", "nullable": true },
+                  "parentId": { "type": "string", "nullable": true },
+                  "title": { "type": "string", "nullable": true },
+                  "summary": { "type": "string", "nullable": true },
+                  "expectedLastActionSeq": { "type": "integer", "minimum": 0, "nullable": true },
+                  "noteId": { "type": "string", "nullable": true },
+                  "content": { "type": "string" },
+                  "kind": { "type": "string" },
+                  "scope": { "type": "string", "enum": ["project", "global"] },
+                  "tags": { "type": "array", "items": { "type": "string" } },
+                  "expectedRevision": { "type": "integer", "minimum": 0 },
+                  "reason": { "type": "string", "nullable": true },
+                  "requestFingerprint": { "type": "string", "nullable": true }
+                },
+                "required": ["op"]
+              }
+            }
+          },
+          "required": ["expectedMapId", "operations"]
+        }
+      },
+      {
+        "name": "remember",
+        "subsystem": "knowledge-graph",
+        "description": "Save a memory entry (Note) for cross-session recall.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "content": { "type": "string" },
+            "kind": { "type": "string", "enum": ["episode", "lesson", "decision", "observation"] },
+            "scope": { "type": "string", "enum": ["project", "global"] },
+            "tags": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["content"]
+        }
+      },
+      {
+        "name": "recall",
+        "subsystem": "knowledge-graph",
+        "description": "Search memories by keyword, tag, or kind.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": { "type": "string" },
+            "type": { "type": "string", "enum": ["node", "edge", "note"] },
+            "scope": { "type": "string", "enum": ["current", "global"] },
+            "limit": { "type": "number" }
+          }
+        }
+      },
+      {
+        "name": "inspect",
+        "subsystem": "knowledge-graph",
+        "description": "Retrieve full details of a visible knowledge entry by short id (n_, e_, t_).",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" }
+          },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "graph",
+        "subsystem": "knowledge-graph",
+        "description": "Expand a visible subgraph centered on a node.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "depth": { "type": "number" },
+            "edge_type": { "type": "string" }
+          },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "knowledge_update",
+        "subsystem": "knowledge-graph",
+        "description": "Create or CAS-update private knowledge (node|edge|note, project|global, expectedRevision).",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "op": { "type": "string", "enum": ["create", "update"] },
+            "type": { "type": "string", "enum": ["node", "edge", "note"] },
+            "scope": { "type": "string", "enum": ["project", "global"] },
+            "id": { "type": "string" },
+            "expectedRevision": { "type": "integer", "minimum": 0 },
+            "name": { "type": "string" },
+            "kind": { "type": "string" },
+            "from": { "type": "string" },
+            "to": { "type": "string" },
+            "relation": { "type": "string" },
+            "content": { "type": "string" },
+            "tags": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      },
+      {
+        "name": "consolidate_memory",
+        "subsystem": "knowledge-graph",
+        "description": "Run an ordinary memory peer now. Deep extracts entities/relations and can browse scoped Sessions; shallow saves/anchors notes only.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "level": { "type": "string", "enum": ["shallow", "deep"], "default": "deep" },
+            "hint": { "type": "string" }
+          }
+        }
+      },
+      {
+        "name": "muse",
+        "subsystem": "knowledge-graph",
+        "description": "Run a bounded independent Muse reflection. Wait for completion and return its narrative/noop directly.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "description": "reflect | worry | doubt | eureka | gratitude | custom" },
+            "about": { "type": "string" }
+          }
+        }
+      },
+      {
+        "name": "skill_search",
+        "subsystem": "skills",
+        "description": "Discover external Markdown Skill metadata/sections only.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": { "type": "string" },
+            "limit": { "type": "integer", "minimum": 0 },
+            "cursor": { "type": "string" }
+          },
+          "required": ["query"]
+        }
+      },
+      {
+        "name": "skill_load",
+        "subsystem": "skills",
+        "description": "Explicitly load id:string, sections?:string[], maxTokens?:int; Store-backed context projected into model prompts; repeat loads deduplicate.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "sections": { "type": "array", "items": { "type": "string" } },
+            "maxTokens": { "type": "integer", "minimum": 1, "maximum": 8000 }
+          },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "skill_reload",
+        "subsystem": "skills",
+        "description": "Explicitly re-read a Skill.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "sections": { "type": "array", "items": { "type": "string" } },
+            "maxTokens": { "type": "integer", "minimum": 1, "maximum": 8000 }
+          },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "skill_release",
+        "subsystem": "skills",
+        "description": "Release receipt id:string; cannot erase historical tool results.",
+        "parameters": {
+          "type": "object",
+          "properties": { "id": { "type": "string" } },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "skill_status",
+        "subsystem": "skills",
+        "description": "List persisted receipts; does not read files; reports explicit validation and residency.",
+        "parameters": { "type": "object", "properties": {} }
+      },
+      {
+        "name": "skill_manage",
+        "subsystem": "skills",
+        "description": "Manage current-user Base Skill packages: list/read/create/update/delete/history/restore with ETag CAS.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "enum": ["list", "read", "create", "update", "delete", "history", "restore"] },
+            "id": { "type": "string" },
+            "key": { "type": "string" },
+            "etag": { "type": "string" },
+            "expected_absent": { "type": "boolean" },
+            "content": { "type": "string" },
+            "file": { "type": "string" },
+            "files": { "type": "object" },
+            "remove_files": { "type": "array", "items": { "type": "string" } },
+            "package_base64": { "type": "string" },
+            "revision": { "type": "string" },
+            "query": { "type": "string" },
+            "cursor": { "type": "string" },
+            "limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 },
+            "offset": { "type": "integer", "minimum": 0 },
+            "max_bytes": { "type": "integer", "minimum": 1, "maximum": 65536, "default": 32768 }
+          },
+          "required": ["action"]
+        }
+      },
+      {
+        "name": "models_list",
+        "subsystem": "subagents-models",
+        "description": "List currently available Provider/model profiles for this account.",
+        "parameters": { "type": "object", "properties": {} }
+      },
+      {
+        "name": "thinking_effort_get",
+        "subsystem": "subagents-models",
+        "description": "Read current thinking effort and the current model's supported levels.",
+        "parameters": { "type": "object", "properties": {} }
+      },
+      {
+        "name": "thinking_effort_set",
+        "subsystem": "subagents-models",
+        "description": "Set thinking effort. Applies to the next Provider request.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "effort": { "type": "string", "enum": ["minimal", "low", "medium", "high", "xhigh", "max"] }
+          },
+          "required": ["effort"]
+        }
+      },
+      {
+        "name": "agent_spawn",
+        "subsystem": "subagents-models",
+        "description": "Create a child agent Session and start its task.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "task": { "type": "string" },
+            "name": { "type": "string" },
+            "model": { "type": "string", "nullable": true },
+            "allow_subagent": { "type": "boolean", "default": false }
+          },
+          "required": ["task"]
+        }
+      },
+      {
+        "name": "agent_list",
+        "subsystem": "subagents-models",
+        "description": "List subordinate agents (current) or Sessions in this user Base (all), newest activity first.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "scope": { "type": "string", "enum": ["current", "all"], "default": "current" },
+            "status": { "type": "array", "items": { "type": "string", "enum": ["streaming", "idle", "error", "interrupted"] } },
+            "query": { "type": "string", "maxLength": 256 },
+            "updated_after": { "type": "integer", "minimum": 0 },
+            "limit": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 },
+            "cursor": { "type": "string", "nullable": true }
+          }
+        }
+      },
+      {
+        "name": "agent_peek",
+        "subsystem": "subagents-models",
+        "description": "Inspect another agent: current state, stored conversation and an unfinished turn.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "scope": { "type": "string", "enum": ["status", "brief", "last", "recent", "full"] },
+            "turn": { "type": "number" }
+          },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "agent_post",
+        "subsystem": "subagents-models",
+        "description": "Send a message to another agent. Idle agents begin a turn; active agents receive an injection that releases passive waits.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "message": { "type": "string" },
+            "mode": { "type": "string", "enum": ["reply", "alert"] },
+            "abort": { "type": "boolean" }
+          },
+          "required": ["id", "message"]
+        }
+      },
+      {
+        "name": "agent_wait",
+        "subsystem": "subagents-models",
+        "description": "Wait for a target agent state change or timeout. Supports synchronous blocking and async subscription.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "event": {
+              "type": "object",
+              "properties": {
+                "session": { "type": "string" },
+                "on": { "type": "string", "enum": ["idle", "error", "any"] }
+              },
+              "required": ["session"]
+            },
+            "async": { "type": "boolean" },
+            "persistent": { "type": "boolean" },
+            "timeout": { "type": "number" }
+          },
+          "required": ["event"]
+        }
+      },
+      {
+        "name": "agent_cancel_wait",
+        "subsystem": "subagents-models",
+        "description": "Cancel an async agent_wait subscription by its id.",
+        "parameters": {
+          "type": "object",
+          "properties": { "id": { "type": "string" } },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "agent_close",
+        "subsystem": "subagents-models",
+        "description": "Close an agent Session by id.",
+        "parameters": {
+          "type": "object",
+          "properties": { "id": { "type": "string" } },
+          "required": ["id"]
+        }
+      },
+      {
+        "name": "main_agent_inspect",
+        "subsystem": "subagents-models",
+        "description": "Inspect the parent/origin agent bound to this subagent.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "depth": { "type": "string", "enum": ["summary", "evidence"] },
+            "turn": { "type": "number" }
+          }
+        }
+      },
+      {
+        "name": "session_folders",
+        "subsystem": "subagents-models",
+        "description": "Organize pure-display Session folders without waking Sessions or changing projects.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "enum": ["list", "preview", "apply", "undo"] },
+            "folder": { "type": "string" },
+            "query": { "type": "string" },
+            "limit": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 },
+            "cursor": { "type": "string" },
+            "expected_revision": { "type": "integer", "minimum": 0 },
+            "request_id": { "type": "string" },
+            "plan_id": { "type": "string" },
+            "undo_id": { "type": "string" },
+            "dry_run": { "type": "boolean", "default": true },
+            "compact": { "type": "boolean", "default": true },
+            "operations": { "type": "array" }
+          },
+          "required": ["action"]
+        }
+      },
+      {
+        "name": "cron_schedule",
+        "subsystem": "cron",
+        "description": "Schedule a delayed or repeating message for this Session.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "delay": { "type": "string" },
+            "message": { "type": "string" },
+            "repeat": { "type": "string" },
+            "tag": { "type": "string" }
+          },
+          "required": ["delay", "message"]
+        }
+      },
+      {
+        "name": "cron_schedule_on_idle",
+        "subsystem": "cron",
+        "description": "Schedule a delayed or repeating message for this Session, delivered only at the next idle boundary.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "delay": { "type": "string" },
+            "message": { "type": "string" },
+            "repeat": { "type": "string" },
+            "tag": { "type": "string" }
+          },
+          "required": ["delay", "message"]
+        }
+      },
+      {
+        "name": "cron_list",
+        "subsystem": "cron",
+        "description": "List all scheduled cron tasks created by this Session.",
+        "parameters": { "type": "object", "properties": {} }
+      },
+      {
+        "name": "cron_cancel",
+        "subsystem": "cron",
+        "description": "Cancel a scheduled cron task by id or tag.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "tag": { "type": "string" }
+          }
+        }
+      },
+      {
+        "name": "ask_user",
+        "subsystem": "interaction",
+        "description": "Ask the user for missing business information or a decision. Not permission approval.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "questions": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 4,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "header": { "type": "string" },
+                  "question": { "type": "string" },
+                  "multiSelect": { "type": "boolean" },
+                  "options": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 4,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": { "type": "string" },
+                        "description": { "type": "string" },
+                        "markdown": { "type": "string" }
+                      },
+                      "required": ["label", "description"]
+                    }
+                  }
+                },
+                "required": ["header", "question", "options"]
+              }
+            }
+          },
+          "required": ["questions"]
+        }
+      }
+    ]
+  }
+}

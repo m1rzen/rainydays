@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "66eec398d4c51529e40a54b189c4961de2e7c40f22eab215d2e1cc4e336fc27a",
+      "sha256": "67d02541bf34585a9cc03bc1199cde6753a39f34cba8d987d50c347dfe989ea2",
       "owner": "REL-03"
     },
     {
@@ -28,7 +28,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "d0bdaec00be926cfa152b9786a0e0f2de7410013ddf2f7fdac2b115f983e86ba",
+      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
       "owner": "REL-03"
     },
     {
@@ -43,7 +43,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "1722f8ba8571fd276466224fe3edb916cd3aec36246250c4295bffb1277e848a",
+      "sha256": "e23e72b230a2efb1da04bf62447829c29726c4fb72aebea7ac7c715bf7cd8641",
       "owner": "REL-03"
     },
     {
@@ -58,7 +58,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "03f0ec3775a7a130a0cd6ace738166a0c58778f6d4dfc4a3c2eb28816dedded1",
+      "sha256": "e66b4650ee26064c40975b58397fe6d7078a75586eb3f085f4f8e7ca8098c819",
       "owner": "REL-03"
     }
   ],
@@ -99,5 +99,5 @@
       "owner": "REL-03"
     }
   ],
-  "canonicalPayloadSha256": "23891ebde9358b4af859b880e6009148b92cb3b5548376e103ec5eead60fd10e"
+  "canonicalPayloadSha256": "1ae8effc44678c2b21a29adc092c7f38c8bfd34e6b1a494b064673af05404902"
 }

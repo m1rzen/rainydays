@@ -232,11 +232,14 @@ export async function askUserQuestion(question: string, options: string[] = [], 
 }
 
 export async function askUserConfirm(question: string, signal?: AbortSignal): Promise<{ approved: boolean; answer: string }> {
-  const answer = await askUserQuestion(question, ["确认执行", "拒绝执行"], 300000, signal);
+  const answer = await askUserQuestion(question, ["确认执行", "本会话自动批准（Auto 模式）", "拒绝执行"], 300000, signal);
   const normalized = answer.trim().toLowerCase();
   const rejectChoices = new Set(["拒绝执行", "拒绝", "取消", "不同意", "不允许", "否", "no", "n", "deny", "reject", "cancel"]);
   if (rejectChoices.has(normalized)) return { approved: false, answer };
-  const approveChoices = new Set(["确认执行", "确认", "同意", "允许", "可以", "是", "yes", "y", "approve", "ok"]);
+  const approveChoices = new Set([
+    "确认执行", "确认", "同意", "允许", "可以", "是", "yes", "y", "approve", "ok",
+    "本会话自动批准（auto 模式）", "本会话自动批准", "本会话允许", "auto",
+  ]);
   return { approved: approveChoices.has(normalized), answer };
 }
 
@@ -250,13 +253,52 @@ export const askUserDef: ToolDefinition = {
       properties: {
         question: { type: "string", description: "要问用户的问题。" },
         options: { type: "array", items: { type: "string" }, description: "可选选项列表（最多 4 个）。用户也可以输入自定义答案。" },
+        questions: {
+          type: "array",
+          minItems: 1,
+          maxItems: 4,
+          description: "Lux-Cloud 结构化问题列表。",
+          items: {
+            type: "object",
+            properties: {
+              header: { type: "string" },
+              question: { type: "string" },
+              multiSelect: { type: "boolean" },
+              options: {
+                type: "array",
+                minItems: 2,
+                maxItems: 4,
+                items: {
+                  type: "object",
+                  properties: {
+                    label: { type: "string" },
+                    description: { type: "string" },
+                    markdown: { type: "string" },
+                  },
+                  required: ["label", "description"],
+                },
+              },
+            },
+            required: ["header", "question", "options"],
+          },
+        },
       },
-      required: ["question"],
     },
   },
 };
 
 export const askUserExec: ToolExecutor = async (args, _env, invocation) => {
-  const answer = await askUserQuestion(args.question as string, (args.options as string[]) || [], 300000, invocation?.signal);
+  if (Array.isArray(args.questions) && args.questions.length > 0) {
+    const answers: Array<{ header: string; question: string; answer: string }> = [];
+    for (const q of args.questions as Array<{ header: string; question: string; options?: Array<{ label: string; description?: string }> }>) {
+      const opts = Array.isArray(q.options) ? q.options.map(o => `${o.label}${o.description ? ` — ${o.description}` : ""}`) : [];
+      const ans = await askUserQuestion(`[${q.header}] ${q.question}`, opts, 300000, invocation?.signal);
+      answers.push({ header: q.header, question: q.question, answer: ans });
+    }
+    return JSON.stringify({ answers }, null, 2);
+  }
+  const question = typeof args.question === "string" ? args.question : "";
+  if (!question) throw new Error("ask_user requires question or questions");
+  const answer = await askUserQuestion(question, (args.options as string[]) || [], 300000, invocation?.signal);
   return `用户回答: ${answer}`;
 };

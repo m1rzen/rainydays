@@ -69,12 +69,12 @@ test("TOOL-02 built-in personas prefer canonical file tools while legacy names r
 
 test("TOOL-02 canonical definitions expose the complete frozen field contracts", () => {
   const fields = definition => Object.keys(definition.function.parameters.properties).sort();
-  assert.deepEqual(fields(lux.readDef), ["file_path", "limit", "offset", "pages"]);
-  assert.deepEqual(fields(lux.writeDef), ["content", "file_path"]);
-  assert.deepEqual(fields(lux.editDef), ["file_path", "new_string", "old_string", "replace_all"]);
+  assert.deepEqual(fields(lux.readDef), ["byte_offset", "file_path", "limit", "max_bytes", "offset", "pages", "worker_id"]);
+  assert.deepEqual(fields(lux.writeDef), ["content", "file_path", "worker_id"]);
+  assert.deepEqual(fields(lux.editDef), ["file_path", "new_string", "old_string", "replace_all", "worker_id"]);
   assert.deepEqual(fields(lux.replaceDef), fields(lux.editDef));
-  assert.deepEqual(fields(lux.globDef), ["path", "pattern"]);
-  assert.deepEqual(fields(grepModule.grepDef), ["-A", "-B", "-C", "-i", "-n", "context", "glob", "head_limit", "multiline", "offset", "output_mode", "path", "pattern", "regex_dialect", "type"]);
+  assert.deepEqual(fields(lux.globDef), ["head_limit", "max_depth", "path", "pattern", "timeout", "worker_id"]);
+  assert.deepEqual(fields(grepModule.grepDef), ["-A", "-B", "-C", "-i", "-n", "context", "glob", "head_limit", "multiline", "offset", "output_mode", "path", "pattern", "regex_dialect", "timeout", "type", "worker_id"]);
   assert.deepEqual(lux.readDef.function.parameters.required, ["file_path"]);
   assert.deepEqual(lux.writeDef.function.parameters.required, ["file_path", "content"]);
   assert.deepEqual(lux.editDef.function.parameters.required, ["file_path", "old_string", "new_string"]);

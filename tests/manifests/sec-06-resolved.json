@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "electron/main.cjs",
-      "sha256": "66eec398d4c51529e40a54b189c4961de2e7c40f22eab215d2e1cc4e336fc27a",
+      "sha256": "67d02541bf34585a9cc03bc1199cde6753a39f34cba8d987d50c347dfe989ea2",
       "owner": "SEC-06"
     },
     {
@@ -18,12 +18,12 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "sha256": "3bfbeb374a8d3230e2a900b272f34d255fb60b9386e9675546bcaa725230560c",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "src/bootstrap-database.ts",
-      "sha256": "a4ce1c94fe22775f6d309ae2608d8d7f69a181584751d6f36a6a3bdbe7a89de3",
+      "sha256": "3243eea9d3b47e23722a03209bec68a672efcf12a76edad415adc5ebfa7e18a9",
       "owner": "SEC-06"
     },
     {
@@ -38,17 +38,17 @@
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
+      "sha256": "1e2e7d79f024f8890a07d53a3e3023da6560345b7c72cd836d9f9d90d19a8259",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "66e6dc01044271f687f58748a1bfcdc765539292b1be78cca65fdcc924463e15",
+      "sha256": "54ac0c7e279c4dc66de636b812bc530392b911357fe25263b597367bbc3c7a79",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "src/playbook.ts",
-      "sha256": "a420fdd834db4c8279dc866223a35de37df1a585dde4a35afc4af3f2bc1b004d",
+      "sha256": "526dcdf2f28038235d3ba89561469268c96b3e97989278a58fab1823d36c904b",
       "owner": "SEC-06"
     },
     {
@@ -68,22 +68,22 @@
     },
     {
       "exactCasePath": "src/tools/index.ts",
-      "sha256": "f7cec1d0f2daf8f46073bc254d22e4ab8c90c4f2f255c924dd5c2f66dc9549a3",
+      "sha256": "e1330b5e28cd33ed66bd3ae1566f665bae026c30d676457c656971ab28e75ea2",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "88d58ae37f27f624eee647775c6f54ff792d1097ed52cf9ab81898f52fb06655",
+      "sha256": "fe6a2c2cef39e0d91213c0ca060265239b68d69e870e7fc8ff696931f5eab7e0",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "478c9f9fed363353c12cddabb788fe85c60448d50dff27fb6a6697683ad6d7ba",
+      "sha256": "2d59108a795b170b873f9c7fe9f801839cabd826cb5ab1481c46f6335ebb6913",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "dist/bootstrap-database.js",
-      "sha256": "32eb2871a24cb68209c31897a833e4913815f69882216e494e33a7e42d840a3c",
+      "sha256": "5dab3c45c637c8f372af74ed463d889e7a52639ce9015cbb5128de67ce8e3cce",
       "owner": "SEC-06"
     },
     {
@@ -98,17 +98,17 @@
     },
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "5cfc545b89b8b5d6a49a06c219cc991ea1c0cd9980e1306c755f47c8dff173fb",
+      "sha256": "fa97d05ecc9dc07beab2197416a20275f9bddeb63a135d49c7bffbfb40150428",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "c0f880bf7c0c15ffa618247f05557d521029387e1b8e0e786a39a88526105d51",
+      "sha256": "3ec7f9fa04823fc8ca807bdd8b399c4bda91ba277575a10863be4bc748343ab6",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "dist/playbook.js",
-      "sha256": "78a8491b360c73d58ae5d1a95e4b31b230dc92f980392fe243d4c234c3959a16",
+      "sha256": "73eb79a46145b85a45e028fc2f08aa79e43a51e12bb22cdff61f5e1c0ff5a8f9",
       "owner": "SEC-06"
     },
     {
@@ -128,12 +128,12 @@
     },
     {
       "exactCasePath": "dist/tools/index.js",
-      "sha256": "c89fe997e34260991bfa81b25d10388575de10a6b4253c39674797962de48c3e",
+      "sha256": "afdc663cd1655ac7f4438be47bc104ff9c6b0ef1ab9bc95b619e754c438d154b",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "981683aeb9036331ec3aedd680a8e9695d8c07ac0fab3056fe43df9184a05c80",
+      "sha256": "e3743791b6c2d5fdc0c673b29525379a8a7eafe4cd44a7e44a5fb60e5dd55b9f",
       "owner": "SEC-06"
     }
   ],
@@ -168,7 +168,7 @@
     },
     {
       "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-      "sha256": "ddafc43dec89d904749962cbeb1ace661d63ac748baf04506a0fcbee01493d15",
+      "sha256": "cb6638806da64f816268ccce37e88d1ff568e7674b0bef357fc6bb6844068bd3",
       "kind": "test",
       "layer": "integration",
       "owner": "SEC-06"
@@ -196,18 +196,18 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "sha256": "d650202d3436c38e3f4a9fd3fb8e90dc9229f6c6e00ec0127dacd008e476a10a",
       "kind": "test",
       "layer": "electron",
       "owner": "SEC-06"
     },
     {
       "exactCasePath": "tests/packaged/sec05-win-unpacked-credentials.test.mjs",
-      "sha256": "33cb49fd11411e43617f51ec035a8380ff7fd3bf96bd0d69df0771fa1189d35c",
+      "sha256": "695c9a69a7a28648c18a06a90b660c7549e521f9eaf8c28177062dcf7c0e997c",
       "kind": "test",
       "layer": "packaged",
       "owner": "SEC-06"
     }
   ],
-  "canonicalPayloadSha256": "e91bd6244882c250c1e2c6ae53723c8325b14b7e5d98b85c56c59008cb6a5742"
+  "canonicalPayloadSha256": "0fd0b21f10578e2887dd077c8f7fd1fbeabc534587cef1f9d3d83c6c239da073"
 }

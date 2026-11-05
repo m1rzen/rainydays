@@ -206,6 +206,6 @@ export function publicSettingsDomains(value: SettingsDomains): Record<string, un
   const relayConfigured = typeof clone.relay.credentialRef === "string";
   delete clone.asr.credentialRef;
   delete clone.relay.credentialRef;
-  clone.mcp.servers = value.mcp.servers.map(server => ({ ...server, env: Object.fromEntries(Object.keys(server.env).map(key => [key, ""])) }));
+  clone.mcp.servers = value.mcp.servers.map(server => ({ ...server, auth: { ...server.auth, credentialRef: "" }, env: Object.fromEntries(Object.keys(server.env).map(key => [key, ""])) }));
   return { ...clone, credentials: { asrConfigured, relayConfigured } };
 }

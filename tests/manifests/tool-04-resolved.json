@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "d2f5269d283b6cd1a163c01211d9e97bab1b74e512b1adec8541e7fe7decce54",
+      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
       "owner": "TOOL-04"
     },
     {
@@ -23,12 +23,12 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "0d913f3167364b53cf0f51101820b151d7d97b76167da57b8ec776b6baa644d5",
+      "sha256": "e23e72b230a2efb1da04bf62447829c29726c4fb72aebea7ac7c715bf7cd8641",
       "owner": "TOOL-04"
     },
     {
       "exactCasePath": "native/sandbox-host/sandbox-host.cpp",
-      "sha256": "7aae6f025aa45c433936d96abf3fb68c1e0e3612fea0079aee50cb7ae3a15079",
+      "sha256": "4e6033af505e5e1e24fbca2808f71d9a5039ea240d843826631a38eb45e64db0",
       "owner": "TOOL-04"
     },
     {
@@ -38,7 +38,7 @@
     },
     {
       "exactCasePath": "src/execution-isolation.ts",
-      "sha256": "83dfdf6e98865acce425a66e8eb0bd4cded8425f2f7e2854334db4c730a28f00",
+      "sha256": "43b99ae750c22dcbfad80dc54b26da9b3bdfad9df916d8b4ee88d33098f9bd29",
       "owner": "TOOL-04"
     },
     {
@@ -48,32 +48,32 @@
     },
     {
       "exactCasePath": "src/execution-runtime.ts",
-      "sha256": "0264db73364b929b7a3e9de95093798b303cdb6bc81d301b8bfd327f6944e676",
+      "sha256": "6201dd1df3a00ff136c1d705d3b93a87c86a6c2ba0ca15f661392fa4146f3b4f",
       "owner": "TOOL-04"
     },
     {
       "exactCasePath": "src/script-runtime.ts",
-      "sha256": "e9ff0fcc8bf3a5c9b3c947309716a7e17987032e0f5d1a814c1e5f0fbd6e4976",
+      "sha256": "e11145f87ecfc2832e5016546e2d9b9ff6a0d9f04de367171ad5e0badd5d931d",
       "owner": "TOOL-04"
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "45fcc2cf22b2000176e164c6d86c1ff9338fcc299282d4fdd0aef218bfc1bb62",
+      "sha256": "36517715129d97a1c909bef4e15bf0d0c58671aae9808656af659a2abc44271c",
       "owner": "TOOL-04"
     },
     {
       "exactCasePath": "src/tool-protocol.ts",
-      "sha256": "4f5b925988709fec3bbc61097e60f1ff6daef4c58a179c4c0e4752c55ad07d9d",
+      "sha256": "fdd1305b84a5447aa20d8988e4862283474e2c6f904dfadcc6cd2db28c06cc16",
       "owner": "TOOL-04"
     },
     {
       "exactCasePath": "src/tools/index.ts",
-      "sha256": "f7cec1d0f2daf8f46073bc254d22e4ab8c90c4f2f255c924dd5c2f66dc9549a3",
+      "sha256": "e1330b5e28cd33ed66bd3ae1566f665bae026c30d676457c656971ab28e75ea2",
       "owner": "TOOL-04"
     },
     {
       "exactCasePath": "src/tools/script.ts",
-      "sha256": "210f9d549c62a13345f6b10450a1faa303bcbf684477c9a9dafa65aa79d3973e",
+      "sha256": "f7265929316f467a9ecced48a38204dc31a048b79901e048fd00218afbd7a1df",
       "owner": "TOOL-04"
     },
     {
@@ -83,7 +83,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "2749389342cc762ea859f98aa344fca159e5c4d6752d746ed6f70c8720b5995f",
+      "sha256": "df5f12e19f4132fe73b42934e63f6da38a696738bc32058d49524ebfbbb1d35b",
       "owner": "TOOL-04"
     },
     {
@@ -93,7 +93,7 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "5f41785d3bb8cfb1150b341486aa555bee431fcec5c4ef3cf63ab2254b931a0e",
+      "sha256": "6798f7fec648d022de255ebb5b01415b97051e4ab148497a11cfc97134207466",
       "owner": "TOOL-04"
     },
     {
@@ -124,14 +124,14 @@
     },
     {
       "exactCasePath": "tests/unit/tool-protocol.test.mjs",
-      "sha256": "d4beca652dcefcc64fe1dea5398d21366f2eeb967c5ade30fed5e85dd7b0959c",
+      "sha256": "4da49328e8da018721df995959874b819cc633e98ee5e5f30d902dfe89be59c2",
       "kind": "test",
       "layer": "unit",
       "owner": "TOOL-04"
     },
     {
       "exactCasePath": "tests/unit/execution-isolation.test.mjs",
-      "sha256": "c7b31ff6febde84380d2856105f92a2b7782d5aa8a7c6908365aab1bb430efdb",
+      "sha256": "0b2e57dcc0894f0ae4c4386b2def3ca011f5dacbb5927a28b5b4014a583dc8e1",
       "kind": "test",
       "layer": "unit",
       "owner": "TOOL-04"
@@ -152,7 +152,7 @@
     },
     {
       "exactCasePath": "tests/integration/tool04-script-native.test.mjs",
-      "sha256": "e1b136923efa03be3a597da3b1eec9ff80a071ba4c8ec61aa93f6e1b403051a2",
+      "sha256": "719971f160566f1e7b650f7850c6237035cfc2b4f7db6eec4b9daa1e998699cd",
       "kind": "test",
       "layer": "integration",
       "owner": "TOOL-04"
@@ -165,5 +165,5 @@
       "owner": "TOOL-04"
     }
   ],
-  "canonicalPayloadSha256": "54cdd2d8febdada28a438630e3aa001e2d8dd2c2d13fcd08b792bbaca65b71dc"
+  "canonicalPayloadSha256": "0ee07f43f09525b6a52ac0a36ef77163028132f6e8a89d5dae03c81b9a593496"
 }

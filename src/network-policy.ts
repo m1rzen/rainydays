@@ -1,4 +1,4 @@
-import type { CapabilityContext, InspectedToolCall, NetworkPolicy } from "./capability-broker.js";
+import type { CapabilityContext, InspectedToolCall, NetworkPolicy, ToolPolicy } from "./capability-broker.js";
 import type { ScopedNetworkGateway } from "./types.js";
 import { throwIfCancelled } from "./run-cancellation.js";
 
@@ -70,13 +70,16 @@ function redirectInit(init: RequestInit, status: number): RequestInit {
 
 export function createScopedNetworkGateway(input: Readonly<{
   context: CapabilityContext;
-  inspected: InspectedToolCall;
   signal: AbortSignal;
   fetchImpl?: typeof fetch;
   assertActive?: () => boolean;
-}>): ScopedNetworkGateway {
-  const { context, inspected, signal, fetchImpl = globalThis.fetch, assertActive = () => true } = input;
-  const networkCapable = inspected.policy.riskClasses.includes("network") && inspected.policy.effects.includes("network");
+  maxRequests?: number;
+} & ({ inspected: InspectedToolCall; policy?: never } | { inspected?: never; policy: ToolPolicy })>): ScopedNetworkGateway {
+  const { context, signal, fetchImpl = globalThis.fetch, assertActive = () => true } = input;
+  const policy = input.inspected?.policy ?? input.policy;
+  const networkCapable = !!policy && policy.riskClasses.includes("network") && policy.effects.includes("network");
+  const requestLimit = input.maxRequests ?? MAX_REDIRECTS + 2;
+  if (!Number.isSafeInteger(requestLimit) || requestLimit < 1 || requestLimit > 144) throw new TypeError("Network request limit is invalid");
   const origins = canonicalOrigins(context.networkPolicy);
   let requestCount = 0;
 
@@ -90,10 +93,12 @@ export function createScopedNetworkGateway(input: Readonly<{
       if (!assertActive()) denied("Network capability context is unavailable");
       assertAllowed(url, context.networkPolicy, origins);
       requestCount += 1;
-      if (requestCount > MAX_REDIRECTS + 2) denied("Network request count exceeded the invocation limit");
+      if (requestCount > requestLimit) denied("Network request count exceeded the invocation limit");
       const requestSignal = init.signal ? AbortSignal.any([signal, init.signal]) : signal;
       const response = await fetchImpl(url.href, { ...init, redirect: "manual", signal: requestSignal });
       if (!REDIRECT_STATUS.has(response.status)) return response;
+      if (init.redirect === "manual") return response;
+      if (init.redirect === "error") { await response.body?.cancel().catch(() => undefined); denied("Network redirect was explicitly denied by the caller"); }
       const location = response.headers.get("location");
       if (!location) return response;
       await response.body?.cancel().catch(() => undefined);

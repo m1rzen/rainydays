@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { isDeveloperCommandTool, isDeveloperModeEnabled } from "./developer-execution.js";
+import { createScopedNetworkGateway } from "./network-policy.js";
 import { PathDeniedError, type ExecutionRootAccess, type PathAuthority, type PathOperation, type PathPolicy, type PathStreamingWriteLease } from "./path-policy.js";
 import type { PersonaPermissionLevel, ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "./types.js";
 import {
@@ -39,7 +40,7 @@ export interface CapabilityToolRegistration {
   readonly definition: ToolDefinition;
   readonly executor: ToolExecutor;
   readonly policy: ToolPolicy;
-  readonly mcpServer?: Readonly<{ key: string; name: string }>;
+  readonly mcpServer?: Readonly<{ key: string; name: string; transport?: "stdio" | "http" | "sse"; address?: string }>;
 }
 
 /** Immutable context projection; executors and registration identities never leave the Broker. */
@@ -298,7 +299,7 @@ interface BindingRecord {
   readonly policy: ToolPolicy;
   readonly policyDigest: string;
   readonly executor: ToolExecutor;
-  readonly mcpServer?: Readonly<{ key: string; name: string }>;
+  readonly mcpServer?: CapabilityToolRegistration["mcpServer"];
 }
 
 interface PersonaSnapshot {
@@ -1138,7 +1139,7 @@ export class CapabilityBroker {
       responseChannel: "ask-user", allowDeveloperCommands: true });
   }
 
-  getMcpServer(parent: CapabilityContext, inspected: InspectedToolCall): Readonly<{ key: string; name: string }> | null {
+  getMcpServer(parent: CapabilityContext, inspected: InspectedToolCall): NonNullable<CapabilityToolRegistration["mcpServer"]> | null {
     const record = this.requireActiveContext(parent), call = this.requireInspectedCall(inspected);
     if (call.source !== record && !(record.grant && record.parent === call.source)) denied("CAPABILITY_BINDING_MISMATCH", "MCP call belongs to another context");
     return call.binding.mcpServer ?? null;
@@ -1352,6 +1353,12 @@ export class CapabilityBroker {
     if (direct.consumed) denied("CAPABILITY_GRANT_REPLAYED", "direct operation capability was already consumed");
     direct.consumed = true;
     return snapshot;
+  }
+
+  issueDirectNetworkGateway(context: CapabilityContext, operation: string, signal: AbortSignal): import("./types.js").ScopedNetworkGateway {
+    const record = this.requireActiveContext(context), policy = this.directPolicies.get(operation);
+    if (context.principal !== "local-user-api" || record.directOperation?.operation !== operation || !record.directOperation.consumed || !policy?.effects.includes("network")) denied("CAPABILITY_DIRECT_OPERATION_DENIED", "Direct network capability is unavailable");
+    return createScopedNetworkGateway({ context, policy, signal, assertActive: () => this.isContextActive(context), maxRequests: operation.startsWith("mcp:") && isDeveloperModeEnabled() ? 144 : undefined });
   }
 
   async withDirectExecutionRoot<T>(

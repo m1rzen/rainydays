@@ -8,22 +8,22 @@
   "runtimeEntries": [
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "64c83f779865c2b6705ad49efd8987f9dc1e2f2225d93daf267a7fe2ce6a5fa2",
+      "sha256": "7d382e927f0d1e5141eb2c592a1d9312a2948ed7595b1dcc6965225d2bb9b59e",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "sha256": "3bfbeb374a8d3230e2a900b272f34d255fb60b9386e9675546bcaa725230560c",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "src/capability-broker.ts",
-      "sha256": "28a2eadfbd65171e88559309c3ea4ae50a9aaf3f149c6f548903b047e8909fbb",
+      "sha256": "d6e1a6e81700e57f34c1341c14b488171e63b0324e47c4b3a0ac3d71675cce09",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "66e6dc01044271f687f58748a1bfcdc765539292b1be78cca65fdcc924463e15",
+      "sha256": "54ac0c7e279c4dc66de636b812bc530392b911357fe25263b597367bbc3c7a79",
       "owner": "RT-01"
     },
     {
@@ -33,32 +33,32 @@
     },
     {
       "exactCasePath": "src/session.ts",
-      "sha256": "ddee52bb93efe1c0a8ade1c5443d47f1d38e826ca3c269d232d7ed2f6f05924d",
+      "sha256": "89bf09c9fb72ff224d6c20ea2a1f30f5eddf6c3e1be19313f5a9ad02d106bac5",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "src/tools/ask-user-tool.ts",
-      "sha256": "1566e6606325bf4ac926c735e11e06ee2936b931288d6d73eb8037653668801e",
+      "sha256": "f0c64f856ee49190fc82b56584cac48c6c1c8142e06ad646a2eb9cf9219abfeb",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "src/tools/phase1-tools.ts",
-      "sha256": "578145c99073dde95d9ba380a514699651bc571a1a9ddbb332aa71cd9ae297b2",
+      "sha256": "807cc1235b6d3ee881db471d9e4e005a4769bf60bfc93eca1a16738a02ab08dc",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "478c9f9fed363353c12cddabb788fe85c60448d50dff27fb6a6697683ad6d7ba",
+      "sha256": "2d59108a795b170b873f9c7fe9f801839cabd826cb5ab1481c46f6335ebb6913",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "dist/capability-broker.js",
-      "sha256": "5fadcace7053a7a2ba42b2bd52b2cf70a16d8e84f8a2f31f94ce4265280e886e",
+      "sha256": "3d62ce5654301723f7be15940c3df6e045219890b084c52ec34597c24843f83c",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "c0f880bf7c0c15ffa618247f05557d521029387e1b8e0e786a39a88526105d51",
+      "sha256": "3ec7f9fa04823fc8ca807bdd8b399c4bda91ba277575a10863be4bc748343ab6",
       "owner": "RT-01"
     },
     {
@@ -68,17 +68,17 @@
     },
     {
       "exactCasePath": "dist/session.js",
-      "sha256": "2614e8ad5aa360194c5b466c323a3e1ef0386ce79489f60b101bb56997bba49b",
+      "sha256": "386e6f514a1e5ffc794a354f44419b8045b8093b3a2d9c35fdb36c1c14346d35",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "dist/tools/ask-user-tool.js",
-      "sha256": "a3d5fb7dfe7eae01a44863bbc3b8677ee0621bcb51e99e0b055a087ed4e17687",
+      "sha256": "8613bbf91e3cbbd40dfd5c36d4283cefd41ffc85e9a853783aa9fb550b14769b",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "dist/tools/phase1-tools.js",
-      "sha256": "2a09fe110c6914749b4652d00d8403836b7ac3993882694a2b786a4de7088348",
+      "sha256": "96a922491e29bfee2ef45d421ce7edbf9e7ba1654b2ba15204d54da0f743a6aa",
       "owner": "RT-01"
     }
   ],
@@ -106,14 +106,14 @@
     },
     {
       "exactCasePath": "tests/integration/rt01-session-runtime.test.mjs",
-      "sha256": "dc52a6dbbf3ff6ef17fa0f97442e8951002011ae0b13b1d24078aa7e88c93991",
+      "sha256": "3eec98b831094b79c05cf17968050447f660bae801f9bb38f1bd1232334080e4",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-01"
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "sha256": "d650202d3436c38e3f4a9fd3fb8e90dc9229f6c6e00ec0127dacd008e476a10a",
       "kind": "test",
       "layer": "electron",
       "owner": "RT-01"
@@ -126,5 +126,5 @@
       "owner": "RT-01"
     }
   ],
-  "canonicalPayloadSha256": "ef4a55f6eb4a8f11e3c25682088e462afec63870dce2e3119f46a079dd8595d4"
+  "canonicalPayloadSha256": "ec613400f4a49289995c9fbbdac2aef664644039589fd4760a033f7401644b10"
 }

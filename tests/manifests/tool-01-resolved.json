@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "d2f5269d283b6cd1a163c01211d9e97bab1b74e512b1adec8541e7fe7decce54",
+      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
       "owner": "TOOL-01"
     },
     {
@@ -23,32 +23,32 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "0d913f3167364b53cf0f51101820b151d7d97b76167da57b8ec776b6baa644d5",
+      "sha256": "e23e72b230a2efb1da04bf62447829c29726c4fb72aebea7ac7c715bf7cd8641",
       "owner": "TOOL-01"
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "sha256": "3bfbeb374a8d3230e2a900b272f34d255fb60b9386e9675546bcaa725230560c",
       "owner": "TOOL-01"
     },
     {
       "exactCasePath": "src/capability-broker.ts",
-      "sha256": "a36f7031be1aa04c0921a6d4766a1e4392fca68fb4bbf094b320553b186bb13b",
+      "sha256": "d6e1a6e81700e57f34c1341c14b488171e63b0324e47c4b3a0ac3d71675cce09",
       "owner": "TOOL-01"
     },
     {
       "exactCasePath": "src/tool-protocol.ts",
-      "sha256": "4f5b925988709fec3bbc61097e60f1ff6daef4c58a179c4c0e4752c55ad07d9d",
+      "sha256": "fdd1305b84a5447aa20d8988e4862283474e2c6f904dfadcc6cd2db28c06cc16",
       "owner": "TOOL-01"
     },
     {
       "exactCasePath": "src/tools/index.ts",
-      "sha256": "f7cec1d0f2daf8f46073bc254d22e4ab8c90c4f2f255c924dd5c2f66dc9549a3",
+      "sha256": "e1330b5e28cd33ed66bd3ae1566f665bae026c30d676457c656971ab28e75ea2",
       "owner": "TOOL-01"
     },
     {
       "exactCasePath": "src/types.ts",
-      "sha256": "b8b3832dbcac45658a63bb020a86ac40fcaab42b010bd829ddd867f3c8fb3b4a",
+      "sha256": "bedb1a57504f8d615fc349d14afad8dce0221c509d239295e8c73ee7511e3fb4",
       "owner": "TOOL-01"
     },
     {
@@ -58,7 +58,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "2749389342cc762ea859f98aa344fca159e5c4d6752d746ed6f70c8720b5995f",
+      "sha256": "df5f12e19f4132fe73b42934e63f6da38a696738bc32058d49524ebfbbb1d35b",
       "owner": "TOOL-01"
     },
     {
@@ -77,7 +77,7 @@
     },
     {
       "exactCasePath": "tests/unit/tool-protocol.test.mjs",
-      "sha256": "d4beca652dcefcc64fe1dea5398d21366f2eeb967c5ade30fed5e85dd7b0959c",
+      "sha256": "4da49328e8da018721df995959874b819cc633e98ee5e5f30d902dfe89be59c2",
       "kind": "test",
       "layer": "unit",
       "owner": "TOOL-01"
@@ -97,5 +97,5 @@
       "owner": "TOOL-01"
     }
   ],
-  "canonicalPayloadSha256": "6b99fe89ec23c2adcb56b169bbc870b1912612dd926f560b46a198c5c62d7f92"
+  "canonicalPayloadSha256": "c1b8b37b7316e0bf76dbc9532680b45f125222ade7d914c8882a279765eefa17"
 }

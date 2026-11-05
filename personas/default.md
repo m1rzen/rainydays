@@ -102,6 +102,49 @@ tools:
   - memo_done
   - mascot_notify
   - search_tools
+  - computer_use
+  - pin
+  - unpin
+  - context_usage
+  - compact_context
+  - tool_result_read
+  - canvas_history_overview
+  - canvas_history_search
+  - canvas_history_inspect
+  - prompt_inspect
+  - map_view
+  - map_search
+  - map_update
+  - inspect
+  - graph
+  - knowledge_update
+  - consolidate_memory
+  - skill_search
+  - skill_load
+  - skill_reload
+  - skill_release
+  - skill_status
+  - skill_manage
+  - models_list
+  - thinking_effort_get
+  - thinking_effort_set
+  - agent_spawn
+  - agent_list
+  - agent_peek
+  - agent_post
+  - agent_wait
+  - agent_cancel_wait
+  - agent_close
+  - main_agent_inspect
+  - session_folders
+  - cron_list
+  - cron_schedule_on_idle
+  - worker_pairing_claim
+  - worker_file_upload
+  - worker_file_download
+  - preview_web
+  - preview_list
+  - preview_close
 env:
   DATA_ROOT: "C:\\Users\\raidriar"
   OUTPUT_DIR: "F:\\rainydays\\output"

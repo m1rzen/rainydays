@@ -98,6 +98,14 @@
     }
     const activeRunsBySession = new Map();
     const questionsBySession = new Map();
+    const sessionAutoApproveBySession = new Map();
+    function renderAutoApproveToggle() {
+      const btn = document.getElementById("auto-approve-toggle");
+      if (!btn) return;
+      const enabled = Boolean(currentSessionId && sessionAutoApproveBySession.get(currentSessionId) === true);
+      btn.setAttribute("aria-pressed", enabled ? "true" : "false");
+      btn.textContent = enabled ? "⚡ Auto 授权: 开" : "⚡ Auto 授权: 关";
+    }
     const attachmentUploads = new Map();
     let attachmentDrafts = [];
     let attachmentLoadGeneration = 0;
@@ -2625,7 +2633,8 @@
       if (!res.ok && data.code !== "SESSION_PERSONA_CHANGED") { addSystemMessage(data.error || "打开对话失败，请重试。"); return; }
       if (!data.session) return;
       if (data.code === "SESSION_PERSONA_CHANGED") unavailableSessionIds.add(id); else unavailableSessionIds.delete(id);
-      currentSessionId = id; currentTitleEl.textContent = data.session.title; refreshRunControls(); refreshQuestionForCurrentSession(); restoreDraft(id);
+      if (typeof data.autoApprove === "boolean") sessionAutoApproveBySession.set(id, data.autoApprove);
+      currentSessionId = id; currentTitleEl.textContent = data.session.title; renderAutoApproveToggle(); refreshRunControls(); refreshQuestionForCurrentSession(); restoreDraft(id);
       renderDocumentOutputs([]);
       if (data.persona && personaSelect.value !== data.persona) {
         personaSelect.value = data.persona;
@@ -3045,8 +3054,22 @@
       const assistantEl = addMessage("assistant", ""); const bubbleEl = assistantEl.querySelector(".bubble");
       runToken.bubble = bubbleEl;
       runToken.messageEl = assistantEl;
-      const answerEl = document.createElement("div");
-      const renderRunText = text => { bubbleEl.querySelector(".typing")?.remove(); if (answerEl.parentNode !== bubbleEl) bubbleEl.appendChild(answerEl); answerEl.innerHTML = renderMarkdown(text); };
+      let answerEl = document.createElement("div");
+      answerEl.className = "run-text-segment";
+      let segmentText = "";
+      let activeToolGroup = null;
+      const renderRunText = text => {
+        bubbleEl.querySelector(".typing")?.remove();
+        if (answerEl.parentNode !== bubbleEl) bubbleEl.appendChild(answerEl);
+        answerEl.innerHTML = renderMarkdown(text);
+      };
+      const sealCurrentTextSegment = () => {
+        if (!segmentText.trim()) return;
+        enhanceLocalFileLinks(answerEl, segmentText);
+        segmentText = "";
+        answerEl = document.createElement("div");
+        answerEl.className = "run-text-segment";
+      };
       bubbleEl.setAttribute("aria-live", "off");
       bubbleEl.setAttribute("aria-busy", "true");
       responseAnnouncerEl.textContent = "";
@@ -3064,7 +3087,12 @@
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: sessionHeaders(chatSessionId, true),
-          body: JSON.stringify({ sessionId: chatSessionId, message: text, attachmentIds: readyAttachments.map(attachment => attachment.id) }),
+          body: JSON.stringify({
+            sessionId: chatSessionId,
+            message: text,
+            attachmentIds: readyAttachments.map(attachment => attachment.id),
+            ...(sessionAutoApproveBySession.has(chatSessionId) ? { autoApprove: sessionAutoApproveBySession.get(chatSessionId) } : {}),
+          }),
           signal: runToken.controller.signal,
         });
         if (!response.ok) { const err = await response.json(); bubbleEl.innerHTML = ""; bubbleEl.textContent = err.error || "请求失败"; completeAccessibleResponse(bubbleEl.textContent); return; }
@@ -3093,8 +3121,20 @@
               }
               continue;
             }
-            if (step.type === "answer_chunk") { streamingStarted = true; fullText += step.content; renderRunText(fullText); if (currentSessionId === chatSessionId) messagesEl.scrollTop = messagesEl.scrollHeight; }
-            else if (step.type === "tool_call") { bubbleEl.querySelector(".typing")?.remove(); addToolCard(bubbleEl, step); }
+            if (step.type === "answer_chunk") {
+              if (activeToolGroup) activeToolGroup = null;
+              streamingStarted = true;
+              fullText += step.content;
+              segmentText += step.content;
+              renderRunText(segmentText);
+              if (currentSessionId === chatSessionId) messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+            else if (step.type === "tool_call") {
+              bubbleEl.querySelector(".typing")?.remove();
+              sealCurrentTextSegment();
+              activeToolGroup = addToolCard(bubbleEl, step, activeToolGroup);
+              if (currentSessionId === chatSessionId) messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
             else if (step.type === "tool_result") {
               updateLastToolCard(bubbleEl, step);
               if (step.toolName === "shell_start" && currentSessionId === chatSessionId && activeTerminalOwnerSessionId === chatSessionId) void loadTerminals();
@@ -3106,13 +3146,25 @@
               if (note) { note.dataset.state = "applied"; note.textContent = `已加入对话：${step.content}`; } else showSteerNote(runToken, step.content, "applied");
             }
             else if (step.type === "task_created" || step.type === "task_update") { if (currentSessionId === chatSessionId && step.tasks?.length > 0) renderTasks(step.tasks); }
-            else if (step.type === "answer_done") { if (!streamingStarted && step.content) { fullText = step.content; renderRunText(fullText); } if (fullText) { if (currentSessionId === chatSessionId) speakText(fullText.slice(0, 200)); enhanceLocalFileLinks(answerEl, fullText); } completeAccessibleResponse(fullText || bubbleEl.textContent); }
+            else if (step.type === "answer_done") {
+              if (step.content) {
+                if (activeToolGroup) activeToolGroup = null;
+                fullText += (fullText ? "\n\n" : "") + step.content;
+                segmentText = step.content;
+                renderRunText(segmentText);
+              }
+              if (segmentText) {
+                if (currentSessionId === chatSessionId) speakText(segmentText.slice(0, 200));
+                enhanceLocalFileLinks(answerEl, segmentText);
+              }
+              completeAccessibleResponse(fullText || bubbleEl.textContent);
+            }
             else if (step.type === "run_cancelled") { runToken.outcome = "cancelled"; showRunNotice(runToken, "已中断，已生成的内容和文件已保留。"); completeAccessibleResponse(bubbleEl.textContent); }
             else if (step.type === "run_finished") {
               runToken.outcome = step.outcome;
               if (step.outcome === "partial") showRunNotice(runToken, "部分步骤未完成，请检查工具记录和成果。");
             }
-            else if (step.type === "error") { runToken.outcome = "failed"; renderRunText((fullText ? fullText + "\n\n" : "") + "执行失败：" + step.content); completeAccessibleResponse(bubbleEl.textContent); }
+            else if (step.type === "error") { runToken.outcome = "failed"; renderRunText((segmentText ? segmentText + "\n\n" : "") + "执行失败：" + step.content); completeAccessibleResponse(bubbleEl.textContent); }
           }
         }
         if (!runToken.outcome) showRunNotice(runToken, "连接已结束，任务结果尚未确认。请检查已生成的内容和成果。");
@@ -3183,7 +3235,9 @@
       messagesEl.insertBefore(el, documentOutputsEl.parentNode === messagesEl ? documentOutputsEl : null);
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
-    function addToolCard(parent, step) {
+    function addToolCard(parent, step, preferredGroup = null) {
+      const group = ensureToolGroup(parent, preferredGroup);
+      const container = group.querySelector(".tool-group-list") || group;
       const card = document.createElement("details");
       card.className = "tool-card";
       card.dataset.status = "running";
@@ -3197,21 +3251,102 @@
       body.className = "tool-card-body";
       const label = document.createElement("span");
       label.className = "label";
-      const toolLabels = { read_file:"读取文件", write_file:"写入文件", create_docx:"生成 Word 文档", create_xlsx:"生成 Excel 工作簿", web_search:"搜索资料", web_fetch:"阅读网页", fetch_markdown:"阅读网页", bash:"运行命令" };
+      const toolLabels = {
+        read_file:"读取文件", read:"读取文件", write_file:"写入文件", write:"写入文件",
+        edit_file:"修改文件", edit:"修改文件", replace:"替换内容", edit_files:"修改代码",
+        list_directory:"浏览目录", glob:"查找文件", search_files:"搜索文件", grep:"检索代码",
+        execute_command:"运行命令", bash:"运行命令", shell_start:"启动终端", shell_input:"终端输入", shell_output:"读取终端",
+        create_docx:"生成 Word 文档", create_xlsx:"生成 Excel 工作簿",
+        web_search:"搜索资料", web_fetch:"阅读网页", fetch_markdown:"阅读网页",
+        browser_open:"打开浏览器", browser_click:"点击页面元素", browser_fill:"填写网页表单", browser_screenshot:"网页截图",
+        computer_use:"桌面辅助操作", task_create:"创建任务计划", task_update:"更新任务状态",
+      };
       label.textContent = `${step.toolSource ? `${step.toolSource} · ` : ""}${toolLabels[step.toolName] || step.toolName}`;
       label.title = step.toolName;
+      const argHintText = summarizeToolCallArg(step.toolName, step.toolArgs);
+      const argSpan = document.createElement("span");
+      argSpan.className = "tool-card-arg";
+      if (argHintText) argSpan.textContent = argHintText;
       const status = document.createElement("span");
       status.className = "tool-card-status";
       status.textContent = "执行中";
       const chevron = createUiIcon("chevron"); chevron.classList.add("disclosure-icon");
-      summary.append(icon, label, status, chevron);
+      summary.append(icon, label, ...(argHintText ? [argSpan] : []), status, chevron);
       if (step.toolArgs) {
         const args = document.createElement("pre");
         args.textContent = Object.entries(step.toolArgs).map(([key, value]) => `  ${key}: ${value}`).join("\n");
         body.appendChild(args);
       }
       card.append(summary, body);
-      parent.appendChild(card);
+      container.appendChild(card);
+      refreshToolGroupSummary(group);
+      return group;
+    }
+    function summarizeToolCallArg(toolName, toolArgs) {
+      if (!toolArgs || typeof toolArgs !== "object") return "";
+      const primary = toolArgs.file_path ?? toolArgs.path ?? toolArgs.command ?? toolArgs.pattern ?? toolArgs.keyword ?? toolArgs.query ?? toolArgs.url ?? toolArgs.subject ?? toolArgs.action;
+      if (typeof primary === "string" && primary.trim()) {
+        const clean = primary.trim().replace(/\s+/gu, " ");
+        return clean.length > 48 ? clean.slice(0, 48) + "…" : clean;
+      }
+      return "";
+    }
+    function ensureToolGroup(parent, preferredGroup) {
+      if (preferredGroup && preferredGroup.parentNode === parent) return preferredGroup;
+      const lastEl = parent.lastElementChild;
+      if (lastEl && lastEl.classList?.contains("tool-group")) return lastEl;
+      const group = document.createElement("details");
+      group.className = "tool-group";
+      group.dataset.status = "running";
+      const summary = document.createElement("summary");
+      summary.className = "tool-group-summary";
+      const icon = document.createElement("span");
+      icon.className = "tool-group-icon";
+      icon.appendChild(createUiIcon("loader"));
+      const label = document.createElement("span");
+      label.className = "tool-group-title";
+      label.textContent = "正在执行步骤…";
+      const meta = document.createElement("span");
+      meta.className = "tool-group-meta";
+      meta.textContent = "展开详情";
+      const chevron = createUiIcon("chevron");
+      chevron.classList.add("disclosure-icon");
+      summary.append(icon, label, meta, chevron);
+      const items = document.createElement("div");
+      items.className = "tool-group-list";
+      group.append(summary, items);
+      parent.appendChild(group);
+      return group;
+    }
+    function refreshToolGroupSummary(group) {
+      if (!group) return;
+      const cards = [...group.querySelectorAll(".tool-card")];
+      if (cards.length === 0) return;
+      const running = cards.filter(c => c.dataset.status === "running");
+      const failed = cards.filter(c => c.dataset.status === "error");
+      const iconEl = group.querySelector(".tool-group-icon");
+      const labelEl = group.querySelector(".tool-group-title");
+      const metaEl = group.querySelector(".tool-group-meta");
+      const names = [...new Set(cards.map(c => c.querySelector(".label")?.textContent || c.dataset.toolName))].slice(0, 3).join("、");
+      if (running.length > 0) {
+        group.dataset.status = "running";
+        const currentCard = running.at(-1);
+        const currentLabel = currentCard.querySelector(".label")?.textContent || currentCard.dataset.toolName;
+        const currentArg = currentCard.querySelector(".tool-card-arg")?.textContent || "";
+        iconEl?.replaceChildren(createUiIcon("loader"));
+        if (labelEl) labelEl.textContent = `正在执行：${currentLabel}${currentArg ? ` (${currentArg})` : ""} · 已调用 ${cards.length} 项工具`;
+        if (metaEl) metaEl.textContent = `进行中 (${cards.length - running.length}/${cards.length})`;
+      } else if (failed.length > 0) {
+        group.dataset.status = "error";
+        iconEl?.replaceChildren(createUiIcon("alert"));
+        if (labelEl) labelEl.textContent = `已执行 ${cards.length} 项工具操作（${names}）`;
+        if (metaEl) metaEl.textContent = `${failed.length} 项未完成 · 点击展开`;
+      } else {
+        group.dataset.status = "done";
+        iconEl?.replaceChildren(createUiIcon("check"));
+        if (labelEl) labelEl.textContent = `已完成 ${cards.length} 项工具调用（${names}）`;
+        if (metaEl) metaEl.textContent = "全部完成 · 点击展开";
+      }
     }
     function isCodeChanges(receipt) {
       return receipt?.type === "code_changes" && /^[a-f0-9-]{36}$/.test(receipt.changeId) && Array.isArray(receipt.changes) && receipt.changes.length <= 8
@@ -3252,6 +3387,7 @@
       last.dataset.status = succeeded ? "success" : "error";
       const s = last.querySelector(".tool-card-status"); if (s) s.textContent = succeeded ? "完成" : "未完成";
       last.querySelector(".icon").replaceChildren(createUiIcon(succeeded ? "check" : "alert"));
+      refreshToolGroupSummary(last.closest?.(".tool-group") || parent.querySelector(".tool-group"));
       let displayContent = String(step.content || "");
       if (["edit_files", "undo_edits"].includes(step.toolName)) {
         try { const receipt = JSON.parse(step.content); if (isCodeChanges(receipt)) { renderCodeChanges(last.querySelector(".tool-card-body"), receipt); return; } } catch { /* Failed calls keep their original message. */ }
@@ -3533,10 +3669,16 @@
       }
       document.getElementById("ask-question-text").textContent = question.question;
       optsEl.replaceChildren();
-      for (const option of question.options) {
+      const autoLabel = "本会话自动批准（Auto 模式）";
+      const isApproval = question.options.some(opt => ["确认执行", "本次任务允许运行命令", "本次任务允许新建文档", "本次任务允许此服务器", autoLabel].includes(opt));
+      const renderedOptions = isApproval && !question.options.includes(autoLabel)
+        ? [...question.options.slice(0, -1), autoLabel, ...question.options.slice(-1)]
+        : question.options;
+      for (const option of renderedOptions) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "ask-option";
+        if (option === autoLabel) btn.classList.add("ask-option-auto");
         btn.textContent = option;
         btn.addEventListener("click", () => { document.getElementById("ask-input").value = option; submitAskAnswer(); });
         optsEl.appendChild(btn);
@@ -3544,21 +3686,54 @@
       document.getElementById("ask-input").value = "";
       showAccessibleDialog(modal, "#ask-input");
     }
-    async function submitAskAnswer() {
-      const answer = document.getElementById("ask-input").value.trim();
+    async function submitAskAnswer(overrideBody = null) {
       const answerSessionId = currentSessionId;
-      const question = answerSessionId ? questionsBySession.get(answerSessionId) : null;
-      if (!answer || !question || question.sessionId !== answerSessionId) return;
-      hideAccessibleDialog(document.getElementById("ask-modal"));
+      if (!answerSessionId) return;
+      let payload;
+      let question = null;
+      if (overrideBody) {
+        payload = { sessionId: answerSessionId, ...overrideBody };
+      } else {
+        const answer = document.getElementById("ask-input").value.trim();
+        question = questionsBySession.get(answerSessionId) || null;
+        if (!answer || !question || question.sessionId !== answerSessionId) return;
+        if (answer === "本会话自动批准（Auto 模式）" || answer === "本会话自动批准") {
+          sessionAutoApproveBySession.set(answerSessionId, true);
+          renderAutoApproveToggle();
+        }
+        hideAccessibleDialog(document.getElementById("ask-modal"));
+        payload = {
+          sessionId: question.sessionId,
+          runId: question.runId,
+          questionId: question.questionId,
+          answer,
+          ...(sessionAutoApproveBySession.get(answerSessionId) === true ? { autoApprove: true } : {}),
+        };
+      }
       const response = await fetch("/api/ask-user/answer", {
         method: "POST",
         headers: sessionHeaders(answerSessionId, true),
-        body: JSON.stringify({ sessionId: question.sessionId, runId: question.runId, questionId: question.questionId, answer }),
+        body: JSON.stringify(payload),
       });
-      if (response.ok && questionsBySession.get(answerSessionId) === question) questionsBySession.delete(answerSessionId);
-      refreshQuestionForCurrentSession();
+      if (!overrideBody) {
+        if (response.ok && questionsBySession.get(answerSessionId) === question) questionsBySession.delete(answerSessionId);
+        refreshQuestionForCurrentSession();
+      }
     }
     const actionHandlers = Object.freeze({
+      "toggle-auto-approve": () => {
+        if (!currentSessionId) return;
+        const next = !(sessionAutoApproveBySession.get(currentSessionId) === true);
+        sessionAutoApproveBySession.set(currentSessionId, next);
+        renderAutoApproveToggle();
+        const pending = questionsBySession.get(currentSessionId);
+        if (next && pending) {
+          document.getElementById("ask-input").value = "本会话自动批准（Auto 模式）";
+          void submitAskAnswer();
+        } else {
+          void submitAskAnswer({ autoApprove: next });
+        }
+      },
       "toggle-sidebar": () => {
         const open = sidebarMedia.matches ? document.body.classList.contains("sidebar-visible") : !document.body.classList.contains("sidebar-collapsed");
         setSidebarOpen(!open);

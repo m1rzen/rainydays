@@ -160,14 +160,15 @@ export const museDef: ToolDefinition = {
   type: "function",
   function: {
     name: "muse",
-    description: "在当前 Session 启动受限后台 Muse 任务。立即返回 task_id；用 subagent_peek/output/post/stop 管理。最多 10 次迭代、遵循父权限和 Session 关闭，不跨重启自动恢复。",
+    description: "在当前 Session 启动受限后台 Muse 独立反思任务。最多 10 次迭代、遵循父权限和 Session 关闭。",
     parameters: {
       type: "object",
       properties: {
-        topic: { type: "string", minLength: 1, maxLength: 8000, description: "思考的主题/问题" },
-        perspective: { type: "string", minLength: 1, maxLength: 160, description: "思考视角，如'风险审查'、'替代方案'、'用户视角'" },
+        about: { type: "string", minLength: 1, maxLength: 8000, description: "反思主题/问题（Lux-Cloud 标准参数）" },
+        kind: { type: "string", minLength: 1, maxLength: 160, description: "反思视角/类型（Lux-Cloud 标准参数）" },
+        topic: { type: "string", minLength: 1, maxLength: 8000, description: "思考的主题/问题（兼容旧参数）" },
+        perspective: { type: "string", minLength: 1, maxLength: 160, description: "思考视角（兼容旧参数）" },
       },
-      required: ["topic"],
     },
   },
 };
@@ -183,8 +184,8 @@ export function createMuseExec(dependencies: Readonly<{
 }>): ToolExecutor {
   return async (args, _env, invocation) => {
     if (!invocation) throw new Error("Tool invocation services are required");
-    const topic = args.topic as string;
-    const perspective = (args.perspective as string) || "整体审视";
+    const topic = ((args.about as string) || (args.topic as string) || "当前会话复盘").trim();
+    const perspective = ((args.kind as string) || (args.perspective as string) || "整体审视").trim();
     const child = await dependencies.registry.spawn({
       description: "muse reflection",
       prompt: [

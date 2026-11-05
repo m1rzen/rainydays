@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "d0bdaec00be926cfa152b9786a0e0f2de7410013ddf2f7fdac2b115f983e86ba",
+      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
       "owner": "REL-04"
     },
     {
@@ -23,12 +23,12 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "1722f8ba8571fd276466224fe3edb916cd3aec36246250c4295bffb1277e848a",
+      "sha256": "e23e72b230a2efb1da04bf62447829c29726c4fb72aebea7ac7c715bf7cd8641",
       "owner": "REL-04"
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "sha256": "3bfbeb374a8d3230e2a900b272f34d255fb60b9386e9675546bcaa725230560c",
       "owner": "REL-04"
     },
     {
@@ -38,17 +38,17 @@
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
+      "sha256": "1e2e7d79f024f8890a07d53a3e3023da6560345b7c72cd836d9f9d90d19a8259",
       "owner": "REL-04"
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "66e6dc01044271f687f58748a1bfcdc765539292b1be78cca65fdcc924463e15",
+      "sha256": "54ac0c7e279c4dc66de636b812bc530392b911357fe25263b597367bbc3c7a79",
       "owner": "REL-04"
     },
     {
       "exactCasePath": "src/llm.ts",
-      "sha256": "cc9d812aa34fa14006bc951b108da70948452f79b66ed2cd67970d6b82aa2fe2",
+      "sha256": "55bcb3cbf48c5ff98ab2a7a5f87b8cf839df376d95a3c7b3917a4c67c44e9458",
       "owner": "REL-04"
     },
     {
@@ -63,7 +63,7 @@
     },
     {
       "exactCasePath": "src/terminal.ts",
-      "sha256": "080e0e9f8820fb1c704041fbf70ee59c93f44c860c50ab8d7fe2d68669ca6980",
+      "sha256": "610f9ece2f7f82c53c59227cfa4da24dfedf6343c82b7c91f3e527d4284d2e24",
       "owner": "REL-04"
     },
     {
@@ -75,7 +75,7 @@
   "testEntries": [
     {
       "exactCasePath": "tests/unit/rel04-observability.test.mjs",
-      "sha256": "2f28c08863fd2f165451dcd12a07ac990f2d33104041926e545f61ecda3656e7",
+      "sha256": "786a90c67b49e3097d2e28ec7377a5f80a874f09a1ad001651fbe1d263f17d4e",
       "kind": "test",
       "layer": "unit",
       "owner": "REL-04"
@@ -96,7 +96,7 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+      "sha256": "d650202d3436c38e3f4a9fd3fb8e90dc9229f6c6e00ec0127dacd008e476a10a",
       "kind": "test",
       "layer": "electron",
       "owner": "REL-04"
@@ -109,5 +109,5 @@
       "owner": "REL-04"
     }
   ],
-  "canonicalPayloadSha256": "7cd08da3b2386675efa7c1efd6c7cc41536dd262d4cf31b8abd705e17e695e91"
+  "canonicalPayloadSha256": "270ca5b2a28f67ecdd63a35183aa194e4f794bc0e93d20abd0740c12af3a9a03"
 }

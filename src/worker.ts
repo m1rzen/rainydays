@@ -136,11 +136,13 @@ export class StdioWorkerAdapter {
   }
 
   async close(): Promise<void> {
+    try { this.process.stdin?.end(); } catch {}
     if (this.process.exitCode === null) {
       this.process.kill("SIGTERM");
-      await new Promise(resolve => { const timer = setTimeout(resolve, 2_000); this.process.once("exit", () => { clearTimeout(timer); resolve(undefined); }); });
+      await new Promise(resolve => { const timer = setTimeout(resolve, 2_000); timer.unref?.(); this.process.once("exit", () => { clearTimeout(timer); resolve(undefined); }); });
       if (this.process.exitCode === null) this.process.kill("SIGKILL");
     }
+    try { this.process.stdout?.destroy(); this.process.stderr?.destroy(); this.process.unref(); } catch {}
     this.status = "offline";
   }
 }
@@ -241,7 +243,12 @@ export class WorkerRegistry {
   }
 
   async execute<T = unknown>(sessionIdInput: string, operation: string, args: Readonly<Record<string, unknown>>, signal?: AbortSignal, timeoutMs?: number): Promise<T> {
-    const workerId = this.selectedWorkerId(sessionIdInput);
+    const explicitWorkerId = typeof args.worker_id === "string" && args.worker_id.trim().length > 0
+      ? exactId(args.worker_id.trim())
+      : typeof args.workerId === "string" && args.workerId.trim().length > 0
+        ? exactId(args.workerId.trim())
+        : null;
+    const workerId = explicitWorkerId ?? this.selectedWorkerId(sessionIdInput);
     const worker = workerId === "local" ? await this.#local() : this.#workers.get(workerId);
     if (!worker) throw new Error(`Selected Worker is unavailable: ${workerId}`);
     if (worker.status !== "online") throw new Error(`Selected Worker ${workerId} disconnected; local fallback is forbidden`);
@@ -264,7 +271,9 @@ export const workerRegistry = new WorkerRegistry();
 export async function routeToSelectedWorker(invocation: ToolInvocationServices | undefined, operation: string, args: Readonly<Record<string, unknown>>): Promise<string | null> {
   if (!invocation) return null;
   const sessionId = invocation.capabilityContext.sessionId;
-  if (!workerRegistry.isRemoteSelected(sessionId)) return null;
+  const explicitWorkerId = typeof args.worker_id === "string" && args.worker_id.trim().length > 0 ? args.worker_id.trim() : null;
+  if (explicitWorkerId === "local") return null;
+  if (!explicitWorkerId && !workerRegistry.isRemoteSelected(sessionId)) return null;
   const value = await workerRegistry.execute(sessionId, operation, args, invocation.signal);
   return typeof value === "string" ? value : JSON.stringify(value, null, 2);
 }

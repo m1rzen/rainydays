@@ -8,17 +8,17 @@
   "runtimeEntries": [
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "478c9f9fed363353c12cddabb788fe85c60448d50dff27fb6a6697683ad6d7ba",
+      "sha256": "2d59108a795b170b873f9c7fe9f801839cabd826cb5ab1481c46f6335ebb6913",
       "owner": "RT-06"
     },
     {
       "exactCasePath": "dist/capability-broker.js",
-      "sha256": "5fadcace7053a7a2ba42b2bd52b2cf70a16d8e84f8a2f31f94ce4265280e886e",
+      "sha256": "3d62ce5654301723f7be15940c3df6e045219890b084c52ec34597c24843f83c",
       "owner": "RT-06"
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "8cef9e1b6a7e83768f74257a140fa929aa77ace5553095f30be948901728cb56",
+      "sha256": "ede99e6b841d941b6b9153a62477d8adfb1fc6953ab1d6b34ccb9f279d87f9b5",
       "owner": "RT-06"
     },
     {
@@ -28,17 +28,17 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "sha256": "3bfbeb374a8d3230e2a900b272f34d255fb60b9386e9675546bcaa725230560c",
       "owner": "RT-06"
     },
     {
       "exactCasePath": "src/capability-broker.ts",
-      "sha256": "28a2eadfbd65171e88559309c3ea4ae50a9aaf3f149c6f548903b047e8909fbb",
+      "sha256": "d6e1a6e81700e57f34c1341c14b488171e63b0324e47c4b3a0ac3d71675cce09",
       "owner": "RT-06"
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "b02ad6940f8c77ac634a9b9c022eb660425d85120dba2cadd87f14d20fbdef0d",
+      "sha256": "36517715129d97a1c909bef4e15bf0d0c58671aae9808656af659a2abc44271c",
       "owner": "RT-06"
     },
     {
@@ -57,7 +57,7 @@
     },
     {
       "exactCasePath": "tests/unit/capability-broker.test.mjs",
-      "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d",
+      "sha256": "6336b3f48df6aee3f83cabf47cfa6ca8c22775815900fb8e860b4a51f47116ab",
       "kind": "test",
       "layer": "unit",
       "owner": "RT-06"
@@ -78,14 +78,14 @@
     },
     {
       "exactCasePath": "tests/integration/rt04-runtime-cancellation.test.mjs",
-      "sha256": "b8c794941b2b198e895d543003a883350129e075d240073e46a002f7879926f4",
+      "sha256": "3468d5e086ae809c526920bcdc2a6d6d2d766ba320e9d098d4d33c9f2cdaeeae",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-06"
     },
     {
       "exactCasePath": "tests/integration/rt05-tool-pipeline.test.mjs",
-      "sha256": "2c56602dd6a55809418ba0c646bbe6c03c93e5caa396aed61e0b0f8abd00938e",
+      "sha256": "0e491f9d863d06169bf0575034b41cb75743f6b88750b634a0ebe1a971447edd",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-06"
@@ -98,5 +98,5 @@
       "owner": "RT-06"
     }
   ],
-  "canonicalPayloadSha256": "32073e5b83ff439d5e8b699770d8eb9f5203c1605a3945a22a8d741636556d70"
+  "canonicalPayloadSha256": "b2fa3eca07c6089d8b2445afba12ee8da023dc8aab3cb3c64098003de171a95c"
 }

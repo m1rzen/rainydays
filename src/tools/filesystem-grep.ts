@@ -207,6 +207,8 @@ export const grepDef: ToolDefinition = {
         head_limit: { type: "integer", minimum: 0, maximum: MAX_OUTPUT_ENTRIES, description: "最多输出项；0 为内部安全上限。" },
         offset: { type: "integer", minimum: 0, maximum: MAX_OUTPUT_ENTRIES, description: "跳过输出项数。" },
         multiline: { type: "boolean", description: "允许 . 匹配换行。" },
+        timeout: { type: "number", minimum: 1, description: "搜索预算（毫秒），默认 10000。" },
+        worker_id: { type: "string", description: "可选单次调用目标 Worker ID。" },
       },
       required: ["pattern"],
     },
@@ -244,7 +246,8 @@ export const grepExec: ToolExecutor = async (args, _env, invocationValue) => {
     if (!values) throw new ToolArgumentsError(`未知文件类型: ${String(args.type)}`);
     extensions = new Set(values);
   }
-  const deadline = Date.now() + SEARCH_TIME_BUDGET_MS;
+  const budgetMs = typeof args.timeout === "number" && args.timeout >= 1 ? Math.min(args.timeout, 60_000) : SEARCH_TIME_BUDGET_MS;
+  const deadline = Date.now() + budgetMs;
   const candidates = await candidateFiles({
     invocation,
     searchPath,

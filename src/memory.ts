@@ -20,9 +20,14 @@ import { bindMessageAttachments, getMessageAttachmentMap } from "./attachment-st
 import { messageAttachmentTokenText } from "./attachment.js";
 import { ContextBudgetExceededError, type RequestBudgetReport } from "./request-budget.js";
 import { collectDocumentOutputs, type DocumentOutput } from "./document-outputs.js";
+import { archiveMessagesToColdStore, autoScribePrepareWatermark } from "./lux-cloud-runtime.js";
 export { ContextBudgetExceededError } from "./request-budget.js";
 
 // --- 常量 ---
+
+/** Lux-Cloud 双水位线：50% 触发后台 Scribe 制图预备，90% 触发历史归档与摘要替换 */
+export const PREPARE_WATERMARK_RATIO = 0.5;
+export const REPLACE_WATERMARK_RATIO = 0.9;
 
 /** 上下文 token 预算（留出空间给 system prompt + 新回复） */
 const MAX_CONTEXT_TOKENS = 28000;
@@ -102,7 +107,13 @@ function formatMessagesForSummary(messages: Message[]): string {
       }
       return `${reference}助手: ${m.content}`;
     }
-    if (m.role === "tool") return `${reference}工具结果 (${m.tool_call_id || ""}): ${m.content}`;
+    if (m.role === "tool") {
+      const text = m.content || "";
+      const clipped = text.length > 1200
+        ? `${text.slice(0, 900)}\n...[工具输出已省略 ${text.length - 1200} 字符，完整原文见 ${reference || "history:"}]...\n${text.slice(-300)}`
+        : text;
+      return `${reference}工具结果 (${m.tool_call_id || ""}): ${clipped}`;
+    }
     return m.content;
   }).join("\n\n");
 }
@@ -225,7 +236,18 @@ export class ConversationMemory {
     const assess = options.assess ?? summaryAssessment;
     const fits = (report: RequestBudgetReport) => report.estimatedInputTokens + report.outputReserveTokens <= report.contextWindowTokens;
     const assertFits = (messages: Message[]) => { const report = assess(messages); if (!fits(report)) throw new ContextBudgetExceededError(report); };
-    if (fits(assess(this.messages)) && this.messages.length <= this.maxMessages) return false;
+    const initialReport = assess(this.messages);
+    const usageRatio = initialReport.contextWindowTokens > 0
+      ? (initialReport.estimatedInputTokens + initialReport.outputReserveTokens) / initialReport.contextWindowTokens
+      : 0;
+    if (usageRatio >= PREPARE_WATERMARK_RATIO && this.sessionId) {
+      try {
+        autoScribePrepareWatermark(this.sessionId, this.messages);
+      } catch {
+        // Scribe 50% watermark preparation is non-blocking
+      }
+    }
+    if (fits(initialReport) && usageRatio < REPLACE_WATERMARK_RATIO) return false;
 
     // 分离 system 消息和对话消息
     const mainSystem = this.messages.filter(
@@ -285,12 +307,23 @@ export class ConversationMemory {
         else high = middle - 1;
       }
       if (size === 0) throw new ContextBudgetExceededError(summaryAssessment(summaryMessages(chars[cursor])));
-      summary = await boundedSummary(llm, summaryMessages(chars.slice(cursor, cursor + size).join("")), signal ?? NEVER_ABORT_SIGNAL, transport, options.summaryTimeoutMs ?? 30_000);
+      summary = await boundedSummary(llm, summaryMessages(chars.slice(cursor, cursor + size).join("")), signal ?? NEVER_ABORT_SIGNAL, transport, options.summaryTimeoutMs ?? 90_000);
       cursor += size;
     }
     if (signal) throwIfCancelled(signal);
     const candidate = [...mainSystem, { role: "system" as const, content: `${SUMMARY_MARKER}${references}\n\n${summary}` }, ...retained];
     assertFits(candidate);
+    if (this.sessionId && toSummarize.length > 0) {
+      try {
+        archiveMessagesToColdStore(
+          this.sessionId,
+          toSummarize.map((m) => ({ role: m.role, content: m.content })),
+          summary,
+        );
+      } catch {
+        // Best-effort cold canvas archival
+      }
+    }
     this.messages = candidate;
     return true;
   }

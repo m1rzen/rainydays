@@ -18,8 +18,26 @@ export const workerListExec: ToolExecutor = async (_args, _env, invocation) => j
 export const workerStatusDef: ToolDefinition = { type: "function", function: { name: "worker_status", description: "Get selected or named Worker status. Disconnected remote Workers never fall back locally.", parameters: { type: "object", properties: { workerId: { type: "string" } }, ...noExtra } } };
 export const workerStatusExec: ToolExecutor = async (args, _env, invocation) => json(await workerRegistry.status(sessionId(invocation), args.workerId as string | undefined));
 
-export const workerSelectDef: ToolDefinition = { type: "function", function: { name: "worker_select", description: "Select an online Worker for this Session's routed tools.", parameters: { type: "object", properties: { workerId: { type: "string" } }, required: ["workerId"], ...noExtra } } };
-export const workerSelectExec: ToolExecutor = async (args, _env, invocation) => json(await workerRegistry.select(sessionId(invocation), args.workerId as string));
+export const workerSelectDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "worker_select",
+    description: "Select an online Worker for this Session's routed tools.",
+    parameters: {
+      type: "object",
+      properties: {
+        worker_id: { type: "string", description: "Authorized online Worker ID." },
+        workerId: { type: "string", description: "Legacy alias for worker_id." },
+      },
+      ...noExtra,
+    },
+  },
+};
+export const workerSelectExec: ToolExecutor = async (args, _env, invocation) => {
+  const target = (typeof args.worker_id === "string" && args.worker_id.trim()) || (typeof args.workerId === "string" && args.workerId.trim());
+  if (!target) throw new Error("worker_select requires worker_id");
+  return json(await workerRegistry.select(sessionId(invocation), target));
+};
 
 export const workerConnectDef: ToolDefinition = {
   type: "function",
@@ -63,6 +81,7 @@ export const bashDef: ToolDefinition = {
         command: { type: "string" }, cwd: { type: "string" }, timeout: { type: "number", minimum: 0 }, description: { type: "string" },
         session: { type: "string" }, shell: { type: "string", enum: ["bash", "sh", "powershell", "pwsh", "cmd"] },
         env: { type: "object", additionalProperties: { type: "string" } },
+        worker_id: { type: "string" },
       },
       required: ["command"],
       ...noExtra,
@@ -75,16 +94,16 @@ export const bashExec: ToolExecutor = async (args, _env, invocation) => {
   return json(await workerRegistry.execute(sessionId(invocation), "bash", args, invocation.signal, typeof args.timeout === "number" ? Math.max(args.timeout + 5_000, 10_000) : undefined));
 };
 
-export const bashOutputDef: ToolDefinition = { type: "function", function: { name: "bash_output", description: "Read current output or a line tail from a persistent shell on the selected Worker.", parameters: { type: "object", properties: { session: { type: "string" }, tail: { type: "number", minimum: 1 }, wait: { type: "number", minimum: 0 } }, required: ["session"], ...noExtra } } };
+export const bashOutputDef: ToolDefinition = { type: "function", function: { name: "bash_output", description: "Read current output or a line tail from a persistent shell on the selected Worker.", parameters: { type: "object", properties: { session: { type: "string" }, tail: { type: "number", minimum: 0 }, wait: { type: "number", minimum: 0 }, worker_id: { type: "string" } }, required: ["session"], ...noExtra } } };
 export const bashOutputExec: ToolExecutor = async (args, _env, invocation) => {
   if (typeof args.wait === "number" && args.wait > 0) await new Promise(resolve => setTimeout(resolve, Math.min(args.wait as number, 30_000)));
   return json(await workerRegistry.execute(sessionId(invocation), "bash_output", args, invocation?.signal));
 };
 
-export const bashListDef: ToolDefinition = { type: "function", function: { name: "bash_list", description: "List persistent shell sessions on the selected Worker.", parameters: { type: "object", properties: {}, ...noExtra } } };
-export const bashListExec: ToolExecutor = async (_args, _env, invocation) => json(await workerRegistry.execute(sessionId(invocation), "bash_list", {}, invocation?.signal));
+export const bashListDef: ToolDefinition = { type: "function", function: { name: "bash_list", description: "List persistent shell sessions on the selected Worker.", parameters: { type: "object", properties: { worker_id: { type: "string" } }, ...noExtra } } };
+export const bashListExec: ToolExecutor = async (args, _env, invocation) => json(await workerRegistry.execute(sessionId(invocation), "bash_list", args ?? {}, invocation?.signal));
 
-export const bashKillDef: ToolDefinition = { type: "function", function: { name: "bash_kill", description: "Kill a persistent shell and its process tree on the selected Worker.", parameters: { type: "object", properties: { session: { type: "string" } }, required: ["session"], ...noExtra } } };
+export const bashKillDef: ToolDefinition = { type: "function", function: { name: "bash_kill", description: "Kill a persistent shell and its process tree on the selected Worker.", parameters: { type: "object", properties: { session: { type: "string" }, worker_id: { type: "string" } }, required: ["session"], ...noExtra } } };
 export const bashKillExec: ToolExecutor = async (args, _env, invocation) => json(await workerRegistry.execute(sessionId(invocation), "bash_kill", args, invocation?.signal));
 
 export const workerUploadDef: ToolDefinition = { type: "function", function: { name: "worker_upload", description: "Upload a local DATA_ROOT file to the selected Worker.", parameters: { type: "object", properties: { localPath: { type: "string" }, remotePath: { type: "string" } }, required: ["localPath", "remotePath"], ...noExtra } } };
@@ -106,4 +125,59 @@ export const workerDownloadExec: ToolExecutor = async (args, _env, invocation) =
   if (bytes.length !== result.bytes || bytes.length > 128 * 1024 * 1024) throw new Error("Worker download framing is invalid");
   await invocation.path.writeFile(args.localPath as string, bytes, { defaultRootId: rootId, maxBytes: 128 * 1024 * 1024 });
   return json({ localPath: path.normalize(args.localPath as string), bytes: bytes.length });
+};
+
+export const computerUseDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "computer_use",
+    description: "Execute OS-level Desktop GUI Computer Use actions on the selected or specified Worker (screen_info, screenshot, window_list, window_focus, mouse_move, click, double_click, right_click, drag, scroll, type, keypress, hotkey, clipboard_get, clipboard_set, open_app, open_url).",
+    parameters: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          enum: [
+            "screen_info",
+            "screenshot",
+            "window_list",
+            "window_focus",
+            "mouse_move",
+            "click",
+            "double_click",
+            "right_click",
+            "drag",
+            "scroll",
+            "type",
+            "keypress",
+            "hotkey",
+            "clipboard_get",
+            "clipboard_set",
+            "open_app",
+            "open_url",
+          ],
+          description: "Desktop GUI action to perform.",
+        },
+        x: { type: "number", description: "Target X screen coordinate (or region X for screenshot)." },
+        y: { type: "number", description: "Target Y screen coordinate (or region Y for screenshot)." },
+        to_x: { type: "number", description: "Destination X coordinate for drag." },
+        to_y: { type: "number", description: "Destination Y coordinate for drag." },
+        width: { type: "number", minimum: 1, description: "Region width for screenshot." },
+        height: { type: "number", minimum: 1, description: "Region height for screenshot." },
+        amount: { type: "number", description: "Scroll wheel delta (e.g., 120 or -120)." },
+        text: { type: "string", description: "Text to type or set into clipboard." },
+        key: { type: "string", description: "Key or hotkey sequence in SendKeys format (e.g. '{ENTER}', '^c', '%{TAB}')." },
+        target: { type: "string", description: "Window title/process substring for window_focus, or app/URL for open_app/open_url." },
+        output_path: { type: "string", description: "Optional PNG file path to save desktop screenshot." },
+        worker_id: { type: "string", description: "Optional per-call Worker ID override." },
+      },
+      required: ["action"],
+      ...noExtra,
+    },
+  },
+};
+export const computerUseExec: ToolExecutor = async (args, _env, invocation) => {
+  const sid = invocation?.capabilityContext?.sessionId || "default-session";
+  if (invocation?.signal) throwIfCancelled(invocation.signal);
+  return json(await workerRegistry.execute(sid, "computer_use", args, invocation?.signal, 30_000));
 };

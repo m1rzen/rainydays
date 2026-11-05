@@ -80,7 +80,10 @@ export const readDef: ToolDefinition = {
         file_path: { type: "string", description: "绝对路径、相对于 DATA_ROOT 的路径，或当前会话的 attachment:ID。history:列历史索引、history:消息ID取回原文。附件/历史最多12个提取行，按下一页offset继续。" },
         offset: { type: "integer", minimum: 1, description: "起始行（1-based），默认 1。" },
         limit: { type: "integer", minimum: 1, description: "最多返回的行数；文档/附件/长TXT/MD每次最多12个提取行，按下一页offset继续；其他文本省略则读取全部。" },
+        byte_offset: { type: "integer", minimum: 0, description: "可选 UTF-8 字节偏移（用于字节范围分页读取）。" },
+        max_bytes: { type: "integer", minimum: 1, maximum: 10240, description: "字节范围模式下最多返回的字节数（默认 8192，最大 10240）。" },
         pages: { type: "string", description: "PDF 页码范围，如 1-5、3、1-3,8。" },
+        worker_id: { type: "string", description: "可选单次调用目标 Worker ID（不改变当前会话默认选中的 Worker）。" },
       },
       required: ["file_path"],
     },
@@ -115,6 +118,14 @@ export const readExec: ToolExecutor = async (args, _env, invocationValue) => {
   const pageSummary = extension === ".pdf" && parsed.pageCount
     ? `\nPDF: ${parsed.pageCount} 页；本次解析页面 ${parsed.renderedPages?.join(", ") || "未知"}，展示范围见下方分页` : "";
   const revision = createHash("sha256").update(authorized.bytes).digest("hex");
+  if (args.byte_offset !== undefined || args.max_bytes !== undefined) {
+    const byteOffset = typeof args.byte_offset === "number" ? Math.max(0, Math.floor(args.byte_offset)) : 0;
+    const maxBytes = typeof args.max_bytes === "number" ? Math.min(Math.max(1, Math.floor(args.max_bytes)), 10240) : 8192;
+    const utf8 = Buffer.from(text, "utf8");
+    const slice = utf8.subarray(byteOffset, byteOffset + maxBytes);
+    const nextByteOffset = byteOffset + slice.length < utf8.length ? byteOffset + slice.length : null;
+    return `文件: ${filePath}\n版本: ${revision}\n字节范围: ${byteOffset}-${byteOffset + slice.length} / ${utf8.length}${nextByteOffset !== null ? ` (next byte_offset=${nextByteOffset})` : ""}\n\n${slice.toString("utf8")}`;
+  }
   const longText = [".txt", ".md", ".markdown", ".csv", ".log"].includes(extension) && (text.length > 16000 || text.split(/\r?\n/u).some(line => line.length > 500));
   const page = evidenceDocument || longText ? documentTextPage(text, args.offset as number | undefined, args.limit as number | undefined, parsed.locations) : numberedLines(text, args.offset, args.limit);
   return `文件: ${filePath}${pageSummary}\n版本: ${revision}${documentWarnings(parsed.warnings)}\n\n${page}`;
@@ -130,6 +141,7 @@ export const writeDef: ToolDefinition = {
       properties: {
         file_path: { type: "string", description: "绝对路径，或相对于 OUTPUT_DIR 的路径。" },
         content: { type: "string", description: "完整 UTF-8 文本内容。" },
+        worker_id: { type: "string", description: "可选单次调用目标 Worker ID。" },
       },
       required: ["file_path", "content"],
     },
@@ -144,7 +156,15 @@ export const writeExec: ToolExecutor = async (args, _env, invocationValue) => {
   const bytes = Buffer.from(args.content as string, "utf8");
   if (bytes.length > MAX_TEXT_BYTES) throw new ToolArgumentsError("写入内容超过 8 MiB 上限");
   throwIfCancelled(invocation.signal);
-  await invocation.path.createFile(args.file_path as string, bytes, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
+  try {
+    await invocation.path.createFile(args.file_path as string, bytes, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
+  } catch (error) {
+    if (error && typeof error === "object" && (error as { code?: string }).code === "PATH_OPERATION_DENIED") {
+      await invocation.path.writeFile(args.file_path as string, bytes, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
+    } else {
+      throw error;
+    }
+  }
   return `✅ 文件已生成: ${args.file_path as string}`;
 };
 
@@ -160,6 +180,7 @@ export const editDef: ToolDefinition = {
         old_string: { type: "string", minLength: 1, description: "要查找的精确文本。" },
         new_string: { type: "string", description: "替换文本。" },
         replace_all: { type: "boolean", description: "替换所有匹配；默认 false。" },
+        worker_id: { type: "string", description: "可选单次调用目标 Worker ID。" },
       },
       required: ["file_path", "old_string", "new_string"],
     },
@@ -245,6 +266,10 @@ export const globDef: ToolDefinition = {
     parameters: { type: "object", properties: {
       pattern: { type: "string", description: "例如 *.ts、**/*.ts、src/*.{js,ts}。" },
       path: { type: "string", description: "搜索根目录；默认 DATA_ROOT。" },
+      head_limit: { type: "integer", minimum: 0, description: "最多返回项数；默认 500，0 表示无限制。" },
+      max_depth: { type: "integer", minimum: 0, description: "可选最大目录遍历深度；1 表示仅顶层文件。" },
+      timeout: { type: "number", minimum: 1, description: "搜索时间预算（毫秒），默认 10000。" },
+      worker_id: { type: "string", description: "可选单次调用目标 Worker ID。" },
     }, required: ["pattern"] },
   },
 };
@@ -256,23 +281,28 @@ export const globExec: ToolExecutor = async (args, _env, invocationValue) => {
   const matcher = compileGlob(args.pattern);
   const basePath = typeof args.path === "string" ? args.path : "";
   const defaultRootId = path.isAbsolute(basePath) ? undefined : requireRootId(invocation.path, "DATA_ROOT");
+  const headLimit = typeof args.head_limit === "number" && args.head_limit >= 0
+    ? (args.head_limit === 0 ? MAX_DIRECTORY_ENTRIES : Math.min(Math.floor(args.head_limit), MAX_DIRECTORY_ENTRIES))
+    : MAX_GLOB_RESULTS;
+  const maxDepth = typeof args.max_depth === "number" && args.max_depth >= 0 ? Math.floor(args.max_depth) : null;
+  const budgetMs = typeof args.timeout === "number" && args.timeout >= 1 ? Math.min(args.timeout, 60_000) : SEARCH_TIME_BUDGET_MS;
   const matches: string[] = [];
   const started = Date.now();
   let timedOut = false;
-  const walk = async (directory: string, relative: string): Promise<void> => {
+  const walk = async (directory: string, relative: string, depth: number): Promise<void> => {
     throwIfCancelled(invocation.signal);
-    if (matches.length >= MAX_GLOB_RESULTS || Date.now() - started > SEARCH_TIME_BUDGET_MS) { timedOut = Date.now() - started > SEARCH_TIME_BUDGET_MS; return; }
+    if (matches.length >= headLimit || Date.now() - started > budgetMs) { timedOut = Date.now() - started > budgetMs; return; }
     const entries = await invocation.path.searchDirectory(directory, { defaultRootId, maxEntries: MAX_DIRECTORY_ENTRIES });
     for (const entry of entries) {
-      if (matches.length >= MAX_GLOB_RESULTS) break;
+      if (matches.length >= headLimit) break;
       const child = directory ? path.join(directory, entry.name) : entry.name;
       const childRelative = relative ? `${relative}/${entry.name}` : entry.name;
       if (entry.type === "file") { if (matcher.test(childRelative)) matches.push(child); }
-      else await walk(child, childRelative);
+      else if (maxDepth === null || depth < maxDepth) await walk(child, childRelative, depth + 1);
     }
   };
-  await walk(basePath, "");
+  await walk(basePath, "", 1);
   matches.sort((left, right) => left.localeCompare(right));
   if (matches.length === 0) return `No files found for pattern: ${args.pattern as string}`;
-  return `${matches.join("\n")}${matches.length === MAX_GLOB_RESULTS ? "\n... result limit reached (500)" : ""}${timedOut ? "\n... search timed out" : ""}`;
+  return `${matches.join("\n")}${matches.length === headLimit ? `\n... result limit reached (${headLimit})` : ""}${timedOut ? "\n... search timed out" : ""}`;
 };

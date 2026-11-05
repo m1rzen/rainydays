@@ -64,6 +64,10 @@ export const scriptDef: ToolDefinition = {
           maximum: 10000,
           description: "原生隔离进程超时（毫秒），默认 10000。",
         },
+        worker_id: {
+          type: "string",
+          description: "可选单次调用目标 Worker ID。",
+        },
       },
       required: ["code"],
     },

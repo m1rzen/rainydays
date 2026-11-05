@@ -577,6 +577,7 @@ export function prepareSettingsDomainUpdate(domainId: string, input: unknown, ba
   const value = { ...(input as Record<string, unknown>) };
   if (domainId === "mcp") {
     delete value.envValues;
+    delete value.authValues;
     value.servers = prepareMcpSettings(value, candidate.domains.mcp.servers);
   }
   if (domainId === "asr") {
@@ -602,10 +603,20 @@ export async function updateSettingsDomain(domainId: string, input: unknown): Pr
   if (domainId === "mcp") {
     const created: string[] = [];
     const values = mcpEnvironmentValues(request.envValues, candidate.domains.mcp.servers);
+    const authValues = request.authValues;
+    if (authValues !== undefined && (!authValues || typeof authValues !== "object" || Array.isArray(authValues))) throw new TypeError("MCP认证秘密无效");
     try {
       for (const { server, key, value } of values) { const ref = await storeCredential(value); created.push(ref); server.env[key] = ref; server.tools = []; server.protocolVersion = ""; }
-      const live = new Set(candidate.domains.mcp.servers.flatMap(server => Object.values(server.env)));
-      await stageCredentialRetirements(current.domains.mcp.servers.flatMap(server => Object.values(server.env)).filter(ref => ref && !live.has(ref)));
+      for (const [name, secret] of Object.entries(authValues ?? {})) {
+        const server = candidate.domains.mcp.servers.find(entry => entry.name === name);
+        if (!server || server.auth.mode !== "token" || (secret !== null && (typeof secret !== "string" || secret.length > 8192))) throw new TypeError("MCP token输入无效");
+        if (secret === "") continue;
+        const ref = secret === null ? "" : await storeCredential(secret);
+        if (ref) created.push(ref); server.auth.credentialRef = ref; server.tools = []; server.protocolVersion = ""; server.resources = false;
+      }
+      const refs = (servers: Config["domains"]["mcp"]["servers"]) => servers.flatMap(server => [...Object.values(server.env), server.auth.credentialRef]);
+      const live = new Set(refs(candidate.domains.mcp.servers));
+      await stageCredentialRetirements(refs(current.domains.mcp.servers).filter(ref => ref && !live.has(ref)));
       await saveConfig(candidate);
     } catch (error) { return failCredentialMutation(error, created, current); }
     await finalizeCredentialChanges();
@@ -648,7 +659,7 @@ export function exportSettings(): SettingsExportBundle {
   const domains = cloneSettingsDomains(snapshot.domains);
   delete domains.asr.credentialRef;
   delete domains.relay.credentialRef;
-  for (const server of domains.mcp.servers) server.env = Object.fromEntries(Object.keys(server.env).map(key => [key, ""]));
+  for (const server of domains.mcp.servers) { server.env = Object.fromEntries(Object.keys(server.env).map(key => [key, ""])); server.auth.credentialRef = ""; server.auth.authorizationId = ""; }
   return {
     schemaVersion: 1,
     kind: "rainydays-settings",
@@ -728,6 +739,7 @@ function configCredentialReferences(value: Config): string[] {
     value.domains.asr.credentialRef,
     value.domains.relay.credentialRef,
     ...value.domains.mcp.servers.flatMap(server => Object.values(server.env)).filter(Boolean),
+    ...value.domains.mcp.servers.map(server => server.auth.credentialRef).filter(Boolean),
   ].filter((reference): reference is string => typeof reference === "string");
   return [...new Set(references.map(validateCredentialReference))].sort();
 }

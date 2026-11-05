@@ -12,9 +12,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { LLMClient } from "./llm.js";
 import { ConversationMemory } from "./memory.js";
-import { Agent } from "./agent.js";
+import { Agent, isSessionAutoApproveEnabled, setSessionAutoApproveEnabled } from "./agent.js";
 import { mcpRuntimeToolNames, registerMcpTools } from "./mcp/runtime.js";
-import { registerMcpRoutes } from "./mcp/routes.js";
+import { registerMcpHost } from "./mcp/host.js";
+import { configureMcpOAuthMutationBoundary } from "./mcp/oauth-store.js";
 import { createEffectivePersona, listPersonas, reloadPersonas, getPersona, listAvailableSkills, loadSkillContent, personaPermissionLevel } from "./persona.js";
 import {
   createSession,
@@ -2302,7 +2303,7 @@ app.post("/api/sessions/:id/select", async (req, res) => {
       }
     });
     console.log(`✅ 切换会话: ${id} (${session.title})`);
-    res.json({ session, persona: runtime.persona.name });
+    res.json({ session, persona: runtime.persona.name, autoApprove: isSessionAutoApproveEnabled(id) });
   } catch (error) {
     res.status(409).json(error instanceof SessionPersonaChangedError
       ? { code: error.code, error: error.message, session }
@@ -2603,19 +2604,11 @@ app.post("/api/sessions/import", sessionImportJsonBodyParser, async (req, res) =
 // Settings / Provider API
 // ===========================================
 
-registerMcpRoutes(app, {
+configureMcpOAuthMutationBoundary((action, requireIdle) => withRuntimeMutation(async () => { if (requireIdle && requireRuntimeRegistry().hasRunningSessions()) throw new Error("请等待任务结束后再登录或断开MCP"); return action(); }));
+registerMcpHost(app, {
+  broker: capabilityBroker, direct: runDirectOperation, resolve: sessionId => requireRuntimeRegistry().ensure(sessionId), redirectUrl: `http://127.0.0.1:${PORT}/mcp/oauth/callback`,
   busy: () => runtimeMutationReservations > 0 || requireRuntimeRegistry().hasRunningSessions(),
   mutate: action => withRuntimeMutation(async () => { ensureRuntimeAccepting(); if (requireRuntimeRegistry().hasRunningSessions()) throw new Error("请等待任务结束后重新测试"); await action(); }),
-  probe: (name, signal) => runDirectOperation("mcp:test", { name }, async (_args, owner, _authority, context) => {
-    const server = getConfigSnapshot().domains.mcp.servers.find(item => item.name === name);
-    if (!server) throw new Error("MCP服务器不存在");
-    return capabilityBroker.withDirectExecutionRoot(context, "mcp:test", server.cwd || ".", "WORKSPACE_ROOT", async cwd => {
-      const { McpConnection } = await import("./mcp/client.js");
-      const connection = new McpConnection(server);
-      try { await connection.open(cwd, owner, signal); return { tools: await connection.listTools(signal), protocolVersion: connection.protocolVersion }; }
-      finally { await connection.close(); }
-    });
-  }),
 });
 
 /** 查询设置。敏感值与 secret-derived hint 永不回显，只返回 configured boolean。 */
@@ -3040,7 +3033,7 @@ app.post("/api/chat/steer", async (req, res) => {
 app.post("/api/chat", async (req, res) => {
   const body = req.body as Record<string, unknown> | null;
   if (!body || typeof body !== "object" || Array.isArray(body)
-    || Object.keys(body).some(key => !new Set(["sessionId", "message", "attachmentIds"]).has(key))
+    || Object.keys(body).some(key => !new Set(["sessionId", "message", "attachmentIds", "autoApprove"]).has(key))
     || typeof body.message !== "string") {
     res.status(400).json({ error: "Chat request is invalid" });
     return;
@@ -3050,6 +3043,7 @@ app.post("/api/chat", async (req, res) => {
   let initialAttachments: ReturnType<typeof prepareMessageAttachments>;
   try {
     chatSessionId = resolveBodySessionIdentity(body.sessionId, true)!;
+    if (typeof body.autoApprove === "boolean") setSessionAutoApproveEnabled(chatSessionId, body.autoApprove);
     initialAttachments = prepareMessageAttachments(chatSessionId, body.attachmentIds);
     if (!message.trim() && initialAttachments.length === 0) throw new TypeError("Message or attachment is required");
   } catch (error) {
@@ -3182,8 +3176,21 @@ app.post("/api/chat", async (req, res) => {
 // ===========================================
 // Ask User API（用户提交回答）
 // ===========================================
+app.get("/api/sessions/:id/auto-approve", (req, res) => {
+  const id = req.params.id;
+  if (!getSessionInfo(id)) { res.status(404).json({ error: "会话不存在" }); return; }
+  res.json({ sessionId: id, autoApprove: isSessionAutoApproveEnabled(id) });
+});
+
+app.post("/api/sessions/:id/auto-approve", (req, res) => {
+  const id = req.params.id;
+  if (!getSessionInfo(id)) { res.status(404).json({ error: "会话不存在" }); return; }
+  const enabled = setSessionAutoApproveEnabled(id, Boolean(req.body?.autoApprove ?? req.body?.enabled));
+  res.json({ sessionId: id, autoApprove: enabled });
+});
+
 app.post("/api/ask-user/answer", (req, res) => {
-  const { runId, questionId, answer } = req.body;
+  const { runId, questionId, answer, autoApprove } = req.body;
   let sessionId: string;
   try {
     sessionId = resolveBodySessionIdentity(req.body?.sessionId, true)!;
@@ -3191,12 +3198,20 @@ app.post("/api/ask-user/answer", (req, res) => {
     res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
     return;
   }
+  if (typeof autoApprove === "boolean" && !runId && !questionId && !answer) {
+    const enabled = setSessionAutoApproveEnabled(sessionId, autoApprove);
+    res.status(200).json({ success: true, autoApprove: enabled });
+    return;
+  }
   if (![runId, questionId, answer].every(value => typeof value === "string" && value.length > 0)) {
     res.status(400).json({ error: "缺少 runId、questionId 或 answer" });
     return;
   }
+  if (autoApprove === true || answer === "本会话自动批准（Auto 模式）" || answer === "本会话自动批准" || answer === "auto") {
+    setSessionAutoApproveEnabled(sessionId, true);
+  }
   const success = submitAnswer(sessionId, runId, questionId, answer);
-  res.status(success ? 200 : 409).json({ success });
+  res.status(success ? 200 : 409).json({ success, autoApprove: isSessionAutoApproveEnabled(sessionId) });
 });
 
 /** 清空指定会话的内存（不删数据库，只清空该 runtime 的内存上下文）。 */

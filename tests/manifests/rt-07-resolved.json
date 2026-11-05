@@ -8,17 +8,17 @@
   "runtimeEntries": [
     {
       "exactCasePath": "dist/agent.js",
-      "sha256": "478c9f9fed363353c12cddabb788fe85c60448d50dff27fb6a6697683ad6d7ba",
+      "sha256": "2d59108a795b170b873f9c7fe9f801839cabd826cb5ab1481c46f6335ebb6913",
       "owner": "RT-07"
     },
     {
       "exactCasePath": "dist/db.js",
-      "sha256": "5cfc545b89b8b5d6a49a06c219cc991ea1c0cd9980e1306c755f47c8dff173fb",
+      "sha256": "fa97d05ecc9dc07beab2197416a20275f9bddeb63a135d49c7bffbfb40150428",
       "owner": "RT-07"
     },
     {
       "exactCasePath": "dist/session.js",
-      "sha256": "2614e8ad5aa360194c5b466c323a3e1ef0386ce79489f60b101bb56997bba49b",
+      "sha256": "386e6f514a1e5ffc794a354f44419b8045b8093b3a2d9c35fdb36c1c14346d35",
       "owner": "RT-07"
     },
     {
@@ -28,12 +28,12 @@
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "8cef9e1b6a7e83768f74257a140fa929aa77ace5553095f30be948901728cb56",
+      "sha256": "ede99e6b841d941b6b9153a62477d8adfb1fc6953ab1d6b34ccb9f279d87f9b5",
       "owner": "RT-07"
     },
     {
       "exactCasePath": "dist/tools/index.js",
-      "sha256": "c6c648d42d29444a6c00512307405a96986fe9344276f4e5fbb5142ab24c3e62",
+      "sha256": "afdc663cd1655ac7f4438be47bc104ff9c6b0ef1ab9bc95b619e754c438d154b",
       "owner": "RT-07"
     },
     {
@@ -43,7 +43,7 @@
     },
     {
       "exactCasePath": "dist/version.js",
-      "sha256": "981683aeb9036331ec3aedd680a8e9695d8c07ac0fab3056fe43df9184a05c80",
+      "sha256": "e3743791b6c2d5fdc0c673b29525379a8a7eafe4cd44a7e44a5fb60e5dd55b9f",
       "owner": "RT-07"
     },
     {
@@ -53,17 +53,17 @@
     },
     {
       "exactCasePath": "personas/debugger.md",
-      "sha256": "e980ea60ff097df4615bcc5509b8ae8c1748a351febd3b374215614d5fe5119a",
+      "sha256": "76192b6fe47a904dd27a381a0935cc94ab0d2ffac43533f99e4adc3119498844",
       "owner": "RT-07"
     },
     {
       "exactCasePath": "personas/developer.md",
-      "sha256": "5d91a4f1561bd2879ff7fc2cbbfc55d6f960bba65c5454717b50688f9866db88",
+      "sha256": "dae5408dc12b81f740e369e30e78e430b1b5eae248ed3aee122a6186c5cff326",
       "owner": "RT-07"
     },
     {
       "exactCasePath": "personas/general.md",
-      "sha256": "1db6e30d9fb751fdc043a83064ecec97bccbae7414362c28af6517713880eb01",
+      "sha256": "73f4f23961d2b3fc4cd0311be509fab2f009ffb1731e6abd4c5b9fdf24f3319a",
       "owner": "RT-07"
     },
     {
@@ -78,7 +78,7 @@
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "64c83f779865c2b6705ad49efd8987f9dc1e2f2225d93daf267a7fe2ce6a5fa2",
+      "sha256": "7d382e927f0d1e5141eb2c592a1d9312a2948ed7595b1dcc6965225d2bb9b59e",
       "owner": "RT-07"
     },
     {
@@ -88,17 +88,17 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "5872990a26002684f02aa60b4cc35e1c64076df91c5b0f772ced34d3252e41f5",
+      "sha256": "3bfbeb374a8d3230e2a900b272f34d255fb60b9386e9675546bcaa725230560c",
       "owner": "RT-07"
     },
     {
       "exactCasePath": "src/db.ts",
-      "sha256": "1fb311cc78d9c47e4872c3836e9cbb419f93f6c0c370e02c4a2db66d973826b3",
+      "sha256": "1e2e7d79f024f8890a07d53a3e3023da6560345b7c72cd836d9f9d90d19a8259",
       "owner": "RT-07"
     },
     {
       "exactCasePath": "src/session.ts",
-      "sha256": "ddee52bb93efe1c0a8ade1c5443d47f1d38e826ca3c269d232d7ed2f6f05924d",
+      "sha256": "89bf09c9fb72ff224d6c20ea2a1f30f5eddf6c3e1be19313f5a9ad02d106bac5",
       "owner": "RT-07"
     },
     {
@@ -108,12 +108,12 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "b02ad6940f8c77ac634a9b9c022eb660425d85120dba2cadd87f14d20fbdef0d",
+      "sha256": "36517715129d97a1c909bef4e15bf0d0c58671aae9808656af659a2abc44271c",
       "owner": "RT-07"
     },
     {
       "exactCasePath": "src/tools/index.ts",
-      "sha256": "c2be1f37eb9603eb296ebab06efca90fed389abd823c1150c8ed57cb08b803f0",
+      "sha256": "e1330b5e28cd33ed66bd3ae1566f665bae026c30d676457c656971ab28e75ea2",
       "owner": "RT-07"
     },
     {
@@ -123,12 +123,12 @@
     },
     {
       "exactCasePath": "src/types.ts",
-      "sha256": "6ae065f4fe3647fc777de9435965894ff03e5428c9753b79df16cdf08dcece88",
+      "sha256": "bedb1a57504f8d615fc349d14afad8dce0221c509d239295e8c73ee7511e3fb4",
       "owner": "RT-07"
     },
     {
       "exactCasePath": "src/version.ts",
-      "sha256": "88d58ae37f27f624eee647775c6f54ff792d1097ed52cf9ab81898f52fb06655",
+      "sha256": "fe6a2c2cef39e0d91213c0ca060265239b68d69e870e7fc8ff696931f5eab7e0",
       "owner": "RT-07"
     }
   ],
@@ -142,7 +142,7 @@
     },
     {
       "exactCasePath": "tests/integration/rt07-task-dag.test.mjs",
-      "sha256": "f55358a474d133cd08b8d4a6185b6ecbd87636f558709f5f3a14eb2e1d4aa60a",
+      "sha256": "c535424d72d42e57af0e0ce67cb92b67ae955f51c287da35fc24a602d8c2da7e",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-07"
@@ -156,11 +156,11 @@
     },
     {
       "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-      "sha256": "ddafc43dec89d904749962cbeb1ace661d63ac748baf04506a0fcbee01493d15",
+      "sha256": "cb6638806da64f816268ccce37e88d1ff568e7674b0bef357fc6bb6844068bd3",
       "kind": "test",
       "layer": "integration",
       "owner": "RT-07"
     }
   ],
-  "canonicalPayloadSha256": "7375aa9c2037e4261da55e43b670b7d4b6898529be649690cece988dc783ca63"
+  "canonicalPayloadSha256": "fb1b3e687eb92704d86f0737c98b0cfbeb5a87695fa85c48b7148de391d5f61a"
 }

@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { validateCredentialReference } from "../credential-store.js";
 
 export interface McpToolSetting {
@@ -9,7 +9,7 @@ export interface McpToolSetting {
 export interface McpServerSetting {
   name: string;
   enabled: boolean;
-  transport: "stdio" | "http";
+  transport: "stdio" | "http" | "sse";
   command: string;
   args: string[];
   url: string;
@@ -18,6 +18,8 @@ export interface McpServerSetting {
   env: Record<string, string>;
   tools: McpToolSetting[];
   protocolVersion: string;
+  resources: boolean;
+  auth: { mode: "none" | "token" | "oauth"; credentialRef: string; clientId: string; authorizationId: string };
 }
 function object(value: unknown, label: string): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new TypeError(`${label}必须是对象`);
@@ -43,18 +45,19 @@ export function parseMcpServers(value: unknown): McpServerSetting[] {
   const seen = new Set<string>();
   return value.map(entry => {
     const item = object(entry, "MCP server");
-    const allowed = new Set(["name", "enabled", "transport", "command", "args", "url", "cwd", "env", "tools", "protocolVersion"]);
+    const allowed = new Set(["name", "enabled", "transport", "command", "args", "url", "cwd", "env", "tools", "protocolVersion", "resources", "auth"]);
     if (Object.keys(item).some(key => !allowed.has(key))) throw new TypeError("MCP server包含未知字段");
     const name = text(item.name, "MCP名称", 64, false);
     if (seen.has(name)) throw new TypeError("MCP name重复"); seen.add(name);
-    if (typeof item.enabled !== "boolean" || (item.transport !== "stdio" && item.transport !== "http")) throw new TypeError("MCP启用状态或传输无效");
+    if (typeof item.enabled !== "boolean" || !["stdio", "http", "sse"].includes(String(item.transport))) throw new TypeError("MCP启用状态或传输无效");
     if (!Array.isArray(item.args) || item.args.length > 64) throw new TypeError("MCP args无效");
     const args = item.args.map(arg => text(arg, "MCP参数", 1024));
     const command = text(item.command, "MCP命令", 2048), url = text(item.url, "MCP URL", 2048);
     if (item.transport === "stdio" && !command) throw new TypeError("stdio MCP缺少command");
-    if (item.transport === "http") {
+    if (item.transport !== "stdio") {
       const target = new URL(url);
-      if (target.protocol !== "https:" || target.username || target.password || target.hash) throw new TypeError("MCP URL须为无凭据的HTTPS地址");
+      const loopback = target.hostname === "127.0.0.1" || target.hostname === "[::1]" || target.hostname === "localhost";
+      if ((target.protocol !== "https:" && !(target.protocol === "http:" && loopback)) || target.username || target.password || target.hash || target.search) throw new TypeError("MCP URL须为无凭据的HTTPS或明确loopback HTTP地址，不含查询参数");
     }
     const env = object(item.env ?? {}, "MCP环境变量");
     if (Object.keys(env).length > 32) throw new TypeError("MCP环境变量过多");
@@ -63,7 +66,14 @@ export function parseMcpServers(value: unknown): McpServerSetting[] {
       return [key, reference === "" ? "" : validateCredentialReference(reference)];
     }));
     if (new Set(Object.keys(references).map(key => key.toUpperCase())).size !== Object.keys(references).length) throw new TypeError("MCP环境变量名称重复");
-    return { name, enabled: item.enabled, transport: item.transport, command, args, url, cwd: text(item.cwd ?? "", "MCP cwd", 2048), env: references, tools: parseMcpTools(item.tools ?? []), protocolVersion: text(item.protocolVersion ?? "", "MCP协议版本", 64) };
+    const rawAuth = object(item.auth ?? {}, "MCP认证");
+    if (Object.keys(rawAuth).some(key => !["mode", "credentialRef", "clientId", "authorizationId"].includes(key))) throw new TypeError("MCP认证字段无效");
+    const mode = rawAuth.mode ?? "none";
+    if (mode !== "none" && mode !== "token" && mode !== "oauth") throw new TypeError("MCP认证模式无效");
+    if (item.resources !== undefined && typeof item.resources !== "boolean") throw new TypeError("MCP资源能力无效");
+    const authorizationId = text(rawAuth.authorizationId ?? "", "MCP授权标识", 36);
+    if (authorizationId && !/^[a-f0-9-]{36}$/u.test(authorizationId)) throw new TypeError("MCP授权标识无效");
+    return { name, enabled: item.enabled, transport: item.transport as McpServerSetting["transport"], command, args, url, cwd: text(item.cwd ?? "", "MCP cwd", 2048), env: references, tools: parseMcpTools(item.tools ?? []), protocolVersion: text(item.protocolVersion ?? "", "MCP协议版本", 64), resources: item.resources === true, auth: { mode, credentialRef: rawAuth.credentialRef ? validateCredentialReference(rawAuth.credentialRef) : "", clientId: text(rawAuth.clientId ?? "", "MCP OAuth clientId", 256), authorizationId } };
   });
 }
 /** Public forms keep existing secrets with an empty placeholder; refs are never accepted from a client. */
@@ -73,14 +83,17 @@ export function prepareMcpSettings(input: Record<string, unknown>, current: McpS
     const item = object(entry, "MCP server");
     const old = current.find(server => server.name === item.name);
     const env = object(item.env ?? {}, "MCP环境变量");
-    return { ...item, env: Object.fromEntries(Object.entries(env).map(([key, value]) => {
+    const auth = object(item.auth ?? {}, "MCP认证"), mode = auth.mode ?? "none";
+    if (auth.credentialRef && auth.credentialRef !== old?.auth.credentialRef) throw new TypeError("MCP凭据须通过秘密输入更新");
+    const sameAuth = old?.url === item.url && old?.auth.mode === mode && old?.auth.clientId === (auth.clientId ?? "");
+    return { ...item, auth: { ...auth, credentialRef: sameAuth ? old!.auth.credentialRef : "", authorizationId: mode === "oauth" ? (sameAuth && old!.auth.authorizationId ? old!.auth.authorizationId : randomUUID()) : "" }, env: Object.fromEntries(Object.entries(env).map(([key, value]) => {
       if (value !== "" && value !== old?.env[key]) throw new TypeError("MCP环境变量须通过秘密输入更新");
       return [key, old?.env[key] ?? ""];
     })) };
   }));
   for (const server of parsed) {
     const old = current.find(entry => entry.name === server.name);
-    if (old && mcpConfigurationKey(old) !== mcpConfigurationKey(server)) { server.tools = []; server.protocolVersion = ""; }
+    if (old && mcpConfigurationKey(old) !== mcpConfigurationKey(server)) { server.tools = []; server.protocolVersion = ""; server.resources = false; }
   }
   return parsed;
 }
@@ -99,9 +112,10 @@ export function mcpEnvironmentValues(input: unknown, servers: McpServerSetting[]
   return result;
 }
 export function mcpConfigurationKey(server: McpServerSetting): string {
-  return createHash("sha256").update(JSON.stringify({ name: server.name, transport: server.transport, command: server.command, args: server.args, cwd: server.cwd, env: server.env, url: server.url })).digest("hex");
+  const auth = server.auth.mode === "oauth" ? { mode: "oauth", clientId: server.auth.clientId, authorizationId: server.auth.authorizationId } : server.auth;
+  return createHash("sha256").update(JSON.stringify({ name: server.name, transport: server.transport, command: server.command, args: server.args, cwd: server.cwd, env: server.env, url: server.url, auth })).digest("hex");
 }
-export function mcpToolName(server: string, tool: string): string {
+export function mcpToolName(server: string, tool: string, hostOperation?: string): string {
   const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9_-]/gu, "_").slice(0, 16);
-  return `mcp__${slug(server)}__${slug(tool)}_${createHash("sha256").update(JSON.stringify([server, tool])).digest("hex").slice(0, 12)}`;
+  return `mcp__${slug(server)}__${slug(tool)}_${createHash("sha256").update(JSON.stringify(hostOperation ? [server, tool, hostOperation] : [server, tool])).digest("hex").slice(0, 12)}`;
 }

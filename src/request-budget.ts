@@ -31,3 +31,43 @@ export class ContextBudgetExceededError extends Error {
     this.name = "ContextBudgetExceededError";
   }
 }
+
+export type ThinkingEffortLevel = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+
+const sessionThinkingEffort = new Map<string, ThinkingEffortLevel>();
+
+export function getSessionThinkingEffort(sessionId: string): {
+  currentEffort: ThinkingEffortLevel;
+  availableEfforts: ThinkingEffortLevel[];
+} {
+  return {
+    currentEffort: sessionThinkingEffort.get(sessionId) ?? "high",
+    availableEfforts: ["minimal", "low", "medium", "high", "xhigh", "max"],
+  };
+}
+
+export function setSessionThinkingEffort(sessionId: string, effort: ThinkingEffortLevel): {
+  previousEffort: ThinkingEffortLevel;
+  currentEffort: ThinkingEffortLevel;
+  appliesTo: "next_provider_request";
+} {
+  const prev = sessionThinkingEffort.get(sessionId) ?? "high";
+  sessionThinkingEffort.set(sessionId, effort);
+  return {
+    previousEffort: prev,
+    currentEffort: effort,
+    appliesTo: "next_provider_request",
+  };
+}
+
+export function hasExplicitSessionThinkingEffort(sessionId: string): boolean {
+  return sessionThinkingEffort.has(sessionId);
+}
+
+export function resolveProviderReasoningEffort(sessionId: string): "low" | "medium" | "high" | undefined {
+  const effort = sessionThinkingEffort.get(sessionId);
+  if (!effort) return undefined;
+  if (effort === "minimal" || effort === "low") return "low";
+  if (effort === "medium") return "medium";
+  return "high";
+}

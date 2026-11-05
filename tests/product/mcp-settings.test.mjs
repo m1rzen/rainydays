@@ -56,3 +56,13 @@ test("A05 changing launch settings invalidates the previously tested tool catalo
   const updated = config.getConfigSnapshot().domains.mcp.servers[0];
   assert.deepEqual(updated.tools, []); assert.equal(updated.protocolVersion, "");
 });
+
+test("A06 HTTP token settings use vault refs, stay private and preserve empty form inputs", async () => {
+  const remote = { ...oldServer, name: "remote-token", transport: "http", command: "", args: [], url: "https://fixture.invalid/mcp", auth: { mode: "token" } };
+  await config.updateSettingsDomain("mcp", { servers: [remote], authValues: { [remote.name]: "obviously-fake-mcp-token" } });
+  const [saved] = config.getConfigSnapshot().domains.mcp.servers;
+  assert.match(saved.auth.credentialRef, /^cred_/u); assert.equal(await credentials.readCredential(saved.auth.credentialRef), "obviously-fake-mcp-token");
+  for (const view of [config.getPublicConfig(), config.exportSettings()]) { assert(!JSON.stringify(view).includes(saved.auth.credentialRef)); assert(!JSON.stringify(view).includes("obviously-fake-mcp-token")); }
+  await config.updateSettingsDomain("mcp", { servers: [remote] });
+  assert.equal(config.getConfigSnapshot().domains.mcp.servers[0].auth.credentialRef, saved.auth.credentialRef);
+});

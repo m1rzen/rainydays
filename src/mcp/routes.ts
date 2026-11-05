@@ -7,7 +7,7 @@ import { mcpConnectedCount } from "./runtime.js";
 export function registerMcpRoutes(app: Express, dependencies: {
   busy: () => boolean;
   mutate: (action: () => Promise<void>) => Promise<void>;
-  probe: (name: string, signal: AbortSignal) => Promise<{ tools: McpToolSetting[]; protocolVersion: string }>;
+  probe: (name: string, signal: AbortSignal) => Promise<{ tools: McpToolSetting[]; protocolVersion: string; resources: boolean }>;
 }): void {
   const status = new Map<string, { key: string; state: string; error?: string }>();
   const currentStatus = (server: McpServerSetting) => { const state = status.get(server.name); return state?.key === mcpConfigurationKey(server) ? state : undefined; };
@@ -32,7 +32,7 @@ export function registerMcpRoutes(app: Express, dependencies: {
         if (expectedRevision !== getConfigRevisionDigest()) throw new Error("测试期间设置已变化，请重新测试");
         const servers = getConfigSnapshot().domains.mcp.servers;
         const server = servers.find(item => item.name === name); if (!server) throw new Error("MCP服务器不存在");
-        server.tools = result.tools; server.protocolVersion = result.protocolVersion;
+        server.tools = result.tools; server.protocolVersion = result.protocolVersion; server.resources = result.resources;
         await updateSettingsDomain("mcp", { servers });
       });
       status.set(name, { key, state: "tested-on-demand" });

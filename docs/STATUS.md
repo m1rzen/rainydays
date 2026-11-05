@@ -17,6 +17,11 @@
 
 ## 已验证
 
+- LC-00 ~ LC-06（Lux-Cloud 2026 全量對標與原生 Computer Use）：
+  - **60 工具契約 100% 滿分對齊**：`node docs/research/check-lux-cloud-parity.mjs` 驗證為 `aligned: 60, partial: 0, legacy: 0, missing: 0`（全庫共發現 161 個工具 Schema）。
+  - **主循環深度接線**：`src/agent.ts` 自動注入 `<agent_map>`、`<coverage>` 與 `<loaded_skills>` 並將超長工具結果自動歸檔供 `tool_result_read` 分頁讀取；`src/memory.ts` 實現 50% Scribe 預備水位線（`autoScribePrepareWatermark`）與 90% 冷熱窗口替換（`archiveMessagesToColdStore`）；`src/llm.ts` 接入 `resolveProviderReasoningEffort` 動態映射推理檔位。
+  - **原生桌面級 Computer Use (`computer_use`)**：於 `scripts/rainydays-worker.mjs` 與 `src/tools/worker-tools.ts` 落地基於 Windows `user32.dll` P/Invoke、`System.Windows.Forms` 與 `System.Drawing` 的 17 種桌面動作（屏幕信息、全屏/區域截圖、窗口枚舉/聚焦、鼠標移動/點擊/雙擊/右擊/拖拽/滾輪、鍵盤輸入/熱鍵、剪貼板讀寫、應用與網址啟動），並納入 `CapabilityBroker` 審批與單次 `worker_id` 路由。`tests/product/lux-cloud-parity.test.mjs`（LC-01 ~ LC-06）與契約治理測試全數通過。
+
 - A05：官方SDK1.32.1的真實stdio工具接入，設定CRUD/測試/啟停與vault環境值，按需schema與原server標籤；開發模式同run每server一次授權，下一run重置。同事模式停用，不回退；Windows Job/原owner清理包含server崩潰後子程序及app強制退出；typed錯誤與有界分頁。產品109/109、UI15/15、桌面6/6，真實模型與安裝仍另驗。[證據](work/general-agent/tickets/05-mcp-local.md)
 
 - A03：开发模式默认助手61秒终端、1600行中文分页/stdin/exit7、活动终端旁运行命令、跨Session拒绝与取消清理通过；修复缺命令诊断乱码并给PATH/安装选择提示。真实Electron输入框→任务授权→只读面板→结束后保留活动手动终端通过。产品93+UI15、同事模式4项通过；真实模型/当前安装未测。[证据](work/general-agent/tickets/03-cli-sessions.md)

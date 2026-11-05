@@ -1,10 +1,37 @@
 # RainyDays 自主連續開發記錄
 
-更新：2026-10-30。分支`demo/2026-10-16`，起點`fc9f745`；`git pull --ff-only`已同步，必要基線是HEAD祖先。既存`claude_tail.py`與`deliverables/**`僅保留，沒有未知已追蹤修改或stash。排期唯一來源仍是[plan.md](plan.md)，本檔記錄執行與恢復位置。
+更新：2026-11-06。分支`demo/2026-10-16`。排期唯一來源仍是[plan.md](plan.md)，本檔記錄執行與恢復位置。
 
 ## 目前位置
 
-目前：A05已verified，程式碼1e0a09e與08f31b9；本次文件提交後推送，再接續A06。完整五組檢查均通過。
+目前：
+1. **A06 遠端 MCP 接入**（in-progress，已完成 Streamable HTTP JSON/SSE、寫後斷線不重放、token vault 設定、跨 origin 重導與寫後 401 防重放；待接普通 Agent/UI/OAuth 與資源 reader）；
+2. **LC-00 ~ LC-06（Lux Cloud 60 工具與主循環對齊）+ 桌面端實戰體驗修復（Session Auto 授權模式、自然語言授權說明、長對話整理歷史超時修復、工具折疊時間軸 UI）**：已完成代碼落地、TypeScript 編譯與核心單元/契約/產品測試驗證，待重啟桌面端進程使新 `dist/` 在運行中實例生效並繼續完成用戶 B 站「永雛塔菲」最後 3 個直播回放合並與「邑易行」小程序源碼分析會話。
+
+## 本輪已完成與未完成的改動（2026-11-06 切片）
+
+### 已完成改動
+1. **Session 級工具授權 Auto 模式（Claude Auto 風格）**：
+   - `src/agent.ts`：新增 `isSessionAutoApproveEnabled` / `setSessionAutoApproveEnabled`。開啟後當前 Session 內後續工具調用自動通過授權挑戰，不再重複彈窗。
+   - `src/tools/ask-user-tool.ts`：`askUserConfirm` 新增 `「本會話自動批准（Auto 模式）」` 選項並納入正向授權集合。
+   - `src/index.ts`：`POST /api/sessions/:id/select`、`POST /api/chat`、`POST /api/ask-user/answer` 及 `GET/POST /api/sessions/:id/auto-approve` 同步 Session 級 `autoApprove` 狀態。
+   - `public/index.html`、`public/redesign.css`、`public/renderer.js`：底部輸入欄新增 `⚡ Auto 授權: 開/關` 一鍵切換按鈕，並在每次授權彈窗（`#ask-modal`）提供醒目的 `「本會話自動批准（Auto 模式）」` 按鈕。
+2. **自然語言工具授權提示與開發模式審批打通**：
+   - `src/agent.ts`：新增 `summarizeFileContentPurpose`、`describeDeveloperCommandPurpose`、`describeNaturalToolApproval`，將原本僅顯示 `工具: write / 參數: {...}` 的生硬 JSON 替換為清晰自然語言說明（要做的事、目的、保存路徑/目標與調用工具名）。
+   - `src/developer-execution.ts`：將 `bash`、`bash_kill`、`shell_kill`、`browser_open`、`browser_close`、`computer_use` 納入 `DEVELOPER_COMMAND_TOOLS`，在開發模式下統一走應用內授權而非為每次調用彈原生進程確認框。
+   - `src/tools/filesystem-lux.ts`：`writeExec` 在同名文件已存在觸發 `PATH_OPERATION_DENIED` 時自動回退 `writeFile` 覆蓋寫入。
+   - `src/agent.ts`：`write`/`edit`/`replace`/`shell_input` 成功後及 `execute_command` 輸出發生變化時調用 `toolLoopDetector.noteCodeChange()`，避免輪詢後台下載進度時誤觸發 `TOOL_LOOP_DETECTED`。
+3. **「整理歷史超時」根因修復**：
+   - `src/memory.ts`：移除 `this.messages.length <= this.maxMessages` 強制壓縮條件（僅在超過上下文預算或達到 90% 水位線時才觸發 `compact()`）；`formatMessagesForSummary` 對單條 `role === "tool"` 輸出做 1,200 字符有界裁剪；默認 `summaryTimeoutMs` 從 30s 提升至 90s 以適配 Thinking 模型（`Gcable-Pro-Thinking`）。
+4. **任務執行過程分段時間軸與 `.tool-group` 折疊 UI**：
+   - `public/renderer.js`、`public/redesign.css`：實時流式輸出按時間順序分段渲染 `.run-text-segment`，連續工具調用自動折疊進 `.tool-group` 摘要面板。
+
+### 未完成改動（WIP）
+1. **桌面端運行實例熱重載與歷史超大錯誤輸出清理**：尚未重啟當前正在運行的 RainyDays Electron 桌面端進程（舊進程仍加載修改前的 `dist/`），且 `mini-lux.db` 中會話 `a841e150-b0e4-4bf4-8ee7-7b3fb0137f11` 與 `0db1b724-7956-4f7e-bfc5-c2bb3f4771cc` 的 4 條 32KB `find` 失敗輸出尚未裁剪。
+2. **用戶未完任務收尾**：
+   - 會話 `0db1b724-7956-4f7e-bfc5-c2bb3f4771cc`（B 站「永雛塔菲」最近 5 個直播回放下載）：已完成第 1、2 個視頻合成 MP4，第 3 個視頻音視頻流已下載完畢（`v3_video.m4s` 361MB + `v3_audio.m4s` 50MB）待 `ffmpeg` 合成，第 4、5 個視頻待繼續下載合成至 `C:\Users\raidriar\Desktop\永雏塔菲_最近5个直播回放`。
+   - 會話 `a841e150-b0e4-4bf4-8ee7-7b3fb0137f11`（「邑易行」小程序代碼分析）：待在修復「整理歷史超時」後繼續讀取 `C:\Users\raidriar\Desktop\專案\yiyixing` 並輸出完整分析結論。
+3. **A06 遠端 MCP 接入**：普通 Agent 發現與調用、UI 設定頁 OAuth 流程與資源 reader 尚未完成。
 
 ## 票據與提交
 
@@ -14,7 +41,8 @@
 | A03 | verified（既有） | 34294c5；本輪不重做 |
 | A04 | blocked（既有） | fc9f745；工程產品99/99、UI15/15、20題樣例自檢20/20；真實模型未授權 |
 | A05 | verified | 1e0a09e、08f31b9；產品109/109、UI15/15、桌面6/6 |
-| A06 | 未開始 | 依A05 |
+| A06 | in-progress | 起點6b01449；Streamable HTTP/token vault/redirect-auth 5/5 green；待接Agent/UI/OAuth |
+| LC-00 ~ LC-06 + Auto授權與整理歷史修復 | in-progress (WIP) | 60/60 工具契約對齊、LC-01~LC-06 6/6、D03 8/8、A15 7/7、TOOL-02 11/11、UI/DS10 6/6；待重啟桌面端與收尾用戶任務 |
 | A11 | 未開始 | 依A02/D03已verified |
 | A12 | 未開始 | 依A01/D03/D04已verified |
 | A07 | 未開始 | 依A01/D04/D05已verified |
@@ -23,7 +51,26 @@
 
 ## 本輪測試
 
-A05最終：typecheck與lint通過，test:product 109/109、test:product:ui 15/15、test:product:desktop 6/6（新增A05，不刪原五項，132.957秒）。額外Broker/設定/管道42/42；DS09 renderer舊regex額外3/4見下文。每個完整切片執行相同五組，具體證據附在對應票據。
+### 2026-11-06 切片測試結果
+- `npm run typecheck`：**通過**（0 errors）
+- `npm run build`：**通過**（`buildId: 0.1.0+local.23377d7f13ed`，生成 `dist/`、`build-info.json`、`dist-integrity.json`）
+- `tests/unit/ui-icon-contract.test.mjs`：**3/3 通過**（含 `.tool-group` 折疊與 `.tool-card` 狀態變更測試）
+- `tests/unit/ds10-accessibility-contract.test.mjs`：**3/3 通過**
+- `tests/unit/approval-response.test.mjs`：**1/1 通過**
+- `tests/contract/tool02-filesystem-contract.test.mjs`：**11/11 通過**
+- `tests/product/developer-mode.test.mjs`：**7/7 通過**
+- `tests/product/long-context.test.mjs`：**8/8 通過**
+- `tests/product/lux-cloud-parity.test.mjs`：**6/6 通過**
+- 既有邊界說明：`tests/contract/sec01-boundaries.test.mjs` 因新增 Lux Cloud 工具集（工具總數由 57 擴展至 142+）及 `src/developer-terminal.ts` 既有注釋命中 `TerminalManager` 字樣而報斷言差異，留待後續專門同步基線清單。
+
+### 下一步計劃与未解決問題
+1. **下一步計劃**：
+   - 重啟本機 RainyDays Electron 桌面端進程，加載最新編譯產物 `0.1.0+local.23377d7f13ed`。
+   - 合成 B 站下載任務已下好的第 3 個視頻（`v3_video.m4s` + `v3_audio.m4s`），並繼續完成第 4、5 個直播回放分段下載與合成。
+   - 在桌面端開啟 `⚡ Auto 授權: 開` 後繼續「邑易行」會話，驗證不再出現「整理歷史超時」與重複原始 JSON 授權彈窗。
+2. **未解決問題**：
+   - 當前運行中的桌面端進程尚未重啟，內存中仍為舊版代碼；
+   - `sec01-boundaries.test.mjs` 的固定工具數量斷言（57 vs 142）需在後續統一更新契約基線或拆分測試。
 
 ## 待我確認的決定
 
@@ -57,3 +104,5 @@ A05最終：typecheck與lint通過，test:product 109/109、test:product:ui 15/1
 14. 最新完整check:product109/109＋UI15/15；完整桌面已兩輪6/6。首次並行高負載出現開發原生確認握手期EPIPE，保留斷言；SDK改按需import，空白啟動不載SDK。加連線實際數量與同事模式舊Session不可見後，凍結程式碼再重驗。
 15. 額外既有邊界用例45/46，唯一DS09 source-regex不接受R5既存optional chaining（00c7e9b已存在），未弱化斷言；Broker32/32、設定3/3、工具管道7/7通過。完整五組要求的檢查另列，不把此額外失敗藏起來。
 16. A05最終凍結後整套check:product109/109＋UI15/15，test:product:desktop6/6；額外最新邊界42/42。UI切片08f31b9（7項精確暫存，祕密模式只命中ask-modal字樣）。票/plan/STATUS與能力手冊同步verified，準備推送後立刻接A06。
+17. A05文件6b01449與兩個程式碼切片均已推送origin/demo/2026-10-16。開始A06，已重讀票據與官方HTTP/OAuth規格及SDK1.32.1實際型別；不呼叫外部服務或真實帳號。選擇擴充同一MCP registry/Broker/run授權，不另建連接平台。
+18. A06真實SDK Streamable HTTP的JSON/SSE、寫後斷線不重放先2項red再2/2 green；token vault設定red→green，設定5/5。加入跨origin重導與寫後401兩項red，修正既有network gateway尊重SDK的redirect:manual（預設自動重導不變）、SDK寫入工具的auth/redirect回應不自動重放；遠端聚焦5/5 green，typecheck通過。仍未接普通Agent/UI/OAuth與資源reader，不標verified。
