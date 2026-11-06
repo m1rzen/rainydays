@@ -25,6 +25,8 @@ Status: approved
 
 2026-10-30自主輪次（使用者指示）：先修復R5 Electron舊allowlist比較回歸並納入完整桌面命令，再從A05沿上述依賴順序連續推進。各步實際進度與待確認決定見[自主記錄](autonomous-run.md)；本總路線仍是唯一排期。需要模型、帳號、乾淨機或同事的驗收保留blocked，可獨立工程繼續，不冒充verified。
 
+2026-11-06進度同步：完成 LC-00 ~ LC-06（Lux-Cloud 60 工具契約對齊、主循環 `<agent_map>`/`<coverage>`/`<loaded_skills>` 注入與 50%/90% 冷熱窗口水位線、原生 Windows `computer_use` 17 種桌面動作）及桌面端實戰體驗修復（Session 級 Auto 授權模式、自然語言工具授權說明、整理歷史超時修復、流式分段時間軸與 `.tool-group` 折疊 UI）；完整 `check:product`（123/123 + UI 15/15）與 `sec01-boundaries`（5/5，靜態 142 + 運行時 20 = 162）全數通過。A06 已完成 Streamable HTTP（JSON/SSE）、token vault、跨 origin 重導與寫後防重放、PKCE OAuth 與普通 Agent 按需資源調用（產品測試 6/6），待收尾設定頁 UI 與桌面端驗證。
+
 原单主线顺序：D01→D02本地契约→A01→D04→D05→D13→D03→A02→A03→A04→A05→A06→D06/D07/D08/D09→A07→A08→A09→A10→A11→A12→D10/D11/D12/D14→D15→D16/D17→D18→A13。依赖表优先；遇模型阻塞可先做独立工程，不要求机械等待前一项全票完成。
 
 ## 3. 新任务依赖表

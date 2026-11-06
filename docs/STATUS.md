@@ -1,6 +1,6 @@
 # 当前开发状态
 
-更新：2026-10-30。A05本地MCP開發模式工程verified（1e0a09e、08f31b9），完整產品109/109、UI15/15、桌面6/6；R5保持通過。接續A06。A03按开发模式范围verified；A04工程已验证、真实编码模型配置/预算blocked，20题样例自检通过。A15、A14、D05、D03、A02、D06、D08已验证。D13整票blocked，无有效安装候选。项目范围的详细判断见 [二次重构进度审计](audits/baseline-2026-09-29.md)；已完成修复见 [演示问题修复](devlog/2026-10-16-demo-repair.md)。
+更新：2026-11-06。LC-00 ~ LC-06（Lux-Cloud 60工具契約100%對齊、主循環冷熱窗口與原生 `computer_use`）及桌面端體驗修復（Session級Auto授權、自然語言工具授權、整理歷史超時修復、`.tool-group` 折疊時間軸）工程驗證通過，完整 `check:product` 123/123、UI 15/15、`sec01-boundaries` 5/5（142靜態+20運行時=162）。A05本地MCP開發模式工程verified（1e0a09e、08f31b9），桌面6/6；R5保持通過。A06遠端MCP進行中（Streamable HTTP、token vault、PKCE OAuth、普通Agent按需資源與防重放6/6通過，待收尾設定頁UI）。A03按开发模式范围verified；A04工程已验证、真实编码模型配置/预算blocked，20题样例自检通过。A15、A14、D05、D03、A02、D06、D08已验证。D13整票blocked，无有效安装候选。项目范围的详细判断见 [二次重构进度审计](audits/baseline-2026-09-29.md)；已完成修复见 [演示问题修复](devlog/2026-10-16-demo-repair.md)。
 
 ## 通用Agent规划与恢复入口
 
@@ -21,6 +21,7 @@
   - **60 工具契約 100% 滿分對齊**：`node docs/research/check-lux-cloud-parity.mjs` 驗證為 `aligned: 60, partial: 0, legacy: 0, missing: 0`（全庫共發現 161 個工具 Schema）。
   - **主循環深度接線**：`src/agent.ts` 自動注入 `<agent_map>`、`<coverage>` 與 `<loaded_skills>` 並將超長工具結果自動歸檔供 `tool_result_read` 分頁讀取；`src/memory.ts` 實現 50% Scribe 預備水位線（`autoScribePrepareWatermark`）與 90% 冷熱窗口替換（`archiveMessagesToColdStore`）；`src/llm.ts` 接入 `resolveProviderReasoningEffort` 動態映射推理檔位。
   - **原生桌面級 Computer Use (`computer_use`)**：於 `scripts/rainydays-worker.mjs` 與 `src/tools/worker-tools.ts` 落地基於 Windows `user32.dll` P/Invoke、`System.Windows.Forms` 與 `System.Drawing` 的 17 種桌面動作（屏幕信息、全屏/區域截圖、窗口枚舉/聚焦、鼠標移動/點擊/雙擊/右擊/拖拽/滾輪、鍵盤輸入/熱鍵、剪貼板讀寫、應用與網址啟動），並納入 `CapabilityBroker` 審批與單次 `worker_id` 路由。`tests/product/lux-cloud-parity.test.mjs`（LC-01 ~ LC-06）與契約治理測試全數通過。
+  - **桌面端實戰體驗修復（2026-11-06）**：新增 Session 級 `⚡ Auto 授權` 模式、自然語言工具授權說明、開發模式命令統一走應用內授權、`src/memory.ts` 長對話「整理歷史超時」根因修復（移除條數強制壓縮、工具輸出 1,200 字裁剪、超時升至 90s），以及流式分段時間軸與 `.tool-group` 折疊 UI。完整 `check:product` 123/123、UI 15/15、`sec01-boundaries` 5/5 通過。
 
 - A05：官方SDK1.32.1的真實stdio工具接入，設定CRUD/測試/啟停與vault環境值，按需schema與原server標籤；開發模式同run每server一次授權，下一run重置。同事模式停用，不回退；Windows Job/原owner清理包含server崩潰後子程序及app強制退出；typed錯誤與有界分頁。產品109/109、UI15/15、桌面6/6，真實模型與安裝仍另驗。[證據](work/general-agent/tickets/05-mcp-local.md)
 

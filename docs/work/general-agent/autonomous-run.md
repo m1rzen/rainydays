@@ -19,7 +19,6 @@
 2. **自然語言工具授權提示與開發模式審批打通**：
    - `src/agent.ts`：新增 `summarizeFileContentPurpose`、`describeDeveloperCommandPurpose`、`describeNaturalToolApproval`，將原本僅顯示 `工具: write / 參數: {...}` 的生硬 JSON 替換為清晰自然語言說明（要做的事、目的、保存路徑/目標與調用工具名）。
    - `src/developer-execution.ts`：將 `bash`、`bash_kill`、`shell_kill`、`browser_open`、`browser_close`、`computer_use` 納入 `DEVELOPER_COMMAND_TOOLS`，在開發模式下統一走應用內授權而非為每次調用彈原生進程確認框。
-   - `src/tools/filesystem-lux.ts`：`writeExec` 在同名文件已存在觸發 `PATH_OPERATION_DENIED` 時自動回退 `writeFile` 覆蓋寫入。
    - `src/agent.ts`：`write`/`edit`/`replace`/`shell_input` 成功後及 `execute_command` 輸出發生變化時調用 `toolLoopDetector.noteCodeChange()`，避免輪詢後台下載進度時誤觸發 `TOOL_LOOP_DETECTED`。
 3. **「整理歷史超時」根因修復**：
    - `src/memory.ts`：移除 `this.messages.length <= this.maxMessages` 強制壓縮條件（僅在超過上下文預算或達到 90% 水位線時才觸發 `compact()`）；`formatMessagesForSummary` 對單條 `role === "tool"` 輸出做 1,200 字符有界裁剪；默認 `summaryTimeoutMs` 從 30s 提升至 90s 以適配 Thinking 模型（`Gcable-Pro-Thinking`）。
@@ -52,8 +51,10 @@
 ## 本輪測試
 
 ### 2026-11-06 切片測試結果
-- `npm run typecheck`：**通過**（0 errors）
-- `npm run build`：**通過**（`buildId: 0.1.0+local.23377d7f13ed`，生成 `dist/`、`build-info.json`、`dist-integrity.json`）
+- `npm run check:product`：**全量通過**（`typecheck` 0 errors、`lint` 0 warnings、`test:product` **123/123 通過**、`test:product:ui` **15/15 通過**）
+- `npm run build`：**通過**（`buildId: 0.1.0+local.393d8de2e9bf`，生成 `dist/`、`build-info.json`、`dist-integrity.json`）
+- `tests/contract/sec01-boundaries.test.mjs`：**5/5 通過**（核實自 `c2b203d` 以來 5 個提交新增 85 個靜態工具：`ab92e84` +1、`bf3a7e4` +41、`09ad4e9` +2、`1e0a09e` +1、`5ad3f70` +40，靜態工具數由 57 增至 142、總數 162 且與 `STATIC_TOOL_POLICIES` 完全一一對應；清理 `src/developer-terminal.ts` 注釋中觸發正則的 `TerminalManager` 字樣）
+- `tests/product/code-editing.test.mjs`：**8/8 通過**（移除 `writeExec` 對 `PATH_OPERATION_DENIED` 的自動覆蓋回退，恢復 A02 `write` 僅創建不覆蓋的契約保證）
 - `tests/unit/ui-icon-contract.test.mjs`：**3/3 通過**（含 `.tool-group` 折疊與 `.tool-card` 狀態變更測試）
 - `tests/unit/ds10-accessibility-contract.test.mjs`：**3/3 通過**
 - `tests/unit/approval-response.test.mjs`：**1/1 通過**
@@ -61,16 +62,15 @@
 - `tests/product/developer-mode.test.mjs`：**7/7 通過**
 - `tests/product/long-context.test.mjs`：**8/8 通過**
 - `tests/product/lux-cloud-parity.test.mjs`：**6/6 通過**
-- 既有邊界說明：`tests/contract/sec01-boundaries.test.mjs` 因新增 Lux Cloud 工具集（工具總數由 57 擴展至 142+）及 `src/developer-terminal.ts` 既有注釋命中 `TerminalManager` 字樣而報斷言差異，留待後續專門同步基線清單。
+- `tests/product/mcp-remote.test.mjs`：**7/7 通過**（含 A06 Streamable HTTP、token vault、redirect、401 防重放、OAuth PKCE 與普通 Agent 按需資源調用）
 
 ### 下一步計劃与未解決問題
 1. **下一步計劃**：
-   - 重啟本機 RainyDays Electron 桌面端進程，加載最新編譯產物 `0.1.0+local.23377d7f13ed`。
+   - 待用戶確認後，清理 `mini-lux.db` 中會話 `a841e150-b0e4-4bf4-8ee7-7b3fb0137f11` 與 `0db1b724-7956-4f7e-bfc5-c2bb3f4771cc` 的 4 條 32KB `find` 失敗輸出，並重啟本機 RainyDays Electron 桌面端進程，加載最新編譯產物 `0.1.0+local.393d8de2e9bf`。
    - 合成 B 站下載任務已下好的第 3 個視頻（`v3_video.m4s` + `v3_audio.m4s`），並繼續完成第 4、5 個直播回放分段下載與合成。
    - 在桌面端開啟 `⚡ Auto 授權: 開` 後繼續「邑易行」會話，驗證不再出現「整理歷史超時」與重複原始 JSON 授權彈窗。
 2. **未解決問題**：
-   - 當前運行中的桌面端進程尚未重啟，內存中仍為舊版代碼；
-   - `sec01-boundaries.test.mjs` 的固定工具數量斷言（57 vs 142）需在後續統一更新契約基線或拆分測試。
+   - 當前運行中的桌面端進程尚未重啟，內存中仍為舊版代碼。
 
 ## 待我確認的決定
 

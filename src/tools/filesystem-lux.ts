@@ -156,15 +156,7 @@ export const writeExec: ToolExecutor = async (args, _env, invocationValue) => {
   const bytes = Buffer.from(args.content as string, "utf8");
   if (bytes.length > MAX_TEXT_BYTES) throw new ToolArgumentsError("写入内容超过 8 MiB 上限");
   throwIfCancelled(invocation.signal);
-  try {
-    await invocation.path.createFile(args.file_path as string, bytes, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
-  } catch (error) {
-    if (error && typeof error === "object" && (error as { code?: string }).code === "PATH_OPERATION_DENIED") {
-      await invocation.path.writeFile(args.file_path as string, bytes, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
-    } else {
-      throw error;
-    }
-  }
+  await invocation.path.createFile(args.file_path as string, bytes, { defaultRootId, maxBytes: MAX_TEXT_BYTES });
   return `✅ 文件已生成: ${args.file_path as string}`;
 };
 
