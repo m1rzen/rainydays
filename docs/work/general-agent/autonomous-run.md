@@ -26,10 +26,11 @@
    - `public/renderer.js`、`public/redesign.css`：實時流式輸出按時間順序分段渲染 `.run-text-segment`，連續工具調用自動折疊進 `.tool-group` 摘要面板。
 
 ### 未完成改動（WIP）
-1. **桌面端運行實例熱重載與歷史超大錯誤輸出清理**：尚未重啟當前正在運行的 RainyDays Electron 桌面端進程（舊進程仍加載修改前的 `dist/`），且 `mini-lux.db` 中會話 `a841e150-b0e4-4bf4-8ee7-7b3fb0137f11` 與 `0db1b724-7956-4f7e-bfc5-c2bb3f4771cc` 的 4 條 32KB `find` 失敗輸出尚未裁剪。
-2. **用戶未完任務收尾**：
-   - 會話 `0db1b724-7956-4f7e-bfc5-c2bb3f4771cc`（B 站「永雛塔菲」最近 5 個直播回放下載）：已完成第 1、2 個視頻合成 MP4，第 3 個視頻音視頻流已下載完畢（`v3_video.m4s` 361MB + `v3_audio.m4s` 50MB）待 `ffmpeg` 合成，第 4、5 個視頻待繼續下載合成至 `C:\Users\raidriar\Desktop\永雏塔菲_最近5个直播回放`。
-   - 會話 `a841e150-b0e4-4bf4-8ee7-7b3fb0137f11`（「邑易行」小程序代碼分析）：待在修復「整理歷史超時」後繼續讀取 `C:\Users\raidriar\Desktop\專案\yiyixing` 並輸出完整分析結論。
+1. **歷史超大錯誤輸出清理**：`%APPDATA%\rainydays\data\mini-lux.db` 中會話 `a841e150-b0e4-4bf4-8ee7-7b3fb0137f11` 與 `0db1b724-7956-4f7e-bfc5-c2bb3f4771cc` 的 4 條 32KB `find` 失敗輸出尚未裁剪，待用戶確認（倉庫內 `data/mini-lux.db` 是 2026-08 舊檔，不是此庫）。
+2. **用戶未完任務收尾（2026-11-06 依資料庫與磁碟核實，更正先前記錄）**：
+   - 會話 `0db1b724-7956-4f7e-bfc5-c2bb3f4771cc` 的實際需求是下載 B 站 `BV1r6xo6aEC3`（2026 IEM 北京 NAVI vs Falcons 小組賽三局，共約 1.26 GB）。下載於 2026-11-05 17:39 中止，`%APPDATA%\rainydays\workspace\downloads` 僅有 P1 音視頻與 P2 視頻的部分分片，尚無成品 MP4；腳本 `download_iem.py` 支援續傳。
+   - 先前記錄的「永雛塔菲」5 個直播回放、`v3_video.m4s` 與其目標資料夾，在資料庫及 `C:\Users`、D、E、F 均查無依據，不作為待辦。
+   - 會話 `a841e150-b0e4-4bf4-8ee7-7b3fb0137f11` 的邑易行分析已於 2026-11-05 17:02 完成並回覆（程式碼在 `E:\For_Miniprogram\Yi_yixing`，先前記錄的 `Desktop\專案\yiyixing` 不存在）；該會話最後兩條 B 站請求未獲回覆，後續由 `0db1b724` 承接。
 3. **A06 遠端 MCP 接入**：普通 Agent 發現與調用、UI 設定頁 OAuth 流程與資源 reader 尚未完成。
 
 ## 票據與提交
@@ -66,11 +67,12 @@
 
 ### 下一步計劃与未解決問題
 1. **下一步計劃**：
-   - 待用戶確認後，清理 `mini-lux.db` 中會話 `a841e150-b0e4-4bf4-8ee7-7b3fb0137f11` 與 `0db1b724-7956-4f7e-bfc5-c2bb3f4771cc` 的 4 條 32KB `find` 失敗輸出，並重啟本機 RainyDays Electron 桌面端進程，加載最新編譯產物 `0.1.0+local.393d8de2e9bf`。
-   - 合成 B 站下載任務已下好的第 3 個視頻（`v3_video.m4s` + `v3_audio.m4s`），並繼續完成第 4、5 個直播回放分段下載與合成。
-   - 在桌面端開啟 `⚡ Auto 授權: 開` 後繼續「邑易行」會話，驗證不再出現「整理歷史超時」與重複原始 JSON 授權彈窗。
+   - 待用戶確認後，清理上述 4 條 32KB `find` 失敗輸出（先備份資料庫）。
+   - 經用戶確認後續傳 `BV1r6xo6aEC3` 並合成 MP4。
+   - 在真實對話中開啟 `⚡ Auto 授權: 開`，驗證不再出現「整理歷史超時」與重複原始 JSON 授權彈窗（需一次真實模型運行）。
 2. **未解決問題**：
-   - 當前運行中的桌面端進程尚未重啟，內存中仍為舊版代碼。
+   - 桌面端已於 2026-11-06 以 `0.1.0+local.393d8de2e9bf` 用真實資料啟動：舊會話載入正常、`⚡ Auto 授權` 按鈕顯示；隔離環境 `test:product:desktop` 6/6。上述 Auto 與整理歷史修復尚無真實模型運行證據。
+   - `%APPDATA%\rainydays\workspace\_cookiecopy\Profile_2.db` 是 Chrome Cookies 資料庫副本，屬敏感殘留，待用戶確認後刪除。
 
 ## 待我確認的決定
 
