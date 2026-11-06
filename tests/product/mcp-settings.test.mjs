@@ -63,6 +63,8 @@ test("A06 HTTP token settings use vault refs, stay private and preserve empty fo
   const [saved] = config.getConfigSnapshot().domains.mcp.servers;
   assert.match(saved.auth.credentialRef, /^cred_/u); assert.equal(await credentials.readCredential(saved.auth.credentialRef), "obviously-fake-mcp-token");
   for (const view of [config.getPublicConfig(), config.exportSettings()]) { assert(!JSON.stringify(view).includes(saved.auth.credentialRef)); assert(!JSON.stringify(view).includes("obviously-fake-mcp-token")); }
+  const [publicServer] = config.getPublicConfig().domains.mcp.servers;
+  assert.equal(publicServer.auth.mode, "token"); assert.equal(publicServer.transport, "http"); assert.equal(publicServer.url, remote.url);
   await config.updateSettingsDomain("mcp", { servers: [remote] });
   assert.equal(config.getConfigSnapshot().domains.mcp.servers[0].auth.credentialRef, saved.auth.credentialRef);
 });

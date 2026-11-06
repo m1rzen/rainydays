@@ -46,6 +46,8 @@ User stories: G05
 
 2026-10-30，起點6b01449；A05已verified並推送。只用真實loopback SDK HTTP/OAuth fixture與確定性模型，不用外部帳號。沿用SDK1.32.1、A05設定/vault、命名空間、Broker每run每server授權和結果/取消鏈，擴充獨立src/mcp模組。比較另建遠端registry與擴充同一adapter，選後者，保留本地/遠端一致的schema與任務歸屬。外部已批准兼容服務尚無帳號/地址，其真實服務驗收保留未完成。
 
+2026-11-06，核對發現後端已有Streamable HTTP、token、OAuth與資源讀取，但設定頁沒有遠端傳輸、URL、認證欄位，也沒有OAuth登入／斷開入口；`collect()`漏送`auth`與`resources`，儲存表單會把遠端認證重設為none。已補齊表單與登入狀態顯示，並以`tests/product/mcp-settings-form.test.mjs`覆蓋。`check:product`：產品127/127、UI 15/15。設定頁真實畫面與真實OAuth服務登入尚未驗收，本票維持in-progress。
+
 ## Test and design seam
 
 設定/API→官方StreamableHTTP（JSON與SSE回應）/必要的SDK舊SSE adapter→token/OAuth provider vault→原Agent工具鏈。官方SDK負責認證協議與PKCE，應用只管理callback狀態、現有憑據引用及使用者登入入口。網路遵循父context且不把token轉送到跨origin重導；取消/丟回應不重放工具。fixture先測red再green，外部模型/帳號不以fixture充當已驗。
