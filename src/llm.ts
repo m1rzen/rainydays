@@ -35,6 +35,15 @@ function normalizeOpenAIBaseURL(rawBaseURL: string): string {
 
 /** 速率限制等待时间（毫秒） */
 const RATE_LIMIT_WAIT_MS = 5000;
+const RATE_LIMIT_MAX_WAIT_MS = 60_000;
+
+/** 优先遵守服务端的 Retry-After，否则逐次加倍，避免在限流窗口内连续失败。 */
+export function rateLimitWaitMs(error: unknown, attempt: number): number {
+  const headers = (error as { headers?: { get?: (name: string) => string | null } } | null)?.headers;
+  const seconds = Number(headers?.get?.("retry-after"));
+  if (Number.isFinite(seconds) && seconds > 0) return Math.min(seconds * 1000, RATE_LIMIT_MAX_WAIT_MS);
+  return Math.min(RATE_LIMIT_WAIT_MS * 2 ** attempt, RATE_LIMIT_MAX_WAIT_MS);
+}
 
 /**
  * 判断错误是否可重试
@@ -318,7 +327,7 @@ export class LLMClient {
 
         // 计算等待时间
         const waitMs = rateLimit
-          ? RATE_LIMIT_WAIT_MS
+          ? rateLimitWaitMs(err, attempt)
           : BASE_BACKOFF_MS * Math.pow(2, attempt); // 1s, 2s, 4s
 
         console.warn(
@@ -464,7 +473,7 @@ export class LLMClient {
         observation.retry();
 
         const waitMs = rateLimit
-          ? RATE_LIMIT_WAIT_MS
+          ? rateLimitWaitMs(err, attempt)
           : BASE_BACKOFF_MS * Math.pow(2, attempt);
 
         console.warn(

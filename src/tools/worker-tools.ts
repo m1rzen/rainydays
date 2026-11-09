@@ -74,7 +74,7 @@ export const bashDef: ToolDefinition = {
   type: "function",
   function: {
     name: "bash",
-    description: "Run a one-shot command or send it to a named persistent shell on the selected Worker.",
+    description: "Run a one-shot command or send it to a named persistent shell. On Windows the default shell is PowerShell 5.1: use ; or if ($?) instead of || and &&, and $null instead of /dev/null.",
     parameters: {
       type: "object",
       properties: {

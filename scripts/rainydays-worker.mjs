@@ -43,10 +43,13 @@ function shellExecutable(requested) {
   return { shell, executable: values[shell] };
 }
 
+// Windows shells default to the system code page; the Worker decodes output as UTF-8.
+const POWERSHELL_UTF8 = "[Console]::OutputEncoding=[Text.Encoding]::UTF8;$OutputEncoding=[Text.Encoding]::UTF8;";
+
 function commandArguments(shell, command) {
   if (shell === "bash" || shell === "sh") return ["-lc", command];
-  if (shell === "powershell" || shell === "pwsh") return ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command];
-  return ["/d", "/s", "/c", command];
+  if (shell === "powershell" || shell === "pwsh") return ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", `${POWERSHELL_UTF8}${command}`];
+  return ["/d", "/s", "/c", `chcp 65001>nul & ${command}`];
 }
 
 function persistentArguments(shell) {

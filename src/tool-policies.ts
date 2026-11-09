@@ -175,15 +175,15 @@ export const STATIC_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Object
 });
 
 export const RUNTIME_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Object.freeze({
-  agent_spawn: policy(["read", "write", "control"], "none", ["filesystem", "control"]),
+  agent_spawn: policy(["read", "network", "control"], "none", ["network", "control"]),
   agent_list: parallelReadPolicy(["read"], ["filesystem"]),
   agent_peek: parallelReadPolicy(["read"], ["filesystem"]),
   agent_post: policy(["write", "control"], "none", ["filesystem", "control"]),
   agent_wait: policy(["read", "control"], "none", ["control"]),
   agent_cancel_wait: policy(["control"], "none", ["control"]),
   agent_close: policy(["control"], "none", ["control"]),
-  compact_context: policy(["read", "write"], "none", ["filesystem"]),
-  consolidate_memory: policy(["read", "write"], "none", ["filesystem"]),
+  compact_context: policy(["read", "network", "control"], "none", ["network", "control"]),
+  consolidate_memory: policy(["read", "write", "network"], "none", ["filesystem", "network"]),
   cron_schedule: policy(["write", "control"], "user", ["filesystem", "control"]),
   cron_cancel: policy(["read", "write", "control"], "user", ["filesystem", "control"]),
   subagent: policy(["read", "network", "control"], "none", ["network", "control"]),

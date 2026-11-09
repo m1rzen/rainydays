@@ -88,6 +88,24 @@ test("system messages added mid-conversation reach the provider as user messages
   assert.equal(projected[0].content, "主提示");
 });
 
+test("rate-limit waits follow Retry-After and otherwise grow", async () => {
+  const { rateLimitWaitMs } = await import("../../src/llm.ts");
+  assert.equal(rateLimitWaitMs({ headers: new Headers({ "retry-after": "7" }) }, 0), 7000);
+  assert.equal(rateLimitWaitMs({}, 0), 5000);
+  assert.equal(rateLimitWaitMs({}, 2), 20000);
+  assert.equal(rateLimitWaitMs({ headers: new Headers({ "retry-after": "9999" }) }, 0), 60000);
+});
+
+test("glob patterns with a hyphen compile", async () => {
+  const { compileGlob } = await import("../../src/tools/filesystem-lux.ts");
+  assert(compileGlob("**/roadmap-2027.md").test("docs/roadmap-2027.md"));
+});
+
+test("agent_spawn and model-backed tools may reach the provider", async () => {
+  const { RUNTIME_TOOL_POLICIES } = await import("../../src/tool-policies.ts");
+  for (const name of ["agent_spawn", "compact_context", "consolidate_memory"]) assert(RUNTIME_TOOL_POLICIES[name].effects.includes("network"), name);
+});
+
 test("Auto still stops for deletion, publishing and outbound actions", () => {
   const stopped = [
     ["execute_command", { command: "rm -rf build" }], ["execute_command", { command: "del /s /q out" }], ["bash", { command: "Remove-Item -Recurse C:\\data" }],

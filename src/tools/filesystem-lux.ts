@@ -224,7 +224,7 @@ export const editExec: ToolExecutor = async (args, _env, invocationValue) => {
 export const replaceExec = editExec;
 
 function escapeRegex(value: string): string {
-  return value.replace(/[|\\{}()[\]^$+*?.-]/gu, character => `\\${character}`);
+  return value.replace(/[|\\{}()[\]^$+*?.]/gu, character => `\\${character}`);
 }
 
 export function compileGlob(patternValue: unknown): RegExp {
