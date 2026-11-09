@@ -1,5 +1,7 @@
 # 当前开发状态
 
+2026-11-09真实模型评测：最终版本 a7d4736，Gcable-Pro-Thinking 编码 20 题 18/20（2 次流式连接中断），能力探测 12/12；详见[评测记录](work/general-agent/evaluations/04-coding.md)。小型任务结果不代表 A13 验收。
+
 2026-11-09更正：下文「60工具契約100%對齊」只代表工具名稱與參數一致，不代表行為等同。空殼工具已修正或改為明確報告不可用，詳見[對齊報告](research/lux-cloud-gap-report.md)。
 
 更新：2026-11-06。LC-00 ~ LC-06（Lux-Cloud 60工具契約100%對齊、主循環冷熱窗口與原生 `computer_use`）及桌面端體驗修復（Session級Auto授權、自然語言工具授權、整理歷史超時修復、`.tool-group` 折疊時間軸）工程驗證通過，完整 `check:product` 123/123、UI 15/15、`sec01-boundaries` 5/5（142靜態+20運行時=162）。A05本地MCP開發模式工程verified（1e0a09e、08f31b9），桌面6/6；R5保持通過。A06遠端MCP進行中（Streamable HTTP、token vault、PKCE OAuth、普通Agent按需資源與防重放6/6通過，待收尾設定頁UI）。A03按开发模式范围verified；A04工程已验证、真实编码模型配置/预算blocked，20题样例自检通过。A15、A14、D05、D03、A02、D06、D08已验证。D13整票blocked，无有效安装候选。项目范围的详细判断见 [二次重构进度审计](audits/baseline-2026-09-29.md)；已完成修复见 [演示问题修复](devlog/2026-10-16-demo-repair.md)。
