@@ -27,8 +27,8 @@ await config.updateSettingsDomain("shell", { defaultShell: "auto", initializatio
 const builtin = await getPersona("general"); assert(builtin);
 // Keep every declared general-assistant tool; only index.ts's unrelated runtime
 // persona-management hooks are absent from this isolated Agent fixture.
-const { PERSONA_MANAGEMENT_TOOLS } = await import("../../src/persona.ts");
-const persona = createEffectivePersona({ ...builtin, tools: builtin.tools.filter(name => !PERSONA_MANAGEMENT_TOOLS.includes(name)), env: { WORKSPACE_ROOT: workspace }, allowedRoots: [workspace] });
+const { PERSONA_MANAGEMENT_TOOLS, SESSION_BOUND_TOOLS } = await import("../../src/persona.ts");
+const persona = createEffectivePersona({ ...builtin, tools: builtin.tools.filter(name => ![...PERSONA_MANAGEMENT_TOOLS, ...SESSION_BOUND_TOOLS].includes(name)), env: { WORKSPACE_ROOT: workspace }, allowedRoots: [workspace] });
 const authorities = [];
 const requestScope = new AsyncResource("a03-separate-requests");
 test.after(async () => {

@@ -14,6 +14,8 @@ const PERSONA_ROLES: readonly ManagedStoreRole[] = Object.freeze(["builtin-perso
 const SKILL_ROLES: readonly ManagedStoreRole[] = Object.freeze(["user-skills", "builtin-skills"]);
 const PERMISSION_LEVELS: readonly PersonaPermissionLevel[] = Object.freeze(["minimal", "read_only", "coding", "guarded", "full"]);
 export const PERSONA_MANAGEMENT_TOOLS = Object.freeze(["list_personas", "current_persona", "find_personas", "switch_persona"] as const);
+/** 需要运行中的子代理注册表、模型或记忆，由 index.ts 按会话注册。 */
+export const SESSION_BOUND_TOOLS = Object.freeze(["agent_spawn", "agent_list", "agent_peek", "agent_post", "agent_wait", "agent_cancel_wait", "agent_close", "compact_context", "consolidate_memory"] as const);
 const MINIMAL_TOOLS = new Set<string>([...PERSONA_MANAGEMENT_TOOLS, "get_current_time", "ask_user"]);
 
 const RESERVED_ENV_KEYS = new Set([

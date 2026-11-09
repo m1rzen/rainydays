@@ -11,7 +11,7 @@ const git = execFileSync(path.join(process.env.SystemRoot, "System32/where.exe")
 Object.assign(process.env, { RAINYDAYS_APP_ROOT: appRoot, RAINYDAYS_USER_DATA_DIR: fixture, RAINYDAYS_DATA_DIR: path.join(fixture, "data"), RAINYDAYS_CONFIG_PATH: path.join(fixture, "config.json"), RAINYDAYS_BUILTIN_PERSONAS_DIR: path.join(appRoot, "personas"), RAINYDAYS_BUILTIN_SKILLS_DIR: path.join(appRoot, "skills"), RAINYDAYS_GIT_EXECUTABLE: await fs.realpath(git) });
 const credentials = await import("../../src/credential-store.ts");
 credentials.configureCredentialProtector({ protect: value => Buffer.from(value), unprotect: value => Buffer.from(value).toString() });
-const [{ Agent }, { ConversationMemory }, { getPersona, createEffectivePersona, PERSONA_MANAGEMENT_TOOLS }, { createSession }, { capabilityBroker }, { pathPolicy }, config, interaction, { closeDb }] = await Promise.all([
+const [{ Agent }, { ConversationMemory }, { getPersona, createEffectivePersona, PERSONA_MANAGEMENT_TOOLS, SESSION_BOUND_TOOLS }, { createSession }, { capabilityBroker }, { pathPolicy }, config, interaction, { closeDb }] = await Promise.all([
   import("../../src/agent.ts"), import("../../src/memory.ts"), import("../../src/persona.ts"), import("../../src/session.ts"), import("../../src/tools/index.ts"), import("../../src/path-runtime.ts"), import("../../src/config.ts"), import("../../src/tools/ask-user-tool.ts"), import("../../src/db.ts"),
 ]);
 await config.initializeConfig(); await config.updateSettingsDomain("shell", { defaultShell: "auto", initializationScript: "", developerMode: true });
@@ -27,7 +27,7 @@ const revision = text => { const value = /版本: ([a-f0-9]{64})/u.exec(text)?.[
 async function run(workspace, next) {
   // Preserve the default declared tools; this isolated fixture does not install
   // index.ts's runtime persona-management hooks.
-  const persona = createEffectivePersona({ ...builtin, tools: builtin.tools.filter(name => !PERSONA_MANAGEMENT_TOOLS.includes(name)), env: { WORKSPACE_ROOT: workspace }, allowedRoots: [workspace] });
+  const persona = createEffectivePersona({ ...builtin, tools: builtin.tools.filter(name => ![...PERSONA_MANAGEMENT_TOOLS, ...SESSION_BOUND_TOOLS].includes(name)), env: { WORKSPACE_ROOT: workspace }, allowedRoots: [workspace] });
   const authority = capabilityBroker.createRuntimeAuthority({ ...persona, rootEnv: { WORKSPACE_ROOT: "workspace" }, pathAuthority: await pathPolicy.createAuthority([{ rootId: "workspace", role: "workspace", configuredPath: workspace, permissions: ["initial-cwd", "read-file", "read-directory", "search-tree", "create-file", "replace-file"] }]) }); authorities.push(authority);
   let requests = 0;
   const llm = { async chat() { return { role: "assistant", content: "代码检查" }; }, async *chatStream(messages) {
