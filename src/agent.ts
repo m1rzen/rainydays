@@ -737,9 +737,11 @@ export class Agent {
         else trace.record("execute", "error", cancelled.code);
         trace.record("output", outcome.truncated ? "truncated" : "passed", outcome.truncated ? "TOOL_OUTPUT_TRUNCATED" : null);
         if (audit && !audit.finished) {
+          // The audit chain requires a call denied before authorization to end as denied.
+          const authorizedBeforeCancel = audit.authorized;
           if (!audit.authorized) await audit.authorize("denied", "none", cancelled.code, policyDigest);
           if (!audit.executed) await audit.execution(false);
-          await audit.result(outcome.content, Date.now() - toolStart, cancellationStatus, cancelled.code, outcome.outputBytes, outcome.truncated);
+          await audit.result(outcome.content, Date.now() - toolStart, authorizedBeforeCancel ? cancellationStatus : "denied", cancelled.code, outcome.outputBytes, outcome.truncated);
         }
         trace.record("audit", "passed");
         return settled(outcome, cancelled);
@@ -1196,7 +1198,7 @@ export class Agent {
               await audit.request(pending.rawArguments);
               await audit.authorize("denied", "none", batchCancellation.code);
               await audit.execution(false);
-              await audit.result(outcome.content, 0, "cancelled", batchCancellation.code, outcome.outputBytes, outcome.truncated);
+              await audit.result(outcome.content, 0, "denied", batchCancellation.code, outcome.outputBytes, outcome.truncated);
             }
             trace.record("audit", "passed");
             results[pending.originalIndex] = Object.freeze({

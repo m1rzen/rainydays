@@ -813,9 +813,11 @@ export async function executeTool(
       const cancellationStatus = cancelled.code === "RUN_TIMEOUT" ? "timeout" : "cancelled";
       const outcome = createToolOutcome(cancellationStatus, `工具执行${cancellationStatus === "timeout" ? "超时" : "已取消"}: ${cancelled.message}`, cancelled.code);
       if (!audit.finished) {
+        // The audit chain requires a call denied before authorization to end as denied.
+        const authorizedBeforeCancel = audit.authorized;
         if (!audit.authorized) await audit.authorize("denied", null, cancelled.code);
         if (!audit.executed) await audit.execution(false);
-        await audit.result(outcome.content, cancellationStatus, cancelled.code, outcome.outputBytes, outcome.truncated);
+        await audit.result(outcome.content, authorizedBeforeCancel ? cancellationStatus : "denied", cancelled.code, outcome.outputBytes, outcome.truncated);
       }
       throw cancelled;
     }

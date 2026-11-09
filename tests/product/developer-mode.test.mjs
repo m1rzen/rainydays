@@ -200,6 +200,35 @@ test("Auto runs routine commands, still asks before a push, and turns off when h
   }
 });
 
+test("stopping a run during approval records a valid audit chain", { timeout: 60_000 }, async () => {
+  const [{ Agent }, { ConversationMemory }, { createEffectivePersona, getPersona }, { createSession }, { capabilityBroker }, { pathPolicy }, interaction] = await Promise.all([
+    import("../../src/agent.ts"), import("../../src/memory.ts"), import("../../src/persona.ts"), import("../../src/session.ts"),
+    import("../../src/tools/index.ts"), import("../../src/path-runtime.ts"), import("../../src/tools/ask-user-tool.ts"),
+  ]);
+  await setDeveloperMode(true);
+  const builtin = await getPersona("general"); assert(builtin);
+  const persona = createEffectivePersona({ ...builtin, tools: ["execute_command"], env: { WORKSPACE_ROOT: workspace }, allowedRoots: [workspace] });
+  const authority = capabilityBroker.createRuntimeAuthority({ ...persona, rootEnv: { WORKSPACE_ROOT: "workspace" }, pathAuthority: await pathPolicy.createAuthority([{ rootId: "workspace", role: "workspace", configuredPath: workspace, permissions: ["initial-cwd", "read-file", "read-directory"] }]) });
+  const events = [];
+  const { createSecurityAuditCommitment } = await import("../../src/security-audit.ts");
+  const journal = { commit: value => createSecurityAuditCommitment(Buffer.alloc(32, 7), value), append: async input => { events.push(input); return input; } };
+  const llm = { async chat() { return { role: "assistant", content: "x" }; }, async *chatStream() { yield { type: "result", message: { role: "assistant", content: "", tool_calls: [{ id: "stop-1", type: "function", function: { name: "execute_command", arguments: JSON.stringify({ command: "echo stop", cwd: workspace }) } }] } }; } };
+  const agent = new Agent(llm, new ConversationMemory(), persona, authority, journal);
+  const session = createSession(persona, "停止"); agent.setSession(session.id);
+  const controller = new AbortController();
+  try {
+    await interaction.runWithInteractionChannel({ sessionId: session.id, runId: "stop-run" }, { emit(event) { if (event.type === "ask_user") controller.abort(new Error("user stop")); } }, async () => {
+      try { for await (const event of agent.run("运行", "stop-run", controller.signal)) void event; } catch { /* the run ends as cancelled */ }
+    });
+    const authorization = events.find(event => event.phase === "authorization"), result = events.find(event => event.phase === "result");
+    assert.equal(authorization.safePayload.decision, "denied");
+    assert.equal(result.safePayload.status, "denied");
+  } finally {
+    await capabilityBroker.retireAuthority(authority);
+    await setDeveloperMode(false);
+  }
+});
+
 test("A15 persistent terminal runs as the user, receives stdin, reports the real exit code and is cleaned up", { timeout: 60_000 }, async () => {
   const [{ Agent }, { ConversationMemory }, { createEffectivePersona, getPersona }, { createSession }, { capabilityBroker }, { pathPolicy }, interaction, { waitFor }] = await Promise.all([
     import("../../src/agent.ts"), import("../../src/memory.ts"), import("../../src/persona.ts"), import("../../src/session.ts"),
