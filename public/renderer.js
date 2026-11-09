@@ -99,12 +99,14 @@
     const activeRunsBySession = new Map();
     const questionsBySession = new Map();
     const sessionAutoApproveBySession = new Map();
+    const AUTO_APPROVE_OFF_TITLE = "开启后，本对话的例行工具调用自动放行。删除、推送和对外发送仍会询问；不建议在长对话中开启。";
     function renderAutoApproveToggle() {
       const btn = document.getElementById("auto-approve-toggle");
       if (!btn) return;
       const enabled = Boolean(currentSessionId && sessionAutoApproveBySession.get(currentSessionId) === true);
       btn.setAttribute("aria-pressed", enabled ? "true" : "false");
       btn.textContent = enabled ? "⚡ Auto 授权: 开" : "⚡ Auto 授权: 关";
+      btn.title = enabled ? "Auto 已开启：例行工具调用会自动放行，请留意助手的操作。删除、推送和对外发送仍会询问；对话整理历史时会自动关闭。" : AUTO_APPROVE_OFF_TITLE;
     }
     const attachmentUploads = new Map();
     let attachmentDrafts = [];
@@ -3158,6 +3160,10 @@
                 enhanceLocalFileLinks(answerEl, segmentText);
               }
               completeAccessibleResponse(fullText || bubbleEl.textContent);
+            }
+            else if (step.type === "context_notice") {
+              if (typeof step.autoApprove === "boolean") { sessionAutoApproveBySession.set(chatSessionId, step.autoApprove); renderAutoApproveToggle(); }
+              addSystemMessage(step.content);
             }
             else if (step.type === "run_cancelled") { runToken.outcome = "cancelled"; showRunNotice(runToken, "已中断，已生成的内容和文件已保留。"); completeAccessibleResponse(bubbleEl.textContent); }
             else if (step.type === "run_finished") {

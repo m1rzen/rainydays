@@ -451,9 +451,9 @@ details:not([open]) > summary > .disclosure-icon { transform:rotate(-90deg); }
 }
 
 .auto-approve-btn[aria-pressed="true"] {
-  background: rgba(22, 163, 74, 0.12);
-  border-color: rgba(22, 163, 74, 0.4);
-  color: #15803d;
+  background: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.55);
+  color: #b45309;
 }
 
 .ask-option.ask-option-auto {

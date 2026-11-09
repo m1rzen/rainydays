@@ -38,6 +38,16 @@ const KEEP_RECENT = 8;
 /** 摘要 system 消息的标记前缀 */
 const SUMMARY_MARKER = "## 对话摘要\n";
 
+/** 工具输出占长会话的大部分；这些最近结果保持完整，更早的大结果折叠为可取回的引用。 */
+export const KEEP_RECENT_TOOL_RESULTS = 12;
+const FOLD_MIN_CHARS = 2000;
+const FOLD_HEAD_CHARS = 500;
+const FOLD_TAIL_CHARS = 200;
+const FOLDED_TOOL_RESULT_MARKER = "[工具输出已折叠";
+
+/** 摘要的摘要会逐代丢失细节；每经过这么多代，建议用户做一次核实过的交接。 */
+export const HANDOFF_SUGGESTION_INTERVAL = 4;
+
 // --- token 估算 ---
 
 /** 粗略估算：中文 ~1.5 字符/token，英文 ~4 字符/token，混合取 2.5 */
@@ -144,6 +154,7 @@ export class ConversationMemory {
   private maxMessages: number;
   private sessionId: string | null = null;
   private artifactReferences = new Map<string, DocumentOutput>();
+  private summaryGeneration = 0;
 
   constructor(maxMessages: number = 100) {
     this.maxMessages = maxMessages;
@@ -182,6 +193,23 @@ export class ConversationMemory {
 
     this.messages = messages;
     this.artifactReferences.clear();
+    this.summaryGeneration = 0;
+  }
+
+  /** 只替换内存中的投影，数据库原文不变；没有 history 引用的结果无法取回，不折叠。 */
+  private foldOlderToolResults(): boolean {
+    const toolIndexes = this.messages.flatMap((message, index) => message.role === "tool" ? [index] : []);
+    const foldable = toolIndexes.slice(0, Math.max(0, toolIndexes.length - KEEP_RECENT_TOOL_RESULTS));
+    let changed = false;
+    for (const index of foldable) {
+      const message = this.messages[index];
+      const content = message.content || "";
+      if (!message.historyId || content.length <= FOLD_MIN_CHARS || content.startsWith(FOLDED_TOOL_RESULT_MARKER)) continue;
+      for (const output of collectDocumentOutputs([message])) this.artifactReferences.set(output.path, output);
+      this.messages[index] = { ...message, content: `${FOLDED_TOOL_RESULT_MARKER}，原文 ${content.length} 字符，用 read(file_path="history:${message.historyId}") 取回]\n${content.slice(0, FOLD_HEAD_CHARS)}\n...\n${content.slice(-FOLD_TAIL_CHARS)}` };
+      changed = true;
+    }
+    return changed;
   }
 
   setSystemPrompt(prompt: string): void {
@@ -236,18 +264,20 @@ export class ConversationMemory {
     const assess = options.assess ?? summaryAssessment;
     const fits = (report: RequestBudgetReport) => report.estimatedInputTokens + report.outputReserveTokens <= report.contextWindowTokens;
     const assertFits = (messages: Message[]) => { const report = assess(messages); if (!fits(report)) throw new ContextBudgetExceededError(report); };
-    const initialReport = assess(this.messages);
-    const usageRatio = initialReport.contextWindowTokens > 0
-      ? (initialReport.estimatedInputTokens + initialReport.outputReserveTokens) / initialReport.contextWindowTokens
+    const usage = (report: RequestBudgetReport) => report.contextWindowTokens > 0
+      ? (report.estimatedInputTokens + report.outputReserveTokens) / report.contextWindowTokens
       : 0;
-    if (usageRatio >= PREPARE_WATERMARK_RATIO && this.sessionId) {
+    const initialReport = assess(this.messages);
+    if (usage(initialReport) >= PREPARE_WATERMARK_RATIO && this.sessionId) {
       try {
         autoScribePrepareWatermark(this.sessionId, this.messages);
       } catch {
         // Scribe 50% watermark preparation is non-blocking
       }
     }
-    if (fits(initialReport) && usageRatio < REPLACE_WATERMARK_RATIO) return false;
+    const folded = usage(initialReport) >= PREPARE_WATERMARK_RATIO && this.foldOlderToolResults();
+    const currentReport = folded ? assess(this.messages) : initialReport;
+    if (fits(currentReport) && usage(currentReport) < REPLACE_WATERMARK_RATIO) return folded;
 
     // 分离 system 消息和对话消息
     const mainSystem = this.messages.filter(
@@ -325,7 +355,13 @@ export class ConversationMemory {
       }
     }
     this.messages = candidate;
+    this.summaryGeneration++;
     return true;
+  }
+
+  /** 本次运行内模型摘要已执行的代数。 */
+  getSummaryGeneration(): number {
+    return this.summaryGeneration;
   }
 
   getAll(): Message[] {
@@ -349,11 +385,13 @@ export class ConversationMemory {
     const systemMsgs = this.messages.filter((m) => m.role === "system" && !m.content.startsWith(SUMMARY_MARKER));
     this.messages = systemMsgs;
     this.artifactReferences.clear();
+    this.summaryGeneration = 0;
   }
 
   reset(): void {
     this.messages = [];
     this.sessionId = null;
     this.artifactReferences.clear();
+    this.summaryGeneration = 0;
   }
 }

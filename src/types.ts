@@ -263,7 +263,9 @@ export interface ToolExecutionOutcome {
 /** agent 运行中的一步 */
 export interface AgentStep {
   type: "thinking" | "tool_call" | "tool_result" | "answer_chunk" | "answer_done" | "error"
-    | "task_created" | "task_update" | "steer";
+    | "task_created" | "task_update" | "steer" | "context_notice";
+  /** context_notice：会话 Auto 授权的最新状态，供界面同步。 */
+  autoApprove?: boolean;
   content: string;
   toolName?: string;
   toolSource?: string;

@@ -149,6 +149,57 @@ test("A15 default Agent asks in-app once per task, runs commands as the user and
   }
 });
 
+test("Auto runs routine commands, still asks before a push, and turns off when history is summarized", { timeout: 60_000 }, async () => {
+  const [{ Agent, isSessionAutoApproveEnabled, setSessionAutoApproveEnabled }, { ConversationMemory }, { createEffectivePersona, getPersona }, { createSession }, { capabilityBroker }, { pathPolicy }, interaction] = await Promise.all([
+    import("../../src/agent.ts"), import("../../src/memory.ts"), import("../../src/persona.ts"), import("../../src/session.ts"),
+    import("../../src/tools/index.ts"), import("../../src/path-runtime.ts"), import("../../src/tools/ask-user-tool.ts"),
+  ]);
+  await setDeveloperMode(true);
+  const builtin = await getPersona("general"); assert(builtin);
+  const persona = createEffectivePersona({ ...builtin, tools: ["execute_command"], env: { WORKSPACE_ROOT: workspace }, allowedRoots: [workspace] });
+  const authority = capabilityBroker.createRuntimeAuthority({ ...persona, rootEnv: { WORKSPACE_ROOT: "workspace" }, pathAuthority: await pathPolicy.createAuthority([{ rootId: "workspace", role: "workspace", configuredPath: workspace, permissions: ["initial-cwd", "read-file", "read-directory"] }]) });
+  let calls = [], counter = 0, systemPrompt = "";
+  const llm = {
+    async chat() { return { role: "assistant", content: "摘要" }; },
+    async *chatStream(messages) {
+      systemPrompt = messages[0].content;
+      const next = calls.shift();
+      yield { type: "result", message: next ? { role: "assistant", content: "", tool_calls: [{ id: `auto-${++counter}`, type: "function", function: { name: "execute_command", arguments: JSON.stringify(next) } }] } : { role: "assistant", content: "完成" } };
+    },
+  };
+  class SummarizingMemory extends ConversationMemory {
+    generation = 0; summarizeNext = false;
+    async compact() { if (this.summarizeNext) { this.summarizeNext = false; this.generation++; return true; } return false; }
+    getSummaryGeneration() { return this.generation; }
+  }
+  const memory = new SummarizingMemory();
+  const agent = new Agent(llm, memory, persona, authority);
+  const session = createSession(persona, "Auto"); agent.setSession(session.id);
+  const questions = [];
+  const run = runId => interaction.runWithInteractionChannel({ sessionId: session.id, runId }, { emit(event) {
+    if (event.type !== "ask_user") return;
+    questions.push(event); assert(interaction.submitAnswer(session.id, runId, event.questionId, "拒绝执行"));
+  } }, async () => { const events = []; for await (const event of agent.run("继续", runId)) events.push(event); return events; });
+  try {
+    setSessionAutoApproveEnabled(session.id, true);
+    calls = [{ command: "echo routine-one", cwd: workspace }, { command: "git push origin main", cwd: workspace }, { command: "echo routine-two", cwd: workspace }];
+    const events = await run("auto-first");
+    assert.deepEqual(events.filter(event => event.type === "tool_result").map(event => event.toolStatus), ["success", "denied", "success"]);
+    assert.equal(questions.length, 1, "only the push reaches the user");
+    assert.match(questions[0].question, /git push/u);
+    assert.match(systemPrompt, /## 长任务连续性/u);
+    memory.summarizeNext = true;
+    const summarized = await run("auto-second");
+    assert.equal(isSessionAutoApproveEnabled(session.id), false);
+    const notice = summarized.find(event => event.type === "context_notice");
+    assert.equal(notice.autoApprove, false); assert.match(notice.content, /Auto 授权已自动关闭/u);
+  } finally {
+    setSessionAutoApproveEnabled(session.id, false);
+    await capabilityBroker.retireAuthority(authority);
+    await setDeveloperMode(false);
+  }
+});
+
 test("A15 persistent terminal runs as the user, receives stdin, reports the real exit code and is cleaned up", { timeout: 60_000 }, async () => {
   const [{ Agent }, { ConversationMemory }, { createEffectivePersona, getPersona }, { createSession }, { capabilityBroker }, { pathPolicy }, interaction, { waitFor }] = await Promise.all([
     import("../../src/agent.ts"), import("../../src/memory.ts"), import("../../src/persona.ts"), import("../../src/session.ts"),
