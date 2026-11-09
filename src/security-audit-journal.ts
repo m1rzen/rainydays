@@ -208,6 +208,7 @@ export async function openSecurityAuditJournal(
   const masterKey = await loadOrCreateMasterKey(wrapper);
   let closed = false;
   let poisoned = false;
+  let poisonCause = "unknown";
   let tail = Promise.resolve();
   try {
     verifyPersistedAudit(masterKey);
@@ -219,7 +220,7 @@ export async function openSecurityAuditJournal(
 
   const requireOpen = (): void => {
     if (closed) throw new Error("Security audit journal is closed");
-    if (poisoned) throw new Error("Security audit journal is poisoned");
+    if (poisoned) throw new Error(`Security audit journal is poisoned: ${poisonCause}`);
   };
   const enqueue = <T>(action: () => T): Promise<T> => {
     requireOpen();
@@ -228,6 +229,7 @@ export async function openSecurityAuditJournal(
       try { return action(); }
       catch (error) {
         poisoned = true;
+        poisonCause = error instanceof Error ? error.message : String(error);
         throw error;
       }
     });

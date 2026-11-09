@@ -303,7 +303,9 @@ function validateTransition(events: readonly SecurityAuditEvent[], input: Append
     if (input.correlation.executionId !== null) throw new Error("Request phase cannot bind an execution identity");
     if (input.correlation.parentRequestId !== null) {
       const parent = events.find(event => event.phase === "request" && event.correlation.requestId === input.correlation.parentRequestId);
-      if (!parent || parent.correlation.sessionId !== input.correlation.sessionId || parent.correlation.runId !== input.correlation.runId) {
+      // A detached subagent runs under its own run id but still belongs to the parent request's Session.
+      const sameRun = parent?.correlation.runId === input.correlation.runId || input.correlation.runId.startsWith("subagent:");
+      if (!parent || parent.correlation.sessionId !== input.correlation.sessionId || !sameRun) {
         throw new Error("Security audit parent request identity is invalid");
       }
     }

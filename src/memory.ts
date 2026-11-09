@@ -40,6 +40,7 @@ const SUMMARY_MARKER = "## 对话摘要\n";
 
 /** 工具输出占长会话的大部分；这些最近结果保持完整，更早的大结果折叠为可取回的引用。 */
 export const KEEP_RECENT_TOOL_RESULTS = 12;
+const RECENT_TOOL_RESULT_BUDGET_RATIO = 0.3;
 const FOLD_MIN_CHARS = 2000;
 const FOLD_HEAD_CHARS = 500;
 const FOLD_TAIL_CHARS = 200;
@@ -201,9 +202,16 @@ export class ConversationMemory {
   }
 
   /** 只替换内存中的投影，数据库原文不变；没有 history 引用的结果无法取回，不折叠。 */
-  private foldOlderToolResults(): boolean {
+  private foldOlderToolResults(contextWindowTokens: number): boolean {
     const toolIndexes = this.messages.flatMap((message, index) => message.role === "tool" ? [index] : []);
-    const foldable = toolIndexes.slice(0, Math.max(0, toolIndexes.length - KEEP_RECENT_TOOL_RESULTS));
+    // Keep the newest results whole, but never let them take over a small budget.
+    let keep = 0, keptTokens = 0;
+    for (const index of [...toolIndexes].reverse()) {
+      keptTokens += Buffer.byteLength(this.messages[index].content || "", "utf8") / 2;
+      if (keep >= KEEP_RECENT_TOOL_RESULTS || (keep > 0 && keptTokens > contextWindowTokens * RECENT_TOOL_RESULT_BUDGET_RATIO)) break;
+      keep += 1;
+    }
+    const foldable = toolIndexes.slice(0, Math.max(0, toolIndexes.length - keep));
     let changed = false;
     for (const index of foldable) {
       const message = this.messages[index];
@@ -272,7 +280,7 @@ export class ConversationMemory {
       ? (report.estimatedInputTokens + report.outputReserveTokens) / report.contextWindowTokens
       : 0;
     const initialReport = assess(this.messages);
-    const folded = usage(initialReport) >= PREPARE_WATERMARK_RATIO && this.foldOlderToolResults();
+    const folded = usage(initialReport) >= PREPARE_WATERMARK_RATIO && this.foldOlderToolResults(initialReport.contextWindowTokens);
     const currentReport = folded ? assess(this.messages) : initialReport;
     if (!options.force && fits(currentReport) && usage(currentReport) < REPLACE_WATERMARK_RATIO) return folded;
 

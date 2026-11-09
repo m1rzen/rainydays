@@ -168,7 +168,7 @@ const PROBES = {
   },
   // A small budget forces folding and summaries; the early fact must still be recoverable.
   longContext: {
-    budget: { contextWindowTokens: 48000, outputReserveTokens: 4000 },
+    budget: { contextWindowTokens: 64000, outputReserveTokens: 4000 },
     files: Object.fromEntries(Array.from({ length: 14 }, (_, index) => [`notes/file_${String(index).padStart(2, "0")}.txt`, (index === 2 ? "项目暗号 ZEPHYR-4417\n" : "") + filler(`文件${index}`, 5000)])),
     run: async server => {
       const first = await converse(server, "依次用 read 读取 notes 目录下的全部 14 个文件（file_00 到 file_13），每读一个用一句话说明。全部读完后告诉我读了几个。");

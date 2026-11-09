@@ -209,6 +209,10 @@ test("SEC-06 safe payload builders reject unknown fields and inconsistent values
   const parent = allowedChain()[0];
   const substituted = { ...orphan, correlation: correlation({ requestId: "nested-request", parentRequestId: parent.correlation.requestId, runId: "other-run" }) };
   assert.throws(() => appendSecurityAuditEvent([parent], substituted), /parent request identity/u);
+  const detached = { ...orphan, correlation: correlation({ requestId: "nested-request", parentRequestId: parent.correlation.requestId, runId: "subagent:task-1" }) };
+  assert.doesNotThrow(() => appendSecurityAuditEvent([parent], detached));
+  const otherSession = { ...orphan, correlation: correlation({ requestId: "nested-request", parentRequestId: parent.correlation.requestId, runId: "subagent:task-1", sessionId: "other-session" }) };
+  assert.throws(() => appendSecurityAuditEvent([parent], otherSession), /parent request identity/u);
 });
 
 test("SEC-06 public validators fail closed across malformed identities, payloads and phase bindings", () => {

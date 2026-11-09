@@ -48,6 +48,15 @@ test("older large tool results are folded without a model call and stay retrieva
   assert.equal(memory.getSummaryGeneration(), 0);
 });
 
+test("large recent results are folded too when they would crowd out a small budget", async () => {
+  const memory = toolHistory("prune-small", 14, 8000);
+  const size = Math.ceil(JSON.stringify(memory.getAll()).length / 2);
+  await memory.compact(noModel, undefined, undefined, { assess: budget(Math.ceil(size / 0.6)) });
+  const tools = memory.getAll().filter(item => item.role === "tool");
+  assert(tools.at(-1).content.length > 8000, "the newest result stays whole");
+  assert(tools.filter(item => item.content.length > 8000).length < KEEP_RECENT_TOOL_RESULTS);
+});
+
 test("folding does nothing below the prepare watermark and is idempotent", async () => {
   const memory = toolHistory("prune-b", 24);
   const size = Math.ceil(JSON.stringify(memory.getAll()).length / 2);
