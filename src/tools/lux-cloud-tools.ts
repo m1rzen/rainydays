@@ -4,14 +4,15 @@
 // ===========================================
 
 import { randomUUID } from "node:crypto";
+import { connect } from "node:net";
+import type { LLMClient } from "../llm.js";
+import type { ConversationMemory } from "../memory.js";
 import type { ToolDefinition, ToolExecutor } from "../types.js";
 import {
   getMessagesBySession,
   insertCronJob,
   listSessions,
   getSession,
-  insertSession,
-  insertMessage,
   listMemories,
 } from "../db.js";
 import { parseCronDurationMs } from "../cron.js";
@@ -192,27 +193,15 @@ export const compactContextDef: ToolDefinition = {
   },
 };
 
-export const compactContextExec: ToolExecutor = async (args, env) => {
-  const sessionId = resolveSessionId(env);
-  const focus = typeof args.focus === "string" ? args.focus.trim() : "";
-  const messages = getMessagesBySession(sessionId);
-  const summaryLines = messages
-    .slice(-12)
-    .map(m => `[${m.role}] ${m.content.replace(/\s+/g, " ").slice(0, 160)}`);
-  const continuity = [
-    focus ? `Focus: ${focus}` : "Focus: general continuity",
-    ...summaryLines,
-  ].join("\n");
-  const archivedCount = archiveMessagesToColdStore(sessionId, messages, continuity);
-  return JSON.stringify({
-    status: "compacted",
-    sessionId,
-    focus: focus || null,
-    archivedBlocksAdded: archivedCount,
-    totalMessagesArchived: messages.length,
-    continuityPreview: continuity.slice(0, 400),
-  }, null, 2);
-};
+export function createCompactContextExec(memory: ConversationMemory, llm: LLMClient): ToolExecutor {
+  return async (args, _env, invocation) => {
+    if (!invocation) throw new Error("Tool invocation services are required");
+    const focus = typeof args.focus === "string" ? args.focus.trim() : "";
+    const tokensBefore = memory.getTokenEstimate();
+    const compacted = await memory.compact(llm, invocation.signal, invocation.network.fetch, { force: true, ...(focus ? { focus } : {}) });
+    return JSON.stringify({ status: compacted ? "compacted" : "nothing_to_compact", focus: focus || null, tokens_before: tokensBefore, tokens_after: memory.getTokenEstimate(), summary_generation: memory.getSummaryGeneration() }, null, 2);
+  };
+}
 
 export const toolResultReadDef: ToolDefinition = {
   type: "function",
@@ -518,50 +507,51 @@ export const consolidateMemoryDef: ToolDefinition = {
   },
 };
 
-export const consolidateMemoryExec: ToolExecutor = async (args) => {
-  const level = (args.level as "shallow" | "deep" | undefined) ?? "deep";
-  const hint = typeof args.hint === "string" ? args.hint.trim() : "";
-  const recent = listMemories(10);
-  const createdNotes: string[] = [];
-  const createdNodes: string[] = [];
+const CONSOLIDATE_PROMPT = `从以下记忆中提取实体和关系，只使用明确出现的信息，不要猜测。只返回 JSON：{"entities":[{"name":"实体名","kind":"person|project|org|tech|product|concept"}],"edges":[{"src":"源实体名","dst":"目标实体名","relation":"动词关系"}]}`;
 
-  for (const mem of recent.slice(0, 5)) {
-    let tags: string[] = [];
-    try { tags = JSON.parse(mem.tags || "[]"); } catch { /* ignore */ }
-    const noteRes = createOrUpdateKnowledge({
-      op: "create",
-      type: "note",
-      scope: "project",
-      kind: mem.kind || "observation",
-      content: hint ? `[${hint}] ${mem.content}` : mem.content,
-      tags,
-    });
-    const entry = noteRes.entry as { id: string };
-    createdNotes.push(entry.id);
+function parseExtraction(text: string): { entities: Array<{ name?: unknown; kind?: unknown }>; edges: Array<{ src?: unknown; dst?: unknown; relation?: unknown }> } {
+  const start = text.indexOf("{"), end = text.lastIndexOf("}");
+  try {
+    const value = JSON.parse(text.slice(start, end + 1));
+    return { entities: Array.isArray(value.entities) ? value.entities : [], edges: Array.isArray(value.edges) ? value.edges : [] };
+  } catch { throw new Error("模型没有返回有效的 JSON，知识图谱未写入"); }
+}
 
-    if (level === "deep" && tags.length > 0) {
-      for (const tag of tags.slice(0, 2)) {
-        const nodeRes = createOrUpdateKnowledge({
-          op: "create",
-          type: "node",
-          scope: "project",
-          name: tag,
-          kind: "concept",
-          tags: [mem.kind],
-        });
-        createdNodes.push((nodeRes.entry as { id: string }).id);
+/** shallow 只把近期记忆锚定为 Note；deep 由模型提取实体和关系后写入图谱。 */
+export function createConsolidateMemoryExec(llm?: LLMClient): ToolExecutor {
+  return async (args, _env, invocation) => {
+    const level = (args.level as "shallow" | "deep" | undefined) ?? "deep";
+    const hint = typeof args.hint === "string" ? args.hint.trim() : "";
+    const recent = listMemories(10);
+    if (level === "deep" && (!llm || !invocation)) throw new Error("deep 整理需要可用的模型");
+    const createdNotes: string[] = [], createdNodes: string[] = [], createdEdges: string[] = [];
+    if (level === "deep" && recent.length > 0) {
+      const response = await llm!.chat([
+        { role: "system", content: CONSOLIDATE_PROMPT },
+        { role: "user", content: `${hint ? `关注点：${hint}\n` : ""}${recent.map((memory, index) => `[${index + 1}] (${memory.kind}) ${memory.content}`).join("\n")}` },
+      ], undefined, invocation!.signal, invocation!.network.fetch);
+      const extraction = parseExtraction(typeof response.content === "string" ? response.content : "");
+      const ids = new Map<string, string>();
+      for (const entity of extraction.entities) {
+        if (typeof entity.name !== "string" || !entity.name.trim() || ids.has(entity.name)) continue;
+        const id = (createOrUpdateKnowledge({ op: "create", type: "node", scope: "project", name: entity.name, kind: typeof entity.kind === "string" ? entity.kind : "concept", tags: [] }).entry as { id: string }).id;
+        ids.set(entity.name, id); createdNodes.push(id);
+      }
+      for (const edge of extraction.edges) {
+        const from = ids.get(String(edge.src)), to = ids.get(String(edge.dst));
+        if (!from || !to || typeof edge.relation !== "string" || !edge.relation.trim()) continue;
+        createdEdges.push((createOrUpdateKnowledge({ op: "create", type: "edge", scope: "project", from, to, relation: edge.relation, tags: [] }).entry as { id: string }).id);
       }
     }
-  }
-
-  return JSON.stringify({
-    status: "consolidated",
-    level,
-    hint: hint || null,
-    anchoredNotes: createdNotes,
-    extractedNodes: createdNodes,
-  }, null, 2);
-};
+    for (const memory of recent.slice(0, 5)) {
+      let tags: string[] = [];
+      try { tags = JSON.parse(memory.tags || "[]"); } catch { /* ignore */ }
+      createdNotes.push((createOrUpdateKnowledge({ op: "create", type: "note", scope: "project", kind: memory.kind || "observation", content: hint ? `[${hint}] ${memory.content}` : memory.content, tags }).entry as { id: string }).id);
+    }
+    return JSON.stringify({ status: "consolidated", level, hint: hint || null, anchoredNotes: createdNotes, extractedNodes: createdNodes, extractedEdges: createdEdges }, null, 2);
+  };
+}
+export const consolidateMemoryExec = createConsolidateMemoryExec();
 
 // ===========================================
 // 4. Store-Backed Zero-Preload Skill Tools: skill_search, skill_load, skill_reload, skill_release, skill_status, skill_manage
@@ -823,19 +813,6 @@ export const thinkingEffortSetExec: ToolExecutor = async (args, env) => {
   return JSON.stringify(setSessionThinkingEffort(sessionId, effort), null, 2);
 };
 
-interface ManagedChildSessionRecord {
-  id: string;
-  parentSessionId: string;
-  name: string;
-  task: string;
-  model: string | null;
-  allowSubagent: boolean;
-  status: "streaming" | "idle" | "error" | "interrupted";
-  updatedAt: number;
-}
-
-const childAgents = new Map<string, ManagedChildSessionRecord>();
-const waitSubscriptions = new Map<string, { id: string; parentSessionId: string; targetSessionId: string; on: string; persistent: boolean }>();
 
 export const agentSpawnDef: ToolDefinition = {
   type: "function",
@@ -853,59 +830,6 @@ export const agentSpawnDef: ToolDefinition = {
       required: ["task"],
     },
   },
-};
-
-export const agentSpawnExec: ToolExecutor = async (args, env) => {
-  const parentSessionId = resolveSessionId(env);
-  const task = String(args.task ?? "").trim();
-  if (!task) throw new Error("agent_spawn requires non-empty task");
-  const childId = `session-sub-${randomUUID().slice(0, 12)}`;
-  const name = typeof args.name === "string" && args.name.trim() ? args.name.trim() : task.slice(0, 40);
-  const nowIso = new Date().toISOString();
-
-  insertSession({
-    id: childId,
-    persona_name: "general",
-    title: name,
-    created_at: nowIso,
-    updated_at: nowIso,
-  });
-  insertMessage({
-    session_id: childId,
-    role: "user",
-    content: task,
-    tool_calls: null,
-    tool_call_id: null,
-    created_at: nowIso,
-  });
-  insertMessage({
-    session_id: childId,
-    role: "assistant",
-    content: `Subagent session initialized for task: ${task}`,
-    tool_calls: null,
-    tool_call_id: null,
-    created_at: nowIso,
-  });
-
-  const record: ManagedChildSessionRecord = {
-    id: childId,
-    parentSessionId,
-    name,
-    task,
-    model: (args.model as string | null | undefined) ?? null,
-    allowSubagent: args.allow_subagent === true,
-    status: "idle",
-    updatedAt: Date.now(),
-  };
-  childAgents.set(childId, record);
-  return JSON.stringify({
-    id: childId,
-    name,
-    parent_session_id: parentSessionId,
-    model: record.model,
-    allow_subagent: record.allowSubagent,
-    status: record.status,
-  }, null, 2);
 };
 
 export const agentListDef: ToolDefinition = {
@@ -927,39 +851,6 @@ export const agentListDef: ToolDefinition = {
   },
 };
 
-export const agentListExec: ToolExecutor = async (args, env) => {
-  const parentSessionId = resolveSessionId(env);
-  const scope = (args.scope as "current" | "all" | undefined) ?? "current";
-  const q = typeof args.query === "string" ? args.query.trim().toLowerCase() : "";
-  const statusFilter = Array.isArray(args.status) ? (args.status as string[]) : [];
-
-  const rows =
-    scope === "current"
-      ? [...childAgents.values()].filter(a => a.parentSessionId === parentSessionId)
-      : listSessions().map(s => ({
-          id: s.id,
-          parentSessionId: childAgents.get(s.id)?.parentSessionId ?? null,
-          name: s.title,
-          status: childAgents.get(s.id)?.status ?? ("idle" as const),
-          updatedAt: new Date(s.updated_at).getTime() || Date.now(),
-        }));
-
-  const filtered = rows
-    .filter(r => (statusFilter.length === 0 || statusFilter.includes(r.status)))
-    .filter(r => (!q || r.id.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)))
-    .filter(r => (typeof args.updated_after !== "number" || r.updatedAt > args.updated_after))
-    .sort((a, b) => b.updatedAt - a.updatedAt);
-
-  const limit = typeof args.limit === "number" ? args.limit : 50;
-  return JSON.stringify({
-    agents: filtered.slice(0, limit),
-    total: filtered.length,
-    has_more: filtered.length > limit,
-    next_cursor: null,
-    snapshot_at: Date.now(),
-  }, null, 2);
-};
-
 export const agentPeekDef: ToolDefinition = {
   type: "function",
   function: {
@@ -977,31 +868,11 @@ export const agentPeekDef: ToolDefinition = {
   },
 };
 
-export const agentPeekExec: ToolExecutor = async (args) => {
-  const id = String(args.id ?? "");
-  const scope = (args.scope as string | undefined) ?? "last";
-  const child = childAgents.get(id);
-  const session = getSession(id);
-  if (!child && !session) throw new Error(`Target agent Session not found: ${id}`);
-  const msgs = getMessagesBySession(id);
-  if (scope === "status") {
-    return JSON.stringify({ id, name: child?.name ?? session?.title, status: child?.status ?? "idle", messageCount: msgs.length }, null, 2);
-  }
-  const slice = scope === "full" ? msgs : msgs.slice(-4);
-  return JSON.stringify({
-    id,
-    name: child?.name ?? session?.title,
-    status: child?.status ?? "idle",
-    scope,
-    messages: slice.map(m => ({ id: m.id, role: m.role, content: m.content.slice(0, 1000), created_at: m.created_at })),
-  }, null, 2);
-};
-
 export const agentPostDef: ToolDefinition = {
   type: "function",
   function: {
     name: "agent_post",
-    description: "Send a message to another agent. Idle agents begin a turn; active agents receive an injection.",
+    description: "Send guidance to a running subagent, or stop it with abort. A finished subagent cannot receive messages; spawn a new one.",
     parameters: {
       type: "object",
       properties: {
@@ -1015,38 +886,11 @@ export const agentPostDef: ToolDefinition = {
   },
 };
 
-export const agentPostExec: ToolExecutor = async (args, env) => {
-  const senderId = resolveSessionId(env);
-  const targetId = String(args.id ?? "");
-  const message = String(args.message ?? "");
-  const mode = (args.mode as "reply" | "alert" | undefined) ?? "reply";
-  const abort = args.abort === true;
-  const child = childAgents.get(targetId);
-  const session = getSession(targetId);
-  if (!child && !session) throw new Error(`Target agent Session not found: ${targetId}`);
-
-  if (abort) {
-    if (child) child.status = "interrupted";
-    return JSON.stringify({ id: targetId, aborted: true, status: "interrupted" }, null, 2);
-  }
-
-  insertMessage({
-    session_id: targetId,
-    role: "user",
-    content: `[From ${senderId} (${mode})] ${message}`,
-    tool_calls: null,
-    tool_call_id: null,
-    created_at: new Date().toISOString(),
-  });
-  if (child) child.updatedAt = Date.now();
-  return JSON.stringify({ id: targetId, delivered: true, mode }, null, 2);
-};
-
 export const agentWaitDef: ToolDefinition = {
   type: "function",
   function: {
     name: "agent_wait",
-    description: "Wait for a target agent state change or timeout.",
+    description: "Wait until a subagent finishes or the timeout (seconds, default 60, max 300) passes. async is not supported.",
     parameters: {
       type: "object",
       properties: {
@@ -1067,33 +911,6 @@ export const agentWaitDef: ToolDefinition = {
   },
 };
 
-export const agentWaitExec: ToolExecutor = async (args, env) => {
-  const parentSessionId = resolveSessionId(env);
-  const event = args.event as { session: string; on?: string };
-  const targetId = event.session;
-  const on = event.on ?? "idle";
-
-  if (args.async === true) {
-    const subId = `wait_${randomUUID().slice(0, 12)}`;
-    waitSubscriptions.set(subId, {
-      id: subId,
-      parentSessionId,
-      targetSessionId: targetId,
-      on,
-      persistent: args.persistent === true,
-    });
-    return JSON.stringify({ id: subId, async: true, target: targetId, on, persistent: args.persistent === true }, null, 2);
-  }
-
-  const child = childAgents.get(targetId);
-  return JSON.stringify({
-    trigger: on,
-    interrupted: false,
-    session: targetId,
-    status: child?.status ?? "idle",
-  }, null, 2);
-};
-
 export const agentCancelWaitDef: ToolDefinition = {
   type: "function",
   function: {
@@ -1109,12 +926,6 @@ export const agentCancelWaitDef: ToolDefinition = {
   },
 };
 
-export const agentCancelWaitExec: ToolExecutor = async (args) => {
-  const id = String(args.id ?? "");
-  const existed = waitSubscriptions.delete(id);
-  return JSON.stringify({ id, cancelled: existed }, null, 2);
-};
-
 export const agentCloseDef: ToolDefinition = {
   type: "function",
   function: {
@@ -1128,12 +939,6 @@ export const agentCloseDef: ToolDefinition = {
       required: ["id"],
     },
   },
-};
-
-export const agentCloseExec: ToolExecutor = async (args) => {
-  const id = String(args.id ?? "");
-  childAgents.delete(id);
-  return JSON.stringify({ id, closed: true }, null, 2);
 };
 
 export const mainAgentInspectDef: ToolDefinition = {
@@ -1152,9 +957,7 @@ export const mainAgentInspectDef: ToolDefinition = {
 };
 
 export const mainAgentInspectExec: ToolExecutor = async (args, env) => {
-  const currentId = resolveSessionId(env);
-  const child = childAgents.get(currentId);
-  const parentId = child?.parentSessionId ?? currentId;
+  const parentId = resolveSessionId(env);
   const msgs = getMessagesBySession(parentId);
   const depth = (args.depth as "summary" | "evidence" | undefined) ?? "summary";
   if (depth === "summary") {
@@ -1284,7 +1087,6 @@ export const cronScheduleOnIdleExec: ToolExecutor = async (args, env) => {
 // 6. Worker Plane & Web Preview Tools: worker_pairing_claim, worker_file_upload, worker_file_download, preview_web/list/close
 // ===========================================
 
-const transferStore = new Map<string, { file_id: string; file_path: string; worker_id: string | null; created_at: number }>();
 const webPreviews = new Map<string, { id: string; ports: number[]; ttl_seconds: number; worker_id: string; urls: string[]; created_at: number }>();
 
 export const workerPairingClaimDef: ToolDefinition = {
@@ -1302,15 +1104,9 @@ export const workerPairingClaimDef: ToolDefinition = {
   },
 };
 
-export const workerPairingClaimExec: ToolExecutor = async (args) => {
-  const code = String(args.code ?? "").trim();
-  if (!code) throw new Error("worker_pairing_claim requires a non-empty pairing code");
-  return JSON.stringify({
-    status: "claimed",
-    worker_id: `worker-paired-${code.slice(0, 8).toLowerCase()}`,
-    online: true,
-  }, null, 2);
-};
+const NO_REMOTE_WORKERS = "RainyDays 目前是单机版，没有远端 Worker 服务，这项操作不可用。请直接使用 read、write 或 execute_command 在本机操作。";
+
+export const workerPairingClaimExec: ToolExecutor = async () => { throw new Error(NO_REMOTE_WORKERS); };
 
 export const workerFileUploadDef: ToolDefinition = {
   type: "function",
@@ -1328,18 +1124,7 @@ export const workerFileUploadDef: ToolDefinition = {
   },
 };
 
-export const workerFileUploadExec: ToolExecutor = async (args) => {
-  const filePath = String(args.file_path ?? "").trim();
-  if (!filePath) throw new Error("worker_file_upload requires file_path");
-  const fileId = `xfer_${randomUUID().slice(0, 12)}`;
-  transferStore.set(fileId, {
-    file_id: fileId,
-    file_path: filePath,
-    worker_id: (args.worker_id as string | undefined) ?? null,
-    created_at: Date.now(),
-  });
-  return JSON.stringify({ file_id: fileId, file_path: filePath, status: "uploaded" }, null, 2);
-};
+export const workerFileUploadExec: ToolExecutor = async () => { throw new Error(NO_REMOTE_WORKERS); };
 
 export const workerFileDownloadDef: ToolDefinition = {
   type: "function",
@@ -1359,26 +1144,13 @@ export const workerFileDownloadDef: ToolDefinition = {
   },
 };
 
-export const workerFileDownloadExec: ToolExecutor = async (args) => {
-  const fileId = String(args.file_id ?? "");
-  const outputPath = String(args.output_path ?? "");
-  const record = transferStore.get(fileId);
-  if (!record) throw new Error(`Transfer file_id not found: ${fileId}`);
-  return JSON.stringify({
-    file_id: fileId,
-    source_path: record.file_path,
-    output_path: outputPath,
-    overwrite: args.overwrite === true,
-    worker_id: (args.worker_id as string | undefined) ?? null,
-    status: "downloaded",
-  }, null, 2);
-};
+export const workerFileDownloadExec: ToolExecutor = async () => { throw new Error(NO_REMOTE_WORKERS); };
 
 export const previewWebDef: ToolDefinition = {
   type: "function",
   function: {
     name: "preview_web",
-    description: "Temporarily publish one to four local Web ports from an owned managed Worker.",
+    description: "Register one to four local Web ports and check whether each is listening. Local only: no public tunnel is created.",
     parameters: {
       type: "object",
       properties: {
@@ -1396,20 +1168,30 @@ export const previewWebDef: ToolDefinition = {
   },
 };
 
+function probeLocalPort(port: number): Promise<boolean> {
+  return new Promise(resolve => {
+    const socket = connect({ host: "127.0.0.1", port });
+    const finish = (open: boolean) => { socket.destroy(); resolve(open); };
+    socket.setTimeout(1000);
+    socket.once("connect", () => finish(true));
+    socket.once("timeout", () => finish(false));
+    socket.once("error", () => finish(false));
+  });
+}
+
+/** 没有公网隧道：只登记本机地址，并如实探测端口是否有服务在监听。 */
 export const previewWebExec: ToolExecutor = async (args) => {
   const ports = (args.ports as number[]) ?? [];
   const ttl = typeof args.ttl_seconds === "number" ? args.ttl_seconds : 3600;
   const workerId = (args.worker_id as string | undefined) ?? "local-worker";
   const id = `prv_${randomUUID().slice(0, 10)}`;
   const urls = ports.map(p => `http://127.0.0.1:${p}`);
+  const listening = await Promise.all(ports.map(probeLocalPort));
   webPreviews.set(id, { id, ports, ttl_seconds: ttl, worker_id: workerId, urls, created_at: Date.now() });
   return JSON.stringify({
-    id,
-    worker_id: workerId,
-    ports,
-    ttl_seconds: ttl,
-    target_ready: true,
-    targets: ports.map((p, idx) => ({ port: p, url: urls[idx], tunnel_connected: true })),
+    id, worker_id: workerId, ports, ttl_seconds: ttl, local_only: true,
+    target_ready: listening.length > 0 && listening.every(Boolean),
+    targets: ports.map((p, idx) => ({ port: p, url: urls[idx], listening: listening[idx], tunnel_connected: false })),
   }, null, 2);
 };
 

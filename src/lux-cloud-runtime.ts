@@ -1674,43 +1674,16 @@ export function manageSessionFolders(input: {
   return { action: "undo", restored: true, revision: state.revision };
 }
 
-export function autoScribePrepareWatermark(
-  sessionId: string,
-  messages: ReadonlyArray<{ role: string; content: string; historyId?: number }>,
-): { mapId: string | null; mapVersion: number; nodeAdded: boolean; cutoffOrdinal: number } {
+/** 把模型实际生成的整理摘要记入 Agent Map，供后续轮次导航。 */
+export function recordCompactionCheckpoint(sessionId: string, summary: string): { mapId: string | null; mapVersion: number } {
   const mapState = loadSessionAgentMap(sessionId);
-  const nonSystem = messages.filter(m => m.role !== "system");
-  if (nonSystem.length === 0) {
-    return { mapId: mapState.mapId, mapVersion: mapState.mapVersion, nodeAdded: false, cutoffOrdinal: 0 };
-  }
-  const latestUser = [...nonSystem].reverse().find(m => m.role === "user")?.content.slice(0, 120) ?? "Ongoing work";
-  const summaryText = `Scribe 50% watermark checkpoint (${nonSystem.length} turns): ${latestUser}`;
-  if (!mapState.rootNodeId) {
-    const updated = executeAgentMapUpdate(sessionId, mapState.mapId, [
-      {
-        op: "add_node",
-        ref: "root",
-        title: `Session ${sessionId.slice(0, 8)} Exploration Root`,
-        summary: summaryText,
-      },
-      {
-        op: "focus_node",
-        nodeId: "$root",
-      },
-    ]);
-    return {
-      mapId: updated.mapId as string,
-      mapVersion: updated.mapVersion as number,
-      nodeAdded: true,
-      cutoffOrdinal: nonSystem.length,
-    };
-  }
-  return {
-    mapId: mapState.mapId,
-    mapVersion: mapState.mapVersion,
-    nodeAdded: false,
-    cutoffOrdinal: nonSystem.length,
-  };
+  const text = summary.replace(/\s+/g, " ").trim().slice(0, 400);
+  const title = `历史整理 ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`;
+  const operations: Parameters<typeof executeAgentMapUpdate>[2] = mapState.rootNodeId
+    ? [{ op: "add_node", parentId: mapState.rootNodeId, title, summary: text }]
+    : [{ op: "add_node", ref: "root", title: `会话 ${sessionId.slice(0, 8)}`, summary: text }, { op: "focus_node", nodeId: "$root" }];
+  const updated = executeAgentMapUpdate(sessionId, mapState.mapId, operations);
+  return { mapId: updated.mapId as string, mapVersion: updated.mapVersion as number };
 }
 
 export function renderSessionLuxCloudContextBlocks(sessionId: string): string[] {

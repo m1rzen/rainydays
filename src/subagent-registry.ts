@@ -18,7 +18,7 @@ const MAX_DESCRIPTION_LENGTH = 160;
 const MAX_PROMPT_LENGTH = 128 * 1024;
 const FORBIDDEN_CHILD_TOOLS = new Set([
   "subagent", "subagent_wait", "subagent_output", "subagent_peek", "subagent_post", "subagent_stop", "subagent_list",
-  "playbook_execute",
+  "playbook_execute", "agent_spawn", "agent_list", "agent_peek", "agent_post", "agent_wait", "agent_cancel_wait", "agent_close",
 ]);
 
 export type SubagentStatus = "running" | "completed" | "failed" | "aborted";
@@ -114,7 +114,7 @@ function slug(value: string): string {
   const normalized = value.toLowerCase().normalize("NFKD")
     .replace(/[^a-z0-9]+/gu, "-")
     .replace(/^-+|-+$/gu, "")
-    .slice(0, 48)
+    .slice(0, 47)
     .replace(/-+$/u, "");
   return normalized || "subagent";
 }

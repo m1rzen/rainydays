@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import net from "node:net";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -19,7 +20,6 @@ const {
   pinExec,
   unpinExec,
   contextUsageExec,
-  compactContextExec,
   toolResultReadExec,
   canvasHistoryOverviewExec,
   canvasHistorySearchExec,
@@ -38,16 +38,10 @@ const {
   skillManageExec,
   thinkingEffortGetExec,
   thinkingEffortSetExec,
-  agentSpawnExec,
-  agentListExec,
-  agentPeekExec,
-  agentPostExec,
-  agentWaitExec,
-  agentCancelWaitExec,
-  agentCloseExec,
   mainAgentInspectExec,
   sessionFoldersExec,
   cronScheduleOnIdleExec,
+  workerPairingClaimExec,
   workerFileUploadExec,
   workerFileDownloadExec,
   previewWebExec,
@@ -60,7 +54,6 @@ const { computerUseExec } = await import("../../src/tools/worker-tools.ts");
 const { workerRegistry } = await import("../../src/worker.ts");
 const {
   resolveProviderReasoningEffort,
-  autoScribePrepareWatermark,
   renderSessionLuxCloudContextBlocks,
 } = await import("../../src/lux-cloud-runtime.ts");
 
@@ -130,9 +123,9 @@ test("LC-01: Pin/Unpin, Cold/Hot Canvas Store, Oversized Tool Result Paging & Th
   assert.equal(usage.sessionId, sessionEnv._SESSION_ID);
   assert(usage.prepareWatermarkTokens < usage.replaceWatermarkTokens);
 
-  const compacted = JSON.parse(await compactContextExec({ focus: "RetainLC01Facts" }, sessionEnv));
-  assert.equal(compacted.status, "compacted");
-  assert(compacted.archivedBlocksAdded >= 2);
+  const { getMessagesBySession } = await import("../../src/db.ts");
+  const { archiveMessagesToColdStore } = await import("../../src/lux-cloud-runtime.ts");
+  assert(archiveMessagesToColdStore(sessionEnv._SESSION_ID, getMessagesBySession(sessionEnv._SESSION_ID), "continuity") >= 2);
 
   const overview = JSON.parse(await canvasHistoryOverviewExec({ after: 0, limit: 10 }, sessionEnv));
   assert(overview.blocks.length >= 2);
@@ -339,28 +332,6 @@ test("LC-05: Subagent Sessions, Thinking Effort, Session Folders CAS & Worker/Pr
   const effort1 = JSON.parse(await thinkingEffortSetExec({ effort: "xhigh" }, sessionEnv));
   assert.equal(effort1.currentEffort, "xhigh");
 
-  const spawned = JSON.parse(await agentSpawnExec({ task: "Audit cold store", name: "auditor-sub" }, sessionEnv));
-  assert.match(spawned.id, /^session-sub-/);
-
-  const list = JSON.parse(await agentListExec({ scope: "current" }, sessionEnv));
-  assert.equal(list.total, 1);
-
-  const peek = JSON.parse(await agentPeekExec({ id: spawned.id, scope: "last" }, sessionEnv));
-  assert.equal(peek.id, spawned.id);
-
-  const posted = JSON.parse(await agentPostExec({ id: spawned.id, message: "Focus on segment 1", mode: "reply" }, sessionEnv));
-  assert.equal(posted.delivered, true);
-
-  const waitSub = JSON.parse(await agentWaitExec({ event: { session: spawned.id, on: "idle" }, async: true }, sessionEnv));
-  assert(waitSub.id);
-  const cancelled = JSON.parse(await agentCancelWaitExec({ id: waitSub.id }, sessionEnv));
-  assert.equal(cancelled.cancelled, true);
-
-  const parentInfo = JSON.parse(await mainAgentInspectExec({ depth: "summary" }, { _SESSION_ID: spawned.id }));
-  assert.equal(parentInfo.parent_session_id, sessionEnv._SESSION_ID);
-
-  await agentCloseExec({ id: spawned.id }, sessionEnv);
-
   // Session folders preview -> apply -> undo
   const folderPreview = JSON.parse(
     await sessionFoldersExec({
@@ -392,14 +363,15 @@ test("LC-05: Subagent Sessions, Thinking Effort, Session Folders CAS & Worker/Pr
   );
   assert.equal(idleCron.delivery_mode, "on_idle");
 
-  const uploaded = JSON.parse(await workerFileUploadExec({ file_path: "/workspace/report.md" }));
-  const downloaded = JSON.parse(
-    await workerFileDownloadExec({ file_id: uploaded.file_id, output_path: "/workspace/out/report.md", overwrite: true }),
-  );
-  assert.equal(downloaded.status, "downloaded");
+  await assert.rejects(workerPairingClaimExec({ code: "ABC" }), /单机版/u);
+  await assert.rejects(workerFileUploadExec({ file_path: "/workspace/report.md" }), /单机版/u);
+  await assert.rejects(workerFileDownloadExec({ file_id: "x", output_path: "/workspace/out.md" }), /单机版/u);
 
-  const preview = JSON.parse(await previewWebExec({ ports: [3000, 5173], ttl_seconds: 600 }));
-  assert.equal(preview.targets.length, 2);
+  const closedPort = await new Promise(resolve => { const server = net.createServer().listen(0, "127.0.0.1", () => { const { port } = server.address(); server.close(() => resolve(port)); }); });
+  const preview = JSON.parse(await previewWebExec({ ports: [closedPort], ttl_seconds: 600 }));
+  assert.equal(preview.target_ready, false);
+  assert.equal(preview.local_only, true);
+  assert.equal(preview.targets[0].tunnel_connected, false);
   const previewListed = JSON.parse(await previewListExec({}));
   assert.equal(previewListed.previews.length, 1);
   const previewClosed = JSON.parse(await previewCloseExec({ id: preview.id }));
@@ -413,13 +385,10 @@ test("LC-06: Main Loop Deep Wiring (50% Scribe Watermark, Reasoning Effort, Prom
   await thinkingEffortSetExec({ effort: "minimal" }, sessionEnv);
   assert.equal(resolveProviderReasoningEffort(sessionEnv._SESSION_ID), "low");
 
-  // 2. 50% Scribe watermark auto-preparation & prompt context blocks
-  const watermarkRes = autoScribePrepareWatermark(sessionEnv._SESSION_ID, [
-    { role: "user", content: "Prepare Scribe watermark at 50%" },
-    { role: "assistant", content: "Scribe prepared exploration map and continuity brief." },
-  ]);
-  assert(watermarkRes.mapId);
-  assert.equal(watermarkRes.cutoffOrdinal, 2);
+  // 2. A real compaction summary reaches the Agent Map and prompt context blocks
+  const { recordCompactionCheckpoint } = await import("../../src/lux-cloud-runtime.ts");
+  const checkpoint = recordCompactionCheckpoint(sessionEnv._SESSION_ID, "Model summary: cold store audit finished.");
+  assert(checkpoint.mapId);
 
   const renderedBlocks = renderSessionLuxCloudContextBlocks(sessionEnv._SESSION_ID).join("\n\n");
   assert.match(renderedBlocks, /<agent_map>/);

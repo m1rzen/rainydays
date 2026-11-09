@@ -95,6 +95,8 @@ import {
   subagentWaitDef,
 } from "./tools/subagent-tools.js";
 import { SubagentRegistry } from "./subagent-registry.js";
+import { createAgentSessionExecutors } from "./tools/agent-session-tools.js";
+import { agentCancelWaitDef, agentCloseDef, agentListDef, agentPeekDef, agentPostDef, agentSpawnDef, agentWaitDef, compactContextDef, consolidateMemoryDef, createCompactContextExec, createConsolidateMemoryExec } from "./tools/lux-cloud-tools.js";
 import { curateDef } from "./tools/curate-tool.js";
 import { consolidateDef } from "./tools/knowledge-tools.js";
 import { oracleQueryDef } from "./tools/advanced-tools.js";
@@ -3708,6 +3710,19 @@ function registerDynamicTools(
       }
     }),
   });
+
+  // agent_* 与 subagent 共用真实注册表；compact_context/consolidate_memory 需要运行中的模型和记忆。
+  const agentExecutors = createAgentSessionExecutors({
+    registry: subagents,
+    llm: runtimeLlm,
+    persona,
+    resolveModel: profile => listProfiles().some(entry => entry.name === profile) ? createLlmClient(profile) : null,
+  });
+  for (const [name, definition] of [["agent_spawn", agentSpawnDef], ["agent_list", agentListDef], ["agent_peek", agentPeekDef], ["agent_post", agentPostDef], ["agent_wait", agentWaitDef], ["agent_cancel_wait", agentCancelWaitDef], ["agent_close", agentCloseDef]] as const) {
+    registerDynamicTool(authority, { name, definition, executor: agentExecutors[name] });
+  }
+  registerDynamicTool(authority, { name: "compact_context", definition: compactContextDef, executor: createCompactContextExec(runtimeMemory, runtimeLlm) });
+  registerDynamicTool(authority, { name: "consolidate_memory", definition: consolidateMemoryDef, executor: createConsolidateMemoryExec(runtimeLlm) });
 
   // muse —— 需要 llm
   registerDynamicTool(authority, {

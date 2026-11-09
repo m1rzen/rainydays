@@ -2,6 +2,8 @@
 
 > 生成腳本：`docs/research/check-lux-cloud-parity.mjs`
 > 基準文件：`parity/baselines/lux-cloud-2026.json`（共 60 個核心原生工具契約；RainyDays 現有已註冊工具 161 個）
+>
+> **本報告只比對工具名稱與參數，不代表行為等同。** 2026-11-09 核對發現多項「對齊」工具沒有實際行為，已修正：`agent_*` 接上真實子代理；`compact_context`、`consolidate_memory` 改用真實壓縮與模型提取；Scribe 占位改為記錄真實整理摘要。`worker_pairing_claim`、`worker_file_upload`、`worker_file_download` 在單機版會明確報告不可用；`preview_web` 只登記並探測本機端口，沒有公網隧道；`agent_wait` 不支援 `async`，子代理結束後不能續聊。
 
 ## 1. 總體統計
 
