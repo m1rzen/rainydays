@@ -829,7 +829,7 @@ export async function executeTool(
     const result = failure instanceof CapabilityDeniedError
       ? `⛔ 执行授权拒绝 [${failure.code}]`
       : failure instanceof PathDeniedError
-        ? `⛔ 路径授权拒绝 [${failure.code}]`
+        ? `⛔ 路径授权拒绝 [${failure.code}]：路径不在授权范围内。请改用相对工作区的路径，或逐字核对绝对路径后重试，不要猜测其他位置。`
         : failure instanceof NetworkPolicyDeniedError
           ? `⛔ 网络授权拒绝 [${failure.code}]`
           : failure instanceof ToolArgumentsError || failure instanceof ToolLoopError

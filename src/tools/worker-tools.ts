@@ -88,10 +88,12 @@ export const bashDef: ToolDefinition = {
     },
   },
 };
-export const bashExec: ToolExecutor = async (args, _env, invocation) => {
+export const bashExec: ToolExecutor = async (args, env, invocation) => {
   if (!invocation) throw new Error("bash requires invocation services");
   throwIfCancelled(invocation.signal);
-  return json(await workerRegistry.execute(sessionId(invocation), "bash", args, invocation.signal, typeof args.timeout === "number" ? Math.max(args.timeout + 5_000, 10_000) : undefined));
+  // Without a cwd the Worker falls back to the application folder, not the user's project.
+  const request = args.cwd === undefined && !args.worker_id && env?.WORKSPACE_ROOT ? { ...args, cwd: env.WORKSPACE_ROOT } : args;
+  return json(await workerRegistry.execute(sessionId(invocation), "bash", request, invocation.signal, typeof args.timeout === "number" ? Math.max(args.timeout + 5_000, 10_000) : undefined));
 };
 
 export const bashOutputDef: ToolDefinition = { type: "function", function: { name: "bash_output", description: "Read current output or a line tail from a persistent shell on the selected Worker.", parameters: { type: "object", properties: { session: { type: "string" }, tail: { type: "number", minimum: 0 }, wait: { type: "number", minimum: 0 }, worker_id: { type: "string" } }, required: ["session"], ...noExtra } } };

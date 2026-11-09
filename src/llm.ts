@@ -134,11 +134,14 @@ export function projectMessagesForProvider(
   imageInput: "none" | "data-uri" = "none",
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
   let attachmentBytes = 0;
-  return messages.map(message => {
+  // Many OpenAI-compatible providers reject system messages after the conversation has started.
+  const firstConversationIndex = messages.findIndex(message => message.role !== "system");
+  return messages.map((message, index) => {
     const { attachments } = message;
+    const lateSystem = message.role === "system" && firstConversationIndex >= 0 && index > firstConversationIndex;
     // Whitelist protocol fields so response metadata cannot leak into later requests.
     const base = {
-      role: message.role, content: message.content,
+      role: lateSystem ? "user" : message.role, content: lateSystem ? `[系统提示]\n${message.content}` : message.content,
       ...(message.tool_calls ? { tool_calls: message.tool_calls } : {}),
       ...(message.tool_call_id ? { tool_call_id: message.tool_call_id } : {}),
     };

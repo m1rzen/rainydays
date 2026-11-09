@@ -35,7 +35,7 @@ export const executeCommandDef: ToolDefinition = {
   function: {
     name: "execute_command",
     description:
-      "执行一条 cmd 命令（如 git、npm、python、dir）。工作目录必须位于授权根内。返回 stdout/stderr 与真实退出码。同事模式在系统隔离中运行、限时30秒；开发模式以用户身份和用户工具链运行，timeout 可设（默认120秒，最长600秒），stdin 关闭。",
+      "在 Windows cmd.exe 中执行一条命令（如 git、npm、python、dir），不是 bash：多条命令用 && 连接，不要用 ; 或 $?。退出码已由结果返回，无需 echo。工作目录必须位于授权根内。返回 stdout/stderr 与真实退出码。同事模式在系统隔离中运行、限时30秒；开发模式以用户身份和用户工具链运行，timeout 可设（默认120秒，最长600秒），stdin 关闭。",
     parameters: {
       type: "object",
       properties: {

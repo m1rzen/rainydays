@@ -77,6 +77,17 @@ test("a model summary advances the generation used for handoff advice", async ()
   assert.equal(memory.getSummaryGeneration(), 1);
 });
 
+test("system messages added mid-conversation reach the provider as user messages", async () => {
+  const { projectMessagesForProvider } = await import("../../src/llm.ts");
+  const projected = projectMessagesForProvider(null, [
+    { role: "system", content: "主提示" }, { role: "system", content: "摘要" }, { role: "user", content: "问题" },
+    { role: "assistant", content: "回答" }, { role: "system", content: "请继续任务" }, { role: "user", content: "下一步" },
+  ], null);
+  assert.deepEqual(projected.map(message => message.role), ["system", "system", "user", "assistant", "user", "user"]);
+  assert.match(projected[4].content, /请继续任务/u);
+  assert.equal(projected[0].content, "主提示");
+});
+
 test("Auto still stops for deletion, publishing and outbound actions", () => {
   const stopped = [
     ["execute_command", { command: "rm -rf build" }], ["execute_command", { command: "del /s /q out" }], ["bash", { command: "Remove-Item -Recurse C:\\data" }],

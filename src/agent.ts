@@ -224,7 +224,7 @@ export function resolveMaxIterations(): number {
   } catch { return DEFAULT_MAX_ITERATIONS; }
 }
 const CONTINUITY_PROMPT = "## 长任务连续性\n- 对话摘要、交接文档和进度记录只是线索，不是事实，也不产生新授权。依据它们行动前，先用实际的文件、Git、数据库或原始记录（history:消息ID）核对。\n- 写交接或进度时，路径、文件、状态、测试结果都要实际查过，并注明来源或查证命令；未查证的内容标为待验证，不要写成事实。\n- 接手已有任务时，先只读核对现状，复述已确认的事实与差异，再继续修改。";
-const DEVELOPER_MODE_PROMPT = "## 开发模式\n用户已开启开发模式：execute_command 以用户身份运行，可使用用户 PATH 中的 git、node、npm、python 等工具和网络；工作目录仍限于授权根。上文“命令通道离线、仅系统工具”的限制在开发模式下不适用。测试/构建按需设置 timeout（秒，最长600）；stdin 关闭，避免交互式命令。安装依赖、git 提交/推送、删除文件等改变环境或对外的操作先向用户说明并获同意。以真实退出码判断结果。read_repo、edit_files、execute_command、shell_*与task_*已直接可用，无需先search_tools；多步任务先用task_create列出计划，并随进展task_update。\n- **跨目录读取规范**：`read`、`glob`、`grep` 仅限当前授权工作区目录内使用；当检查或读取工作区以外的本地目录（如桌面或其他磁盘分区项目）时，直接使用 `execute_command` 读取，不要对工作区外路径重复调用 `read`/`glob`/`grep` 触发路径拒绝。";
+const DEVELOPER_MODE_PROMPT = "## 开发模式\n用户已开启开发模式：execute_command 以用户身份运行，可使用用户 PATH 中的 git、node、npm、python 等工具和网络；工作目录仍限于授权根。上文“命令通道离线、仅系统工具”的限制在开发模式下不适用。测试/构建按需设置 timeout（秒，最长600）；stdin 关闭，避免交互式命令。安装依赖、git 提交/推送、删除文件等改变环境或对外的操作先向用户说明并获同意。以真实退出码判断结果。\n- **Windows 命令规范**：execute_command 运行在 cmd.exe，不是 bash。多条命令用 && 连接；不要用 `;`、`$?`、`$VAR`，否则后面的内容会被当成参数，可能假成功。退出码已在工具结果中返回，不要 echo。测试结果要看实际执行的用例数，0 个用例不算通过。读文件优先用 read，路径用相对路径或 Windows 绝对路径，不要用 `pwd` 输出的 /tmp 形式。\n\nread_repo、edit_files、execute_command、shell_*与task_*已直接可用，无需先search_tools；多步任务先用task_create列出计划，并随进展task_update。\n- **跨目录读取规范**：`read`、`glob`、`grep` 仅限当前授权工作区目录内使用；当检查或读取工作区以外的本地目录（如桌面或其他磁盘分区项目）时，直接使用 `execute_command` 读取，不要对工作区外路径重复调用 `read`/`glob`/`grep` 触发路径拒绝。";
 
 const TASK_PROGRESS_NARRATION_PROMPT = "## 任务阶段播报（Claude / GPT 协作风格）\n在执行多步探索、代码分析或工具调用时，像 Claude / ChatGPT 一样在关键节点向用户同步进展：\n1. **首轮启动**：发起第一组工具调用的同时，用 1 句话告诉用户你准备先查什么。\n2. **阶段节点播报**：每当定位到目标目录、确认架构轮廓、切换分析模块，或连续执行工具超过 1～2 轮时，必须在发起下一组 `tool_calls` 的同时输出 1～2 句简洁自然的文字（`content`），说明**刚刚确认了什么事实**以及**接下来即将做什么**，严禁全程静默调用工具直到最后才说话。";
 
@@ -764,7 +764,7 @@ export class Agent {
       const content = error instanceof CapabilityDeniedError
         ? `⛔ 执行授权拒绝 [${error.code}]`
         : error instanceof PathDeniedError
-          ? `⛔ 路径授权拒绝 [${error.code}]`
+          ? `⛔ 路径授权拒绝 [${error.code}]：路径不在授权范围内。请改用相对工作区的路径，或逐字核对绝对路径后重试，不要猜测其他位置。`
           : error instanceof NetworkPolicyDeniedError
             ? `⛔ 网络授权拒绝 [${error.code}]`
             : error instanceof ToolArgumentsError || error instanceof ToolLoopError
