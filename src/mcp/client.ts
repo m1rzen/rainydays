@@ -11,6 +11,7 @@ import { parseMcpTools, type McpServerSetting, type McpToolSetting } from "./set
 import { McpRemoteRequestError } from "./errors.js";
 import { serializeMcpContent, McpContentError } from "./content.js";
 
+export const MCP_LOGIN_REQUIRED_MESSAGE = "此服务器尚未登录。请在MCP设置中点「登录」，在浏览器完成后再测试或开始新任务。";
 export type McpResultCode = "MCP_TOOL_ERROR" | "MCP_TIMEOUT" | "MCP_CANCELLED" | "MCP_CONNECTION_LOST" | "MCP_SCHEMA_CHANGED" | "MCP_OUTPUT_LIMIT" | "MCP_AUTH_REQUIRED" | "MCP_UNSUPPORTED_CONTENT";
 export type McpCallResult = { status: "success" | "error"; server: string; content: string; code: McpResultCode | null };
 export class McpConnection {
@@ -38,6 +39,8 @@ export class McpConnection {
       this.transport = new OwnedStdioTransport({ command: this.server.command, args: [...this.server.args], cwd, owner, env });
     } else {
       if (!network) throw new Error("Remote MCP requires an authorized network gateway");
+      // Without a completed login the SDK would register a client and rewrite settings before failing.
+      if (this.server.auth.mode === "oauth" && !(await (await import("./oauth-store.js")).hasMcpOAuthTokens(this.server))) throw new McpRemoteRequestError("MCP_AUTH_REQUIRED", MCP_LOGIN_REQUIRED_MESSAGE);
       this.network = { ...network };
       const { createRemoteTransport } = await import("./remote.js");
       this.transport = await createRemoteTransport(this.server, { ...network, fetch: (url, init) => this.network!.fetch(url, init) });

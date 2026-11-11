@@ -30,6 +30,7 @@ export type BootstrapExecutableKind =
   | "terminal-cmd"
   | "terminal-powershell"
   | "reveal"
+  | "url-handler"
   | "git";
 
 function sameIdentity(left: ObjectIdentity, right: ObjectIdentity): boolean {
@@ -141,9 +142,11 @@ function executableCandidate(kind: BootstrapExecutableKind): string {
     if (kind === "terminal-cmd") return path.join(systemRoot, "System32", "cmd.exe");
     if (kind === "terminal-powershell") return path.join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
     if (kind === "reveal") return path.join(systemRoot, "explorer.exe");
+    // explorer.exe does not reliably hand a URL with a query string to the default browser; the URL protocol handler does.
+    if (kind === "url-handler") return path.join(systemRoot, "System32", "rundll32.exe");
   } else {
     if (kind === "terminal-cmd" || kind === "terminal-powershell") return "/bin/bash";
-    if (kind === "reveal") return process.platform === "darwin" ? "/usr/bin/open" : "/usr/bin/xdg-open";
+    if (kind === "reveal" || kind === "url-handler") return process.platform === "darwin" ? "/usr/bin/open" : "/usr/bin/xdg-open";
   }
   throw new PathDeniedError("PATH_ROOT_UNAVAILABLE", `Bootstrap executable is unavailable: ${kind}`);
 }
@@ -225,6 +228,10 @@ export class BootstrapPathStore {
   async openTerminalShell(shell: "cmd" | "powershell"): Promise<BootstrapRuntimeFileLease> {
     const kind = shell === "powershell" ? "terminal-powershell" : "terminal-cmd";
     return this.#openExternalRuntimeFile(executableCandidate(kind), `runtime-${kind}`);
+  }
+
+  async openUrlHandler(): Promise<BootstrapRuntimeFileLease> {
+    return this.#openExternalRuntimeFile(executableCandidate("url-handler"), "runtime-url-handler");
   }
 
   async openRevealLauncher(): Promise<BootstrapRuntimeFileLease> {

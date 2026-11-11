@@ -82,6 +82,67 @@ test("A05 real Electron manages and tests MCP, then calls it in an ordinary chat
   } finally { client?.close(); if (instance) await terminateProcessTreeAsync(instance.child); await new Promise(resolve => model.close(resolve)); await removeFixture(fixture); }
 });
 
+// Opens the user's real default browser; run explicitly with RAINYDAYS_SYSTEM_BROWSER_TESTS=1.
+test("A06 real Electron logs in to a remote OAuth MCP server through the system browser, tests it and disconnects", { timeout: 150000, skip: process.env.RAINYDAYS_SYSTEM_BROWSER_TESTS === "1" ? false : "opens the system browser; set RAINYDAYS_SYSTEM_BROWSER_TESTS=1" }, async context => {
+  const { startMcpHttpFixture } = await import("../fixtures/mcp-http-server.mjs");
+  const fixture = await makeTempDir("mini-lux-a06-electron-"), userData = path.join(fixture, "user-data");
+  const http = await startMcpHttpFixture({ oauth: true });
+  let instance, client;
+  const status = () => client.evaluate("fetch('/api/mcp/oauth/status?name=RemoteFixture').then(r=>r.json()).then(v=>v.state)");
+  const serverState = () => client.evaluate("fetch('/api/settings').then(r=>r.json()).then(v=>v.domains.mcp.servers[0])");
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, "");
+    client = await connectCdp(cdpPort);
+    await waitFor(() => client.evaluate("Boolean(currentSessionId && desktopNavigationReady)"), { timeoutMs: 20000, label: "A06 ready" });
+    await client.evaluate("(async()=>{await openSettings();switchSettingsDomain('common');document.getElementById('setting-developer-mode').click()})()");
+    await waitFor(() => client.evaluate("settingsState.domains.shell.developerMode"), { timeoutMs: 10000, label: "A06 developer mode" });
+    const formResult = await client.evaluate(`(()=>{try {switchSettingsDomain('mcp');document.getElementById('mcp-add-server').click(); const row=document.querySelector('.mcp-server');
+      const set=(key,value)=>{const node=row.querySelector('[data-mcp-field="'+key+'"]');node.value=value;node.dispatchEvent(new Event('change',{bubbles:true}));};
+      set('name','RemoteFixture'); set('transport','http'); set('url',${JSON.stringify(http.url)}); set('auth-mode','oauth');
+      if (row.querySelector('[data-mcp-group=remote]').hidden || row.querySelector('[data-mcp-group=auth-oauth]').hidden) return { error: 'remote OAuth fields stayed hidden' };
+      row.querySelector('[data-mcp-field=enabled]').checked=true; return saveSettingsDomain('mcp'); } catch(error) { return { error: error.message }; }})()`);
+    assert.equal(formResult?.error, undefined, JSON.stringify(formResult));
+    await waitFor(async () => (await serverState())?.auth?.mode === "oauth", { timeoutMs: 10000, label: "A06 saved remote server" });
+    assert.equal(await status(), "signed-out");
+
+    // Testing before login reaches the server but is refused; the session does not hang.
+    await client.evaluate("[...document.querySelectorAll('.mcp-server button')].find(button=>button.textContent==='测试已保存的设置').click()");
+    await waitFor(() => client.evaluate("!/连接中/u.test(document.querySelector('[data-mcp-status]').textContent)"), { timeoutMs: 30000, label: "A06 test before login settles" });
+    assert.equal((await serverState()).tools.length, 0);
+    assert.match(await client.evaluate("document.querySelector('[data-mcp-status]').textContent"), /尚未登录/u);
+    assert.equal(await client.evaluate("settingsDirtyDomains.has('mcp')"), false, "a refused test leaves the form clean");
+
+    await client.evaluate("[...document.querySelectorAll('.mcp-server button')].find(button=>button.textContent==='登录').click()");
+    await waitFor(async () => (await status()) === "authorized", { timeoutMs: 60000, label: "A06 system browser login" }).catch(async error => {
+      const shown = await client.evaluate("document.querySelector('[data-mcp-oauth]')?.textContent").catch(() => "");
+      if (process.env.RAINYDAYS_TEST_LOG_FILE) await writeFile(process.env.RAINYDAYS_TEST_LOG_FILE, JSON.stringify(instance.logs()));
+      throw new Error(`${error.message}: shown=${shown} fixture=${JSON.stringify(http.state)}`);
+    });
+    assert.equal(http.state.registrations, 1); assert.equal(http.state.exchanges, 1);
+    await waitFor(() => client.evaluate("document.querySelector('[data-mcp-oauth]')?.textContent==='已登录'"), { timeoutMs: 10000, label: "A06 settings shows signed in" });
+
+    await client.evaluate("[...document.querySelectorAll('.mcp-server button')].find(button=>button.textContent==='测试已保存的设置').click()");
+    await waitFor(async () => (await serverState()).tools.length === 1, { timeoutMs: 30000, label: "A06 tested catalog after login" })
+      .catch(async error => { throw new Error(`${error.message}: shown=${await client.evaluate("document.querySelector('[data-mcp-status]').textContent")} dirty=${await client.evaluate("settingsDirtyDomains.has('mcp')")} fixture=${JSON.stringify(http.state)}`); });
+    assert.match(await client.evaluate("document.querySelector('[data-mcp-status]').textContent"), /1 个工具/u);
+    const persisted = await readFile(path.join(userData, "config.json"), "utf8");
+    assert(!persisted.includes(http.state.accessToken), "access token is not stored in the config file");
+    assert(!JSON.stringify(instance.logs()).includes(http.state.accessToken), "access token is not logged");
+
+    await client.evaluate("[...document.querySelectorAll('.mcp-server button')].find(button=>button.textContent==='断开').click()");
+    await waitFor(async () => (await status()) === "signed-out", { timeoutMs: 10000, label: "A06 disconnect" });
+    const rejectedBefore = http.state.rejected;
+    await client.evaluate("[...document.querySelectorAll('.mcp-server button')].find(button=>button.textContent==='测试已保存的设置').click()");
+    await waitFor(() => client.evaluate("!/连接中/u.test(document.querySelector('[data-mcp-status]').textContent)"), { timeoutMs: 30000, label: "A06 test after disconnect settles" });
+    assert.equal(http.state.rejected, rejectedBefore, "a signed-out server is refused locally, before any request");
+    assert.match(await client.evaluate("document.querySelector('[data-mcp-status]').textContent"), /尚未登录/u);
+    assert.equal(JSON.parse(await readFile(path.join(userData, "config.json"), "utf8")).domains.mcp.servers[0].auth.credentialRef, "");
+    assert.equal(await status(), "signed-out");
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally { client?.close(); if (instance) await terminateProcessTreeAsync(instance.child); await http.close(); await removeFixture(fixture); }
+});
+
 function expectedUi(buildInfo) {
   const shortBuild = String(buildInfo.buildId).split(".").at(-1).slice(0, 8);
   return `v${buildInfo.appVersion}${shortBuild ? ` · ${shortBuild}` : ""}`;

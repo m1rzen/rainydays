@@ -19,11 +19,17 @@
     input.value = value; label.append(input); container.append(label); return input;
   }
   function group(name) { const node = document.createElement("div"); node.dataset.mcpGroup = name; return node; }
-  function refreshOAuth(node, name, attempts = 150) {
+  /* The browser callback saves tokens on the server, which moves the settings revision; pick it up so the next action is not refused. */
+  function reloadSettings() {
+    if (options.dirty()) return Promise.resolve();
+    return fetch("/api/settings", { headers: options.headers() }).then(response => response.ok ? response.json() : null).then(value => { if (value && !options.dirty()) options.saved(value); }).catch(() => {});
+  }
+  function refreshOAuth(node, name, attempts = 150, wasPending = false) {
     fetch(`/api/mcp/oauth/status?name=${encodeURIComponent(name)}`, { headers: options.headers() }).then(response => response.json()).then(data => {
       if (!node.isConnected) return;
       node.textContent = oauthLabels[data.state] || data.state;
-      if (data.state === "pending" && attempts > 0) setTimeout(() => refreshOAuth(node, name, attempts - 1), 2000);
+      if (data.state === "pending" && attempts > 0) setTimeout(() => refreshOAuth(node, name, attempts - 1, true), 2000);
+      else if (wasPending) void reloadSettings();
     }).catch(() => {});
   }
   async function oauthAction(action, server, target, state) {
@@ -31,7 +37,9 @@
     try {
       if (options.dirty()) throw new Error("请先保存MCP设置");
       const response = await fetch(`/api/mcp/oauth/${action}`, { method: "POST", headers: options.headers(), body: JSON.stringify({ name: server.name, expectedRevision: settings.revision }) });
-      const data = await response.json(); if (!response.ok) throw new Error(data.error || "MCP登录失败");
+      const data = await response.json();
+      if (response.status === 409) void reloadSettings();
+      if (!response.ok) throw new Error(data.error || "MCP登录失败");
       state.textContent = action === "disconnect" ? oauthLabels["signed-out"] : oauthLabels[data.pending ? "pending" : "authorized"];
       options.saved(data.settings);
     } catch (error) { state.textContent = error.message; }
@@ -73,7 +81,9 @@
         if (options.dirty()) throw new Error("请先保存MCP设置后再测试");
         if (!settings.domains.mcp.servers.some(item => item.name === row.querySelector('[data-mcp-field="name"]').value)) throw new Error("请先保存MCP设置");
         const response = await fetch("/api/mcp/test", { method: "POST", headers: options.headers(), body: JSON.stringify({ name: server.name, expectedRevision: settings.revision }) });
-        const data = await response.json(); if (!response.ok) throw new Error(data.error || "测试失败");
+        const data = await response.json();
+        if (response.status === 409) void reloadSettings();
+        if (!response.ok) throw new Error(data.error || "测试失败");
         options.saved(data.settings);
       } catch (error) { state.textContent = error.message; }
       finally { target.disabled = false; }

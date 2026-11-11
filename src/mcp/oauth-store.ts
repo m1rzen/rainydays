@@ -43,6 +43,10 @@ export function mutateMcpOAuthState(snapshot: McpServerSetting, mutate: (state: 
     await finalizeCredentialChanges();
   });
 }
+/** True only when this exact connection holds tokens from a completed login. Never contacts the server. */
+export async function hasMcpOAuthTokens(snapshot: McpServerSetting): Promise<boolean> {
+  try { return !!(await readMcpOAuthState(snapshot)).tokens; } catch { return false; }
+}
 /** Explicit login/logout rotates identity; an old run or callback cannot publish new tokens. */
 export function resetMcpOAuth(name: string): Promise<McpServerSetting> {
   return serialized(async () => {

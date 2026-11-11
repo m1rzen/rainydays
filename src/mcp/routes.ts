@@ -3,6 +3,8 @@ import { getConfigRevisionDigest, getConfigSnapshot, getPublicConfig, updateSett
 import { isDeveloperModeEnabled } from "../developer-execution.js";
 import { mcpConfigurationKey, type McpServerSetting, type McpToolSetting } from "./settings.js";
 import { mcpConnectedCount } from "./runtime.js";
+import { hasMcpOAuthTokens } from "./oauth-store.js";
+import { MCP_LOGIN_REQUIRED_MESSAGE } from "./client.js";
 
 export function registerMcpRoutes(app: Express, dependencies: {
   busy: () => boolean;
@@ -23,6 +25,7 @@ export function registerMcpRoutes(app: Express, dependencies: {
     const key = mcpConfigurationKey(configured);
     if (expectedRevision !== getConfigRevisionDigest()) { res.status(409).json({ error: "设置已变化，请重新载入" }); return; }
     if (status.get(name)?.state === "connecting") { res.status(409).json({ error: "此服务器正在测试" }); return; }
+    if (configured.auth.mode === "oauth" && !(await hasMcpOAuthTokens(configured))) { status.set(name, { key, state: "error", error: MCP_LOGIN_REQUIRED_MESSAGE }); res.status(400).json({ error: MCP_LOGIN_REQUIRED_MESSAGE }); return; }
     const controller = new AbortController();
     const abort = () => { if (!res.writableEnded) controller.abort(); }; res.once("close", abort);
     try {

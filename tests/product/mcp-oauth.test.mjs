@@ -38,3 +38,16 @@ test("A06 SDK OAuth registers, uses PKCE, stores tokens privately, refreshes and
     assert.equal(config.getConfigSnapshot().domains.mcp.servers[0].auth.credentialRef, "");
   } finally { await Promise.all(owners.map(owner => retireResourceOwner(owner))); await http.close(); }
 });
+
+test("A06 an OAuth server that is not logged in is refused before any request, without registering a client or changing settings", async () => {
+  const http = await startMcpHttpFixture({ oauth: true });
+  const owner = issueResourceOwner({ authorityId: "fixture", authorityEpoch: 1, sessionId: "fixture", principal: "agent", rootIds: ["workspace"] });
+  try {
+    await config.updateSettingsDomain("mcp", { servers: [{ name: "fixture-signed-out", enabled: true, transport: "http", command: "", args: [], url: http.url, auth: { mode: "oauth" } }] });
+    const [server] = config.getConfigSnapshot().domains.mcp.servers, revision = config.getConfigRevisionDigest();
+    const connection = new McpConnection(server);
+    await assert.rejects(connection.open(fixture, owner, new AbortController().signal, { fetch: globalThis.fetch }), error => error.code === "MCP_AUTH_REQUIRED" && /登录/u.test(error.message));
+    assert.equal(http.state.registrations, 0); assert.equal(http.state.rejected, 0);
+    assert.equal(config.getConfigRevisionDigest(), revision);
+  } finally { await retireResourceOwner(owner); await http.close(); }
+});
