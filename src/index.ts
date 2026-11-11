@@ -3081,6 +3081,7 @@ app.post("/api/chat", async (req, res) => {
   let streamOpen = true;
   let status: "idle" | "error" = "idle";
   let hadToolFailure = false;
+  let interrupted = false;
   const emit = (event: unknown) => {
     if (streamOpen && !res.writableEnded && !res.destroyed) res.write(`data: ${JSON.stringify(event)}\n\n`);
   };
@@ -3116,7 +3117,7 @@ app.post("/api/chat", async (req, res) => {
       let attachments = initialAttachments;
       while (input !== null) {
         for await (const step of runtime.agent.run(input, runId, claim.signal, attachments)) {
-          if (step.type === "error") status = "error";
+          if (step.type === "error") { status = "error"; if (step.interrupted) interrupted = true; }
           if (step.type === "tool_result" && step.toolStatus && step.toolStatus !== "success") hadToolFailure = true;
           emit(step);
         }
@@ -3164,12 +3165,12 @@ app.post("/api/chat", async (req, res) => {
       persistDesktopNotification({
         sourceKey: `run:${runId}:settled`, sessionId: chatSessionId,
         kind: status === "error" ? "error" : hadToolFailure ? "info" : "success",
-        title: status === "error" ? "运行失败" : hadToolFailure ? "运行结束，请检查失败的工具记录" : "运行完成",
+        title: status === "error" ? (interrupted ? "运行中断，请检查已完成的步骤" : "运行失败") : hadToolFailure ? "运行结束，请检查失败的工具记录" : "运行完成",
         body: notificationText(sessionTitle, "Session", 240), targetTab: "session",
       });
     }
     emit({ type: "run_finished", sessionId: chatSessionId, runId,
-      outcome: status === "error" ? "failed" : runCancelled ? "cancelled" : hadToolFailure ? "partial" : "completed",
+      outcome: status === "error" ? (interrupted ? "interrupted" : "failed") : runCancelled ? "cancelled" : hadToolFailure ? "partial" : "completed",
       timestamp: Date.now() });
     if (streamOpen && !res.writableEnded) res.end();
   }

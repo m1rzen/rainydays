@@ -76,6 +76,14 @@ async function startFakeProvider() {
       else finishTool(response, "read-missing", "read", { file_path: "missing-file.txt" });
       return;
     }
+    if (user === "d04-stream-drop" || user === "d04-stream-lost") {
+      if (user === "d04-stream-drop" && turn > 1) { finishText(response, "续跑后的完整回答"); return; }
+      // The model connection drops mid-answer, after part of the text was already streamed.
+      response.writeHead(200, { "Content-Type": "text/event-stream", Connection: "keep-alive" });
+      response.write(sseChunk({ role: "assistant", content: "断开前的半截" }));
+      setTimeout(() => response.destroy(), 20);
+      return;
+    }
     if (user === "d04-limit") {
       finishTool(response, `read-step-${turn}`, "read", { file_path: `missing-${turn}.txt` });
       return;
@@ -269,7 +277,7 @@ test("D04 真实服务按错误事件结算，工具失败和限步不发送成�
   let product;
   try {
     product = await startProduct(fixture, provider.baseURL, token);
-    for (const [input, outcome, notificationKind] of [["d04-quota", "failed", "error"], ["d04-tool-failure", "partial", "info"], ["d04-limit", "failed", "error"]]) {
+    for (const [input, outcome, notificationKind] of [["d04-quota", "failed", "error"], ["d04-tool-failure", "partial", "info"], ["d04-limit", "failed", "error"], ["d04-stream-drop", "completed", "success"], ["d04-stream-lost", "interrupted", "error"]]) {
       const created = await api(product.base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: input }) });
       const sessionId = created.body.session.id;
       const response = await fetch(`${product.base}/chat`, { method: "POST", headers: { "X-RainyDays-Token": token, "Content-Type": "application/json" }, body: JSON.stringify({ sessionId, message: input }) });
@@ -277,10 +285,22 @@ test("D04 真实服务按错误事件结算，工具失败和限步不发送成�
       const desktop = (await api(product.base, token, "/desktop/state")).body;
       const notification = desktop.notifications.find(item => item.sessionId === sessionId);
       assert.equal(notification.kind, notificationKind, `${input}: ${JSON.stringify(notification)}`);
-      assert.equal(desktop.sessions.find(item => item.id === sessionId).status, outcome === "failed" ? "error" : "idle");
+      assert.equal(desktop.sessions.find(item => item.id === sessionId).status, outcome === "failed" || outcome === "interrupted" ? "error" : "idle");
       assert.equal(events.at(-1).type, "run_finished");
       assert.equal(events.at(-1).outcome, outcome);
       if (input === "d04-limit") assert.match(events.find(event => event.type === "error").content, /最大循环/);
+      if (input.startsWith("d04-stream-")) {
+        const streamRequests = provider.requests.filter(request => request.user === input && request.stream).length;
+        assert.equal(streamRequests, input === "d04-stream-drop" ? 2 : 3, `${input}: same turn re-requested at most twice`);
+        assert.equal(events.filter(event => event.type === "answer_retry").length, input === "d04-stream-drop" ? 1 : 2);
+        if (input === "d04-stream-drop") assert.equal(events.find(event => event.type === "answer_done") !== undefined, true);
+        else {
+          const error = events.find(event => event.type === "error");
+          assert.equal(error.interrupted, true);
+          assert.match(error.content, /已中断/u);
+          assert.match(notification.title, /中断/u);
+        }
+      }
     }
     const created = await api(product.base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: "D04 waiting" }) });
     const sessionId = created.body.session.id;

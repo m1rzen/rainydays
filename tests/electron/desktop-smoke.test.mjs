@@ -1169,6 +1169,21 @@ test("R1 real Electron preserves partial answers on provider and transport error
         const encoder = new TextEncoder();
         return new Response(new ReadableStream({ start(controller) {
           const send = step => controller.enqueue(encoder.encode('data: ' + JSON.stringify(step) + '\\n\\n'));
+          if (window.__r1ChatCount >= 3) {
+            // Model stream dropped mid-answer: the partial text is retracted before the turn is re-requested.
+            send({ type: 'answer_chunk', content: '残缺半截' });
+            send({ type: 'answer_retry', content: '模型连接中断，已丢弃未完成的输出，正在重新请求（1/2）…', retractChars: 4, retryAttempt: 1, retryMax: 2 });
+            if (window.__r1ChatCount === 3) {
+              send({ type: 'answer_chunk', content: '重试后的完整回答' });
+              send({ type: 'answer_done', content: '' });
+              send({ type: 'run_finished', outcome: 'completed' });
+            } else {
+              send({ type: 'error', interrupted: true, content: '已中断：模型流式连接中断（已自动重试 2 次）。已完成的步骤：1. write（第一份.txt）' });
+              send({ type: 'run_finished', outcome: 'interrupted' });
+            }
+            controller.close();
+            return;
+          }
           send({ type: 'answer_chunk', content: '已生成的正文' });
           if (window.__r1ChatCount === 1) {
             send({ type: 'error', content: '回答未完成，请继续。' });
@@ -1178,7 +1193,7 @@ test("R1 real Electron preserves partial answers on provider and transport error
       };
       return true;
     })()`);
-    for (const [index, expected] of [[1, "回答未完成"], [2, "连接错误"]]) {
+    for (const [index, expected] of [[1, "回答未完成"], [2, "连接错误"], [3, "已自动重新请求并完成"], [4, "第一份.txt"]]) {
       await client.evaluate(`(() => {
         const input = document.getElementById('input'); input.value = '测试断流';
         input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1188,8 +1203,14 @@ test("R1 real Electron preserves partial answers on provider and transport error
         const state = await client.evaluate(`({ text: [...document.querySelectorAll('#messages .msg-assistant .bubble')].at(-1)?.textContent, count: window.__r1ChatCount, busy: document.getElementById('submit').disabled })`);
         return state.count === index && !state.busy && state.text?.includes(expected) ? state.text : null;
       }, { timeoutMs: 15_000, label: `R1 error ${index}` });
-      assert.match(text, /已生成的正文/u);
-      assert.equal(text.split("已生成的正文").length - 1, 1);
+      if (index <= 2) {
+        assert.match(text, /已生成的正文/u);
+        assert.equal(text.split("已生成的正文").length - 1, 1);
+        continue;
+      }
+      assert.doesNotMatch(text, /残缺半截/u, "retracted partial text must not stay on screen");
+      if (index === 3) assert.equal(text.split("重试后的完整回答").length - 1, 1);
+      else { assert.match(text, /已中断：/u); assert.doesNotMatch(text, /执行失败/u); assert.match(text, /是否继续由你决定/u); }
     }
     client.close(); client = null;
     await stopElectron(instance, httpPort, cdpPort); instance = null;
