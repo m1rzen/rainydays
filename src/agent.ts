@@ -5,6 +5,7 @@
 // ===========================================
 
 import { randomUUID } from "node:crypto";
+import type { RequestBudgetReport } from "./request-budget.js";
 import type { LLMClient } from "./llm.js";
 import { HANDOFF_SUGGESTION_INTERVAL, type ConversationMemory } from "./memory.js";
 import type { AgentStep, PersonaDefinition, Message, MessageAttachment, TaskSnapshot, ToolCall, ToolExecutionOutcome, ToolPipelineStageRecord } from "./types.js";
@@ -410,6 +411,10 @@ export class Agent {
   private terminalContext: CapabilityContext | null = null;
   private activeRunId: string | null = null;
   private pendingSteers: string[] = [];
+  private lastRequestReport: RequestBudgetReport | null = null;
+
+  /** Estimate of the last full request: messages, tool schemas and attachments, as compaction measures it. */
+  getLastRequestReport(): RequestBudgetReport | null { return this.lastRequestReport ? { ...this.lastRequestReport } : null; }
 
   constructor(llm: LLMClient, memory: ConversationMemory, persona: PersonaDefinition, authority: RuntimeAuthority, auditJournal: SecurityAuditJournal | null = null) {
     this.llm = llm;
@@ -929,6 +934,7 @@ export class Agent {
         return;
       }
       const compactMs = Date.now() - compactStart;
+      this.lastRequestReport = assess?.(this.memory.getAll()) ?? null;
       const summaryGeneration = this.memory.getSummaryGeneration();
       if (summaryGeneration > summaryGenerationBefore) {
         const autoWasEnabled = isSessionAutoApproveEnabled(runSessionId);

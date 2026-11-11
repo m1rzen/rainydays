@@ -2901,6 +2901,8 @@ app.get("/api/status", (_req, res) => {
     requestBudget: llm.getBudgetReport(),
     tokens: runtime?.memory.getTokenEstimate() ?? 0,
     contextWindowTokens: resolveRequestBudget(profile).contextWindowTokens,
+    outputReserveTokens: resolveRequestBudget(profile).outputReserveTokens,
+    lastRequest: runtime?.agent.getLastRequestReport() ?? null,
     messageCount: runtime?.memory.getMessageCount() ?? 0,
     hasSummary: runtime?.memory.hasSummary() ?? false,
     persona: runtime?.persona.name ?? selectedPersona()?.name ?? null,

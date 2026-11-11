@@ -103,3 +103,24 @@ test("A14 developer mode makes core coding and plan tools resident without widen
   const narrow = new TaskToolSelection("general", descriptors.filter(d => d.name !== "execute_command"), { developerMode: true });
   assert.equal(narrow.has("execute_command"), false, "resident set never adds tools outside the allowlist");
 });
+
+test("context dial reads the last full request estimate, including tool definitions", async () => {
+  const { estimateProjectedRequestTokens } = await import("../../src/request-budget.ts");
+  let sentTools = null;
+  const estimate = (messages, tools) => ({ contextWindowTokens: 32768, outputReserveTokens: 4096, estimatedInputTokens: estimateProjectedRequestTokens(messages, tools) });
+  const agent = await makeAgent({
+    estimateRequest: estimate,
+    async chat() { return { role: "assistant", content: "x" }; },
+    async *chatStream(_messages, tools) { sentTools = tools; yield { type: "result", message: { role: "assistant", content: "好的" } }; },
+  });
+  assert.equal(agent.getLastRequestReport(), null);
+  await collect(agent, "你好", "dial-run");
+  const report = agent.getLastRequestReport();
+  assert(report, "a report is kept after the request");
+  assert(sentTools?.length > 0, "the request carried tool definitions");
+  const messagesOnly = estimateProjectedRequestTokens([{ role: "user", content: "你好" }]);
+  assert(report.estimatedInputTokens > messagesOnly + estimateProjectedRequestTokens([], sentTools) - 256, "estimate covers messages and tool schemas");
+  assert.equal(report.outputReserveTokens, 4096);
+  report.estimatedInputTokens = 0;
+  assert.notEqual(agent.getLastRequestReport().estimatedInputTokens, 0, "callers get a copy");
+});

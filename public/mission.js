@@ -116,16 +116,27 @@
 
   function setText(id, value) { const node = byId(id); if (node && node.textContent !== value) node.textContent = value; }
 
-  function updateContext({ tokens, contextWindowTokens, profile, model, messageCount }) {
+  /* Same measure as compaction: estimated input (messages + tool definitions) plus the reply reserve, over the window. */
+  function contextUse({ tokens, contextWindowTokens, outputReserveTokens, lastRequest }) {
+    if (lastRequest && lastRequest.contextWindowTokens > 0) {
+      return { used: lastRequest.estimatedInputTokens + lastRequest.outputReserveTokens, window: lastRequest.contextWindowTokens, full: true };
+    }
+    return { used: (tokens || 0) + (outputReserveTokens || 0), window: contextWindowTokens || 0, full: false };
+  }
+
+  function updateContext(data) {
     const dial = byId("mission-dial"), value = byId("mission-dial-value");
     if (!dial || !value) return;
-    const percent = contextWindowTokens > 0 ? Math.min(100, Math.round(tokens / contextWindowTokens * 100)) : 0;
+    const { used, window, full } = contextUse(data);
+    const percent = window > 0 ? Math.min(100, Math.round(used / window * 100)) : 0;
     value.setAttribute("stroke-dasharray", `${DIAL_LENGTH * percent / 100} ${DIAL_LENGTH}`);
     dial.dataset.level = percent >= 90 ? "high" : "normal";
-    dial.setAttribute("aria-label", `上下文约用 ${percent}%，50% 开始整理，90% 压缩`);
+    const basis = full ? "按上一轮请求估算，含工具定义和回复预留" : "尚未发出请求，按对话记录和回复预留估算";
+    dial.setAttribute("aria-label", `上下文约用 ${percent}%（${basis}），50% 开始整理，90% 压缩`);
+    dial.title = `约 ${(used / 1000).toFixed(1)}k / ${(window / 1000).toFixed(1)}k tokens · ${basis}`;
     setText("mission-percent", `${percent}%`);
-    setText("mission-model", model || profile || "未配置");
-    setText("mission-messages", String(messageCount ?? 0));
+    setText("mission-model", data.model || data.profile || "未配置");
+    setText("mission-messages", String(data.messageCount ?? 0));
   }
 
   function sync(next) {
