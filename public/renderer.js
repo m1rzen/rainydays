@@ -11,7 +11,6 @@
     const currentTitleEl = document.getElementById("current-title");
     const taskPanel = document.getElementById("task-panel");
     const taskListEl = document.getElementById("task-list");
-    const taskProgressText = document.getElementById("task-progress-text");
     const subagentPanel = document.getElementById("subagent-panel");
     const subagentListEl = document.getElementById("subagent-list");
     const subagentProgressText = document.getElementById("subagent-progress-text");
@@ -97,7 +96,9 @@
       resizeMessageInput();
     }
     const activeRunsBySession = new Map();
+    const runOutcomesBySession = new Map();
     const questionsBySession = new Map();
+    let missionTasks = [];
     const sessionAutoApproveBySession = new Map();
     const AUTO_APPROVE_OFF_TITLE = "开启后，本对话的例行工具调用自动放行。删除、推送和对外发送仍会询问；不建议在长对话中开启。";
     function renderAutoApproveToggle() {
@@ -163,7 +164,7 @@
         } else hideAccessibleDialog(sidebarEl);
       } else {
         document.body.classList.toggle("sidebar-collapsed", !open);
-        if (!open) queueMicrotask(() => document.querySelector(".sidebar-open").focus());
+        if (!open) queueMicrotask(() => Array.from(document.querySelectorAll(".sidebar-open")).find(isRestorableFocusTarget)?.focus());
       }
       syncSidebarPresentation();
     }
@@ -2426,7 +2427,7 @@
           status.classList.toggle("error", state.status === "error");
         }
       });
-      refreshWorkbenchTabStatus();
+      refreshRunControls();
       if (typeof window.electronAPI?.updateTrayState === "function") {
         void window.electronAPI.updateTrayState({
           unread: Number(next.unread) || 0,
@@ -2616,7 +2617,9 @@
         currentSessionId = data.session.id; currentTitleEl.textContent = data.session.title; messagesEl.innerHTML = ""; restoreDraft(data.session.id);
         renderDocumentOutputs([]);
         renderWelcomeState();
-        taskPanel.classList.remove("visible"); subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling();
+        taskPanel.open = false;
+        renderTasks([]);
+        subagentPanel.classList.remove("visible"); subagentListEl.replaceChildren(); stopSubagentPolling();
         refreshRunControls(); refreshQuestionForCurrentSession(); await loadSessions(); await loadPins(); await loadAttachmentDrafts(data.session.id);
         if (workbenchLayout) await ensureWorkbenchTab({ id: workbenchId("tab"), kind: "session", title: data.session.title, sessionId: data.session.id });
         inputEl.focus(); updateStatus();
@@ -2636,7 +2639,13 @@
       if (!data.session) return;
       if (data.code === "SESSION_PERSONA_CHANGED") unavailableSessionIds.add(id); else unavailableSessionIds.delete(id);
       if (typeof data.autoApprove === "boolean") sessionAutoApproveBySession.set(id, data.autoApprove);
-      currentSessionId = id; currentTitleEl.textContent = data.session.title; renderAutoApproveToggle(); refreshRunControls(); refreshQuestionForCurrentSession(); restoreDraft(id);
+      const sessionChanged = currentSessionId !== id;
+      currentSessionId = id;
+      if (sessionChanged) {
+        taskPanel.open = false;
+        renderTasks([]);
+      }
+      currentTitleEl.textContent = data.session.title; renderAutoApproveToggle(); refreshRunControls(); refreshQuestionForCurrentSession(); restoreDraft(id);
       renderDocumentOutputs([]);
       if (data.persona && personaSelect.value !== data.persona) {
         personaSelect.value = data.persona;
@@ -2702,6 +2711,7 @@
         return;
       }
       activeRunsBySession.delete(id);
+      runOutcomesBySession.delete(id);
       questionsBySession.delete(id);
       for (const upload of attachmentUploads.values()) if (upload.sessionId === id) upload.xhr.abort();
       knownSessions = knownSessions.filter(session => session.id !== id);
@@ -2719,6 +2729,14 @@
     function isSessionRunning(sessionId = currentSessionId) {
       return Boolean(sessionId && (activeRunsBySession.has(sessionId) || desktopSessionState(sessionId).status === "running"));
     }
+    function syncMission() {
+      window.MissionPanel?.sync({
+        sessionId: currentSessionId, running: isSessionRunning(), hold: questionsBySession.has(currentSessionId),
+        outcome: runOutcomesBySession.get(currentSessionId) ?? (desktopSessionState(currentSessionId).status === "error" ? "failed" : null),
+        tasks: missionTasks,
+        rowState: id => questionsBySession.has(id) ? "hold" : isSessionRunning(id) ? "run" : null,
+      });
+    }
     function refreshRunControls() {
       const running = isSessionRunning();
       for (const button of messagesEl.querySelectorAll('[data-action="undo-code-change"]')) button.disabled = running || button.dataset.undone === "true" || unavailableSessionIds.has(currentSessionId);
@@ -2730,18 +2748,23 @@
       cancel.disabled = Boolean(localRun?.cancelling);
       submitBtn.setAttribute("aria-label", localRun ? "追加指令" : "发送");
       submitBtn.title = localRun ? "追加到当前任务，下一步生效" : "";
+      syncMission();
       statusDot.className = running ? "status-dot busy" : "status-dot";
       statusText.textContent = localRun?.cancelling ? "正在停止..." : running ? "思考中..." : unavailableSessionIds.has(currentSessionId) ? "旧对话只读" : desktopSessionState(currentSessionId).status === "error" ? "本次未完成" : "就绪";
       refreshWorkbenchTabStatus();
     }
     function beginSessionRun(sessionId) {
       const token = { controller: new AbortController(), runId: null, cancelling: false, bubble: null };
+      runOutcomesBySession.delete(sessionId);
       activeRunsBySession.set(sessionId, token);
       refreshRunControls();
       return token;
     }
     function finishSessionRun(sessionId, token) {
-      if (activeRunsBySession.get(sessionId) === token) activeRunsBySession.delete(sessionId);
+      if (activeRunsBySession.get(sessionId) === token) {
+        activeRunsBySession.delete(sessionId);
+        runOutcomesBySession.set(sessionId, token.outcome || (token.cancelConfirmed ? "cancelled" : "unknown"));
+      }
       refreshRunControls();
     }
     function showRunNotice(token, text) {
@@ -3421,7 +3444,9 @@
       addSystemMessage("🧹 对话记忆已清空");
     }
     function renderTasks(tasks) {
-      if (!tasks || tasks.length === 0 || tasks.every(t => t.status === "completed")) {
+      missionTasks = tasks || [];
+      syncMission();
+      if (!missionTasks.length) {
         taskPanel.classList.remove("visible");
         taskListEl.textContent = "";
         return;
@@ -3434,9 +3459,15 @@
         const detail = [indicators, t.activeForm ? escapeHtml(t.activeForm) : "", blockers].filter(Boolean).join(" · ");
         return `<div class="task-item"><span class="t-icon">${iconMarkup(icon)}</span><span class="t-id">${escapeHtml(t.id)}</span><span class="t-subject">${escapeHtml(t.subject)}${detail ? ` <span class="t-active">${detail}</span>` : ""}</span></div>`;
       }).join("");
-      taskProgressText.textContent = `${tasks.filter(t => t.status === "completed").length}/${tasks.length} 完成`;
     }
-    async function loadSessionTasks(sessionId) { try { const res = await fetch(`/api/sessions/${sessionId}/tasks`); const data = await res.json(); if (data.tasks && data.tasks.length > 0) renderTasks(data.tasks); else taskPanel.classList.remove("visible"); } catch {} }
+    async function loadSessionTasks(sessionId) {
+      const tasksAtRequest = missionTasks;
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}/tasks`);
+        const data = await res.json();
+        if (res.ok && currentSessionId === sessionId && missionTasks === tasksAtRequest) renderTasks(data.tasks || []);
+      } catch {}
+    }
     function stopSubagentPolling() {
       if (subagentPollTimer !== null) clearTimeout(subagentPollTimer);
       subagentPollTimer = null;
@@ -3497,6 +3528,7 @@
         const res = await fetch("/api/status");
         const data = await res.json();
         statusTokens.textContent = `≈${data.tokens} tokens · ${data.messageCount} msgs`;
+        window.MissionPanel?.updateContext(data);
         statusModel.textContent = `${data.profile || "--"} · ${data.model}`;
         const composerModel = document.getElementById("composer-model");
         composerModel.textContent = data.configured && data.model ? data.model : "配置模型";
@@ -3663,8 +3695,10 @@
       return true;
     }
     function refreshQuestionForCurrentSession() {
+      syncMission();
       const modal = document.getElementById("ask-modal");
       const optsEl = document.getElementById("ask-options");
+      const custom = document.getElementById("ask-custom");
       const question = currentSessionId ? questionsBySession.get(currentSessionId) : null;
       if (!question) {
         hideAccessibleDialog(modal);
@@ -3676,21 +3710,56 @@
       document.getElementById("ask-question-text").textContent = question.question;
       optsEl.replaceChildren();
       const autoLabel = "本会话自动批准（Auto 模式）";
-      const isApproval = question.options.some(opt => ["确认执行", "本次任务允许运行命令", "本次任务允许新建文档", "本次任务允许此服务器", autoLabel].includes(opt));
+      const taskOptions = ["本次任务允许运行命令", "本次任务允许新建文档", "本次任务允许此服务器"];
+      const isApproval = question.options.some(option => option === "确认执行" || option === autoLabel || taskOptions.includes(option));
+      modal.toggleAttribute("data-approval", isApproval);
+      custom.open = !isApproval;
       const renderedOptions = isApproval && !question.options.includes(autoLabel)
-        ? [...question.options.slice(0, -1), autoLabel, ...question.options.slice(-1)]
+        ? [...question.options, autoLabel]
         : question.options;
+      const immediate = document.createElement("div");
+      immediate.className = "ask-immediate";
+      const broader = document.createElement("div");
+      broader.className = "ask-broader";
       for (const option of renderedOptions) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "ask-option";
-        if (option === autoLabel) btn.classList.add("ask-option-auto");
+        btn.value = option;
         btn.textContent = option;
-        btn.addEventListener("click", () => { document.getElementById("ask-input").value = option; submitAskAnswer(); });
-        optsEl.appendChild(btn);
+        btn.addEventListener("click", () => { document.getElementById("ask-input").value = btn.value; void submitAskAnswer(); });
+        if (!isApproval) {
+          optsEl.appendChild(btn);
+        } else if (option === autoLabel || taskOptions.includes(option)) {
+          const scope = document.createElement("span");
+          scope.className = "ask-scope";
+          const sessionScope = option === autoLabel;
+          scope.id = `ask-scope-${renderedOptions.indexOf(option)}`;
+          scope.textContent = sessionScope
+            ? "本会话后续的例行操作自动批准。删除、推送和对外发送仍需确认。"
+            : "有效期至当前任务结束，仅适用于此项所列操作。";
+          btn.setAttribute("aria-describedby", scope.id);
+          broader.append(btn, scope);
+        } else {
+          if (option === "确认执行" || option === "仅这一次") {
+            btn.classList.add("ask-option-once");
+            btn.textContent = "仅允许这一次";
+          } else if (option === "拒绝执行" || option === "拒绝") {
+            btn.classList.add("ask-option-reject");
+            btn.textContent = "拒绝";
+          }
+          immediate.appendChild(btn);
+        }
+      }
+      if (isApproval) {
+        const label = document.createElement("div");
+        label.className = "ask-scope-heading";
+        label.textContent = "扩大授权范围";
+        broader.prepend(label);
+        optsEl.append(immediate, broader);
       }
       document.getElementById("ask-input").value = "";
-      showAccessibleDialog(modal, "#ask-input");
+      showAccessibleDialog(modal, isApproval ? ".ask-option-reject" : "#ask-input");
     }
     async function submitAskAnswer(overrideBody = null) {
       const answerSessionId = currentSessionId;

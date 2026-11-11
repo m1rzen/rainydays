@@ -320,8 +320,8 @@ test("A04 real Electron default assistant edits, runs real tests and displays re
     assert.equal(await client.evaluate(`(async () => { const settings = await fetch('/api/settings').then(r => r.json()); return fetch('/api/settings/domains/shell', {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({expectedRevision:settings.revision,value:{...settings.domains.shell,developerMode:true}})}).then(r => r.status); })()`), 200);
     await client.evaluate("inputEl.value='修复项目，运行测试并区分缺依赖失败，保留我的改动。';document.getElementById('input-form').requestSubmit()");
     for (const answer of ["本次任务允许运行命令", "确认执行"]) {
-      await waitFor(() => client.evaluate(`document.getElementById('ask-modal').classList.contains('visible') && [...document.querySelectorAll('#ask-options button')].some(button => button.textContent === ${JSON.stringify(answer)})`), { timeoutMs: 20000, label: `A04 ${answer}` });
-      await client.evaluate(`[...document.querySelectorAll('#ask-options button')].find(button => button.textContent === ${JSON.stringify(answer)}).click()`);
+      await waitFor(() => client.evaluate(`document.getElementById('ask-modal').classList.contains('visible') && [...document.querySelectorAll('#ask-options button')].some(button => button.value === ${JSON.stringify(answer)})`), { timeoutMs: 20000, label: `A04 ${answer}` });
+      await client.evaluate(`[...document.querySelectorAll('#ask-options button')].find(button => button.value === ${JSON.stringify(answer)}).click()`);
     }
     await waitFor(() => client.evaluate("!isSessionRunning() && messagesEl.textContent.includes('缺依赖检查仍失败')"), { timeoutMs: 30000, label: "A04 coding task complete" });
     assert.equal(failure, null); assert.equal(stage, 7);
@@ -407,7 +407,7 @@ test("A02 real Electron edits multiple files, restores complete diffs and undoes
     const gitBefore=execFileSync(git,['status','--porcelain=v1','-z','--untracked-files=all'],{cwd:root,windowsHide:true,encoding:'utf8'});
     let client=await desktop.start();const session=await client.evaluate('currentSessionId');
     await client.evaluate("(() => { inputEl.value='将项目中两个文件的value从1改为2，并补充说明，保留我已有的改动；展示差异，不要提交。'; inputEl.dispatchEvent(new Event('input')); document.getElementById('input-form').requestSubmit(); return true; })()");
-    const approve=async()=>{await waitFor(()=>client.evaluate("[...document.querySelectorAll('#ask-options button')].some(button=>button.textContent==='确认执行')"),{timeoutMs:15000,label:'A02 one batch confirmation'});const question=await client.evaluate("document.getElementById('ask-question-text').textContent");assert(question.includes(targets[0])&&question.includes(targets[1]),question);await client.evaluate("[...document.querySelectorAll('#ask-options button')].find(button=>button.textContent==='确认执行').click()");};
+    const approve=async()=>{await waitFor(()=>client.evaluate("[...document.querySelectorAll('#ask-options button')].some(button=>button.value==='确认执行')"),{timeoutMs:15000,label:'A02 one batch confirmation'});const question=await client.evaluate("document.getElementById('ask-question-text').textContent");assert(question.includes(targets[0])&&question.includes(targets[1]),question);await client.evaluate("[...document.querySelectorAll('#ask-options button')].find(button=>button.value==='确认执行').click()");};
     await approve();await waitFor(()=>client.evaluate("!isSessionRunning() && messagesEl.textContent.includes('两个文件已修改')"),{timeoutMs:15000,label:'A02 code edit completed'});
     assert.equal(failure,null);assert.equal(streams,4);assert.match(await readFile(targets[0],'utf8'),/用户已有改动/);assert.match(await client.evaluate("document.querySelector('.code-changes').textContent"),/DIFF_END_649/);
     await desktop.stop();client=await desktop.start();assert.equal(await client.evaluate('currentSessionId'),session);

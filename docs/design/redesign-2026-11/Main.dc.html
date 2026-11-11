@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>RainyDays 任務控制台</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&amp;family=IBM+Plex+Mono:wght@400;600&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap">
+<style>
+body{margin:0}
+/* Concept: one five-colour livery stripe leaves the wordmark, bends into the navy panel and runs down it. Where it stops is how far the task has got. */
+.rd{--paper:#F1EDE1;--navy:#14224A;--ink:#141B2D;--muted:#5A5F6B;--hair:#D8D2C2;--on-navy:#F1EDE1;--dim-navy:#A9B3CC;--hold:#F2622A;
+--s1:#C43D2B;--s2:#E5752A;--s3:#EFAE34;--s4:#35A7BE;--s5:#2B6CA8;--rail:#E5E0D1;--well:#E8E3D5;--deep:#0E1A3A;--top:#FDFBF5;--ok:#25663F;--run:#1F5F96;
+--space:"Michroma","Segoe UI",sans-serif;--sans:"Noto Sans TC","Microsoft JhengHei UI","Microsoft YaHei UI",sans-serif;--mono:"IBM Plex Mono","Cascadia Code",Consolas,monospace;
+--pw:404px;position:relative;display:grid;grid-template-columns:216px minmax(0,1fr) var(--pw);min-height:100vh;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.8;overflow:hidden}
+.rd *{box-sizing:border-box}
+.rd button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.rd button:focus-visible,.rd a:focus-visible{outline:2px solid var(--s4);outline-offset:2px}
+.lab{font:400 11.5px/1.4 var(--mono);letter-spacing:.04em;color:var(--muted)}
+.brand{position:absolute;left:24px;top:22px;height:40px;display:flex;align-items:center;gap:10px;z-index:3}
+.brand b{font:400 13.5px/1 var(--space);letter-spacing:.04em}
+.sh{position:absolute;top:22px;left:214px;right:calc(var(--pw) - 2px);height:40px;z-index:2;overflow:hidden;background:linear-gradient(180deg,var(--s1) 0 20%,var(--s2) 20% 40%,var(--s3) 40% 60%,var(--s4) 60% 80%,var(--s5) 80% 100%)}
+.rail{background:var(--rail);padding:104px 0 18px;display:flex;flex-direction:column;gap:26px;min-width:0}
+.new{margin:0 24px;min-height:44px;color:inherit;text-decoration:none;font-weight:700;display:flex;align-items:center;gap:10px}
+.new i{font:400 22px/1 var(--space);font-style:normal;color:var(--s1)}
+.zone{padding:0 24px 8px}
+.sess{display:grid;grid-template-columns:minmax(0,1fr) 10px;gap:8px;align-items:center;width:100%;text-align:left;padding:9px 24px;min-height:44px}
+.sess:hover{background:var(--hair)}
+.sess em{display:block;width:10px;height:10px}
+.m-hold{background:var(--hold)}
+.m-run{background:var(--run)}
+.sess span{display:block;font-size:14px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.sess.on,.sess.on:hover{background:var(--paper)}
+.sess.on span{color:var(--ink);font-weight:700}
+.main{display:flex;flex-direction:column;min-width:0;padding-top:96px}
+.page{flex:1;width:100%;max-width:800px;padding:0 44px 28px;display:flex;flex-direction:column;gap:30px}
+.head h1{margin:6px 0 0;font-size:43px;line-height:1.24;font-weight:900;letter-spacing:.005em;text-wrap:balance}
+.row{display:grid;grid-template-columns:56px minmax(0,1fr);gap:0 16px}
+.row .lab{line-height:30px}
+.q{font-size:20px;line-height:1.55;font-weight:500;margin:0}
+.a p{margin:0;max-width:60ch}
+.a p+p{margin-top:10px}
+.tools{list-style:none;margin:0;padding:4px 14px;background:var(--well);font:400 12.5px/1.5 var(--mono);font-variant-numeric:tabular-nums}
+.tools li{display:grid;grid-template-columns:62px 86px minmax(0,1fr) auto;gap:0 12px;padding:6px 0;border-top:1px solid var(--hair)}
+.tools li:first-child{border-top:0}
+.tools li span:first-child,.tools li span:nth-child(2){color:var(--muted)}
+.done{color:var(--ok)}.live{color:var(--run);font-weight:600}
+.hold{background:var(--hold);color:var(--ink);padding:22px 24px 24px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 28px;align-items:start}
+.hold .word{font:400 40px/1 var(--space);letter-spacing:.01em;margin-top:6px}
+.hold h2{margin:0;font-size:22px;line-height:1.4;font-weight:900}
+.hold code{display:block;grid-column:2;font:400 12.5px/1.6 var(--mono);overflow-x:auto;white-space:nowrap}
+.acts{grid-column:2;display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.btn{min-height:44px;padding:0 20px!important;font-weight:700!important}
+.btn.go{background:var(--ink)!important;color:var(--paper)!important}
+.btn.ghost{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.btn.ghost:hover{background:rgba(20,27,45,.12)!important}
+.go-line{display:flex;gap:16px;align-items:baseline;background:var(--navy);color:var(--on-navy);padding:14px 24px}
+.go-line b{font:400 20px/1 var(--space)}
+.composer{background:var(--top);border-top:1px solid var(--hair);padding:16px 44px 14px}
+.composer:focus-within{box-shadow:inset 0 3px 0 var(--run)}
+.composer>div{max-width:712px;display:flex;flex-direction:column;gap:6px}
+.composer textarea{width:100%;min-height:50px;resize:vertical;font:inherit;font-size:17px;color:var(--ink);background:transparent;border:0;outline:0;padding:4px 0}
+.composer textarea::placeholder{color:var(--muted)}
+.cbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.cbar .sp{flex:1}
+.auto{min-height:44px;display:flex;align-items:center;gap:10px;font:400 12px/1.3 var(--mono)!important}
+.sw{width:34px;height:18px;background:var(--hair);position:relative;display:block}
+.sw::after{content:"";position:absolute;left:3px;top:3px;width:12px;height:12px;background:var(--ink)}
+.auto.on .sw{background:var(--hold)}
+.auto.on .sw::after{left:19px}
+.send{min-width:92px;min-height:44px;background:var(--ink)!important;color:var(--paper)!important;font-weight:700!important}
+.panel{position:relative;background:var(--navy);color:var(--on-navy);min-width:0;display:flex;flex-direction:column}
+.panel .lab{color:var(--dim-navy)}
+.sc{position:absolute;left:2px;top:22px;width:70px;height:70px;overflow:visible;z-index:2}
+.sv{position:absolute;left:32px;top:92px;width:40px;z-index:2;display:flex;align-items:flex-start}
+.sv i{display:block;width:8px;transition:height .9s cubic-bezier(.3,.7,.2,1)}
+.sd{position:absolute;left:51px;top:92px;height:345px;border-left:2px dotted var(--dim-navy)}
+.clock{height:150px;padding:26px 24px 0 96px}
+.clock strong{display:block;font:400 40px/1.25 var(--space);white-space:nowrap}
+.clock strong span{display:inline-block;width:.84em;text-align:center}
+.clock strong span.col{width:.42em}
+.steps{list-style:none;margin:0;padding:0}
+.step{position:relative;height:92px;padding-left:96px;padding-right:24px}
+.step::before{content:"";position:absolute;left:72px;top:11px;width:16px;height:2px;background:var(--on-navy)}
+.step.todo::before{left:62px;width:26px;background:var(--dim-navy)}
+.step.hold-s::before{background:var(--hold);height:4px;top:10px}
+.step b{display:block;font-size:16px;line-height:1.45;font-weight:700}
+.step small{display:block;font:400 12px/1.6 var(--mono);color:var(--dim-navy)}
+.step.todo b{font-weight:500;color:var(--dim-navy)}
+.step.hold-s small{color:#FF9A66}
+.instr{flex:1;display:flex;gap:16px 22px;align-items:center;align-content:flex-start;flex-wrap:wrap;margin-top:8px;padding:24px 24px 24px 32px;background:var(--deep)}
+.dial{position:relative;width:150px;height:88px;flex:none}
+.dial svg{display:block;overflow:visible}
+.dial strong{position:absolute;left:0;right:0;bottom:0;text-align:center;font:400 21px/1 var(--space)}
+.dl{flex:1 1 130px;display:grid;gap:8px;margin:0;min-width:0}
+.dl dt{font:400 11.5px/1.3 var(--mono);color:var(--dim-navy)}
+.dl dd{margin:1px 0 0;font:400 13px/1.45 var(--mono);font-variant-numeric:tabular-nums}
+@media (max-width:1180px){.rd{grid-template-columns:190px minmax(0,1fr)}.panel{grid-column:1/-1;padding-top:8px}.sh{right:auto;left:190px;width:calc((100% - 190px)*var(--prog));transition:width .9s}.sc,.sv,.sd{display:none}.clock{height:auto;padding:26px 24px 20px 32px}.step{padding-left:32px;height:auto;padding-bottom:18px}.step::before{display:none}}
+@media (max-width:760px){.rd{grid-template-columns:minmax(0,1fr)}.brand{left:16px}.sh{left:178px;width:calc((100% - 178px)*var(--prog))}.rail{padding:84px 0 8px}.main{padding-top:12px}.new{margin:0 16px}.sess{padding-inline:16px}.page{padding:0 16px 24px}.head h1{font-size:32px}.composer{padding:14px 16px}.row{grid-template-columns:minmax(0,1fr)}.hold{grid-template-columns:minmax(0,1fr)}.hold code,.acts{grid-column:1}.tools{overflow-x:auto}.tools li{min-width:440px}.clock,.instr,.step{padding-left:16px;padding-right:16px}.clock strong{font-size:32px}}
+@media (prefers-reduced-motion:reduce){.sv i,.sh{transition:none}}
+@media (prefers-reduced-motion:no-preference){.rd.running .sh::after{content:"";position:absolute;top:0;bottom:0;left:0;width:150px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);animation:sweep 2.8s linear infinite}@keyframes sweep{from{transform:translateX(-150px)}to{transform:translateX(100vw)}}.step.hold-s::before{animation:hb 1.6s steps(2,jump-none) infinite}@keyframes hb{to{opacity:.25}}}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="--prog: {{prog}}">
+  <div class="brand">
+    <svg width="24" height="22" viewBox="0 0 24 22" aria-hidden="true"><path d="M7 1 2 21M14 1 9 21M21 1l-5 20" fill="none" stroke="#141B2D" stroke-width="3"></path></svg>
+    <b>RAINYDAYS</b>
+  </div>
+  <div class="sh" aria-hidden="true"></div>
+
+  <nav class="rail" aria-label="任務列表">
+    <a class="new" href="Launch.dc.html"><i>+</i>新任務</a>
+    <div>
+      <div class="lab zone">任務清單</div>
+      <sc-for list="{{sessions}}" as="s" hint-placeholder-count="6">
+        <button class="{{s.cls}}" type="button"><span>{{s.name}}</span><em class="{{s.mark}}" title="{{s.tip}}"></em></button>
+      </sc-for>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="page">
+      <header class="head">
+        <span class="lab">RD-0412 · 樣例內容</span>
+        <h1>下載 IEM 北京小組賽錄像，合成 MP4</h1>
+      </header>
+      <div class="row"><span class="lab">你</span><p class="q">三局都要。NAVI 對 Falcons 那場。</p></div>
+      <div class="row a"><span class="lab">助手</span><div>
+        <p>找到官方賽事帳號發布的完整錄像，共三局、約 1.26 GB，已在後台下載。第一局的音視頻已經齊了。</p>
+        <p>下一步要把它們合併成 MP4，這會在下載資料夾新增一個檔案。</p>
+      </div></div>
+      <div class="row"><span class="lab">工具</span>
+        <ul class="tools">
+          <sc-for list="{{tools}}" as="t" hint-placeholder-count="3">
+            <li><span>{{t.time}}</span><span>{{t.tool}}</span><span>{{t.what}}</span><span class="{{t.cls}}">{{t.state}}</span></li>
+          </sc-for>
+        </ul>
+      </div>
+      <sc-if value="{{showHold}}" hint-placeholder-val="{{ true }}">
+        <section class="hold" aria-label="等待批准">
+          <span class="word">HOLD</span>
+          <h2>可以合併第一局嗎？</h2>
+          <code>ffmpeg -i P1_video.m4s -i P1_audio.m4s -c copy IEM北京_P1.mp4</code>
+          <div class="acts">
+            <button class="btn go" type="button" onClick="{{approve}}">批准</button>
+            <button class="btn ghost" type="button">本任務都批准</button>
+            <button class="btn ghost" type="button">拒絕</button>
+          </div>
+        </section>
+      </sc-if>
+      <sc-if value="{{showGo}}" hint-placeholder-val="{{ false }}">
+        <div class="go-line" role="status"><b>GO</b><span>{{goText}}</span></div>
+      </sc-if>
+    </div>
+    <div class="composer"><div>
+      <label class="lab" for="rd-input">下一條指令</label>
+      <textarea id="rd-input" placeholder="接下來要做什麼？"></textarea>
+      <div class="cbar">
+        <button class="{{autoCls}}" type="button" onClick="{{toggleAuto}}" aria-pressed="{{autoOn}}"><span class="sw"></span>Auto 授權 {{autoWord}}</button>
+        <span class="lab">通用助手 · Gcable-Pro-Thinking</span>
+        <span class="sp"></span>
+        <button class="send" type="button">發送</button>
+      </div>
+    </div></div>
+  </main>
+
+  <aside class="panel" aria-label="任務進程">
+    <svg class="sc" viewBox="0 0 70 70" fill="none" stroke-width="8" aria-hidden="true">
+      <path d="M-1 4H0A66 66 0 0 1 66 70V71" style="stroke: var(--s1)"></path>
+      <path d="M-1 12H0A58 58 0 0 1 58 70V71" style="stroke: var(--s2)"></path>
+      <path d="M-1 20H0A50 50 0 0 1 50 70V71" style="stroke: var(--s3)"></path>
+      <path d="M-1 28H0A42 42 0 0 1 42 70V71" style="stroke: var(--s4)"></path>
+      <path d="M-1 36H0A34 34 0 0 1 34 70V71" style="stroke: var(--s5)"></path>
+    </svg>
+    <div class="sd" aria-hidden="true"></div>
+    <div class="sv" aria-hidden="true"><sc-for list="{{bands}}" as="b" hint-placeholder-count="5"><i style="height: {{b.h}}px; background: {{b.bg}}; transition-delay: {{b.d}}ms"></i></sc-for></div>
+    <div class="clock"><span class="lab">任務時鐘 · {{statusWord}}</span><strong><sc-for list="{{metChars}}" as="c" hint-placeholder-count="8"><span class="{{c.cls}}">{{c.ch}}</span></sc-for></strong></div>
+    <ol class="steps">
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+        <li class="{{s.cls}}"><b>{{s.name}}</b><small>{{s.note}}</small></li>
+      </sc-for>
+    </ol>
+    <div class="instr">
+      <div class="dial" role="img" aria-label="上下文已用 30%，50% 開始整理，90% 壓縮">
+        <svg width="150" height="82" viewBox="0 0 150 82" fill="none" aria-hidden="true">
+          <path d="M5 77A70 70 0 0 1 145 77" stroke="#33426F" stroke-width="10"></path>
+          <path d="M5 77A70 70 0 0 1 145 77" style="stroke: var(--s3)" stroke-width="10" stroke-dasharray="66 220"></path>
+          <path d="M75 0V14" stroke="#F1EDE1" stroke-width="2"></path>
+          <path d="M141 56 128 60" style="stroke: var(--hold)" stroke-width="3"></path>
+        </svg>
+        <strong>30%</strong>
+      </div>
+      <dl class="dl">
+        <div><dt>上下文</dt><dd>50 整理 · 90 壓縮</dd></div>
+        <div><dt>電腦</dt><dd>本機 Windows</dd></div>
+        <div><dt>已下載</dt><dd>0.42 / 1.26 GB</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":980}}'>
+class Component extends DCLogic {
+  state = { auto: false, phase: 'hold', sec: 872 };
+  componentDidMount() { this.timer = setInterval(() => this.setState({ sec: this.state.sec + 1 }), 1000); }
+  componentWillUnmount() { clearInterval(this.timer); clearTimeout(this.after); }
+  renderVals() {
+    const p = (n) => String(n).padStart(2, '0');
+    const s = this.state.sec, phase = this.state.phase, st = this.state;
+    const reached = phase === 'done' ? 3 : 2;
+    const third = phase === 'hold' ? { name: '合併第一局', note: '等待你批准', cls: 'step hold-s' }
+      : phase === 'run' ? { name: '合併第一局', note: '進行中', cls: 'step' }
+      : { name: '合併第一局', note: 'P1.mp4 已生成', cls: 'step' };
+    return {
+      rootClass: phase === 'hold' ? 'rd' : 'rd running',
+      prog: reached / 4,
+      metChars: (p(Math.floor(s / 3600)) + ':' + p(Math.floor(s / 60) % 60) + ':' + p(s % 60)).split('').map((ch) => ({ ch, cls: ch === ':' ? 'col' : '' })),
+      statusWord: phase === 'hold' ? 'HOLD' : 'GO',
+      bands: ['--s5', '--s4', '--s3', '--s2', '--s1'].map((v, i) => ({ bg: 'var(' + v + ')', h: 69 + 92 * reached - (4 - i) * 7, d: (4 - i) * 70 })),
+      showHold: phase === 'hold',
+      showGo: phase !== 'hold',
+      goText: phase === 'run' ? '已批准，正在合併第一局。' : '第一局已合併，繼續下載第二、三局。',
+      approve: () => { this.setState({ phase: 'run' }); this.after = setTimeout(() => this.setState({ phase: 'done' }), 2400); },
+      autoCls: st.auto ? 'auto on' : 'auto',
+      autoOn: st.auto ? 'true' : 'false',
+      autoWord: st.auto ? '開' : '關',
+      toggleAuto: () => this.setState({ auto: !st.auto }),
+      sessions: [
+        { name: '下載 IEM 北京錄像', cls: 'sess on', mark: phase === 'hold' ? 'm-hold' : 'm-run', tip: phase === 'hold' ? '等待你批准' : '運行中' },
+        { name: '邑易行結構分析', cls: 'sess', mark: '', tip: '已完成' },
+        { name: '第三季銷售總結', cls: 'sess', mark: 'm-run', tip: '運行中' },
+        { name: '整理投標資料', cls: 'sess', mark: '', tip: '已完成' },
+        { name: '會議紀要轉週報', cls: 'sess', mark: '', tip: '已完成' },
+        { name: '重命名現場照片', cls: 'sess', mark: '', tip: '已完成' }
+      ],
+      tools: [
+        { time: 'T+13:48', tool: 'terminal', what: '啟動 3 路分軌下載', state: '完成', cls: 'done' },
+        { time: 'T+14:10', tool: 'file_stat', what: '第一局音視頻校驗完整', state: '完成', cls: 'done' },
+        { time: 'T+14:29', tool: 'terminal', what: '第二局下載中', state: '運行', cls: 'live' }
+      ],
+      steps: [
+        { name: '確認要下載的視頻', note: '官方帳號 · 3 局', cls: 'step' },
+        { name: '檢查磁碟與下載工具', note: '剩餘 34.5 GB', cls: 'step' },
+        third,
+        phase === 'done' ? { name: '下載並合併其餘兩局', note: '進行中 · 預計 12 分鐘', cls: 'step' } : { name: '下載並合併其餘兩局', note: '預計 12 分鐘', cls: 'step todo' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

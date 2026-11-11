@@ -95,6 +95,7 @@ import {
   subagentWaitDef,
 } from "./tools/subagent-tools.js";
 import { SubagentRegistry } from "./subagent-registry.js";
+import { resolveRequestBudget } from "./request-budget.js";
 import { createAgentSessionExecutors } from "./tools/agent-session-tools.js";
 import { agentCancelWaitDef, agentCloseDef, agentListDef, agentPeekDef, agentPostDef, agentSpawnDef, agentWaitDef, compactContextDef, consolidateMemoryDef, createCompactContextExec, createConsolidateMemoryExec } from "./tools/lux-cloud-tools.js";
 import { curateDef } from "./tools/curate-tool.js";
@@ -2899,6 +2900,7 @@ app.get("/api/status", (_req, res) => {
     paths: getAppSettings(),
     requestBudget: llm.getBudgetReport(),
     tokens: runtime?.memory.getTokenEstimate() ?? 0,
+    contextWindowTokens: resolveRequestBudget(profile).contextWindowTokens,
     messageCount: runtime?.memory.getMessageCount() ?? 0,
     hasSummary: runtime?.memory.hasSummary() ?? false,
     persona: runtime?.persona.name ?? selectedPersona()?.name ?? null,

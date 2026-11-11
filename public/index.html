@@ -12,14 +12,11 @@
   <link rel="stylesheet" href="/vendor/xterm.css">
   <link rel="stylesheet" href="/renderer.css">
   <link rel="stylesheet" href="/redesign.css">
+  <link rel="stylesheet" href="/vendor/fonts/noto-sans-sc/wght.css">
+  <link rel="stylesheet" href="/mission.css">
 </head>
 <body>
-  <!-- THESIS: RainyDays makes a working conversation and its finished files the whole desktop. The default screen gives them room instead of presenting a tool dashboard.
-  OWN-WORLD: porcelain and warm-grey planes, ink text, restrained clay action, a three-stroke rain mark, quiet outline controls, and unboxed assistant prose.
-  STORY: choose a conversation, attach material, follow progress, open or revise each result.
-  FIRST VIEWPORT: a 240px session rail, a 56px title bar, a 760px reading measure, small document rows, and a two-row composer with tools and model on its lower edge.
-  FORM: approved composition A, quiet workspace; user-pinned familiar assistant direction after seed 02c2d474.
-  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->
+  <!-- THESIS: One five-colour stripe carries the task: it runs across the top, arcs into the navy panel, comes down the steps and stops at the one in progress. Everything else stays typographic and quiet. -->
   <svg class="ui-icons" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
     <symbol id="i-rain" viewBox="0 0 32 32"><path d="M12 3 5 17M22 5 11 28M28 15l-6 13"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
@@ -81,7 +78,7 @@
 
   <div id="main">
     <header>
-      <button class="sidebar-open icon-only" type="button" data-action="toggle-sidebar" aria-label="展开会话导航" title="展开会话导航" aria-expanded="false"><svg aria-hidden="true"><use href="#i-panel"/></svg></button>
+      <button class="sidebar-open icon-only" type="button" data-action="toggle-sidebar" aria-label="展开会话导航" title="展开会话导航" aria-expanded="false"><svg aria-hidden="true"><use href="#i-panel"/></svg><span class="sidebar-open-label">会话</span></button>
       <div id="current-title" role="heading" aria-level="1">未选择对话</div>
       <div class="header-right">
         <button id="header-outputs" type="button" data-action="show-document-outputs" hidden><svg aria-hidden="true"><use href="#i-file"/></svg><span>成果</span><span id="header-output-count"></span></button>
@@ -104,6 +101,10 @@
     </div>
     <div id="workbench-staging" hidden>
       <section id="chat-view" class="workbench-view" aria-label="会话">
+        <div id="mission-welcome-stripe" aria-hidden="true">
+          <i class="mc-b1"></i><i class="mc-b2"></i><i class="mc-b3"></i><i class="mc-b4"></i><i class="mc-b5"></i>
+        </div>
+        <button id="mission-welcome-nav" class="sidebar-open icon-only" type="button" data-action="toggle-sidebar" aria-label="展开会话导航" title="展开会话导航" aria-expanded="false"><svg aria-hidden="true"><use href="#i-panel"/></svg><span class="sidebar-open-label">会话</span></button>
         <details id="document-outputs" hidden open>
           <summary><svg aria-hidden="true"><use href="#i-check"/></svg><span>成果文件</span><span id="document-output-count"></span><svg class="disclosure-icon" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
           <div id="document-output-list" aria-live="polite"></div>
@@ -113,10 +114,14 @@
           <p class="research-note">状态表示网页获取情况，结论仍需结合原文核对。</p>
           <div id="research-source-list"></div><p id="research-link-warning" role="status" hidden></p>
         </details>
-        <div id="task-panel">
-          <div id="task-panel-header"><span><svg aria-hidden="true"><use href="#i-check"/></svg>任务进度</span><span id="task-progress-text" role="status" aria-live="polite"></span></div>
+        <details id="task-panel">
+          <summary id="task-panel-header">
+            <span id="task-current-step">任务进度</span>
+            <span id="task-progress-text"></span>
+            <svg class="task-progress-chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+          </summary>
           <div id="task-list"></div>
-        </div>
+        </details>
         <div id="subagent-panel">
           <div id="subagent-panel-header"><span><svg aria-hidden="true"><use href="#i-chat"/></svg>后台任务</span><span id="subagent-progress-text" role="status" aria-live="polite"></span></div>
           <div id="subagent-list"></div>
@@ -287,15 +292,43 @@
 
 
   <!-- ask_user 弹窗 -->
+  <div id="mission-stripe" aria-hidden="true"></div>
+  <svg id="mission-corner" viewBox="0 0 70 70" aria-hidden="true">
+    <path class="mc1" d="M-1 4H0A66 66 0 0 1 66 70V71"/><path class="mc2" d="M-1 12H0A58 58 0 0 1 58 70V71"/><path class="mc3" d="M-1 20H0A50 50 0 0 1 50 70V71"/><path class="mc4" d="M-1 28H0A42 42 0 0 1 42 70V71"/><path class="mc5" d="M-1 36H0A34 34 0 0 1 34 70V71"/>
+  </svg>
+  <aside id="mission-panel" aria-label="任务进程">
+    <div id="mission-track">
+      <div id="mission-dots" aria-hidden="true"></div>
+      <div id="mission-bands" aria-hidden="true"><i class="mc-b5"></i><i class="mc-b4"></i><i class="mc-b3"></i><i class="mc-b2"></i><i class="mc-b1"></i></div>
+      <div class="mission-clock"><span class="mission-label" id="mission-status" role="status">任务时钟 · 待命</span><strong id="mission-time" role="timer"></strong></div>
+      <ol id="mission-steps" aria-label="任务步骤"></ol>
+    </div>
+    <div id="mission-instruments">
+      <div id="mission-dial" role="img" aria-label="上下文用量">
+        <svg width="150" height="82" viewBox="0 0 150 82" aria-hidden="true">
+          <path class="dial-track" d="M5 77A70 70 0 0 1 145 77"/><path id="mission-dial-value" class="dial-value" d="M5 77A70 70 0 0 1 145 77" stroke-dasharray="0 220"/><path class="dial-mark-50" d="M75 0V14"/><path class="dial-mark-90" d="M141 56 128 60"/>
+        </svg>
+        <strong id="mission-percent">0%</strong>
+      </div>
+      <dl id="mission-readout">
+        <div><dt>上下文</dt><dd>50 整理 · 90 压缩</dd></div>
+        <div><dt>模型</dt><dd id="mission-model">--</dd></div>
+        <div><dt>消息</dt><dd id="mission-messages">0</dd></div>
+      </dl>
+    </div>
+  </aside>
   <div id="ask-modal" role="dialog" aria-modal="true" aria-labelledby="ask-title" aria-describedby="ask-question-text" aria-hidden="true" tabindex="-1">
     <div id="ask-box">
       <div class="ask-title" id="ask-title"><svg aria-hidden="true"><use href="#i-chat"/></svg>RainyDays 需要你的回答</div>
       <div class="ask-question" id="ask-question-text"></div>
       <div class="ask-options" id="ask-options"></div>
-      <label class="sr-only" for="ask-input">回答</label><input class="ask-input" id="ask-input" placeholder="或输入自定义答案..." />
-      <div class="ask-actions">
-        <button class="ask-submit" data-action="submit-ask-answer">提交</button>
-      </div>
+      <details id="ask-custom" open>
+        <summary>其他回答</summary>
+        <label class="sr-only" for="ask-input">回答</label><input class="ask-input" id="ask-input" placeholder="或输入自定义答案..." />
+        <div class="ask-actions">
+          <button class="ask-submit" data-action="submit-ask-answer">提交</button>
+        </div>
+      </details>
     </div>
   </div>
 
@@ -303,6 +336,7 @@
   <script src="/vendor/xterm-addon-fit.js"></script>
   <script src="/keyboard-shortcuts.js"></script>
   <script src="/mcp-settings.js"></script>
+  <script src="/mission.js"></script>
   <script src="/renderer.js"></script>
 </body>
 </html>
