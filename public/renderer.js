@@ -1935,6 +1935,7 @@
         const state = await loadSettingsRuntimeState();
         if (!state) return;
         renderSettingsPreservingDirty();
+        void window.SkillSettings?.refresh({ headers: () => sessionHeaders(currentSessionId) });
         document.querySelector(".settings-domain-tab.active")?.focus();
         showSettingsMessage("");
       } catch (err) {

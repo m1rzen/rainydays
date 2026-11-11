@@ -139,7 +139,8 @@ import {
   reserveAttachment,
 } from "./attachment-store.js";
 import { MAX_ATTACHMENT_BYTES, validateAttachmentId } from "./attachment.js";
-import { DATA_DIR } from "./runtime-paths.js";
+import { DATA_DIR, USER_SKILLS_DIR } from "./runtime-paths.js";
+import { listSkillPackages, setSkillPackageEnabled, invalidateSkillCatalog } from "./skill-packages.js";
 import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 import { APP_VERSION, BUILD_ID, BUILD_INFO, PROTOCOL_CAPABILITIES, getPublicVersionInfo } from "./version.js";
 import { executeSettingsEnrollment } from "./settings-enrollment.js";
@@ -2791,6 +2792,23 @@ app.post("/api/providers/switch", async (req, res) => {
 // ===========================================
 // Skill API（运行时技能管理）
 // ===========================================
+// A11 SKILL.md packages: list and enable/disable. Bodies are never sent here.
+app.get("/api/skill-packages", async (_req, res) => {
+  try { res.json({ skills: await listSkillPackages(), userDirectory: USER_SKILLS_DIR }); }
+  catch { res.status(500).json({ error: "读取技能失败" }); }
+});
+app.put("/api/skill-packages/:id", async (req, res) => {
+  const id = req.params.id, enabled = req.body?.enabled;
+  if (!/^[a-z0-9][a-z0-9-]{0,63}$/u.test(id) || typeof enabled !== "boolean" || Object.keys(req.body ?? {}).join(",") !== "enabled") { res.status(400).json({ error: "技能设置请求无效" }); return; }
+  try {
+    const skill = (await listSkillPackages()).find(item => item.id === id);
+    if (!skill) { res.status(404).json({ error: "技能不存在" }); return; }
+    if (skill.problem && enabled) { res.status(409).json({ error: `技能无法使用：${skill.problem}` }); return; }
+    setSkillPackageEnabled(id, enabled); invalidateSkillCatalog();
+    res.json({ skills: await listSkillPackages() });
+  } catch { res.status(500).json({ error: "保存技能设置失败" }); }
+});
+
 app.get("/api/skills", async (_req, res) => {
   const skills = await listAvailableSkills();
   res.json({ skills });

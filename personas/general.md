@@ -94,6 +94,7 @@ tools:
   - skill_release
   - skill_status
   - skill_manage
+  - skill_open
   - models_list
   - thinking_effort_get
   - thinking_effort_set

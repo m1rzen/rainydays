@@ -143,6 +143,36 @@ test("A06 real Electron logs in to a remote OAuth MCP server through the system 
   } finally { client?.close(); if (instance) await terminateProcessTreeAsync(instance.child); await http.close(); await removeFixture(fixture); }
 });
 
+test("A11 real Electron lists installed skills with their source and toggles one without touching general settings", { timeout: 90000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-a11-electron-"), userData = path.join(fixture, "user-data");
+  let instance, client;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, "");
+    client = await connectCdp(cdpPort);
+    await waitFor(() => client.evaluate("Boolean(currentSessionId && desktopNavigationReady)"), { timeoutMs: 20000, label: "A11 ready" });
+    const skillDir = path.join(userData, "skills", "weekly-report");
+    await mkdir(path.join(skillDir, "references"), { recursive: true });
+    await writeFile(path.join(skillDir, "SKILL.md"), "---\nname: 周报\ndescription: 写周报时使用，三段结构\n---\n正文");
+    await writeFile(path.join(skillDir, "references", "style.md"), "参考");
+    await mkdir(path.join(userData, "skills", "half-done"), { recursive: true });
+    await writeFile(path.join(userData, "skills", "half-done", "SKILL.md"), "---\nname: 未完成\n---\n缺少描述");
+    await client.evaluate("openSettings().then(()=>switchSettingsDomain('common'))");
+    await waitFor(() => client.evaluate("document.querySelectorAll('#skill-package-list .skill-package').length===2"), { timeoutMs: 10000, label: "A11 skills listed" }).catch(async error => { throw new Error(`${error.message}: list=${await client.evaluate("document.getElementById('skill-package-list').textContent")} api=${await client.evaluate("fetch('/api/skill-packages').then(async r=>r.status+' '+await r.text())")}`); });
+    const rows = await client.evaluate("[...document.querySelectorAll('#skill-package-list .skill-package')].map(row=>({id:row.dataset.skillId,text:row.textContent,checked:row.querySelector('input').checked,disabled:row.querySelector('input').disabled}))");
+    const report = rows.find(row => row.id === "weekly-report"), broken = rows.find(row => row.id === "half-done");
+    assert.match(report.text, /周报/u); assert.match(report.text, /用户技能/u); assert.match(report.text, /三段结构/u); assert.equal(report.checked, true);
+    assert.match(broken.text, /无法使用/u); assert.equal(broken.disabled, true);
+    assert.match(await client.evaluate("document.getElementById('skill-packages-directory').textContent"), /skills/u);
+    await client.evaluate("document.getElementById('skill-package-weekly-report').click()");
+    await waitFor(() => client.evaluate("fetch('/api/skill-packages').then(r=>r.json()).then(v=>v.skills.find(s=>s.id==='weekly-report').enabled===false)"), { timeoutMs: 10000, label: "A11 disabled" });
+    assert.equal(await client.evaluate("settingsDirtyDomains.has('common')"), false, "the toggle is not part of the general settings form");
+    await client.evaluate("window.SkillSettings.refresh()");
+    await waitFor(() => client.evaluate("document.getElementById('skill-package-weekly-report')?.checked===false"), { timeoutMs: 10000, label: "A11 reload shows disabled" });
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally { client?.close(); if (instance) await terminateProcessTreeAsync(instance.child); await removeFixture(fixture); }
+});
+
 function expectedUi(buildInfo) {
   const shortBuild = String(buildInfo.buildId).split(".").at(-1).slice(0, 8);
   return `v${buildInfo.appVersion}${shortBuild ? ` · ${shortBuild}` : ""}`;

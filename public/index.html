@@ -241,6 +241,11 @@
               <label>子系统 Profiles</label><div class="settings-profile-grid"><input id="setting-supervisor-profile" placeholder="Supervisor" /><input id="setting-curator-profile" placeholder="Curator" /><input id="setting-consolidation-profile" placeholder="Consolidation" /><input id="setting-oracle-profile" placeholder="Oracle" /><input id="setting-image-profile" placeholder="Image" /><input id="setting-video-profile" placeholder="Video" /><input id="setting-rename-profile" placeholder="Rename" /></div>
             </div>
             <div class="settings-actions"><button class="settings-btn primary" data-action="save-general-settings">保存通用设置</button></div>
+            <section class="skill-packages" aria-labelledby="skill-packages-title">
+              <h4 id="skill-packages-title">技能</h4>
+              <p class="settings-help">把含 SKILL.md 的文件夹放进<span id="skill-packages-directory">用户技能目录</span>后会出现在这里。助手平时只看到名称和用途，用到时才读取正文；技能里的脚本不会自动运行。开关立即生效，下一次请求起使用。</p>
+              <div id="skill-package-list" role="list"></div>
+            </section>
           </div>
           <div class="settings-section" data-settings-domain="profiles" hidden>
             <h3>Profiles</h3><div class="settings-domain-status" data-domain-status="profiles"></div>
@@ -336,6 +341,7 @@
   <script src="/vendor/xterm-addon-fit.js"></script>
   <script src="/keyboard-shortcuts.js"></script>
   <script src="/mcp-settings.js"></script>
+  <script src="/skill-settings.js"></script>
   <script src="/mission.js"></script>
   <script src="/renderer.js"></script>
 </body>

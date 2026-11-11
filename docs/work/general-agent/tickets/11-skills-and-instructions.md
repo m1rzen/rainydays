@@ -49,3 +49,10 @@ src/persona.ts、skills/和默认工具发现/上下文预算；参考现有文�
 
 尚未审查/验证。完成时记录具体命令、实际结果、人工核对、未测项、回退和终点提交。全部条件有证据才改为verified；依赖例外以[总任务图](../plan.md)为准。
 
+
+## 2026-11-12 自主輪次（工程實現，未用真實模型）
+
+- 項目說明：`src/project-instructions.ts` 包裝 read/write/edit/replace/read_repo。碰到文件時，用同一授權通道從文件所在目錄逐級向上找 AGENTS.md（同目錄無則 CLAUDE.md），越界即停；本輪首次涉及才附加到工具結果，根目錄在前、近目錄在後，並附「不授予額外權限」說明。
+- 技能：`src/skill-packages.ts` 讀用戶技能目錄（Electron 為 `<userData>/skills`）與內置目錄下的 `<id>/SKILL.md`；frontmatter 子集（name、description，支援 `>`/`|`）。系統提示只列 id 與用途（預算 6000 字元、最多 40 項）；新工具 `skill_open` 按需讀正文與文本參考文件，拒絕越界、隱藏檔與二進位，不執行腳本。設定「通用」頁新增技能清單與開關（`/api/skill-packages`）。
+- 驗證：`tests/product/a11-skills-instructions.test.mjs` 7/7（含 S01 普通 run 只見描述→開正文→按需讀參考；S02 根/子目錄按範圍、資料文本不擴權）；Electron「A11 real Electron」1/1；`check:product` 156/156 + UI 15/15。治理測試 ECO-06/TOOL-06/tool-protocol 4 項失敗在改動前已存在。
+- 未完成：真實模型下的 S01/S02 成果、內置技能遮蔽邏輯的直接測試（內置目錄須位於應用根內，測試未覆蓋）、設定頁開關後的即時狀態文字在雙重刷新時可能被重繪覆蓋（測試改為重新載入後核對）。狀態維持 ready→工程實現待真實模型驗收。

@@ -158,6 +158,7 @@ export const STATIC_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Object
   skill_reload: policy(["read", "write"], "none", ["filesystem"]),
   skill_release: policy(["write"], "none", ["filesystem"]),
   skill_status: parallelReadPolicy(["read"], ["filesystem"]),
+  skill_open: parallelReadPolicy(["read"], ["filesystem"]),
   skill_manage: policy(["read", "write"], "none", ["filesystem"]),
   models_list: minimalPolicy(["read"], "none", []),
   thinking_effort_get: minimalPolicy(["read"], "none", []),

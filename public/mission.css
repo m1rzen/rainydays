@@ -244,3 +244,15 @@ body[data-mission-view="idle"] #status-bar { background:var(--deep); border-colo
   .mission-clock { height:128px; }
   #mission-time { font-size:min(32px, var(--mission-clock-size)); }
 }
+
+/* A11 skills list in general settings. */
+.skill-packages { margin-top:28px; padding-top:20px; border-top:1px solid var(--hair); }
+.skill-packages h4 { margin:0 0 6px; font-size:15px; font-weight:700; }
+.skill-packages > .settings-help { grid-column:auto; margin:0 0 12px; }
+.skill-package { display:grid; grid-template-columns:20px 1fr auto; gap:2px 10px; align-items:start; padding:10px 0; border-bottom:1px solid var(--hair); }
+.skill-package input { margin-top:4px; }
+.skill-package label b { display:block; font-size:14px; }
+.skill-package label small { font:400 11.5px/1.5 var(--font-mono); color:var(--muted); }
+.skill-package p { grid-column:2 / 4; margin:0; font-size:13px; line-height:1.6; color:var(--muted); }
+.skill-package p.skill-package-problem { color:#A43D35; }
+.skill-package-state { grid-column:3; grid-row:1; font:400 11.5px/1.5 var(--font-mono); color:var(--muted); }

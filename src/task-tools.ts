@@ -1,6 +1,6 @@
 import type { ToolExecutionOutcome, ToolProtocolDescriptor } from "./types.js";
 
-const commonTools = new Set(["glob", "read", "grep", "write", "edit", "get_current_time", "ask_user", "web_search", "fetch_markdown", "create_docx", "create_xlsx", "search_tools"]);
+const commonTools = new Set(["glob", "read", "grep", "write", "edit", "get_current_time", "ask_user", "web_search", "fetch_markdown", "create_docx", "create_xlsx", "search_tools", "skill_open"]);
 // A14：开发模式下编码核心工具、计划工具、浏览器自动化、Computer Use 与 Lux-Cloud 工具首轮常驻；仍只取人格允许列表内的工具。
 const developerTools = new Set([
   "read_repo", "edit_files", "undo_edits", "execute_command",

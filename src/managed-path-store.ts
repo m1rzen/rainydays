@@ -31,6 +31,8 @@ interface ManagedRoot {
 const READ_BYTES = 4 * 1024 * 1024;
 const WRITE_BYTES = 4 * 1024 * 1024;
 const identifierPattern = /^[a-z0-9][a-z0-9-]{0,63}$/u;
+/** One path segment inside a skill package: no dot-only names, separators or hidden files. */
+const skillFileSegment = /^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$/u;
 const readPermissions: readonly PathOperation[] = Object.freeze(["read-file", "read-directory"]);
 
 const roleConfig: Readonly<Record<ManagedStoreRole, Readonly<{
@@ -169,6 +171,40 @@ export class ManagedPathStore {
       defaultRootId: root.rootId,
       requiredExtension: extension,
     }, bytes, WRITE_BYTES);
+  }
+
+  /** Skill packages are `<id>/SKILL.md` folders beside the flat persona skills. */
+  async listSkillPackageIds(role: "builtin-skills" | "user-skills"): Promise<string[]> {
+    const root = await this.#root(role);
+    const entries = await pathPolicy.listDirectory(root.authority, { input: "", operation: "read-directory", defaultRootId: root.rootId });
+    return entries.filter((entry) => entry.type === "directory" && identifierPattern.test(entry.name)).map((entry) => entry.name).sort();
+  }
+
+  /** Lists regular files of one package, at most `maxDepth` folders deep, as `/`-joined relative paths. */
+  async listSkillPackageFiles(role: "builtin-skills" | "user-skills", id: string, maxDepth = 3, maxFiles = 200): Promise<string[]> {
+    const root = await this.#root(role);
+    const safeId = validateManagedIdentifier(id);
+    const files: string[] = [];
+    const walk = async (relative: string, depth: number): Promise<void> => {
+      const entries = await pathPolicy.listDirectory(root.authority, { input: path.join(safeId, relative), operation: "read-directory", defaultRootId: root.rootId });
+      for (const entry of entries) {
+        if (files.length >= maxFiles || !skillFileSegment.test(entry.name)) continue;
+        const next = relative ? `${relative}/${entry.name}` : entry.name;
+        if (entry.type === "file") files.push(next);
+        else if (entry.type === "directory" && depth < maxDepth) await walk(next, depth + 1);
+      }
+    };
+    await walk("", 0);
+    return files.sort();
+  }
+
+  async readSkillPackageFile(role: "builtin-skills" | "user-skills", id: string, relative: string, maxBytes = READ_BYTES): Promise<Buffer> {
+    const root = await this.#root(role);
+    const safeId = validateManagedIdentifier(id);
+    const segments = relative.split("/");
+    if (segments.length > 4 || segments.some((segment) => !skillFileSegment.test(segment))) throw new PathDeniedError("PATH_INPUT_INVALID", "Skill file path is not allowed");
+    const result = await pathPolicy.readFile(root.authority, { input: path.join(safeId, ...segments), operation: "read-file", defaultRootId: root.rootId }, Math.min(maxBytes, READ_BYTES));
+    return Buffer.from(result.bytes);
   }
 
   async listRoutineIds(): Promise<string[]> {

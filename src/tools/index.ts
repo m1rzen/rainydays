@@ -143,6 +143,8 @@ import {
   mediaStatusDef, mediaStatusExec,
 } from "./media-tools.js";
 import { readRepoDef, readRepoExec } from "./read-repo.js";
+import { skillOpenDef, skillOpenExec } from "./skill-package-tools.js";
+import { withProjectInstructions, fileTarget, repositoryTarget } from "../project-instructions.js";
 import { editFilesDef, editFilesExec, undoEditsDef, undoEditsExec, codeEditingOutcome } from "./code-editing.js";
 import { savePersonaDef, createSavePersonaExec } from "./save-persona.js";
 import {
@@ -195,10 +197,10 @@ export { createToolOutcome, isValidToolCallId, MAX_TOOL_OUTPUT_BYTES, parseToolA
 
 /** 全部已注册的工具（按名索引） */
 const rawStaticTools: Omit<RegisteredTool, "policy">[] = [
-  { name: "read",            definition: readDef,            executor: readExec },
-  { name: "write",           definition: writeDef,           executor: writeExec },
-  { name: "edit",            definition: editDef,            executor: editExec },
-  { name: "replace",         definition: replaceDef,         executor: replaceExec },
+  { name: "read",            definition: readDef,            executor: withProjectInstructions(readExec, fileTarget("DATA_ROOT", true)) },
+  { name: "write",           definition: writeDef,           executor: withProjectInstructions(writeExec, fileTarget("OUTPUT_DIR", true)) },
+  { name: "edit",            definition: editDef,            executor: withProjectInstructions(editExec, fileTarget("OUTPUT_DIR", false)) },
+  { name: "replace",         definition: replaceDef,         executor: withProjectInstructions(replaceExec, fileTarget("OUTPUT_DIR", false)) },
   { name: "edit_files",      definition: editFilesDef,       executor: editFilesExec },
   { name: "undo_edits",      definition: undoEditsDef,       executor: undoEditsExec },
   { name: "glob",            definition: globDef,            executor: globExec },
@@ -296,7 +298,7 @@ const rawStaticTools: Omit<RegisteredTool, "policy">[] = [
   { name: "media_status",     definition: mediaStatusDef,         executor: mediaStatusExec },
   { name: "media_cancel",     definition: mediaCancelDef,         executor: mediaCancelExec },
   { name: "media_history",    definition: mediaHistoryDef,        executor: mediaHistoryExec },
-  { name: "read_repo",        definition: readRepoDef,            executor: readRepoExec },
+  { name: "read_repo",        definition: readRepoDef,            executor: withProjectInstructions(readRepoExec, repositoryTarget) },
   { name: "pin",              definition: pinDef,                 executor: pinExec },
   { name: "unpin",            definition: unpinDef,               executor: unpinExec },
   { name: "context_usage",    definition: contextUsageDef,        executor: contextUsageExec },
@@ -315,6 +317,7 @@ const rawStaticTools: Omit<RegisteredTool, "policy">[] = [
   { name: "skill_release",    definition: skillReleaseDef,        executor: skillReleaseExec },
   { name: "skill_status",     definition: skillStatusDef,         executor: skillStatusExec },
   { name: "skill_manage",     definition: skillManageDef,         executor: skillManageExec },
+  { name: "skill_open",       definition: skillOpenDef,           executor: skillOpenExec },
   { name: "models_list",      definition: modelsListDef,          executor: modelsListExec },
   { name: "thinking_effort_get", definition: thinkingEffortGetDef, executor: thinkingEffortGetExec },
   { name: "thinking_effort_set", definition: thinkingEffortSetDef, executor: thinkingEffortSetExec },
