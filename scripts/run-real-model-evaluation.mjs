@@ -37,9 +37,9 @@ async function startServer(item, model, runDir, { contextWindowTokens = 128000, 
   };
   const deadline = Date.now() + 90_000;
   for (;;) {
-    if (child.exitCode !== null) throw new Error(`server exited: ${log.slice(-600)}`);
+    if (child.exitCode !== null) throw Object.assign(new Error(`server exited: ${log.slice(-600)}`), { serverLog: log, startup: true });
     try { if ((await api("/api/health/ready")).ok) break; } catch { /* starting */ }
-    if (Date.now() > deadline) throw new Error(`server not ready: ${log.slice(-600)}`);
+    if (Date.now() > deadline) { try { execFileSync("taskkill", ["/pid", String(child.pid), "/t", "/f"], { windowsHide: true, stdio: "ignore" }); } catch { /* exited */ } throw Object.assign(new Error(`server not ready: ${log.slice(-600)}`), { serverLog: log, startup: true }); }
     await sleep(250);
   }
   const put = async (route, build) => {
@@ -53,6 +53,24 @@ async function startServer(item, model, runDir, { contextWindowTokens = 128000, 
 }
 
 /** Sends one prompt through /api/chat and follows the SSE stream, like the desktop renderer. */
+/**
+ * A server that dies before it is ready never saw the model; that is a harness/startup event, not a case result.
+ * Keep the full log, clean the fresh user directory and try once more. The result records every attempt.
+ */
+async function startServerRecorded(item, model, runDir, budget, attempts) {
+  for (let attempt = 1; ; attempt += 1) {
+    try { return await startServer(item, model, runDir, budget); }
+    catch (error) {
+      if (!error.startup) throw error;
+      await fs.writeFile(path.join(runDir, `server-start-failure-${attempt}.log`), String(error.serverLog ?? error)).catch(() => undefined);
+      attempts.push({ attempt, error: String(error.message).slice(0, 300) });
+      if (attempt >= 2) throw error;
+      await fs.rm(path.join(runDir, "user-data"), { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }).catch(() => undefined);
+      await sleep(2000);
+    }
+  }
+}
+
 async function converse(server, prompt, { limitMs = timeoutMs, onAsk = () => "拒绝执行", sessionId: existing = null, autoApprove = true, onStep = null } = {}) {
   const created = existing ? null : await (await server.api("/api/sessions", "POST", { title: "eval" })).json();
   const sessionId = existing ?? created.session?.id ?? created.id;
@@ -130,15 +148,16 @@ async function runCase(model, item) {
   const runDir = path.join(outRoot, "runs", model, item.id);
   await fs.mkdir(runDir, { recursive: true });
   let server;
+  const startFailures = [];
   try {
-    server = await startServer(item, model, runDir);
+    server = await startServerRecorded(item, model, runDir, undefined, startFailures);
     const record = await converse(server, item.prompt);
     const { verdict, checkOutput } = await judge(item, record);
-    const result = { model, case: item.id, language: item.language, ...verdict, outcome: record.outcome, durationMs: record.durationMs, firstEventMs: record.firstEventMs, toolCalls: record.tools.length, failedTools: record.tools.filter(tool => tool.status && tool.status !== "success").length, asks: record.asks, errors: record.errors.map(error => String(error).slice(0, 300)), notices: record.notices, answerChars: record.answer.length };
+    const result = { model, case: item.id, language: item.language, ...verdict, ...(startFailures.length ? { startFailures } : {}), outcome: record.outcome, durationMs: record.durationMs, firstEventMs: record.firstEventMs, toolCalls: record.tools.length, failedTools: record.tools.filter(tool => tool.status && tool.status !== "success").length, asks: record.asks, errors: record.errors.map(error => String(error).slice(0, 300)), notices: record.notices, answerChars: record.answer.length };
     await fs.writeFile(path.join(runDir, "record.json"), JSON.stringify({ ...result, tools: record.tools, answer: record.answer, checkOutput }, null, 1));
     return result;
   } catch (error) {
-    return { model, case: item.id, language: item.language, pass: false, outcome: "harness-error", errors: [String(error).slice(0, 500)] };
+    return { model, case: item.id, language: item.language, pass: false, outcome: startFailures.length ? "startup-error" : "harness-error", startFailures, errors: [String(error).slice(0, 500)] };
   } finally {
     if (server) { await fs.writeFile(path.join(runDir, "server.log"), server.getLog().slice(-40000)).catch(() => undefined); server.stop(); }
     await sleep(300);
@@ -312,14 +331,15 @@ async function runProbe(model, name) {
   const probe = PROBES[name], runDir = path.join(outRoot, "probes", model, name), dir = path.join(runDir, "project");
   await project(dir, probe.files);
   let server;
+  const startFailures = [];
   try {
-    server = await startServer({ project: dir }, model, runDir, probe.budget);
+    server = await startServerRecorded({ project: dir }, model, runDir, probe.budget, startFailures);
     const { record, checks, extra } = await probe.run(server, dir);
-    const result = { model, probe: name, pass: Object.values(checks).every(Boolean), checks, outcome: record.outcome, durationMs: record.durationMs, toolCalls: record.tools.length, tools: record.tools.map(tool => `${tool.name}:${tool.status ?? "?"}`), asks: record.asks, errors: record.errors, notices: record.notices, extra, answer: record.answer.slice(0, 1500) };
+    const result = { model, probe: name, pass: Object.values(checks).every(Boolean), checks, ...(startFailures.length ? { startFailures } : {}), outcome: record.outcome, durationMs: record.durationMs, toolCalls: record.tools.length, tools: record.tools.map(tool => `${tool.name}:${tool.status ?? "?"}`), asks: record.asks, errors: record.errors, notices: record.notices, extra, answer: record.answer.slice(0, 1500) };
     await fs.writeFile(path.join(runDir, "record.json"), JSON.stringify({ ...result, fullTools: record.tools, answer: record.answer, extra }, null, 1));
     return result;
   } catch (error) {
-    return { model, probe: name, pass: false, outcome: "harness-error", errors: [String(error).slice(0, 500)] };
+    return { model, probe: name, pass: false, outcome: startFailures.length ? "startup-error" : "harness-error", startFailures, errors: [String(error).slice(0, 500)] };
   } finally {
     if (server) { await fs.writeFile(path.join(runDir, "server.log"), server.getLog().slice(-40000)).catch(() => undefined); server.stop(); }
     await sleep(300);
