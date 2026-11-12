@@ -271,3 +271,22 @@ test("(c) Agent：工具已执行后模型连接持续中断，不重做写入�
     });
   } finally { await fx.capabilityBroker.retireAuthority(fx.authority); }
 });
+
+test("D02 a gateway's 503 model_not_found is not retried, streamed or not", async () => {
+  let requests = 0;
+  const server = createServer((req, res) => {
+    requests += 1;
+    req.resume();
+    res.writeHead(503, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: { code: "model_not_found", message: "分组 svip 下模型 no-such 无可用渠道", type: "new_api_error" } }));
+  });
+  server.listen(0, "127.0.0.1"); await once(server, "listening");
+  try {
+    const llm = new LLMClient({ apiKey: "fixture", baseURL: `http://127.0.0.1:${server.address().port}/v1`, model: "no-such", providerType: "openai-compatible" });
+    await assert.rejects(llm.chat([{ role: "user", content: "hi" }]), /model_not_found|模型不可用/u);
+    assert.equal(requests, 1, "non-streamed request is sent once");
+    requests = 0;
+    await assert.rejects(async () => { for await (const event of llm.chatStream([{ role: "user", content: "hi" }])) void event; }, /model_not_found|模型不可用/u);
+    assert.equal(requests, 1, "streamed request is sent once");
+  } finally { server.close(); }
+});

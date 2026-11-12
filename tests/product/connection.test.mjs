@@ -30,6 +30,9 @@ test('检测的错误有下一步，提供方错误与秘密不回显，失败�
     assert.match(result.message, new RegExp(expected));
     assert.doesNotMatch(JSON.stringify(result), /SECRET_FIXTURE/);
   }
+  const unknownModel = await probeProviderConnection({ probe: async () => { throw Object.assign(new Error('分组 svip 下模型 x 无可用渠道 SECRET_FIXTURE'), { status: 503, code: 'model_not_found' }); } });
+  assert.equal(unknownModel.code, 'MODEL', 'a gateway 503 model_not_found means a wrong model name, not a provider outage');
+  assert.doesNotMatch(JSON.stringify(unknownModel), /SECRET_FIXTURE/);
   assert.equal((await probeProviderConnection({ probe: async () => {} })).ok, true);
   const timeout = await probeProviderConnection({ probe: async () => { throw Object.assign(new Error('private'), { name: 'AbortError' }); } });
   assert.match(timeout.message, /超时/);

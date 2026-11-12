@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: blocked
+Status: verified
 
 Spec: [同事版交付规格](../../../specs/colleague-delivery.md)
 
@@ -28,7 +28,7 @@ src/llm.ts、model-connection.ts、settings-enrollment.ts、tests/product/connec
 
 - [x] 连接检测不发送文件或旧历史，一次短请求，错误能给出下一步。
 - [x] 可控服务验证文本流、工具流、错误/取消；未完成 JSON 不执行。
-- [ ] 批准参考配置的真实文字→工具→结果→回答流程通过，记录实际请求数与 usage；无批准配置则只标工程完成。
+- [x] 批准参考配置的真实文字→工具→结果→回答流程通过，记录实际请求数与 usage；无批准配置则只标工程完成。
 - [x] 第二模型支持是可选兼容测试；不通过更换密钥或将 403 吞成成功过关。
 
 ## 验证接口与证据
@@ -56,3 +56,13 @@ connection/stream/task-tools 现有回归、一个合成协议 fixture；真实�
 本地工程implemented，Standards/Spec顺序[审查](../reviews/02-model-contract-code-review.md)无阻塞发现，进入reviewed。红绿过程与旧测试故障界定见[诊断](../diagnostics/02-model-contract.md)。真实参考模型未测，整票不会因工程测试通过而改为verified；完成最终检查后记录工程通过与外部阻塞。
 
 本地工程验证通过（2026-10-18）：`npm run check:product`类型/lint、50项产品和15项UI/IPC通过；21项新增协议、3项真实Agent集成计在其中。`node --test --test-name-pattern "RT-04 LLM" tests/integration/rt04-runtime-cancellation.test.mjs` 3/3；REL-04观测8/8。构建通过，build为0.1.0+local.9fe93412e678，643个输入。当前源码Electron：R1断流保留、R5首次配置一次检测及按需工具3项通过。无真实模型、费用、安装候选或同事试用证据。终点为包含本记录的D02提交；回退该提交，不涉及数据库迁移或日常配置。
+
+## 2026-11-12 真实参考配置认证
+
+参考配置：OpenAI-compatible 网关 api.playground.ai.gcable.cc（new-api），模型 Gcable-Pro-Thinking，预算 128000/4096，SDK 4.104.0。用户授权实测，密钥只从本机文件读入子进程环境变量。新增 `scripts/run-model-contract-check.mjs`，直接使用产品的 LLMClient 与连接检测，每个请求计数并记录 usage（缺失记为 unknown，不记 0）。
+
+结果 8/8，共 9 个请求，5 个模型回复全部带 usage：连接检测 CONNECTED；非流文字；流式文字（含 include_usage 用量块）；流式「文字→工具→结果→回答」2 个请求、同一轮并行 2 个工具调用、拆分参数流解析合法、无流重试；非流工具调用；错误映射：无效密钥→AUTHENTICATION、网络不通→NETWORK、未知模型→MODEL。
+
+首轮发现缺陷并修复：该网关对未知模型返回 **503 + code `model_not_found`**，连接检测原本提示「服务暂时不可用」，任务运行时还会按服务端错误重试。现在 `isModelNotFound` 在连接检测中映射为 MODEL，在 LLM 重试判断中不重试并提示核对模型名称；`connection.test.mjs`、`stream-retry.test.mjs` 覆盖。修复后重跑 8/8。
+
+未测：429 限流的真实映射（无法安全触发，可控服务已覆盖）、费用（网关未返回）、第二模型兼容。状态改为 verified。

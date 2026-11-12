@@ -10,6 +10,7 @@ import { abortableDelay, cancellationError, cancellationFailure, throwIfCancelle
 import { MAX_DRAFT_ATTACHMENT_BYTES, INLINE_ATTACHMENT_BYTES, isDocumentMime } from "./attachment.js";
 import { beginObservation } from "./observability.js";
 import { ContextBudgetExceededError, estimateProjectedRequestTokens, resolveProviderReasoningEffort, resolveRequestBudget, type RequestBudget, type RequestBudgetReport } from "./request-budget.js";
+import { isModelNotFound } from "./model-connection.js";
 
 /** 最大重试次数 */
 const MAX_RETRIES = 3;
@@ -79,6 +80,11 @@ function llmCancellationFailure(signal: AbortSignal, error: unknown, fallback: s
 function isRetryableError(err: unknown): { retry: boolean; rateLimit?: boolean; reason: string } {
   // OpenAI API 错误
   const e = err as { status?: number; code?: string; message?: string; type?: string };
+
+  // 模型不存在：部分网关用 503 表示，重试只会白等。
+  if (isModelNotFound(err)) {
+    return { retry: false, reason: "模型不可用 (model_not_found)，请核对模型名称" };
+  }
 
   // 速率限制
   if (e.status === 429) {

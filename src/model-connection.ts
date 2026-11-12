@@ -1,3 +1,10 @@
+/** A provider saying the model does not exist, whatever HTTP status its gateway chose. Never retried. */
+export function isModelNotFound(error: unknown): boolean {
+  const failure = error as { code?: unknown; error?: { code?: unknown } } | null;
+  const code = failure?.code ?? failure?.error?.code;
+  return code === "model_not_found";
+}
+
 export interface ConnectionProbe {
   probe(signal: AbortSignal): Promise<void>;
 }
@@ -14,6 +21,8 @@ Promise<Readonly<{ ok: boolean; code: string; message: string }>> {
       return { ok: false, code: "TIMEOUT", message: "连接超时。请检查模型地址和网络后重新检测。" };
     }
     if (failure.status === 401) return { ok: false, code: "AUTHENTICATION", message: "密钥未通过验证。请检查 API Key，保存后重新检测。" };
+    // OpenAI-compatible gateways (e.g. new-api) report an unknown model as 503 with code model_not_found.
+    if (isModelNotFound(error)) return { ok: false, code: "MODEL", message: "模型或接口地址不可用。请核对模型名称与 Base URL 后保存。" };
     if (failure.status === 403) {
       return /quota|usage limit|credit|billing|额度|余额/iu.test(failure.message ?? "")
         ? { ok: false, code: "QUOTA", message: "模型额度已用完或余额不足。请在提供方恢复额度，或添加可用的模型配置。" }
