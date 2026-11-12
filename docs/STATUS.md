@@ -1,5 +1,7 @@
 # 当前开发状态
 
+2026-11-12 真实模型复测（3d7cf49，Gcable-Pro-Thinking）：编码 18/20（J06 启动崩溃、重测通过；P05 因 read/write 相对路径基准不同而超时）；探测首轮 7/9，A11 instructions、A12 subagentCancel 通过，skills 与 autoBoundary 重测通过。本轮无流式中断，串流重试未被真实触发。详见[评测记录](work/general-agent/evaluations/04-coding.md)。
+
 2026-11-12 自主輪次（無模型可用，只做可用合成模型驗證的工程，全部本地提交未推送）：
 - 3a02c24 界面改版（五色條紋任務面板，見 DESIGN.md）；8d15162 上下文表改按「輸入估算＋回覆預留」÷ 窗口計算，含工具定義。
 - b75790c A06：真實 Electron＋系統瀏覽器走通遠端 OAuth，修正 explorer 打不開授權網址、未登入測試改寫設定、登入後設定未重載三個缺陷；A06 仍 in-progress（缺外部真實服務）。

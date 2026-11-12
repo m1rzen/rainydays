@@ -63,3 +63,4 @@ src/subagent.ts、tools/subagent-tools.ts、任务授权和取消链、已有chi
 驗證：`tests/product/agent-session-tools.test.mjs` 9/9（新增並發上限與只讀工具、父取消傳播 2 項）；Electron「A12 real Electron」1/1；`check:product` 158/158 + UI 15/15；桌面 6/6。
 
 未完成：S03 的真實模型組合場景、單 Agent 與子任務在質量／耗時／費用上的比較（需要模型額度）。狀態維持 ready（工程實現已完成，待真實模型驗收）。
+- 2026-11-12 真实模型（Gcable-Pro-Thinking，3d7cf49）：subagents 探测（两个子任务各读一个文件、主任务等待并汇总，主任务未直接读取）1/1；subagentCancel（派生后取消主任务，子任务全部停止，同时不超过 2 个）1/1。单 Agent 与子任务的质量/耗时/费用比较仍未做。

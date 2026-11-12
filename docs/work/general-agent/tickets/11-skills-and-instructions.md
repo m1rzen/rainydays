@@ -56,3 +56,4 @@ src/persona.ts、skills/和默认工具发现/上下文预算；参考现有文�
 - 技能：`src/skill-packages.ts` 讀用戶技能目錄（Electron 為 `<userData>/skills`）與內置目錄下的 `<id>/SKILL.md`；frontmatter 子集（name、description，支援 `>`/`|`）。系統提示只列 id 與用途（預算 6000 字元、最多 40 項）；新工具 `skill_open` 按需讀正文與文本參考文件，拒絕越界、隱藏檔與二進位，不執行腳本。設定「通用」頁新增技能清單與開關（`/api/skill-packages`）。
 - 驗證：`tests/product/a11-skills-instructions.test.mjs` 7/7（含 S01 普通 run 只見描述→開正文→按需讀參考；S02 根/子目錄按範圍、資料文本不擴權）；Electron「A11 real Electron」1/1；`check:product` 156/156 + UI 15/15。治理測試 ECO-06/TOOL-06/tool-protocol 4 項失敗在改動前已存在。
 - 未完成：真實模型下的 S01/S02 成果、內置技能遮蔽邏輯的直接測試（內置目錄須位於應用根內，測試未覆蓋）、設定頁開關後的即時狀態文字在雙重刷新時可能被重繪覆蓋（測試改為重新載入後核對）。狀態維持 ready→工程實現待真實模型驗收。
+- 2026-11-12 真实模型（Gcable-Pro-Thinking，3d7cf49）：S02 instructions 探测 1/1；S01 skills 两轮都正确发现并打开技能、按需读取参考、未执行脚本，首轮术语未替换且原检查过严判失败，重测按新检查通过。详见[评测记录](../evaluations/04-coding.md)。
