@@ -1,6 +1,7 @@
 import path from "node:path";
 import { throwIfCancelled } from "../run-cancellation.js";
 import { ToolArgumentsError } from "../tool-pipeline.js";
+import { PathDeniedError } from "../path-policy.js";
 import type { ScopedPathGateway, ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 import { parseDocumentIsolated } from "../document-parser.js";
 import { routeToSelectedWorker } from "../worker.js";
@@ -19,6 +20,22 @@ const IMAGE_MIME_BY_EXTENSION = Object.freeze<Record<string, string>>({
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
   ".gif": "image/gif", ".webp": "image/webp",
 });
+
+/**
+ * Relative reads resolve against DATA_ROOT while writes resolve against OUTPUT_DIR. A result the assistant just
+ * wrote or saved exists only in OUTPUT_DIR, so a relative read that misses DATA_ROOT tries OUTPUT_DIR once and says so.
+ * Both roots are already authorized; nothing outside them becomes reachable.
+ */
+async function readRelativeWithOutputFallback(invocation: ToolInvocationServices, filePath: string, defaultRootId: string | undefined, maxBytes: number) {
+  try { return { authorized: await invocation.path.readFile(filePath, { defaultRootId, maxBytes }), fromOutput: false }; }
+  catch (error) {
+    const outputRoot = invocation.path.rootIdForEnv("OUTPUT_DIR");
+    if (path.isAbsolute(filePath) || !outputRoot || outputRoot === defaultRootId || !(error instanceof PathDeniedError && error.code === "PATH_NOT_FOUND")) throw error;
+    try { return { authorized: await invocation.path.readFile(filePath, { defaultRootId: outputRoot, maxBytes }), fromOutput: true }; }
+    catch { throw error; }
+  }
+}
+const OUTPUT_FALLBACK_NOTE = "（资料目录中没有此文件，读取的是成果目录中的同名文件）";
 
 function requireInvocation(invocation?: ToolInvocationServices): ToolInvocationServices {
   if (!invocation) throw new Error("Tool invocation services are required");
@@ -101,11 +118,12 @@ export const readExec: ToolExecutor = async (args, _env, invocationValue) => {
   const extension = path.extname(filePath).toLowerCase();
   if (args.pages !== undefined && extension !== ".pdf") throw new ToolArgumentsError("pages 仅适用于 PDF 文件");
   const pdfPages = parsePdfPageRange(args.pages);
-  const authorized = await invocation.path.readFile(filePath, { defaultRootId, maxBytes: MAX_DOCUMENT_BYTES });
+  const { authorized, fromOutput } = await readRelativeWithOutputFallback(invocation, filePath, defaultRootId, MAX_DOCUMENT_BYTES);
+  const where = fromOutput ? OUTPUT_FALLBACK_NOTE : "";
   const mime = imageMime(filePath, authorized.bytes);
   if (mime) {
     if (args.offset !== undefined || args.limit !== undefined || args.pages !== undefined) throw new ToolArgumentsError("图片读取不支持 offset、limit 或 pages");
-    return `[Image: ${filePath}]\nMIME: ${mime}\nBytes: ${authorized.bytes.length}\nUse image_helper with the same authorized path for visual analysis.`;
+    return `[Image: ${filePath}]${where}\nMIME: ${mime}\nBytes: ${authorized.bytes.length}\nUse image_helper with the same authorized path for visual analysis.`;
   }
   const evidenceDocument = [".pdf", ".docx", ".xlsx", ".xls"].includes(extension);
   const parsed = await parseDocumentIsolated(filePath, authorized.bytes, invocation.resourceOwner, invocation.signal, { pdfPages, includeEvidence: evidenceDocument });
@@ -124,11 +142,11 @@ export const readExec: ToolExecutor = async (args, _env, invocationValue) => {
     const utf8 = Buffer.from(text, "utf8");
     const slice = utf8.subarray(byteOffset, byteOffset + maxBytes);
     const nextByteOffset = byteOffset + slice.length < utf8.length ? byteOffset + slice.length : null;
-    return `文件: ${filePath}\n版本: ${revision}\n字节范围: ${byteOffset}-${byteOffset + slice.length} / ${utf8.length}${nextByteOffset !== null ? ` (next byte_offset=${nextByteOffset})` : ""}\n\n${slice.toString("utf8")}`;
+    return `文件: ${filePath}${where}\n版本: ${revision}\n字节范围: ${byteOffset}-${byteOffset + slice.length} / ${utf8.length}${nextByteOffset !== null ? ` (next byte_offset=${nextByteOffset})` : ""}\n\n${slice.toString("utf8")}`;
   }
   const longText = [".txt", ".md", ".markdown", ".csv", ".log"].includes(extension) && (text.length > 16000 || text.split(/\r?\n/u).some(line => line.length > 500));
   const page = evidenceDocument || longText ? documentTextPage(text, args.offset as number | undefined, args.limit as number | undefined, parsed.locations) : numberedLines(text, args.offset, args.limit);
-  return `文件: ${filePath}${pageSummary}\n版本: ${revision}${documentWarnings(parsed.warnings)}\n\n${page}`;
+  return `文件: ${filePath}${where}${pageSummary}\n版本: ${revision}${documentWarnings(parsed.warnings)}\n\n${page}`;
 };
 
 export const writeDef: ToolDefinition = {

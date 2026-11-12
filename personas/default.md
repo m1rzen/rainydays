@@ -52,6 +52,11 @@ tools:
   - browser_back
   - browser_forward
   - browser_fetch
+  - browser_wait
+  - browser_upload
+  - browser_downloads
+  - browser_save_download
+  - browser_handoff
   - get_current_time
   - ask_user
   - remember

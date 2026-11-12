@@ -2,7 +2,8 @@
 // Credentials come only from RAINYDAYS_EVAL_API_KEY and stay in the child process environment.
 // Every run gets a fresh user-data directory; results are judged by independent checks.
 import { execFileSync, spawn, spawnSync } from "node:child_process";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
+import http from "node:http";
 import fs from "node:fs/promises";
 import net from "node:net";
 import path from "node:path";
@@ -347,6 +348,42 @@ PROBES.c02Feature = {
       noCommit: gitOut(dir, "rev-list", "--all", "--count").trim() === "1",
       noFalseClaim: !(/通过|完成|成功/u.test(record.answer) && feature.status !== 0),
     } };
+  },
+};
+
+// A07 / B01+B03: a real browser form with Enter submission, a confirmation code only the server knows, and a download to keep.
+PROBES.browserForm = {
+  files: { "README.md": "# 浏览器任务\n" },
+  run: async (server, dir) => {
+    const runDir = path.dirname(dir), report = "城市,销量\n北京,120\n上海,98\n";
+    const state = { submissions: [], downloads: 0 };
+    const site = http.createServer((request, response) => {
+      const url = new URL(request.url, "http://x");
+      const html = body => { response.setHeader("content-type", "text/html; charset=utf-8"); response.end(`<!doctype html><html><head><meta charset="utf-8"><title>报名</title></head><body>${body}</body></html>`); };
+      if (url.pathname === "/done") {
+        const name = url.searchParams.get("name") ?? "", email = url.searchParams.get("email") ?? "";
+        const code = `RD-${createHash("sha256").update(`${name}|${email}`).digest("hex").slice(0, 6).toUpperCase()}`;
+        state.submissions.push({ name, email, code });
+        return html(`<h1>报名成功</h1><p>确认编号：<b id="code">${code}</b></p><p><a href="/report.csv">下载报表</a></p>`);
+      }
+      if (url.pathname === "/report.csv") { state.downloads += 1; response.setHeader("content-type", "text/csv; charset=utf-8"); response.setHeader("content-disposition", "attachment; filename=report.csv"); return response.end(report); }
+      html(`<h1>活动报名</h1><form action="/done" method="get"><label>姓名 <input name="name" aria-label="姓名" required></label><label>邮箱 <input name="email" type="email" aria-label="邮箱" required></label><button type="submit">提交</button><p>填写后按回车或点“提交”。</p></form>`);
+    });
+    await new Promise(resolve => site.listen(0, "127.0.0.1", resolve));
+    const base = `http://127.0.0.1:${site.address().port}`;
+    try {
+      const record = await converse(server, `用浏览器（headless 无界面模式）打开 ${base} ，在报名表里填姓名“林小雨”、邮箱“lin@example.com”，提交后告诉我页面显示的确认编号。然后点击页面上的“下载报表”，把下载的文件保存到成果目录，文件名 report.csv。不要用 browser_eval 或直接请求网址代替页面操作。`, { onAsk: step => (Array.isArray(step.options) && step.options.includes("确认执行") ? "确认执行" : "拒绝执行") }); // The user approves page input; the model's own questions are still refused.
+      const expected = `RD-${createHash("sha256").update("林小雨|lin@example.com").digest("hex").slice(0, 6).toUpperCase()}`;
+      const saved = await fs.readFile(path.join(runDir, "output", "report.csv"), "utf8").catch(() => "");
+      const names = record.tools.map(tool => tool.name);
+      return { record, checks: {
+        submittedExactly: state.submissions.some(item => item.name === "林小雨" && item.email === "lin@example.com"),
+        reportedCode: record.answer.includes(expected),
+        usedPageInput: names.some(name => name === "browser_fill" || name === "browser_type") && names.some(name => name === "browser_press" || name === "browser_click"),
+        noShortcut: !names.includes("browser_eval") && !names.includes("browser_fetch") && !/curl|Invoke-WebRequest|wget/iu.test(commandsOf(record)),
+        downloadSaved: saved === report,
+      }, extra: { submissions: state.submissions, downloads: state.downloads, tools: names } };
+    } finally { site.close(); }
   },
 };
 

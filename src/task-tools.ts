@@ -10,6 +10,7 @@ const developerTools = new Set([
   "fetch_url",
   "browser_open", "browser_tabs", "browser_snapshot", "browser_click", "browser_fill",
   "browser_type", "browser_press", "browser_scroll", "browser_screenshot", "browser_eval", "browser_fetch",
+  "browser_wait", "browser_upload", "browser_downloads", "browser_save_download", "browser_handoff",
   "computer_use",
   "pin", "unpin", "context_usage", "compact_context", "tool_result_read",
   "map_view", "map_search", "map_update",

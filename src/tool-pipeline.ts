@@ -73,6 +73,13 @@ export class ToolLoopDetector {
     }
   }
 
+  /** A successful page action changes what a browser observation returns, so observing again is progress. */
+  noteBrowserChange(): void {
+    for (const key of this.#counts.keys()) {
+      if (/^browser_(?:snapshot|screenshot|tabs|downloads|wait):/u.test(key)) this.#counts.set(key, 0);
+    }
+  }
+
   observe(toolName: string, argumentsDigest: string): void {
     const key = `${toolName}:${argumentsDigest}`;
     const previous = this.#counts.get(key) ?? 0;

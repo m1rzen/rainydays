@@ -1,5 +1,7 @@
 # 当前开发状态
 
+2026-11-12 A07 浏览器：真实鼠标/键盘输入、引用新鲜度、只操作任务自己的标签、上传/下载/等待/交给用户，真实 Chrome 测试 7/7、真实模型报名表与下载场景 3/3；状态 implemented（待真人登录接管与同事入口确认）。产品 173/173。
+
 2026-11-12 收尾：**A04 verified**（真实模型 C01 1/1、C02 3/3、C05 由 J05/P05 覆盖）；**D02 verified**（参考配置 Gcable-Pro-Thinking 契约检查 8/8，修复网关 503 model_not_found 被当作服务故障并重试）。产品 172/172、UI 15/15。
 
 2026-11-12 真实模型复测（3d7cf49，Gcable-Pro-Thinking）：编码 18/20（J06 启动崩溃、重测通过，72 次并发启动未复现，评测脚本已改为保存完整启动日志并记录重试；P05 超时，根因是 read_repo 路径编码过度致模型拼错绝对路径，已修复并重测 3/3）；探测首轮 7/9，A11 instructions、A12 subagentCancel 通过，skills 与 autoBoundary 重测通过。本轮无流式中断，串流重试未被真实触发。详见[评测记录](work/general-agent/evaluations/04-coding.md)。

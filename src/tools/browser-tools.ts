@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import path from "node:path";
+import { writeFile } from "node:fs/promises";
 import { browserSessions, type BrowserTabSelector } from "../browser.js";
 import { throwIfCancelled } from "../run-cancellation.js";
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
@@ -22,7 +25,7 @@ export const browserOpenDef: ToolDefinition = {
   type: "function",
   function: {
     name: "browser_open",
-    description: "Open or navigate a Session-isolated browser using CDP or the Chrome Extension backend.",
+    description: "Open or navigate this Session's browser. By default RainyDays launches its own visible Chrome/Edge profile (downloads supported). With cdpPort/cdpUrl it attaches to a browser you already run and only sees tabs this task opens.",
     parameters: {
       type: "object",
       properties: {
@@ -65,7 +68,7 @@ export const browserSnapshotDef: ToolDefinition = {
   type: "function",
   function: {
     name: "browser_snapshot",
-    description: "Capture a ref-bearing accessibility-style DOM snapshot and bounded page text. Refs expire after navigation or mutation.",
+    description: "Capture a ref-bearing accessibility-style DOM snapshot and bounded page text. Refs stay valid until the page navigates, the element is replaced, or the browser is handed to the user; then take a new snapshot.",
     parameters: {
       type: "object",
       properties: {
@@ -85,16 +88,16 @@ export const browserSnapshotExec: ToolExecutor = async (args, env, invocation) =
   maxContentLength: args.maxContentLength as number | undefined,
 });
 
-export const browserClickDef: ToolDefinition = { type: "function", function: { name: "browser_click", description: "Click an element by ref from the latest snapshot.", parameters: { type: "object", properties: { ref: { type: "string" }, tab: tabProperty }, required: ["ref"], ...noExtra } } };
-export const browserClickExec: ToolExecutor = async (args, env, invocation) => { await browserSessions.click(prepare(env, invocation), args.ref as string, args.tab as BrowserTabSelector); return "Browser element clicked; snapshot refs invalidated"; };
+export const browserClickDef: ToolDefinition = { type: "function", function: { name: "browser_click", description: "Real mouse click at the centre of an element from the latest snapshot. Refuses elements that are hidden or covered by another element.", parameters: { type: "object", properties: { ref: { type: "string" }, tab: tabProperty }, required: ["ref"], ...noExtra } } };
+export const browserClickExec: ToolExecutor = async (args, env, invocation) => { await browserSessions.click(prepare(env, invocation), args.ref as string, args.tab as BrowserTabSelector); return "Clicked. Refs stay valid until the page navigates or the element is replaced; take a snapshot to see the effect."; };
 
-export const browserFillDef: ToolDefinition = { type: "function", function: { name: "browser_fill", description: "Clear and fill an input by snapshot ref.", parameters: { type: "object", properties: { ref: { type: "string" }, value: { type: "string" }, tab: tabProperty }, required: ["ref", "value"], ...noExtra } } };
-export const browserFillExec: ToolExecutor = async (args, env, invocation) => { await browserSessions.fill(prepare(env, invocation), args.ref as string, args.value as string, args.tab as BrowserTabSelector); return "Browser field filled; snapshot refs invalidated"; };
+export const browserFillDef: ToolDefinition = { type: "function", function: { name: "browser_fill", description: "Replace a field's content through real text input and verify the value the page kept.", parameters: { type: "object", properties: { ref: { type: "string" }, value: { type: "string" }, tab: tabProperty }, required: ["ref", "value"], ...noExtra } } };
+export const browserFillExec: ToolExecutor = async (args, env, invocation) => { await browserSessions.fill(prepare(env, invocation), args.ref as string, args.value as string, args.tab as BrowserTabSelector); return `Filled; the field now holds ${JSON.stringify(String(args.value ?? "").slice(0, 120))}.`; };
 
-export const browserTypeDef: ToolDefinition = { type: "function", function: { name: "browser_type", description: "Type text character-by-character into an element by snapshot ref.", parameters: { type: "object", properties: { ref: { type: "string" }, text: { type: "string" }, delay: { type: "number", minimum: 0, maximum: 2000 }, tab: tabProperty }, required: ["ref", "text"], ...noExtra } } };
-export const browserTypeExec: ToolExecutor = async (args, env, invocation) => { await browserSessions.type(prepare(env, invocation), args.ref as string, args.text as string, args.delay as number | undefined, args.tab as BrowserTabSelector); return "Browser text typed; snapshot refs invalidated"; };
+export const browserTypeDef: ToolDefinition = { type: "function", function: { name: "browser_type", description: "Type text into an element by snapshot ref using real text input.", parameters: { type: "object", properties: { ref: { type: "string" }, text: { type: "string" }, delay: { type: "number", minimum: 0, maximum: 2000 }, tab: tabProperty }, required: ["ref", "text"], ...noExtra } } };
+export const browserTypeExec: ToolExecutor = async (args, env, invocation) => { await browserSessions.type(prepare(env, invocation), args.ref as string, args.text as string, args.delay as number | undefined, args.tab as BrowserTabSelector); return "Typed. The snapshot shows each field's current value."; };
 
-export const browserPressDef: ToolDefinition = { type: "function", function: { name: "browser_press", description: "Dispatch a keyboard key to the active page element.", parameters: { type: "object", properties: { key: { type: "string" }, tab: tabProperty }, required: ["key"], ...noExtra } } };
+export const browserPressDef: ToolDefinition = { type: "function", function: { name: "browser_press", description: "Send a real key to the focused element: Enter submits forms, Tab moves focus. Supports Escape, Backspace, arrows, Space and modifiers such as Control+A or Shift+Tab.", parameters: { type: "object", properties: { key: { type: "string" }, tab: tabProperty }, required: ["key"], ...noExtra } } };
 export const browserPressExec: ToolExecutor = async (args, env, invocation) => { await browserSessions.press(prepare(env, invocation), args.key as string, args.tab as BrowserTabSelector); return "Browser key pressed"; };
 
 export const browserScrollDef: ToolDefinition = { type: "function", function: { name: "browser_scroll", description: "Scroll the page or a ref-selected scroll container.", parameters: { type: "object", properties: { direction: { type: "string", enum: ["up", "down", "left", "right"] }, amount: { type: "number" }, ref: { type: "string" }, tab: tabProperty }, required: ["direction"], ...noExtra } } };
@@ -137,3 +140,79 @@ export const browserFetchExec: ToolExecutor = async (args, env, invocation) => j
   body: args.body as string | undefined,
   tab: args.tab as BrowserTabSelector,
 }));
+
+const MAX_TRANSFER_BYTES = 50 * 1024 * 1024;
+
+export const browserWaitDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "browser_wait",
+    description: "等待页面出现某段文字、某段文字消失或网址包含某段内容（最多 60 秒）。操作后页面需要时间更新时使用；返回是否满足和当前网址。",
+    parameters: { type: "object", properties: { text: { type: "string" }, textGone: { type: "string" }, urlIncludes: { type: "string" }, timeoutMs: { type: "number", minimum: 100, maximum: 60000 }, tab: tabProperty }, ...noExtra },
+  },
+};
+export const browserWaitExec: ToolExecutor = async (args, env, invocation) => json(await browserSessions.waitFor(prepare(env, invocation), {
+  text: args.text as string | undefined, textGone: args.textGone as string | undefined, urlIncludes: args.urlIncludes as string | undefined, timeoutMs: args.timeoutMs as number | undefined,
+}, args.tab as BrowserTabSelector, invocation?.signal));
+
+export const browserUploadDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "browser_upload",
+    description: "把授权目录里的一个文件选进页面的文件上传框（按快照里的 ref）。只交出这一个文件的副本，不会交出整个目录。",
+    parameters: { type: "object", properties: { ref: { type: "string" }, file_path: { type: "string", description: "绝对路径，或相对于资料目录的路径。" }, tab: tabProperty }, required: ["ref", "file_path"], ...noExtra },
+  },
+};
+export const browserUploadExec: ToolExecutor = async (args, env, invocation) => {
+  const sessionId = prepare(env, invocation);
+  if (!invocation) throw new Error("browser_upload requires a scoped path gateway");
+  const filePath = String(args.file_path ?? "");
+  const defaultRootId = path.isAbsolute(filePath) ? undefined : invocation.path.rootIdForEnv("DATA_ROOT") ?? undefined;
+  const read = await invocation.path.readFile(filePath, { defaultRootId, maxBytes: MAX_TRANSFER_BYTES });
+  const name = path.basename(filePath).replace(/[^\p{L}\p{N}._ ()-]/gu, "_").slice(0, 120) || "upload.bin";
+  const copy = path.join(await browserSessions.uploadDirectory(sessionId), name);
+  await writeFile(copy, read.bytes, { flag: "wx" });
+  await browserSessions.upload(sessionId, args.ref as string, copy, args.tab as BrowserTabSelector);
+  return json({ uploaded: name, bytes: read.bytes.length, sha256: createHash("sha256").update(read.bytes).digest("hex") });
+};
+
+export const browserDownloadsDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "browser_downloads",
+    description: "列出本会话浏览器的下载（名称、状态、字节数）。下载先放在临时目录，不算成果；需要保留时用 browser_save_download 存到成果目录。",
+    parameters: { type: "object", properties: {}, ...noExtra },
+  },
+};
+export const browserDownloadsExec: ToolExecutor = async (_args, env, invocation) => json(browserSessions.downloads(prepare(env, invocation)));
+
+export const browserSaveDownloadDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "browser_save_download",
+    description: "把一个已完成的浏览器下载保存到成果目录（或授权目录的指定位置），返回保存的文件名、大小和 sha256。",
+    parameters: { type: "object", properties: { id: { type: "number", minimum: 1 }, file_path: { type: "string", description: "绝对路径，或相对于成果目录的路径；省略时用下载的原文件名。" } }, required: ["id"], ...noExtra },
+  },
+};
+export const browserSaveDownloadExec: ToolExecutor = async (args, env, invocation) => {
+  const sessionId = prepare(env, invocation);
+  if (!invocation) throw new Error("browser_save_download requires a scoped path gateway");
+  const download = await browserSessions.readDownload(sessionId, Number(args.id), MAX_TRANSFER_BYTES);
+  const filePath = typeof args.file_path === "string" && args.file_path.trim() ? args.file_path.trim() : download.name.replace(/[\\/:*?"<>|]/gu, "_");
+  const defaultRootId = path.isAbsolute(filePath) ? undefined : invocation.path.rootIdForEnv("OUTPUT_DIR") ?? undefined;
+  await invocation.path.createFile(filePath, download.bytes, { defaultRootId, maxBytes: MAX_TRANSFER_BYTES });
+  return json({ saved: filePath, bytes: download.bytes.length, sha256: createHash("sha256").update(download.bytes).digest("hex") });
+};
+
+export const browserHandoffDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "browser_handoff",
+    description: "遇到登录、验证码、支付或需要用户本人确认的页面时，把浏览器切到前台交给用户。不要替用户输入密码或绕过验证。调用后用 ask_user 请用户完成并回复；用户确认后先 browser_snapshot 重新观察，旧 ref 全部作废。",
+    parameters: { type: "object", properties: { reason: { type: "string", description: "告诉用户需要做什么，例如“请登录后回复”。" }, tab: tabProperty }, required: ["reason"], ...noExtra },
+  },
+};
+export const browserHandoffExec: ToolExecutor = async (args, env, invocation) => {
+  const tab = await browserSessions.handoff(prepare(env, invocation), args.tab as BrowserTabSelector);
+  return json({ handedOff: true, reason: String(args.reason ?? "").slice(0, 300), tab, next: "调用 ask_user 请用户完成后回复；之后先 browser_snapshot，旧 ref 已作废。" });
+};

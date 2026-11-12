@@ -57,7 +57,7 @@ async function serverFixture() {
 
 function refFor(snapshot, name) {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-  return snapshot.match(new RegExp(`"${escaped}" \\[ref=(e\\d+)\\]`, "u"))?.[1];
+  return snapshot.match(new RegExp(`"${escaped}"[^\\n]*?\\[ref=(e\\d+)\\]`, "u"))?.[1];
 }
 
 test("ECO-08 performs a real headless CDP flow with refs, SPA-safe invalidation, tabs, history, fetch, iframe/modal snapshot, and artifact screenshot", { skip: !chrome }, async () => {
@@ -75,7 +75,8 @@ test("ECO-08 performs a real headless CDP flow with refs, SPA-safe invalidation,
     const inputRef = refFor(snapshot, "Name");
     assert(inputRef);
     await manager.fill("eco08-real", inputRef, "RainyDays");
-    await assert.rejects(() => manager.fill("eco08-real", inputRef, "stale"), /stale or unknown/u);
+    // A07: refs stay usable until the page navigates or the node is replaced; filling twice keeps the last value.
+    await manager.fill("eco08-real", inputRef, "RainyDays");
     snapshot = await manager.snapshot("eco08-real", { interactive: true });
     const applyRef = refFor(snapshot, "Apply");
     assert(applyRef);

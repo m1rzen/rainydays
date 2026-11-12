@@ -58,6 +58,72 @@ export interface BrowserBackend {
   back(tab?: BrowserTabSelector): Promise<BrowserTab>;
   forward(tab?: BrowserTabSelector): Promise<BrowserTab>;
   fetch(url: string, options?: Readonly<{ method?: string; headers?: Record<string, string>; body?: string; tab?: BrowserTabSelector }>): Promise<unknown>;
+  waitFor?(condition: BrowserWaitCondition, tab?: BrowserTabSelector, signal?: AbortSignal): Promise<BrowserWaitResult>;
+  upload?(ref: string, hostFile: string, tab?: BrowserTabSelector): Promise<void>;
+  uploadDirectory?(): Promise<string>;
+  downloads?(): BrowserDownload[];
+  readDownload?(id: number, maximumBytes: number): Promise<Readonly<{ name: string; bytes: Buffer }>>;
+  handoff?(tab?: BrowserTabSelector): Promise<BrowserTab>;
+}
+
+export interface BrowserWaitCondition {
+  readonly text?: string;
+  readonly textGone?: string;
+  readonly urlIncludes?: string;
+  readonly timeoutMs?: number;
+}
+
+export interface BrowserWaitResult { readonly met: boolean; readonly url: string; readonly title: string; readonly waitedMs: number }
+
+export interface BrowserDownload {
+  readonly id: number;
+  readonly name: string;
+  readonly url: string;
+  readonly state: "inProgress" | "completed" | "canceled";
+  readonly receivedBytes: number;
+  readonly totalBytes: number;
+}
+
+interface DownloadRecord { id: number; guid: string; name: string; url: string; state: BrowserDownload["state"]; receivedBytes: number; totalBytes: number }
+
+/** Real key events: Enter submits native forms and Tab moves focus, unlike synthetic KeyboardEvent objects. */
+const NAMED_KEYS: Readonly<Record<string, Readonly<{ key: string; code: string; keyCode: number; text?: string }>>> = Object.freeze({
+  Enter: { key: "Enter", code: "Enter", keyCode: 13, text: "\r" },
+  Tab: { key: "Tab", code: "Tab", keyCode: 9 },
+  Escape: { key: "Escape", code: "Escape", keyCode: 27 },
+  Backspace: { key: "Backspace", code: "Backspace", keyCode: 8 },
+  Delete: { key: "Delete", code: "Delete", keyCode: 46 },
+  ArrowUp: { key: "ArrowUp", code: "ArrowUp", keyCode: 38 },
+  ArrowDown: { key: "ArrowDown", code: "ArrowDown", keyCode: 40 },
+  ArrowLeft: { key: "ArrowLeft", code: "ArrowLeft", keyCode: 37 },
+  ArrowRight: { key: "ArrowRight", code: "ArrowRight", keyCode: 39 },
+  Home: { key: "Home", code: "Home", keyCode: 36 },
+  End: { key: "End", code: "End", keyCode: 35 },
+  PageUp: { key: "PageUp", code: "PageUp", keyCode: 33 },
+  PageDown: { key: "PageDown", code: "PageDown", keyCode: 34 },
+  Space: { key: " ", code: "Space", keyCode: 32, text: " " },
+});
+const KEY_ALIASES: Readonly<Record<string, string>> = Object.freeze({ Esc: "Escape", Return: "Enter", Up: "ArrowUp", Down: "ArrowDown", Left: "ArrowLeft", Right: "ArrowRight", " ": "Space", Spacebar: "Space" });
+const MODIFIERS: Readonly<Record<string, number>> = Object.freeze({ alt: 1, control: 2, ctrl: 2, meta: 4, cmd: 4, command: 4, shift: 8 });
+
+export function parseBrowserKey(input: string): Readonly<{ key: string; code: string; keyCode: number; text?: string; modifiers: number }> {
+  const parts = input === "+" ? ["+"] : input.split("+");
+  const name = parts.pop() ?? "";
+  let modifiers = 0;
+  for (const part of parts) {
+    const bit = MODIFIERS[part.trim().toLowerCase()];
+    if (!bit) throw new TypeError(`Unknown key modifier: ${part}`);
+    modifiers |= bit;
+  }
+  const canonical = KEY_ALIASES[name] ?? name;
+  const named = NAMED_KEYS[canonical];
+  const shortcut = (modifiers & (1 | 2 | 4)) !== 0;
+  if (named) return Object.freeze({ ...named, ...(shortcut ? { text: undefined } : {}), modifiers });
+  if ([...name].length !== 1) throw new TypeError(`Unsupported browser key: ${name}`);
+  const upper = name.toUpperCase();
+  const letter = /^[A-Z]$/u.test(upper), digit = /^[0-9]$/u.test(name);
+  const text = shortcut ? undefined : (modifiers & 8) && letter ? upper : name;
+  return Object.freeze({ key: (modifiers & 8) && letter ? upper : name, code: letter ? `Key${upper}` : digit ? `Digit${name}` : "", keyCode: letter || digit ? upper.charCodeAt(0) : 0, ...(text !== undefined ? { text } : {}), modifiers });
 }
 
 interface CdpTarget {
@@ -79,6 +145,13 @@ class CdpConnection {
   readonly ready: Promise<void>;
   #nextId = 1;
   #pending = new Map<number, PendingRequest>();
+  #listeners = new Map<string, Set<(params: Record<string, unknown>) => void>>();
+
+  on(method: string, listener: (params: Record<string, unknown>) => void): void {
+    let set = this.#listeners.get(method);
+    if (!set) { set = new Set(); this.#listeners.set(method, set); }
+    set.add(listener);
+  }
 
   constructor(url: string) {
     this.url = url;
@@ -92,6 +165,10 @@ class CdpConnection {
       try { message = JSON.parse(String(event.data)); } catch { return; }
       if (!message || typeof message !== "object" || Array.isArray(message)) return;
       const record = message as Record<string, unknown>;
+      if (typeof record.method === "string" && typeof record.id !== "number") {
+        for (const listener of this.#listeners.get(record.method) ?? []) { try { listener((record.params ?? {}) as Record<string, unknown>); } catch { /* listener errors stay local */ } }
+        return;
+      }
       if (typeof record.id !== "number") return;
       const pending = this.#pending.get(record.id);
       if (!pending) return;
@@ -195,7 +272,11 @@ function renderSnapshot(value: unknown, maximum: number): string {
     const role = typeof item.role === "string" ? item.role : "element";
     const name = typeof item.name === "string" ? item.name.replace(/\s+/gu, " ").trim() : "";
     const ref = typeof item.ref === "string" ? ` [ref=${item.ref}]` : "";
-    return `${"  ".repeat(depth)}- ${role}${name ? ` \"${name}\"` : ""}${ref}`;
+    const value = typeof item.value === "string" ? ` value=${JSON.stringify(item.value)}` : "";
+    const checked = typeof item.checked === "boolean" ? (item.checked ? " [checked]" : " [unchecked]") : "";
+    const files = typeof item.files === "string" ? ` files=${JSON.stringify(item.files)}` : "";
+    const focused = item.focused === true ? " [focused]" : "";
+    return `${"  ".repeat(depth)}- ${role}${name ? ` \"${name}\"` : ""}${value}${checked}${files}${focused}${ref}`;
   });
   const content = typeof record.content === "string" ? record.content.slice(0, maximum) : "";
   return `${lines.join("\n")}\n\n--- Page Content ---\n${content}`.trim();
@@ -212,6 +293,15 @@ export class CdpBrowserBackend implements BrowserBackend {
   #nextTabNumber = 1;
   #activeTargetId: string | null = null;
   #refs = new Map<string, Set<string>>();
+  /** Attached to a browser the user already runs: only tabs this Session opened (and their popups) are visible. */
+  #attached = false;
+  #owned = new Set<string>();
+  #browserConnection: CdpConnection | null = null;
+  #ioPath: string | null = null;
+  #downloads = new Map<string, DownloadRecord>();
+  #nextDownloadId = 1;
+  #downloadsEnabled = false;
+  #headless = false;
 
   async #connect(options: BrowserOpenOptions): Promise<void> {
     if (this.#baseUrl || this.#directTarget) return;
@@ -219,13 +309,14 @@ export class CdpBrowserBackend implements BrowserBackend {
       const wsUrl = exactText(options.cdpUrl, "CDP URL", 8_192);
       if (!/^wss?:\/\//iu.test(wsUrl)) throw new Error("cdpUrl must use ws:// or wss://");
       this.#directTarget = { id: "direct", type: "page", url: "about:blank", title: "Direct CDP", webSocketDebuggerUrl: wsUrl };
+      this.#owned.add("direct");
       return;
     }
     const requestedPort = safePort(options.cdpPort) ?? safePort(Number(process.env.LUX_CDP_PORT) || undefined);
     const ports = requestedPort ? [requestedPort] : [9222, 9223];
     for (const port of ports) {
       const candidate = `http://127.0.0.1:${port}`;
-      try { await waitForEndpoint(candidate, 500); this.#baseUrl = candidate; return; } catch { /* discover next */ }
+      try { await waitForEndpoint(candidate, 500); this.#baseUrl = candidate; this.#attached = true; await this.#connectBrowser(); return; } catch { /* discover next */ }
     }
     const executable = await firstExecutable();
     const port = requestedPort ?? await freePort();
@@ -238,11 +329,60 @@ export class CdpBrowserBackend implements BrowserBackend {
       "--disable-default-apps",
       "--disable-background-networking",
     ];
+    this.#headless = options.headless === true;
     if (options.headless) args.push("--headless=new", "--disable-gpu");
     args.push("about:blank");
     this.#spawned = spawn(executable, args, { stdio: "ignore", windowsHide: Boolean(options.headless) });
     this.#baseUrl = `http://127.0.0.1:${port}`;
     try { await waitForEndpoint(this.#baseUrl); } catch (error) { await this.close(); throw error; }
+    await this.#connectBrowser();
+  }
+
+  /** Browser-level channel: popup ownership and, for a browser this Session launched, downloads into a private folder. */
+  async #connectBrowser(): Promise<void> {
+    if (!this.#baseUrl || this.#browserConnection) return;
+    try {
+      const version = await (await fetch(`${this.#baseUrl}/json/version`)).json() as { webSocketDebuggerUrl?: string };
+      if (!version.webSocketDebuggerUrl) return;
+      const connection = new CdpConnection(version.webSocketDebuggerUrl);
+      await connection.ready;
+      this.#browserConnection = connection;
+      if (this.#attached) return; // Never change download behaviour of a browser the user owns.
+      const downloadPath = path.join(await this.#io(), "downloads");
+      await mkdir(downloadPath, { recursive: true });
+      connection.on("Browser.downloadWillBegin", params => {
+        const guid = String(params.guid ?? "");
+        if (!guid || this.#downloads.has(guid)) return;
+        this.#downloads.set(guid, { id: this.#nextDownloadId++, guid, name: String(params.suggestedFilename ?? "download").slice(0, 200), url: String(params.url ?? "").slice(0, 2048), state: "inProgress", receivedBytes: 0, totalBytes: 0 });
+      });
+      connection.on("Browser.downloadProgress", params => {
+        const record = this.#downloads.get(String(params.guid ?? ""));
+        if (!record) return;
+        if (params.state === "completed" || params.state === "canceled" || params.state === "inProgress") record.state = params.state;
+        if (typeof params.receivedBytes === "number") record.receivedBytes = params.receivedBytes;
+        if (typeof params.totalBytes === "number") record.totalBytes = params.totalBytes;
+      });
+      await connection.send("Browser.setDownloadBehavior", { behavior: "allowAndName", downloadPath, eventsEnabled: true });
+      this.#downloadsEnabled = true;
+    } catch { /* downloads stay unavailable; page actions still work */ }
+  }
+
+  async #io(): Promise<string> {
+    if (!this.#ioPath) this.#ioPath = await mkdtemp(path.join(os.tmpdir(), "rainydays-browser-io-"));
+    return this.#ioPath;
+  }
+
+  async #adoptPopups(targets: CdpTarget[]): Promise<void> {
+    if (!this.#attached || !this.#browserConnection) return;
+    if (!targets.some(target => !this.#owned.has(target.id))) return;
+    try {
+      const { targetInfos } = await this.#browserConnection.send<{ targetInfos: Array<{ targetId: string; openerId?: string }> }>("Target.getTargets");
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const info of targetInfos) if (info.openerId && this.#owned.has(info.openerId) && !this.#owned.has(info.targetId)) { this.#owned.add(info.targetId); changed = true; }
+      }
+    } catch { /* ownership stays as it was */ }
   }
 
   async #targets(): Promise<CdpTarget[]> {
@@ -250,8 +390,10 @@ export class CdpBrowserBackend implements BrowserBackend {
     if (!this.#baseUrl) throw new Error("Browser is not connected");
     const response = await fetch(`${this.#baseUrl}/json/list`);
     if (!response.ok) throw new Error(`CDP target listing failed: HTTP ${response.status}`);
-    const values = await response.json() as CdpTarget[];
-    return values.filter(target => target.type === "page" && typeof target.webSocketDebuggerUrl === "string");
+    const values = (await response.json() as CdpTarget[]).filter(target => target.type === "page" && typeof target.webSocketDebuggerUrl === "string");
+    if (!this.#attached) return values;
+    await this.#adoptPopups(values);
+    return values.filter(target => this.#owned.has(target.id));
   }
 
   #number(targetId: string): number {
@@ -285,6 +427,8 @@ export class CdpBrowserBackend implements BrowserBackend {
     if (!connection) {
       connection = new CdpConnection(target.webSocketDebuggerUrl);
       this.#connections.set(target.id, connection);
+      const targetId = target.id;
+      connection.on("Page.frameNavigated", params => { const frame = params.frame as { parentId?: string } | undefined; if (!frame?.parentId) this.#invalidate(targetId); });
       await connection.ready;
       await Promise.all([connection.send("Page.enable"), connection.send("Runtime.enable")]);
     }
@@ -321,8 +465,11 @@ export class CdpBrowserBackend implements BrowserBackend {
     const url = normalizeUrl(options.url);
     let target = await this.#target(options.tab).catch(async () => {
       if (!this.#baseUrl) throw new Error("Direct CDP target is unavailable");
-      await fetch(`${this.#baseUrl}/json/new?${encodeURIComponent("about:blank")}`, { method: "PUT" });
-      return this.#target();
+      const response = await fetch(`${this.#baseUrl}/json/new?${encodeURIComponent("about:blank")}`, { method: "PUT" });
+      if (!response.ok) throw new Error(`Creating browser tab failed: HTTP ${response.status}`);
+      const created = await response.json() as CdpTarget;
+      this.#owned.add(created.id);
+      return this.#target(this.#number(created.id));
     });
     const connection = await this.#connection(target);
     await connection.send("Page.navigate", { url });
@@ -332,8 +479,19 @@ export class CdpBrowserBackend implements BrowserBackend {
   }
 
   async close(): Promise<void> {
+    if (this.#attached && this.#baseUrl) {
+      for (const targetId of this.#owned) await fetch(`${this.#baseUrl}/json/close/${encodeURIComponent(targetId)}`).catch(() => undefined);
+    }
     for (const connection of this.#connections.values()) connection.close();
     this.#connections.clear();
+    this.#browserConnection?.close();
+    this.#browserConnection = null;
+    this.#owned.clear();
+    this.#attached = false;
+    this.#downloads.clear();
+    this.#downloadsEnabled = false;
+    if (this.#ioPath) await rm(this.#ioPath, { recursive: true, force: true }).catch(() => undefined);
+    this.#ioPath = null;
     if (this.#spawned && this.#spawned.exitCode === null) this.#spawned.kill("SIGTERM");
     this.#spawned = null;
     if (this.#profilePath) await rm(this.#profilePath, { recursive: true, force: true }).catch(() => undefined);
@@ -352,6 +510,7 @@ export class CdpBrowserBackend implements BrowserBackend {
     const response = await fetch(`${this.#baseUrl}/json/new?${encodeURIComponent(url)}`, { method: "PUT" });
     if (!response.ok) throw new Error(`Creating browser tab failed: HTTP ${response.status}`);
     const target = await response.json() as CdpTarget;
+    this.#owned.add(target.id);
     this.#activeTargetId = target.id;
     return this.#settled(this.#number(target.id));
   }
@@ -366,6 +525,7 @@ export class CdpBrowserBackend implements BrowserBackend {
       if (!response.ok) throw new Error(`Closing browser tab failed: HTTP ${response.status}`);
     } else connection?.close();
     this.#refs.delete(target.id);
+    this.#owned.delete(target.id);
     this.#activeTargetId = null;
   }
 
@@ -390,7 +550,14 @@ export class CdpBrowserBackend implements BrowserBackend {
           let ref;
           if (isInteractive) { ref = 'e' + (++sequence); element.setAttribute('data-rainydays-ref', ref); }
           const name = element.getAttribute('aria-label') || element.getAttribute('alt') || element.getAttribute('title') || element.innerText || element.value || '';
-          if (!interactiveOnly || isInteractive) elements.push({ role, name: String(name).trim().slice(0, 240), ref, depth });
+          const field = (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT');
+          const kind = String(element.type || '').toLowerCase();
+          const state = {};
+          if (field && !['checkbox','radio','button','submit','reset','file','image','hidden'].includes(kind)) state.value = kind === 'password' ? (element.value ? '••••' : '') : String(element.value ?? '').slice(0, 200);
+          if (kind === 'checkbox' || kind === 'radio') state.checked = Boolean(element.checked);
+          if (kind === 'file') state.files = Array.from(element.files || []).map(file => file.name).join(', ').slice(0, 200);
+          if (document.activeElement === element) state.focused = true;
+          if (!interactiveOnly || isInteractive) elements.push({ role, name: String(field ? (element.getAttribute('aria-label') || element.labels?.[0]?.innerText || element.name || element.placeholder || '') : name).trim().slice(0, 240), ref, depth, ...state });
           if (tag === 'IFRAME') { try { if (element.contentDocument) visit(element.contentDocument, depth + 1); } catch {} }
           visit(element, depth + 1);
         }
@@ -404,34 +571,133 @@ export class CdpBrowserBackend implements BrowserBackend {
     return renderSnapshot(value, maximum);
   }
 
-  async #withRef(refInput: string, tab: BrowserTabSelector, operation: (selector: string) => string): Promise<void> {
+  /** Resolves a ref of the latest snapshot in its own tab; a missing node means the page changed and must be observed again. */
+  async #resolveRef(refInput: string, tab: BrowserTabSelector): Promise<Readonly<{ target: CdpTarget; selector: string }>> {
     const ref = exactText(refInput, "Browser ref", 80);
     const target = await this.#target(tab);
     if (!this.#refs.get(target.id)?.has(ref)) throw new Error(`Browser ref is stale or unknown: ${ref}; run browser_snapshot again`);
     const selector = `[data-rainydays-ref=${JSON.stringify(ref)}]`;
+    const exists = await this.#evaluate<boolean>(`Boolean(document.querySelector(${JSON.stringify(selector)}))`, this.#number(target.id));
+    if (!exists) { this.#refs.get(target.id)?.delete(ref); throw new Error(`Browser ref no longer exists: ${ref}; the page changed, run browser_snapshot again`); }
+    return Object.freeze({ target, selector });
+  }
+
+  async #withRef(refInput: string, tab: BrowserTabSelector, operation: (selector: string) => string): Promise<void> {
+    const { target, selector } = await this.#resolveRef(refInput, tab);
     const result = await this.#evaluate<boolean>(operation(selector), this.#number(target.id));
-    if (!result) throw new Error(`Browser ref no longer exists: ${ref}; run browser_snapshot again`);
-    this.#invalidate(target.id);
+    if (!result) throw new Error(`Browser ref no longer exists: ${refInput}; run browser_snapshot again`);
   }
 
+  async #focusRef(refInput: string, tab: BrowserTabSelector, selectContents: boolean): Promise<CdpTarget> {
+    const { target, selector } = await this.#resolveRef(refInput, tab);
+    const focused = await this.#evaluate<boolean>(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e)return false; e.scrollIntoView({block:'center',inline:'center'}); e.focus(); if(document.activeElement!==e && !e.contains(document.activeElement))return false; if(${selectContents}){ if(typeof e.select==='function')e.select(); else if(e.isContentEditable){ const r=document.createRange(); r.selectNodeContents(e); const s=getSelection(); s.removeAllRanges(); s.addRange(r); } } return true; })()`, this.#number(target.id));
+    if (!focused) throw new Error(`Browser element cannot take keyboard focus: ${refInput}`);
+    return target;
+  }
+
+  async #key(connection: CdpConnection, parsed: ReturnType<typeof parseBrowserKey>): Promise<void> {
+    const base = { key: parsed.key, code: parsed.code, windowsVirtualKeyCode: parsed.keyCode, nativeVirtualKeyCode: parsed.keyCode, modifiers: parsed.modifiers };
+    await connection.send("Input.dispatchKeyEvent", { type: parsed.text ? "keyDown" : "rawKeyDown", ...base, ...(parsed.text ? { text: parsed.text, unmodifiedText: parsed.text } : {}) });
+    await connection.send("Input.dispatchKeyEvent", { type: "keyUp", ...base });
+  }
+
+  /** A real mouse click at the element's visible centre; refuses when another element covers that point. */
   async click(ref: string, tab?: BrowserTabSelector): Promise<void> {
-    await this.#withRef(ref, tab, selector => `(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e)return false; e.scrollIntoView({block:'center'}); e.click(); return true; })()`);
+    const { target, selector } = await this.#resolveRef(ref, tab);
+    const point = await this.#evaluate<{ x: number; y: number; covered: string | null } | null>(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e)return null; e.scrollIntoView({block:'center',inline:'center'}); const r=e.getBoundingClientRect(); if(r.width<=0||r.height<=0)return null; const x=r.left+r.width/2, y=r.top+r.height/2; const hit=document.elementFromPoint(x,y); const covered=hit && hit!==e && !e.contains(hit) && !hit.contains(e) ? (hit.tagName.toLowerCase()+(hit.id?'#'+hit.id:'')+(hit.className&&typeof hit.className==='string'?'.'+hit.className.split(/\\s+/).filter(Boolean).join('.'):'')).slice(0,120) : null; return {x,y,covered}; })()`, this.#number(target.id));
+    if (!point) throw new Error(`Browser element is not visible: ${ref}; scroll or run browser_snapshot again`);
+    if (point.covered) throw new Error(`Browser element is covered by ${point.covered}; close the overlay or choose another element`);
+    const connection = await this.#connection(target);
+    await connection.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: point.x, y: point.y });
+    await connection.send("Input.dispatchMouseEvent", { type: "mousePressed", x: point.x, y: point.y, button: "left", buttons: 1, clickCount: 1 });
+    await connection.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: point.x, y: point.y, button: "left", buttons: 0, clickCount: 1 });
   }
 
+  /** Replaces the field's content through real text input, then reports what the page actually kept. */
   async fill(ref: string, valueInput: string, tab?: BrowserTabSelector): Promise<void> {
     const value = exactText(valueInput, "Fill value", 1_000_000, true);
-    await this.#withRef(ref, tab, selector => `(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e)return false; e.focus(); const setter=Object.getOwnPropertyDescriptor(Object.getPrototypeOf(e),'value')?.set; if(setter)setter.call(e,${JSON.stringify(value)}); else e.value=${JSON.stringify(value)}; e.dispatchEvent(new Event('input',{bubbles:true})); e.dispatchEvent(new Event('change',{bubbles:true})); return true; })()`);
+    const target = await this.#focusRef(ref, tab, true);
+    const connection = await this.#connection(target);
+    if (value) await connection.send("Input.insertText", { text: value });
+    else await this.#key(connection, parseBrowserKey("Backspace"));
+    const kept = await this.#evaluate<string | null>(`(() => { const e=document.activeElement; return e && 'value' in e ? String(e.value) : null; })()`, this.#number(target.id));
+    if (kept !== null && kept !== value) throw new Error(`Browser field kept a different value (${JSON.stringify(kept.slice(0, 80))}); it may limit length or format input`);
   }
 
   async type(ref: string, textInput: string, delayInput = 50, tab?: BrowserTabSelector): Promise<void> {
     const text = exactText(textInput, "Typed text", 100_000, true);
     const delay = Math.max(0, Math.min(2_000, Number.isFinite(delayInput) ? delayInput : 50));
-    await this.#withRef(ref, tab, selector => `(async () => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e)return false; e.focus(); for(const ch of ${JSON.stringify(text)}) { e.dispatchEvent(new KeyboardEvent('keydown',{key:ch,bubbles:true})); e.value=(e.value||'')+ch; e.dispatchEvent(new Event('input',{bubbles:true})); e.dispatchEvent(new KeyboardEvent('keyup',{key:ch,bubbles:true})); if(${delay})await new Promise(r=>setTimeout(r,${delay})); } return true; })()`);
+    const target = await this.#focusRef(ref, tab, false);
+    const connection = await this.#connection(target);
+    if (!delay) { if (text) await connection.send("Input.insertText", { text }); return; }
+    for (const character of text) {
+      await connection.send("Input.insertText", { text: character });
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
   }
 
+  /** Sends a real key (optionally with modifiers such as Control+A) to the focused element of the tab. */
   async press(keyInput: string, tab?: BrowserTabSelector): Promise<void> {
-    const key = exactText(keyInput, "Browser key", 40);
-    await this.#evaluate(`(() => { const e=document.activeElement || document.body; for(const type of ['keydown','keypress','keyup'])e.dispatchEvent(new KeyboardEvent(type,{key:${JSON.stringify(key)},bubbles:true,cancelable:true})); return true; })()`, tab);
+    const parsed = parseBrowserKey(exactText(keyInput, "Browser key", 40));
+    const target = await this.#target(tab);
+    await this.#key(await this.#connection(target), parsed);
+  }
+
+  async waitFor(condition: BrowserWaitCondition, tab?: BrowserTabSelector, signal?: AbortSignal): Promise<BrowserWaitResult> {
+    const timeoutMs = Math.max(100, Math.min(60_000, condition.timeoutMs ?? 10_000));
+    if (!condition.text && !condition.textGone && !condition.urlIncludes) throw new TypeError("browser_wait needs text, textGone or urlIncludes");
+    const started = Date.now();
+    const probe = `(() => { const body=(document.body?.innerText||''); return { url: location.href, title: document.title, text: ${condition.text ? `body.includes(${JSON.stringify(condition.text)})` : "true"}, gone: ${condition.textGone ? `!body.includes(${JSON.stringify(condition.textGone)})` : "true"}, urlOk: ${condition.urlIncludes ? `location.href.includes(${JSON.stringify(condition.urlIncludes)})` : "true"} }; })()`;
+    let last = { url: "", title: "" };
+    while (Date.now() - started < timeoutMs) {
+      signal?.throwIfAborted();
+      try {
+        const state = await this.#evaluate<{ url: string; title: string; text: boolean; gone: boolean; urlOk: boolean }>(probe, tab);
+        last = state;
+        if (state.text && state.gone && state.urlOk) return Object.freeze({ met: true, url: state.url, title: state.title, waitedMs: Date.now() - started });
+      } catch { /* navigating */ }
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    return Object.freeze({ met: false, url: last.url, title: last.title, waitedMs: Date.now() - started });
+  }
+
+  async uploadDirectory(): Promise<string> {
+    const directory = path.join(await this.#io(), "uploads", String(Date.now()));
+    await mkdir(directory, { recursive: true });
+    return directory;
+  }
+
+  async upload(ref: string, hostFile: string, tab?: BrowserTabSelector): Promise<void> {
+    const { target, selector } = await this.#resolveRef(ref, tab);
+    const connection = await this.#connection(target);
+    const found = await connection.send<{ result: { objectId?: string; subtype?: string } }>("Runtime.evaluate", { expression: `(() => { const e=document.querySelector(${JSON.stringify(selector)}); return e && e.tagName==='INPUT' && e.type==='file' ? e : null; })()`, returnByValue: false });
+    if (!found.result.objectId) throw new Error(`Browser ref is not a file input: ${ref}`);
+    await connection.send("DOM.setFileInputFiles", { files: [hostFile], objectId: found.result.objectId });
+  }
+
+  downloads(): BrowserDownload[] {
+    if (!this.#downloadsEnabled) throw new Error(this.#attached ? "Downloads are only managed in a browser RainyDays launched; reopen without cdpPort/cdpUrl" : "Downloads are unavailable for this browser connection");
+    return [...this.#downloads.values()].map(({ guid: _guid, ...visible }) => Object.freeze({ ...visible }));
+  }
+
+  async readDownload(id: number, maximumBytes: number): Promise<Readonly<{ name: string; bytes: Buffer }>> {
+    const record = [...this.#downloads.values()].find(item => item.id === id);
+    if (!record) throw new Error(`Browser download was not found: ${id}`);
+    if (record.state !== "completed") throw new Error(`Browser download ${id} is ${record.state}; wait until it completes`);
+    const { readFile, stat } = await import("node:fs/promises");
+    const file = path.join(await this.#io(), "downloads", record.guid);
+    const info = await stat(file);
+    if (info.size > maximumBytes) throw new Error(`Browser download ${id} exceeds ${maximumBytes} bytes`);
+    return Object.freeze({ name: record.name, bytes: await readFile(file) });
+  }
+
+  /** Hands the visible tab to the user (login, verification). Every ref is dropped so work resumes from a fresh observation. */
+  async handoff(tab?: BrowserTabSelector): Promise<BrowserTab> {
+    if (this.#spawned && this.#headless) throw new Error("A headless browser cannot be handed to the user; reopen with headless:false");
+    const target = await this.#target(tab);
+    await (await this.#connection(target)).send("Page.bringToFront");
+    this.#refs.clear();
+    return this.#settled(this.#number(target.id));
   }
 
   async scroll(direction: "up" | "down" | "left" | "right", amountInput = 400, ref?: string, tab?: BrowserTabSelector): Promise<void> {
@@ -614,6 +880,19 @@ export class BrowserSessionManager {
   back(sessionId: string, tab?: BrowserTabSelector): Promise<BrowserTab> { return this.#backend(sessionId).back(tab); }
   forward(sessionId: string, tab?: BrowserTabSelector): Promise<BrowserTab> { return this.#backend(sessionId).forward(tab); }
   fetch(sessionId: string, url: string, options: Readonly<{ method?: string; headers?: Record<string, string>; body?: string; tab?: BrowserTabSelector }> = {}): Promise<unknown> { return this.#backend(sessionId).fetch(url, options); }
+
+  #capable<K extends "waitFor" | "upload" | "uploadDirectory" | "downloads" | "readDownload" | "handoff">(sessionId: string, name: K): NonNullable<BrowserBackend[K]> {
+    const backend = this.#backend(sessionId);
+    const method = backend[name];
+    if (typeof method !== "function") throw new Error(`The ${backend.kind} browser backend does not support ${name}`);
+    return (method as (...args: unknown[]) => unknown).bind(backend) as NonNullable<BrowserBackend[K]>;
+  }
+  waitFor(sessionId: string, condition: BrowserWaitCondition, tab?: BrowserTabSelector, signal?: AbortSignal): Promise<BrowserWaitResult> { return this.#capable(sessionId, "waitFor")(condition, tab, signal); }
+  uploadDirectory(sessionId: string): Promise<string> { return this.#capable(sessionId, "uploadDirectory")(); }
+  upload(sessionId: string, ref: string, hostFile: string, tab?: BrowserTabSelector): Promise<void> { return this.#capable(sessionId, "upload")(ref, hostFile, tab); }
+  downloads(sessionId: string): BrowserDownload[] { return this.#capable(sessionId, "downloads")(); }
+  readDownload(sessionId: string, id: number, maximumBytes: number): Promise<Readonly<{ name: string; bytes: Buffer }>> { return this.#capable(sessionId, "readDownload")(id, maximumBytes); }
+  handoff(sessionId: string, tab?: BrowserTabSelector): Promise<BrowserTab> { return this.#capable(sessionId, "handoff")(tab); }
 
   async screenshot(sessionIdInput: string, fullPage?: boolean, tab?: BrowserTabSelector): Promise<Readonly<{ path: string; sha256: string; bytes: number; mimeType: string; tab: BrowserTab }>> {
     const sessionId = this.#sessionId(sessionIdInput);
