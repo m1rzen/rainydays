@@ -1,6 +1,6 @@
 import type { ToolExecutionOutcome, ToolProtocolDescriptor } from "./types.js";
 
-const commonTools = new Set(["glob", "read", "grep", "write", "edit", "get_current_time", "ask_user", "web_search", "fetch_markdown", "create_docx", "create_xlsx", "search_tools", "skill_open"]);
+const commonTools = new Set(["glob", "read", "grep", "write", "edit", "get_current_time", "ask_user", "web_search", "fetch_markdown", "create_docx", "create_xlsx", "search_tools"]);
 // A14：开发模式下编码核心工具、计划工具、浏览器自动化、Computer Use 与 Lux-Cloud 工具首轮常驻；仍只取人格允许列表内的工具。
 const developerTools = new Set([
   "read_repo", "edit_files", "undo_edits", "execute_command",
@@ -24,10 +24,11 @@ export class TaskToolSelection {
   readonly #loaded: Set<string>;
   readonly enabled: boolean;
 
-  constructor(personaName: string, allowed: readonly ToolProtocolDescriptor[], options: Readonly<{ developerMode?: boolean }> = {}) {
+  constructor(personaName: string, allowed: readonly ToolProtocolDescriptor[], options: Readonly<{ developerMode?: boolean; resident?: readonly string[] }> = {}) {
     this.#allowed = new Map(allowed.map(protocol => [protocol.name, protocol]));
     this.enabled = personaName === "general" && this.#allowed.has("search_tools");
-    const resident = (name: string) => commonTools.has(name) || (options.developerMode === true && developerTools.has(name));
+    const extra = new Set(options.resident ?? []);
+    const resident = (name: string) => commonTools.has(name) || extra.has(name) || (options.developerMode === true && developerTools.has(name));
     this.#loaded = new Set(allowed.filter(protocol => !this.enabled || resident(protocol.name)).map(protocol => protocol.name));
   }
 

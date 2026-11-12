@@ -862,9 +862,9 @@ export class Agent {
       }
 
       const toolProtocols = getToolProtocolDescriptors(capabilityContext);
-      const toolSelection = new TaskToolSelection(this.persona.name, toolProtocols, { developerMode: isDeveloperModeEnabled() });
-      // A11: only names and descriptions enter the prompt; skill_open reads bodies on demand.
-      this.skillCatalog = toolSelection.has("skill_open") ? await renderSkillCatalogBlock().catch(() => "") : "";
+      // A11: only names and descriptions enter the prompt; skill_open is resident only when a usable skill exists.
+      this.skillCatalog = toolProtocols.some(protocol => protocol.name === "skill_open") ? await renderSkillCatalogBlock().catch(() => "") : "";
+      const toolSelection = new TaskToolSelection(this.persona.name, toolProtocols, { developerMode: isDeveloperModeEnabled(), resident: this.skillCatalog ? ["skill_open"] : [] });
       let orgModeEnabled = false;
       try { orgModeEnabled = getConfigSnapshot().domains.common.orgMode; } catch { /* isolated Agent fixtures have no global config */ }
       this.refreshSystemPrompt(runSessionId, orgModeEnabled ? renderBodyToolInstructions(toolSelection.protocols()) : "");
