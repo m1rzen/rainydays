@@ -256,3 +256,11 @@ body[data-mission-view="idle"] #status-bar { background:var(--deep); border-colo
 .skill-package p { grid-column:2 / 4; margin:0; font-size:13px; line-height:1.6; color:var(--muted); }
 .skill-package p.skill-package-problem { color:#A43D35; }
 .skill-package-state { grid-column:3; grid-row:1; font:400 11.5px/1.5 var(--font-mono); color:var(--muted); }
+
+/* A12 subtask panel: goal, state and an expandable result. */
+#subagent-panel { background:var(--well); border-bottom:1px solid var(--hair); }
+.subagent-item { flex-wrap:wrap; }
+.subagent-item .sa-state { margin-left:auto; font:400 11.5px/1.5 var(--font-mono); color:var(--muted); }
+.subagent-item .sa-result { flex-basis:100%; margin:4px 0 2px 24px; font-size:13px; }
+.subagent-item .sa-result summary { cursor:pointer; color:var(--muted); }
+.subagent-item .sa-result p { margin:6px 0 0; white-space:pre-wrap; }

@@ -128,3 +128,56 @@ test("deep consolidation requires a model and rejects non-JSON output", async ()
   assert.equal(result.extractedNodes.length, 2);
   assert.equal(result.extractedEdges.length, 1);
 });
+
+function scopedHarness(llm, sessionId) {
+  const controller = new AbortController(), derived = [];
+  const childPersona = Object.freeze({ ...persona, tools: Object.freeze(["read", "glob", "grep", "web_search", "write", "edit", "execute_command", "create_docx"]) });
+  const context = { sessionId, allowedRoots: [], networkPolicy: { mode: "deny" } };
+  const invocation = Object.freeze({
+    capabilityContext: context, signal: controller.signal, network: { fetch: async () => { throw new Error("no network"); } }, path: {},
+    getUnattendedChildToolNames: () => ["read", "glob", "grep", "web_search", "write", "edit", "execute_command", "create_docx"],
+    deriveDetachedChild: request => { derived.push(request); return { sessionId, allowedTools: new Set(request.tools), allowedRoots: [], networkPolicy: { mode: "deny" } }; },
+    finishDetachedChild: async () => undefined, createDetachedNetwork: () => ({ fetch: async () => { throw new Error("no network"); } }),
+    getToolDefinitions: () => [], listCurrentToolDefinitions: () => [], executeDetachedTool: async () => "", executeTool: async () => "",
+  });
+  const registry = new SubagentRegistry(sessionId);
+  const tools = createAgentSessionExecutors({ registry, llm, persona: childPersona, resolveModel: () => null });
+  return { tools, invocation, registry, controller, derived };
+}
+
+test("A12 at most two children run at once, each gets read-only tools, and results are marked as suggestions", async () => {
+  const releases = [];
+  const { tools, invocation, registry, derived } = scopedHarness({ chat: async () => { await new Promise(resolve => releases.push(resolve)); return { role: "assistant", content: "来源：README 第 3 行" }; } }, "a12-limit");
+  const first = await call(tools.agent_spawn, { task: "读 README 找配置项", name: "reader" }, invocation);
+  await call(tools.agent_spawn, { task: "读 CHANGELOG", name: "changelog" }, invocation);
+  await assert.rejects(tools.agent_spawn({ task: "第三个" }, {}, invocation), /最多同时运行 2 个子任务/u);
+  assert.equal(first.read_only, true); assert.match(first.note, /不是已核对的事实/u);
+  for (const request of derived) assert.deepEqual([...request.tools].sort(), ["glob", "grep", "read", "web_search"], "no write, edit, process or document creation");
+  while (releases.length < 2) await new Promise(resolve => setTimeout(resolve, 5));
+  releases.shift()();
+  const settled = await call(tools.agent_wait, { event: { session: first.id }, timeout: 5 }, invocation);
+  assert.equal(settled.result, "来源：README 第 3 行"); assert.match(settled.note, /自己的工具核对/u);
+  await call(tools.agent_spawn, { task: "第三个，现在有空位" }, invocation);
+  for (const release of releases) release();
+  await registry.shutdown();
+});
+
+test("A12 stopping the parent run stops its running children; finished results stay readable", async () => {
+  let calls = 0;
+  const { tools, invocation, registry, controller } = scopedHarness({ chat: async (_messages, _tools, signal) => {
+    calls += 1;
+    if (calls === 1) return { role: "assistant", content: "已完成的审查" };
+    await new Promise((resolve, reject) => { const timer = setTimeout(resolve, 30000); signal?.addEventListener("abort", () => { clearTimeout(timer); reject(signal.reason); }, { once: true }); });
+    return { role: "assistant", content: "不应出现" };
+  } }, "a12-cancel");
+  const done = await call(tools.agent_spawn, { task: "快的", name: "fast" }, invocation);
+  await call(tools.agent_wait, { event: { session: done.id }, timeout: 5 }, invocation);
+  const slow = await call(tools.agent_spawn, { task: "慢的", name: "slow" }, invocation);
+  controller.abort(new Error("parent cancelled"));
+  const deadline = Date.now() + 5000;
+  while (registry.get(slow.id).status === "running" && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 20));
+  assert.equal(registry.get(slow.id).status, "aborted");
+  assert.equal(registry.get(done.id).result, "已完成的审查");
+  await assert.rejects(tools.agent_spawn({ task: "取消后不能再派生" }, {}, invocation), /cancel|取消|abort/iu);
+  await registry.shutdown();
+});

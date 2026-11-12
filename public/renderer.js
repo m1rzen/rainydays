@@ -3494,16 +3494,25 @@
         const icon = document.createElement("span");
         icon.className = "sa-icon";
         icon.appendChild(createUiIcon(icons[child.status] || "circle"));
-        const id = document.createElement("span");
-        id.className = "sa-id";
-        id.textContent = child.taskId;
+        // A12: users see the goal, the state and the result; internal task ids stay internal.
         const description = document.createElement("span");
         description.className = "sa-description";
         description.textContent = child.description;
-        const persona = document.createElement("span");
-        persona.className = "sa-persona";
-        persona.textContent = child.persona;
-        item.append(icon, id, description, persona);
+        const state = document.createElement("span");
+        state.className = "sa-state";
+        state.textContent = { running: "进行中", completed: "已完成", failed: "失败", aborted: "已停止" }[child.status] || child.status;
+        item.append(icon, description, state);
+        const outcome = child.result || child.error;
+        if (outcome) {
+          const details = document.createElement("details");
+          details.className = "sa-result";
+          const summary = document.createElement("summary");
+          summary.textContent = child.result ? "查看结果（建议，待主任务核对）" : "查看原因";
+          const body = document.createElement("p");
+          body.textContent = String(outcome).slice(0, 2000);
+          details.append(summary, body);
+          item.appendChild(details);
+        }
         subagentListEl.appendChild(item);
       }
       const running = subagents.filter(child => child.status === "running").length;

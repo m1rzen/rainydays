@@ -173,6 +173,31 @@ test("A11 real Electron lists installed skills with their source and toggles one
   } finally { client?.close(); if (instance) await terminateProcessTreeAsync(instance.child); await removeFixture(fixture); }
 });
 
+test("A12 real Electron subtask panel shows goals, states and results without internal ids", { timeout: 60000 }, async context => {
+  const fixture = await makeTempDir("mini-lux-a12-electron-"), userData = path.join(fixture, "user-data");
+  let instance, client;
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    instance = await startElectron(userData, httpPort, cdpPort, context.signal, "");
+    client = await connectCdp(cdpPort);
+    await waitFor(() => client.evaluate("Boolean(currentSessionId && desktopNavigationReady)"), { timeoutMs: 20000, label: "A12 ready" });
+    const shown = await client.evaluate(`(() => {
+      renderSubagents([
+        { taskId: "reader-0123456789abcdef0123456789abcdef", description: "读 README 找配置项", persona: "general", status: "completed", result: "来源：README 第 3 行，端口 3111", error: null },
+        { taskId: "changelog-fedcba9876543210fedcba9876543210", description: "读 CHANGELOG", persona: "general", status: "running", result: null, error: null },
+      ], currentSessionId);
+      stopSubagentPolling();
+      const panel = document.getElementById("subagent-panel");
+      return { visible: panel.classList.contains("visible"), text: panel.textContent, results: panel.querySelectorAll(".sa-result").length };
+    })()`);
+    assert.equal(shown.visible, true);
+    assert.match(shown.text, /读 README 找配置项/u); assert.match(shown.text, /已完成/u); assert.match(shown.text, /进行中/u);
+    assert.match(shown.text, /待主任务核对/u); assert.equal(shown.results, 1);
+    assert.doesNotMatch(shown.text, /0123456789abcdef|fedcba9876543210|general/u, "internal ids and persona names stay hidden");
+    client.close(); client = null; await stopElectron(instance, httpPort, cdpPort); instance = null;
+  } finally { client?.close(); if (instance) await terminateProcessTreeAsync(instance.child); await removeFixture(fixture); }
+});
+
 function expectedUi(buildInfo) {
   const shortBuild = String(buildInfo.buildId).split(".").at(-1).slice(0, 8);
   return `v${buildInfo.appVersion}${shortBuild ? ` · ${shortBuild}` : ""}`;

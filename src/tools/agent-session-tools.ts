@@ -7,6 +7,8 @@ import type { LLMClient } from "../llm.js";
 import { getMessagesBySession, getSession, listSessions } from "../db.js";
 import { SubagentRegistryError, type SubagentPeekScope, type SubagentRegistry, type SubagentSnapshot, type SubagentStatus } from "../subagent-registry.js";
 import type { PersonaDefinition, ToolExecutor } from "../types.js";
+import { STATIC_TOOL_POLICIES, RUNTIME_TOOL_POLICIES } from "../tool-policies.js";
+import { throwIfCancelled } from "../run-cancellation.js";
 
 const STATUS: Readonly<Record<SubagentStatus, "streaming" | "idle" | "error" | "interrupted">> = {
   running: "streaming", completed: "idle", failed: "error", aborted: "interrupted",
@@ -14,6 +16,15 @@ const STATUS: Readonly<Record<SubagentStatus, "streaming" | "idle" | "error" | "
 const DEFAULT_WAIT_SECONDS = 60;
 const MAX_WAIT_SECONDS = 300;
 const MAX_NAME_LENGTH = 160;
+/** A12: at most two research/review children at once; the parent stays the only writer. */
+export const MAX_ACTIVE_AGENT_SPAWNS = 2;
+export const SUBAGENT_RESULT_NOTE = "子任务结果是建议和线索，不是已核对的事实。引用或据此修改前，用自己的工具核对来源；最终回答和写入由你负责。";
+
+/** Read-only means every risk class is read or network: no file writes, processes or control actions. */
+export function isReadOnlyTool(name: string): boolean {
+  const policy = STATIC_TOOL_POLICIES[name] ?? RUNTIME_TOOL_POLICIES[name];
+  return !!policy && policy.riskClasses.every(risk => risk === "read" || risk === "network");
+}
 
 export interface AgentSessionDependencies {
   readonly registry: SubagentRegistry;
@@ -43,11 +54,17 @@ export function createAgentSessionExecutors(dependencies: AgentSessionDependenci
       const model = typeof args.model === "string" && args.model ? args.model : null;
       const childLlm = model ? resolveModel(model) : llm;
       if (!childLlm) throw new Error(`模型不存在: ${model}。可用模型见 models_list`);
+      throwIfCancelled(invocation.signal);
+      const running = registry.list().filter(item => item.status === "running").length;
+      if (running >= MAX_ACTIVE_AGENT_SPAWNS) throw new Error(`最多同时运行 ${MAX_ACTIVE_AGENT_SPAWNS} 个子任务；先用 agent_wait 取回结果，或用 agent_close 停止一个。`);
+      const readOnlyTools = invocation.getUnattendedChildToolNames().filter(isReadOnlyTool);
       const child = await registry.spawn({
         description: name.slice(0, MAX_NAME_LENGTH), prompt: task, persona, llm: childLlm,
-        parentContext: invocation.capabilityContext, parentInvocation: invocation,
+        parentContext: invocation.capabilityContext, parentInvocation: invocation, toolAllowlist: readOnlyTools,
       });
-      return json({ ...view(child), parent_session_id: invocation.capabilityContext.sessionId, model, allow_subagent: false });
+      // Stopping the parent run stops the children it started; finished results stay readable.
+      invocation.signal.addEventListener("abort", () => { void registry.stop(child.taskId).catch(() => undefined); }, { once: true });
+      return json({ ...view(child), parent_session_id: invocation.capabilityContext.sessionId, model, allow_subagent: false, read_only: true, tools: readOnlyTools, note: SUBAGENT_RESULT_NOTE });
     },
     agent_list: async args => {
       const query = typeof args.query === "string" ? args.query.trim().toLowerCase() : "";
@@ -89,7 +106,7 @@ export function createAgentSessionExecutors(dependencies: AgentSessionDependenci
       const seconds = Math.min(MAX_WAIT_SECONDS, Math.max(1, typeof args.timeout === "number" ? args.timeout : DEFAULT_WAIT_SECONDS));
       const settled = await registry.output(String(event?.session ?? ""), { block: true, timeoutMs: Math.round(seconds * 1000), signal: invocation.signal });
       const trigger = settled.status === "running" ? "timeout" : settled.status === "completed" ? "idle" : "error";
-      return json({ ...view(settled), trigger, interrupted: false, session: settled.taskId });
+      return json({ ...view(settled), trigger, interrupted: false, session: settled.taskId, ...(settled.result ? { note: SUBAGENT_RESULT_NOTE } : {}) });
     },
     agent_cancel_wait: async args => json({ id: String(args.id ?? ""), cancelled: false, reason: "agent_wait 暂不支持 async 订阅，没有可取消的等待" }),
     agent_close: async args => json({ ...view(await registry.stop(String(args.id ?? ""))), closed: true }),
