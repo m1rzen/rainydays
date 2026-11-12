@@ -1,6 +1,6 @@
 # 当前开发状态
 
-2026-11-12 真实模型复测（3d7cf49，Gcable-Pro-Thinking）：编码 18/20（J06 启动崩溃、重测通过；P05 因 read/write 相对路径基准不同而超时）；探测首轮 7/9，A11 instructions、A12 subagentCancel 通过，skills 与 autoBoundary 重测通过。本轮无流式中断，串流重试未被真实触发。详见[评测记录](work/general-agent/evaluations/04-coding.md)。
+2026-11-12 真实模型复测（3d7cf49，Gcable-Pro-Thinking）：编码 18/20（J06 启动崩溃、重测通过；P05 超时，根因是 read_repo 路径编码过度致模型拼错绝对路径，已修复并重测 3/3）；探测首轮 7/9，A11 instructions、A12 subagentCancel 通过，skills 与 autoBoundary 重测通过。本轮无流式中断，串流重试未被真实触发。详见[评测记录](work/general-agent/evaluations/04-coding.md)。
 
 2026-11-12 自主輪次（無模型可用，只做可用合成模型驗證的工程，全部本地提交未推送）：
 - 3a02c24 界面改版（五色條紋任務面板，見 DESIGN.md）；8d15162 上下文表改按「輸入估算＋回覆預留」÷ 窗口計算，含工具定義。

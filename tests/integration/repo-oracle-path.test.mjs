@@ -177,16 +177,16 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
   const root = toolsModule.capabilityBroker.beginAgentRun(authority, session.id);
   try {
     const tree = await toolsModule.executeTool(root, "read_repo", { path: "", level: "tree" });
-    assert.match(tree, /package%2Ejson/u);
-    assert.match(tree, /src\/main%2Ets/u);
-    assert.match(tree, /- %23%20%60FORGED%60%2Emd/u);
+    assert.match(tree, /package\.json/u);
+    assert.match(tree, /src\/main\.ts/u);
+    assert.match(tree, /- %23%20%60FORGED%60\.md/u);
     assert.doesNotMatch(tree, /`FORGED`/u);
     const headers = await toolsModule.executeTool(root, "read_repo", { path: "", level: "headers" });
     assert.match(headers, /governed-repository/);
     assert.match(headers, /Governed Repository/);
     const summary = await toolsModule.executeTool(root, "read_repo", { path: "", level: "summary", include: "*.ts" });
     assert.match(summary, /Selected all 2 matched/u);
-    assert.match(summary, /- %2Ets: 2/u);
+    assert.match(summary, /- \.ts: 2/u);
     const full = await toolsModule.executeTool(root, "read_repo", { path: "", level: "full", exclude: "*.md" });
     assert.match(full, /governed-repository/u);
     assert.doesNotMatch(full, /Governed Repository/u);
@@ -199,8 +199,8 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
     assert.match(all, /Complete content for every selected text file/u);
     assert.match(all, /export const governed = true/u);
     const globstar = await toolsModule.executeTool(root, "read_repo", { path: "", level: "tree", include: "**/*.ts" });
-    assert.match(globstar, /- root%2Ets/u);
-    assert.match(globstar, /- src\/main%2Ets/u);
+    assert.match(globstar, /- root\.ts/u);
+    assert.match(globstar, /- src\/main\.ts/u);
     await assert.rejects(() => toolsModule.executeTool(root, "read_repo", { path: "", level: "all" }), /binary tracked file/u);
     await assert.rejects(() => toolsModule.executeTool(root, "read_repo", { path: "", level: "all", include: "invalid-utf8.bin" }), /binary tracked file/u);
 
@@ -233,7 +233,7 @@ test("SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every track
       await fs.rm(multibyte, { force: true });
     }
     const unfilteredSummary = await toolsModule.executeTool(root, "read_repo", { path: "", level: "summary", exclude: "?.md" });
-    assert.match(unfilteredSummary, /%28no%20ext%29: 1/u);
+    assert.match(unfilteredSummary, /\(no%20ext\): 1/u);
 
     const cwdBefore = await externalState();
     const cwdAttempt = await captureDenial(() => toolsModule.executeTool(root, "read_repo", { path: outside, level: "tree" }));

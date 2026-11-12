@@ -81,8 +81,9 @@ async function converse(server, prompt, { limitMs = timeoutMs, onAsk = () => "æ‹
           const answer = onAsk(step);
           record.asks.push({ question: String(step.question ?? "").slice(0, 300), answer });
           await server.api("/api/ask-user/answer", "POST", { sessionId, runId: step.runId ?? runId, questionId: step.questionId, answer }).catch(() => undefined);
-        } else if (step.type === "tool_call") record.tools.push({ name: step.toolName, args: JSON.stringify(step.toolArgs ?? {}).slice(0, 400) });
-        else if (step.type === "tool_result") { const last = [...record.tools].reverse().find(tool => tool.name === step.toolName && tool.status === undefined); if (last) { last.status = step.toolStatus; last.code = step.toolCode ?? null; last.output = String(step.content ?? "").slice(0, 500); } }
+        } else if (step.type === "tool_call") record.tools.push({ id: step.toolCallId ?? null, name: step.toolName, args: JSON.stringify(step.toolArgs ?? {}).slice(0, 400) });
+        // Parallel calls of the same tool settle in any order; match by call id, by name only as a fallback.
+        else if (step.type === "tool_result") { const last = (step.toolCallId && record.tools.find(tool => tool.id === step.toolCallId && tool.status === undefined)) || record.tools.find(tool => tool.name === step.toolName && tool.status === undefined); if (last) { last.status = step.toolStatus; last.code = step.toolCode ?? null; last.output = String(step.content ?? "").slice(0, 500); } }
         else if (step.type === "answer_chunk") record.answer += step.content;
         else if (step.type === "context_notice") record.notices.push(step.content);
         else if (step.type === "error") { record.errors.push(step.content); }

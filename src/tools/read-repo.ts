@@ -192,13 +192,20 @@ function fenceFor(content: string): string {
   return "`".repeat(Math.max(2, ...runs) + 1);
 }
 
-function safePath(value: string): string {
-  return [...Buffer.from(value, "utf8")].map(byte =>
-    (byte >= 0x30 && byte <= 0x39) || (byte >= 0x41 && byte <= 0x5a) || (byte >= 0x61 && byte <= 0x7a)
-      || byte === 0x2f
-      ? String.fromCharCode(byte)
-      : `%${byte.toString(16).toUpperCase().padStart(2, "0")}`
-  ).join("");
+/**
+ * Paths are data. Letters (any script), digits and ordinary path punctuation stay readable so a model can
+ * copy them exactly; spaces, controls and anything that could read as Markdown, a fence or an instruction
+ * (#, `, *, <, >, |, quotes, %, ...) are percent-encoded so a file name cannot forge structure.
+ */
+const READABLE_PATH_CHARACTER = /^[A-Za-z0-9/._\-:\\()+,=@~]$|^[\p{L}\p{N}]$/u;
+export function safePath(value: string): string {
+  let output = "";
+  for (const character of value) {
+    output += READABLE_PATH_CHARACTER.test(character)
+      ? character
+      : [...Buffer.from(character, "utf8")].map(byte => `%${byte.toString(16).toUpperCase().padStart(2, "0")}`).join("");
+  }
+  return output;
 }
 
 function fileSection(file: string, content: string): string {

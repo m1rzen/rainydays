@@ -39,14 +39,14 @@ test("A02 selected project context includes scripts, modified/untracked/deleted 
     const summary = await executeTool(root,"read_repo",{path:repository,level:"summary"});
     assert.match(summary,/Repository root:/); assert.match(summary,/Working directory:/);
     assert.match(summary,/node --test/); assert.match(summary,/tsc/);
-    assert.match(summary,/untracked/); assert.match(summary,/deleted%2Etxt/);
+    assert.match(summary,/untracked/); assert.match(summary,/deleted\.txt/);
     const full = await executeTool(root,"read_repo",{path:repository,level:"all",include:"*.ts"});
     assert.match(full,/USER_NEW/); assert.match(full,/用户未提交改动/); assert.doesNotMatch(full,/ignored-content/);
     assert.equal(runGit(["status","--porcelain=v1","-z","--untracked-files=all"]),before);
     assert.equal(await readFile(path.join(repository,"src","未跟踪 文件.ts"),"utf8"),"export const pending = 'USER_NEW';\n");
     await assert.rejects(readFile(path.join(repository,"deleted.txt")),error=>error.code==="ENOENT");
     const child = await executeTool(root,"read_repo",{path:path.join(repository,"src"),level:"all"});
-    assert.match(child,/USER_NEW/); assert.doesNotMatch(child,/node --test|package%2Ejson/);
+    assert.match(child,/USER_NEW/); assert.doesNotMatch(child,/node --test|package\.json/);
     await assert.rejects(executeTool(root,"read_repo",{path:outside,level:"tree"}),error=>error.code==="PATH_ROOT_DENIED");
   } finally { capabilityBroker.finishContext(root); }
 });
