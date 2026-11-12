@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { writeFile } from "node:fs/promises";
 import { browserSessions, type BrowserTabSelector } from "../browser.js";
+import { OBSERVATION_MARKER } from "../observations.js";
 import { throwIfCancelled } from "../run-cancellation.js";
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 
@@ -104,7 +105,11 @@ export const browserScrollDef: ToolDefinition = { type: "function", function: { 
 export const browserScrollExec: ToolExecutor = async (args, env, invocation) => { await browserSessions.scroll(prepare(env, invocation), args.direction as "up" | "down" | "left" | "right", args.amount as number | undefined, args.ref as string | undefined, args.tab as BrowserTabSelector); return "Browser scrolled"; };
 
 export const browserScreenshotDef: ToolDefinition = { type: "function", function: { name: "browser_screenshot", description: "Capture a PNG screenshot and persist it as a Session-namespaced browser artifact.", parameters: { type: "object", properties: { fullPage: { type: "boolean" }, tab: tabProperty }, ...noExtra } } };
-export const browserScreenshotExec: ToolExecutor = async (args, env, invocation) => json(await browserSessions.screenshot(prepare(env, invocation), args.fullPage === true, args.tab as BrowserTabSelector));
+export const browserScreenshotExec: ToolExecutor = async (args, env, invocation) => {
+  const shot = await browserSessions.screenshot(prepare(env, invocation), args.fullPage === true, args.tab as BrowserTabSelector);
+  const { observation, ...rest } = shot;
+  return json({ ...rest, ...(observation ? { [OBSERVATION_MARKER]: { sha256: observation.sha256, width: observation.width, height: observation.height, scale: observation.scale, viewport: observation.viewport }, note: "截图已作为图片附在本次工具结果之后（模型配置支持图片时）。" } : {}) });
+};
 
 export const browserEvalDef: ToolDefinition = { type: "function", function: { name: "browser_eval", description: "Evaluate a bounded JavaScript expression in the selected page. This is a high-risk action requiring approval.", parameters: { type: "object", properties: { expression: { type: "string", maxLength: 32768 }, tab: tabProperty }, required: ["expression"], ...noExtra } } };
 export const browserEvalExec: ToolExecutor = async (args, env, invocation) => json(await browserSessions.evaluate(prepare(env, invocation), args.expression as string, args.tab as BrowserTabSelector));
@@ -215,4 +220,17 @@ export const browserHandoffDef: ToolDefinition = {
 export const browserHandoffExec: ToolExecutor = async (args, env, invocation) => {
   const tab = await browserSessions.handoff(prepare(env, invocation), args.tab as BrowserTabSelector);
   return json({ handedOff: true, reason: String(args.reason ?? "").slice(0, 300), tab, next: "调用 ask_user 请用户完成后回复；之后先 browser_snapshot，旧 ref 已作废。" });
+};
+
+export const browserClickPointDef: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "browser_click_point",
+    description: "按最近一次非整页 browser_screenshot 图片上的像素坐标点击（真实鼠标）。用于画布、图形等快照里没有 ref 的目标；有 ref 时优先用 browser_click。坐标直接写图片坐标，换算由系统完成。",
+    parameters: { type: "object", properties: { x: { type: "number", minimum: 0 }, y: { type: "number", minimum: 0 }, tab: tabProperty }, required: ["x", "y"], ...noExtra },
+  },
+};
+export const browserClickPointExec: ToolExecutor = async (args, env, invocation) => {
+  await browserSessions.clickPoint(prepare(env, invocation), Number(args.x), Number(args.y), args.tab as BrowserTabSelector);
+  return "Clicked at the given screenshot point. Take a new screenshot or snapshot to see the effect.";
 };

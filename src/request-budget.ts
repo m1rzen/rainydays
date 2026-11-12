@@ -19,8 +19,16 @@ export function resolveRequestBudget(value: Readonly<{ contextWindowTokens?: unk
 }
 
 /** Deliberately conservative text estimate, including JSON and protocol framing. Usage records the error. */
+/** Conservative per-image allowance; inline image bytes are not counted as text. */
+export const IMAGE_TOKEN_ESTIMATE = 1600;
+
 export function estimateProjectedRequestTokens(messages: unknown, tools?: unknown): number {
-  return Math.ceil(Buffer.byteLength(JSON.stringify({ messages, ...(tools ? { tools } : {}) }), "utf8") / 2) + 128;
+  let images = 0;
+  const text = JSON.stringify({ messages, ...(tools ? { tools } : {}) }, (key, value) => {
+    if (key === "url" && typeof value === "string" && value.startsWith("data:image/")) { images += 1; return ""; }
+    return value;
+  });
+  return Math.ceil(Buffer.byteLength(text, "utf8") / 2) + 128 + images * IMAGE_TOKEN_ESTIMATE;
 }
 
 export class ContextBudgetExceededError extends Error {

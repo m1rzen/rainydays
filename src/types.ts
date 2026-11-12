@@ -1,3 +1,4 @@
+import type { ToolObservation } from "./observations.js";
 // ===========================================
 // 类型定义 —— RainyDays 核心数据结构
 // ===========================================
@@ -29,6 +30,8 @@ export interface Message {
   attachments?: readonly MessageAttachment[];
   /** Host-only reference into the current session's immutable original history. */
   historyId?: number;
+  /** A08: images a host tool registered for this tool result; projected after the tool block, never persisted. */
+  observations?: readonly ToolObservation[];
 }
 
 /** 工具调用 */

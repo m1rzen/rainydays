@@ -25,7 +25,7 @@ const git = execFileSync(path.join(process.env.SystemRoot, "System32/where.exe")
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const freePort = () => new Promise(resolve => { const server = net.createServer().listen(0, "127.0.0.1", () => { const { port } = server.address(); server.close(() => resolve(port)); }); });
 
-async function startServer(item, model, runDir, { contextWindowTokens = 128000, outputReserveTokens = 16384 } = {}) {
+async function startServer(item, model, runDir, { contextWindowTokens = 128000, outputReserveTokens = 16384, providerType = "openai-compatible" } = {}) {
   const port = await freePort(), token = randomBytes(24).toString("hex"), userData = path.join(runDir, "user-data");
   await fs.mkdir(path.join(runDir, "output"), { recursive: true });
   const env = { ...process.env, PORT: String(port), RAINYDAYS_API_TOKEN: token, RAINYDAYS_APP_ROOT: root, RAINYDAYS_USER_DATA_DIR: userData, RAINYDAYS_DATA_DIR: path.join(userData, "data"), RAINYDAYS_CONFIG_PATH: path.join(userData, "config.json"), WORKSPACE_ROOT: item.project, OUTPUT_DIR: path.join(runDir, "output"), LLM_API_KEY: apiKey, LLM_BASE_URL: baseURL, LLM_MODEL: model };
@@ -49,7 +49,7 @@ async function startServer(item, model, runDir, { contextWindowTokens = 128000, 
     if (!response.ok) throw new Error(`${route} ${response.status}: ${await response.text()}`);
   };
   await put("/api/settings/domains/shell", settings => ({ expectedRevision: settings.revision, value: { defaultShell: "auto", initializationScript: "", developerMode: true } }));
-  await put("/api/settings/providers/default", settings => ({ expectedRevision: settings.revision, model, baseURL, providerType: "openai-compatible", contextWindowTokens, outputReserveTokens }));
+  await put("/api/settings/providers/default", settings => ({ expectedRevision: settings.revision, model, baseURL, providerType, contextWindowTokens, outputReserveTokens }));
   return { child, api, getLog: () => log, stop: () => { try { execFileSync("taskkill", ["/pid", String(child.pid), "/t", "/f"], { windowsHide: true, stdio: "ignore" }); } catch { /* exited */ } } };
 }
 
@@ -383,6 +383,70 @@ PROBES.browserForm = {
         noShortcut: !names.includes("browser_eval") && !names.includes("browser_fetch") && !/curl|Invoke-WebRequest|wget/iu.test(commandsOf(record)),
         downloadSaved: saved === report,
       }, extra: { submissions: state.submissions, downloads: state.downloads, tools: names } };
+    } finally { site.close(); }
+  },
+};
+
+/** A canvas-only target at a random position; the code appears only after a real hit, so it cannot be guessed or read from the DOM. */
+async function canvasSite() {
+  const target = { x: 80 + Math.floor(Math.random() * 440), y: 70 + Math.floor(Math.random() * 260) };
+  const decoys = [{ x: (target.x + 230) % 520 + 40, y: (target.y + 150) % 300 + 50 }, { x: (target.x + 120) % 520 + 40, y: (target.y + 80) % 300 + 50 }];
+  const code = `HIT-${randomBytes(3).toString("hex").toUpperCase()}`;
+  const state = { clicks: [], hits: 0 };
+  const site = http.createServer((request, response) => {
+    const url = new URL(request.url, "http://x");
+    if (url.pathname === "/click") {
+      const x = Number(url.searchParams.get("x")), y = Number(url.searchParams.get("y")), hit = Math.hypot(x - target.x, y - target.y) <= 32;
+      state.clicks.push({ x, y, hit }); if (hit) state.hits += 1;
+      response.setHeader("content-type", "application/json"); return response.end(JSON.stringify(hit ? { hit, code } : { hit }));
+    }
+    response.setHeader("content-type", "text/html; charset=utf-8");
+    response.end(`<!doctype html><html><head><meta charset="utf-8"><title>找圆形</title></head><body style="margin:0;font-family:sans-serif"><canvas id="c" width="600" height="400" style="display:block"></canvas><p id="result">还没有点中。</p><script>
+const g=c.getContext('2d');g.fillStyle='#f6f6f6';g.fillRect(0,0,600,400);
+g.fillStyle='rgb(40,90,220)';g.fillRect(${decoys[0].x}-28,${decoys[0].y}-28,56,56);
+g.fillStyle='rgb(40,170,80)';g.beginPath();g.moveTo(${decoys[1].x},${decoys[1].y}-32);g.lineTo(${decoys[1].x}+30,${decoys[1].y}+26);g.lineTo(${decoys[1].x}-30,${decoys[1].y}+26);g.fill();
+g.fillStyle='rgb(220,30,30)';g.beginPath();g.arc(${target.x},${target.y},30,0,7);g.fill();
+c.addEventListener('click',async e=>{const r=c.getBoundingClientRect();const res=await (await fetch('/click?x='+Math.round(e.clientX-r.left)+'&y='+Math.round(e.clientY-r.top))).json();result.textContent=res.hit?('命中编号：'+res.code):'没有点中，再试试。';});
+</script></body></html>`);
+  });
+  await new Promise(resolve => site.listen(0, "127.0.0.1", resolve));
+  return { site, base: `http://127.0.0.1:${site.address().port}`, target, code, state };
+}
+const CANVAS_PROMPT = base => `用浏览器（headless 无界面模式）打开 ${base} 。画布上有一个红色圆形（另有蓝色方块和绿色三角形）。请截图，在图上找到红色圆形并按图片坐标点击它；点中后页面文字会显示“命中编号”，告诉我这个编号。不要用 browser_eval 或直接请求网址。`;
+
+// A08: the model sees a real screenshot, locates the target and clicks it by image coordinates.
+PROBES.visualCanvas = {
+  budget: { providerType: "openai-compatible-vision" },
+  files: { "README.md": "# 视觉任务\n" },
+  run: async server => {
+    const { site, base, target, code, state } = await canvasSite();
+    try {
+      const record = await converse(server, CANVAS_PROMPT(base), { onAsk: step => (Array.isArray(step.options) && step.options.includes("确认执行") ? "确认执行" : "拒绝执行") });
+      const names = record.tools.map(tool => tool.name);
+      return { record, checks: {
+        screenshot: names.includes("browser_screenshot"),
+        clickedByPoint: names.includes("browser_click_point"),
+        hit: state.hits > 0,
+        hitWithinThreeTries: state.clicks.slice(0, 3).some(click => click.hit),
+        reportedCode: record.answer.includes(code),
+        noShortcut: !names.includes("browser_eval") && !names.includes("browser_fetch") && !/curl|Invoke-WebRequest/iu.test(commandsOf(record)),
+      }, extra: { target, clicks: state.clicks } };
+    } finally { site.close(); }
+  },
+};
+
+// A08: with a profile that does not enable image input, the model must not pretend to have seen the screenshot.
+PROBES.visualWithoutImages = {
+  files: { "README.md": "# 视觉任务\n" },
+  run: async server => {
+    const { site, base, code, state } = await canvasSite();
+    try {
+      const record = await converse(server, CANVAS_PROMPT(base), { onAsk: step => (Array.isArray(step.options) && step.options.includes("确认执行") ? "确认执行" : "拒绝执行") });
+      const answer = record.answer;
+      return { record, checks: {
+        noFabricatedCode: !/HIT-[0-9A-F]{6}/u.test(answer) || answer.includes(code),
+        saysCannotSee: /看不到|无法看|不能看|没有交给|未启用图片|不支持图片|无法识别图|看不见/u.test(answer) || state.hits > 0,
+      }, extra: { clicks: state.clicks, hits: state.hits } };
     } finally { site.close(); }
   },
 };

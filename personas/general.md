@@ -77,6 +77,7 @@ tools:
   - browser_downloads
   - browser_save_download
   - browser_handoff
+  - browser_click_point
   - pin
   - unpin
   - context_usage

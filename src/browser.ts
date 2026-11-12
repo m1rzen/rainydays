@@ -5,6 +5,7 @@ import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { USER_DATA_DIR } from "./runtime-paths.js";
+import { pngSize, registerObservation, type ToolObservation } from "./observations.js";
 
 export type BrowserBackendKind = "cdp" | "extension";
 export type BrowserTabSelector = number | string | undefined;
@@ -38,7 +39,15 @@ export interface BrowserScreenshot {
   readonly mimeType: "image/png";
   readonly bytes: Buffer;
   readonly tab: BrowserTab;
+  /** CSS size of the captured area; image pixels = CSS pixels × scale. */
+  readonly cssWidth?: number;
+  readonly cssHeight?: number;
+  readonly scale?: number;
+  readonly viewport?: boolean;
 }
+
+/** Longest image edge sent to a model; larger pages are scaled down and the scale is recorded. */
+export const SCREENSHOT_MAX_EDGE = 1280;
 
 export interface BrowserBackend {
   readonly kind: BrowserBackendKind;
@@ -64,6 +73,7 @@ export interface BrowserBackend {
   downloads?(): BrowserDownload[];
   readDownload?(id: number, maximumBytes: number): Promise<Readonly<{ name: string; bytes: Buffer }>>;
   handoff?(tab?: BrowserTabSelector): Promise<BrowserTab>;
+  clickPoint?(x: number, y: number, tab?: BrowserTabSelector): Promise<void>;
 }
 
 export interface BrowserWaitCondition {
@@ -302,6 +312,8 @@ export class CdpBrowserBackend implements BrowserBackend {
   #nextDownloadId = 1;
   #downloadsEnabled = false;
   #headless = false;
+  /** Per tab: the latest viewport screenshot geometry, used to map image points back to page points. */
+  #lastViewportShot = new Map<string, { scale: number; cssWidth: number; cssHeight: number }>();
 
   async #connect(options: BrowserOpenOptions): Promise<void> {
     if (this.#baseUrl || this.#directTarget) return;
@@ -458,7 +470,7 @@ export class CdpBrowserBackend implements BrowserBackend {
     return Object.freeze({ id: this.#number(target.id), targetId: target.id, title, url, active: true });
   }
 
-  #invalidate(targetId: string): void { this.#refs.delete(targetId); }
+  #invalidate(targetId: string): void { this.#refs.delete(targetId); this.#lastViewportShot.delete(targetId); }
 
   async open(options: BrowserOpenOptions): Promise<BrowserTab> {
     await this.#connect(options);
@@ -709,11 +721,37 @@ export class CdpBrowserBackend implements BrowserBackend {
     else await this.#evaluate(`(() => { window.scrollBy(${x},${y}); return true; })()`, tab);
   }
 
+  /** Captures at most SCREENSHOT_MAX_EDGE pixels on the long edge and reports the CSS size, so image points map back to the page. */
   async screenshot(fullPage = false, tab?: BrowserTabSelector): Promise<BrowserScreenshot> {
     const target = await this.#target(tab);
     const connection = await this.#connection(target);
-    const result = await connection.send<{ data: string }>("Page.captureScreenshot", { format: "png", captureBeyondViewport: fullPage, fromSurface: true });
-    return Object.freeze({ mimeType: "image/png", bytes: Buffer.from(result.data, "base64"), tab: await this.#settled(this.#number(target.id)) });
+    const metrics = await this.#evaluate<{ w: number; h: number; sx: number; sy: number; pageW: number; pageH: number }>("({ w: innerWidth, h: innerHeight, sx: scrollX, sy: scrollY, pageW: Math.max(document.documentElement.scrollWidth, innerWidth), pageH: Math.max(document.documentElement.scrollHeight, innerHeight) })", this.#number(target.id));
+    const cssWidth = Math.max(1, Math.round(fullPage ? metrics.pageW : metrics.w));
+    const cssHeight = Math.max(1, Math.round(fullPage ? Math.min(metrics.pageH, 16_384) : metrics.h));
+    const requested = Math.min(1, SCREENSHOT_MAX_EDGE / Math.max(cssWidth, cssHeight));
+    // Clip coordinates are document coordinates: a viewport capture starts at the scroll offset.
+    const clip = { x: fullPage ? 0 : metrics.sx, y: fullPage ? 0 : metrics.sy, width: cssWidth, height: cssHeight, scale: requested };
+    const result = await connection.send<{ data: string }>("Page.captureScreenshot", { format: "png", captureBeyondViewport: fullPage, fromSurface: true, clip });
+    const bytes = Buffer.from(result.data, "base64");
+    const { width } = pngSize(bytes);
+    const settledTab = await this.#settled(this.#number(target.id));
+    const shot = Object.freeze({ mimeType: "image/png" as const, bytes, tab: settledTab, cssWidth, cssHeight, scale: width / cssWidth, viewport: !fullPage });
+    if (!fullPage) this.#lastViewportShot.set(target.id, { scale: shot.scale, cssWidth, cssHeight });
+    return shot;
+  }
+
+  /** Clicks a point of the tab's latest viewport screenshot, given in that image's pixels. */
+  async clickPoint(x: number, y: number, tab?: BrowserTabSelector): Promise<void> {
+    const target = await this.#target(tab);
+    const shot = this.#lastViewportShot.get(target.id);
+    if (!shot) throw new Error("Take a viewport browser_screenshot of this tab first; full-page screenshots cannot be clicked by position");
+    if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0) throw new TypeError("Point must be non-negative image coordinates");
+    const pageX = x / shot.scale, pageY = y / shot.scale;
+    if (pageX > shot.cssWidth || pageY > shot.cssHeight) throw new RangeError(`Point (${x}, ${y}) is outside the latest screenshot`);
+    const connection = await this.#connection(target);
+    await connection.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: pageX, y: pageY });
+    await connection.send("Input.dispatchMouseEvent", { type: "mousePressed", x: pageX, y: pageY, button: "left", buttons: 1, clickCount: 1 });
+    await connection.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: pageX, y: pageY, button: "left", buttons: 0, clickCount: 1 });
   }
 
   async evaluate(expressionInput: string, tab?: BrowserTabSelector): Promise<unknown> {
@@ -881,7 +919,7 @@ export class BrowserSessionManager {
   forward(sessionId: string, tab?: BrowserTabSelector): Promise<BrowserTab> { return this.#backend(sessionId).forward(tab); }
   fetch(sessionId: string, url: string, options: Readonly<{ method?: string; headers?: Record<string, string>; body?: string; tab?: BrowserTabSelector }> = {}): Promise<unknown> { return this.#backend(sessionId).fetch(url, options); }
 
-  #capable<K extends "waitFor" | "upload" | "uploadDirectory" | "downloads" | "readDownload" | "handoff">(sessionId: string, name: K): NonNullable<BrowserBackend[K]> {
+  #capable<K extends "waitFor" | "upload" | "uploadDirectory" | "downloads" | "readDownload" | "handoff" | "clickPoint">(sessionId: string, name: K): NonNullable<BrowserBackend[K]> {
     const backend = this.#backend(sessionId);
     const method = backend[name];
     if (typeof method !== "function") throw new Error(`The ${backend.kind} browser backend does not support ${name}`);
@@ -893,8 +931,9 @@ export class BrowserSessionManager {
   downloads(sessionId: string): BrowserDownload[] { return this.#capable(sessionId, "downloads")(); }
   readDownload(sessionId: string, id: number, maximumBytes: number): Promise<Readonly<{ name: string; bytes: Buffer }>> { return this.#capable(sessionId, "readDownload")(id, maximumBytes); }
   handoff(sessionId: string, tab?: BrowserTabSelector): Promise<BrowserTab> { return this.#capable(sessionId, "handoff")(tab); }
+  clickPoint(sessionId: string, x: number, y: number, tab?: BrowserTabSelector): Promise<void> { return this.#capable(sessionId, "clickPoint")(x, y, tab); }
 
-  async screenshot(sessionIdInput: string, fullPage?: boolean, tab?: BrowserTabSelector): Promise<Readonly<{ path: string; sha256: string; bytes: number; mimeType: string; tab: BrowserTab }>> {
+  async screenshot(sessionIdInput: string, fullPage?: boolean, tab?: BrowserTabSelector): Promise<Readonly<{ path: string; sha256: string; bytes: number; mimeType: string; tab: BrowserTab; observation?: ToolObservation }>> {
     const sessionId = this.#sessionId(sessionIdInput);
     const screenshot = await this.#backend(sessionId).screenshot(fullPage, tab);
     const sessionDirectory = createHash("sha256").update(sessionId).digest("hex").slice(0, 24);
@@ -902,7 +941,11 @@ export class BrowserSessionManager {
     await mkdir(directory, { recursive: true });
     const filePath = path.join(directory, `screenshot-${Date.now()}.png`);
     await writeFile(filePath, screenshot.bytes, { flag: "wx" });
-    return Object.freeze({ path: filePath, sha256: createHash("sha256").update(screenshot.bytes).digest("hex"), bytes: screenshot.bytes.length, mimeType: screenshot.mimeType, tab: screenshot.tab });
+    const observation = screenshot.cssWidth && screenshot.cssHeight && screenshot.scale ? registerObservation(sessionId, screenshot.bytes, {
+      sourceWidth: screenshot.cssWidth, sourceHeight: screenshot.cssHeight, scale: screenshot.scale, source: "browser_screenshot",
+      target: `${screenshot.tab.title} <${screenshot.tab.url}>`.slice(0, 300), viewport: screenshot.viewport === true,
+    }) : undefined;
+    return Object.freeze({ path: filePath, sha256: createHash("sha256").update(screenshot.bytes).digest("hex"), bytes: screenshot.bytes.length, mimeType: screenshot.mimeType, tab: screenshot.tab, ...(observation ? { observation } : {}) });
   }
 }
 

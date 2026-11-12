@@ -11,6 +11,7 @@ import { MAX_DRAFT_ATTACHMENT_BYTES, INLINE_ATTACHMENT_BYTES, isDocumentMime } f
 import { beginObservation } from "./observability.js";
 import { ContextBudgetExceededError, estimateProjectedRequestTokens, resolveProviderReasoningEffort, resolveRequestBudget, type RequestBudget, type RequestBudgetReport } from "./request-budget.js";
 import { isModelNotFound } from "./model-connection.js";
+import { describeObservation, loadObservationBytes, type ToolObservation } from "./observations.js";
 
 /** 最大重试次数 */
 const MAX_RETRIES = 3;
@@ -172,11 +173,52 @@ function completedMessage(message: Message, finishReason: string | null | undefi
   return message;
 }
 
+/** At most this many tool observation images are sent per request; older ones become text references. */
+export const MAX_OBSERVATION_IMAGES = 2;
+
+/**
+ * Tool messages cannot carry images in OpenAI-compatible chat requests, so a tool block's observations follow it
+ * as one user message that names the call, target, time, size and scale. Without image input it says plainly
+ * that the model did not receive the picture.
+ */
+function observationMessage(sessionId: string | null, observations: readonly ToolObservation[], recent: ReadonlySet<ToolObservation>, imageInput: "none" | "data-uri", resolve: (sessionId: string, sha256: string) => Buffer | null): OpenAI.Chat.ChatCompletionMessageParam {
+  const content: OpenAI.Chat.ChatCompletionContentPart[] = [];
+  for (const observation of observations) {
+    content.push({ type: "text", text: describeObservation(observation) });
+    if (!recent.has(observation)) { content.push({ type: "text", text: "这张较早的截图已省略，需要时重新截图。" }); continue; }
+    if (imageInput !== "data-uri") { content.push({ type: "text", text: "当前模型配置未启用图片输入，这张截图没有交给模型。不要假装看见了内容；需要看图时请说明，或让用户在模型设置中选用支持视觉的配置。" }); continue; }
+    const bytes = sessionId ? resolve(sessionId, observation.sha256) : null;
+    if (!bytes) { content.push({ type: "text", text: "截图文件已不可用，需要时重新截图。" }); continue; }
+    content.push({ type: "image_url", image_url: { url: `data:${observation.mime};base64,${bytes.toString("base64")}`, detail: "auto" } });
+  }
+  return { role: "user", content };
+}
+
 export function projectMessagesForProvider(
   sessionId: string | null,
   messages: readonly Message[],
   resolveAttachment: AttachmentResolver | null,
   imageInput: "none" | "data-uri" = "none",
+  resolveObservation: (sessionId: string, sha256: string) => Buffer | null = loadObservationBytes,
+): OpenAI.Chat.ChatCompletionMessageParam[] {
+  const all = messages.flatMap(message => message.role === "tool" && message.observations?.length ? [...message.observations] : []);
+  const recent = new Set(all.slice(-MAX_OBSERVATION_IMAGES));
+  const projected: OpenAI.Chat.ChatCompletionMessageParam[] = [];
+  let pending: ToolObservation[] = [];
+  projectEachMessage(sessionId, messages, resolveAttachment, imageInput).forEach((message, index) => {
+    projected.push(message);
+    const source = messages[index];
+    if (source.role === "tool" && source.observations?.length) pending.push(...source.observations);
+    if (pending.length && messages[index + 1]?.role !== "tool") { projected.push(observationMessage(sessionId, pending, recent, imageInput, resolveObservation)); pending = []; }
+  });
+  return projected;
+}
+
+function projectEachMessage(
+  sessionId: string | null,
+  messages: readonly Message[],
+  resolveAttachment: AttachmentResolver | null,
+  imageInput: "none" | "data-uri",
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
   let attachmentBytes = 0;
   // Many OpenAI-compatible providers reject system messages after the conversation has started.

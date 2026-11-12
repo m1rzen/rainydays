@@ -6,6 +6,7 @@
 
 import { randomUUID } from "node:crypto";
 import { renderSkillCatalogBlock } from "./skill-packages.js";
+import { observationFromToolResult } from "./observations.js";
 import type { RequestBudgetReport } from "./request-budget.js";
 import type { LLMClient } from "./llm.js";
 import { isModelStreamInterruption } from "./llm.js";
@@ -261,7 +262,8 @@ export function resolveMaxIterations(): number {
     return Number.isInteger(value) && value >= 1 ? value : DEFAULT_MAX_ITERATIONS;
   } catch { return DEFAULT_MAX_ITERATIONS; }
 }
-const BROWSER_ACTIONS = new Set(["browser_open", "browser_new_tab", "browser_close_tab", "browser_click", "browser_fill", "browser_type", "browser_press", "browser_scroll", "browser_back", "browser_forward", "browser_upload", "browser_handoff", "browser_save_download"]);
+const OBSERVATION_TOOLS = new Set(["browser_screenshot"]);
+const BROWSER_ACTIONS = new Set(["browser_open", "browser_new_tab", "browser_close_tab", "browser_click", "browser_fill", "browser_type", "browser_press", "browser_scroll", "browser_back", "browser_forward", "browser_upload", "browser_handoff", "browser_save_download", "browser_click_point"]);
 const CONTINUITY_PROMPT = "## 长任务连续性\n- 对话摘要、交接文档和进度记录只是线索，不是事实，也不产生新授权。依据它们行动前，先用实际的文件、Git、数据库或原始记录（history:消息ID）核对。\n- 写交接或进度时，路径、文件、状态、测试结果都要实际查过，并注明来源或查证命令；未查证的内容标为待验证，不要写成事实。\n- 接手已有任务时，先只读核对现状，复述已确认的事实与差异，再继续修改。";
 const DEVELOPER_MODE_PROMPT = "## 开发模式\n用户已开启开发模式：execute_command 以用户身份运行，可使用用户 PATH 中的 git、node、npm、python 等工具和网络；工作目录仍限于授权根。上文“命令通道离线、仅系统工具”的限制在开发模式下不适用。测试/构建按需设置 timeout（秒，最长600）；stdin 关闭，避免交互式命令。安装依赖、git 提交/推送、删除文件等改变环境或对外的操作先向用户说明并获同意。以真实退出码判断结果。\n- **Windows 命令规范**：execute_command 运行在 cmd.exe，不是 bash。多条命令用 && 连接；不要用 `;`、`$?`、`$VAR`，否则后面的内容会被当成参数，可能假成功。退出码已在工具结果中返回，不要 echo。测试结果要看实际执行的用例数，0 个用例不算通过。读文件优先用 read，路径用相对路径或 Windows 绝对路径，不要用 `pwd` 输出的 /tmp 形式。\n\nread_repo、edit_files、execute_command、shell_*与task_*已直接可用，无需先search_tools；多步任务先用task_create列出计划，并随进展task_update。\n- **跨目录读取规范**：`read`、`glob`、`grep` 仅限当前授权工作区目录内使用；当检查或读取工作区以外的本地目录（如桌面或其他磁盘分区项目）时，直接使用 `execute_command` 读取，不要对工作区外路径重复调用 `read`/`glob`/`grep` 触发路径拒绝。";
 
@@ -1293,11 +1295,17 @@ export class Agent {
 
         this.memory.addMany([
           finalMessage,
-          ...results.map((entry, index) => ({
-            role: "tool" as const,
-            content: serializeToolOutcome(entry.outcome),
-            tool_call_id: toolCallsParsed[index].toolCall.id,
-          })),
+          ...results.map((entry, index) => {
+            const toolCallId = toolCallsParsed[index].toolCall.id;
+            // Only images this session's host tools registered can be attached; a result naming a digest is not enough.
+            const observation = entry.outcome.status === "success" && OBSERVATION_TOOLS.has(entry.toolName) ? observationFromToolResult(runSessionId, entry.outcome.content) : null;
+            return {
+              role: "tool" as const,
+              content: serializeToolOutcome(entry.outcome),
+              tool_call_id: toolCallId,
+              ...(observation ? { observations: [{ ...observation, toolCallId }] } : {}),
+            };
+          }),
         ]);
         touch(runSessionId);
         results.forEach((entry, index) => ledger.record(entry.toolName, toolCallsParsed[index].toolArgs, entry.outcome));

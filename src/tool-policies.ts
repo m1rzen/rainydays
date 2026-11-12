@@ -127,6 +127,7 @@ export const STATIC_TOOL_POLICIES: Readonly<Record<string, ToolPolicy>> = Object
   browser_downloads: policy(["read", "control"], "none", ["control"]),
   browser_save_download: policy(["write"], "user", ["filesystem"], ["create-file"]),
   browser_handoff: policy(["control"], "none", ["control"]),
+  browser_click_point: policy(["write", "control"], "user", ["network", "control"]),
   link_discover: policy(["read", "control"], "none", ["control"]),
   link_peek: policy(["read", "control"], "none", ["control"]),
   link_post: policy(["write", "control"], "user", ["control"]),

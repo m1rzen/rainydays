@@ -57,6 +57,7 @@ tools:
   - browser_downloads
   - browser_save_download
   - browser_handoff
+  - browser_click_point
   - get_current_time
   - ask_user
   - remember

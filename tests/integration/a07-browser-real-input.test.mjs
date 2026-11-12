@@ -32,6 +32,8 @@ async function site() {
     if (url.pathname === "/upload") return html(`<input type="file" id="file" aria-label="选择文件"><p id="picked">未选择</p><script>file.addEventListener('change',()=>{const f=file.files[0];picked.textContent=f.name+':'+f.size;});</script>`, "Upload");
     if (url.pathname === "/user") return html("<h1>用户自己的标签</h1>", "User tab");
     if (url.pathname === "/popup") return html(`<button id="pop" onclick="window.open('/user?from=popup','_blank')">打开弹窗</button>`, "Popup");
+    if (url.pathname === "/canvas") return html(`<canvas id="c" width="600" height="400" style="display:block;margin:0"></canvas><p id="hits">none</p><script>const g=c.getContext('2d');g.fillStyle='#f4f4f4';g.fillRect(0,0,600,400);g.fillStyle='rgb(220,30,30)';g.beginPath();g.arc(420,260,30,0,7);g.fill();c.addEventListener('click',e=>{const r=c.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;hits.textContent=Math.hypot(x-420,y-260)<=30?'hit':'miss '+Math.round(x)+','+Math.round(y);});</script>`, "Canvas");
+    if (url.pathname === "/tall") return html(`<div style="height:3000px;background:linear-gradient(#fff,#ccc)">很长的页面</div>`, "Tall");
     if (url.pathname === "/covered") return html(`<button id="under" onclick="this.textContent='被点了'">底下的按钮</button><div style="position:fixed;inset:0;background:rgba(0,0,0,.3)">遮罩</div>`, "Covered");
     html(`
       <form action="/submitted" method="get">
@@ -179,4 +181,31 @@ test("A07 observing the page again after a page action is not counted as a loop"
   const clicking = new ToolLoopDetector();
   for (let round = 0; round < 3; round += 1) { clicking.observe("browser_click", "e1"); clicking.noteBrowserChange(); }
   assert.throws(() => clicking.observe("browser_click", "e1"), /Repeated identical tool call/u, "repeating the same action is still a loop");
+});
+
+test("A08 screenshots are registered observations; a canvas target is clicked by image coordinates; full-page shots are scaled and not clickable", { skip: !chrome, timeout: 60000 }, async () => {
+  const { server, base } = await site(); const manager = new BrowserSessionManager();
+  const { knownObservation, loadObservationBytes } = await import("../../src/observations.ts");
+  try {
+    await manager.open("a08", { url: `${base}/canvas`, backend: "cdp", headless: true });
+    await assert.rejects(() => manager.clickPoint("a08", 10, 10), /viewport browser_screenshot/u, "no screenshot yet");
+    const shot = await manager.screenshot("a08");
+    const observation = shot.observation;
+    assert(observation && observation.viewport); assert.equal(knownObservation("a08", observation.sha256)?.sha256, observation.sha256);
+    assert(loadObservationBytes("a08", observation.sha256)?.length > 100);
+    assert(Math.abs(observation.width / observation.sourceWidth - observation.scale) < 1e-9);
+    const rect = await manager.evaluate("a08", "(() => { const r = document.getElementById('c').getBoundingClientRect(); return { x: r.left, y: r.top }; })()");
+    await manager.clickPoint("a08", (rect.x + 420) * observation.scale, (rect.y + 260) * observation.scale);
+    assert.equal(await manager.evaluate("a08", "document.getElementById('hits').textContent"), "hit", "image coordinates map back to the page");
+    await manager.clickPoint("a08", (rect.x + 100) * observation.scale, (rect.y + 100) * observation.scale);
+    assert.match(await manager.evaluate("a08", "document.getElementById('hits').textContent"), /^miss /u);
+    await assert.rejects(() => manager.clickPoint("a08", observation.width * 3, 5), /outside the latest screenshot/u);
+    await manager.open("a08", { url: `${base}/tall`, backend: "cdp", headless: true });
+    await assert.rejects(() => manager.clickPoint("a08", 10, 10), /viewport browser_screenshot/u, "navigation drops the old screenshot geometry");
+    const full = (await manager.screenshot("a08", true)).observation;
+    assert.equal(full.viewport, false);
+    assert(Math.max(full.width, full.height) <= 1280 + 1, `long edge ${full.width}x${full.height}`);
+    assert(full.sourceHeight >= 3000 && full.scale < 0.5, `scaled ${full.scale}`);
+    await assert.rejects(() => manager.clickPoint("a08", 10, 10), /viewport browser_screenshot/u, "full-page screenshots cannot be clicked by position");
+  } finally { await manager.close("a08").catch(() => undefined); server.close(); }
 });
