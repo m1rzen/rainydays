@@ -270,6 +270,16 @@ test("D04 真实服务按错误事件结算，工具失败和限步不发送成�
   try {
     product = await startProduct(fixture, provider.baseURL, token);
     for (const [input, outcome, notificationKind] of [["d04-quota", "failed", "error"], ["d04-tool-failure", "partial", "info"], ["d04-limit", "failed", "error"]]) {
+      if (input === "d04-limit") {
+        // 产品默认上限为 200 步；本用例只验证限步结算，通过设置 API 把上限降到 25 步以控制耗时。
+        const current = (await api(product.base, token, "/settings")).body;
+        const saved = await api(product.base, token, "/settings/domains/common", {
+          method: "PUT",
+          body: JSON.stringify({ expectedRevision: current.revision, value: { ...current.domains.common, maxIterations: 25 } }),
+        });
+        assert.equal(saved.status, 200, JSON.stringify(saved.body));
+        assert.equal(saved.body.settings.domains.common.maxIterations, 25);
+      }
       const created = await api(product.base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: input }) });
       const sessionId = created.body.session.id;
       const response = await fetch(`${product.base}/chat`, { method: "POST", headers: { "X-RainyDays-Token": token, "Content-Type": "application/json" }, body: JSON.stringify({ sessionId, message: input }) });
@@ -280,7 +290,10 @@ test("D04 真实服务按错误事件结算，工具失败和限步不发送成�
       assert.equal(desktop.sessions.find(item => item.id === sessionId).status, outcome === "failed" ? "error" : "idle");
       assert.equal(events.at(-1).type, "run_finished");
       assert.equal(events.at(-1).outcome, outcome);
-      if (input === "d04-limit") assert.match(events.find(event => event.type === "error").content, /最大循环/);
+      if (input === "d04-limit") {
+        assert.match(events.find(event => event.type === "error").content, /最大循环次数（25）/);
+        assert.equal(provider.requests.filter(request => request.stream && request.user === "d04-limit").length, 25);
+      }
     }
     const created = await api(product.base, token, "/sessions", { method: "POST", body: JSON.stringify({ title: "D04 waiting" }) });
     const sessionId = created.body.session.id;
