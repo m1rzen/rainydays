@@ -2772,7 +2772,8 @@
       if (!token?.bubble) return;
       token.bubble.querySelector(".typing")?.remove();
       let note = token.bubble.querySelector(".run-status-note");
-      if (!note) { note = document.createElement("p"); note.className = "run-status-note"; token.bubble.appendChild(note); }
+      if (!note) { note = document.createElement("p"); note.className = "run-status-note"; }
+      token.bubble.appendChild(note);
       note.textContent = text;
     }
     async function cancelSessionRun(sessionId = currentSessionId) {
@@ -3155,6 +3156,15 @@
               renderRunText(segmentText);
               if (currentSessionId === chatSessionId) messagesEl.scrollTop = messagesEl.scrollHeight;
             }
+            else if (step.type === "answer_retry") {
+              // 模型连接中断：撤回本轮已显示的半截文字，同一轮会重新请求，界面不留重复或残缺正文。
+              const drop = Math.min(Math.max(0, Number(step.retractChars) || 0), segmentText.length);
+              segmentText = segmentText.slice(0, segmentText.length - drop);
+              fullText = fullText.slice(0, Math.max(0, fullText.length - drop));
+              if (segmentText) renderRunText(segmentText); else answerEl.remove();
+              runToken.retried = true;
+              showRunNotice(runToken, step.content);
+            }
             else if (step.type === "tool_call") {
               bubbleEl.querySelector(".typing")?.remove();
               sealCurrentTextSegment();
@@ -3193,8 +3203,10 @@
             else if (step.type === "run_finished") {
               runToken.outcome = step.outcome;
               if (step.outcome === "partial") showRunNotice(runToken, "部分步骤未完成，请检查工具记录和成果。");
+              else if (step.outcome === "interrupted") showRunNotice(runToken, "已中断，已完成的步骤和文件已保留；是否继续由你决定。");
+              else if (step.outcome === "completed" && runToken.retried) showRunNotice(runToken, "模型连接曾中断，已自动重新请求并完成。");
             }
-            else if (step.type === "error") { runToken.outcome = "failed"; renderRunText((segmentText ? segmentText + "\n\n" : "") + "执行失败：" + step.content); completeAccessibleResponse(bubbleEl.textContent); }
+            else if (step.type === "error") { runToken.outcome = "failed"; renderRunText((segmentText ? segmentText + "\n\n" : "") + (step.interrupted ? "" : "执行失败：") + step.content); completeAccessibleResponse(bubbleEl.textContent); }
           }
         }
         if (!runToken.outcome) showRunNotice(runToken, "连接已结束，任务结果尚未确认。请检查已生成的内容和成果。");

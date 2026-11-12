@@ -20,6 +20,28 @@ const BASE_BACKOFF_MS = 1000;
 /** 请求超时（毫秒） */
 const REQUEST_TIMEOUT_MS = 120000;
 
+/** 流已建立后断开时，同一轮最多自动重新请求的次数。 */
+export const MAX_STREAM_RESUME_RETRIES = 2;
+
+/** 连接在回答完整结束前关闭：本轮输出不完整，可重新请求同一轮。 */
+class StreamClosedEarlyError extends Error {
+  readonly closedEarly = true;
+  constructor() { super("回答未完整结束 (连接提前关闭或未知结束状态)"); }
+}
+
+/** 流式连接多次中断且重试已用尽；本轮没有返回任何可执行结果。 */
+export class ModelStreamInterruptedError extends Error {
+  readonly code = "MODEL_STREAM_INTERRUPTED";
+  constructor(readonly reason: string, readonly retries: number) {
+    super(`模型流式连接中断: ${reason}（已自动重试 ${retries} 次）`);
+  }
+}
+
+export function isModelStreamInterruption(error: unknown): error is ModelStreamInterruptedError {
+  return error instanceof ModelStreamInterruptedError
+    || (error as { code?: unknown } | null)?.code === "MODEL_STREAM_INTERRUPTED";
+}
+
 function normalizeOpenAIBaseURL(rawBaseURL: string): string {
   const trimmed = rawBaseURL.trim().replace(/\/+$/u, "");
   try {
@@ -68,12 +90,18 @@ function isRetryableError(err: unknown): { retry: boolean; rateLimit?: boolean; 
     return { retry: true, reason: `服务端错误 (${e.status})` };
   }
 
+  if (err instanceof StreamClosedEarlyError) {
+    return { retry: true, reason: "连接提前关闭" };
+  }
+
   // 网络错误（无 status 通常是网络层问题）
   if (!e.status) {
     const msg = e.message || "";
+    // "Premature close"/"terminated"/"other side closed" 是流读取中连接被关闭时 SDK 与 undici 的报错。
     if (msg.includes("timeout") || msg.includes("ETIMEDOUT") || msg.includes("ECONNRESET") ||
         msg.includes("fetch failed") || msg.includes("network") || msg.includes("socket hang up") ||
-        msg.includes("ECONNREFUSED") || msg.includes("EAI_AGAIN")) {
+        msg.includes("ECONNREFUSED") || msg.includes("EAI_AGAIN") || msg.includes("Premature close") ||
+        msg === "terminated" || msg.includes("other side closed") || msg.includes("UND_ERR_SOCKET")) {
       return { retry: true, reason: `网络错误: ${msg.slice(0, 80)}` };
     }
   }
@@ -108,7 +136,9 @@ export type AttachmentResolver = (
 ) => Readonly<{ attachment: MessageAttachment; bytes: Buffer }>;
 
 /** A complete protocol reply is required before any caller can execute its tools. */
-function completedMessage(message: Message, finishReason: string | null | undefined): Message {
+function completedMessage(message: Message, finishReason: string | null | undefined, streamed = false): Message {
+  // A stream that ended without any finish_reason was cut off; length/content_filter are deterministic endings.
+  if (streamed && (finishReason === null || finishReason === undefined)) throw new StreamClosedEarlyError();
   if (finishReason !== "stop" && finishReason !== "tool_calls") {
     const reason = finishReason === "length" || finishReason === "content_filter" ? finishReason : "连接提前关闭或未知结束状态";
     throw new Error(`回答未完整结束 (${reason})`);
@@ -380,13 +410,15 @@ export class LLMClient {
     }
 
     const budget = this.checkBudget(params.messages, tools);
-    let lastError: unknown = null;
     const observation = beginObservation("llm");
     let fallbackOutcome: "cancelled" | "error" = "cancelled";
 
     try {
-    // 重试只在流建立阶段（create 调用），流开始后不重试
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    // 建立流失败最多重试 MAX_RETRIES 次。流建立后断开时，本轮尚未交给调用方执行任何工具
+    // （完整结束前不返回 result），丢弃本轮输出并重新请求同一轮，最多 MAX_STREAM_RESUME_RETRIES 次。
+    let setupRetries = 0;
+    let streamRetries = 0;
+    for (let attempt = 0; ; attempt++) {
       let streamEstablished = false;
       try {
         if (signal) throwIfCancelled(signal);
@@ -451,7 +483,7 @@ export class LLMClient {
                 function: { name: tc.name, arguments: tc.arguments },
               }))
             : undefined,
-        }, finishReason);
+        }, finishReason, true);
 
         observation.finish("success", { bytesOut: Buffer.byteLength(fullContent, "utf8") });
         this.recordUsage(budget, usage);
@@ -463,34 +495,47 @@ export class LLMClient {
           observation.finish("cancelled");
           throw llmCancellationFailure(signal, err, "LLM stream was cancelled");
         }
-        lastError = err;
         const { retry, rateLimit, reason } = isRetryableError(err);
+        const retried = setupRetries + streamRetries;
 
-        if (streamEstablished || !retry || attempt === MAX_RETRIES) {
+        if (!retry) {
           observation.finish("error");
-          throw new Error(`LLM 流式请求失败: ${reason}${attempt > 0 ? ` (已重试 ${attempt} 次)` : ""}`);
+          throw new Error(`LLM 流式请求失败: ${reason}${retried > 0 ? ` (已重试 ${retried} 次)` : ""}`);
         }
+        if (streamEstablished && streamRetries >= MAX_STREAM_RESUME_RETRIES) {
+          observation.finish("error");
+          console.warn(`⚠️ LLM 流式连接中断 (${reason})，已自动重试 ${streamRetries} 次，本轮按中断结束`);
+          throw new ModelStreamInterruptedError(reason, streamRetries);
+        }
+        if (!streamEstablished && setupRetries >= MAX_RETRIES) {
+          observation.finish("error");
+          throw new Error(`LLM 流式请求失败: ${reason}${retried > 0 ? ` (已重试 ${retried} 次)` : ""}`);
+        }
+        if (streamEstablished) streamRetries++; else setupRetries++;
         observation.retry();
 
         const waitMs = rateLimit
           ? rateLimitWaitMs(err, attempt)
           : BASE_BACKOFF_MS * Math.pow(2, attempt);
 
-        console.warn(
-          `⚠️ LLM 流式请求失败 (尝试 ${attempt + 1}/${MAX_RETRIES + 1}): ${reason}，` +
-          `${waitMs}ms 后重试...`
-        );
+        if (streamEstablished) {
+          console.warn(
+            `⚠️ LLM 流式连接中断 (重试 ${streamRetries}/${MAX_STREAM_RESUME_RETRIES}): ${reason}，` +
+            `丢弃本轮未完成输出，${waitMs}ms 后重新请求同一轮...`
+          );
+          // 调用方据此撤回本轮已显示的半截文字；未完成的工具调用从未交出。
+          yield { type: "retry", attempt: streamRetries, maxRetries: MAX_STREAM_RESUME_RETRIES, reason, waitMs };
+        } else {
+          console.warn(
+            `⚠️ LLM 流式请求失败 (尝试 ${setupRetries}/${MAX_RETRIES + 1}): ${reason}，` +
+            `${waitMs}ms 后重试...`
+          );
+        }
 
         if (signal) await abortableDelay(waitMs, signal);
         else await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
       }
     }
-
-    observation.finish("error");
-    throw new Error(
-      `LLM 流式请求失败: 已耗尽 ${MAX_RETRIES + 1} 次尝试。` +
-      `最后错误: ${lastError instanceof Error ? lastError.message : String(lastError)}`
-    );
     } catch (error) {
       fallbackOutcome = signal?.aborted ? "cancelled" : "error";
       throw error;
@@ -503,4 +548,6 @@ export class LLMClient {
 /** 流式事件类型 */
 export type StreamEvent =
   | { type: "delta"; content: string }
+  /** 流已建立后断开，本轮输出作废，等待 waitMs 后重新请求同一轮。 */
+  | { type: "retry"; attempt: number; maxRetries: number; reason: string; waitMs: number }
   | { type: "result"; message: Message; usage?: LLMUsage };

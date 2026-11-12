@@ -8,6 +8,7 @@ import { randomUUID } from "node:crypto";
 import { renderSkillCatalogBlock } from "./skill-packages.js";
 import type { RequestBudgetReport } from "./request-budget.js";
 import type { LLMClient } from "./llm.js";
+import { isModelStreamInterruption } from "./llm.js";
 import { HANDOFF_SUGGESTION_INTERVAL, type ConversationMemory } from "./memory.js";
 import type { AgentStep, PersonaDefinition, Message, MessageAttachment, TaskSnapshot, ToolCall, ToolExecutionOutcome, ToolPipelineStageRecord } from "./types.js";
 import type { CapabilityContext, InspectedToolCall, RuntimeAuthority, ToolPolicy } from "./capability-broker.js";
@@ -216,6 +217,41 @@ function wroteCode(result: AgentToolResult): boolean {
     return receipt.type === "code_changes" && Array.isArray(receipt.changes)
       && receipt.changes.some((change: { status?: string; beforeRevision?: string; afterRevision?: string }) => change.status === "written" && change.afterRevision !== change.beforeRevision);
   } catch { return false; }
+}
+
+const FILE_WRITING_TOOLS = new Set(["write", "write_file", "edit", "edit_file", "replace"]);
+
+/** 本次运行已提交的工具结果，用于中断时说明已完成的步骤和产出的文件。 */
+class RunLedger {
+  private readonly steps: string[] = [];
+  private readonly files = new Map<string, string>();
+
+  record(toolName: string, args: Record<string, unknown> | null, outcome: AgentToolResult["outcome"]): void {
+    if (outcome.status !== "success") return;
+    const target = [args?.file_path, args?.path, args?.command, args?.url].find(value => typeof value === "string" && value.trim());
+    this.steps.push(typeof target === "string" ? `${toolName}（${target.replace(/\s+/gu, " ").slice(0, 80)}）` : toolName);
+    const paths: string[] = [];
+    try {
+      const receipt = JSON.parse(outcome.content) as { type?: unknown; path?: unknown; changes?: unknown };
+      if (receipt?.type === "document_output" && typeof receipt.path === "string") paths.push(receipt.path);
+      if (receipt?.type === "code_changes" && Array.isArray(receipt.changes)) {
+        for (const change of receipt.changes as { status?: unknown; path?: unknown }[]) {
+          if (change?.status === "written" && typeof change.path === "string") paths.push(change.path);
+        }
+      }
+    } catch { /* plain-text receipts */ }
+    if (paths.length === 0 && FILE_WRITING_TOOLS.has(toolName)) {
+      const written = args?.file_path ?? args?.path;
+      if (typeof written === "string" && written.trim()) paths.push(written);
+    }
+    for (const file of paths) this.files.set(process.platform === "win32" ? file.toLowerCase() : file, file);
+  }
+
+  describe(): string {
+    const steps = this.steps.length ? this.steps.map((step, index) => `${index + 1}. ${step}`).join("\n") : "（无）";
+    const files = this.files.size ? [...this.files.values()].map(file => `- ${file}`).join("\n") : "（无）";
+    return `已完成的步骤：\n${steps}\n产出的文件：\n${files}`;
+  }
 }
 
 /** A14：迭代上限来自 common.maxIterations；隔离夹具没有全局配置时使用默认值。 */
@@ -876,6 +912,7 @@ export class Agent {
       let failingCommand: string | null = null;
       let codeRepairRounds = 0;
       let silentToolRounds = 0;
+      const ledger = new RunLedger();
 
       const maxIterations = resolveMaxIterations();
     for (let i = 0; i < maxIterations; i++) {
@@ -957,7 +994,21 @@ export class Agent {
       const llmStart = Date.now();
       try {
         for await (const event of this.llm.chatStream(this.memory.getAll(), schemas, signal, runSessionId, readMessageAttachmentForSession)) {
-          if (event.type === "delta") {
+          if (event.type === "retry") {
+            // 本轮回答作废：撤回已显示的半截文字，重新请求同一轮；未完成的工具调用从未交出或执行。
+            const retractChars = streamedContent.length;
+            streamedContent = "";
+            hasStreamedContent = false;
+            console.warn(`↻ [迭代 ${i}] 模型连接中断，丢弃 ${retractChars} 字未完成输出，重试 ${event.attempt}/${event.maxRetries}: ${event.reason}`);
+            yield {
+              type: "answer_retry",
+              content: `模型连接中断，已丢弃未完成的输出，正在重新请求（${event.attempt}/${event.maxRetries}）…`,
+              retractChars,
+              retryAttempt: event.attempt,
+              retryMax: event.maxRetries,
+              timestamp: Date.now(),
+            };
+          } else if (event.type === "delta") {
             if (!orgModeEnabled) {
               hasStreamedContent = true;
               streamedContent += event.content;
@@ -973,16 +1024,22 @@ export class Agent {
         }
       } catch (err) {
         const cancelled = isRunCancellation(err) || signal.aborted;
-        const errorContent = cancelled ? "运行已取消，以上内容未完成。" : `回答未完成，请重新发送或要求继续。LLM 请求失败: ${err instanceof Error ? err.message : String(err)}`;
-        // 只保存已经向用户显示的正文，不保存或执行未完成的工具调用。
-        if (streamedContent) {
-          this.memory.add({ role: "assistant", content: `${streamedContent}\n\n⚠️ ${errorContent}` });
+        const interrupted = !cancelled && isModelStreamInterruption(err);
+        const errorContent = cancelled ? "运行已取消，以上内容未完成。"
+          : interrupted
+            // D04：不重放未知写入，继续由用户发起；已提交的工具结果保留在对话中。
+            ? `已中断：${err instanceof Error ? err.message : String(err)}，本轮未完成。已完成的步骤和产出的文件已保留，未完成的操作不会自动重放；请检查后回复“继续”。\n${ledger.describe()}`
+            : `回答未完成，请重新发送或要求继续。LLM 请求失败: ${err instanceof Error ? err.message : String(err)}`;
+        // 只保存已经向用户显示的正文和中断说明，不保存或执行未完成的工具调用。
+        if (streamedContent || interrupted) {
+          this.memory.add({ role: "assistant", content: streamedContent ? `${streamedContent}\n\n⚠️ ${errorContent}` : `⚠️ ${errorContent}` });
           touch(runSessionId);
         }
         if (cancelled) throw err;
         yield {
           type: "error",
           content: errorContent,
+          ...(interrupted ? { interrupted: true } : {}),
           timestamp: Date.now(),
         };
         return;
@@ -1241,6 +1298,7 @@ export class Agent {
           })),
         ]);
         touch(runSessionId);
+        results.forEach((entry, index) => ledger.record(entry.toolName, toolCallsParsed[index].toolArgs, entry.outcome));
         if (batchCancellation) throw batchCancellation;
         throwIfCancelled(signal);
         const previousToolCount = toolSelection.protocols().length;

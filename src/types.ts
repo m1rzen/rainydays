@@ -262,8 +262,14 @@ export interface ToolExecutionOutcome {
 
 /** agent 运行中的一步 */
 export interface AgentStep {
-  type: "thinking" | "tool_call" | "tool_result" | "answer_chunk" | "answer_done" | "error"
+  type: "thinking" | "tool_call" | "tool_result" | "answer_chunk" | "answer_done" | "answer_retry" | "error"
     | "task_created" | "task_update" | "steer" | "context_notice";
+  /** answer_retry：模型连接中断，撤回本轮已显示的末尾字符数，随后重新请求同一轮。 */
+  retractChars?: number;
+  retryAttempt?: number;
+  retryMax?: number;
+  /** error：模型连接多次中断，运行按中断结束（非成功），继续由用户发起。 */
+  interrupted?: boolean;
   /** context_notice：会话 Auto 授权的最新状态，供界面同步。 */
   autoApprove?: boolean;
   content: string;

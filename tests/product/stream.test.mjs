@@ -16,6 +16,8 @@ async function withProvider(handler, run) {
 const chunk = delta => `data: ${JSON.stringify({ choices: [{ delta }] })}\n\n`;
 const finished = reason => `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: reason }] })}\n\ndata: [DONE]\n\n`;
 const streamError = `data: ${JSON.stringify({ error: { message: "network connection reset during generation", type: "server_error" } })}\n\n`;
+// Not a transport fault: re-requesting would not help, so the turn ends after one request.
+const fatalStreamError = `data: ${JSON.stringify({ error: { message: "generation rejected by provider policy", type: "invalid_request_error" } })}\n\n`;
 async function collect(llm, events = [], signal) {
   for await (const event of llm.chatStream([{ role: "user", content: "test" }], undefined, signal)) events.push(event);
   return events;
@@ -24,18 +26,32 @@ async function collect(llm, events = [], signal) {
 for (const [name, delta] of [
   ["文字", { content: "已经生成的正文" }],
   ["工具参数", { tool_calls: [{ index: 0, id: "half", type: "function", function: { name: "write", arguments: '{"path":' } }] }],
-]) test(`${name}断流后不发第二次请求、不产生成功结果`, async () => {
-  await withProvider((res, n) => {
-    res.writeHead(200, { "Content-Type": "text/event-stream" });
-    res.end(n === 1 ? chunk(delta) + streamError : chunk({ content: "第二次回答" }) + finished("stop"));
-  }, async (llm, requests) => {
-    const events = [];
-    await assert.rejects(() => collect(llm, events), /流式请求失败/);
-    assert.equal(requests(), 1);
-    assert.equal(events.some(event => event.type === "result"), false);
-    assert.deepEqual(events.filter(event => event.type === "delta").map(event => event.content), delta.content ? [delta.content] : []);
+]) {
+  test(`${name}后流内出现不可重试错误：不发第二次请求、不产生成功结果`, async () => {
+    await withProvider((res, n) => {
+      res.writeHead(200, { "Content-Type": "text/event-stream" });
+      res.end(n === 1 ? chunk(delta) + fatalStreamError : chunk({ content: "第二次回答" }) + finished("stop"));
+    }, async (llm, requests) => {
+      const events = [];
+      await assert.rejects(() => collect(llm, events), /流式请求失败/);
+      assert.equal(requests(), 1);
+      assert.equal(events.some(event => event.type === "result"), false);
+      assert.deepEqual(events.filter(event => event.type === "delta").map(event => event.content), delta.content ? [delta.content] : []);
+    });
   });
-});
+  test(`${name}后网络断流：作废本轮输出，重新请求一次并只返回完整回答`, async () => {
+    await withProvider((res, n) => {
+      res.writeHead(200, { "Content-Type": "text/event-stream" });
+      res.end(n === 1 ? chunk(delta) + streamError : chunk({ content: "第二次回答" }) + finished("stop"));
+    }, async (llm, requests) => {
+      const events = await collect(llm);
+      assert.equal(requests(), 2);
+      assert.deepEqual(events.map(event => event.type), [...(delta.content ? ["delta"] : []), "retry", "delta", "result"]);
+      assert.equal(events.at(-1).message.content, "第二次回答");
+      assert.equal(events.at(-1).message.tool_calls, undefined);
+    });
+  });
+}
 
 test("建立流之前的暂时错误仍可重试，成功只返回一份回答", async () => {
   await withProvider((res, n) => {
@@ -56,8 +72,9 @@ for (const ending of ["", finished("length")]) test(`未完成的工具参数不
     res.end(chunk({ tool_calls: [{ index: 0, id: "half", type: "function", function: { name: "write", arguments: '{"path":' } }] }) + ending);
   }, async (llm, requests) => {
     const events = [];
-    await assert.rejects(() => collect(llm, events), /未完整结束/);
-    assert.equal(requests(), 1);
+    // EOF without finish_reason is a cut-off connection: retried twice, then interrupted. length is final.
+    await assert.rejects(() => collect(llm, events), ending ? /未完整结束 \(length\)/ : error => error.code === "MODEL_STREAM_INTERRUPTED");
+    assert.equal(requests(), ending ? 1 : 3);
     assert.equal(events.some(event => event.type === "result"), false);
   });
 });
