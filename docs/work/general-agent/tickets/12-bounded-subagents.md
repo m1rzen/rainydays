@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: ready
+Status: implemented
 
 Spec: [通用Agent规格](../../../specs/general-agent.md)
 
@@ -64,3 +64,5 @@ src/subagent.ts、tools/subagent-tools.ts、任务授权和取消链、已有chi
 
 未完成：S03 的真實模型組合場景、單 Agent 與子任務在質量／耗時／費用上的比較（需要模型額度）。狀態維持 ready（工程實現已完成，待真實模型驗收）。
 - 2026-11-12 真实模型（Gcable-Pro-Thinking，3d7cf49）：subagents 探测（两个子任务各读一个文件、主任务等待并汇总，主任务未直接读取）1/1；subagentCancel（派生后取消主任务，子任务全部停止，同时不超过 2 个）1/1。单 Agent 与子任务的质量/耗时/费用比较仍未做。
+
+2026-11-14 进度同步：已有实现和上述真实模型派生/取消证据，状态统一为 implemented。单 Agent 与子任务的质量、耗时和费用对照仍待完成，保留未勾选条件。前文“尚未开始”与 ready 状态是实施前的历史记录。当前源码 `7c03998` 的产品 177/177、UI 15/15、类型/lint 复验通过，本轮没有新增真实模型调用。详见[计划审阅](../reviews/2026-11-14-progress-plan-assessment.md)。

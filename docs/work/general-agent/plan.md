@@ -29,6 +29,8 @@ Status: approved
 
 原单主线顺序：D01→D02本地契约→A01→D04→D05→D13→D03→A02→A03→A04→A05→A06→D06/D07/D08/D09→A07→A08→A09→A10→A11→A12→D10/D11/D12/D14→D15→D16/D17→D18→A13。依赖表优先；遇模型阻塞可先做独立工程，不要求机械等待前一项全票完成。
 
+2026-11-14 独立进度同步：源码 `7c03998`，`check:product` 产品 177/177、UI 15/15、类型/lint 通过，真实 Chrome 整合 8/8。A11/A12 按已有工程与 11 月 12 日真实模型探测同步为 implemented，剩余验收见各票。文稿使用复盘的六项补充切片及建议次序记录在[计划审阅](reviews/2026-11-14-progress-plan-assessment.md)，作为待确认的路线修订建议；本轮仅同步事实与审阅意见。
+
 ## 3. 新任务依赖表
 
 | 任务 | 阻塞依赖 | 可观察验收出口 | 状态 |
@@ -43,8 +45,8 @@ Status: approved
 | [A08 工具图像进入视觉模型](tickets/08-visual-observations.md) | A01、D02、D03 | 真实模型识别非预置截图，尺寸/坐标/上下文预算正确；2026-11-12真实模型画布3/3，MCP图片待接 | implemented |
 | [A09 可打包的Windows观察与动作](tickets/09-windows-driver.md) | A01、D04、D13 | 普通用户安装包中UIA/截图/输入可用，DPI/焦点/清理通过 | ready |
 | [A10 Computer Use任务循环与接管](tickets/10-computer-use-loop.md) | A07、A08、A09 | 浏览器/桌面真实观察操作验证，暂停停止和恢复有效 | ready |
-| [A11 项目说明与技能按需使用](tickets/11-skills-and-instructions.md) | A02、D03 | scoped项目指令、SKILL.md参考按需加载、可开关 | ready |
-| [A12 有界子任务与结果汇总](tickets/12-bounded-subagents.md) | A01、D03、D04 | 两个只读子任务、来源汇总、父取消传播、单写入者 | ready |
+| [A11 项目说明与技能按需使用](tickets/11-skills-and-instructions.md) | A02、D03 | 工程及真实模型指令/技能探测已有证据；内置技能覆盖与即时开关体验待验收 | implemented |
+| [A12 有界子任务与结果汇总](tickets/12-bounded-subagents.md) | A01、D03、D04 | 两个只读子任务及父取消真实探测通过；单/多 Agent 质量、耗时和费用对照待验收 | implemented |
 | [A14 长任务Agent循环](tickets/14-agent-loop.md) | 无 | 可配置迭代上限、计划、运行中追加指令、开发模式核心工具常驻 | verified |
 | [A15 开发模式：以用户身份执行命令](tickets/15-developer-mode.md) | 无 | 显式开启后用户工具链真实跑node/python/git/npm，任务级授权、取消清理；同事模式隔离不变 | verified |
 | [A13 通用任务、安装与同事交付](tickets/13-general-delivery.md) | A04、A06、A10、A11、A12、A14、A15、D18 | 固定100次和真实同事试用满足门槛，完整安装候选可交付 | ready |
