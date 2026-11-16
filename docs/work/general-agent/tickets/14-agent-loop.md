@@ -54,3 +54,13 @@ User stories: G04、G10
 - 引导：收敛期间 system prompt 持续携带"交付收敛模式"块——下一轮先生成或返回当前产物；只保留解决成品阻塞的必要检查；交付时明确给出产物路径与完成依据。
 - 有界复核（宿主强制，不依赖模型自觉）：每轮工具结果提交后由宿主分类——只有检查类命令（execute_command/bash/shell_input/shell_output）的轮次计数，任何其他工具的成功轮次重置计数；连续 2 轮只检查 → 下一轮模型请求前注入"交付复核提醒"；连续 3 轮 → 宿主直接停止本轮，向用户汇报已完成的步骤与产物（RunLedger.describe()），停止说明写入会话记忆。简单问答没有工具轮次，不受影响。
 - 验证：`tests/product/delivery-convergence.test.mjs` 4/4（简单问答不受影响；连续检查先提醒、超过上限即停止并汇报产物；其他工具成功重置计数不误停；运行中追加交付指令进入收敛模式）。`npm run typecheck` 与 eslint 通过；既有 developer-mode + long-context 17/17 无回归。真实模型长任务表现留 A04/A13 复测。
+
+### 2026-11-16 length 截断章节检查点（2026-11-14 审阅补充切片4，沿 D04）
+
+审阅第 4 项要求 length 恢复与断线重试分别设计。本轮实现（`src/agent.ts` run 主循环 catch）：
+
+- `completedMessage()` 协议校验保持不变：残缺 JSON 或半段工具参数仍然抛错不执行；length/content_filter 仍是确定性结束，不自动重试（stream.test 断言保持）。
+- length 截断且本 run 已有成功写入文件（RunLedger.filesList()，按完成顺序）时：不再以 error 事件丢弃整轮，而是生成检查点说明——已显示正文保留、截断残段未执行任何工具也不会被补接续写、列出已写入文件、续接策略（先读文件核对已有内容，从缺失部分继续，不重复已写入章节，交付前 register_output 登记）；说明以 assistant 消息随会话持久化（重启后 loadFromDb 回放），run 以 answer_chunk + answer_done 正常收束，等待用户回复"继续"。
+- 无已写入文件时 length 维持原确定性错误路径；EOF 断线仍走 retry/interrupted 路径，两者互不影响。
+- 防重复沿用协议既有保证：write 仅创建不覆盖（A02）、edit 唯一匹配替换；检查点只记录已成功提交的写入。
+- 验证：新增 `tests/product/length-checkpoint.test.mjs` 2/2（有写入的 length 输出检查点说明并列出文件、说明进入续接请求、无 error 事件；无写入时维持错误收束）；stream、model-contract、delivery-convergence、developer-mode 合计 44/44 无回归；typecheck、eslint 通过。

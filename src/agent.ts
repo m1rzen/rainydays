@@ -253,6 +253,11 @@ class RunLedger {
     const files = this.files.size ? [...this.files.values()].map(file => `- ${file}`).join("\n") : "（无）";
     return `已完成的步骤：\n${steps}\n产出的文件：\n${files}`;
   }
+
+  /** 本 run 成功写入的文件（按首次完成顺序），供 length 截断检查点使用。 */
+  filesList(): string[] {
+    return [...this.files.values()];
+  }
 }
 
 /** A14：迭代上限来自 common.maxIterations；隔离夹具没有全局配置时使用默认值。 */
@@ -1054,17 +1059,32 @@ export class Agent {
       } catch (err) {
         const cancelled = isRunCancellation(err) || signal.aborted;
         const interrupted = !cancelled && isModelStreamInterruption(err);
+        // length 截断（2026-11-14 审阅补充切片4，沿 D04）：与断线重试分别设计——
+        // length 是确定性结束，不自动重试；若本轮已有成功写入的文件，保留已完成
+        // 章节作为检查点，用户回复"继续"后从缺失部分续接。截断的残文不执行任何
+        // 工具，也不会被补接续写；检查点说明随消息持久化，重启后仍可回放。
+        const lengthCut = !cancelled && !interrupted && err instanceof Error && /回答未完整结束 \(length\)/u.test(err.message);
+        const checkpointFiles = lengthCut ? ledger.filesList() : [];
+        const checkpointResume = lengthCut && checkpointFiles.length > 0;
         const errorContent = cancelled ? "运行已取消，以上内容未完成。"
           : interrupted
             // D04：不重放未知写入，继续由用户发起；已提交的工具结果保留在对话中。
             ? `已中断：${err instanceof Error ? err.message : String(err)}，本轮未完成。已完成的步骤和产出的文件已保留，未完成的操作不会自动重放；请检查后回复“继续”。\n${ledger.describe()}`
-            : `回答未完成，请重新发送或要求继续。LLM 请求失败: ${err instanceof Error ? err.message : String(err)}`;
+            : checkpointResume
+              ? `回答因输出长度限制在文字中途截断：以上已显示部分保留，截断处之后的残段没有执行任何工具，也不会被续写补接。本轮已成功写入的文件（按完成顺序）：\n${checkpointFiles.map((file, index) => `${index + 1}. ${file}`).join("\n")}\n回复“继续”时，先读取上述文件核对已有内容，再从缺失部分继续；不要重复已写入的章节，最终交付前用 register_output 登记交付件。\n${ledger.describe()}`
+              : `回答未完成，请重新发送或要求继续。LLM 请求失败: ${err instanceof Error ? err.message : String(err)}`;
         // 只保存已经向用户显示的正文和中断说明，不保存或执行未完成的工具调用。
-        if (streamedContent || interrupted) {
+        if (streamedContent || interrupted || checkpointResume) {
           this.memory.add({ role: "assistant", content: streamedContent ? `${streamedContent}\n\n⚠️ ${errorContent}` : `⚠️ ${errorContent}` });
           touch(runSessionId);
         }
         if (cancelled) throw err;
+        if (checkpointResume) {
+          console.log(`📄 [写作检查点] length 截断，保留 ${checkpointFiles.length} 个已写入文件作为检查点，等待用户续接。`);
+          yield { type: "answer_chunk", content: errorContent, timestamp: Date.now() };
+          yield { type: "answer_done", content: "", timestamp: Date.now() };
+          return;
+        }
         yield {
           type: "error",
           content: errorContent,
