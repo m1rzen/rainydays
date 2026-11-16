@@ -68,3 +68,13 @@ src/llm.ts、tools/image-helper.ts与工具结果投影；D02模型契约、D03�
 真实模型（Gcable-Pro-Thinking，视觉配置）`visualCanvas`：画布随机位置红色圆＋蓝色方块、绿色三角干扰，页面文字不含位置，命中编号只在点中后由服务端返回。3/3 通过（26、20、21 秒），每次首击即中并报告编号，未用 eval/直接请求。对照 `visualWithoutImages`（不启用图片输入）2/2 未编造：模型没有声称看见，分别改用 image_helper 视觉工具和自写脚本分析截图像素后点中，并如实说明方法。
 
 未完成：真实运行中视口小于 1280，缩放为 1，缩放后的坐标换算只由工程测试覆盖；MCP 工具返回的图片（M04）尚未登记为观察；桌面截图在 A09。状态 implemented。
+
+### 2026-11-16 本地图片观察入口（2026-11-14 审阅补充切片2）
+
+审阅第 2 项指出本地 PNG/JPEG 只返回 MIME/字节数并建议 image_helper，是 A08 已有管道的缺失入口。本轮补齐：
+
+- `observations.ts`：`ToolObservation.mime` 扩展为 `image/png | image/jpeg`；新增 `jpegSize()`（扫描 SOF 段，含 progressive/extended SOF）与 `imageSize()`（按魔数分发）；注册与读取按 mime 选 `.png`/`.jpg` 扩展；`describeObservation()` 对 `source === "read"` 的本地图片给出文件路径、像素、版本摘要与“文件变化后重新 read 重新观察”的说明，不再套用页面坐标措辞。
+- `filesystem-lux.ts`：`read` 的图片分支对 PNG/JPEG 调用 `registerObservation`（source=read，scale=1，viewport=false），返回 JSON 含 `file/mime/bytes/width/height/version(sha256)/rainydaysObservation 标记/reminder`；注册失败（无会话上下文、超 8MiB、无法解析尺寸）回退原文本提示，读取本身不受影响。GIF/WebP 保持原提示。
+- `agent.ts`：`OBSERVATION_TOOLS` 加入 `read`；带标记的图片读取照旧走最近 2 张预算与只读已注册摘要的防伪路径，文本读取不产生观察。
+- 相同文件重复读取按内容摘要复用同一观察，不重复存储；文件内容变化（不同 sha256）即注册新版本，版面变化后重验。
+- 验证：新增 `tests/product/local-image-observation.test.mjs` 2/2（PNG/JPEG 注册为观察并随工具结果附给模型且携带版本摘要；重复读取复用同一版本、损坏图片被既有签名校验拒绝不进入观察、文本读取无观察）；`tool02-filesystem-contract.test.mjs` 补真实 PNG/JPEG 观察断言后 11/11；`npm run build`、typecheck、eslint 通过。真实视觉模型对本地图片的识别效果与逐页文稿渲染检查留 A08 剩余验收/A13 计分。

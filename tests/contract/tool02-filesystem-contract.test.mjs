@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -125,6 +126,23 @@ test("TOOL-02 read validates image boundaries and reports authorized image metad
   })));
   assert.match(output, /\[Image: pixel\.png\]/u);
   assert.match(output, /MIME: image\/png/u);
+  // 真实 PNG/JPEG 注册为会话观察（A08 本地图片入口），损坏图片保持文本回退。
+  const realPng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+  const realPngSha = createHash("sha256").update(realPng).digest("hex");
+  const realJpeg = Buffer.from("/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AVN//2Q==", "base64");
+  const realJpegSha = createHash("sha256").update(realJpeg).digest("hex");
+  const pngObserved = JSON.parse(await lux.readExec({ file_path: "real.png" }, {}, invocation(gateway({
+    readFile: async () => ({ bytes: realPng, rootId: "workspace", identity: {}, snapshot: {} }),
+  }))));
+  assert.equal(pngObserved.mime, "image/png");
+  assert.equal(pngObserved.width, 1);
+  assert.equal(pngObserved.version, realPngSha);
+  assert.equal(pngObserved.rainydaysObservation.sha256, realPngSha);
+  const jpegObserved = JSON.parse(await lux.readExec({ file_path: "real.jpg" }, {}, invocation(gateway({
+    readFile: async () => ({ bytes: realJpeg, rootId: "workspace", identity: {}, snapshot: {} }),
+  }))));
+  assert.equal(jpegObserved.mime, "image/jpeg");
+  assert.equal(jpegObserved.rainydaysObservation.sha256, realJpegSha);
   await assert.rejects(
     () => lux.readExec({ file_path: "fake.png" }, {}, invocation(gateway({
       readFile: async () => ({ bytes: Buffer.from("not png"), rootId: "workspace", identity: {}, snapshot: {} }),

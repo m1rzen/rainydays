@@ -9,6 +9,7 @@ import { readAttachmentDocument } from "../attachment-reader.js";
 import { readHistory } from "../history-reader.js";
 import { createHash } from "node:crypto";
 import { documentTextPage, documentWarnings, parsePdfPageRange } from "../document-pagination.js";
+import { imageSize, OBSERVATION_MARKER, registerObservation, type ToolObservation } from "../observations.js";
 export { parsePdfPageRange } from "../document-pagination.js";
 
 const MAX_DOCUMENT_BYTES = 32 * 1024 * 1024;
@@ -20,6 +21,19 @@ const IMAGE_MIME_BY_EXTENSION = Object.freeze<Record<string, string>>({
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
   ".gif": "image/gif", ".webp": "image/webp",
 });
+
+/**
+ * A08 本地图片观察：read 授权读取的 PNG/JPEG 注册为会话观察，随工具结果投影给模型；
+ * 注册失败（损坏图片、无会话上下文、超大小上限）时保持原有文本提示，不影响读取本身。
+ */
+function registerLocalImageObservation(invocation: ToolInvocationServices, filePath: string, bytes: Buffer): ToolObservation | null {
+  const sessionId = invocation.capabilityContext?.sessionId;
+  if (!sessionId) return null;
+  try {
+    const { width, height } = imageSize(bytes);
+    return registerObservation(sessionId, bytes, { source: "read", target: filePath, scale: 1, sourceWidth: width, sourceHeight: height, viewport: false });
+  } catch { return null; }
+}
 
 /**
  * Relative reads resolve against DATA_ROOT while writes resolve against OUTPUT_DIR. A result the assistant just
@@ -123,6 +137,20 @@ export const readExec: ToolExecutor = async (args, _env, invocationValue) => {
   const mime = imageMime(filePath, authorized.bytes);
   if (mime) {
     if (args.offset !== undefined || args.limit !== undefined || args.pages !== undefined) throw new ToolArgumentsError("图片读取不支持 offset、limit 或 pages");
+    const observation = (mime === "image/png" || mime === "image/jpeg") ? registerLocalImageObservation(invocation, filePath, authorized.bytes) : null;
+    if (observation) {
+      return JSON.stringify({
+        file: filePath,
+        ...(where ? { note: where } : {}),
+        mime,
+        bytes: authorized.bytes.length,
+        width: observation.width,
+        height: observation.height,
+        version: observation.sha256,
+        [OBSERVATION_MARKER]: { sha256: observation.sha256, width: observation.width, height: observation.height, scale: 1, viewport: false },
+        reminder: "图片已作为观察附在本次工具结果之后（模型配置支持图片时）；文件内容变化后重新 read 即可重新观察。",
+      });
+    }
     return `[Image: ${filePath}]${where}\nMIME: ${mime}\nBytes: ${authorized.bytes.length}\nUse image_helper with the same authorized path for visual analysis.`;
   }
   const evidenceDocument = [".pdf", ".docx", ".xlsx", ".xls"].includes(extension);

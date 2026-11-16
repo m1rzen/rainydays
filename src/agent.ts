@@ -262,7 +262,7 @@ export function resolveMaxIterations(): number {
     return Number.isInteger(value) && value >= 1 ? value : DEFAULT_MAX_ITERATIONS;
   } catch { return DEFAULT_MAX_ITERATIONS; }
 }
-const OBSERVATION_TOOLS = new Set(["browser_screenshot"]);
+const OBSERVATION_TOOLS = new Set(["browser_screenshot", "read"]);
 const BROWSER_ACTIONS = new Set(["browser_open", "browser_new_tab", "browser_close_tab", "browser_click", "browser_fill", "browser_type", "browser_press", "browser_scroll", "browser_back", "browser_forward", "browser_upload", "browser_handoff", "browser_save_download", "browser_click_point"]);
 // 交付收敛（2026-11-14 审阅补充切片1，沿 A14/D04）：用户明确要求交付后，由宿主记录
 // 复核阶段并有界约束“换命令、换脚本形式的重复检查”：先注入收敛引导，连续检查超过
