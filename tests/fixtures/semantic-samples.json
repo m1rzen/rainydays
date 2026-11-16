@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "comment": "会议文稿语义检查标注样本（2026-11-14 审阅补充切片5，沿 A11/D07/D08，服务 A13 基准集）。label: positive=符合规则可保留的产出表述; negative=违反规则、出现即扣分的表述。真实模型评测与逐条人工审核在 A04/A13 授权后进行。",
+  "scoringDimensions": [
+    { "id": "factuality", "name": "事实保真", "weight": 0.5, "description": "数字、主体、范围、程度与材料原文一致，无凭空结论；样本集 dimensions 全部服务本项。" },
+    { "id": "language", "name": "语言表达", "weight": 0.3, "description": "归属清晰、措辞对齐原文、不合并转述、不使用夸饰措辞。" },
+    { "id": "layout", "name": "版式", "weight": 0.2, "description": "段落不超过 5 行、列表一条一句、表格不超过 5 列、金额与时限单独成列（见 skills/meeting-minutes.md 版式规则）。" }
+  ],
+  "dimensions": [
+    { "id": "amount_bounds", "name": "金额上下限", "description": "金额的上下限、区间与单位必须保留原文表述，不得收敛为单点值或改换单位。" },
+    { "id": "statistic_subject", "name": "统计主体", "description": "数量与比例必须写明统计主体与范围，不得脱离主体引用数字。" },
+    { "id": "inclusion", "name": "包含关系", "description": "方案范围的含/不含、另计、打包表述必须与原文一致，不得互换或扩大。" },
+    { "id": "risk_dimension", "name": "风险维度", "description": "风险必须落在材料明确提及的维度（工期、预算、技术、合规等），不得引入材料未提及的新风险类别。" },
+    { "id": "commitment_level", "name": "意向承诺落实程度", "description": "区分表示意向/承诺/已落实三级，按原文措辞对齐，不得升格。" },
+    { "id": "unsupported_enforcement", "name": "无依据执法结论", "description": "材料没有依据的执法、处罚、合规定性一律不得写入正文。" }
+  ],
+  "samples": [
+    { "id": "amount-pos-1", "dimension": "amount_bounds", "label": "positive", "text": "客户表示预算在 80 万至 100 万元之间（材料来源：会议记录第 2 页）。", "rationale": "保留原文区间与单位，并注明出处。" },
+    { "id": "amount-pos-2", "dimension": "amount_bounds", "label": "positive", "text": "监控点位单价不超过 3,000 元/点，总价以最终点位数核算。", "rationale": "保留上限表述与计价方式，未收敛为单点价。" },
+    { "id": "amount-neg-1", "dimension": "amount_bounds", "label": "negative", "text": "客户确认项目预算为 90 万元。", "rationale": "原文是 80 至 100 万区间，被改写成单点值，属于事实失真。" },
+    { "id": "amount-neg-2", "dimension": "amount_bounds", "label": "negative", "text": "点位单价约 0.3 万元。", "rationale": "把不超过 3,000 元/点的上限改写为约数并换单位，金额上下限信息丢失。" },
+    { "id": "statistic-pos-1", "dimension": "statistic_subject", "label": "positive", "text": "五邑中医院项目覆盖 3 个考点、共 96 个监控点位。", "rationale": "数字带统计主体（项目、考点）与范围（点位）。" },
+    { "id": "statistic-pos-2", "dimension": "statistic_subject", "label": "positive", "text": "本季度政企服务部签约专线项目 5 个，数据来自合同台账。", "rationale": "主体（政企服务部）、口径（签约）、范围（本季度）与出处齐全。" },
+    { "id": "statistic-neg-1", "dimension": "statistic_subject", "label": "negative", "text": "目前已覆盖 96 个监控点位。", "rationale": "脱离主体表述，无法判断属于哪个项目或客户。" },
+    { "id": "statistic-neg-2", "dimension": "statistic_subject", "label": "negative", "text": "今年已经签约了 5 个项目。", "rationale": "缺少统计主体与口径（政企/全公司、签约/中标），数字被泛化引用。" },
+    { "id": "inclusion-pos-1", "dimension": "inclusion", "label": "positive", "text": "方案包含前端设备与传输链路，机房改造费用另计（材料来源：方案报价单）。", "rationale": "含/另计与原文一致并注明出处。" },
+    { "id": "inclusion-pos-2", "dimension": "inclusion", "label": "positive", "text": "报价含三年运维，不含等保测评费用。", "rationale": "包含与排除关系逐项对齐原文。" },
+    { "id": "inclusion-neg-1", "dimension": "inclusion", "label": "negative", "text": "方案包含机房改造。", "rationale": "原文机房改造为另计项，被并入方案范围，扩大了承诺范围。" },
+    { "id": "inclusion-neg-2", "dimension": "inclusion", "label": "negative", "text": "报价包含等保测评费用。", "rationale": "原文明确不含等保测评，包含关系被互换。" },
+    { "id": "risk-pos-1", "dimension": "risk_dimension", "label": "positive", "text": "工期风险：考点 8 月前交付，设备到货周期为材料所述主要制约（待确认）。", "rationale": "风险维度（工期）来自材料，未落实的部分标注待确认。" },
+    { "id": "risk-pos-2", "dimension": "risk_dimension", "label": "positive", "text": "预算风险：客户预算区间与方案报价尚有差距，双方未最终确认。", "rationale": "风险维度（预算）在材料中明确出现过。" },
+    { "id": "risk-neg-1", "dimension": "risk_dimension", "label": "negative", "text": "数据安全法规变化可能影响项目验收。", "rationale": "材料未提及法规变化风险，属于引入材料外的新风险类别。" },
+    { "id": "risk-neg-2", "dimension": "risk_dimension", "label": "negative", "text": "主要风险是客户可能更换合作方。", "rationale": "材料无更换合作方的表述，凭空推断风险。" },
+    { "id": "commitment-pos-1", "dimension": "commitment_level", "label": "positive", "text": "客户对二期扩容表示初步意向，具体范围待下次沟通（材料原文：可以再谈谈二期）。", "rationale": "意向级措辞与原文对齐，未升格为承诺。" },
+    { "id": "commitment-pos-2", "dimension": "commitment_level", "label": "positive", "text": "我方已按 6 月 30 日完成一期验收并提交验收报告（材料来源：验收单）。", "rationale": "落实级表述附实际证据出处。" },
+    { "id": "commitment-neg-1", "dimension": "commitment_level", "label": "negative", "text": "客户已同意二期扩容方案。", "rationale": "原文仅为初步意向，被升格为同意（承诺级）。" },
+    { "id": "commitment-neg-2", "dimension": "commitment_level", "label": "negative", "text": "监控平台已完成部署上线。", "rationale": "材料仅显示在部署中，落实程度被夸大。" },
+    { "id": "enforcement-pos-1", "dimension": "unsupported_enforcement", "label": "positive", "text": "客户询问高考考点录像保存期限要求，我方按材料所引教育考试院规定答复为考试结束后不少于 6 个月。", "rationale": "合规要求有材料出处，且为转述监管规定而非定性结论。" },
+    { "id": "enforcement-pos-2", "dimension": "unsupported_enforcement", "label": "positive", "text": "双方确认设备采购流程按单位内部审批制度执行。", "rationale": "流程描述来自双方确认，无凭空执法定性。" },
+    { "id": "enforcement-neg-1", "dimension": "unsupported_enforcement", "label": "negative", "text": "原供应商违反相关规定，将承担法律责任。", "rationale": "材料无任何违规事实与法律依据，属于无依据执法结论。" },
+    { "id": "enforcement-neg-2", "dimension": "unsupported_enforcement", "label": "negative", "text": "该项目涉嫌不合规，存在被查处风险。", "rationale": "无材料依据的合规定性加恐吓式风险表述。" }
+  ]
+}
