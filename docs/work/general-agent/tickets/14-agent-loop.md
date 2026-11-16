@@ -64,3 +64,7 @@ User stories: G04、G10
 - 无已写入文件时 length 维持原确定性错误路径；EOF 断线仍走 retry/interrupted 路径，两者互不影响。
 - 防重复沿用协议既有保证：write 仅创建不覆盖（A02）、edit 唯一匹配替换；检查点只记录已成功提交的写入。
 - 验证：新增 `tests/product/length-checkpoint.test.mjs` 2/2（有写入的 length 输出检查点说明并列出文件、说明进入续接请求、无 error 事件；无写入时维持错误收束）；stream、model-contract、delivery-convergence、developer-mode 合计 44/44 无回归；typecheck、eslint 通过。
+
+### 2026-11-16 重复消息幂等（2026-11-14 审阅补充切片6 / M2 调查项）
+
+调查结论：`/api/chat` 每次请求生成新 runId、无幂等键——运行中靠 `claimRun` 409 防重入，run 结束后双击、网络重放或 UI 重连重发会产生重复 user 消息与重复 run。修复：新增 `src/chat-idempotency.ts`（(sessionId, clientRequestId) 10 分钟窗口去重，内存态，无键请求向后兼容），`/api/chat` 窗口内同键返回 409；`renderer.js` 每次发送生成并携带 clientRequestId。验证：`tests/unit/chat-idempotency.test.mjs`（同键拒绝、跨会话隔离、过期放行、空键跳过）；typecheck/eslint/UI 回归通过。SSE 重连时的回复去重渲染属 UI 渲染层，本轮未发现缺陷，留真实桌面验证观察。

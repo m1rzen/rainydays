@@ -2831,7 +2831,8 @@
       refreshWorkbenchTabStatus();
     }
     function beginSessionRun(sessionId) {
-      const token = { controller: new AbortController(), runId: null, cancelling: false, bubble: null };
+      // 幂等键：同一消息的双击或网络重放由服务端按 clientRequestId 去重（见 /api/chat）。
+      const token = { controller: new AbortController(), runId: null, cancelling: false, bubble: null, clientRequestId: (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`) };
       runOutcomesBySession.delete(sessionId);
       activeRunsBySession.set(sessionId, token);
       refreshRunControls();
@@ -3194,6 +3195,7 @@
             sessionId: chatSessionId,
             message: text,
             attachmentIds: readyAttachments.map(attachment => attachment.id),
+            clientRequestId: runToken.clientRequestId,
             ...(sessionAutoApproveBySession.has(chatSessionId) ? { autoApprove: sessionAutoApproveBySession.get(chatSessionId) } : {}),
           }),
           signal: runToken.controller.signal,

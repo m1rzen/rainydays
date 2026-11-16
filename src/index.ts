@@ -11,6 +11,7 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { LLMClient } from "./llm.js";
+import { isDuplicateChatRequest } from "./chat-idempotency.js";
 import { ConversationMemory } from "./memory.js";
 import { Agent, isSessionAutoApproveEnabled, setSessionAutoApproveEnabled } from "./agent.js";
 import { mcpRuntimeToolNames, registerMcpTools } from "./mcp/runtime.js";
@@ -3077,7 +3078,7 @@ app.post("/api/chat/steer", async (req, res) => {
 app.post("/api/chat", async (req, res) => {
   const body = req.body as Record<string, unknown> | null;
   if (!body || typeof body !== "object" || Array.isArray(body)
-    || Object.keys(body).some(key => !new Set(["sessionId", "message", "attachmentIds", "autoApprove"]).has(key))
+    || Object.keys(body).some(key => !new Set(["sessionId", "message", "attachmentIds", "autoApprove", "clientRequestId"]).has(key))
     || typeof body.message !== "string") {
     res.status(400).json({ error: "Chat request is invalid" });
     return;
@@ -3095,6 +3096,13 @@ app.post("/api/chat", async (req, res) => {
     return;
   }
   if (!getSessionInfo(chatSessionId)) { res.status(404).json({ error: "Session 不存在" }); return; }
+  const clientRequestId = typeof body.clientRequestId === "string" && body.clientRequestId.length >= 8 && body.clientRequestId.length <= 128
+    ? body.clientRequestId
+    : null;
+  if (clientRequestId && isDuplicateChatRequest(chatSessionId, clientRequestId)) {
+    res.status(409).json({ error: "重复请求：这条消息已经提交过（相同 clientRequestId）。请刷新会话查看已有回复，不要重复发送。" });
+    return;
+  }
   if (!getCurrentProfile().apiKey) { res.status(400).json({ error: "当前 Provider 尚未配置 API Key，请先打开 Settings 完成配置" }); return; }
   if (runtimeMutationReservations > 0) { res.status(409).json({ error: "Session runtime 正在变更" }); return; }
 
