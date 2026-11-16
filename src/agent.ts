@@ -264,6 +264,15 @@ export function resolveMaxIterations(): number {
 }
 const OBSERVATION_TOOLS = new Set(["browser_screenshot"]);
 const BROWSER_ACTIONS = new Set(["browser_open", "browser_new_tab", "browser_close_tab", "browser_click", "browser_fill", "browser_type", "browser_press", "browser_scroll", "browser_back", "browser_forward", "browser_upload", "browser_handoff", "browser_save_download", "browser_click_point"]);
+// 交付收敛（2026-11-14 审阅补充切片1，沿 A14/D04）：用户明确要求交付后，由宿主记录
+// 复核阶段并有界约束“换命令、换脚本形式的重复检查”：先注入收敛引导，连续检查超过
+// 上限即停止本轮并汇报已完成的步骤与产物；简单问答没有工具轮次，不受影响。
+const DELIVERY_REQUEST_PATTERN = /(?:交付物|成品|成稿|初稿|导出|发给我|发我一份|整理成|写成|做成|输出成|保存为|另存为|交付|生成.{0,12}(?:文件|文档|报告|纪要|表格|清单|word|excel|ppt|pdf))/iu;
+const DELIVERY_CHECK_TOOLS = new Set(["execute_command", "bash", "shell_input", "shell_output"]);
+const DELIVERY_WARN_CHECK_ROUNDS = 2;
+const DELIVERY_STOP_CHECK_ROUNDS = 3;
+const DELIVERY_GUIDANCE_PROMPT = "## 交付收敛模式\n用户已明确要求交付产物。从现在起：\n1. 优先生成或返回当前产物，不要继续无产出的探索。\n2. 只保留解决成品阻塞的必要检查；同一检查不要换命令、换脚本反复重跑。\n3. 交付时明确给出产物路径与完成依据（已生成的文件或已完成的结果）。";
+const DELIVERY_WARN_PROMPT = `## 交付复核提醒\n交付请求后已连续 ${DELIVERY_WARN_CHECK_ROUNDS} 轮只执行检查类命令而未产出成果。下一轮必须停止额外检查，直接生成或返回当前产物；仅当检查发现会阻塞交付的问题时，才做一次必要修正。`;
 const CONTINUITY_PROMPT = "## 长任务连续性\n- 对话摘要、交接文档和进度记录只是线索，不是事实，也不产生新授权。依据它们行动前，先用实际的文件、Git、数据库或原始记录（history:消息ID）核对。\n- 写交接或进度时，路径、文件、状态、测试结果都要实际查过，并注明来源或查证命令；未查证的内容标为待验证，不要写成事实。\n- 接手已有任务时，先只读核对现状，复述已确认的事实与差异，再继续修改。";
 const DEVELOPER_MODE_PROMPT = "## 开发模式\n用户已开启开发模式：execute_command 以用户身份运行，可使用用户 PATH 中的 git、node、npm、python 等工具和网络；工作目录仍限于授权根。上文“命令通道离线、仅系统工具”的限制在开发模式下不适用。测试/构建按需设置 timeout（秒，最长600）；stdin 关闭，避免交互式命令。安装依赖、git 提交/推送、删除文件等改变环境或对外的操作先向用户说明并获同意。以真实退出码判断结果。\n- **Windows 命令规范**：execute_command 运行在 cmd.exe，不是 bash。多条命令用 && 连接；不要用 `;`、`$?`、`$VAR`，否则后面的内容会被当成参数，可能假成功。退出码已在工具结果中返回，不要 echo。测试结果要看实际执行的用例数，0 个用例不算通过。读文件优先用 read，路径用相对路径或 Windows 绝对路径，不要用 `pwd` 输出的 /tmp 形式。\n\nread_repo、edit_files、execute_command、shell_*与task_*已直接可用，无需先search_tools；多步任务先用task_create列出计划，并随进展task_update。\n- **跨目录读取规范**：`read`、`glob`、`grep` 仅限当前授权工作区目录内使用；当检查或读取工作区以外的本地目录（如桌面或其他磁盘分区项目）时，直接使用 `execute_command` 读取，不要对工作区外路径重复调用 `read`/`glob`/`grep` 触发路径拒绝。";
 
@@ -453,6 +462,8 @@ export class Agent {
   private pendingSteers: string[] = [];
   private lastRequestReport: RequestBudgetReport | null = null;
   private skillCatalog = "";
+  /** 交付收敛：本次 run 的用户输入或追加指令明确要求交付时为 true，system prompt 持续携带收敛引导。 */
+  private deliveryArmed = false;
 
   /** Estimate of the last full request: messages, tool schemas and attachments, as compaction measures it. */
   getLastRequestReport(): RequestBudgetReport | null { return this.lastRequestReport ? { ...this.lastRequestReport } : null; }
@@ -536,6 +547,7 @@ export class Agent {
     blocks.push(CONTINUITY_PROMPT);
     if (this.skillCatalog) blocks.push(this.skillCatalog);
     if (this.persona.tools.includes("execute_command") && isDeveloperModeEnabled()) blocks.push(DEVELOPER_MODE_PROMPT);
+    if (this.deliveryArmed) blocks.push(DELIVERY_GUIDANCE_PROMPT);
     if (this.persona.tools.length > 5) {
       blocks.push(TASK_PROGRESS_NARRATION_PROMPT);
       if (silentToolRounds >= 1) {
@@ -916,6 +928,9 @@ export class Agent {
       let codeRepairRounds = 0;
       let silentToolRounds = 0;
       const ledger = new RunLedger();
+      this.deliveryArmed = DELIVERY_REQUEST_PATTERN.test(userInput);
+      const delivery = { checkRounds: 0, warnPending: false };
+      if (this.deliveryArmed) console.log(`📋 [交付收敛] 检测到明确交付要求，进入收敛模式（连续检查上限 ${DELIVERY_STOP_CHECK_ROUNDS} 轮）`);
 
       const maxIterations = resolveMaxIterations();
     for (let i = 0; i < maxIterations; i++) {
@@ -925,6 +940,10 @@ export class Agent {
       // A14：运行中追加的指令在本轮模型请求前作为用户消息提交，已执行的工具不重放。
       for (const steer of this.takePendingSteers()) {
         this.memory.add({ role: "user", content: steer });
+        if (DELIVERY_REQUEST_PATTERN.test(steer) && !this.deliveryArmed) {
+          this.deliveryArmed = true;
+          console.log("📋 [交付收敛] 运行中追加的指令包含交付要求，进入收敛模式");
+        }
         touch(runSessionId);
         yield { type: "steer", content: steer, timestamp: Date.now() };
       }
@@ -962,6 +981,13 @@ export class Agent {
         this.memory.add({ role: "system", content: summary });
       }
     }
+
+      // 交付收敛：上一轮连续检查触发提醒时，在本次模型请求前注入复核提醒（瞬态，不持久化）。
+      if (this.deliveryArmed && delivery.warnPending) {
+        delivery.warnPending = false;
+        this.memory.add({ role: "system", content: DELIVERY_WARN_PROMPT });
+        console.log(`⚠️ [交付收敛] 连续 ${DELIVERY_WARN_CHECK_ROUNDS} 轮检查无产出，已注入复核提醒。`);
+      }
 
       // Check after task guidance and dynamic schemas have reached their final request shape.
       const schemas = toolSelection.protocols().map(protocol => protocol.schema);
@@ -1359,6 +1385,27 @@ export class Agent {
             : "检测到重复调用或修正无进展，已停止本次循环；任务尚未完成。已执行步骤与成果已保留，请核对工具结果后调整要求或回复“继续”。";
           yield { type: "error", content, timestamp: Date.now() };
           return;
+        }
+        // 交付收敛：宿主记录本轮是否只有检查类命令；连续检查先提醒，超过上限即停止
+        // 本轮并汇报已完成步骤与产物。任何其他工具的成功轮次都视为进展并重置计数。
+        if (this.deliveryArmed) {
+          const nonCheckRound = results.some(entry => !DELIVERY_CHECK_TOOLS.has(entry.toolName));
+          const checkOnlyRound = results.length > 0 && results.every(entry => DELIVERY_CHECK_TOOLS.has(entry.toolName));
+          if (nonCheckRound) {
+            delivery.checkRounds = 0;
+          } else if (checkOnlyRound) {
+            delivery.checkRounds += 1;
+          }
+          if (delivery.checkRounds >= DELIVERY_STOP_CHECK_ROUNDS) {
+            const notice = `已按交付收敛规则停止：交付请求后连续 ${DELIVERY_STOP_CHECK_ROUNDS} 轮只执行检查类命令，没有产出新成果。已完成的步骤与产物如下；请直接生成或返回当前产物，或告知需要的调整。\n${ledger.describe()}`;
+            this.memory.add({ role: "assistant", content: notice });
+            touch(runSessionId);
+            console.log(`🛑 [交付收敛] 连续 ${delivery.checkRounds} 轮检查无产出，已停止本轮并汇报进度。`);
+            yield { type: "answer_chunk", content: notice, timestamp: Date.now() };
+            yield { type: "answer_done", content: "", timestamp: Date.now() };
+            return;
+          }
+          if (delivery.checkRounds >= DELIVERY_WARN_CHECK_ROUNDS) delivery.warnPending = true;
         }
         if (results.some(result => result.toolName === "switch_persona" && result.outcome.status === "success")) return;
         continue;

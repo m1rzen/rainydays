@@ -45,3 +45,12 @@ User stories: G04、G10
 - 既有失败：`R5 real Electron loads discovered tools…`在“previous allowlist measurement”步骤超时，回退本票改动后同样失败，与本票无关，留待单独排查。
 
 未测：真实模型长任务表现（A04/A13）。回退：revert本票提交。
+
+### 2026-11-16 交付收敛切片（2026-11-14 审阅补充切片1）
+
+按[计划审阅](../reviews/2026-11-14-progress-plan-assessment.md)第1项，沿本票与 D04 实现"任务交付收敛"，不再只靠提示词约束"换命令、换脚本形式的重复检查"：
+
+- 触发：用户输入或运行中追加指令匹配明确交付模式（交付/成品/成稿/初稿/导出/整理成/生成…文件等），`Agent.deliveryArmed` 进入收敛模式。
+- 引导：收敛期间 system prompt 持续携带"交付收敛模式"块——下一轮先生成或返回当前产物；只保留解决成品阻塞的必要检查；交付时明确给出产物路径与完成依据。
+- 有界复核（宿主强制，不依赖模型自觉）：每轮工具结果提交后由宿主分类——只有检查类命令（execute_command/bash/shell_input/shell_output）的轮次计数，任何其他工具的成功轮次重置计数；连续 2 轮只检查 → 下一轮模型请求前注入"交付复核提醒"；连续 3 轮 → 宿主直接停止本轮，向用户汇报已完成的步骤与产物（RunLedger.describe()），停止说明写入会话记忆。简单问答没有工具轮次，不受影响。
+- 验证：`tests/product/delivery-convergence.test.mjs` 4/4（简单问答不受影响；连续检查先提醒、超过上限即停止并汇报产物；其他工具成功重置计数不误停；运行中追加交付指令进入收敛模式）。`npm run typecheck` 与 eslint 通过；既有 developer-mode + long-context 17/17 无回归。真实模型长任务表现留 A04/A13 复测。
