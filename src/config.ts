@@ -13,6 +13,7 @@ import { CONFIG_PATH, DEFAULT_WORKSPACE_DIR, USER_DATA_DIR } from "./runtime-pat
 import { cloneSettingsDomains, defaultSettingsDomains, parseSettingsDomains, publicSettingsDomains, settingsDomainManifest, type SettingsDomainId, type SettingsDomains } from "./settings-schema.js";
 import { resolveRequestBudget, type RequestBudget } from "./request-budget.js";
 import { prepareMcpSettings, mcpEnvironmentValues } from "./mcp/settings.js";
+import { gcableModelCatalog, isGcableEndpoint } from "./gcable-models.js";
 
 export interface ProviderProfile extends RequestBudget {
   model: string;
@@ -385,6 +386,7 @@ export function getPublicConfig(): {
   defaultProfile: string;
   currentProfile: string;
   profiles: PublicProviderProfile[];
+  modelPresets: typeof gcableModelCatalog;
   settings: AppSettings;
   domains: Record<string, unknown>;
   domainManifest: ReturnType<typeof settingsDomainManifest>;
@@ -397,6 +399,7 @@ export function getPublicConfig(): {
     defaultProfile: cfg.defaultProfile,
     currentProfile: getCurrentProfileName(),
     profiles: listProfiles(),
+    modelPresets: gcableModelCatalog,
     settings: { ...cfg.settings },
     domains: publicSettingsDomains(cfg.domains),
     domainManifest: settingsDomainManifest(),
@@ -491,6 +494,26 @@ export async function upsertProfile(
 
   assertDomainProfileReferences(cfg.domains, cfg.profiles);
   await saveConfig(cfg);
+  if (!deferCredentialCleanup) await finalizeCredentialChanges();
+}
+
+/** Explicit local settings action: reuse only a credential already bound to this gateway. */
+export async function addGcableProfiles(sourceName: string, deferCredentialCleanup = false): Promise<void> {
+  const cfg = getConfigSnapshot();
+  const source = Object.hasOwn(cfg.profiles, sourceName) ? cfg.profiles[sourceName] : undefined;
+  if (!source || !isGcableEndpoint(source.baseURL) || !source.apiKey) throw new TypeError("请先保存一个已配置 API Key 的 Gcable 模型。接口地址须为 https://api.playground.ai.gcable.cc/v1。");
+  let changed = false;
+  for (const entry of gcableModelCatalog) {
+    const existing = Object.hasOwn(cfg.profiles, entry.model) ? cfg.profiles[entry.model] : undefined;
+    if (existing) {
+      if (!isGcableEndpoint(existing.baseURL) || !Object.hasOwn(entry.aliases, existing.model)) throw new TypeError(`配置名称 ${entry.model} 已被其他模型占用，请先修改该名称。`);
+      if (!existing.apiKey) { existing.apiKey = source.apiKey; existing.credentialRef = undefined; changed = true; }
+      continue;
+    }
+    cfg.profiles[entry.model] = { ...source, model: entry.model, credentialRef: undefined, providerType: "openai-compatible-vision", personaProfileBindings: {} };
+    changed = true;
+  }
+  if (changed) await saveConfig(cfg);
   if (!deferCredentialCleanup) await finalizeCredentialChanges();
 }
 

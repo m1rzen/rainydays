@@ -69,6 +69,53 @@ function assertNoSecrets(value) {
   assert.doesNotMatch(encoded, /provider-secret-never-public|asr-secret-never-public|credentialRef|apiKeyHint/u);
 }
 
+test("Gcable presets add once using only the same pool credential, persist aliases and survive restart", { timeout: 120_000 }, async () => {
+  const fixture = await makeTempDir("rainydays-gcable-settings-");
+  const token = "gcable-settings-fixture";
+  let product;
+  try {
+    product = await startProduct(fixture, token);
+    let settings = (await api(product, token, "/settings")).body;
+    assert.deepEqual(settings.modelPresets.map(p => p.model), ["Gcable-Pro", "Gcable-Plus", "Gcable-Max"]);
+    const rejected = await api(product, token, "/settings/gcable-models", { method: "POST", body: JSON.stringify({ expectedRevision: settings.revision, sourceProfile: "default" }) });
+    assert.equal(rejected.status, 400, "never copy another provider's secret to the Gcable gateway");
+    assert.equal((await api(product, token, "/settings")).body.revision, settings.revision);
+    const source = await api(product, token, "/settings/providers/company", { method: "PUT", body: JSON.stringify({ expectedRevision: settings.revision, model: "Gcable-Pro-Thinking", baseURL: "https://api.playground.ai.gcable.cc/v1", apiKey: "provider-secret-never-public" }) });
+    assert.equal(source.status, 200);
+    settings = source.body.settings;
+    const installed = await api(product, token, "/settings/gcable-models", { method: "POST", body: JSON.stringify({ expectedRevision: settings.revision, sourceProfile: "company" }) });
+    assert.equal(installed.status, 200, JSON.stringify(installed.body));
+    settings = installed.body.settings;
+    assertNoSecrets(settings);
+    assert.equal(settings.defaultProfile, "default");
+    assert.equal(settings.currentProfile, "default");
+    for (const model of ["Gcable-Pro", "Gcable-Plus", "Gcable-Max"]) {
+      const saved = settings.profiles.find(p => p.name === model);
+      assert.equal(saved.model, model);
+      assert.equal(saved.hasApiKey, true);
+      assert.equal(saved.providerType, "openai-compatible-vision");
+    }
+    const changed = await api(product, token, "/settings/providers/Gcable-Plus", { method: "PUT", body: JSON.stringify({ expectedRevision: settings.revision, model: "Gcable-Plus-XHigh" }) });
+    assert.equal(changed.status, 200);
+    settings = changed.body.settings;
+    const repeated = await api(product, token, "/settings/gcable-models", { method: "POST", body: JSON.stringify({ expectedRevision: settings.revision, sourceProfile: "company" }) });
+    assert.equal(repeated.status, 200);
+    assert.equal(repeated.body.settings.profiles.find(p => p.name === "Gcable-Plus").model, "Gcable-Plus-XHigh");
+    const stale = await api(product, token, "/settings/gcable-models", { method: "POST", body: JSON.stringify({ expectedRevision: source.body.settings.revision, sourceProfile: "company" }) });
+    assert.equal(stale.status, 409);
+    const exported = await api(product, token, "/settings/export");
+    assert.equal(exported.body.profiles["Gcable-Plus"].model, "Gcable-Plus-XHigh");
+    assertNoSecrets(exported.body);
+    await stopProduct(product); product = null;
+    product = await startProduct(fixture, token);
+    settings = (await api(product, token, "/settings")).body;
+    assert.equal(settings.profiles.find(p => p.name === "Gcable-Plus").model, "Gcable-Plus-XHigh");
+    assertNoSecrets(settings);
+    const disk = await fs.readFile(product.configPath, "utf8");
+    assert.doesNotMatch(disk, /provider-secret-never-public/u);
+  } finally { await stopProduct(product); await removeFixture(fixture); }
+});
+
 test("DS-09 Settings API migrates, validates, CAS-publishes, exports and restarts without secret disclosure", { timeout: 120_000 }, async () => {
   const fixture = await makeTempDir("mini-lux-ds09-");
   const token = "ds09-settings-api-token";

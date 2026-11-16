@@ -1,3 +1,5 @@
+import { describeGcableModel, gcableModelCatalog, resolveGcableRequestModel } from "./gcable-models.js";
+
 /** Configured work limits; these do not certify a provider's real context window. */
 export interface RequestBudget {
   readonly contextWindowTokens: number;
@@ -43,24 +45,46 @@ export class ContextBudgetExceededError extends Error {
 export type ThinkingEffortLevel = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 
 const sessionThinkingEffort = new Map<string, ThinkingEffortLevel>();
+const sessionThinkingModel = new Map<string, string>();
+const sessionRequestModel = new Map<string, string>();
 
-export function getSessionThinkingEffort(sessionId: string): {
+function explicitEffort(sessionId: string, model?: string): ThinkingEffortLevel | undefined {
+  const boundModel = sessionThinkingModel.get(sessionId);
+  return boundModel && model && boundModel !== model ? undefined : sessionThinkingEffort.get(sessionId);
+}
+
+export function getSessionThinkingEffort(sessionId: string, model = sessionRequestModel.get(sessionId)): {
   currentEffort: ThinkingEffortLevel;
   availableEfforts: ThinkingEffortLevel[];
+  thinkingEnabled?: boolean;
 } {
+  const state = model ? describeGcableModel(model) : undefined;
+  if (state) {
+    const entry = gcableModelCatalog.find(p => p.model === state.model)!;
+    const override = explicitEffort(sessionId, model);
+    return {
+      currentEffort: (override && entry.efforts.includes(override) ? override : state.effort) as ThinkingEffortLevel,
+      availableEfforts: (state.thinking ? entry.efforts : []) as ThinkingEffortLevel[],
+      thinkingEnabled: state.thinking,
+    };
+  }
   return {
-    currentEffort: sessionThinkingEffort.get(sessionId) ?? "high",
+    currentEffort: explicitEffort(sessionId, model) ?? "high",
     availableEfforts: ["minimal", "low", "medium", "high", "xhigh", "max"],
   };
 }
 
-export function setSessionThinkingEffort(sessionId: string, effort: ThinkingEffortLevel): {
+export function setSessionThinkingEffort(sessionId: string, effort: ThinkingEffortLevel, model = sessionRequestModel.get(sessionId)): {
   previousEffort: ThinkingEffortLevel;
   currentEffort: ThinkingEffortLevel;
   appliesTo: "next_provider_request";
 } {
-  const prev = sessionThinkingEffort.get(sessionId) ?? "high";
+  const state = getSessionThinkingEffort(sessionId, model);
+  if (!state.availableEfforts.includes(effort)) throw new TypeError("当前模型未开启思考或不支持此思考强度，请先查看 thinking_effort_get 或修改模型设置。");
+  const prev = state.currentEffort;
   sessionThinkingEffort.set(sessionId, effort);
+  if (model) sessionThinkingModel.set(sessionId, model);
+  else sessionThinkingModel.delete(sessionId);
   return {
     previousEffort: prev,
     currentEffort: effort,
@@ -70,6 +94,19 @@ export function setSessionThinkingEffort(sessionId: string, effort: ThinkingEffo
 
 export function hasExplicitSessionThinkingEffort(sessionId: string): boolean {
   return sessionThinkingEffort.has(sessionId);
+}
+
+export function resolveRequestModel(model: string, sessionId: string | null): { model: string; reasoning_effort?: "low" | "medium" | "high" } {
+  if (sessionId) sessionRequestModel.set(sessionId, model);
+  if (describeGcableModel(model)) {
+    const effort = sessionId ? explicitEffort(sessionId, model) : undefined;
+    // An override from a different model must not prevent switching profiles.
+    const state = describeGcableModel(model)!;
+    const entry = gcableModelCatalog.find(p => p.model === state.model)!;
+    return { model: resolveGcableRequestModel(model, effort && entry.efforts.includes(effort) ? effort : undefined) };
+  }
+  const effort = sessionId && explicitEffort(sessionId, model) ? resolveProviderReasoningEffort(sessionId) : undefined;
+  return { model, ...(effort ? { reasoning_effort: effort } : {}) };
 }
 
 export function resolveProviderReasoningEffort(sessionId: string): "low" | "medium" | "high" | undefined {

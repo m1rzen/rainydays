@@ -1131,6 +1131,7 @@
 
     // ========== File Viewer ==========
     let fileRoots = [];
+    const fileRootRequests = new Map();
     let activeFileOwnerSessionId = null;
     let currentFileRoot = "workspace";
     let currentFilePath = "";
@@ -1178,7 +1179,16 @@
         selectAvailableFileRoot();
         return fileRoots;
       }
-      const res = await fetch("/api/files/roots", { headers: sessionHeaders(activeFileOwnerSessionId || currentSessionId) });
+      const owner = activeFileOwnerSessionId || currentSessionId;
+      if (!force && fileRootRequests.has(owner)) return fileRootRequests.get(owner);
+      const request = loadFileRoots(owner);
+      fileRootRequests.set(owner, request);
+      try { return await request; }
+      finally { if (fileRootRequests.get(owner) === request) fileRootRequests.delete(owner); }
+    }
+
+    async function loadFileRoots(owner) {
+      const res = await fetch("/api/files/roots", { headers: sessionHeaders(owner) });
       const data = await res.json();
       if (!res.ok) {
         const error = new Error(data.error || "根目录加载失败");
@@ -2103,6 +2113,7 @@
       document.getElementById("provider-name").value = profile.name;
       document.getElementById("provider-name").disabled = true;
       document.getElementById("provider-model").value = profile.model || "";
+      renderModelPresetControls();
       document.getElementById("provider-context-window").value = profile.contextWindowTokens ?? 32768;
       document.getElementById("provider-output-reserve").value = profile.outputReserveTokens ?? 4096;
       document.getElementById("provider-base-url").value = profile.baseURL || "";
@@ -2141,6 +2152,7 @@
       document.getElementById("provider-name").disabled = false;
       document.getElementById("provider-name").value = "";
       document.getElementById("provider-model").value = "";
+      renderModelPresetControls();
       document.getElementById("provider-context-window").value = 32768;
       document.getElementById("provider-output-reserve").value = 4096;
       document.getElementById("provider-base-url").value = "";
@@ -2156,6 +2168,70 @@
       document.getElementById("provider-switch-btn").disabled = true;
       renderProviderSelection();
       if (clearMessage) showSettingsMessage("");
+    }
+
+    function renderModelPresetControls() {
+      const presets = settingsState?.modelPresets || [];
+      const select = document.getElementById("provider-preset");
+      const model = document.getElementById("provider-model").value.trim();
+      const preset = presets.find(p => Object.hasOwn(p.aliases, model));
+      select.replaceChildren(new Option("自定义模型", ""), ...presets.map(p => new Option(p.model, p.model)));
+      select.value = preset?.model || "";
+      document.querySelectorAll("[data-gcable-control]").forEach(el => { el.hidden = !preset; });
+      if (!preset) return;
+      const state = preset.aliases[model];
+      const thinking = document.getElementById("provider-thinking");
+      thinking.value = state.thinking ? "on" : "off";
+      thinking.disabled = !preset.canDisableThinking;
+      thinking.querySelector('[value="off"]').disabled = !preset.canDisableThinking;
+      const effort = document.getElementById("provider-effort");
+      effort.replaceChildren(...preset.efforts.map(value => new Option(({low:"低 · Low",medium:"中 · Medium",high:"高 · High",xhigh:"超高 · XHigh",max:"最高 · Max"})[value] || value, value)));
+      effort.value = state.effort;
+      effort.disabled = !state.thinking;
+      document.getElementById("provider-thinking-hint").textContent = preset.canDisableThinking
+        ? "关闭时使用即时模式；开启后可选择思考强度。保存后生效。"
+        : "Gcable-Max 固定开启思考，可调整强度。保存后生效。";
+    }
+
+    function selectModelPreset(event) {
+      if (event.type !== "change") return;
+      const preset = settingsState?.modelPresets?.find(p => p.model === event.target.value);
+      if (preset) {
+        if (!editingProviderName && !document.getElementById("provider-name").value.trim()) document.getElementById("provider-name").value = preset.model;
+        document.getElementById("provider-model").value = preset.model;
+        document.getElementById("provider-base-url").value = preset.baseURL;
+        document.getElementById("provider-type").value = "openai-compatible-vision";
+      } else document.getElementById("provider-model").value = "";
+      renderModelPresetControls();
+    }
+
+    function changeModelThinking(event) {
+      if (event.type !== "change") return;
+      const preset = settingsState?.modelPresets?.find(p => p.model === document.getElementById("provider-preset").value);
+      if (!preset) return;
+      const enabled = !preset.canDisableThinking || document.getElementById("provider-thinking").value === "on";
+      document.getElementById("provider-model").value = enabled ? preset.variants[document.getElementById("provider-effort").value] : preset.model;
+      renderModelPresetControls();
+    }
+
+    async function addGcableModels() {
+      const generation = ++settingsRequestGeneration;
+      const button = document.getElementById("gcable-add-models");
+      button.disabled = true;
+      try {
+        if (settingsDirtyDomains.has("profiles")) throw new Error("请先保存当前模型修改，再添加三款模型。");
+        const source = settingsState?.profiles?.find(p => p.name === editingProviderName && p.hasApiKey && p.baseURL.replace(/\/+$/u, "") === "https://api.playground.ai.gcable.cc/v1")
+          || settingsState?.profiles?.find(p => p.hasApiKey && p.baseURL.replace(/\/+$/u, "") === "https://api.playground.ai.gcable.cc/v1");
+        if (!source) throw new Error("请先选择 Gcable 预设，填写 API Key 并保存，再添加三款模型。");
+        const res = await fetch("/api/settings/gcable-models", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expectedRevision: settingsState.revision, sourceProfile: source.name }) });
+        const data = await res.json();
+        if (generation !== settingsRequestGeneration) return;
+        if (!res.ok) throw new Error(data.error || "添加模型失败");
+        settingsState = data.settings;
+        renderSettingsPreservingDirty();
+        showSettingsMessage("Gcable-Pro、Gcable-Plus、Gcable-Max 已添加。选择配置后可调整思考模式和强度，再切换使用。", "success");
+      } catch (error) { if (generation === settingsRequestGeneration) showSettingsMessage(error.message, "error"); }
+      finally { button.disabled = false; }
     }
 
     async function refreshSettingsState() {
@@ -3841,6 +3917,9 @@
       },
       "cancel-run": () => cancelSessionRun(),
       "open-model-settings": async () => { await openSettings(); switchSettingsDomain("profiles"); },
+      "select-model-preset": selectModelPreset,
+      "change-model-thinking": changeModelThinking,
+      "add-gcable-models": addGcableModels,
       "show-document-outputs": async () => {
         if (documentOutputsEl.hidden) return;
         if (!documentOutputsEl.closest(".workbench-pane-content") && currentSessionId) await selectSession(currentSessionId);
@@ -3997,6 +4076,7 @@
     const markSettingsDirty = event => {
       const domainId = settingsControlDomain(event.target);
       if (domainId) settingsDirtyDomains.add(domainId);
+      if (event.target.id === "provider-model") renderModelPresetControls();
     };
     settingsModal.addEventListener("input", markSettingsDirty);
     settingsModal.addEventListener("change", markSettingsDirty);

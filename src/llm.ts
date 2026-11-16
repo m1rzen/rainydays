@@ -9,7 +9,7 @@ import type { LLMConfig, Message, MessageAttachment, ScopedNetworkGateway, ToolD
 import { abortableDelay, cancellationError, cancellationFailure, throwIfCancelled } from "./run-cancellation.js";
 import { MAX_DRAFT_ATTACHMENT_BYTES, INLINE_ATTACHMENT_BYTES, isDocumentMime } from "./attachment.js";
 import { beginObservation } from "./observability.js";
-import { ContextBudgetExceededError, estimateProjectedRequestTokens, resolveProviderReasoningEffort, resolveRequestBudget, type RequestBudget, type RequestBudgetReport } from "./request-budget.js";
+import { ContextBudgetExceededError, estimateProjectedRequestTokens, resolveRequestModel, resolveRequestBudget, type RequestBudget, type RequestBudgetReport } from "./request-budget.js";
 import { isModelNotFound } from "./model-connection.js";
 import { describeObservation, loadObservationBytes, type ToolObservation } from "./observations.js";
 
@@ -344,12 +344,10 @@ export class LLMClient {
     attachmentResolver: AttachmentResolver | null = null,
   ): Promise<LLMReply> {
     const client = transport ? this.createClient(transport) : this.client;
-    const reasoningEffort = attachmentSessionId ? resolveProviderReasoningEffort(attachmentSessionId) : undefined;
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
-      model: this.model,
+      ...resolveRequestModel(this.model, attachmentSessionId),
       messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
       max_tokens: this.requestBudget.outputReserveTokens,
-      ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
     };
 
     if (tools && tools.length > 0) {
@@ -442,14 +440,12 @@ export class LLMClient {
     attachmentSessionId: string | null = null,
     attachmentResolver: AttachmentResolver | null = null,
   ): AsyncGenerator<StreamEvent> {
-    const reasoningEffort = attachmentSessionId ? resolveProviderReasoningEffort(attachmentSessionId) : undefined;
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
-      model: this.model,
+      ...resolveRequestModel(this.model, attachmentSessionId),
       messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
       stream: true,
       stream_options: { include_usage: true },
       max_tokens: this.requestBudget.outputReserveTokens,
-      ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
     };
 
     if (tools && tools.length > 0) {

@@ -7,6 +7,78 @@ import {
   removeFixture, spawnManaged, terminateProcessTreeAsync, waitFor,
 } from "../helpers.mjs";
 
+test("Gcable model controls persist supported switches and efforts in the real desktop", { timeout: 120_000 }, async () => {
+  const fixture = await makeTempDir("rainydays-gcable-desktop-");
+  const userData = path.join(fixture, "user-data");
+  let child, client;
+  let logs = "";
+  try {
+    const [httpPort, cdpPort] = await freeDistinctPorts(2);
+    const settings = { workspaceRoot: path.join(userData, "workspace"), departmentDataRoot: path.join(userData, "department"), outputDir: path.join(userData, "output") };
+    await Promise.all(Object.values(settings).map(directory => mkdir(directory, { recursive: true })));
+    await writeFile(path.join(userData, "config.json"), JSON.stringify({ defaultProfile: "company", profiles: { company: { model: "Gcable-Pro-Thinking", apiKey: "fixture-only-never-sent", baseURL: "https://api.playground.ai.gcable.cc/v1" } }, settings: { ...settings, defaultPersona: "general" } }));
+    const env = { ...process.env, npm_node_execpath: process.execPath, PORT: String(httpPort) };
+    delete env.RAINYDAYS_E2E_USE_DIST; delete env.RAINYDAYS_E2E_NODE_EXECUTABLE; delete env.ELECTRON_RUN_AS_NODE;
+    child = spawnManaged(path.join(projectRoot, "node_modules", "electron", "dist", "electron.exe"), [projectRoot, `--user-data-dir=${userData}`, `--remote-debugging-port=${cdpPort}`, "--disable-gpu"], { env });
+    for (const stream of [child.stdout, child.stderr]) {
+      stream.setEncoding("utf8"); stream.on("data", chunk => { logs = (logs + chunk).slice(-20_000); });
+    }
+    await waitFor(async () => {
+      if (child.exitCode !== null) throw new Error(`Desktop exited: ${logs}`);
+      try { return (await boundedFetch(`http://127.0.0.1:${httpPort}/`, { signal: AbortSignal.timeout(1000) })).ok; } catch { return false; }
+    }, { timeoutMs: 45_000, label: "Gcable desktop service" });
+    client = await connectCdp(cdpPort);
+    await waitFor(() => client.evaluate("typeof openSettings === 'function' && Boolean(currentSessionId)"), { label: "Gcable desktop renderer" });
+    const rootRequests = await client.evaluate(`(async () => {
+      const original = window.fetch; let requests = 0, release;
+      const gate = new Promise(resolve => { release = resolve; });
+      fileRoots = [];
+      window.fetch = async (...args) => {
+        if (args[0] !== '/api/files/roots') return original(...args);
+        requests += 1; await gate;
+        return Response.json({roots:[{id:'workspace', name:'工作目录', available:true}]});
+      };
+      try {
+        const pending = Array.from({length:20}, () => ensureFileRoots());
+        await Promise.resolve(); const count = requests; release(); await Promise.all(pending); return count;
+      } finally { window.fetch = original; fileRoots = []; }
+    })()`);
+    assert.equal(rootRequests, 1, "restoring many file links must leave connection slots available for model settings");
+    await client.evaluate("(async () => { await openSettings(); switchSettingsDomain('profiles'); })()");
+    await client.evaluate("document.getElementById('gcable-add-models').click()");
+    await waitFor(() => client.evaluate("settingsState.profiles.some(p => p.name === 'Gcable-Max')"), { label: "three saved profiles" });
+    for (const [name, efforts, off] of [["Gcable-Pro", ["low", "high", "max"], true], ["Gcable-Plus", ["low", "medium", "xhigh"], true], ["Gcable-Max", ["low", "high", "max"], false]]) {
+      await client.evaluate(`selectProviderEditor(${JSON.stringify(name)})`);
+      assert.deepEqual(await client.evaluate("Array.from(document.getElementById('provider-effort').options, o => o.value)"), efforts);
+      assert.equal(await client.evaluate("document.getElementById('provider-thinking').disabled"), !off);
+      if (off) {
+        assert.equal(await client.evaluate("document.getElementById('provider-effort').disabled"), true);
+        await client.evaluate("(() => { const e = document.getElementById('provider-thinking'); e.value = 'on'; e.dispatchEvent(new Event('change', {bubbles:true})); })()");
+      }
+      for (const effort of efforts) {
+        await client.evaluate(`(() => { const e = document.getElementById('provider-effort'); e.value = ${JSON.stringify(effort)}; e.dispatchEvent(new Event('change', {bubbles:true})); })()`);
+        await client.evaluate("saveProvider()");
+        assert.equal(await client.evaluate(`settingsState.profiles.find(p => p.name === ${JSON.stringify(name)}).model`), await client.evaluate(`settingsState.modelPresets.find(p => p.model === ${JSON.stringify(name)}).variants[${JSON.stringify(effort)}]`));
+      }
+      if (off) {
+        await client.evaluate("(() => { const e = document.getElementById('provider-thinking'); e.value = 'off'; e.dispatchEvent(new Event('change', {bubbles:true})); })()");
+        await client.evaluate("saveProvider()");
+        assert.equal(await client.evaluate(`settingsState.profiles.find(p => p.name === ${JSON.stringify(name)}).model`), name);
+      }
+    }
+    await client.evaluate("refreshSettingsState()");
+    assert.equal(await client.evaluate("document.getElementById('provider-effort').value"), "max");
+    assert.equal(await client.evaluate("document.getElementById('provider-thinking').value"), "on");
+    await client.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
+    const capture = await client.send("Page.captureScreenshot", { format: "png" });
+    await mkdir(path.join(projectRoot, "test-results"), { recursive: true });
+    await writeFile(path.join(projectRoot, "test-results", "gcable-settings-desktop.png"), Buffer.from(capture.data, "base64"));
+    const disk = JSON.parse(await readFile(path.join(userData, "config.json"), "utf8"));
+    assert.equal(disk.profiles["Gcable-Max"].model, "Gcable-Max-Thinking-Max");
+    assert.doesNotMatch(JSON.stringify(disk), /fixture-only-never-sent/);
+  } finally { client?.close(); if (child) await terminateProcessTreeAsync(child); await removeFixture(fixture); }
+});
+
 test("development desktop uses npm Node, loads native storage and renders the working application", { timeout: 90_000 }, async () => {
   const fixture = await makeTempDir("mini-lux-development-launch-");
   const userData = path.join(fixture, "user-data");

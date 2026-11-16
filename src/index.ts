@@ -68,6 +68,7 @@ import {
   switchProfile,
   listProfiles,
   upsertProfile,
+  addGcableProfiles,
   deleteProfile,
   exportSettings,
   prepareSettingsImport,
@@ -2699,6 +2700,25 @@ app.put("/api/settings/general", async (req, res) => {
       return;
     }
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+app.post("/api/settings/gcable-models", async (req, res) => {
+  if (rejectWhenRuntimeBusy(res)) return;
+  try {
+    if (!req.body || typeof req.body.expectedRevision !== "string" || typeof req.body.sourceProfile !== "string"
+      || Object.keys(req.body).sort().join(",") !== "expectedRevision,sourceProfile") throw new TypeError("请选择已保存的 Gcable 配置。");
+    await mutateGlobalConfigAndRuntimes(() => {
+      if (req.body.expectedRevision !== getConfigRevisionDigest()) throw new SettingsRevisionConflictError();
+      return addGcableProfiles(req.body.sourceProfile, true);
+    }, false);
+    res.json({ success: true, settings: getPublicConfig() });
+  } catch (error) {
+    if (error instanceof SettingsRevisionConflictError) {
+      res.status(409).json({ code: "SETTINGS_REVISION_CONFLICT", error: error.message, settings: getPublicConfig() });
+      return;
+    }
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
