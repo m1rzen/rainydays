@@ -21,6 +21,7 @@ import {
   editFileDef, editFileExec,
 } from "./filesystem.js";
 import { readDef, readExec, writeDef, writeExec, editDef, editExec, replaceDef, replaceExec, globDef, globExec } from "./filesystem-lux.js";
+import { registerOutputDef, registerOutputExec } from "./output-registry.js";
 import { grepDef, grepExec } from "./filesystem-grep.js";
 import {
   createDocxDef, createDocxExec,
@@ -212,6 +213,7 @@ const rawStaticTools: Omit<RegisteredTool, "policy">[] = [
   { name: "edit_file",       definition: editFileDef,        executor: editFileExec },
   { name: "create_docx",     definition: createDocxDef,      executor: createDocxExec },
   { name: "create_xlsx",     definition: createXlsxDef,      executor: createXlsxExec },
+  { name: "register_output", definition: registerOutputDef,  executor: registerOutputExec },
   { name: "execute_command", definition: executeCommandDef,  executor: executeCommandExec },
   { name: "shell_start",     definition: shellStartDef,       executor: shellStartExec },
   { name: "shell_input",     definition: shellInputDef,       executor: shellInputExec },

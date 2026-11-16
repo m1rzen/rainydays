@@ -11,6 +11,7 @@ tools:
   - edit
   - replace
   - create_docx
+  - register_output
   - get_current_time
   - remember
   - recall

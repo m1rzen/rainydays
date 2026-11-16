@@ -12,6 +12,7 @@ tools:
   - edit
   - replace
   - create_docx
+  - register_output
   - create_xlsx
   - web_search
   - fetch_markdown

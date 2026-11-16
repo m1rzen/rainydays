@@ -51,3 +51,13 @@ general-agent-acceptance.md为唯一最终计分入口；release.md与D18资料�
 
 尚未审查/验证。完成时记录具体命令、实际结果、人工核对、未测项、回退和终点提交。全部条件有证据才改为verified；依赖例外以[总任务图](../plan.md)为准。
 
+
+### 2026-11-16 成品登记（2026-11-14 审阅补充切片3，工程切片）
+
+审阅第 3 项指出 document-outputs 只从 create_docx/create_xlsx 回执派生，脚本、通用 write 与下载保存成果不在登记链。本轮补齐显式登记：
+
+- 新增 `register_output` 工具（`src/tools/output-registry.ts`，parallelReadPolicy，只读 read-file）：模型对成果文件显式登记，要求 `kind` 区分 deliverable（交付件）/intermediate（中间产物）/source（原始资料）。执行器经授权路径网关 `readFile` 核对授权与存在性（≤32MiB 全量读 → 完整 sha256 + 大小 + 魔数实际格式；超限或权限类失败降级头部 64KiB 校验 `verification: "head64k"`；头部也读不到一律拒绝登记，不按文件名或 mtime 猜测）。回执 `type: "artifact_registration"` 持久化在会话消息中；扩展名与实际内容不符时在回执附 `formatWarning`。
+- `document-outputs.ts`：`collectDocumentOutputs` 统一派生 `document_output`（kind=document）与 `artifact_registration`（kind=deliverable/intermediate/source）两类成功回执；`DocumentOutput` 增加 kind/bytes/sha256 可选字段，同一路径重复登记只保留最新版本；失败、截断与伪造回执不入列表，助手散文路径不算产物。列表展示所有候选，不自动挑选。
+- `agent.ts` 交付收敛引导（DELIVERY_GUIDANCE_PROMPT）增加第 3 条：交付文件用 register_output 登记，中间产物与原始资料按 kind 区分。
+- `personas/general.md`、`writer.md`、`rds-assistant.md` 工具清单加入 `register_output`；`tool-policies.ts` 静态策略同步；sec01 基线同步为 141 静态 + 29 运行时 = 170（此前测试断言 133/162 与实际注册表已经漂移，属 A06 收尾清单的既知事项，本轮顺手对齐）。
+- 验证：新增 `tests/product/output-registry.test.mjs` 3/3（校验存在文件回传格式与摘要、缺失路径与非法 kind 拒绝；相对路径走 OUTPUT_DIR、超限降级头部校验、格式不符提示；统一派生两类回执、失败与伪造不入列表、同路径保留最新版本）；sec01 5/5（141/29/170 基线）、conversation、delivery-convergence 无回归，合计 22/22；typecheck、eslint、build 通过。真实模型在长任务中主动登记交付件的行为留 A04/A13 真实运行验收。

@@ -29,10 +29,10 @@ async function verifyPolicyRegistryBoundary() {
   const staticPolicies = namesFromPolicyBlock(policies, "STATIC_TOOL_POLICIES");
   const runtimePolicies = namesFromPolicyBlock(policies, "RUNTIME_TOOL_POLICIES");
 
-  assert.equal(staticNames.length, 133);
+  assert.equal(staticNames.length, 141);
   assert.equal(runtimePolicies.length, 29);
   assert.deepEqual([...staticNames].sort(), [...staticPolicies].sort());
-  assert.equal(new Set([...staticNames, ...runtimePolicies]).size, 162);
+  assert.equal(new Set([...staticNames, ...runtimePolicies]).size, 170);
   assert.match(registry, /registerDynamicTool\(authority: RuntimeAuthority/);
   assert.doesNotMatch(registry, /registerRuntimeTool\([^,]+,\s*tool\)(?![\s\S]*policy)/);
   return true;
