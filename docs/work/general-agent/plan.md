@@ -35,6 +35,8 @@ Status: approved
 
 2026-11-16 修订（用户批准）：采纳[计划审阅](reviews/2026-11-14-progress-plan-assessment.md)的六项补充切片，按三里程碑纳入执行队列：M1 交付收敛（A14/D04，已实现）→ 本地图像观察（A08 缺失入口）→ 成品登记（脚本与下载成果归属）；M2 length 章节检查点恢复、图文模板与语义样本（A11/D07/D08）、重复消息幂等调查；M3 八场景×3次固定回放回归与 D13 安装候选准备。A06 仍按原队列收尾（设置页 UI 与桌面端验证），A13 仍为完整出口。各切片进度记于对应票据与 autonomous-run.md。
 
+2026-11-16 独立验收更正：六项实现 `3a635ec..3247477` 经实际复现后为 **changes-requested**，M1/M2 尚未合格。按[审查报告](reviews/2026-11-16-glm-improvements-code-review.md)先修 A14 生产命令误停与 length 终态，再修 A13 成果登记/显示链，接着补 A11 模板接入、请求幂等生命周期及 A08 JPEG 清理；章节恢复和语义质量证据仍按原规格补齐。正式冻结 M3 的 24 次回归候选在上述修复之后，D13 准备仍可独立推进。A14/A08/A11 返回 in-progress，历史通过范围保留；本轮仅审查与同步，没有实施产品修复。
+
 ## 3. 新任务依赖表
 
 | 任务 | 阻塞依赖 | 可观察验收出口 | 状态 |
@@ -46,12 +48,12 @@ Status: approved
 | [A05 MCP本地接入与工具发现](tickets/05-mcp-local.md) | A03 | 设置添加stdio服务器→普通会话发现/调用→重启/取消 | verified |
 | [A06 MCP远端认证与内容处理](tickets/06-mcp-remote.md) | A05 | HTTP/token/OAuth、资源和结构化内容；断线不重复写入 | in-progress |
 | [A07 一个可用的交互浏览器后端](tickets/07-browser-control.md) | A01、D04、D05 | SPA真实输入、标签归属、上传下载、登录接管；2026-11-12工程与真实模型3/3通过，待真人登录接管与同事入口确认 | implemented |
-| [A08 工具图像进入视觉模型](tickets/08-visual-observations.md) | A01、D02、D03 | 真实模型识别非预置截图，尺寸/坐标/上下文预算正确；2026-11-12真实模型画布3/3，MCP图片待接 | implemented |
+| [A08 工具图像进入视觉模型](tickets/08-visual-observations.md) | A01、D02、D03 | 真实模型画布3/3；新增本地图像待修JPEG淘汰清理，MCP图片待接 | in-progress |
 | [A09 可打包的Windows观察与动作](tickets/09-windows-driver.md) | A01、D04、D13 | 普通用户安装包中UIA/截图/输入可用，DPI/焦点/清理通过 | ready |
 | [A10 Computer Use任务循环与接管](tickets/10-computer-use-loop.md) | A07、A08、A09 | 浏览器/桌面真实观察操作验证，暂停停止和恢复有效 | ready |
-| [A11 项目说明与技能按需使用](tickets/11-skills-and-instructions.md) | A02、D03 | 工程及真实模型指令/技能探测已有证据；内置技能覆盖与即时开关体验待验收 | implemented |
+| [A11 项目说明与技能按需使用](tickets/11-skills-and-instructions.md) | A02、D03 | 既有指令/技能探测保留；新增会议模板未接入发现/加载，需返工 | in-progress |
 | [A12 有界子任务与结果汇总](tickets/12-bounded-subagents.md) | A01、D03、D04 | 两个只读子任务及父取消真实探测通过；单/多 Agent 质量、耗时和费用对照待验收 | implemented |
-| [A14 长任务Agent循环](tickets/14-agent-loop.md) | 无 | 可配置迭代上限、计划、运行中追加指令、开发模式核心工具常驻 | verified |
+| [A14 长任务Agent循环](tickets/14-agent-loop.md) | 无 | 既有上限/计划/追加指令证据保留；新增收敛误停与length假完成待修 | in-progress |
 | [A15 开发模式：以用户身份执行命令](tickets/15-developer-mode.md) | 无 | 显式开启后用户工具链真实跑node/python/git/npm，任务级授权、取消清理；同事模式隔离不变 | verified |
 | [A13 通用任务、安装与同事交付](tickets/13-general-delivery.md) | A04、A06、A10、A11、A12、A14、A15、D18 | 固定100次和真实同事试用满足门槛，完整安装候选可交付 | ready |
 

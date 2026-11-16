@@ -61,3 +61,9 @@ general-agent-acceptance.md为唯一最终计分入口；release.md与D18资料�
 - `agent.ts` 交付收敛引导（DELIVERY_GUIDANCE_PROMPT）增加第 3 条：交付文件用 register_output 登记，中间产物与原始资料按 kind 区分。
 - `personas/general.md`、`writer.md`、`rds-assistant.md` 工具清单加入 `register_output`；`tool-policies.ts` 静态策略同步；sec01 基线同步为 141 静态 + 29 运行时 = 170（此前测试断言 133/162 与实际注册表已经漂移，属 A06 收尾清单的既知事项，本轮顺手对齐）。
 - 验证：新增 `tests/product/output-registry.test.mjs` 3/3（校验存在文件回传格式与摘要、缺失路径与非法 kind 拒绝；相对路径走 OUTPUT_DIR、超限降级头部校验、格式不符提示；统一派生两类回执、失败与伪造不入列表、同路径保留最新版本）；sec01 5/5（141/29/170 基线）、conversation、delivery-convergence 无回归，合计 22/22；typecheck、eslint、build 通过。真实模型在长任务中主动登记交付件的行为留 A04/A13 真实运行验收。
+
+### 2026-11-16 独立 Code review：成果登记切片 changes-requested
+
+详见[独立审查报告 R02/R06/R07/R09](../reviews/2026-11-16-glm-improvements-code-review.md)。已重现：允许的相对路径工具登记成功而成果列表为零；非 register_output 工具可伪造成果回执；授权 33MiB 文件的头部降级实际失败；真实 Electron 将 PDF/MP4/Markdown 均标为 Excel 且不展示 source/intermediate/deliverable 类别。修复应覆盖可信路径登记→持久消息→会话 API→用户成果列表，不以单工具假网关测试代替完整链。
+
+整票仍为 ready，M1/M2 不视为已通过。结构化章节恢复、真实文稿语义质量及 M3 固定回放继续按原规格补齐，修复后再冻结正式回归候选。未新增真实模型或当前安装包证据，本轮未实施产品修复。

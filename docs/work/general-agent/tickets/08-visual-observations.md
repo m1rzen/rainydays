@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: implemented
+Status: in-progress
 
 Spec: [通用Agent规格](../../../specs/general-agent.md)
 
@@ -78,3 +78,7 @@ src/llm.ts、tools/image-helper.ts与工具结果投影；D02模型契约、D03�
 - `agent.ts`：`OBSERVATION_TOOLS` 加入 `read`；带标记的图片读取照旧走最近 2 张预算与只读已注册摘要的防伪路径，文本读取不产生观察。
 - 相同文件重复读取按内容摘要复用同一观察，不重复存储；文件内容变化（不同 sha256）即注册新版本，版面变化后重验。
 - 验证：新增 `tests/product/local-image-observation.test.mjs` 2/2（PNG/JPEG 注册为观察并随工具结果附给模型且携带版本摘要；重复读取复用同一版本、损坏图片被既有签名校验拒绝不进入观察、文本读取无观察）；`tool02-filesystem-contract.test.mjs` 补真实 PNG/JPEG 观察断言后 11/11；`npm run build`、typecheck、eslint 通过。真实视觉模型对本地图片的识别效果与逐页文稿渲染检查留 A08 剩余验收/A13 计分。
+
+### 2026-11-16 独立 Code review：changes-requested
+
+详见[独立审查报告 R08](../reviews/2026-11-16-glm-improvements-code-review.md)。本地 PNG/JPEG 像素入口有实现，但淘汰逻辑先删索引再读 MIME，JPEG 磁盘文件未清理；真实文件探针 41 张注册后仍保留 41 个 .jpg，违反每会话 40 张上限。A08 返回 in-progress，先修混合格式清理，既有浏览器视觉成绩保留；文稿逐页、小字及真实模型本地图像收益继续按原票验收。本轮未实施修复。

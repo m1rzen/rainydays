@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: verified
+Status: in-progress
 
 Spec: [通用Agent规格](../../../specs/general-agent.md#7-2026-10-20路线修订开发模式与agent循环)
 
@@ -68,3 +68,9 @@ User stories: G04、G10
 ### 2026-11-16 重复消息幂等（2026-11-14 审阅补充切片6 / M2 调查项）
 
 调查结论：`/api/chat` 每次请求生成新 runId、无幂等键——运行中靠 `claimRun` 409 防重入，run 结束后双击、网络重放或 UI 重连重发会产生重复 user 消息与重复 run。修复：新增 `src/chat-idempotency.ts`（(sessionId, clientRequestId) 10 分钟窗口去重，内存态，无键请求向后兼容），`/api/chat` 窗口内同键返回 409；`renderer.js` 每次发送生成并携带 clientRequestId。验证：`tests/unit/chat-idempotency.test.mjs`（同键拒绝、跨会话隔离、过期放行、空键跳过）；typecheck/eslint/UI 回归通过。SSE 重连时的回复去重渲染属 UI 渲染层，本轮未发现缺陷，留真实桌面验证观察。
+
+### 2026-11-16 独立 Code review：changes-requested
+
+固定范围 `3a635ec..3247477`，详见[独立审查报告](../reviews/2026-11-16-glm-improvements-code-review.md)。R01：三个实际产出文件的命令仍触发“无产出”误停；R03：length 截断待续接却向 HTTP/UI 发 completed；R05：请求前置失败占用幂等键，合法重试被拒。原 length 实现只有说明和文件清单，结构化章节/版本/环境检查点及真正进程重启恢复仍缺证据。
+
+当前产品检查 188/191，三项编码回归；仅将 Agent 替换为改动前版本的受控对照 coding-loop 6/6。独立探针已复现生产误停和两个 HTTP 生命周期缺陷；本轮未实施修复。A14 返回 in-progress，历史上限/steer 等已验证范围保留，修复后重验本轮新增行为与受影响编码循环。

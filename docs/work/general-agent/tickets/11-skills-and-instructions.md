@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: implemented
+Status: in-progress
 
 Spec: [通用Agent规格](../../../specs/general-agent.md)
 
@@ -67,3 +67,7 @@ src/persona.ts、skills/和默认工具发现/上下文预算；参考现有文�
 - 新增内置技能 `skills/meeting-minutes.md`：四段结构模板（会议信息/议题纪要/决议与跟进/风险与待确认，发言归属到单位或人员）；事实规则（金额保留原文区间与单位、统计写明主体与口径、含/不含不得互换、意向/承诺/已落实三级不升格、无依据执法结论不入正文）；版式规则（段落≤5 行、表格≤5 列、金额时限单独成列、标题两级，用户截图反馈时优先检查横向溢出）；篇幅规则——默认按内容自然长度不设最低页数，仅当用户本次对话明确约定"详版/两页以上/完整版"才扩展，且以补充材料事实为限、不得凑篇幅。
 - 新增语义标注样本数据集 `tests/fixtures/semantic-samples.json`：六个维度（金额上下限、统计主体、包含关系、风险维度、意向承诺落实程度、无依据执法结论）各 2 正例 + 2 反例，共 24 条，每条带标注依据；分项评分维度定义（事实保真 0.5 / 语言表达 0.3 / 版式 0.2，权重合计 1）。样本为 A13 基准集的 ground truth 素材，真实模型评测与逐条人工审核留 A04/A13 授权后进行。
 - 新增契约测试 `tests/contract/semantic-samples.test.mjs` 3/3：维度与正反例完整性、字段与引用有效性、评分权重合计、篇幅规则（不设最低页数 + 扩写限定 + 截图阅读宽度）落进模板。`a11-skills-instructions.test.mjs` 10/10 无回归。
+
+### 2026-11-16 独立 Code review：changes-requested
+
+详见[独立审查报告 R04](../reviews/2026-11-16-glm-improvements-code-review.md)。meeting-minutes.md 既不是 A11 可发现的 SKILL.md 包，也未列入任何交付人格的旧 skills 绑定；实际目录与 general/writer/rds-assistant 提示都拿不到模板。静态文本契约通过不能证明运行可用。A11 返回 in-progress，补已有发现/加载路径与普通任务验证；既有技能探测成绩保留。24 条语义样本与分项权重属于夹具准备，独立标注及真实文稿质量仍待验收。本轮未实施修复。
