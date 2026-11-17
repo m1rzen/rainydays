@@ -42,7 +42,9 @@ export function collectDocumentOutputs(messages: readonly (Message & { created_a
         outputs.set(key, { path: receipt.path, name: path.basename(receipt.path), format, createdAt, kind: "document" });
         continue;
       }
-      if (receipt.type === "artifact_registration" && typeof receipt.path === "string" && path.isAbsolute(receipt.path)
+      if (tool === "register_output" && receipt.type === "artifact_registration" && typeof receipt.path === "string" && path.isAbsolute(receipt.path)
+        && typeof receipt.sha256 === "string" && /^[a-f0-9]{64}$/u.test(receipt.sha256)
+        && receipt.verification === "sha256" && Number.isSafeInteger(receipt.bytes) && receipt.bytes >= 0
         && (receipt.kind === "deliverable" || receipt.kind === "intermediate" || receipt.kind === "source")) {
         const key = outputKey(receipt.path);
         outputs.delete(key);

@@ -961,11 +961,11 @@ test("SEC-02 write preflight authorizes existing replace or nearest parent witho
   const authority = await policy.createAuthority([rootInput(root, ["create-file", "replace-file"])]);
   assert.deepEqual(
     await policy.preflightWrite(authority, { input: "existing.xlsx", operation: "create-file", defaultRootId: "workspace", requiredExtension: ".xlsx" }),
-    { rootId: "workspace" }
+    { rootId: "workspace", path: path.join(root, "existing.xlsx"), directory: root, exists: true }
   );
   assert.deepEqual(
     await policy.preflightWrite(authority, { input: "nested/new.xlsx", operation: "create-file", defaultRootId: "workspace", requiredExtension: ".xlsx" }),
-    { rootId: "workspace" }
+    { rootId: "workspace", path: path.join(root, "nested", "new.xlsx"), directory: root, exists: false }
   );
   assert.equal(await fs.readFile(path.join(root, "existing.xlsx"), "utf8"), "old");
   await assert.rejects(() => fs.access(path.join(root, "nested")));

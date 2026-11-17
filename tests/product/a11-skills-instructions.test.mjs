@@ -64,10 +64,10 @@ test("A11 SKILL.md frontmatter subset: folded and quoted descriptions, required 
 
 test("A11 packages: broken packages are reported, flat persona skills stay separate, toggles hide a skill", async () => {
   const list = await skills.listSkillPackages();
-  assert.deepEqual(list.map(item => item.id), ["broken-skill", "data-check", "report-writer"]);
+  assert.deepEqual(list.map(item => item.id), ["broken-skill", "data-check", "meeting-minutes", "report-writer"]);
   const report = list.find(item => item.id === "report-writer");
   assert.equal(report.source, "user"); assert.match(report.description, /固定三段结构/u); assert.equal(report.enabled, true);
-  assert.equal(list.filter(item => item.source === "builtin").length, 0, "the shipped skills folder holds only flat persona skills");
+  assert.deepEqual(list.filter(item => item.source === "builtin").map(item => item.id), ["meeting-minutes"], "only the new package is discoverable; legacy flat persona skills stay separate");
   assert.match(list.find(item => item.id === "broken-skill").problem, /description/u);
   skills.invalidateSkillCatalog();
   let block = await skills.renderSkillCatalogBlock();

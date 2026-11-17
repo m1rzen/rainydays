@@ -769,6 +769,10 @@ export class CapabilityBroker {
         requireInvocation("read-file");
         return this.pathPolicy.readFile(invocationAuthority, request(input, "read-file", options.defaultRootId), options.maxBytes);
       },
+      inspectFile: (input, options = {}) => {
+        requireInvocation("read-file");
+        return this.pathPolicy.inspectFile(invocationAuthority, request(input, "read-file", options.defaultRootId), options.previewBytes, options.signal);
+      },
       listDirectory: (input, options = {}) => {
         requireInvocation("read-directory");
         return this.pathPolicy.listDirectory(invocationAuthority, request(input, "read-directory", options.defaultRootId), options.maxEntries);
@@ -1472,6 +1476,24 @@ export class CapabilityBroker {
     const record = this.contextRecords.get(context);
     return Boolean(record?.active && record.authority.active && context.authorityEpoch === record.authority.epoch
       && this.pathPolicy.isActive(record.pathAuthority));
+  }
+
+  /** Host recovery bookkeeping, constrained by this run's existing read roots. */
+  async inspectRunFile(context: CapabilityContext, input: string, rootEnvs: readonly string[], signal?: AbortSignal) {
+    const record = this.requireActiveContext(context);
+    const roots = rootEnvs.length ? rootEnvs : [""];
+    for (let i = 0; i < roots.length; i++) {
+      const defaultRootId = record.authority.persona.rootEnv[roots[i]] ?? undefined;
+      try {
+        return await this.pathPolicy.inspectFile(record.pathAuthority, {
+          input, operation: "read-file", defaultRootId,
+          auditIdentity: { sessionId: context.sessionId, runId: context.runId, principal: context.principal },
+        }, undefined, signal);
+      } catch (error) {
+        if (!(error instanceof PathDeniedError) || error.code !== "PATH_NOT_FOUND" || i === roots.length - 1) throw error;
+      }
+    }
+    throw new Error("No checkpoint read root");
   }
 
   private makeBinding(ownerAuthorityId: string, ownerEpoch: number, registration: CapabilityToolRegistration): BindingRecord {

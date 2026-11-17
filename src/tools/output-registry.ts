@@ -1,8 +1,7 @@
 import path from "node:path";
-import { createHash } from "node:crypto";
 import { PathDeniedError } from "../path-policy.js";
 import { ToolArgumentsError } from "../tool-pipeline.js";
-import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
+import type { ToolDefinition, ToolExecutor } from "../types.js";
 
 // 2026-11-14 审阅补充切片3（成品登记）：脚本生成、通用 write 与下载保存的成果
 // 此前不在任何登记链上，只有 create_docx/create_xlsx 回执能进入产物列表。本工具
@@ -10,8 +9,6 @@ import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../ty
 // 模型区分交付件/中间件/原始资料。登记回执持久化在会话消息中，由 document-outputs
 // 统一派生；不做任何"按最新 mtime 猜测产物"的隐式行为。
 
-const FULL_READ_LIMIT = 32 * 1024 * 1024;
-const HEAD_READ_LIMIT = 64 * 1024;
 const KINDS = new Set(["deliverable", "intermediate", "source"]);
 
 function detectFormat(bytes: Buffer): string | null {
@@ -67,28 +64,18 @@ export const registerOutputExec: ToolExecutor = async (args, _env, invocationVal
   const note = typeof args.note === "string" && args.note.trim() ? args.note.trim() : undefined;
   const defaultRootId = path.isAbsolute(filePath) ? undefined : invocation.path.rootIdForEnv("OUTPUT_DIR") ?? undefined;
 
-  // 全量读取（≤32MiB）：存在性 + 完整 sha256 + 实际格式。超限或权限类失败时降级
-  // 为头部 64KiB 校验（verification: "head64k"），头部也读不到的路径一律拒绝登记，
-  // 绝不按文件名或 mtime 猜测。
-  let bytes: Buffer;
-  let verification: "sha256" | "head64k" = "sha256";
-  let headOnly = false;
+  // One authorized handle: canonical path, bounded format preview and streaming
+  // full-file SHA-256. Large downloads need no unbounded in-memory buffer.
+  let inspected;
   try {
-    bytes = (await invocation.path.readFile(filePath, { defaultRootId, maxBytes: FULL_READ_LIMIT })).bytes;
+    inspected = await invocation.path.inspectFile(filePath, { defaultRootId, signal: invocation.signal });
   } catch (error) {
-    const denied = error instanceof PathDeniedError;
-    if (!denied) throw error;
-    if (error.code === "PATH_NOT_FOUND") throw new ToolArgumentsError(`登记失败：文件不存在: ${filePath}`);
-    try {
-      bytes = (await invocation.path.readFile(filePath, { defaultRootId, maxBytes: HEAD_READ_LIMIT })).bytes;
-      verification = "head64k";
-      headOnly = true;
-    } catch {
-      throw new ToolArgumentsError(`登记失败：无法访问该文件: ${filePath}`);
-    }
+    if (error instanceof PathDeniedError && error.code === "PATH_NOT_FOUND") throw new ToolArgumentsError(`登记失败：文件不存在: ${filePath}`);
+    throw error;
   }
 
-  const sha256 = createHash("sha256").update(bytes).digest("hex");
+  const { bytes, canonicalPath, sha256 } = inspected;
+  const verification = "sha256";
   const detected = detectFormat(bytes);
   const byExtension = extensionFormat(filePath);
   const formatWarning = detected && byExtension && detected !== byExtension
@@ -96,16 +83,16 @@ export const registerOutputExec: ToolExecutor = async (args, _env, invocationVal
     : undefined;
   return JSON.stringify({
     type: "artifact_registration",
-    path: filePath,
-    name: path.basename(filePath),
+    path: canonicalPath,
+    name: path.basename(canonicalPath),
     kind,
     ...(note ? { note } : {}),
-    format: byExtension ?? detected ?? "unknown",
+    format: detected ?? "unknown",
     detectedFormat: detected ?? "unknown",
-    bytes: headOnly ? null : bytes.length,
+    bytes: Number(inspected.snapshot.size),
     sha256,
     verification,
     ...(formatWarning ? { formatWarning } : {}),
-    message: `已登记${kind === "deliverable" ? "交付件" : kind === "intermediate" ? "中间产物" : "原始资料"}: ${filePath}（${verification === "sha256" ? `版本 ${sha256.slice(0, 12)}` : "头部校验"}）`,
+    message: `已登记${kind === "deliverable" ? "交付件" : kind === "intermediate" ? "中间产物" : "原始资料"}: ${canonicalPath}（版本 ${sha256.slice(0, 12)}）`,
   });
 };

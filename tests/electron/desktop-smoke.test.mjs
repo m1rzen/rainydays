@@ -1903,12 +1903,12 @@ test("R5 real Electron loads discovered tools for one task and resets the next",
       const stage = iteration++;
       let calls;
       if (stage === 0) {
-        assert.equal(names.length, 12); assert(!names.includes("list_memories")); assert(!names.includes("worker_connect"));
+        assert.equal(names.length, 13); assert(names.includes("skill_open")); assert(!names.includes("list_memories")); assert(!names.includes("worker_connect"));
         calls = [{ index: 0, id: "discover-memories", type: "function", function: { name: "search_tools", arguments: JSON.stringify({ keywords: "list_memories worker_connect" }) } }];
       } else if (stage === 1) {
         assert(names.includes("list_memories")); assert(!names.includes("worker_connect"));
         calls = [{ index: 0, id: "use-memories", type: "function", function: { name: "list_memories", arguments: "{}" } }];
-      } else if (stage === 3) { assert.equal(names.length, 12); assert(!names.includes("list_memories")); }
+      } else if (stage === 3) { assert.equal(names.length, 13); assert(names.includes("skill_open")); assert(!names.includes("list_memories")); }
       response.writeHead(200, { "Content-Type": "text/event-stream" });
       response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: calls ? { tool_calls: calls } : { content: "已检查当前记录。" }, finish_reason: null }] })}\n\n`);
       response.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: calls ? "tool_calls" : "stop" }] })}\n\n`);

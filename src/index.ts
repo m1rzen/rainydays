@@ -12,6 +12,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { LLMClient } from "./llm.js";
 import { isDuplicateChatRequest } from "./chat-idempotency.js";
+import { getSessionCheckpoint } from "./run-checkpoint.js";
 import { ConversationMemory } from "./memory.js";
 import { Agent, isSessionAutoApproveEnabled, setSessionAutoApproveEnabled } from "./agent.js";
 import { mcpRuntimeToolNames, registerMcpTools } from "./mcp/runtime.js";
@@ -2400,7 +2401,7 @@ app.get("/api/sessions/:id/messages", (req, res) => {
       ...message,
       attachments: attachmentMap.get(message.id) ?? [],
     }));
-    res.json({ session, messages, outputs: collectDocumentOutputs(messages), research: collectResearchSources(messages) });
+    res.json({ session, messages, outputs: collectDocumentOutputs(messages), research: collectResearchSources(messages), checkpoint: getSessionCheckpoint(id) });
   } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : String(error) }); }
 });
 
@@ -3099,10 +3100,6 @@ app.post("/api/chat", async (req, res) => {
   const clientRequestId = typeof body.clientRequestId === "string" && body.clientRequestId.length >= 8 && body.clientRequestId.length <= 128
     ? body.clientRequestId
     : null;
-  if (clientRequestId && isDuplicateChatRequest(chatSessionId, clientRequestId)) {
-    res.status(409).json({ error: "重复请求：这条消息已经提交过（相同 clientRequestId）。请刷新会话查看已有回复，不要重复发送。" });
-    return;
-  }
   if (!getCurrentProfile().apiKey) { res.status(400).json({ error: "当前 Provider 尚未配置 API Key，请先打开 Settings 完成配置" }); return; }
   if (runtimeMutationReservations > 0) { res.status(409).json({ error: "Session runtime 正在变更" }); return; }
 
@@ -3127,10 +3124,18 @@ app.post("/api/chat", async (req, res) => {
   }
 
   const identity: ActiveRun = Object.freeze({ sessionId: chatSessionId, runId });
+  // Reserve only after all preflight checks and the atomic run claim succeed.
+  // Failed admission must leave the logical request retryable.
+  if (clientRequestId && isDuplicateChatRequest(chatSessionId, clientRequestId)) {
+    registry.releaseRun(claim);
+    res.status(409).json({ error: "重复请求：这条消息已经提交过（相同 clientRequestId）。请刷新会话查看已有回复，不要重复发送。" });
+    return;
+  }
   activeRunInteractions.set(chatSessionId, identity);
   let streamOpen = true;
   let status: "idle" | "error" = "idle";
   let hadToolFailure = false;
+  let incomplete = false;
   let interrupted = false;
   const emit = (event: unknown) => {
     if (streamOpen && !res.writableEnded && !res.destroyed) res.write(`data: ${JSON.stringify(event)}\n\n`);
@@ -3168,6 +3173,7 @@ app.post("/api/chat", async (req, res) => {
       while (input !== null) {
         for await (const step of runtime.agent.run(input, runId, claim.signal, attachments)) {
           if (step.type === "error") { status = "error"; if (step.interrupted) interrupted = true; }
+          if (step.type === "answer_done") incomplete = step.outcome === "incomplete";
           if (step.type === "tool_result" && step.toolStatus && step.toolStatus !== "success") hadToolFailure = true;
           emit(step);
         }
@@ -3214,13 +3220,13 @@ app.post("/api/chat", async (req, res) => {
       const sessionTitle = getSessionInfo(chatSessionId)?.title ?? "Session";
       persistDesktopNotification({
         sourceKey: `run:${runId}:settled`, sessionId: chatSessionId,
-        kind: status === "error" ? "error" : hadToolFailure ? "info" : "success",
-        title: status === "error" ? (interrupted ? "运行中断，请检查已完成的步骤" : "运行失败") : hadToolFailure ? "运行结束，请检查失败的工具记录" : "运行完成",
+        kind: status === "error" ? "error" : incomplete || hadToolFailure ? "info" : "success",
+        title: status === "error" ? (interrupted ? "运行中断，请检查已完成的步骤" : "运行失败") : incomplete ? "任务待继续" : hadToolFailure ? "运行结束，请检查失败的工具记录" : "运行完成",
         body: notificationText(sessionTitle, "Session", 240), targetTab: "session",
       });
     }
     emit({ type: "run_finished", sessionId: chatSessionId, runId,
-      outcome: status === "error" ? (interrupted ? "interrupted" : "failed") : runCancelled ? "cancelled" : hadToolFailure ? "partial" : "completed",
+      outcome: status === "error" ? (interrupted ? "interrupted" : "failed") : runCancelled ? "cancelled" : incomplete ? "incomplete" : hadToolFailure ? "partial" : "completed",
       timestamp: Date.now() });
     if (streamOpen && !res.writableEnded) res.end();
   }

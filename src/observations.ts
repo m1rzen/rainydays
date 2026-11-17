@@ -82,8 +82,9 @@ export function registerObservation(sessionId: string, bytes: Buffer, meta: Omit
   session.set(sha256, observation);
   while (session.size > MAX_PER_SESSION) {
     const oldest = session.keys().next().value!;
+    const evicted = session.get(oldest)!;
     session.delete(oldest);
-    rmSync(path.join(dir, `${oldest}${index.get(sessionId)?.get(oldest)?.mime === "image/jpeg" ? ".jpg" : ".png"}`), { force: true });
+    rmSync(path.join(dir, `${oldest}${evicted.mime === "image/jpeg" ? ".jpg" : ".png"}`), { force: true });
   }
   return observation;
 }

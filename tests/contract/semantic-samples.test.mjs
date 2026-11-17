@@ -50,9 +50,22 @@ test("分项评分维度：事实保真/语言表达/版式，权重合计为 1"
 });
 
 test("篇幅规则：默认纪要不设最低页数，扩写仅限本次明确约定", async () => {
-  const skill = await readFile(path.join(projectRoot, "skills", "meeting-minutes.md"), "utf8");
+  const skill = await readFile(path.join(projectRoot, "skills", "meeting-minutes", "SKILL.md"), "utf8");
   assert.match(skill, /不设最低页数/u, "模板明确默认不设最低页数");
   assert.match(skill, /明确约定[^\n]*详版\/两页以上\/完整版/u, "扩写仅适用于本次明确约定");
   assert.match(skill, /不得为凑篇幅重复或泛化/u, "扩写不得凑篇幅");
   assert.match(skill, /截图阅读宽度/u, "版式规则覆盖截图阅读宽度");
+});
+
+test("every semantic label is grounded in a frozen material and an explicit task", async () => {
+  const sources = JSON.parse(await readFile(path.join(projectRoot, "tests", "fixtures", dataset.sourceDataset), "utf8"));
+  assert.equal(sources.provenance, "synthetic-fixed-v1");
+  const cases = new Map(sources.cases.map(item => [item.id, item]));
+  for (const sample of dataset.samples) {
+    const source = cases.get(sample.sourceCaseId);
+    assert(source, `missing original material for ${sample.id}`);
+    assert.equal(source.id, sample.dimension);
+    assert(source.material.length > 30 && source.task.length > 5);
+  }
+  assert.equal(cases.size, dataset.dimensions.length);
 });

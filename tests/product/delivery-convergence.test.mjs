@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -90,6 +90,25 @@ async function cleanup(authority) {
   await capabilityBroker.retireAuthority(authority);
   await setDeveloperMode(false);
 }
+
+test("productive commands are progress and reach the final delivery response", async () => {
+  const files = ["part-one.md", "part-two.md", "part-three.md"];
+  const { agent, session, authority, calls, setSessionAutoApproveEnabled } = await buildAgent([
+    ...files.map((file, index) => ({ role: "assistant", content: "", tool_calls: [toolCall(`produce-${index}`, "execute_command", { command: `echo actual-content > "${file}"`, cwd: workspace })] })),
+    { role: "assistant", content: "三个文件均已生成，可以交付。" },
+  ]);
+  try {
+    setSessionAutoApproveEnabled(session.id, true);
+    const events = await collect(agent, "生成报告并交付", "productive-delivery");
+    for (const file of files) assert.match(await readFile(path.join(workspace, file), "utf8"), /actual-content/u);
+    assert.equal(calls(), 4);
+    assert(events.some(event => event.type === "answer_done" && /三个文件/u.test(event.content)));
+    assert.equal(events.some(event => /没有产出新成果/u.test(event.content ?? "")), false);
+  } finally {
+    setSessionAutoApproveEnabled(session.id, false);
+    await cleanup(authority);
+  }
+});
 
 test("交付收敛：明确交付要求注入收敛引导；简单问答保持直接回答路径", async () => {
   const { agent, authority, requests, calls } = await buildAgent([

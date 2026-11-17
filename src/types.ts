@@ -6,7 +6,7 @@ import type { ToolObservation } from "./observations.js";
 import type { CapabilityContext, ChildCapabilityRequest, ToolPolicy } from "./capability-broker.js";
 import type { ResourceOwner } from "./resource-owner.js";
 import type { ScopedExecutionGateway } from "./execution-runtime.js";
-import type { ExecutionRootLease, PathCreateResult, PathDirectoryEntry, PathReadResult, PathReplaceResult, PathStreamingWriteLease, PathTransformResult, PathWatchEvent } from "./path-policy.js";
+import type { ExecutionRootLease, PathCreateResult, PathDirectoryEntry, PathInspectionResult, PathReadResult, PathReplaceResult, PathStreamingWriteLease, PathTransformResult, PathWatchEvent } from "./path-policy.js";
 import type { SecurityAuditJournal } from "./security-audit-journal.js";
 
 /** 对话角色 */
@@ -117,6 +117,10 @@ export interface ScopedDirectoryIdentity {
 }
 
 export interface ScopedPathGateway {
+  readonly inspectFile: (
+    input: string,
+    options?: Readonly<{ defaultRootId?: string; previewBytes?: number; signal?: AbortSignal }>
+  ) => Promise<PathInspectionResult>;
   readonly rootIdForEnv: (envKey: string) => string | null;
   readonly identifyDirectory: (
     input: string,
@@ -265,6 +269,8 @@ export interface ToolExecutionOutcome {
 
 /** agent 运行中的一步 */
 export interface AgentStep {
+  /** An answer can settle this run while the task still awaits continuation. */
+  outcome?: "incomplete";
   type: "thinking" | "tool_call" | "tool_result" | "answer_chunk" | "answer_done" | "answer_retry" | "error"
     | "task_created" | "task_update" | "steer" | "context_notice";
   /** answer_retry：模型连接中断，撤回本轮已显示的末尾字符数，随后重新请求同一轮。 */

@@ -421,6 +421,11 @@ export interface PathDirectReadResult extends PathReadResult {
   readonly canonicalPath: string;
 }
 
+/** A bounded preview and a full-file digest from the same authorized handle. */
+export interface PathInspectionResult extends PathDirectReadResult {
+  readonly sha256: string;
+}
+
 export interface PathQualifiedResult {
   readonly rootId: string;
   readonly canonicalPath: string;
@@ -840,6 +845,11 @@ export class PathPolicy {
     return this.#readExistingFile(authority, request, maxBytes, "read-file", true, false) as Promise<PathDirectReadResult>;
   }
 
+  async inspectFile(authority: PathAuthority, request: PathRequest, previewBytes = 64 * 1024, signal?: AbortSignal): Promise<PathInspectionResult> {
+    signal?.throwIfAborted();
+    return this.#readExistingFile(authority, request, previewBytes, "read-file", true, false, true, signal) as Promise<PathInspectionResult>;
+  }
+
   async searchFile(authority: PathAuthority, request: PathRequest, maxBytes: number): Promise<PathReadResult> {
     return this.#readExistingFile(authority, request, maxBytes, "search-tree", false, true) as Promise<PathReadResult>;
   }
@@ -851,7 +861,9 @@ export class PathPolicy {
     requiredOperation: "read-file" | "search-tree",
     includeCanonicalPath: boolean,
     rejectHardlinks: boolean,
-  ): Promise<PathReadResult | PathDirectReadResult> {
+    inspect = false,
+    signal?: AbortSignal,
+  ): Promise<PathReadResult | PathDirectReadResult | PathInspectionResult> {
     if (!Number.isSafeInteger(maxBytes) || maxBytes < 1) throw new TypeError("maxBytes must be a positive safe integer");
     return this.#run(authority, request, async (record, state) => {
       if (request.operation !== requiredOperation) deny("PATH_OPERATION_DENIED");
@@ -881,21 +893,35 @@ export class PathPolicy {
         await this.#barrier("afterHandleOpen", state.operationId);
         const chunks: Buffer[] = [];
         let total = 0;
+        let retained = 0;
+        const digest = inspect ? createHash("sha256") : null;
         while (true) {
-          const chunk = Buffer.allocUnsafe(Math.min(64 * 1024, maxBytes - total + 1));
+          if (inspect) { signal?.throwIfAborted(); this.#assertActive(record); }
+          const chunk = Buffer.allocUnsafe(inspect ? 64 * 1024 : Math.min(64 * 1024, maxBytes - total + 1));
           const { bytesRead } = await handle.read(chunk, 0, chunk.length, null);
           if (bytesRead === 0) break;
           total += bytesRead;
-          if (total > maxBytes) deny("PATH_OPERATION_DENIED");
-          chunks.push(chunk.subarray(0, bytesRead));
+          if (!inspect && total > maxBytes) deny("PATH_OPERATION_DENIED");
+          digest?.update(chunk.subarray(0, bytesRead));
+          const keep = Math.min(bytesRead, maxBytes - retained);
+          if (keep > 0) { chunks.push(Buffer.from(chunk.subarray(0, keep))); retained += keep; }
+        }
+        if (inspect) {
+          signal?.throwIfAborted();
+          this.#assertActive(record);
+          await this.#verifyRoot(record, selected.root, state);
+          await this.#walkNoRedirect(selected.root, selected.lexicalTarget);
+          const named = await this.#statIdentity(canonicalTarget, "file");
+          if (!sameIdentity(opened, named.identity) || !sameSnapshot(mutableSnapshot(openedInfo), named.snapshot)
+            || !sameSnapshot(mutableSnapshot(openedInfo), mutableSnapshot(await handle.stat({ bigint: true })))) deny("PATH_IDENTITY_CHANGED");
         }
         const result = {
-          bytes: Buffer.concat(chunks, total),
+          bytes: Buffer.concat(chunks, retained),
           rootId: selected.root.rootId,
           identity: opened,
           snapshot: mutableSnapshot(openedInfo),
         };
-        return Object.freeze(includeCanonicalPath ? { ...result, canonicalPath: canonicalTarget } : result);
+        return Object.freeze(includeCanonicalPath ? { ...result, canonicalPath: canonicalTarget, ...(digest ? { sha256: digest.digest("hex") } : {}) } : result);
       } finally {
         await handle.close().catch(() => undefined);
       }

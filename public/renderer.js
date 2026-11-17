@@ -1846,12 +1846,16 @@
       for (const output of outputs) {
         const row = document.createElement("div"); row.className = "document-output-row";
         const type = document.createElement("span");
-        type.className = `document-output-type ${output.format === "docx" || String(output.name).toLowerCase().endsWith(".docx") ? "docx" : "xlsx"}`;
-        type.appendChild(createUiIcon(type.classList.contains("docx") ? "file" : "table"));
+        const format = String(output.format || "unknown").toLowerCase();
+        type.className = `document-output-type ${format === "docx" || format === "xlsx" ? format : "generic"}`;
+        type.appendChild(createUiIcon(format === "xlsx" ? "table" : "file"));
+        row.dataset.artifactKind = output.kind || "document";
         const link = createLocalFileLink(output.path); link.textContent = output.name; link.title = `预览：${output.path}`;
         const copy = document.createElement("div"); copy.className = "document-output-copy";
         const meta = document.createElement("span"); meta.className = "document-output-meta";
-        meta.textContent = type.classList.contains("docx") ? "Word 文档" : "Excel 工作簿";
+        const formats = { docx: "Word 文档", xlsx: "Excel 工作簿", pdf: "PDF 文档", mp4: "MP4 视频", mp3: "MP3 音频", png: "PNG 图片", jpeg: "JPEG 图片", gif: "GIF 图片", webp: "WebP 图片", "zip-container": "ZIP 容器", text: String(output.name).toLowerCase().endsWith(".md") ? "Markdown 文稿" : "文本文件", unknown: "文件" };
+        const roles = { document: "文档产物", deliverable: "交付件", intermediate: "中间产物", source: "原始资料" };
+        meta.textContent = `${formats[format] || `${format.toUpperCase()} 文件`} · ${roles[output.kind] || "文件"}`;
         copy.append(link, meta);
         const actions = document.createElement("div"); actions.className = "document-output-actions";
         const open = document.createElement("button"); open.type = "button"; open.append("打开", createUiIcon("external"));
@@ -1881,6 +1885,20 @@
       } catch {
         if (currentSessionId === sessionId && generation === documentOutputGeneration) renderDocumentOutputs([], "成果列表加载失败");
       }
+    }
+    let checkpointNoticeEl = null;
+    function renderCheckpointNotice(checkpoint) {
+      checkpointNoticeEl?.remove();
+      checkpointNoticeEl = null;
+      if (!checkpoint || checkpoint.state === "completed" || isSessionRunning(currentSessionId)) return;
+      checkpointNoticeEl = document.createElement("p");
+      checkpointNoticeEl.className = "run-status-note checkpoint-recovery-notice";
+      checkpointNoticeEl.setAttribute("role", "status");
+      checkpointNoticeEl.id = "checkpoint-notice";
+      checkpointNoticeEl.textContent = checkpoint.reason === "stale"
+        ? "检查点需要重新核对。请说明按哪些新材料或环境继续，已保存的文件会保留。"
+        : "任务尚未完成，已保存检查点。输入“继续”将先校验已有文件，再接着处理。";
+      messagesEl.appendChild(checkpointNoticeEl);
     }
 
     // ========== Settings ==========
@@ -2734,6 +2752,7 @@
       if (generation !== sessionSelectionGeneration) return;
       messagesEl.innerHTML = "";
       renderDocumentOutputs(mdata.outputs || [], "", mdata.research);
+      renderCheckpointNotice(mdata.checkpoint);
       const savedToolCalls = new Map();
       for (const msg of mdata.messages) {
         if (msg.role === "user") addMessage("user", msg.content, msg.id, msg.attachments);
@@ -3281,6 +3300,7 @@
             else if (step.type === "run_finished") {
               runToken.outcome = step.outcome;
               if (step.outcome === "partial") showRunNotice(runToken, "部分步骤未完成，请检查工具记录和成果。");
+              else if (step.outcome === "incomplete") showRunNotice(runToken, "任务尚未完成，已保存的文件会保留。输入“继续”可校验检查点后续接。");
               else if (step.outcome === "interrupted") showRunNotice(runToken, "已中断，已完成的步骤和文件已保留；是否继续由你决定。");
               else if (step.outcome === "completed" && runToken.retried) showRunNotice(runToken, "模型连接曾中断，已自动重新请求并完成。");
             }
