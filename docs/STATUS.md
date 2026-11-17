@@ -1,5 +1,7 @@
 # 当前开发状态
 
+2026-11-17 用户要求的 GLM 执行与审查交接规范已写入[执行规范](agents/glm-execution.md)与[交接规范及模板](agents/glm-review-handoff.md)，并接入 AGENTS/CLAUDE/workflow。规定正常用户链路、条件性负向/恢复验证、固定受测版本、逐项证据与独立复核；整票工程范围完成后 GLM 自测最多推进 implemented，reviewed/verified 由独立记录支撑，切片完成不能代替整票完成。本轮只改内部规范，九项产品缺陷及 M1/M2 changes-requested 状态不变。
+
 2026-11-16 GLM 六项改进独立验收：范围 `3a635ec..3247477`，结论 **changes-requested**。`check:product` 类型/lint 通过，产品 188/191（3 项编码循环回归）；单独 UI 15/15、边界 16/16、构建通过。隔离 Agent/HTTP/文件及真实 Electron 共重现 9 项问题：生产命令误停、相对成果丢失、length 假完成、模板不可达、失败请求占用幂等键、伪造成果回执、大文件登记失败、JPEG 清理遗漏及成果格式/类别显示错误。A14/A08/A11 回到 in-progress，A13 保持 ready；M1/M2 有实现但未通过验收，先修原票缺陷再冻结 M3 回归。未改产品源码、未调用真实模型。详见[审查报告](work/general-agent/reviews/2026-11-16-glm-improvements-code-review.md)；历史记录保留原验证范围。
 
 2026-11-16 Lux bootstrap 接入诊断：用户确认公司授权与佛山组织，实体有线直连、官方扫码、工作台会话及当前账号应用均已接通。当前账号目录返回 5 个共享模型；bootstrap 只返回登录票据，读取共享 Provider 配置返回 `403 provider_permission_denied`。尚未取得可迁移凭据，未新增 Lux 来源模型配置；用户选择先交付诊断。完成接入需平台专用调用凭据或具备 Provider 读取/导出权限的账号。见[诊断记录](devlog/2026-11-16-lux-bootstrap-access.md)。
