@@ -159,3 +159,7 @@ node --test test-results/glm-review-20261116/ui-probe.test.mjs
 - 修复顺序归入原票：先 R01/R03 运行与终态，再 R02/R06/R07/R09 成果链，再 R04/R05/R08；补齐章节恢复和原案例证据后，才冻结 M3 的 24 次回归候选。M3 准备工作可继续，正式合格窗口须在修复后开始。
 - 本轮交付：审查报告、状态与票据记录；没有实施产品修复，没有新增真实模型或安装包合格结论。
 - Final review status：**changes-requested**。
+
+## 2026-11-17 后续修复
+
+用户已要求 Codex 实施返工，新的版本与逐项关闭证据见[修复复核报告](2026-11-17-glm-repair-verification.md)。本报告的 changes-requested 仍描述原固定范围，不覆盖后续修复候选。

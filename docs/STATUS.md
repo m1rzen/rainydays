@@ -1,5 +1,7 @@
 # 当前开发状态
 
+2026-11-17 GLM 返工修复完成，产品提交 `535915a`：R01–R09 工程问题逐项关闭，并补结构化检查点、版本重校验、已提交写入防重复、真正重启/取消/进程退出恢复。最终同源码门槛：构建、类型/lint 通过，产品 **200/200**、UI **15/15**，路径/边界等 **95/95**、隔离 HTTP 恢复/去重 **5/5**、真实 Electron **3/3**。未调用真实模型；原始失败与复试均保留。A14 按工程范围恢复 verified，A08/A11 implemented，A13 ready。下一项是 [plan 第6节](work/general-agent/plan.md#6-2026-11-17-修复后的执行窗口)八场景×3次冻结质量窗口，D13 同版本安装候选准备可并行；真实模型质量、原重复消息事件因果与正式安装/同事试用继续按实际证据推进。详见[修复复核报告](work/general-agent/reviews/2026-11-17-glm-repair-verification.md)。
+
 2026-11-17 用户要求的 GLM 执行与审查交接规范已写入[执行规范](agents/glm-execution.md)与[交接规范及模板](agents/glm-review-handoff.md)，并接入 AGENTS/CLAUDE/workflow。规定正常用户链路、条件性负向/恢复验证、固定受测版本、逐项证据与独立复核；整票工程范围完成后 GLM 自测最多推进 implemented，reviewed/verified 由独立记录支撑，切片完成不能代替整票完成。本轮只改内部规范，九项产品缺陷及 M1/M2 changes-requested 状态不变。
 
 2026-11-16 GLM 六项改进独立验收：范围 `3a635ec..3247477`，结论 **changes-requested**。`check:product` 类型/lint 通过，产品 188/191（3 项编码循环回归）；单独 UI 15/15、边界 16/16、构建通过。隔离 Agent/HTTP/文件及真实 Electron 共重现 9 项问题：生产命令误停、相对成果丢失、length 假完成、模板不可达、失败请求占用幂等键、伪造成果回执、大文件登记失败、JPEG 清理遗漏及成果格式/类别显示错误。A14/A08/A11 回到 in-progress，A13 保持 ready；M1/M2 有实现但未通过验收，先修原票缺陷再冻结 M3 回归。未改产品源码、未调用真实模型。详见[审查报告](work/general-agent/reviews/2026-11-16-glm-improvements-code-review.md)；历史记录保留原验证范围。

@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: in-progress
+Status: implemented
 
 Spec: [通用Agent规格](../../../specs/general-agent.md)
 
@@ -71,3 +71,7 @@ src/persona.ts、skills/和默认工具发现/上下文预算；参考现有文�
 ### 2026-11-16 独立 Code review：changes-requested
 
 详见[独立审查报告 R04](../reviews/2026-11-16-glm-improvements-code-review.md)。meeting-minutes.md 既不是 A11 可发现的 SKILL.md 包，也未列入任何交付人格的旧 skills 绑定；实际目录与 general/writer/rds-assistant 提示都拿不到模板。静态文本契约通过不能证明运行可用。A11 返回 in-progress，补已有发现/加载路径与普通任务验证；既有技能探测成绩保留。24 条语义样本与分项权重属于夹具准备，独立标注及真实文稿质量仍待验收。本轮未实施修复。
+
+### 2026-11-17 返工复核：模板正常加载工程通过
+
+产品 `535915a`，见[复核报告](../reviews/2026-11-17-glm-repair-verification.md)。R04 会议模板迁移为 meeting-minutes/SKILL.md，目录→skill_open→下一次真实 Agent 请求正文有回归；内置包出现后，原夹具精确更新为包含该包与常驻 skill_open，用户覆盖、停用和次任务重置断言保留。语义样本增加六组固定合成原材料、24 条 sourceCaseId 与独立 Codex 核对，人工审核及真实质量评分仍明确待验。状态 implemented，剩余即时启停体验与文稿收益按原票继续。

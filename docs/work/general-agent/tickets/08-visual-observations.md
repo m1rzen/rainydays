@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: in-progress
+Status: implemented
 
 Spec: [通用Agent规格](../../../specs/general-agent.md)
 
@@ -82,3 +82,7 @@ src/llm.ts、tools/image-helper.ts与工具结果投影；D02模型契约、D03�
 ### 2026-11-16 独立 Code review：changes-requested
 
 详见[独立审查报告 R08](../reviews/2026-11-16-glm-improvements-code-review.md)。本地 PNG/JPEG 像素入口有实现，但淘汰逻辑先删索引再读 MIME，JPEG 磁盘文件未清理；真实文件探针 41 张注册后仍保留 41 个 .jpg，违反每会话 40 张上限。A08 返回 in-progress，先修混合格式清理，既有浏览器视觉成绩保留；文稿逐页、小字及真实模型本地图像收益继续按原票验收。本轮未实施修复。
+
+### 2026-11-17 返工复核：JPEG 清理与本地入口工程通过
+
+产品 `535915a`，见[复核报告](../reviews/2026-11-17-glm-repair-verification.md)。R08 删除索引前保留 MIME，41 次真实 JPEG 登记后磁盘与索引均为 40；本地 PNG/JPEG 读取像素与版本回归通过。状态恢复 implemented，既有浏览器视觉成绩保留；MCP 图片、文稿页图/小字及真实模型本地视觉收益继续验收。

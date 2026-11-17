@@ -2,7 +2,7 @@
 
 Kind: implementation
 
-Status: in-progress
+Status: verified
 
 Spec: [通用Agent规格](../../../specs/general-agent.md#7-2026-10-20路线修订开发模式与agent循环)
 
@@ -74,3 +74,9 @@ User stories: G04、G10
 固定范围 `3a635ec..3247477`，详见[独立审查报告](../reviews/2026-11-16-glm-improvements-code-review.md)。R01：三个实际产出文件的命令仍触发“无产出”误停；R03：length 截断待续接却向 HTTP/UI 发 completed；R05：请求前置失败占用幂等键，合法重试被拒。原 length 实现只有说明和文件清单，结构化章节/版本/环境检查点及真正进程重启恢复仍缺证据。
 
 当前产品检查 188/191，三项编码回归；仅将 Agent 替换为改动前版本的受控对照 coding-loop 6/6。独立探针已复现生产误停和两个 HTTP 生命周期缺陷；本轮未实施修复。A14 返回 in-progress，历史上限/steer 等已验证范围保留，修复后重验本轮新增行为与受影响编码循环。
+
+### 2026-11-17 返工复核与验证通过（工程范围）
+
+产品提交 `535915a5af9aa27e8f3c7207f97c873827c2d909`，详见[修复复核报告](../reviews/2026-11-17-glm-repair-verification.md)。R01 生产命令误停、R03 length 假完成、R05 前置失败占用幂等键已修；检查点保存已观察/登记输入与产物版本、章节边界、环境和已提交写入指纹，真正重启、突然退出、取消及输入变化均有 HTTP 回放。
+
+Code review：工程正确性与规格符合度分开顺序复核，本轮范围 passed。最终产品 200/200、UI 15/15，路径/边界等 95/95，HTTP 5/5；真实 Electron 成果 1/1、A14 运行中追加和 R5 发现/重置 2/2。原 JS/Python 编码测试断言保留。按本票验收恢复 verified，真实模型长任务质量继续留 A04/A13；并未扩展为所有脚本的隐式文件依赖自动追踪。
