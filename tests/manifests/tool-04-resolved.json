@@ -93,12 +93,12 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "42889a0477c016bbef60cac79077f73057806992fdbb29f10b6d3657eefa7894",
+      "sha256": "9977cbe77154b532faa2f3adf4c4a5523c752a803aaee1e3ead7b2a61862a101",
       "owner": "TOOL-04"
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "5b5f864c592106db9d3e9879f6cf602c472b85d3f46863444d289f4e6cdaf90b",
+      "sha256": "b9d9968234815be9dba04ba177d74990fc3ce9a480f272193eeabc270d880640",
       "owner": "TOOL-04"
     },
     {
@@ -165,5 +165,5 @@
       "owner": "TOOL-04"
     }
   ],
-  "canonicalPayloadSha256": "5ed435a3c0f762e9d60ca52aeff23666a920714f13bc4da25c43cb7427ab0ee4"
+  "canonicalPayloadSha256": "e871cdfc87ed3015bcef6d87073df71ec3a7d9838b9d5410464759cdb5697028"
 }

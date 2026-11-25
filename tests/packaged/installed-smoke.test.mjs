@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { copyFile, mkdir, readFile, readdir, rename, stat, symlink, writeFile } from "node:fs/promises";
+import { copyFile, lstat, mkdir, readFile, readdir, rename, stat, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { validateElectronAsar } from "../../scripts/electron-asar-integrity.mjs";
@@ -258,6 +258,14 @@ async function assertPackagedPathPolicy(client, userData, launchIndex, applicati
   return passedPathPolicyLaunch(launchIndex);
 }
 
+async function assertFocusedSession(client, sessionId) {
+  const focus = await client.evaluate(`(() => {
+    const tab = activeWorkbenchTab();
+    return { kind: tab?.kind, tabSession: tab?.sessionId, currentSessionId };
+  })()`);
+  assert.deepEqual(focus, { kind: "session", tabSession: sessionId, currentSessionId: sessionId });
+}
+
 function hashText(value) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -267,6 +275,8 @@ async function knownShortcutPaths() {
   return [
     { key: "programs", filePath: path.join(folders.programs, "RainyDays.lnk") },
     { key: "desktop", filePath: path.join(folders.desktop, "RainyDays.lnk") },
+    { key: "legacyPrograms", filePath: path.join(folders.programs, "Mini-Lux.lnk") },
+    { key: "legacyDesktop", filePath: path.join(folders.desktop, "Mini-Lux.lnk") },
   ];
 }
 
@@ -276,9 +286,15 @@ async function systemIntegrationSnapshot(missingRegistryRoot) {
   const registry = await observeWindowsRegistryKey(rainyDaysUninstallSubkey);
   const shortcuts = {};
   for (const shortcut of await knownShortcutPaths()) {
-    shortcuts[shortcut.key] = await pathExists(shortcut.filePath) ? await fileSha256(shortcut.filePath) : null;
+    try {
+      assert((await lstat(shortcut.filePath)).isFile(), "Unexpected object at installer shortcut path");
+      shortcuts[shortcut.key] = await fileSha256(shortcut.filePath);
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+      shortcuts[shortcut.key] = null;
+    }
   }
-  return { registryHash: hashText(JSON.stringify(registry)), shortcuts };
+  return { registryPresent: registry.rootPresent, registryHash: hashText(JSON.stringify(registry)), shortcuts };
 }
 
 async function waitForProcessConvergence(paths, unknownBaseline, phase, label, observeBlockedFailure) {
@@ -456,6 +472,8 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     systemBefore = await systemIntegrationSnapshot(missingRegistryRoot);
     details.cleanup.registryObserved = true;
     details.cleanup.shortcutObserved = true;
+    assert(!systemBefore.registryPresent && Object.values(systemBefore.shortcuts).every(value => value === null),
+      "Installer smoke needs a clean test account. An existing uninstall entry or shortcut was found.");
     await checkpoint("preflight-build-identity");
     const check = await runProcess(process.execPath, ["scripts/generate-build-info.mjs", "--check"], { timeoutMs: 60_000 });
     assert.equal(check.code, 0, check.stderr);
@@ -541,6 +559,9 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     })()`, 30_000);
     assert.deepEqual(terminalIsolation, {started:403,code:"EXEC_DIRECT_MUTATION_DENIED",second:200,secondId:terminalIsolation.secondId,beforeCount:0,afterCount:0,selected:200});
     assert.notEqual(terminalIsolation.secondId, sessionId);
+    await waitFor(() => client.evaluate("desktopNavigationReady"), { label: "first workbench initialization" });
+    await client.evaluate(`selectSession(${JSON.stringify(sessionId)}).then(() => true)`);
+    await assertFocusedSession(client, sessionId);
     assert(first.logs().stdout.includes(buildInfo.buildId));
     client.close(); client = null;
     await checkpoint("first-launch-stop");
@@ -554,6 +575,8 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     await checkpoint("restart-probe");
     await probeIdentity(client, buildInfo, secondPorts[0]);
     details.pathPolicy.launches[1] = await assertPackagedPathPolicy(client, userData, 2, second.child.pid, sessionId);
+    await waitFor(() => client.evaluate("desktopNavigationReady"), { label: "restored workbench initialization" });
+    await assertFocusedSession(client, sessionId);
     const sessions = await client.evaluate("fetch('/api/sessions').then(r=>r.json())");
     assert(sessions.sessions.some((entry) => entry.id === sessionId));
     assert.equal(sessions.current, sessionId);

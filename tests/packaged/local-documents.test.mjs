@@ -63,6 +63,7 @@ test("D13 packaged app reads local input, creates and reopens DOCX without devel
   const send = text => client.evaluate(`(() => { inputEl.value=${JSON.stringify(text)}; inputEl.dispatchEvent(new Event('input')); document.getElementById('input-form').requestSubmit(); return true; })()`);
   try {
     await launch();
+    const sessionId = await client.evaluate("currentSessionId");
     await send("读取输入.txt并生成一份Word简报");
     await waitFor(() => client.evaluate("document.getElementById('ask-modal').classList.contains('visible')"), { timeoutMs: 30000, label: "D13 document consent" });
     assert.equal(await client.evaluate("(() => { const button=[...document.querySelectorAll('#ask-options button')].find(button=>button.textContent==='本次任务允许新建文档'); button?.click(); return Boolean(button); })()"), true);
@@ -74,7 +75,15 @@ test("D13 packaged app reads local input, creates and reopens DOCX without devel
     await waitFor(() => client.evaluate("document.querySelectorAll('.document-output-row .local-file-link').length===1"), { timeoutMs: 10000, label: "D13 restored output" });
     await client.evaluate("document.querySelector('.document-output-row .local-file-link').click(); true");
     await waitFor(() => client.evaluate("document.getElementById('file-preview-content').textContent.includes('D13唯一核对事实：57')"), { timeoutMs: 15000, label: "D13 packaged parser worker preview" });
-    await client.evaluate("selectWorkbenchTab(workbenchPanes().flatMap(pane=>pane.tabs).find(tab=>tab.kind==='session').id).then(()=>true)");
+    const focusedSession = await client.evaluate(`(async () => {
+      const isOwner = tab => tab.kind === "session" && tab.sessionId === ${JSON.stringify(sessionId)};
+      const pane = workbenchPanes().find(item => item.tabs.some(isOwner));
+      if (!pane) throw new Error("Missing document owner session tab");
+      await selectWorkbenchTab(pane.tabs.find(isOwner).id, pane.id);
+      const tab = activeWorkbenchTab();
+      return tab?.kind === "session" ? tab.sessionId : null;
+    })()`);
+    assert.equal(focusedSession, sessionId);
     await send("重新读取简报，核对其中的事实");
     await waitFor(() => client.evaluate("!isSessionRunning() && [...document.querySelectorAll('#messages .msg-assistant .bubble')].at(-1)?.textContent.includes('已核对57')"), { timeoutMs: 30000, label: "D13 reopened document read" });
     assert.equal(stage, 5); assert.equal(modelFailure, null);

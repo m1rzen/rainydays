@@ -5,7 +5,7 @@
   "scannerSha256": "d81dfe30bf6f7df1ce3221861923b011c495fb6be0af1efb026f8203f69d8cb1",
   "crosscheckSha256": "a2c62c23669d2924472d4c80761122a5c4446d12e6a27f8595221f55a0290093",
   "policySha256": "df6b011b210445ab277f8de381eb0ab7c1100cfa68e4db6fdccd9cb544577dfe",
-  "sourceSetSha256": "53ab870a2668a3eab8dee5c500c55e3972be0a7743bd0d0aedd836bba041ad00",
+  "sourceSetSha256": "14d07477247dec2ef883666f37cfaec6d9bbb9cee8905299e521a392b5697ab8",
   "files": [
     {
       "sourcePath": "electron/ipc-contract.cjs",
@@ -2607,20 +2607,20 @@
     },
     {
       "sourcePath": "tests/packaged/ds02-win-unpacked-ipc.test.mjs",
-      "bytes": 7246,
-      "sha256": "826e0cc2c74ea8ad2e4dd3e579d95585e6aaec04d7ddd170df1a8644c2f3116c",
+      "bytes": 7775,
+      "sha256": "540cc8347e4324d82f7769ff49a0a6ebab97ede58588f18f7303a76aef4063f0",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "bytes": 34826,
-      "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea",
+      "bytes": 36203,
+      "sha256": "dd6e87186dae74a067f1a7831c51790cf030391d57805c71456dea9cb87d5604",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/packaged/local-documents.test.mjs",
-      "bytes": 7563,
-      "sha256": "384119624a29ea54d2cc9d21f84317a2b66c814c15f1205055596912147e113a",
+      "bytes": 8028,
+      "sha256": "7ba70972a7c03e4a3e21bd798d971600b760eb767957f66f98828377133386d9",
       "executionClass": "build-test"
     },
     {
@@ -2861,6 +2861,12 @@
       "sourcePath": "tests/product/research.test.mjs",
       "bytes": 9905,
       "sha256": "52e73beb4414860fea1dcbd08bdf37fa2c7d76d8df2e07a79d8dd305cf43f2bf",
+      "executionClass": "build-test"
+    },
+    {
+      "sourcePath": "tests/product/runtime-dependencies.test.mjs",
+      "bytes": 2563,
+      "sha256": "49c0a290a25d0c8887a2439fbc7f42e7170b580a6a4c33f8edf060c8e6abdd2c",
       "executionClass": "build-test"
     },
     {
@@ -13471,10 +13477,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-6bc342fac7a3d690bf074254",
+      "id": "exec-1deb132f0b2cbb1378ec17b1",
       "occurrence": 1,
       "sourcePath": "tests/packaged/ds02-win-unpacked-ipc.test.mjs",
-      "line": 35,
+      "line": 39,
       "column": 15,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -13505,10 +13511,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-00e001883ee8e0c74a1fdef8",
+      "id": "exec-e1740d9051b9417312d813d4",
       "occurrence": 1,
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "line": 436,
+      "line": 452,
       "column": 27,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -13522,7 +13528,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-80c05aeb3e5317d519ac0b15",
+      "id": "exec-6ca84bd299d25fc906964493",
       "occurrence": 1,
       "sourcePath": "tests/packaged/local-documents.test.mjs",
       "line": 19,
@@ -14991,5 +14997,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "d8fe72f2c5c23a2bb5a6276b646167a60427113f7a8c70d4cf9db4fc91bbec20"
+  "canonicalPayloadSha256": "644e351546c49ba52c45a6a5267a2eb297b183bceade6f537f5932a1fbc629f0"
 }

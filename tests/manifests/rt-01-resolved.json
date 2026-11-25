@@ -120,11 +120,11 @@
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea",
+      "sha256": "dd6e87186dae74a067f1a7831c51790cf030391d57805c71456dea9cb87d5604",
       "kind": "test",
       "layer": "packaged",
       "owner": "RT-01"
     }
   ],
-  "canonicalPayloadSha256": "37b4a435287196ae09967f4a59884fef08c227e3a78f54c3be40560b26e8a692"
+  "canonicalPayloadSha256": "292f20256da51f047adc2c75646922b95676e5de0cd84134d9b5fce734855a9f"
 }

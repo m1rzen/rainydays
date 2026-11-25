@@ -158,12 +158,12 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-02-current.json",
-      "sha256": "4a66a9be396ba86363404c7de30ed76f4b3fa753367764d9bf88b51600245ba7",
+      "sha256": "3ac988d29c6e5f6054651b3e0affe66e06f2791d76fe8a80e5d52a9bd075c00b",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "27a556f708799290f97d58dde79458cae4e93ac95b75643a97d01f72f44c7fbb",
+      "sha256": "5ee2a430ae675c764c128169f54d444bd452a52c8d4020946b2c194b834d335f",
       "owner": "TOOL-02"
     },
     {
@@ -173,12 +173,12 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "42889a0477c016bbef60cac79077f73057806992fdbb29f10b6d3657eefa7894",
+      "sha256": "9977cbe77154b532faa2f3adf4c4a5523c752a803aaee1e3ead7b2a61862a101",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "5b5f864c592106db9d3e9879f6cf602c472b85d3f46863444d289f4e6cdaf90b",
+      "sha256": "b9d9968234815be9dba04ba177d74990fc3ce9a480f272193eeabc270d880640",
       "owner": "TOOL-02"
     },
     {
@@ -245,5 +245,5 @@
       "owner": "TOOL-02"
     }
   ],
-  "canonicalPayloadSha256": "fe5984ef97350a3a4b7d1eb651ed093ac7e90908fa1b8deba7818cfe8b7f72b6"
+  "canonicalPayloadSha256": "86397cb4cbcf4a093de77eefbc8e74354d0c7fb5d0fbcca68e9d82a23e2e9b79"
 }

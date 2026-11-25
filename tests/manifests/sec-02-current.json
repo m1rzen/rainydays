@@ -94,7 +94,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea",
+          "sha256": "dd6e87186dae74a067f1a7831c51790cf030391d57805c71456dea9cb87d5604",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         }
@@ -362,7 +362,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea",
+          "sha256": "dd6e87186dae74a067f1a7831c51790cf030391d57805c71456dea9cb87d5604",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -1060,7 +1060,7 @@
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea",
+          "sha256": "dd6e87186dae74a067f1a7831c51790cf030391d57805c71456dea9cb87d5604",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -6822,7 +6822,7 @@
         "layer": "packaged",
         "test": {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea"
+          "sha256": "dd6e87186dae74a067f1a7831c51790cf030391d57805c71456dea9cb87d5604"
         },
         "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
         "producer": "node-test"
@@ -7150,7 +7150,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "27a556f708799290f97d58dde79458cae4e93ac95b75643a97d01f72f44c7fbb"
+      "sha256": "5ee2a430ae675c764c128169f54d444bd452a52c8d4020946b2c194b834d335f"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
@@ -7214,5 +7214,5 @@
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "010491757f722d77ebe784ec525f302817ca2b3fe422aa97bd817dd4ca8d8468"
+  "canonicalPayloadSha256": "038290ae7782adf9f48000773f0d3bf8205a7e18b12732b57b1a44a6cd72d6ec"
 }

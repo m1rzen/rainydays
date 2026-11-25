@@ -218,11 +218,11 @@
     },
     {
       "exactCasePath": "tests/packaged/ds02-win-unpacked-ipc.test.mjs",
-      "sha256": "826e0cc2c74ea8ad2e4dd3e579d95585e6aaec04d7ddd170df1a8644c2f3116c",
+      "sha256": "540cc8347e4324d82f7769ff49a0a6ebab97ede58588f18f7303a76aef4063f0",
       "kind": "test",
       "layer": "packaged",
       "owner": "DS-04"
     }
   ],
-  "canonicalPayloadSha256": "87703c103326012f6877903a5e9a1c6e87db814ac1e0cfd2a7d607065fe7d9a0"
+  "canonicalPayloadSha256": "427885c8cc99e24a23c8f5d11e0128a71aec780e1f354d7001641832993802df"
 }

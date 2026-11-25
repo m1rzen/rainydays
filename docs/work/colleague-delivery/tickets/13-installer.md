@@ -85,3 +85,9 @@ package.json、scripts/build-electron.mjs、after-pack.cjs、electron/main.cjs�
 獨立 bundle 實讀四類文件通過，兩個清單、typecheck、lint、diff 通過，單程序 SEC-02 19/19、SEC-03 18/18。
 `npm run test:packaged` 已到達測試程序啟動，在沙箱遇 `spawn EPERM`。
 安裝服務逾時已加啟動診斷，待負責人重建及複跑 `npm run test:package` 和六個包內測試。[第四輪證據](../diagnostics/13-sink-classification.md#第四輪安裝候選複核)
+
+### 2026-11-26 開發機候選通過包內驗證
+
+- 在提交後的同一源碼上 `npm run test:package` 退出 0：安裝、兩次啟動選回原會話、卸載後登錄與捷徑回到基線 1/1；另五個解包版測試（DS-02、local-documents、REL-03、RT-10、SEC-05）5/5；`check:product` 202/202 + UI 15/15；全部 governance 檢查通過。安裝器 SHA-256 見提交說明，Authenticode 為 NotSigned。
+- 修正：安裝版文件解析 Worker 打包為單文件、marked 移入正式依賴（新增守衛測試）、三個過時的包內測試、DS-02 不再在用戶開始選單留下捷徑。
+- 未完成：兩套乾淨 Windows 11 x64（標準用戶）安裝驗收，需要可用的乾淨環境；D13 保持 blocked 直到完成。

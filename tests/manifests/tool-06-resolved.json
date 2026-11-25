@@ -93,7 +93,7 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "27a556f708799290f97d58dde79458cae4e93ac95b75643a97d01f72f44c7fbb",
+      "sha256": "5ee2a430ae675c764c128169f54d444bd452a52c8d4020946b2c194b834d335f",
       "owner": "TOOL-06"
     },
     {
@@ -139,5 +139,5 @@
       "owner": "TOOL-06"
     }
   ],
-  "canonicalPayloadSha256": "fd210ca06617df18d507003ba835b07e39a37f8eb7b6b5e956d68eadafeb2284"
+  "canonicalPayloadSha256": "ab5ded91566b0db1823c17aaf1ac5a89e134f381c17e03d1c79d834507720677"
 }

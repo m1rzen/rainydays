@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { rm } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import {
@@ -30,6 +31,9 @@ test("DS-02 win-unpacked exposes only the typed desktop bridge", { timeout: 90_0
   assert.equal(process.platform, "win32");
   assert.equal(await pathExists(executable), true, "win-unpacked executable is missing");
   const userData = await makeTempDir("rainydays-ds02-packaged-");
+  // The unpacked app registers a Start menu shortcut on first run. Only a shortcut that did not exist before this test is removed.
+  const startMenuShortcut = path.join(process.env.APPDATA ?? "", "Microsoft", "Windows", "Start Menu", "Programs", "RainyDays.lnk");
+  const shortcutExisted = await pathExists(startMenuShortcut);
   const [httpPort, cdpPort] = await freeDistinctPorts(2);
   const instance = launchTracked(executable, [`--user-data-dir=${userData}`, `--remote-debugging-port=${cdpPort}`, "--disable-gpu"], {
     env: { ...process.env, PORT: String(httpPort), ELECTRON_ENABLE_LOGGING: "1" },
@@ -76,8 +80,8 @@ test("DS-02 win-unpacked exposes only the typed desktop bridge", { timeout: 90_0
         hasGenericInvoke:Boolean(api?.invoke||api?.send),
         capabilities:await api.capabilities(),
         state:await api.windowState(),
-        invalidNotification:await reject(()=>api.notify({id:'../escape',title:'x',body:'y'})),
-        extraField:await reject(()=>api.notify({id:'safe',title:'x',body:'y',channel:'shell'})),
+        invalidNotification:await reject(()=>api.notify({id:'../escape',title:'x',body:'y',sessionId:'ds02-session',targetTab:'session'})),
+        extraField:await reject(()=>api.notify({id:'safe',title:'x',body:'y',sessionId:'ds02-session',targetTab:'session',channel:'shell'})),
         invalidTrayState:await reject(()=>api.updateTrayState({unread:'1',running:0,errors:0,firstUnreadSessionId:null})),
         nodeGlobals:[typeof window.require,typeof window.process,typeof window.module],
         csp:root.headers.get('content-security-policy')||'',
@@ -126,5 +130,6 @@ test("DS-02 win-unpacked exposes only the typed desktop bridge", { timeout: 90_0
     await waitFor(() => listenerClosed(httpPort), { timeoutMs: 20_000, label: "DS-02 HTTP shutdown" });
     await waitFor(() => listenerClosed(cdpPort), { timeoutMs: 20_000, label: "DS-02 CDP shutdown" });
     await removeFixture(userData);
+    if (!shortcutExisted) await rm(startMenuShortcut, { force: true });
   }
 });
