@@ -6,6 +6,7 @@ import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 import { expectedElectronStagePackage, writeElectronStageManifest } from "./electron-stage-integrity.mjs";
 import { validateSec03NativeProjection } from "./build-inputs.mjs";
+import { writeDocumentParserWorkerBundle } from "./document-parser-worker-bundle.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const stageDir = path.join(projectRoot, ".electron-app");
@@ -54,6 +55,7 @@ async function verifyFreshCompilation() {
       "--project", path.join(projectRoot, "tsconfig.json"),
       "--outDir", temporaryDist,
     ], projectRoot);
+    await writeDocumentParserWorkerBundle(projectRoot, temporaryDist);
     await compareDirectoryBytes(temporaryDist, path.join(projectRoot, "dist"), "dist fresh JavaScript compilation", relative => !relative.startsWith("native/"));
   } finally {
     await fs.rm(temporaryRoot, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });

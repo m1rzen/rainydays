@@ -12,6 +12,7 @@ import {
   validateSec03NativeProjection,
 } from "./build-inputs.mjs";
 import { electronStageManifestName, expectedElectronStagePackage, validateElectronStage } from "./electron-stage-integrity.mjs";
+import { buildDocumentParserWorkerBundle, documentParserWorkerBundlePath } from "./document-parser-worker-bundle.mjs";
 import { validateSec02SinkInventory } from "./sec02-sink-inventory.mjs";
 import { scanSec02SourceSet } from "./sec02-sink-scanner.mjs";
 import { crosscheckPolicyPath, validateSec02RestrictedSourceSet } from "./sec02-sink-crosscheck.mjs";
@@ -25,7 +26,7 @@ function isRuntimeProjection(relative) {
   return relative === "build-info.json"
     || relative === electronStageManifestName
     || relative === "package.json"
-    || relative === "dist/document-parser-worker.js"
+    || relative === documentParserWorkerBundlePath
     || relative === "electron/rainydays-worker.mjs"
     || sec03NativeBinarySet.has(relative)
     || /^(?:models|personas|public|skills)\//u.test(relative);
@@ -69,13 +70,14 @@ async function walkRegularFiles(directory, root) {
 
 async function expectedAuthoredFiles(projectRoot) {
   const stageDir = path.join(projectRoot, ".electron-app");
-  const [buildInfoBytes, sourcePackageBytes, stageManifestBytes, sourceFiles, sinkInventory, stageIdentity] = await Promise.all([
+  const [buildInfoBytes, sourcePackageBytes, stageManifestBytes, sourceFiles, sinkInventory, stageIdentity, freshParserWorker] = await Promise.all([
     readFile(path.join(projectRoot, "build-info.json")),
     readFile(path.join(projectRoot, "package.json")),
     readFile(path.join(stageDir, electronStageManifestName)),
     collectSourceFiles(projectRoot),
     validateSec02SinkInventory(projectRoot),
     validateElectronStage(projectRoot, stageDir),
+    buildDocumentParserWorkerBundle(projectRoot),
   ]);
   const buildInfo = JSON.parse(buildInfoBytes.toString("utf8"));
   const sourcePackage = JSON.parse(sourcePackageBytes.toString("utf8"));
@@ -102,7 +104,7 @@ async function expectedAuthoredFiles(projectRoot) {
   delete packagedPackage.build;
   delete packagedPackage.devDependencies;
   add("package.json", Buffer.from(JSON.stringify(packagedPackage, null, 2), "utf8"));
-  return { buildInfo, records, executableSources, sinkInventory, native, stageIdentity, stageManifestSha256: sha256(stageManifestBytes) };
+  return { buildInfo, records, executableSources, freshParserWorker, sinkInventory, native, stageIdentity, stageManifestSha256: sha256(stageManifestBytes) };
 }
 
 function normalizeAsarPath(value) {
@@ -180,15 +182,27 @@ function packageDialectSources(sources) {
   return new Map([...sources].filter(([relative]) => relative.startsWith("dist/") || relative.startsWith("electron/")));
 }
 
-export function validatePackagedExecutableProjection(expectedSources, actualSources, dialect = null) {
+export function validatePackagedExecutableProjection(expectedSources, actualSources, dialect = null, freshParserWorker = null) {
   assert.deepEqual([...actualSources.keys()].sort(), [...expectedSources.keys()].sort(), "Packaged ASAR executable projection differs");
-  const expectedPackagedSinks = scanSec02SourceSet(expectedSources);
-  const actualPackagedSinks = scanSec02SourceSet(actualSources);
+  const expectedAuthored = new Map(expectedSources);
+  const actualAuthored = new Map(actualSources);
+  if (expectedSources.has(documentParserWorkerBundlePath) || freshParserWorker) {
+    // The authored inputs pass the source inventory. Verify the generated code,
+    // including the locked dependencies, before scanning the other executables.
+    assert(Buffer.isBuffer(freshParserWorker), "ASAR document parser worker requires a fresh bundle");
+    for (const sources of [expectedAuthored, actualAuthored]) {
+      const bundledSource = sources.get(documentParserWorkerBundlePath);
+      assert(typeof bundledSource === "string" && Buffer.from(bundledSource, "utf8").equals(freshParserWorker), "ASAR document parser worker differs from fresh bundle");
+      sources.delete(documentParserWorkerBundlePath);
+    }
+  }
+  const expectedPackagedSinks = scanSec02SourceSet(expectedAuthored);
+  const actualPackagedSinks = scanSec02SourceSet(actualAuthored);
   assert.deepEqual(actualPackagedSinks, expectedPackagedSinks, "Packaged ASAR sink set differs from fresh authored projection");
   let packagedDialectImportSetSha256 = null;
   if (dialect) {
-    const expectedDialect = validateSec02RestrictedSourceSet(packageDialectSources(expectedSources), dialect.policy, dialect.checkerSha256, "package");
-    const actualDialect = validateSec02RestrictedSourceSet(packageDialectSources(actualSources), dialect.policy, dialect.checkerSha256, "package");
+    const expectedDialect = validateSec02RestrictedSourceSet(packageDialectSources(expectedAuthored), dialect.policy, dialect.checkerSha256, "package");
+    const actualDialect = validateSec02RestrictedSourceSet(packageDialectSources(actualAuthored), dialect.policy, dialect.checkerSha256, "package");
     assert.deepEqual(actualDialect, expectedDialect, "Packaged ASAR restricted dialect differs from fresh authored projection");
     packagedDialectImportSetSha256 = actualDialect.importSetSha256;
   }
@@ -209,7 +223,7 @@ export async function validateElectronAsar(projectRoot, appResourcesDirectory) {
   const asarInfo = await lstat(asarPath);
   if (asarInfo.isSymbolicLink() || !asarInfo.isFile()) throw new Error("Packaged app.asar is not a regular file");
   const unpackedRoot = path.join(appResourcesDirectory, "app.asar.unpacked");
-  const [{ buildInfo, records: expected, executableSources: expectedExecutableSources, sinkInventory, native, stageIdentity, stageManifestSha256 }, { records: actual, executableSources: actualExecutableSources }, asarBytes, unpacked] = await Promise.all([
+  const [{ buildInfo, records: expected, executableSources: expectedExecutableSources, freshParserWorker, sinkInventory, native, stageIdentity, stageManifestSha256 }, { records: actual, executableSources: actualExecutableSources }, asarBytes, unpacked] = await Promise.all([
     expectedAuthoredFiles(projectRoot),
     actualAsarFiles(asarPath, unpackedRoot),
     readFile(asarPath),
@@ -241,7 +255,7 @@ export async function validateElectronAsar(projectRoot, appResourcesDirectory) {
   const rescannedProjection = validatePackagedExecutableProjection(expectedExecutableSources, actualExecutableSources, {
     policy: dialectPolicy,
     checkerSha256: dialectCheckerSha256,
-  });
+  }, freshParserWorker);
   const executableProjection = [...actualExecutableSources.keys()].sort().map(relative => {
     const record = actualAuthored.get(relative);
     return { path: relative, bytes: record.bytes, sha256: record.sha256, unpacked: record.unpacked };

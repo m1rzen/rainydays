@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
+      "sha256": "d6cc396955d3afdf48863805db8690164732fbdbc3c539f51080ba652ea53219",
       "owner": "TOOL-02"
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "36517715129d97a1c909bef4e15bf0d0c58671aae9808656af659a2abc44271c",
+      "sha256": "176d64078c6243d204e1c080b94023c4c7b6feba2a4337ac79f62cd1abecdc2e",
       "owner": "TOOL-02"
     },
     {
@@ -63,7 +63,7 @@
     },
     {
       "exactCasePath": "src/tools/filesystem-lux.ts",
-      "sha256": "b13ad284ccc93fe3a1e51b8d0736ebd4047ff5866c0396db43ee7d83421d47d0",
+      "sha256": "4e4a5bb58fb037c0fb85d6dea59ee5efcaa368d61def5124fc403323457a5aa0",
       "owner": "TOOL-02"
     },
     {
@@ -73,7 +73,7 @@
     },
     {
       "exactCasePath": "src/tools/index.ts",
-      "sha256": "e1330b5e28cd33ed66bd3ae1566f665bae026c30d676457c656971ab28e75ea2",
+      "sha256": "1c81e90906991d39dbdf56b92c034ffd5865ab87b76496dae389cd006ad84e9e",
       "owner": "TOOL-02"
     },
     {
@@ -103,7 +103,7 @@
     },
     {
       "exactCasePath": "personas/general.md",
-      "sha256": "73f4f23961d2b3fc4cd0311be509fab2f009ffb1731e6abd4c5b9fdf24f3319a",
+      "sha256": "a44a1375a02d66ac4caac2cff9974757effb6b758a7709ee2772c6db8ddbd170",
       "owner": "TOOL-02"
     },
     {
@@ -118,7 +118,7 @@
     },
     {
       "exactCasePath": "personas/rds-assistant.md",
-      "sha256": "19af7c99d595246131938779f9b7eeefb12f5eaf32540a39d66d5fd9e8c90c76",
+      "sha256": "ea82aa85303219cbfa413f8c33ae1f730c4662bdd71a68b23a92625e808fa626",
       "owner": "TOOL-02"
     },
     {
@@ -133,7 +133,7 @@
     },
     {
       "exactCasePath": "personas/writer.md",
-      "sha256": "2909266546709ce12784c9613e63d304cae24c2cec4109fe6325fbce5dd8cbe4",
+      "sha256": "5583e63e9c02088144b098b8566a31088b162c1f3bf09b95ade5f096aaa820aa",
       "owner": "TOOL-02"
     },
     {
@@ -158,32 +158,32 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-02-current.json",
-      "sha256": "de6c14775cb95db1354b07ab7b47bbd8d1c1115ca32c857cdaab3c9639f25c96",
+      "sha256": "5dfbe18030204be4fb20b964fa1a2c6e5e2e4077b4bbd52ce8ef9c5cfc9f9a5b",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "2a6dcd397ee4ffb6a82ff70838ed53785f6a049303bdd1bd99f4b418434375a2",
+      "sha256": "27a556f708799290f97d58dde79458cae4e93ac95b75643a97d01f72f44c7fbb",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "e66b4650ee26064c40975b58397fe6d7078a75586eb3f085f4f8e7ca8098c819",
+      "sha256": "c3da9cd3c0b9c4e9fb127d4b2f6c332c92c4b7cf82576ccf3b8acd40eb8f3cf0",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "6798f7fec648d022de255ebb5b01415b97051e4ab148497a11cfc97134207466",
+      "sha256": "3702e99d3581cd07cbfee4393359446b9015a6237793a032894d115d64f47480",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec03-execution-inventory.json",
-      "sha256": "e7eddea060f057b065680cdc84f4eaf7b98fdd2acaf39f5e7fe08f5ab53811a8",
+      "sha256": "5b5f864c592106db9d3e9879f6cf602c472b85d3f46863444d289f4e6cdaf90b",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/sec03-execution-policy.json",
-      "sha256": "8192c7aead57030d225b3a557ddc87c221373ec4c43c6370e2e9a075dba4ffa3",
+      "sha256": "dfefaf4003cf27afa9643515d109dceacf03b19e870e4d1806b14b00cf29d0ee",
       "owner": "TOOL-02"
     }
   ],
@@ -197,14 +197,14 @@
     },
     {
       "exactCasePath": "tests/contract/tool02-filesystem-contract.test.mjs",
-      "sha256": "6882eb8c15d2070f8d7fae277b7f1abaa95d553bf1e4b2d570b5197b866102a2",
+      "sha256": "96703fba7292c09c7697a12181e4e3dbea9f0c8960f902ae77420c2f3a5a36ae",
       "kind": "test",
       "layer": "contract",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-      "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
+      "sha256": "310b6a0f10f3f2fe151d9dbeb3c0ea7d8e7b330b8f87ffcc6516e3f4ce07caba",
       "kind": "test",
       "layer": "contract",
       "owner": "TOOL-02"
@@ -225,14 +225,14 @@
     },
     {
       "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-      "sha256": "240e2d1453d6b78a374d55f4218082bfd4f235c6d23ff6eef9c7c15b51edba10",
+      "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e",
       "kind": "test",
       "layer": "integration",
       "owner": "TOOL-02"
     },
     {
       "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-      "sha256": "ac668e55240e0ee8f5b53980429882c0031cbf4eb43f88ecb8d09159763302e3",
+      "sha256": "c441797b17b15712e9a0a7a270575f7c54dec1b3de8600c214f5c9d001dc2f70",
       "kind": "test",
       "layer": "contract",
       "owner": "TOOL-02"
@@ -245,5 +245,5 @@
       "owner": "TOOL-02"
     }
   ],
-  "canonicalPayloadSha256": "fb319c3ba9459ad02834c99a0251a7d0050376d2bf0ac879e15e6314e095ca09"
+  "canonicalPayloadSha256": "b9812de4af43595a58b6ba62749e74280ed8c6ffb3ba59d4377c41fd17242874"
 }

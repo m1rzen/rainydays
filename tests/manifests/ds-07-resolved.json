@@ -8,12 +8,12 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
+      "sha256": "d6cc396955d3afdf48863805db8690164732fbdbc3c539f51080ba652ea53219",
       "owner": "DS-07"
     },
     {
       "exactCasePath": "public/index.html",
-      "sha256": "0ab7100220a8c237be43fdfcc0babd7e1913f519d836efcc0072cd9b64692dbf",
+      "sha256": "3f9491b0cbb12b351f9edf76f224c08550eb3048a93e6a643e598368bfffba4a",
       "owner": "DS-07"
     },
     {
@@ -23,7 +23,7 @@
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "7d382e927f0d1e5141eb2c592a1d9312a2948ed7595b1dcc6965225d2bb9b59e",
+      "sha256": "bf5331bd9c25e92888228867d1fda9573d3780e1f05474761446ca16695c4b83",
       "owner": "DS-07"
     },
     {
@@ -104,11 +104,11 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "d650202d3436c38e3f4a9fd3fb8e90dc9229f6c6e00ec0127dacd008e476a10a",
+      "sha256": "b954bbb8d8fb478fb52adf8e339f011fd8e8d5e005af99460cf6d7467a439b68",
       "kind": "test",
       "layer": "electron",
       "owner": "DS-07"
     }
   ],
-  "canonicalPayloadSha256": "6ce0c48c0561db131fea77bf63d98d4a59955b0a8c1c47d7e3b3b811af042234"
+  "canonicalPayloadSha256": "3e4e65c7022c367c00ba7b9537f39cb818b5b21a072a6710984e883870ffa59a"
 }

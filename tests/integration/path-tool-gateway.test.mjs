@@ -58,7 +58,7 @@ ioHook.enable();
 const listRecorder = await createSec02Recorder(import.meta.url, "SEC-02 list_directory delegates the raw input and exact DATA_ROOT ID");
 const searchRecorder = await createSec02Recorder(import.meta.url, "SEC-02 search_files reauthorizes the tree on every invocation");
 const grepRecorder = await createSec02Recorder(import.meta.url, "SEC-02 grep uses only search-tree directory and bounded file operations");
-const downloadRecorder = await createSec02Recorder(import.meta.url, "SEC-02 download reserves its target before fetch and commits bounded bytes");
+const downloadRecorder = await createSec02Recorder(import.meta.url, "SEC-02 download streams through detached path authority and publishes only after completion");
 const officeRecorder = await createSec02Recorder(import.meta.url, "SEC-02 Office writers reserve extension before generation and commit buffers");
 const imageRecorder = await createSec02Recorder(import.meta.url, "SEC-02 image_helper reads authorized bytes before provider setup");
 

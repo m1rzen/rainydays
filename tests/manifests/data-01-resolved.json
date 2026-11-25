@@ -18,12 +18,12 @@
     },
     {
       "exactCasePath": "src/bootstrap-path-store.ts",
-      "sha256": "976a364a4e0a6594e1b41fb97991233179f42e14f5748adf4f107c4915e2ed73",
+      "sha256": "efba164ebbcafdafbf90bc1f8b24d4b371e2e0ef270d92616a256225f3079d9d",
       "owner": "DATA-01"
     },
     {
       "exactCasePath": "src/config.ts",
-      "sha256": "b78e4d72be1d95abb1338d94aa5a4e611f40b08ff726e85e6acc5d8e4852cc21",
+      "sha256": "ac8778bfa033a11ddaca7dc2e4154a8695f29e1abb6694092ff0543435efa165",
       "owner": "DATA-01"
     },
     {
@@ -53,12 +53,12 @@
     },
     {
       "exactCasePath": "src/persona.ts",
-      "sha256": "5bfa3d2b40eedc6be4c5ecc50117d073d9cdb8ef45ff5e0da827ee5661f786eb",
+      "sha256": "824f55b967683a284e77d38e270d29b2cef32ed7b4d735639448b0bfa304c1ac",
       "owner": "DATA-01"
     },
     {
       "exactCasePath": "src/playbook.ts",
-      "sha256": "526dcdf2f28038235d3ba89561469268c96b3e97989278a58fab1823d36c904b",
+      "sha256": "3d8722262f91c1bcf07a643e4f15ad5fdfc8e1c916d17fd858d17f40c86a05c8",
       "owner": "DATA-01"
     },
     {
@@ -73,12 +73,12 @@
     },
     {
       "exactCasePath": "dist/bootstrap-path-store.js",
-      "sha256": "b6a661c0330b720de2a69ae8e080834c914f556b75bf4941c7fe12efd099dcb9",
+      "sha256": "18be70f91c7c142b19fa9343d6babe7010949875905c00be0d7ce63d1a8ec471",
       "owner": "DATA-01"
     },
     {
       "exactCasePath": "dist/config.js",
-      "sha256": "74fee51524b04795bd912b1da9103ab78e49c1a0f307ba129c6000c5a588b356",
+      "sha256": "2e429d5e82caba05a3134f4fdfb14a0cadb60e7771e7c50e0d4a2b8649bc59b9",
       "owner": "DATA-01"
     },
     {
@@ -108,12 +108,12 @@
     },
     {
       "exactCasePath": "dist/persona.js",
-      "sha256": "5810850c02d1403f8283f42d0a42e348ffc76a25b273927106e02f4fb2e2c254",
+      "sha256": "b61cabf347d5b3e1aeaf14d1edb8fd297b31ad875a7def83f69afc3ba67ef22e",
       "owner": "DATA-01"
     },
     {
       "exactCasePath": "dist/playbook.js",
-      "sha256": "73eb79a46145b85a45e028fc2f08aa79e43a51e12bb22cdff61f5e1c0ff5a8f9",
+      "sha256": "c7de84b630b9b72cdbccd8e96b051a251ef21db39e21e6188ab2d7db9a419c18",
       "owner": "DATA-01"
     }
   ],
@@ -147,5 +147,5 @@
       "owner": "DATA-01"
     }
   ],
-  "canonicalPayloadSha256": "f4946f4f74704f9c540b12d051997935a8a62851b563068810aa92579b06caef"
+  "canonicalPayloadSha256": "a077f9b5030fdcf41923424abda8e9042d65c8974d1824b065cc4642cb42a5f6"
 }

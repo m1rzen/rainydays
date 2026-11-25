@@ -549,3 +549,22 @@ read_repo把runGitLsFiles扩为固定四种只读查询runGitQuery；该execFile
 | `npm run test:package` | 構建未通過，因此未啟動。尚無本輪 staging、Electron／NSIS、ASAR 實檔或安裝測試結果。 |
 
 待負責人複跑預設隔離契約、產品／UI、真實 Worker Bash／桌面生命週期，以及 Windows 離線構建、包內清單與安裝候選。第三輪驗證為原掃描器、契約與人工順序核對。
+
+### 第四輪安裝候選複核
+
+負責人已從第三輪產生 `RainyDays Setup 0.1.0-0.1.0~2Blocal.cec2db25a060.exe`。REL-03、RT-10、SEC-05 包內測試通過，D13 文件讀取、DS-02 預載橋及安裝版服務就緒測試失敗。
+
+| 位置 | 處理與證據 |
+| --- | --- |
+| `scripts/document-parser-worker-bundle.mjs`、`package.json`、`package-lock.json` | 固定使用鎖檔已有的 esbuild 0.28.1，以 Node ESM 產生單檔 `dist/document-parser-worker.js`。內含 parsers、iconv-lite、mammoth、xlsx 和 pdf-parse。輸出只允許外部內建模組，CommonJS 相容載入也只查 Node 內建模組。 |
+| `scripts/generate-dist-integrity.mjs`、`scripts/prepare-electron-app.mjs`、`scripts/electron-asar-integrity.mjs` | 構建在產生完整性清單前寫入 bundle，staging 用同一產生器重編並逐位元組比對。ASAR 仍核對解包位置及完整位元組，另以重新產生的 bundle 複核產物，原作者碼仍由來源清單掃描。契約涵蓋欠缺新鮮 bundle 及套件內 bundle 被竄改兩種拒絕。BootstrapPathStore 維持同一路徑與租約。 |
+| `electron/rainydays-worker.mjs`、解包目錄其他 JS | 既有包的本機 Worker 入口只匯入 Node 內建模組。解包的 `public/` 腳本走瀏覽器資產路徑，原生套件旁的 JS 由 Electron 的 ASAR 模組解析載入，例如 better-sqlite3 的 `bindings` 仍在 ASAR 內。只有兩個產品 Worker 以解包路徑直接啟動。 |
+| `tests/packaged/ds02-win-unpacked-ipc.test.mjs` | `updateTrayState` 由 DS-08 加入，`public/renderer.js` 仍在呼叫。主程序綁定可信渲染端，`parseTrayState` 驗證欄位、計數和 Session ID。包內測試收錄確切接口，斷言字串型計數遭拒絕。 |
+| `tests/packaged/installed-smoke.test.mjs` | 兩次服務就緒探測逾時時保留 HTTP 狀態或連線錯誤、程序退出狀態、DevTools 可達性和 stdout/stderr 尾段。Electron 先驗證安裝投影與恢復狀態，再啟動 `dist/index.js`，等待服務 IPC 及 HTTP 就緒。文件解析及本機 Worker 在有工具請求時才啟動。逾時仍需實機重現，先查安全模式、子程序啟動錯誤、實際監聽埠，以及清理明細中的未復原項目。 |
+| `scripts/sec02-governance.mjs`、`tests/sec02-evidence-map.json`、`tests/integration/path-tool-gateway.test.mjs` | 累積測試數為 SEC-01 12、SEC-02 31、GOV-03 32。多出的是既有的 `tests/integration/tool06-download.test.mjs`，包含下載續傳、完整性與權限撤回測試。下載正向收據同步綁定至實際發出收據的現行測試。以原腳本重建 SEC-02/03 清單，以及打包入口會驗證的 30 份過期 resolved manifest。 |
+
+兩個清單檢查、兩個 resolved manifest 檢查、typecheck、lint 和 `git diff --check` 通過。單程序 SEC-02 sink 契約 19/19、SEC-03 契約 18/18、IPC 單元測試 7/7。用本機 esbuild CLI 產生獨立 bundle，從暫存位置實際解析 GBK、DOCX、XLSX 及兩頁 PDF，4/4。正式構建使用的 esbuild Node API 在沙箱遇 `spawn EPERM`。
+
+額外的 SEC-02 治理契約 3/5。子程序案例遇 `spawn EPERM`，凍結矩陣的檔案雜湊與驗證器預期不同，檔案與 `bf3a7e4` 的 Git blob 一致。
+
+`npm run test:packaged` 已通過清單及涵蓋率的前置驗證，在 `scripts/run-test-layer.mjs:223` 啟動 Node 測試程序時遇 `Error: spawn EPERM`。沙箱未執行完整構建及包內測試。待負責人複跑 `npm run test:package` 和六個包內測試。安裝逾時重現時，可用 `RAINYDAYS_LAYER_DETAIL_REPORT` 保留清理檢查明細。

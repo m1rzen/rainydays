@@ -78,3 +78,10 @@ package.json、scripts/build-electron.mjs、after-pack.cjs、electron/main.cjs�
 單程序契約 SEC-02 19/19、SEC-03 18/18，目錄操作 3/3，typecheck、lint、diff 通過，原負向檢查仍拒絕。
 離線 build 通過四個模型檔案，於 `build:native` 的 `vswhere.exe` 遇 `spawnSync ... EPERM`。尚未到達打包及安裝，D13 保持 blocked。
 需負責人複跑預設隔離契約、產品／UI、真實 Worker 與 build/test:package，再驗證當前安裝候選。
+
+### 2026-11-25 第四輪安裝驗證
+
+第三輪已產生安裝器，REL-03、RT-10、SEC-05 通過。第四輪已修正文件解析 worker 的解包依賴、DS-02 橋接測試及打包治理計數和清單。
+獨立 bundle 實讀四類文件通過，兩個清單、typecheck、lint、diff 通過，單程序 SEC-02 19/19、SEC-03 18/18。
+`npm run test:packaged` 已到達測試程序啟動，在沙箱遇 `spawn EPERM`。
+安裝服務逾時已加啟動診斷，待負責人重建及複跑 `npm run test:package` 和六個包內測試。[第四輪證據](../diagnostics/13-sink-classification.md#第四輪安裝候選複核)

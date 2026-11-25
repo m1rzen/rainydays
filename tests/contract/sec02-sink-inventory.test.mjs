@@ -466,6 +466,17 @@ test("SEC-02 packaged executable projection rejects extra files and same-path si
   const mutated = new Map(expected);
   mutated.set("dist/runtime.js", `require("node:fs").readFileSync(userPath);`);
   assert.throws(() => validatePackagedExecutableProjection(expected, mutated, { policy, checkerSha256: analyzer }), /sink set differs/);
+
+  const worker = "dist/document-parser-worker.js";
+  const freshWorker = Buffer.from(`const bundledVendor = require("node:fs");`);
+  const withWorker = new Map([...expected, [worker, freshWorker.toString("utf8")]]);
+  const packagedWorker = new Map(withWorker);
+  const dialect = { policy, checkerSha256: analyzer };
+  assert.throws(() => validatePackagedExecutableProjection(withWorker, packagedWorker, dialect), /requires a fresh bundle/);
+  const exactWorker = validatePackagedExecutableProjection(withWorker, packagedWorker, dialect, freshWorker);
+  assert.notEqual(exactWorker.sourceProjectionSha256, exact.sourceProjectionSha256);
+  packagedWorker.set(worker, `${freshWorker}\n// changed`);
+  assert.throws(() => validatePackagedExecutableProjection(withWorker, packagedWorker, dialect, freshWorker), /differs from fresh bundle/);
 });
 
 test("SEC-02 sink inventory rejects missing sites, changed bindings and producer summaries", async () => {

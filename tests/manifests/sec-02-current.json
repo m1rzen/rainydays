@@ -12,7 +12,7 @@
     {
       "taskId": "SEC-02",
       "exactCasePath": "tests/manifests/sec-02.json",
-      "sha256": "b56918a78fb70c83cd514386a7f18bf5193757607101d60eb6f0dfb9ae19f27b",
+      "sha256": "54e9f3ad9621bddf4d61d0008b2264478a003da074c3d6c9837a9c42cd624fbb",
       "frozenPredecessorSha256": null
     },
     {
@@ -40,19 +40,19 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d",
+          "sha256": "6336b3f48df6aee3f83cabf47cfa6ca8c22775815900fb8e860b4a51f47116ab",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/unit/terminal-owner.test.mjs",
-          "sha256": "88a8a471055e0e304e2477395cea2a56d45d2d0bd295443bccf1ddb98e3a0ed9",
+          "sha256": "8a9d4f438bc5301e64cf3c1fdd1e8cfa4fdfa994bb4caf8a039e5e344cb553f0",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
+          "sha256": "310b6a0f10f3f2fe151d9dbeb3c0ea7d8e7b330b8f87ffcc6516e3f4ce07caba",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -88,13 +88,13 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+          "sha256": "b954bbb8d8fb478fb52adf8e339f011fd8e8d5e005af99460cf6d7467a439b68",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "1bcaa3c56877014cab58866af4b2f92b7b295fdb2749bfdf51f24e38c87295e0",
+          "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         }
@@ -308,19 +308,19 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d",
+          "sha256": "6336b3f48df6aee3f83cabf47cfa6ca8c22775815900fb8e860b4a51f47116ab",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/unit/terminal-owner.test.mjs",
-          "sha256": "88a8a471055e0e304e2477395cea2a56d45d2d0bd295443bccf1ddb98e3a0ed9",
+          "sha256": "8a9d4f438bc5301e64cf3c1fdd1e8cfa4fdfa994bb4caf8a039e5e344cb553f0",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
+          "sha256": "310b6a0f10f3f2fe151d9dbeb3c0ea7d8e7b330b8f87ffcc6516e3f4ce07caba",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -356,13 +356,13 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+          "sha256": "b954bbb8d8fb478fb52adf8e339f011fd8e8d5e005af99460cf6d7467a439b68",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "1bcaa3c56877014cab58866af4b2f92b7b295fdb2749bfdf51f24e38c87295e0",
+          "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -374,19 +374,19 @@
         },
         {
           "exactCasePath": "tests/contract/config-managed-store.test.mjs",
-          "sha256": "f635fa643435796b1efea1b8cdd7115c3b0ce609860c07c9b0113d1edf4bbc11",
+          "sha256": "18a03c6e991009075bfef42e54e0d8aaf7b3b917ec9d7681b9d79ff99e387b28",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
         {
           "exactCasePath": "tests/contract/sec02-governance.test.mjs",
-          "sha256": "ca89b7faa2948a70c1387c985a782a08968f103d66ea160605575a47d4a41885",
+          "sha256": "476bbcc6a4af4624a1235f820bb2b0b2492657fcf5efa44eeb1343e4f741364d",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
         {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "ac668e55240e0ee8f5b53980429882c0031cbf4eb43f88ecb8d09159763302e3",
+          "sha256": "c441797b17b15712e9a0a7a270575f7c54dec1b3de8600c214f5c9d001dc2f70",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -398,7 +398,7 @@
         },
         {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943",
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -416,7 +416,7 @@
         },
         {
           "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-          "sha256": "ddafc43dec89d904749962cbeb1ace661d63ac748baf04506a0fcbee01493d15",
+          "sha256": "cb6638806da64f816268ccce37e88d1ff568e7674b0bef357fc6bb6844068bd3",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -440,7 +440,7 @@
         },
         {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82",
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -452,7 +452,13 @@
         },
         {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e",
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e",
+          "layer": "integration",
+          "sourceTask": "SEC-02"
+        },
+        {
+          "exactCasePath": "tests/integration/tool06-download.test.mjs",
+          "sha256": "b0e0f2c7a7423d588c7b92ceabfd0169ee82438ec1ddcd9c848c6c6a13f7ec75",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -464,7 +470,7 @@
         },
         {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217",
+          "sha256": "96f06bf2355ac54c183944f5cf70a524997f3b6760a3941b4722825d00492c67",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1000,19 +1006,19 @@
         },
         {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d",
+          "sha256": "6336b3f48df6aee3f83cabf47cfa6ca8c22775815900fb8e860b4a51f47116ab",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/unit/terminal-owner.test.mjs",
-          "sha256": "88a8a471055e0e304e2477395cea2a56d45d2d0bd295443bccf1ddb98e3a0ed9",
+          "sha256": "8a9d4f438bc5301e64cf3c1fdd1e8cfa4fdfa994bb4caf8a039e5e344cb553f0",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-          "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
+          "sha256": "310b6a0f10f3f2fe151d9dbeb3c0ea7d8e7b330b8f87ffcc6516e3f4ce07caba",
           "layer": "contract",
           "sourceTask": "SEC-01"
         },
@@ -1048,13 +1054,13 @@
         },
         {
           "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-          "sha256": "ac31039f5c5b2ed0ff2de4787c6793e05c5a13d546ab7df3d2956d11e17bdba0",
+          "sha256": "b954bbb8d8fb478fb52adf8e339f011fd8e8d5e005af99460cf6d7467a439b68",
           "layer": "electron",
           "sourceTask": "SEC-01"
         },
         {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "1bcaa3c56877014cab58866af4b2f92b7b295fdb2749bfdf51f24e38c87295e0",
+          "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea",
           "layer": "packaged",
           "sourceTask": "SEC-01"
         },
@@ -1066,19 +1072,19 @@
         },
         {
           "exactCasePath": "tests/contract/config-managed-store.test.mjs",
-          "sha256": "f635fa643435796b1efea1b8cdd7115c3b0ce609860c07c9b0113d1edf4bbc11",
+          "sha256": "18a03c6e991009075bfef42e54e0d8aaf7b3b917ec9d7681b9d79ff99e387b28",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
         {
           "exactCasePath": "tests/contract/sec02-governance.test.mjs",
-          "sha256": "ca89b7faa2948a70c1387c985a782a08968f103d66ea160605575a47d4a41885",
+          "sha256": "476bbcc6a4af4624a1235f820bb2b0b2492657fcf5efa44eeb1343e4f741364d",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
         {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "ac668e55240e0ee8f5b53980429882c0031cbf4eb43f88ecb8d09159763302e3",
+          "sha256": "c441797b17b15712e9a0a7a270575f7c54dec1b3de8600c214f5c9d001dc2f70",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -1090,7 +1096,7 @@
         },
         {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943",
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c",
           "layer": "contract",
           "sourceTask": "SEC-02"
         },
@@ -1108,7 +1114,7 @@
         },
         {
           "exactCasePath": "tests/integration/bootstrap-database-lifetime.test.mjs",
-          "sha256": "ddafc43dec89d904749962cbeb1ace661d63ac748baf04506a0fcbee01493d15",
+          "sha256": "cb6638806da64f816268ccce37e88d1ff568e7674b0bef357fc6bb6844068bd3",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1132,7 +1138,7 @@
         },
         {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82",
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1144,7 +1150,13 @@
         },
         {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e",
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e",
+          "layer": "integration",
+          "sourceTask": "SEC-02"
+        },
+        {
+          "exactCasePath": "tests/integration/tool06-download.test.mjs",
+          "sha256": "b0e0f2c7a7423d588c7b92ceabfd0169ee82438ec1ddcd9c848c6c6a13f7ec75",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1156,7 +1168,7 @@
         },
         {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217",
+          "sha256": "96f06bf2355ac54c183944f5cf70a524997f3b6760a3941b4722825d00492c67",
           "layer": "integration",
           "sourceTask": "SEC-02"
         },
@@ -1890,7 +1902,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -1902,7 +1914,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -1914,7 +1926,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -1926,7 +1938,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -1938,7 +1950,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -1950,7 +1962,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -1962,7 +1974,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -1974,7 +1986,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 pure UNC selection is exact, most-specific, and performs no network I/O",
         "producer": "node-test"
@@ -1986,7 +1998,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 pure UNC selection is exact, most-specific, and performs no network I/O",
         "producer": "node-test"
@@ -1998,7 +2010,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 pure UNC selection is exact, most-specific, and performs no network I/O",
         "producer": "node-test"
@@ -2010,7 +2022,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 pure UNC selection is exact, most-specific, and performs no network I/O",
         "producer": "node-test"
@@ -2022,7 +2034,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 pure UNC selection is exact, most-specific, and performs no network I/O",
         "producer": "node-test"
@@ -2034,7 +2046,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 pure UNC selection is exact, most-specific, and performs no network I/O",
         "producer": "node-test"
@@ -2046,7 +2058,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 pure UNC selection is exact, most-specific, and performs no network I/O",
         "producer": "node-test"
@@ -2058,7 +2070,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 pure UNC selection is exact, most-specific, and performs no network I/O",
         "producer": "node-test"
@@ -2070,7 +2082,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2082,7 +2094,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2094,7 +2106,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2106,7 +2118,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2118,7 +2130,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2130,7 +2142,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2142,7 +2154,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2154,7 +2166,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2166,7 +2178,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2178,7 +2190,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2190,7 +2202,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2202,7 +2214,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2214,7 +2226,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2226,7 +2238,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2238,7 +2250,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2250,7 +2262,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2262,7 +2274,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2274,7 +2286,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2286,7 +2298,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2298,7 +2310,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2310,7 +2322,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2322,7 +2334,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2334,7 +2346,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2346,7 +2358,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2358,7 +2370,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2370,7 +2382,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2382,7 +2394,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2394,7 +2406,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2406,7 +2418,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2418,7 +2430,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2430,7 +2442,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2442,7 +2454,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2454,7 +2466,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2466,7 +2478,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2478,7 +2490,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2490,7 +2502,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2502,7 +2514,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2514,7 +2526,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2526,7 +2538,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2538,7 +2550,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2550,7 +2562,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2562,7 +2574,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2574,7 +2586,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2586,7 +2598,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2598,7 +2610,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2610,7 +2622,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2622,7 +2634,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2634,7 +2646,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2646,7 +2658,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2658,7 +2670,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2670,7 +2682,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2682,7 +2694,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2694,7 +2706,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2706,7 +2718,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2718,7 +2730,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2730,7 +2742,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2742,7 +2754,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2754,7 +2766,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2766,7 +2778,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2778,7 +2790,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2790,7 +2802,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2802,7 +2814,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2814,7 +2826,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2826,7 +2838,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2838,7 +2850,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2850,7 +2862,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2862,7 +2874,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2874,7 +2886,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2886,7 +2898,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2898,7 +2910,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2910,7 +2922,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2922,7 +2934,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2934,7 +2946,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2946,7 +2958,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2958,7 +2970,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2970,7 +2982,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2982,7 +2994,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -2994,7 +3006,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3006,7 +3018,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3018,7 +3030,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3030,7 +3042,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3042,7 +3054,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3054,7 +3066,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3066,7 +3078,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3078,7 +3090,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3090,7 +3102,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3102,7 +3114,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3114,7 +3126,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3126,7 +3138,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3138,7 +3150,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3150,7 +3162,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3162,7 +3174,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3174,7 +3186,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3186,7 +3198,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3198,7 +3210,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3210,7 +3222,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3222,7 +3234,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3234,7 +3246,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3246,7 +3258,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3258,7 +3270,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3270,7 +3282,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3282,7 +3294,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3294,7 +3306,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3306,7 +3318,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3318,7 +3330,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3330,7 +3342,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3342,7 +3354,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3354,7 +3366,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3366,7 +3378,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3378,7 +3390,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3390,7 +3402,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3402,7 +3414,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3414,7 +3426,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3426,7 +3438,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3438,7 +3450,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3450,7 +3462,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3462,7 +3474,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3474,7 +3486,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3486,7 +3498,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3498,7 +3510,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3510,7 +3522,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3522,7 +3534,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3534,7 +3546,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3546,7 +3558,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3558,7 +3570,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3570,7 +3582,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3582,7 +3594,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3594,7 +3606,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3606,7 +3618,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3618,7 +3630,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3630,7 +3642,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3642,7 +3654,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3654,7 +3666,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3666,7 +3678,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3678,7 +3690,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3690,7 +3702,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3702,7 +3714,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3714,7 +3726,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3726,7 +3738,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3738,7 +3750,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3750,7 +3762,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3762,7 +3774,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3774,7 +3786,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3786,7 +3798,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3798,7 +3810,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3810,7 +3822,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3822,7 +3834,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3834,7 +3846,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3846,7 +3858,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3858,7 +3870,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3870,7 +3882,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3882,7 +3894,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3894,7 +3906,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3906,7 +3918,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3918,7 +3930,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3930,7 +3942,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3942,7 +3954,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3954,7 +3966,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3966,7 +3978,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3978,7 +3990,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -3990,7 +4002,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4002,7 +4014,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4014,7 +4026,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4026,7 +4038,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4038,7 +4050,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4050,7 +4062,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4062,7 +4074,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4074,7 +4086,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4086,7 +4098,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4098,7 +4110,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4110,7 +4122,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4122,7 +4134,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4134,7 +4146,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4146,7 +4158,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4158,7 +4170,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4170,7 +4182,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4182,7 +4194,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4194,7 +4206,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4206,7 +4218,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4218,7 +4230,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4230,7 +4242,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4242,7 +4254,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4254,7 +4266,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4266,7 +4278,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4278,7 +4290,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4290,7 +4302,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4302,7 +4314,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4314,7 +4326,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4326,7 +4338,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4338,7 +4350,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4350,7 +4362,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4362,7 +4374,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4374,7 +4386,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4386,7 +4398,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4398,7 +4410,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4410,7 +4422,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4422,7 +4434,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4434,7 +4446,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4446,7 +4458,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4458,7 +4470,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4470,7 +4482,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4482,7 +4494,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4494,7 +4506,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4506,7 +4518,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4518,7 +4530,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4530,7 +4542,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4542,7 +4554,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4554,7 +4566,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4566,7 +4578,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4578,7 +4590,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4590,7 +4602,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4602,7 +4614,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4614,7 +4626,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4626,7 +4638,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4638,7 +4650,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4650,7 +4662,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4662,7 +4674,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4674,7 +4686,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4686,7 +4698,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4698,7 +4710,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4710,7 +4722,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4722,7 +4734,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4734,7 +4746,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4746,7 +4758,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4758,7 +4770,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4770,7 +4782,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4782,7 +4794,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4794,7 +4806,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4806,7 +4818,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4818,7 +4830,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4830,7 +4842,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4842,7 +4854,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4854,7 +4866,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4866,7 +4878,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4878,7 +4890,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4890,7 +4902,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4902,7 +4914,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4914,7 +4926,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4926,7 +4938,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4938,7 +4950,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4950,7 +4962,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4962,7 +4974,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4974,7 +4986,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4986,7 +4998,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -4998,7 +5010,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5010,7 +5022,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5022,7 +5034,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5034,7 +5046,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5046,7 +5058,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5058,7 +5070,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5070,7 +5082,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5082,7 +5094,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5094,7 +5106,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5106,7 +5118,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5118,7 +5130,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5130,7 +5142,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5142,7 +5154,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5154,7 +5166,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5166,7 +5178,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5178,7 +5190,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5190,7 +5202,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5202,7 +5214,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5214,7 +5226,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5226,7 +5238,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5238,7 +5250,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5250,7 +5262,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5262,7 +5274,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5274,7 +5286,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5286,7 +5298,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5298,7 +5310,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5310,7 +5322,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5322,7 +5334,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5334,7 +5346,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5346,7 +5358,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 Windows grammar rejects canonical aliases before filesystem use",
         "producer": "node-test"
@@ -5358,7 +5370,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 private authority permits relative and exact absolute same-handle reads",
         "producer": "node-test"
@@ -5370,7 +5382,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 private authority permits relative and exact absolute same-handle reads",
         "producer": "node-test"
@@ -5382,7 +5394,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 sibling prefix and most-specific exclusion never fall back to broad root",
         "producer": "node-test"
@@ -5394,7 +5406,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 sibling prefix and most-specific exclusion never fall back to broad root",
         "producer": "node-test"
@@ -5406,7 +5418,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 configured root aliases cannot publish duplicate object identities",
         "producer": "node-test"
@@ -5418,7 +5430,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 configured root aliases cannot publish duplicate object identities",
         "producer": "node-test"
@@ -5430,7 +5442,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 configured root aliases cannot publish duplicate object identities",
         "producer": "node-test"
@@ -5442,7 +5454,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 configured root aliases cannot publish duplicate object identities",
         "producer": "node-test"
@@ -5454,7 +5466,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 configured root aliases cannot publish duplicate object identities",
         "producer": "node-test"
@@ -5466,7 +5478,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 real file symlink and directory junction are denied without external bytes",
         "producer": "node-test"
@@ -5478,7 +5490,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 real file symlink and directory junction are denied without external bytes",
         "producer": "node-test"
@@ -5490,7 +5502,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 configured root replacement retires old object identity before read",
         "producer": "node-test"
@@ -5502,7 +5514,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 lease issued before retirement cannot open a new path handle",
         "producer": "node-test"
@@ -5514,7 +5526,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 opened read handle drains original bytes without pathname reopen after retirement",
         "producer": "node-test"
@@ -5526,7 +5538,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d"
+          "sha256": "6336b3f48df6aee3f83cabf47cfa6ca8c22775815900fb8e860b4a51f47116ab"
         },
         "testCaseId": "SEC-02 Session deletion closes PathPolicy leases before removing the session identity",
         "producer": "node-test"
@@ -5538,7 +5550,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 nested new-file creation uses exclusive segments and an opened handle",
         "producer": "node-test"
@@ -5550,7 +5562,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 new file under a real junction parent is denied with no external artifact",
         "producer": "node-test"
@@ -5562,7 +5574,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 existing writes reject file symlink, directory junction, and multi-hardlink targets",
         "producer": "node-test"
@@ -5574,7 +5586,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 existing writes reject file symlink, directory junction, and multi-hardlink targets",
         "producer": "node-test"
@@ -5586,7 +5598,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 existing writes reject file symlink, directory junction, and multi-hardlink targets",
         "producer": "node-test"
@@ -5598,7 +5610,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 pathname replacement after handle open returns only original bytes",
         "producer": "node-test"
@@ -5610,7 +5622,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 pathname replacement after handle open returns only original bytes",
         "producer": "node-test"
@@ -5622,7 +5634,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 multi-segment create rechecks each current parent identity",
         "producer": "node-test"
@@ -5634,7 +5646,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 parent swap before final create is denied before any external file creation",
         "producer": "node-test"
@@ -5646,7 +5658,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 post-create identity loss stops writes and raises hard rollback failure",
         "producer": "node-test"
@@ -5670,7 +5682,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5682,7 +5694,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5694,7 +5706,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5706,7 +5718,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5718,7 +5730,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5730,7 +5742,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5742,7 +5754,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -5754,19 +5766,19 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
       },
       {
-        "observationId": "SEC02-P23-download-escape-no-fetch",
+        "observationId": "SEC02-P23-download-unsafe-name-no-write-on-header-failure",
         "evidenceTier": "windows-native",
-        "stimulusCanonicalSha256": "5542313b23337ecc9192c5f641a2f7d6d6a4c131b4472ce74431150e0a9fb4dd",
+        "stimulusCanonicalSha256": "b58e1ea14eb90bbeb805c30c14bab5763d1981fc422156c67c2cd113e02e726f",
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -5778,7 +5790,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -5790,7 +5802,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -5802,7 +5814,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -5814,7 +5826,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -5826,7 +5838,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 image_helper reads authorized bytes before provider setup",
         "producer": "node-test"
@@ -5838,7 +5850,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
+          "sha256": "96f06bf2355ac54c183944f5cf70a524997f3b6760a3941b4722825d00492c67"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5850,7 +5862,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
+          "sha256": "96f06bf2355ac54c183944f5cf70a524997f3b6760a3941b4722825d00492c67"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5862,7 +5874,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
+          "sha256": "96f06bf2355ac54c183944f5cf70a524997f3b6760a3941b4722825d00492c67"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5874,7 +5886,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
+          "sha256": "96f06bf2355ac54c183944f5cf70a524997f3b6760a3941b4722825d00492c67"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -5886,7 +5898,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
+          "sha256": "96f06bf2355ac54c183944f5cf70a524997f3b6760a3941b4722825d00492c67"
         },
         "testCaseId": "SEC-02 read_repo uses fixed Git NUL enumeration and authorizes every tracked entry",
         "producer": "node-test"
@@ -6378,7 +6390,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6390,7 +6402,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6402,7 +6414,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6414,7 +6426,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6426,7 +6438,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6438,7 +6450,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 HTTP File Viewer and Settings root enrollment are one authority transaction",
         "producer": "node-test"
@@ -6450,7 +6462,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6462,7 +6474,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6474,7 +6486,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6486,7 +6498,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6498,7 +6510,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6510,7 +6522,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 unsafe disk Settings paths never publish a runtime",
         "producer": "node-test"
@@ -6522,7 +6534,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 bootstrap path candidates reject unsafe environment families with one redacted audit",
         "producer": "node-test"
@@ -6534,7 +6546,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 bootstrap path candidates reject unsafe environment families with one redacted audit",
         "producer": "node-test"
@@ -6546,7 +6558,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 bootstrap path candidates reject unsafe environment families with one redacted audit",
         "producer": "node-test"
@@ -6558,7 +6570,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 bootstrap path candidates reject unsafe environment families with one redacted audit",
         "producer": "node-test"
@@ -6570,7 +6582,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 bootstrap path candidates reject unsafe environment families with one redacted audit",
         "producer": "node-test"
@@ -6582,7 +6594,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 bootstrap path candidates reject unsafe environment families with one redacted audit",
         "producer": "node-test"
@@ -6594,7 +6606,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 config parent junction fails closed before runtime publication",
         "producer": "node-test"
@@ -6606,7 +6618,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 real persistence failure retires old authority and stops fail-closed",
         "producer": "node-test"
@@ -6618,7 +6630,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/file-viewer-settings.test.mjs",
-          "sha256": "43c9df2d34b91f08d2bc5c398bb806c4d73f72d3f1d37f152c1075cf6731ae82"
+          "sha256": "c6f9941f0aecf1ebb7b8e2dea8590a49ba5449bc1bb6d2ef49223a88d914d833"
         },
         "testCaseId": "SEC-02 real publication failure restores disk and runtime using a fresh old-config authority",
         "producer": "node-test"
@@ -6642,7 +6654,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 private authority permits relative and exact absolute same-handle reads",
         "producer": "node-test"
@@ -6654,7 +6666,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d"
+          "sha256": "6336b3f48df6aee3f83cabf47cfa6ca8c22775815900fb8e860b4a51f47116ab"
         },
         "testCaseId": "SEC-02 child PathAuthority and ResourceOwner preserve only the exact root subset",
         "producer": "node-test"
@@ -6666,7 +6678,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d"
+          "sha256": "6336b3f48df6aee3f83cabf47cfa6ca8c22775815900fb8e860b4a51f47116ab"
         },
         "testCaseId": "SEC-02 same configured root string cannot substitute a new filesystem identity",
         "producer": "node-test"
@@ -6678,7 +6690,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d"
+          "sha256": "6336b3f48df6aee3f83cabf47cfa6ca8c22775815900fb8e860b4a51f47116ab"
         },
         "testCaseId": "SEC-02 Broker gateway denies root object replacement during an in-flight read",
         "producer": "node-test"
@@ -6690,7 +6702,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/capability-broker.test.mjs",
-          "sha256": "cf9118f3f8258fa45145bac2b4aa333d4a3902ba9f94d40f6d39ede3f1f9254d"
+          "sha256": "6336b3f48df6aee3f83cabf47cfa6ca8c22775815900fb8e860b4a51f47116ab"
         },
         "testCaseId": "SEC-02 attenuated child gateway cannot fall back to broader parent roots",
         "producer": "node-test"
@@ -6702,7 +6714,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-governance.test.mjs",
-          "sha256": "ca89b7faa2948a70c1387c985a782a08968f103d66ea160605575a47d4a41885"
+          "sha256": "476bbcc6a4af4624a1235f820bb2b0b2492657fcf5efa44eeb1343e4f741364d"
         },
         "testCaseId": "SEC-02 generator is canonical, byte-stable, and fully bound",
         "producer": "unified-runner"
@@ -6714,7 +6726,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 audit sink failure returns PATH_AUDIT_FAILED without recursive delivery",
         "producer": "node-test"
@@ -6726,7 +6738,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-governance.test.mjs",
-          "sha256": "ca89b7faa2948a70c1387c985a782a08968f103d66ea160605575a47d4a41885"
+          "sha256": "476bbcc6a4af4624a1235f820bb2b0b2492657fcf5efa44eeb1343e4f741364d"
         },
         "testCaseId": "SEC-02 generator is canonical, byte-stable, and fully bound",
         "producer": "unified-runner"
@@ -6738,7 +6750,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "ac668e55240e0ee8f5b53980429882c0031cbf4eb43f88ecb8d09159763302e3"
+          "sha256": "c441797b17b15712e9a0a7a270575f7c54dec1b3de8600c214f5c9d001dc2f70"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6750,7 +6762,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "ac668e55240e0ee8f5b53980429882c0031cbf4eb43f88ecb8d09159763302e3"
+          "sha256": "c441797b17b15712e9a0a7a270575f7c54dec1b3de8600c214f5c9d001dc2f70"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6762,7 +6774,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
         "producer": "node-test"
@@ -6774,7 +6786,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "ac668e55240e0ee8f5b53980429882c0031cbf4eb43f88ecb8d09159763302e3"
+          "sha256": "c441797b17b15712e9a0a7a270575f7c54dec1b3de8600c214f5c9d001dc2f70"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6786,7 +6798,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "ac668e55240e0ee8f5b53980429882c0031cbf4eb43f88ecb8d09159763302e3"
+          "sha256": "c441797b17b15712e9a0a7a270575f7c54dec1b3de8600c214f5c9d001dc2f70"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6798,7 +6810,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-          "sha256": "ac668e55240e0ee8f5b53980429882c0031cbf4eb43f88ecb8d09159763302e3"
+          "sha256": "c441797b17b15712e9a0a7a270575f7c54dec1b3de8600c214f5c9d001dc2f70"
         },
         "testCaseId": "SEC-02 sink inventory exactly matches AST closure and package projection",
         "producer": "node-test"
@@ -6810,7 +6822,7 @@
         "layer": "packaged",
         "test": {
           "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-          "sha256": "1bcaa3c56877014cab58866af4b2f92b7b295fdb2749bfdf51f24e38c87295e0"
+          "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea"
         },
         "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
         "producer": "node-test"
@@ -6822,7 +6834,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 private authority permits relative and exact absolute same-handle reads",
         "producer": "node-test"
@@ -6832,7 +6844,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 private authority permits relative and exact absolute same-handle reads",
         "producer": "node-test"
@@ -6842,7 +6854,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 list_directory delegates the raw input and exact DATA_ROOT ID",
         "producer": "node-test"
@@ -6852,7 +6864,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 search_files reauthorizes the tree on every invocation",
         "producer": "node-test"
@@ -6862,7 +6874,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 grep uses only search-tree directory and bounded file operations",
         "producer": "node-test"
@@ -6872,7 +6884,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 nested new-file creation uses exclusive segments and an opened handle",
         "producer": "node-test"
@@ -6882,7 +6894,7 @@
         "layer": "contract",
         "test": {
           "exactCasePath": "tests/unit/path-policy.test.mjs",
-          "sha256": "fa699ce5b618803aa50e2415dafcc2b6946761c1c14b2c68df59e0d1c08ab943"
+          "sha256": "caa627371390990f329b7c48d65cd9dbeb40a3b963f6319312eba295caa8288c"
         },
         "testCaseId": "SEC-02 replace transforms and writes through the same identity-checked handle",
         "producer": "node-test"
@@ -6892,7 +6904,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -6902,7 +6914,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 Office writers reserve extension before generation and commit buffers",
         "producer": "node-test"
@@ -6912,9 +6924,9 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
-        "testCaseId": "SEC-02 download reserves its target before fetch and commits bounded bytes",
+        "testCaseId": "SEC-02 download streams through detached path authority and publishes only after completion",
         "producer": "node-test"
       },
       {
@@ -6922,7 +6934,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/path-tool-gateway.test.mjs",
-          "sha256": "6a06c3e831836cecf890258f73040a86889b31edb13acae076f2242797e49e4e"
+          "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
         },
         "testCaseId": "SEC-02 image_helper reads authorized bytes before provider setup",
         "producer": "node-test"
@@ -6972,7 +6984,7 @@
         "layer": "integration",
         "test": {
           "exactCasePath": "tests/integration/repo-oracle-path.test.mjs",
-          "sha256": "e60cf1f245d59292740775122a0d7769cc11914b631dd92b64fa7ac277e25217"
+          "sha256": "96f06bf2355ac54c183944f5cf70a524997f3b6760a3941b4722825d00492c67"
         },
         "testCaseId": "SEC-02 Oracle writes and reads only the governed project-root LUX.oracle",
         "producer": "node-test"
@@ -7054,7 +7066,7 @@
     },
     {
       "exactCasePath": "tests/sec02-attack-matrix.json",
-      "sha256": "fdba733fec94a6bd7930605555e8306730ac9c7e762e6c9c9c0bbe04694a3574"
+      "sha256": "befede7a4bed7e1b06107b27e62472ab93944ee0f5fe522e6189b5ac281d59ba"
     },
     {
       "exactCasePath": "tests/sec02-attack-matrix.schema.json",
@@ -7078,7 +7090,7 @@
     },
     {
       "exactCasePath": "tests/helpers.mjs",
-      "sha256": "2749389342cc762ea859f98aa344fca159e5c4d6752d746ed6f70c8720b5995f"
+      "sha256": "df5f12e19f4132fe73b42934e63f6da38a696738bc32058d49524ebfbbb1d35b"
     },
     {
       "exactCasePath": "scripts/run-tests.mjs",
@@ -7094,7 +7106,7 @@
     },
     {
       "exactCasePath": "scripts/report-schema.mjs",
-      "sha256": "0d913f3167364b53cf0f51101820b151d7d97b76167da57b8ec776b6baa644d5"
+      "sha256": "e23e72b230a2efb1da04bf62447829c29726c4fb72aebea7ac7c715bf7cd8641"
     },
     {
       "exactCasePath": "scripts/test-gate-selftest.mjs",
@@ -7114,15 +7126,15 @@
     },
     {
       "exactCasePath": "scripts/electron-asar-integrity.mjs",
-      "sha256": "3c1f99f19a586b72340555254da01074ce1f066add0f98615cac606633bd698d"
+      "sha256": "68b1c456e78e7d65e9b70e3f50a0af760af091c485b22cace1ffd51235ea6910"
     },
     {
       "exactCasePath": "scripts/electron-stage-integrity.mjs",
-      "sha256": "e1f603196fc156b6611e6d4e56efc2f965b8c241b54123324efb2cd36e25ac12"
+      "sha256": "7b1d942d33a0628300f8caf13369786139ddc796ba6bb8f8a4c019b1c2f46df4"
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "f610a92a3a825d93f0cdf96e3b7fffab3c591a1215e05f607163e5eef728b348"
+      "sha256": "2e6e214e22a21ddfd5b6f1c4db47858490de686a9676e4536e8e9de0b59a8a83"
     },
     {
       "exactCasePath": "scripts/sec02-sink-scanner.mjs",
@@ -7134,19 +7146,19 @@
     },
     {
       "exactCasePath": "scripts/sec02-sink-inventory.mjs",
-      "sha256": "83e9d1e24fd4551ac855be957b4d6e3e3557815b97fd106c1094bedcf3e2952b"
+      "sha256": "8d95a8248ef86f1425778210b17ea8ee58ad9b492c5eb26b3d5f99b88b800007"
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "e206170c6c2661a4a9bd74467f492c459a9acf5a6ab4fa7d82adc3ea8e804c4b"
+      "sha256": "27a556f708799290f97d58dde79458cae4e93ac95b75643a97d01f72f44c7fbb"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "36fc5f64811be861aa81ca8d69fb308de8039ee3e2400c4e2d4c8cdb57afe70e"
+      "sha256": "c3da9cd3c0b9c4e9fb127d4b2f6c332c92c4b7cf82576ccf3b8acd40eb8f3cf0"
     },
     {
       "exactCasePath": "tests/sec02-sink-crosscheck-policy.json",
-      "sha256": "988bb669056133084a036057be04ac6ec7d53f7e388264633321eacb6e1e8f84"
+      "sha256": "99d6459e5946489a7bc221d21c598b25f49e9d4ede7e88dc9a635ac0b75cabba"
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.schema.json",
@@ -7154,7 +7166,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec02-sink-inventory.test.mjs",
-      "sha256": "ac668e55240e0ee8f5b53980429882c0031cbf4eb43f88ecb8d09159763302e3"
+      "sha256": "c441797b17b15712e9a0a7a270575f7c54dec1b3de8600c214f5c9d001dc2f70"
     },
     {
       "exactCasePath": "scripts/gov04/identity.mjs",
@@ -7166,7 +7178,7 @@
     },
     {
       "exactCasePath": "scripts/sec02-governance.mjs",
-      "sha256": "c2049e985d0c1dcdb819f5c087d3f8eed373fdbe8908ecf9082697904de58fe8"
+      "sha256": "0d0b4fc7cf7d8a4c628ca7c52937d415b1951efe219b4253a3a0bcf6519c52be"
     },
     {
       "exactCasePath": "scripts/sec02-receipt-set.mjs",
@@ -7178,7 +7190,7 @@
     },
     {
       "exactCasePath": "tests/sec02-evidence-map.json",
-      "sha256": "eb8b94effabd80594bdb9483783831fd3f8a9cba0703dc9054a1dd334bc359ba"
+      "sha256": "dc4b5b55c231a86e131801f5a7642c043ec7d6bf782702fe45377e1e8832d182"
     },
     {
       "exactCasePath": "tests/sec02-receipts.mjs",
@@ -7190,17 +7202,17 @@
     },
     {
       "exactCasePath": "tests/contract/sec02-governance.test.mjs",
-      "sha256": "ca89b7faa2948a70c1387c985a782a08968f103d66ea160605575a47d4a41885"
+      "sha256": "476bbcc6a4af4624a1235f820bb2b0b2492657fcf5efa44eeb1343e4f741364d"
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "d2f5269d283b6cd1a163c01211d9e97bab1b74e512b1adec8541e7fe7decce54"
+      "sha256": "b378b2b124162d179025c819f4857588d4ce0715f573cdfaa139489adc93cc7b"
     },
     {
       "exactCasePath": "package-lock.json",
-      "sha256": "2ec921899f4cff90f2334b66f4d8df310e3be74d1ef45bae0a5e01c9c70802b3"
+      "sha256": "fcafb536a4610c92c8e1372fc6a9bc6a1b547a7866d23a6c5854526e6b8eb82d"
     }
   ],
   "exclusions": [],
-  "canonicalPayloadSha256": "1c51e6a4a86b8c9cf3405b1b4696c68e7fd28e1138f59255b0934c2ccbd629a7"
+  "canonicalPayloadSha256": "010491757f722d77ebe784ec525f302817ca2b3fe422aa97bd817dd4ca8d8468"
 }

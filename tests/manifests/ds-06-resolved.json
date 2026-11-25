@@ -13,22 +13,22 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "3ec7f9fa04823fc8ca807bdd8b399c4bda91ba277575a10863be4bc748343ab6",
+      "sha256": "1e7ee6fbe24c1384634361158ddbb92ebfc347a249f20fa8ebd03e402c6ee184",
       "owner": "DS-06"
     },
     {
       "exactCasePath": "dist/tool-policies.js",
-      "sha256": "ede99e6b841d941b6b9153a62477d8adfb1fc6953ab1d6b34ccb9f279d87f9b5",
+      "sha256": "48cd2da8ee80facd6842357a344e8837d0fd3b5f01c2c382961d9590b1c29a5c",
       "owner": "DS-06"
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
+      "sha256": "d6cc396955d3afdf48863805db8690164732fbdbc3c539f51080ba652ea53219",
       "owner": "DS-06"
     },
     {
       "exactCasePath": "public/index.html",
-      "sha256": "0ab7100220a8c237be43fdfcc0babd7e1913f519d836efcc0072cd9b64692dbf",
+      "sha256": "3f9491b0cbb12b351f9edf76f224c08550eb3048a93e6a643e598368bfffba4a",
       "owner": "DS-06"
     },
     {
@@ -38,7 +38,7 @@
     },
     {
       "exactCasePath": "public/renderer.js",
-      "sha256": "7d382e927f0d1e5141eb2c592a1d9312a2948ed7595b1dcc6965225d2bb9b59e",
+      "sha256": "bf5331bd9c25e92888228867d1fda9573d3780e1f05474761446ca16695c4b83",
       "owner": "DS-06"
     },
     {
@@ -53,7 +53,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "ec121de3878bb41e7297b218f6f025d91d8d141e45eaac18ec8a2056ce81375e",
+      "sha256": "2e6e214e22a21ddfd5b6f1c4db47858490de686a9676e4536e8e9de0b59a8a83",
       "owner": "DS-06"
     },
     {
@@ -63,12 +63,12 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "54ac0c7e279c4dc66de636b812bc530392b911357fe25263b597367bbc3c7a79",
+      "sha256": "44a0193bde436620d86d0e080a5af6f9cadfb605f99504f0e680b86de8d3b5ea",
       "owner": "DS-06"
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "36517715129d97a1c909bef4e15bf0d0c58671aae9808656af659a2abc44271c",
+      "sha256": "176d64078c6243d204e1c080b94023c4c7b6feba2a4337ac79f62cd1abecdc2e",
       "owner": "DS-06"
     },
     {
@@ -97,7 +97,7 @@
     },
     {
       "exactCasePath": "tests/contract/sec01-boundaries.test.mjs",
-      "sha256": "646b049228e763923d7abbcb42e5a687c9f9129eda56a9201c3e069f44856756",
+      "sha256": "310b6a0f10f3f2fe151d9dbeb3c0ea7d8e7b330b8f87ffcc6516e3f4ce07caba",
       "kind": "test",
       "layer": "contract",
       "owner": "DS-06"
@@ -146,11 +146,11 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "d650202d3436c38e3f4a9fd3fb8e90dc9229f6c6e00ec0127dacd008e476a10a",
+      "sha256": "b954bbb8d8fb478fb52adf8e339f011fd8e8d5e005af99460cf6d7467a439b68",
       "kind": "test",
       "layer": "electron",
       "owner": "DS-06"
     }
   ],
-  "canonicalPayloadSha256": "fd549c037fd9be21f46653cbf85932e68ffb80ab895bbb8745593a2d02be7fc2"
+  "canonicalPayloadSha256": "86f3fb7b43c2e55589b68653b26bafb49949f74e778a603ac05e7cea52044110"
 }

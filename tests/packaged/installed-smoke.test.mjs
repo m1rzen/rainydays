@@ -102,9 +102,28 @@ function launchInstalled(executable, userData, httpPort, cdpPort) {
     timeoutMs: 45_000,
     label: "installed application service",
     readyProbe: async () => {
-      try { return (await boundedFetch(`http://127.0.0.1:${httpPort}/`)).ok; } catch { return false; }
+      const response = await boundedFetch(`http://127.0.0.1:${httpPort}/`);
+      if (!response.ok) throw new Error(`HTTP ${response.status} on requested service port ${httpPort}`);
+      return true;
     },
   });
+}
+
+async function waitForInstalledService(instance, httpPort, cdpPort) {
+  try {
+    await instance.ready;
+  } catch (error) {
+    const { child, logs } = instance;
+    const { stdout, stderr } = logs();
+    const devToolsStatus = await boundedFetch(`http://127.0.0.1:${cdpPort}/json/version`)
+      .then(response => `HTTP ${response.status}`, () => "unreachable");
+    throw new Error([
+      `${error.message} (PID ${child.pid}, exit ${child.exitCode}, signal ${child.signalCode})`,
+      `Requested HTTP port ${httpPort}; DevTools port ${cdpPort}: ${devToolsStatus}`,
+      `stdout tail:\n${stdout.slice(-8192)}`,
+      `stderr tail:\n${stderr.slice(-8192)}`,
+    ].join("\n"), { cause: error });
+  }
 }
 
 async function listenerClosed(port) {
@@ -503,7 +522,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     await checkpoint("first-launch-readiness");
     firstPorts = await freeDistinctPorts(2);
     first = launchInstalled(executable, userData, firstPorts[0], firstPorts[1]);
-    await first.ready;
+    await waitForInstalledService(first, ...firstPorts);
     client = await connectCdp(firstPorts[1]);
     await checkpoint("first-launch-probe");
     await probeIdentity(client, buildInfo, firstPorts[0]);
@@ -530,7 +549,7 @@ test("current Windows installer repeats identity, persistence and cleanup smoke"
     await checkpoint("restart-readiness");
     secondPorts = await freeDistinctPorts(2);
     second = launchInstalled(executable, userData, secondPorts[0], secondPorts[1]);
-    await second.ready;
+    await waitForInstalledService(second, ...secondPorts);
     client = await connectCdp(secondPorts[1]);
     await checkpoint("restart-probe");
     await probeIdentity(client, buildInfo, secondPorts[0]);

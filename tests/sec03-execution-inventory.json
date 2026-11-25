@@ -5,7 +5,7 @@
   "scannerSha256": "d81dfe30bf6f7df1ce3221861923b011c495fb6be0af1efb026f8203f69d8cb1",
   "crosscheckSha256": "a2c62c23669d2924472d4c80761122a5c4446d12e6a27f8595221f55a0290093",
   "policySha256": "df6b011b210445ab277f8de381eb0ab7c1100cfa68e4db6fdccd9cb544577dfe",
-  "sourceSetSha256": "22ae655653da4879f211a5f90e9b8ee38e9bd0ea0d2438dea1aa8bf9848b4a2b",
+  "sourceSetSha256": "53ab870a2668a3eab8dee5c500c55e3972be0a7743bd0d0aedd836bba041ad00",
   "files": [
     {
       "sourcePath": "electron/ipc-contract.cjs",
@@ -164,6 +164,12 @@
       "executionClass": "build-test"
     },
     {
+      "sourcePath": "scripts/document-parser-worker-bundle.mjs",
+      "bytes": 1754,
+      "sha256": "249e3de4fa1453f7e5a0701a698611457ff2c8ba5a63a7863f18535a45346068",
+      "executionClass": "build-test"
+    },
+    {
       "sourcePath": "scripts/ds01-governance.mjs",
       "bytes": 11478,
       "sha256": "dfed4fbb88ee6f53d1d2877058b0dae038e0740bb372d040b79900a0fb294365",
@@ -237,8 +243,8 @@
     },
     {
       "sourcePath": "scripts/electron-asar-integrity.mjs",
-      "bytes": 15896,
-      "sha256": "785ac8e7fb1792f4671604f61f9f3baae8252832a7c6b761ad403f5c1bafcaf3",
+      "bytes": 16989,
+      "sha256": "68b1c456e78e7d65e9b70e3f50a0af760af091c485b22cace1ffd51235ea6910",
       "executionClass": "build-test"
     },
     {
@@ -297,8 +303,8 @@
     },
     {
       "sourcePath": "scripts/generate-dist-integrity.mjs",
-      "bytes": 2875,
-      "sha256": "25209d6b58808b2ee90ac3a60c79afcd9f74e4322a9d039706735ada58a83244",
+      "bytes": 3029,
+      "sha256": "be1146b67ce67dff37c51ff10c6c56206d5e0c716ddf1be7a695bfa724d26739",
       "executionClass": "build-test"
     },
     {
@@ -627,8 +633,8 @@
     },
     {
       "sourcePath": "scripts/prepare-electron-app.mjs",
-      "bytes": 11220,
-      "sha256": "ec121de3878bb41e7297b218f6f025d91d8d141e45eaac18ec8a2056ce81375e",
+      "bytes": 11378,
+      "sha256": "2e6e214e22a21ddfd5b6f1c4db47858490de686a9676e4536e8e9de0b59a8a83",
       "executionClass": "build-test"
     },
     {
@@ -754,7 +760,7 @@
     {
       "sourcePath": "scripts/sec02-governance.mjs",
       "bytes": 20185,
-      "sha256": "c2049e985d0c1dcdb819f5c087d3f8eed373fdbe8908ecf9082697904de58fe8",
+      "sha256": "0d0b4fc7cf7d8a4c628ca7c52937d415b1951efe219b4253a3a0bcf6519c52be",
       "executionClass": "build-test"
     },
     {
@@ -1942,13 +1948,13 @@
     {
       "sourcePath": "tests/contract/sec02-governance.test.mjs",
       "bytes": 8112,
-      "sha256": "ca89b7faa2948a70c1387c985a782a08968f103d66ea160605575a47d4a41885",
+      "sha256": "476bbcc6a4af4624a1235f820bb2b0b2492657fcf5efa44eeb1343e4f741364d",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/contract/sec02-sink-inventory.test.mjs",
-      "bytes": 25080,
-      "sha256": "8485c83d41ea0326b6c168903618b7012e9113ae20ba04e41d1f77953d902a67",
+      "bytes": 25918,
+      "sha256": "c441797b17b15712e9a0a7a270575f7c54dec1b3de8600c214f5c9d001dc2f70",
       "executionClass": "build-test"
     },
     {
@@ -2421,8 +2427,8 @@
     },
     {
       "sourcePath": "tests/integration/path-tool-gateway.test.mjs",
-      "bytes": 45471,
-      "sha256": "240e2d1453d6b78a374d55f4218082bfd4f235c6d23ff6eef9c7c15b51edba10",
+      "bytes": 45488,
+      "sha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e",
       "executionClass": "build-test"
     },
     {
@@ -2601,14 +2607,14 @@
     },
     {
       "sourcePath": "tests/packaged/ds02-win-unpacked-ipc.test.mjs",
-      "bytes": 7028,
-      "sha256": "ff28ba8a4dda11d0570b04fbe14395e5e1e34301c55bb3f1b89231925eb20314",
+      "bytes": 7246,
+      "sha256": "826e0cc2c74ea8ad2e4dd3e579d95585e6aaec04d7ddd170df1a8644c2f3116c",
       "executionClass": "build-test"
     },
     {
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "bytes": 33954,
-      "sha256": "1bcaa3c56877014cab58866af4b2f92b7b295fdb2749bfdf51f24e38c87295e0",
+      "bytes": 34826,
+      "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea",
       "executionClass": "build-test"
     },
     {
@@ -5899,7 +5905,7 @@
       "id": "exec-c515b10283835c7099222370",
       "occurrence": 1,
       "sourcePath": "scripts/prepare-electron-app.mjs",
-      "line": 100,
+      "line": 102,
       "column": 19,
       "nodeKind": "CallExpression",
       "container": "runDirect",
@@ -13465,7 +13471,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-ca053d6c67bb0104ebb8600e",
+      "id": "exec-6bc342fac7a3d690bf074254",
       "occurrence": 1,
       "sourcePath": "tests/packaged/ds02-win-unpacked-ipc.test.mjs",
       "line": 35,
@@ -13482,7 +13488,7 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-5ed86e440d5e948c6dacdc9e",
+      "id": "exec-bad57b5c0efc5a34b901647a",
       "occurrence": 1,
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
       "line": 101,
@@ -13499,10 +13505,10 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-ddf80303d1dc5873dc5da85b",
+      "id": "exec-00e001883ee8e0c74a1fdef8",
       "occurrence": 1,
       "sourcePath": "tests/packaged/installed-smoke.test.mjs",
-      "line": 417,
+      "line": 436,
       "column": 27,
       "nodeKind": "PropertyAccessExpression",
       "container": "<top-level>",
@@ -14985,5 +14991,5 @@
   ],
   "violations": [],
   "migrated": true,
-  "canonicalPayloadSha256": "e5c4f026633fca71c744db43fde8c49654b35c9cd836508200258a6e978a3ea7"
+  "canonicalPayloadSha256": "d8fe72f2c5c23a2bb5a6276b646167a60427113f7a8c70d4cf9db4fc91bbec20"
 }

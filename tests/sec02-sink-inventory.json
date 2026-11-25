@@ -1089,7 +1089,7 @@
       "executionContract": "sec02-receipt",
       "testFile": "tests/integration/path-tool-gateway.test.mjs",
       "testCaseId": "SEC-02 real dispatcher executes read and exact-approved write/edit through scoped gateways",
-      "testFileSha256": "240e2d1453d6b78a374d55f4218082bfd4f235c6d23ff6eef9c7c15b51edba10"
+      "testFileSha256": "11a2f3d9c894259851255e17eef40dccaeb7d94e674765b879008c2905cae16e"
     },
     {
       "id": "download-streaming",
@@ -1129,7 +1129,7 @@
       "executionContract": "installed-parent-scan",
       "testFile": "tests/packaged/installed-smoke.test.mjs",
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke",
-      "testFileSha256": "1bcaa3c56877014cab58866af4b2f92b7b295fdb2749bfdf51f24e38c87295e0"
+      "testFileSha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea"
     },
     {
       "id": "process-cwd",
@@ -7514,5 +7514,5 @@
       "testCaseId": "current Windows installer repeats identity, persistence and cleanup smoke"
     }
   },
-  "canonicalPayloadSha256": "47b8a5a0d92b821b6ba434de55d568ed5d3bcf8af482fcffbd3ca632026678d2"
+  "canonicalPayloadSha256": "1b82c94913117b0ad471ae24ecca1289efbea9a96fad0dd7aea06b4958a2a40c"
 }

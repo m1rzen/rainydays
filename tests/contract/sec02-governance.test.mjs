@@ -66,7 +66,7 @@ test("SEC-02 cumulative views preserve frozen hashes, counts, tuples and source-
     ["SEC-02", null],
     ["GOV-03", "97907ee2f8e66e99381e52743ff8acb70bf82d640b641dc05f6ff6891194ba1f"],
   ]);
-  assert.deepEqual(manifest.cumulativeViews.map(view => [view.taskId, view.tests.length]), [["SEC-01", 12], ["SEC-02", 30], ["GOV-03", 31]]);
+  assert.deepEqual(manifest.cumulativeViews.map(view => [view.taskId, view.tests.length]), [["SEC-01", 12], ["SEC-02", 31], ["GOV-03", 32]]);
   assertCumulativeInclusion(manifest.cumulativeViews);
   assert(manifest.cumulativeViews[1].coverageExemptions.some(entry => entry.sourceTask === "SEC-01"));
   assert(manifest.cumulativeViews[1].coverageExemptions.some(entry => entry.sourceTask === "SEC-02"));

@@ -14,7 +14,7 @@ const frozenSourceHashes = Object.freeze({
   "SEC-01": "b836976785366f01d1147fef99fe30c53d44d07969708564e64ec3cd2d424964",
   "GOV-03": "97907ee2f8e66e99381e52743ff8acb70bf82d640b641dc05f6ff6891194ba1f",
 });
-const expectedViewCounts = Object.freeze({ "SEC-01": 12, "SEC-02": 30, "GOV-03": 31 });
+const expectedViewCounts = Object.freeze({ "SEC-01": 12, "SEC-02": 31, "GOV-03": 32 });
 const sourcePaths = Object.freeze({
   "SEC-01": "tests/manifests/sec-01.json",
   "SEC-02": "tests/manifests/sec-02.json",

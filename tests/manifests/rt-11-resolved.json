@@ -23,12 +23,12 @@
     },
     {
       "exactCasePath": "dist/index.js",
-      "sha256": "3ec7f9fa04823fc8ca807bdd8b399c4bda91ba277575a10863be4bc748343ab6",
+      "sha256": "1e7ee6fbe24c1384634361158ddbb92ebfc347a249f20fa8ebd03e402c6ee184",
       "owner": "RT-11"
     },
     {
       "exactCasePath": "dist/subagent-registry.js",
-      "sha256": "5e5de469772e1d3b9b4ecbed5301f18e5fa6b051b542530b3b0ee97e485bc42e",
+      "sha256": "32da25cdcd8500949b019f8b3efb5089d5eb4b6bf315ad14f7bae8a07101e29e",
       "owner": "RT-11"
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "exactCasePath": "scripts/prepare-electron-app.mjs",
-      "sha256": "ec121de3878bb41e7297b218f6f025d91d8d141e45eaac18ec8a2056ce81375e",
+      "sha256": "2e6e214e22a21ddfd5b6f1c4db47858490de686a9676e4536e8e9de0b59a8a83",
       "owner": "RT-11"
     },
     {
@@ -78,12 +78,12 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "54ac0c7e279c4dc66de636b812bc530392b911357fe25263b597367bbc3c7a79",
+      "sha256": "44a0193bde436620d86d0e080a5af6f9cadfb605f99504f0e680b86de8d3b5ea",
       "owner": "RT-11"
     },
     {
       "exactCasePath": "src/subagent-registry.ts",
-      "sha256": "cb9426bfdab53c58a8e27d275dba15fa9de0070048cdd4c1e990044eebbbecc2",
+      "sha256": "8f9c8578703dfa0c85a7b53dee90c14d395b01ffe032a9af9d13c703e7260934",
       "owner": "RT-11"
     },
     {
@@ -167,5 +167,5 @@
       "owner": "RT-11"
     }
   ],
-  "canonicalPayloadSha256": "93422ac4dc6f80b483822c46c21ccb0579b81e6513bf4f3559fa5e6d1fc1ab0c"
+  "canonicalPayloadSha256": "0ec30a1f6bc06e7b7aa9a71abab8fd9586be5beeba31a56c9b9ceaac949a385e"
 }

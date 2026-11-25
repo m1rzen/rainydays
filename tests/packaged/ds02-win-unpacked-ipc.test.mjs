@@ -18,7 +18,7 @@ const executable = path.join(projectRoot, "release", "win-unpacked", "RainyDays.
 const expectedKeys = [
   "appVersion", "buildId", "capabilities", "isElectron", "notify", "onNotificationClicked", "platform",
   "selectDirectory", "selectFile", "selectSavePath", "terminalClear", "terminalClose", "terminalInput",
-  "terminalKill", "terminalResize", "terminalStart", "windowAction", "windowState",
+  "terminalKill", "terminalResize", "terminalStart", "updateTrayState", "windowAction", "windowState",
 ];
 
 async function listenerClosed(port) {
@@ -78,6 +78,7 @@ test("DS-02 win-unpacked exposes only the typed desktop bridge", { timeout: 90_0
         state:await api.windowState(),
         invalidNotification:await reject(()=>api.notify({id:'../escape',title:'x',body:'y'})),
         extraField:await reject(()=>api.notify({id:'safe',title:'x',body:'y',channel:'shell'})),
+        invalidTrayState:await reject(()=>api.updateTrayState({unread:'1',running:0,errors:0,firstUnreadSessionId:null})),
         nodeGlobals:[typeof window.require,typeof window.process,typeof window.module],
         csp:root.headers.get('content-security-policy')||'',
         inlineScript:window.__sec07InlineScript,
@@ -104,6 +105,7 @@ test("DS-02 win-unpacked exposes only the typed desktop bridge", { timeout: 90_0
     assert.equal(typeof result.state?.bounds?.height, "number");
     assert.match(result.invalidNotification, /Notification id is invalid/u);
     assert.match(result.extraField, /Notification request fields are invalid/u);
+    assert.match(result.invalidTrayState, /Tray unread count is invalid/u);
     assert.deepEqual(result.nodeGlobals, ["undefined", "undefined", "undefined"]);
     assert.equal(result.inlineScript, false);
     assert.equal(result.inlineHandler, false);

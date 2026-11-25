@@ -3,6 +3,7 @@ import { readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateSec03NativeProjection } from "./build-inputs.mjs";
+import { writeDocumentParserWorkerBundle } from "./document-parser-worker-bundle.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const distDirectory = path.join(projectRoot, "dist");
@@ -40,6 +41,7 @@ buildInfo.versions.executionIsolation = {
 };
 await validateSec03NativeProjection(projectRoot, { buildInfo });
 
+await writeDocumentParserWorkerBundle(projectRoot, distDirectory);
 const files = await listFiles(distDirectory);
 const manifest = {
   schemaVersion: 2,
