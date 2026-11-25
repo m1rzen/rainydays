@@ -1,9 +1,11 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import net from "node:net";
 import os from "node:os";
 import path from "node:path";
+import { getBootstrapPathStore, type BootstrapRuntimeFileLease } from "./bootstrap-path-store.js";
+import { PathDeniedError, type PathAuthority, type PathRequest } from "./path-policy.js";
+import { pathPolicy } from "./path-runtime.js";
+import { terminateProcessTree } from "./process-tree.js";
 import { USER_DATA_DIR } from "./runtime-paths.js";
 import { pngSize, registerObservation, type ToolObservation } from "./observations.js";
 
@@ -165,7 +167,7 @@ class CdpConnection {
 
   constructor(url: string) {
     this.url = url;
-    this.socket = new WebSocket(url);
+    this.socket = new WebSocket(loopbackWebSocket(url));
     this.ready = new Promise((resolve, reject) => {
       this.socket.addEventListener("open", () => resolve(), { once: true });
       this.socket.addEventListener("error", () => reject(new Error(`CDP WebSocket failed: ${url}`)), { once: true });
@@ -226,17 +228,21 @@ function safePort(value: unknown): number | undefined {
   return value;
 }
 
-async function freePort(): Promise<number> {
-  const server = net.createServer();
-  await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", resolve);
-  });
-  const address = server.address();
-  const port = typeof address === "object" && address ? address.port : 0;
-  await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
-  if (!port) throw new Error("Unable to allocate a CDP port");
-  return port;
+function loopbackWebSocket(input: string, endpoint?: string): string {
+  const url = new URL(exactText(input, "Browser WebSocket URL", 8_192));
+  if ((url.protocol !== "ws:" && url.protocol !== "wss:") ||
+      (url.hostname !== "127.0.0.1" && url.hostname !== "[::1]") ||
+      url.username || url.password || url.hash) {
+    throw new Error("Browser WebSocket must use a numeric loopback address without credentials or fragments");
+  }
+  if (endpoint && (url.protocol !== "ws:" || url.host !== new URL(endpoint).host)) {
+    throw new Error("CDP target WebSocket does not match the selected browser endpoint");
+  }
+  return url.href;
+}
+
+function requestCdp(baseUrl: string, endpoint: string, method?: "PUT"): Promise<Response> {
+  return fetch(`${baseUrl}${endpoint}`, { method, redirect: "error", signal: AbortSignal.timeout(2_000) });
 }
 
 function browserCandidates(): string[] {
@@ -251,12 +257,83 @@ function browserCandidates(): string[] {
   return ["/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser", "/usr/bin/microsoft-edge"];
 }
 
-async function firstExecutable(): Promise<string> {
-  const { access } = await import("node:fs/promises");
+async function firstExecutable(): Promise<BootstrapRuntimeFileLease> {
   for (const candidate of browserCandidates()) {
-    try { await access(candidate); return candidate; } catch { /* continue */ }
+    try { return await getBootstrapPathStore().openBrowserExecutable(candidate); }
+    catch (error) {
+      if (!(error instanceof PathDeniedError) || !["PATH_NOT_FOUND", "PATH_ROOT_UNAVAILABLE"].includes(error.code)) throw error;
+    }
   }
   throw new Error("Chrome/Chromium was not found; provide cdpUrl, cdpPort, extensionUrl, or RAINYDAYS_CHROME_PATH");
+}
+
+interface BrowserTemporaryDirectory {
+  readonly canonicalPath: string;
+  readonly authority: PathAuthority;
+  dispose(removeContents: boolean): Promise<void>;
+}
+
+function browserTempRequest(input: string, operation: PathRequest["operation"]): PathRequest {
+  return { input, operation, defaultRootId: "browser-temp" };
+}
+
+async function openBrowserTemporaryDirectory(prefix: "profile" | "io"): Promise<BrowserTemporaryDirectory> {
+  const parentPath = os.tmpdir();
+  const parent = await pathPolicy.createAuthority([{
+    rootId: "browser-temp", role: "browser-temporary-parent", configuredPath: parentPath, permissions: ["create-directory"],
+  }]);
+  try {
+    const name = `rainydays-browser-${prefix}-${randomUUID()}`;
+    const enrollment = await pathPolicy.createDirectoryEnrollment(parent, browserTempRequest(name, "create-directory"));
+    try {
+      if (enrollment.createdDirectories !== 1) throw new Error("Browser temporary directory already exists");
+      const authority = await pathPolicy.createAuthority([{
+        rootId: "browser-temp", role: "browser-temporary", configuredPath: path.join(parentPath, name),
+        permissions: ["read-file", "read-directory", "create-directory", "create-file", "replace-file"],
+      }]);
+      const { canonicalPath } = await pathPolicy.qualifyExisting(authority, browserTempRequest("", "read-directory"), "directory");
+      let remaining = 10_000;
+      const empty = async (input: string, depth: number): Promise<void> => {
+        if (depth > 32 || remaining < 1) throw new Error("Browser temporary directory cleanup exceeded its limit");
+        const entries = await pathPolicy.listDirectory(authority, browserTempRequest(input, "read-directory"), remaining);
+        remaining -= entries.length;
+        for (const entry of entries) {
+          const child = path.join(input, entry.name);
+          if (entry.type === "directory") {
+            await empty(child, depth + 1);
+            await pathPolicy.removeDirectory(authority, browserTempRequest(child, "create-directory"));
+          } else await pathPolicy.removeFile(authority, browserTempRequest(child, "replace-file"));
+        }
+      };
+      return { canonicalPath, authority, async dispose(removeContents) {
+        try {
+          if (removeContents) { await empty("", 0); await enrollment.rollback(); }
+        }
+        finally { pathPolicy.revoke(authority); }
+      } };
+    } catch (error) {
+      await enrollment.rollback().catch(() => undefined);
+      throw error;
+    }
+  } finally { pathPolicy.revoke(parent); }
+}
+
+async function waitForOwnedEndpoint(profile: BrowserTemporaryDirectory, child: ChildProcess): Promise<{ baseUrl: string; socketPath: string }> {
+  const deadline = Date.now() + 12_000;
+  while (Date.now() < deadline && child.exitCode === null && child.signalCode === null) {
+    try {
+      const { bytes } = await pathPolicy.readFile(profile.authority, browserTempRequest("DevToolsActivePort", "read-file"), 1_024);
+      const [portText, socketPath] = Buffer.from(bytes).toString("utf8").trim().split(/\r?\n/u);
+      const port = Number(portText);
+      if (Number.isInteger(port) && port >= 1_024 && port <= 65_535 && /^\/devtools\/browser\/[0-9a-f-]+$/iu.test(socketPath ?? "")) {
+        return { baseUrl: `http://127.0.0.1:${port}`, socketPath };
+      }
+    } catch (error) {
+      if (!(error instanceof PathDeniedError) || error.code !== "PATH_NOT_FOUND") throw error;
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error("The owned browser did not publish its CDP endpoint");
 }
 
 async function waitForEndpoint(baseUrl: string, timeoutMs = 12_000): Promise<void> {
@@ -264,7 +341,7 @@ async function waitForEndpoint(baseUrl: string, timeoutMs = 12_000): Promise<voi
   let lastError: unknown;
   while (Date.now() < deadline) {
     try {
-      const response = await fetch(`${baseUrl}/json/version`);
+      const response = await requestCdp(baseUrl, "/json/version");
       if (response.ok) return;
     } catch (error) { lastError = error; }
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -295,9 +372,11 @@ function renderSnapshot(value: unknown, maximum: number): string {
 export class CdpBrowserBackend implements BrowserBackend {
   readonly kind = "cdp" as const;
   #baseUrl: string | null = null;
+  #connecting: Promise<void> | null = null;
   #directTarget: CdpTarget | null = null;
   #spawned: ChildProcess | null = null;
-  #profilePath: string | null = null;
+  #profile: BrowserTemporaryDirectory | null = null;
+  #ownedSocketPath: string | null = null;
   #connections = new Map<string, CdpConnection>();
   #tabNumbers = new Map<string, number>();
   #nextTabNumber = 1;
@@ -307,10 +386,11 @@ export class CdpBrowserBackend implements BrowserBackend {
   #attached = false;
   #owned = new Set<string>();
   #browserConnection: CdpConnection | null = null;
-  #ioPath: string | null = null;
+  #ioDirectory: Promise<BrowserTemporaryDirectory> | null = null;
   #downloads = new Map<string, DownloadRecord>();
   #nextDownloadId = 1;
   #downloadsEnabled = false;
+  #downloadAuthority: PathAuthority | null = null;
   #headless = false;
   /** Per tab: the latest viewport screenshot geometry, used to map image points back to page points. */
   #lastViewportShot = new Map<string, { scale: number; cssWidth: number; cssHeight: number }>();
@@ -318,24 +398,26 @@ export class CdpBrowserBackend implements BrowserBackend {
   async #connect(options: BrowserOpenOptions): Promise<void> {
     if (this.#baseUrl || this.#directTarget) return;
     if (options.cdpUrl) {
-      const wsUrl = exactText(options.cdpUrl, "CDP URL", 8_192);
-      if (!/^wss?:\/\//iu.test(wsUrl)) throw new Error("cdpUrl must use ws:// or wss://");
+      const wsUrl = loopbackWebSocket(options.cdpUrl);
       this.#directTarget = { id: "direct", type: "page", url: "about:blank", title: "Direct CDP", webSocketDebuggerUrl: wsUrl };
       this.#owned.add("direct");
       return;
     }
     const requestedPort = safePort(options.cdpPort) ?? safePort(Number(process.env.LUX_CDP_PORT) || undefined);
-    const ports = requestedPort ? [requestedPort] : [9222, 9223];
-    for (const port of ports) {
-      const candidate = `http://127.0.0.1:${port}`;
-      try { await waitForEndpoint(candidate, 500); this.#baseUrl = candidate; this.#attached = true; await this.#connectBrowser(); return; } catch { /* discover next */ }
+    if (requestedPort) {
+      const candidate = `http://127.0.0.1:${requestedPort}`;
+      await waitForEndpoint(candidate, 500);
+      this.#baseUrl = candidate;
+      this.#attached = true;
+      await this.#connectBrowser();
+      return;
     }
+    const profile = this.#profile = await openBrowserTemporaryDirectory("profile");
     const executable = await firstExecutable();
-    const port = requestedPort ?? await freePort();
-    this.#profilePath = await mkdtemp(path.join(os.tmpdir(), "rainydays-browser-"));
     const args = [
-      `--remote-debugging-port=${port}`,
-      `--user-data-dir=${this.#profilePath}`,
+      "--remote-debugging-address=127.0.0.1",
+      "--remote-debugging-port=0",
+      `--user-data-dir=${profile.canonicalPath}`,
       "--no-first-run",
       "--no-default-browser-check",
       "--disable-default-apps",
@@ -344,9 +426,18 @@ export class CdpBrowserBackend implements BrowserBackend {
     this.#headless = options.headless === true;
     if (options.headless) args.push("--headless=new", "--disable-gpu");
     args.push("about:blank");
-    this.#spawned = spawn(executable, args, { stdio: "ignore", windowsHide: Boolean(options.headless) });
-    this.#baseUrl = `http://127.0.0.1:${port}`;
-    try { await waitForEndpoint(this.#baseUrl); } catch (error) { await this.close(); throw error; }
+    try {
+      await pathPolicy.qualifyExisting(profile.authority, browserTempRequest("", "read-directory"), "directory");
+      await executable.assertCurrent("beforeProcessSpawn");
+      const child = this.#spawned = spawn(executable.canonicalPath, args, { shell: false, stdio: "ignore", windowsHide: Boolean(options.headless) });
+      await new Promise<void>((resolve, reject) => {
+        child.once("spawn", resolve);
+        child.on("error", reject);
+      });
+    } finally { await executable.close(); }
+    const { baseUrl, socketPath } = await waitForOwnedEndpoint(profile, this.#spawned);
+    this.#baseUrl = baseUrl;
+    this.#ownedSocketPath = socketPath;
     await this.#connectBrowser();
   }
 
@@ -354,17 +445,32 @@ export class CdpBrowserBackend implements BrowserBackend {
   async #connectBrowser(): Promise<void> {
     if (!this.#baseUrl || this.#browserConnection) return;
     try {
-      const version = await (await fetch(`${this.#baseUrl}/json/version`)).json() as { webSocketDebuggerUrl?: string };
+      const version = await (await requestCdp(this.#baseUrl, "/json/version")).json() as { webSocketDebuggerUrl?: string };
       if (!version.webSocketDebuggerUrl) return;
-      const connection = new CdpConnection(version.webSocketDebuggerUrl);
+      const socket = loopbackWebSocket(version.webSocketDebuggerUrl, this.#baseUrl);
+      if (this.#ownedSocketPath && new URL(socket).pathname !== this.#ownedSocketPath) throw new Error("CDP browser does not match the launched profile");
+      const connection = new CdpConnection(socket);
       await connection.ready;
       this.#browserConnection = connection;
       if (this.#attached) return; // Never change download behaviour of a browser the user owns.
-      const downloadPath = path.join(await this.#io(), "downloads");
-      await mkdir(downloadPath, { recursive: true });
+      const directory = await this.#io();
+      const enrollment = await pathPolicy.createDirectoryEnrollment(directory.authority, browserTempRequest("downloads", "create-directory"));
+      enrollment.commit();
+      const { canonicalPath: downloadPath } = await pathPolicy.qualifyExisting(directory.authority, browserTempRequest("downloads", "read-directory"), "directory");
+      const authority = await pathPolicy.createAuthority([{
+        rootId: "browser-downloads",
+        role: "browser-downloads",
+        configuredPath: downloadPath,
+        permissions: ["read-file"],
+      }]);
+      if (this.#browserConnection !== connection) {
+        pathPolicy.revoke(authority);
+        return;
+      }
+      this.#downloadAuthority = authority;
       connection.on("Browser.downloadWillBegin", params => {
         const guid = String(params.guid ?? "");
-        if (!guid || this.#downloads.has(guid)) return;
+        if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu.test(guid) || this.#downloads.has(guid)) return;
         this.#downloads.set(guid, { id: this.#nextDownloadId++, guid, name: String(params.suggestedFilename ?? "download").slice(0, 200), url: String(params.url ?? "").slice(0, 2048), state: "inProgress", receivedBytes: 0, totalBytes: 0 });
       });
       connection.on("Browser.downloadProgress", params => {
@@ -374,14 +480,25 @@ export class CdpBrowserBackend implements BrowserBackend {
         if (typeof params.receivedBytes === "number") record.receivedBytes = params.receivedBytes;
         if (typeof params.totalBytes === "number") record.totalBytes = params.totalBytes;
       });
-      await connection.send("Browser.setDownloadBehavior", { behavior: "allowAndName", downloadPath, eventsEnabled: true });
-      this.#downloadsEnabled = true;
-    } catch { /* downloads stay unavailable; page actions still work */ }
+      try {
+        await connection.send("Browser.setDownloadBehavior", { behavior: "allowAndName", downloadPath, eventsEnabled: true });
+        this.#downloadsEnabled = this.#downloadAuthority === authority;
+      } catch (error) {
+        if (this.#downloadAuthority === authority) {
+          pathPolicy.revoke(authority);
+          this.#downloadAuthority = null;
+        }
+        throw error;
+      }
+    } catch (error) {
+      if (!this.#attached && !this.#browserConnection) throw error;
+      // Downloads stay unavailable when the browser-level connection is usable.
+    }
   }
 
-  async #io(): Promise<string> {
-    if (!this.#ioPath) this.#ioPath = await mkdtemp(path.join(os.tmpdir(), "rainydays-browser-io-"));
-    return this.#ioPath;
+  #io(): Promise<BrowserTemporaryDirectory> {
+    this.#ioDirectory ??= openBrowserTemporaryDirectory("io");
+    return this.#ioDirectory;
   }
 
   async #adoptPopups(targets: CdpTarget[]): Promise<void> {
@@ -400,7 +517,7 @@ export class CdpBrowserBackend implements BrowserBackend {
   async #targets(): Promise<CdpTarget[]> {
     if (this.#directTarget) return [this.#directTarget];
     if (!this.#baseUrl) throw new Error("Browser is not connected");
-    const response = await fetch(`${this.#baseUrl}/json/list`);
+    const response = await requestCdp(this.#baseUrl, "/json/list");
     if (!response.ok) throw new Error(`CDP target listing failed: HTTP ${response.status}`);
     const values = (await response.json() as CdpTarget[]).filter(target => target.type === "page" && typeof target.webSocketDebuggerUrl === "string");
     if (!this.#attached) return values;
@@ -437,7 +554,7 @@ export class CdpBrowserBackend implements BrowserBackend {
   async #connection(target: CdpTarget): Promise<CdpConnection> {
     let connection = this.#connections.get(target.id);
     if (!connection) {
-      connection = new CdpConnection(target.webSocketDebuggerUrl);
+      connection = new CdpConnection(loopbackWebSocket(target.webSocketDebuggerUrl, this.#baseUrl ?? undefined));
       this.#connections.set(target.id, connection);
       const targetId = target.id;
       connection.on("Page.frameNavigated", params => { const frame = params.frame as { parentId?: string } | undefined; if (!frame?.parentId) this.#invalidate(targetId); });
@@ -473,11 +590,13 @@ export class CdpBrowserBackend implements BrowserBackend {
   #invalidate(targetId: string): void { this.#refs.delete(targetId); this.#lastViewportShot.delete(targetId); }
 
   async open(options: BrowserOpenOptions): Promise<BrowserTab> {
-    await this.#connect(options);
+    const connecting = this.#connecting ??= this.#connect(options);
+    try { await connecting; }
+    finally { if (this.#connecting === connecting) this.#connecting = null; }
     const url = normalizeUrl(options.url);
     let target = await this.#target(options.tab).catch(async () => {
       if (!this.#baseUrl) throw new Error("Direct CDP target is unavailable");
-      const response = await fetch(`${this.#baseUrl}/json/new?${encodeURIComponent("about:blank")}`, { method: "PUT" });
+      const response = await requestCdp(this.#baseUrl, `/json/new?${encodeURIComponent("about:blank")}`, "PUT");
       if (!response.ok) throw new Error(`Creating browser tab failed: HTTP ${response.status}`);
       const created = await response.json() as CdpTarget;
       this.#owned.add(created.id);
@@ -491,8 +610,9 @@ export class CdpBrowserBackend implements BrowserBackend {
   }
 
   async close(): Promise<void> {
+    await this.#connecting?.catch(() => undefined);
     if (this.#attached && this.#baseUrl) {
-      for (const targetId of this.#owned) await fetch(`${this.#baseUrl}/json/close/${encodeURIComponent(targetId)}`).catch(() => undefined);
+      for (const targetId of this.#owned) await requestCdp(this.#baseUrl, `/json/close/${encodeURIComponent(targetId)}`).catch(() => undefined);
     }
     for (const connection of this.#connections.values()) connection.close();
     this.#connections.clear();
@@ -502,16 +622,27 @@ export class CdpBrowserBackend implements BrowserBackend {
     this.#attached = false;
     this.#downloads.clear();
     this.#downloadsEnabled = false;
-    if (this.#ioPath) await rm(this.#ioPath, { recursive: true, force: true }).catch(() => undefined);
-    this.#ioPath = null;
-    if (this.#spawned && this.#spawned.exitCode === null) this.#spawned.kill("SIGTERM");
+    if (this.#downloadAuthority) pathPolicy.revoke(this.#downloadAuthority);
+    this.#downloadAuthority = null;
+    const child = this.#spawned;
     this.#spawned = null;
-    if (this.#profilePath) await rm(this.#profilePath, { recursive: true, force: true }).catch(() => undefined);
-    this.#profilePath = null;
+    const profile = this.#profile;
+    this.#profile = null;
+    const io = this.#ioDirectory;
+    this.#ioDirectory = null;
+    this.#ownedSocketPath = null;
     this.#baseUrl = null;
     this.#directTarget = null;
     this.#activeTargetId = null;
     this.#refs.clear();
+    let canClean = !child?.pid;
+    try {
+      if (child?.pid) await terminateProcessTree(child);
+      canClean = true;
+    } finally {
+      const cleaned = await Promise.allSettled([profile?.dispose(canClean), io?.then(directory => directory.dispose(canClean))]);
+      if (canClean) for (const result of cleaned) if (result.status === "rejected") throw result.reason;
+    }
   }
 
   async tabs(): Promise<BrowserTab[]> { return this.#tabValues(); }
@@ -519,7 +650,7 @@ export class CdpBrowserBackend implements BrowserBackend {
   async newTab(urlInput: string): Promise<BrowserTab> {
     const url = normalizeUrl(urlInput);
     if (!this.#baseUrl) throw new Error("New tabs require a browser-level CDP endpoint");
-    const response = await fetch(`${this.#baseUrl}/json/new?${encodeURIComponent(url)}`, { method: "PUT" });
+    const response = await requestCdp(this.#baseUrl, `/json/new?${encodeURIComponent(url)}`, "PUT");
     if (!response.ok) throw new Error(`Creating browser tab failed: HTTP ${response.status}`);
     const target = await response.json() as CdpTarget;
     this.#owned.add(target.id);
@@ -533,7 +664,7 @@ export class CdpBrowserBackend implements BrowserBackend {
     connection?.close();
     this.#connections.delete(target.id);
     if (this.#baseUrl) {
-      const response = await fetch(`${this.#baseUrl}/json/close/${encodeURIComponent(target.id)}`);
+      const response = await requestCdp(this.#baseUrl, `/json/close/${encodeURIComponent(target.id)}`);
       if (!response.ok) throw new Error(`Closing browser tab failed: HTTP ${response.status}`);
     } else connection?.close();
     this.#refs.delete(target.id);
@@ -674,9 +805,11 @@ export class CdpBrowserBackend implements BrowserBackend {
   }
 
   async uploadDirectory(): Promise<string> {
-    const directory = path.join(await this.#io(), "uploads", String(Date.now()));
-    await mkdir(directory, { recursive: true });
-    return directory;
+    const io = await this.#io();
+    const relative = path.join("uploads", randomUUID());
+    const enrollment = await pathPolicy.createDirectoryEnrollment(io.authority, browserTempRequest(relative, "create-directory"));
+    enrollment.commit();
+    return (await pathPolicy.qualifyExisting(io.authority, browserTempRequest(relative, "read-directory"), "directory")).canonicalPath;
   }
 
   async upload(ref: string, hostFile: string, tab?: BrowserTabSelector): Promise<void> {
@@ -693,14 +826,17 @@ export class CdpBrowserBackend implements BrowserBackend {
   }
 
   async readDownload(id: number, maximumBytes: number): Promise<Readonly<{ name: string; bytes: Buffer }>> {
+    const authority = this.#downloadAuthority;
+    if (!this.#downloadsEnabled || !authority) throw new Error("Downloads are unavailable for this browser connection");
     const record = [...this.#downloads.values()].find(item => item.id === id);
     if (!record) throw new Error(`Browser download was not found: ${id}`);
     if (record.state !== "completed") throw new Error(`Browser download ${id} is ${record.state}; wait until it completes`);
-    const { readFile, stat } = await import("node:fs/promises");
-    const file = path.join(await this.#io(), "downloads", record.guid);
-    const info = await stat(file);
-    if (info.size > maximumBytes) throw new Error(`Browser download ${id} exceeds ${maximumBytes} bytes`);
-    return Object.freeze({ name: record.name, bytes: await readFile(file) });
+    const { bytes } = await pathPolicy.readFile(authority, {
+      input: record.guid,
+      operation: "read-file",
+      defaultRootId: "browser-downloads",
+    }, maximumBytes);
+    return Object.freeze({ name: record.name, bytes: Buffer.from(bytes) });
   }
 
   /** Hands the visible tab to the user (login, verification). Every ref is dropped so work resumes from a fresh observation. */
@@ -790,7 +926,7 @@ class ExtensionRpc {
   #pending = new Map<number, PendingRequest>();
 
   constructor(url: string) {
-    this.socket = new WebSocket(url);
+    this.socket = new WebSocket(loopbackWebSocket(url));
     this.ready = new Promise((resolve, reject) => {
       this.socket.addEventListener("open", () => resolve(), { once: true });
       this.socket.addEventListener("error", () => reject(new Error(`Browser Extension bridge failed: ${url}`)), { once: true });
@@ -827,9 +963,7 @@ export class ExtensionBrowserBackend implements BrowserBackend {
 
   constructor(sessionId: string, urlInput: string) {
     this.sessionId = exactText(sessionId, "Browser session id", 200);
-    const url = exactText(urlInput, "Extension bridge URL", 8_192);
-    if (!/^wss?:\/\//iu.test(url)) throw new Error("Extension bridge URL must use ws:// or wss://");
-    this.rpc = new ExtensionRpc(url);
+    this.rpc = new ExtensionRpc(urlInput);
   }
 
   #call<T>(method: string, params: Record<string, unknown> = {}): Promise<T> { return this.rpc.call<T>(method, { sessionId: this.sessionId, ...params }); }
@@ -937,11 +1071,19 @@ export class BrowserSessionManager {
     const sessionId = this.#sessionId(sessionIdInput);
     const screenshot = await this.#backend(sessionId).screenshot(fullPage, tab);
     const sessionDirectory = createHash("sha256").update(sessionId).digest("hex").slice(0, 24);
-    const directory = path.join(USER_DATA_DIR, "browser-artifacts", sessionDirectory);
-    await mkdir(directory, { recursive: true });
-    const filePath = path.join(directory, `screenshot-${Date.now()}.png`);
-    await writeFile(filePath, screenshot.bytes, { flag: "wx" });
-    const observation = screenshot.cssWidth && screenshot.cssHeight && screenshot.scale ? registerObservation(sessionId, screenshot.bytes, {
+    const directory = path.join("browser-artifacts", sessionDirectory);
+    const authority = await pathPolicy.createAuthority([{
+      rootId: "browser-artifacts", role: "browser-artifacts", configuredPath: USER_DATA_DIR,
+      permissions: ["create-directory", "create-file"],
+    }]);
+    const relative = path.join(directory, `screenshot-${Date.now()}-${randomUUID()}.png`);
+    try {
+      const enrollment = await pathPolicy.createDirectoryEnrollment(authority, { input: directory, operation: "create-directory", defaultRootId: "browser-artifacts" });
+      enrollment.commit();
+      await pathPolicy.createFile(authority, { input: relative, operation: "create-file", defaultRootId: "browser-artifacts" }, screenshot.bytes);
+    } finally { pathPolicy.revoke(authority); }
+    const filePath = path.join(USER_DATA_DIR, relative);
+    const observation = screenshot.cssWidth && screenshot.cssHeight && screenshot.scale ? await registerObservation(sessionId, screenshot.bytes, {
       sourceWidth: screenshot.cssWidth, sourceHeight: screenshot.cssHeight, scale: screenshot.scale, source: "browser_screenshot",
       target: `${screenshot.tab.title} <${screenshot.tab.url}>`.slice(0, 300), viewport: screenshot.viewport === true,
     }) : undefined;

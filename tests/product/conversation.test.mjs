@@ -182,7 +182,7 @@ test("文档附件保留原文，模型获得索引，读取工具分段取回�
       const ready = store.completeAttachment(sessionId, draft.id, bytes);
       const memory = new ConversationMemory(); memory.setSessionId(sessionId);
       memory.add({ role: "user", content: "读完并引用依据", attachments: [ready] });
-      const projected = projectMessagesForProvider(sessionId, memory.getAll(), store.readMessageAttachmentForSession);
+      const projected = await projectMessagesForProvider(sessionId, memory.getAll(), store.readMessageAttachmentForSession);
       assert.match(JSON.stringify(projected), new RegExp(`attachment:${ready.id}`));
       assert(!JSON.stringify(projected).includes("PK\\u0003"));
       assert.deepEqual(store.readMessageAttachmentForSession(sessionId, ready.id).bytes, bytes);

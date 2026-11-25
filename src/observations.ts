@@ -5,8 +5,9 @@
 // ===========================================
 
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { PathDeniedError, type PathRequest } from "./path-policy.js";
+import { pathPolicy } from "./path-runtime.js";
 import { USER_DATA_DIR } from "./runtime-paths.js";
 
 export interface ToolObservation {
@@ -32,9 +33,18 @@ export const OBSERVATION_MARKER = "rainydaysObservation";
 const MAX_OBSERVATION_BYTES = 8 * 1024 * 1024;
 const MAX_PER_SESSION = 40;
 const index = new Map<string, Map<string, ToolObservation>>();
+const pending = new Map<string, Promise<ToolObservation>>();
 
 function directory(sessionId: string): string {
-  return path.join(USER_DATA_DIR, "observations", createHash("sha256").update(sessionId).digest("hex").slice(0, 24));
+  return path.join("observations", createHash("sha256").update(sessionId).digest("hex").slice(0, 24));
+}
+
+function observationFile(sessionId: string, observation: Pick<ToolObservation, "sha256" | "mime">): string {
+  return path.join(directory(sessionId), `${observation.sha256}${observation.mime === "image/jpeg" ? ".jpg" : ".png"}`);
+}
+
+function observationRequest(input: string, operation: PathRequest["operation"]): PathRequest {
+  return { input, operation, defaultRootId: "observations" };
 }
 
 export function pngSize(bytes: Buffer): Readonly<{ width: number; height: number }> {
@@ -68,25 +78,50 @@ export function imageSize(bytes: Buffer): Readonly<{ mime: "image/png" | "image/
   throw new Error("Observation is not a PNG or JPEG image");
 }
 
-export function registerObservation(sessionId: string, bytes: Buffer, meta: Omit<ToolObservation, "sha256" | "mime" | "width" | "height" | "capturedAt">): ToolObservation {
+export async function registerObservation(sessionId: string, bytes: Buffer, meta: Omit<ToolObservation, "sha256" | "mime" | "width" | "height" | "capturedAt">): Promise<ToolObservation> {
   if (bytes.length > MAX_OBSERVATION_BYTES) throw new Error("Observation image exceeds the size limit");
-  const { mime, width, height } = imageSize(bytes);
-  const sha256 = createHash("sha256").update(bytes).digest("hex");
-  const dir = directory(sessionId);
-  mkdirSync(dir, { recursive: true });
-  try { writeFileSync(path.join(dir, `${sha256}${mime === "image/jpeg" ? ".jpg" : ".png"}`), bytes, { flag: "wx" }); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
+  const snapshot = Buffer.from(bytes);
+  const { mime, width, height } = imageSize(snapshot);
+  const sha256 = createHash("sha256").update(snapshot).digest("hex");
   const observation: ToolObservation = Object.freeze({ ...meta, sha256, mime, width, height, capturedAt: new Date().toISOString() });
-  let session = index.get(sessionId);
-  if (!session) { session = new Map(); index.set(sessionId, session); }
-  session.delete(sha256);
-  session.set(sha256, observation);
-  while (session.size > MAX_PER_SESSION) {
-    const oldest = session.keys().next().value!;
-    const evicted = session.get(oldest)!;
-    session.delete(oldest);
-    rmSync(path.join(dir, `${oldest}${evicted.mime === "image/jpeg" ? ".jpg" : ".png"}`), { force: true });
+  const write = async () => {
+    const authority = await pathPolicy.createAuthority([{
+      rootId: "observations", role: "observations", configuredPath: USER_DATA_DIR,
+      permissions: ["read-file", "create-directory", "create-file", "replace-file"],
+    }]);
+    try {
+      const enrollment = await pathPolicy.createDirectoryEnrollment(authority, observationRequest(directory(sessionId), "create-directory"));
+      enrollment.commit();
+      const file = observationFile(sessionId, observation);
+      try { await pathPolicy.createFile(authority, observationRequest(file, "create-file"), snapshot, MAX_OBSERVATION_BYTES); }
+      catch (error) {
+        if (!(error instanceof PathDeniedError) || error.code !== "PATH_OPERATION_DENIED") throw error;
+        const existing = await pathPolicy.readFile(authority, observationRequest(file, "read-file"), MAX_OBSERVATION_BYTES);
+        if (createHash("sha256").update(existing.bytes).digest("hex") !== sha256) throw error;
+      }
+      let session = index.get(sessionId);
+      if (!session) { session = new Map(); index.set(sessionId, session); }
+      if (!session.has(sha256) && session.size >= MAX_PER_SESSION) {
+        const oldest = session.keys().next().value!;
+        const evicted = session.get(oldest)!;
+        try { await pathPolicy.removeFile(authority, observationRequest(observationFile(sessionId, evicted), "replace-file")); }
+        catch (error) {
+          if (!(error instanceof PathDeniedError) || error.code !== "PATH_NOT_FOUND") throw error;
+        }
+        session.delete(oldest);
+      }
+      session.delete(sha256);
+      session.set(sha256, observation);
+      return observation;
+    } finally { pathPolicy.revoke(authority); }
+  };
+  const previous = pending.get(sessionId);
+  const queued = previous ? previous.then(write, write) : write();
+  pending.set(sessionId, queued);
+  try { return await queued; }
+  finally {
+    if (pending.get(sessionId) === queued) pending.delete(sessionId);
   }
-  return observation;
 }
 
 export function knownObservation(sessionId: string, sha256: string): ToolObservation | null {
@@ -94,12 +129,17 @@ export function knownObservation(sessionId: string, sha256: string): ToolObserva
 }
 
 /** Bytes of a registered observation, verified against its digest; null when unknown, evicted or altered. */
-export function loadObservationBytes(sessionId: string, sha256: string): Buffer | null {
-  if (!/^[a-f0-9]{64}$/u.test(sha256) || !knownObservation(sessionId, sha256)) return null;
-  const file = path.join(directory(sessionId), `${sha256}${knownObservation(sessionId, sha256)!.mime === "image/jpeg" ? ".jpg" : ".png"}`);
+export async function loadObservationBytes(sessionId: string, sha256: string): Promise<Buffer | null> {
+  const observation = knownObservation(sessionId, sha256);
+  if (!observation) return null;
   try {
-    const bytes = readFileSync(file);
-    return createHash("sha256").update(bytes).digest("hex") === sha256 ? bytes : null;
+    const authority = await pathPolicy.createAuthority([{
+      rootId: "observations", role: "observations", configuredPath: USER_DATA_DIR, permissions: ["read-file"],
+    }]);
+    try {
+      const { bytes } = await pathPolicy.readFile(authority, observationRequest(observationFile(sessionId, observation), "read-file"), MAX_OBSERVATION_BYTES);
+      return knownObservation(sessionId, sha256) && createHash("sha256").update(bytes).digest("hex") === sha256 ? Buffer.from(bytes) : null;
+    } finally { pathPolicy.revoke(authority); }
   } catch { return null; }
 }
 

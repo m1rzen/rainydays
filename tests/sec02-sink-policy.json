@@ -2214,6 +2214,84 @@
       }
     },
     {
+      "siteId": "sink-5bd5e1615b9fc6c6722d0229",
+      "sourcePath": "src/browser.ts",
+      "normalizedNodeSha256": "f25c8d4aec7ffe2a146029cef7410ce00dc19e9e5455fce7fbd9ddeb5e3feeaf",
+      "container": "CdpBrowserBackend.#connect",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "src/browser.ts#CdpBrowserBackend.#connect:child-process.spawn",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/browser.ts#CdpBrowserBackend.#connect:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "src/browser.ts#CdpBrowserBackend.#connect:argument:1"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/browser.ts#CdpBrowserBackend.#connect:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-24a12d651298a390086bd07e",
+      "sourcePath": "src/command-encoding.ts",
+      "normalizedNodeSha256": "f74b6d133250ee8414dbb732ef715b4e7476bbfb74623abb0b93c6c2414e361b",
+      "container": "systemOemCodepage",
+      "family": "child-process",
+      "api": "spawnSync",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/command-encoding.ts#systemOemCodepage:child-process.spawnSync",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/command-encoding.ts#systemOemCodepage:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "src/command-encoding.ts#systemOemCodepage:argument:1"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/command-encoding.ts#systemOemCodepage:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
       "siteId": "sink-c6a5b83358de64fded85db21",
       "sourcePath": "src/daemon.ts",
       "normalizedNodeSha256": "dbc1852d130e31d5956af7419aac13979ce3bd752c1496c7b5c738a4bd839870",
@@ -2311,6 +2389,98 @@
             "selector": "argument:0",
             "classification": "governed-database-staging-path",
             "anchor": "src/db.ts#createConsistentDatabaseSnapshot:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-27b6cd52bed393adcbd1ff78",
+      "sourcePath": "src/developer-execution.ts",
+      "normalizedNodeSha256": "3129fd5263ce89ddf17b94dc99f2d3e32be3bf80e1c13687c2e584d4ac26b9ec",
+      "container": "runDeveloperCommand",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "src/developer-execution.ts#runDeveloperCommand:child-process.spawn",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/developer-execution.ts#runDeveloperCommand:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "broker-approved-developer-command",
+            "anchor": "src/developer-execution.ts#runDeveloperCommand:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "authority-canonical-cwd",
+            "anchor": "src/developer-execution.ts#runDeveloperCommand:argument:2.cwd"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/developer-execution.ts#runDeveloperCommand:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-4c2986d583c0d72aeb6c7ee9",
+      "sourcePath": "src/developer-terminal.ts",
+      "normalizedNodeSha256": "8f504768e68bfdf94b2f8eaeb13835bad514daa8c32435d383c91f637e7aabe7",
+      "container": "startDeveloperShell",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "src/developer-terminal.ts#startDeveloperShell:child-process.spawn",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/developer-terminal.ts#startDeveloperShell:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "src/developer-terminal.ts#startDeveloperShell:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "authority-canonical-cwd",
+            "anchor": "src/developer-terminal.ts#startDeveloperShell:argument:2.cwd"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/developer-terminal.ts#startDeveloperShell:argument:2.shell"
           }
         ]
       }
@@ -2705,6 +2875,333 @@
             "selector": "argument:0",
             "classification": "path-policy-qualified-directory",
             "anchor": "src/managed-restore.ts#syncDirectory:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-28d5ff7c14d6901cdc031f64",
+      "sourcePath": "src/mcp/client.ts",
+      "normalizedNodeSha256": "49127eb56e75fd4b88ebb1a77b2c67d976997bce3a3b011f143a88b438af3ccf",
+      "container": "McpConnection.open",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/mcp/client.ts#McpConnection.open:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/mcp/client.ts#McpConnection.open:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-8ec9c1517a322a63a970312e",
+      "sourcePath": "src/mcp/client.ts",
+      "normalizedNodeSha256": "da5f282ce8683fd4e8c3846a55d2e2538144f30ed34ca6a34c4e81f31f4ffd64",
+      "container": "McpConnection.open",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/mcp/client.ts#McpConnection.open:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/mcp/client.ts#McpConnection.open:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-7414a5bd2dd32de365048400",
+      "sourcePath": "src/mcp/host.ts",
+      "normalizedNodeSha256": "b91f1e22f8ba32d3c22ef29374afe6cb0423c27290e6f1f5e62e61cf3ffa4381",
+      "container": "registerMcpHost",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/mcp/host.ts#registerMcpHost:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/mcp/host.ts#registerMcpHost:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-53d1a4f283359fda6bdefb17",
+      "sourcePath": "src/mcp/oauth-browser.ts",
+      "normalizedNodeSha256": "0c3c5b5d310b80b6d524f266b6e1a07e44f45ed0182cc44827eda193cecd3667",
+      "container": "openMcpOAuthBrowser",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/mcp/oauth-browser.ts#openMcpOAuthBrowser:child-process.spawn",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/mcp/oauth-browser.ts#openMcpOAuthBrowser:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-handler-with-validated-url",
+            "anchor": "src/mcp/oauth-browser.ts#openMcpOAuthBrowser:argument:1"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/mcp/oauth-browser.ts#openMcpOAuthBrowser:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-e69e1204ba43fe6205bda064",
+      "sourcePath": "src/mcp/oauth-manager.ts",
+      "normalizedNodeSha256": "b4643cde8d9f99e1e23d7d0c1945c7ee85b0f79df293b4ec5a1350cb4be9d338",
+      "container": "McpOAuthManager.start",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/mcp/oauth-manager.ts#McpOAuthManager.start:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/mcp/oauth-manager.ts#McpOAuthManager.start:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-a97e9f20bd7c68f9a4267fc7",
+      "sourcePath": "src/mcp/oauth-manager.ts",
+      "normalizedNodeSha256": "26d9736dd55c70d1de46d533289570507cde50552d72ce5aa1ca681d827ad821",
+      "container": "McpOAuthManager.start",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/mcp/oauth-manager.ts#McpOAuthManager.start:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/mcp/oauth-manager.ts#McpOAuthManager.start:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-125094b2d694b32270f5703b",
+      "sourcePath": "src/mcp/oauth-manager.ts",
+      "normalizedNodeSha256": "b4643cde8d9f99e1e23d7d0c1945c7ee85b0f79df293b4ec5a1350cb4be9d338",
+      "container": "McpOAuthManager.finish",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/mcp/oauth-manager.ts#McpOAuthManager.finish:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/mcp/oauth-manager.ts#McpOAuthManager.finish:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-6a685c2ca453f478aafffb85",
+      "sourcePath": "src/mcp/oauth-manager.ts",
+      "normalizedNodeSha256": "26d9736dd55c70d1de46d533289570507cde50552d72ce5aa1ca681d827ad821",
+      "container": "McpOAuthManager.finish",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/mcp/oauth-manager.ts#McpOAuthManager.finish:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/mcp/oauth-manager.ts#McpOAuthManager.finish:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-7963d7f0499ff4fa669d107b",
+      "sourcePath": "src/mcp/remote.ts",
+      "normalizedNodeSha256": "26d9736dd55c70d1de46d533289570507cde50552d72ce5aa1ca681d827ad821",
+      "container": "createRemoteTransport",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/mcp/remote.ts#createRemoteTransport:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/mcp/remote.ts#createRemoteTransport:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-eca1a4703bf04e6366de80c3",
+      "sourcePath": "src/mcp/runtime.ts",
+      "normalizedNodeSha256": "b91f1e22f8ba32d3c22ef29374afe6cb0423c27290e6f1f5e62e61cf3ffa4381",
+      "container": "invoke",
+      "family": "module-loader",
+      "api": "import",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "static-module-loader",
+        "anchor": "src/mcp/runtime.ts#invoke:module-loader.import",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "reviewed-static-module-specifier",
+            "anchor": "src/mcp/runtime.ts#invoke:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-0fdf57b276441a72506cec5e",
+      "sourcePath": "src/mcp/stdio.ts",
+      "normalizedNodeSha256": "8ae8ad4be69b2fc0b36a4d5bc8e192f5058a47dc182974b1c3318969adad7a0d",
+      "container": "OwnedStdioTransport.start",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/mcp/stdio.ts#OwnedStdioTransport.start:child-process.spawn",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/mcp/stdio.ts#OwnedStdioTransport.start:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "src/mcp/stdio.ts#OwnedStdioTransport.start:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "authority-canonical-cwd",
+            "anchor": "src/mcp/stdio.ts#OwnedStdioTransport.start:argument:2.cwd"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/mcp/stdio.ts#OwnedStdioTransport.start:argument:2.shell"
           }
         ]
       }
@@ -4608,5 +5105,5 @@
       }
     }
   ],
-  "canonicalPayloadSha256": "084cb3f41d60af325a2f23ad80323461e6723398d6251c88b4825728370b6cf8"
+  "canonicalPayloadSha256": "d81efb37481e368de3645c2daadd6d8f9f0aaf4fe8e998e80ca263cc6c8ed062"
 }

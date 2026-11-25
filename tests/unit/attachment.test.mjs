@@ -150,7 +150,7 @@ test("DS-05 validates canonical static image containers and UTF-8 text", () => {
   ), /JSON/iu);
 });
 
-test("DS-05 Provider projection emits image data parts and never path text", () => {
+test("DS-05 Provider projection emits image data parts and never path text", async () => {
   const bytes = png();
   const sha256 = createHash("sha256").update(bytes).digest("hex");
   const attachment = Object.freeze({ id: `att_${"b".repeat(32)}`, name: "screen.png", mime: "image/png", size: bytes.length, sha256, kind: "image" });
@@ -159,12 +159,12 @@ test("DS-05 Provider projection emits image data parts and never path text", () 
     assert.equal(id, attachment.id);
     return { attachment, bytes };
   };
-  const projected = projectMessagesForProvider("session-a", [{ role: "user", content: "inspect", attachments: [attachment] }], resolver, "data-uri");
+  const projected = await projectMessagesForProvider("session-a", [{ role: "user", content: "inspect", attachments: [attachment] }], resolver, "data-uri");
   assert.equal(projected[0].role, "user");
   assert.equal(projected[0].content[0].type, "text");
   assert.equal(projected[0].content[1].type, "image_url");
   assert(projected[0].content[1].image_url.url.startsWith("data:image/png;base64,"));
   assert.equal(Buffer.from(projected[0].content[1].image_url.url.split(",")[1], "base64").equals(bytes), true);
   assert.equal(JSON.stringify(projected).includes("C:\\"), false);
-  assert.throws(() => projectMessagesForProvider("session-a", [{ role: "user", content: "inspect", attachments: [attachment] }], resolver, "none"), /PROVIDER_IMAGE_INPUT_UNSUPPORTED/u);
+  await assert.rejects(projectMessagesForProvider("session-a", [{ role: "user", content: "inspect", attachments: [attachment] }], resolver, "none"), /PROVIDER_IMAGE_INPUT_UNSUPPORTED/u);
 });

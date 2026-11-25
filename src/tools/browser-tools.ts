@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import path from "node:path";
-import { writeFile } from "node:fs/promises";
 import { browserSessions, type BrowserTabSelector } from "../browser.js";
 import { OBSERVATION_MARKER } from "../observations.js";
+import { pathPolicy } from "../path-runtime.js";
 import { throwIfCancelled } from "../run-cancellation.js";
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 
@@ -175,9 +175,20 @@ export const browserUploadExec: ToolExecutor = async (args, env, invocation) => 
   const defaultRootId = path.isAbsolute(filePath) ? undefined : invocation.path.rootIdForEnv("DATA_ROOT") ?? undefined;
   const read = await invocation.path.readFile(filePath, { defaultRootId, maxBytes: MAX_TRANSFER_BYTES });
   const name = path.basename(filePath).replace(/[^\p{L}\p{N}._ ()-]/gu, "_").slice(0, 120) || "upload.bin";
-  const copy = path.join(await browserSessions.uploadDirectory(sessionId), name);
-  await writeFile(copy, read.bytes, { flag: "wx" });
-  await browserSessions.upload(sessionId, args.ref as string, copy, args.tab as BrowserTabSelector);
+  const directory = await browserSessions.uploadDirectory(sessionId);
+  const authority = await pathPolicy.createAuthority([{
+    rootId: "browser-upload", role: "browser-upload", configuredPath: directory, permissions: ["create-file", "read-file"],
+  }]);
+  try {
+    const result = await pathPolicy.createFile(authority, { input: name, operation: "create-file", defaultRootId: "browser-upload" }, read.bytes, MAX_TRANSFER_BYTES);
+    const lease = await pathPolicy.openReadLease(authority, { input: name, operation: "read-file", defaultRootId: "browser-upload" }, MAX_TRANSFER_BYTES);
+    try {
+      if (lease.identity.deviceId !== result.identity.deviceId || lease.identity.objectId !== result.identity.objectId) throw new Error("Browser upload copy changed");
+      await lease.assertPathCurrent(undefined, true);
+      throwIfCancelled(invocation.signal);
+      await browserSessions.upload(sessionId, args.ref as string, lease.canonicalPath, args.tab as BrowserTabSelector);
+    } finally { await lease.close(); }
+  } finally { pathPolicy.revoke(authority); }
   return json({ uploaded: name, bytes: read.bytes.length, sha256: createHash("sha256").update(read.bytes).digest("hex") });
 };
 

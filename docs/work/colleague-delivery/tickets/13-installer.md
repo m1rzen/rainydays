@@ -71,3 +71,10 @@ package.json、scripts/build-electron.mjs、after-pack.cjs、electron/main.cjs�
 ### 2026-11-18 当前候选准备复核
 
 在文档 HEAD `7d23d0d` 对清单定向契约重跑得到 0/1，当前首个拒绝为 `src/browser.ts:255 module-loader.import`。10 月数量保留为当时记录。候选冻结还需明确五项未跟踪桌面输入的归属；四个本地模型文件有独立 manifest。详见[复跑与摘要](../../general-agent/reviews/2026-11-18-delivery-readiness.md)及[包与两机执行步骤](../../general-agent/delivery-execution.md)。本轮尚无通过原检查的当前安装候选，D13 继续 blocked。
+
+
+### 2026-11-25 當前候選清單複核
+第二輪已從 SEC-03 原樣重建清單移除五個桌面 WIP 路徑。瀏覽器、開發 shell、觀察檔案、Media 儲存與 Playbook 執行已收緊。[逐項核對](../diagnostics/13-sink-classification.md#第二輪複核)
+SEC-02 剩 Playbook 歸檔／還原／刪除、Worker 啟動與兩個受管匯入；SEC-03 剩 Worker 啟動及環境兩處。
+單程序契約 SEC-02 為 17/19，原負向用例通過；SEC-03 為 18/18。typecheck、lint、diff 檢查通過；預設隔離的契約與產品測試需負責人複跑。
+兩道正式清單仍退出 1，尚未執行 build/test:package，D13 保持 blocked。

@@ -192,7 +192,7 @@ test("A08 screenshots are registered observations; a canvas target is clicked by
     const shot = await manager.screenshot("a08");
     const observation = shot.observation;
     assert(observation && observation.viewport); assert.equal(knownObservation("a08", observation.sha256)?.sha256, observation.sha256);
-    assert(loadObservationBytes("a08", observation.sha256)?.length > 100);
+    assert((await loadObservationBytes("a08", observation.sha256))?.length > 100);
     assert(Math.abs(observation.width / observation.sourceWidth - observation.scale) < 1e-9);
     const rect = await manager.evaluate("a08", "(() => { const r = document.getElementById('c').getBoundingClientRect(); return { x: r.left, y: r.top }; })()");
     await manager.clickPoint("a08", (rect.x + 420) * observation.scale, (rect.y + 260) * observation.scale);

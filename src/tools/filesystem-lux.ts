@@ -26,12 +26,12 @@ const IMAGE_MIME_BY_EXTENSION = Object.freeze<Record<string, string>>({
  * A08 本地图片观察：read 授权读取的 PNG/JPEG 注册为会话观察，随工具结果投影给模型；
  * 注册失败（损坏图片、无会话上下文、超大小上限）时保持原有文本提示，不影响读取本身。
  */
-function registerLocalImageObservation(invocation: ToolInvocationServices, filePath: string, bytes: Buffer): ToolObservation | null {
+async function registerLocalImageObservation(invocation: ToolInvocationServices, filePath: string, bytes: Buffer): Promise<ToolObservation | null> {
   const sessionId = invocation.capabilityContext?.sessionId;
   if (!sessionId) return null;
   try {
     const { width, height } = imageSize(bytes);
-    return registerObservation(sessionId, bytes, { source: "read", target: filePath, scale: 1, sourceWidth: width, sourceHeight: height, viewport: false });
+    return await registerObservation(sessionId, bytes, { source: "read", target: filePath, scale: 1, sourceWidth: width, sourceHeight: height, viewport: false });
   } catch { return null; }
 }
 
@@ -137,7 +137,7 @@ export const readExec: ToolExecutor = async (args, _env, invocationValue) => {
   const mime = imageMime(filePath, authorized.bytes);
   if (mime) {
     if (args.offset !== undefined || args.limit !== undefined || args.pages !== undefined) throw new ToolArgumentsError("图片读取不支持 offset、limit 或 pages");
-    const observation = (mime === "image/png" || mime === "image/jpeg") ? registerLocalImageObservation(invocation, filePath, authorized.bytes) : null;
+    const observation = (mime === "image/png" || mime === "image/jpeg") ? await registerLocalImageObservation(invocation, filePath, authorized.bytes) : null;
     if (observation) {
       return JSON.stringify({
         file: filePath,

@@ -30,10 +30,10 @@ const toolTurn = (id, observation) => [
   { role: "tool", tool_call_id: id, content: JSON.stringify({ [OBSERVATION_MARKER]: { sha256: observation.sha256 } }), observations: [{ ...observation, toolCallId: id }] },
 ];
 
-test("A08 a registered screenshot follows its tool block as image data, with call, target, size and scale", () => {
-  const observation = registerObservation("s1", png(640, 360, 200), meta);
+test("A08 a registered screenshot follows its tool block as image data, with call, target, size and scale", async () => {
+  const observation = await registerObservation("s1", png(640, 360, 200), meta);
   assert.deepEqual({ ...pngSize(png(640, 360, 1)) }, { width: 640, height: 360 });
-  const projected = projectMessagesForProvider("s1", [{ role: "user", content: "看看页面" }, ...toolTurn("call-1", observation)], null, "data-uri");
+  const projected = await projectMessagesForProvider("s1", [{ role: "user", content: "看看页面" }, ...toolTurn("call-1", observation)], null, "data-uri");
   assert.equal(projected.length, 4);
   assert.equal(projected[2].role, "tool", "the tool message stays adjacent to its call");
   const follow = projected[3];
@@ -45,31 +45,31 @@ test("A08 a registered screenshot follows its tool block as image data, with cal
   assert.doesNotMatch(JSON.stringify(projected), new RegExp(fixture.replace(/\\/gu, "\\\\\\\\")), "no host path reaches the provider");
 });
 
-test("A08 without image input the model is told it did not receive the picture", () => {
-  const observation = registerObservation("s2", png(64, 64, 10), meta);
-  const projected = projectMessagesForProvider("s2", toolTurn("call-2", observation), null, "none");
+test("A08 without image input the model is told it did not receive the picture", async () => {
+  const observation = await registerObservation("s2", png(64, 64, 10), meta);
+  const projected = await projectMessagesForProvider("s2", toolTurn("call-2", observation), null, "none");
   const follow = projected.at(-1);
   assert(!follow.content.some(part => part.type === "image_url"));
   assert.match(follow.content.map(part => part.text ?? "").join(""), /没有交给模型/u);
 });
 
-test("A08 only images a host tool registered in this session can be attached", () => {
-  const observation = registerObservation("s3", png(32, 32, 7), meta);
+test("A08 only images a host tool registered in this session can be attached", async () => {
+  const observation = await registerObservation("s3", png(32, 32, 7), meta);
   assert.equal(observationFromToolResult("s3", JSON.stringify({ [OBSERVATION_MARKER]: { sha256: observation.sha256 } })).sha256, observation.sha256);
   assert.equal(observationFromToolResult("other-session", JSON.stringify({ [OBSERVATION_MARKER]: { sha256: observation.sha256 } })), null, "another session's image is not reachable");
   assert.equal(observationFromToolResult("s3", JSON.stringify({ [OBSERVATION_MARKER]: { sha256: "f".repeat(64) } })), null, "a forged digest attaches nothing");
   assert.equal(observationFromToolResult("s3", "plain text"), null);
 });
 
-test("A08 only the latest images are sent; older ones become text, and images are budgeted as images", () => {
+test("A08 only the latest images are sent; older ones become text, and images are budgeted as images", async () => {
   const turns = [];
-  for (let index = 0; index < 4; index += 1) turns.push(...toolTurn(`c${index}`, registerObservation("s4", png(400, 300, 30 + index), meta)));
-  const projected = projectMessagesForProvider("s4", turns, null, "data-uri");
+  for (let index = 0; index < 4; index += 1) turns.push(...toolTurn(`c${index}`, await registerObservation("s4", png(400, 300, 30 + index), meta)));
+  const projected = await projectMessagesForProvider("s4", turns, null, "data-uri");
   const images = projected.flatMap(message => Array.isArray(message.content) ? message.content.filter(part => part.type === "image_url") : []);
   assert.equal(images.length, MAX_OBSERVATION_IMAGES);
   assert.match(JSON.stringify(projected), /较早的截图已省略/u);
   const withImages = estimateProjectedRequestTokens(projected);
-  const textOnly = estimateProjectedRequestTokens(projectMessagesForProvider("s4", turns, null, "none"));
+  const textOnly = estimateProjectedRequestTokens(await projectMessagesForProvider("s4", turns, null, "none"));
   assert(withImages < textOnly + MAX_OBSERVATION_IMAGES * IMAGE_TOKEN_ESTIMATE + 400, `image bytes are not counted as text (${withImages} vs ${textOnly})`);
   assert(withImages >= textOnly + MAX_OBSERVATION_IMAGES * IMAGE_TOKEN_ESTIMATE - 400);
 });

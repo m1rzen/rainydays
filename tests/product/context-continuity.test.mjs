@@ -88,7 +88,7 @@ test("a model summary advances the generation used for handoff advice", async ()
 
 test("system messages added mid-conversation reach the provider as user messages", async () => {
   const { projectMessagesForProvider } = await import("../../src/llm.ts");
-  const projected = projectMessagesForProvider(null, [
+  const projected = await projectMessagesForProvider(null, [
     { role: "system", content: "主提示" }, { role: "system", content: "摘要" }, { role: "user", content: "问题" },
     { role: "assistant", content: "回答" }, { role: "system", content: "请继续任务" }, { role: "user", content: "下一步" },
   ], null);

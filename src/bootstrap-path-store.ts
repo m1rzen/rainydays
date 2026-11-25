@@ -230,6 +230,14 @@ export class BootstrapPathStore {
     return this.#openExternalRuntimeFile(executableCandidate(kind), `runtime-${kind}`);
   }
 
+  async openConsoleCodepage(): Promise<BootstrapRuntimeFileLease> {
+    return this.#openExternalRuntimeFile(path.join(windowsSystemRoot(), "System32", "chcp.com"), "runtime-console-codepage");
+  }
+
+  async openBrowserExecutable(candidate: string): Promise<BootstrapRuntimeFileLease> {
+    return this.#openExternalRuntimeFile(candidate, "runtime-browser");
+  }
+
   async openUrlHandler(): Promise<BootstrapRuntimeFileLease> {
     return this.#openExternalRuntimeFile(executableCandidate("url-handler"), "runtime-url-handler");
   }

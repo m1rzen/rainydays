@@ -1,8 +1,9 @@
-import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { lstat, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { createHash, randomBytes } from "node:crypto";
 import path from "node:path";
 import { getProviderProfile, loadConfig, type ProviderProfile } from "./config.js";
-import { MEDIA_ARTIFACTS_DIR } from "./runtime-paths.js";
+import type { PathAuthority, PathRequest } from "./path-policy.js";
+import { pathPolicy } from "./path-runtime.js";
+import { MEDIA_ARTIFACTS_DIR, USER_DATA_DIR } from "./runtime-paths.js";
 
 export type MediaKind = "image" | "video";
 export type MediaJobStatus = "queued" | "running" | "completed" | "failed" | "cancelled" | "interrupted";
@@ -248,22 +249,51 @@ export class MediaJobManager {
   readonly root: string;
   #jobs = new Map<string, MutableMediaJob>();
   #active = new Map<string, ActiveMediaJob>();
-  #ready: Promise<void>;
+  #ready: Promise<void> | null = null;
+  #authority: Promise<PathAuthority> | null = null;
   #writeQueue: Promise<void> = Promise.resolve();
 
   constructor(root = MEDIA_ARTIFACTS_DIR) {
     this.root = root;
-    this.#ready = this.#recover();
+  }
+
+  #request(input: string, operation: PathRequest["operation"]): PathRequest {
+    return { input, operation, defaultRootId: "media" };
+  }
+
+  #storage(): Promise<PathAuthority> {
+    this.#authority ??= (async () => {
+      const parentPath = this.root === MEDIA_ARTIFACTS_DIR ? USER_DATA_DIR : path.dirname(this.root);
+      const parent = await pathPolicy.createAuthority([{
+        rootId: "media", role: "media-parent", configuredPath: parentPath, permissions: ["create-directory"],
+      }]);
+      try {
+        const enrollment = await pathPolicy.createDirectoryEnrollment(parent, this.#request(this.root, "create-directory"));
+        enrollment.commit();
+        return await pathPolicy.createAuthority([{
+          rootId: "media", role: "media", configuredPath: this.root,
+          permissions: ["read-file", "read-directory", "create-directory", "create-file", "replace-file"],
+        }]);
+      } finally { pathPolicy.revoke(parent); }
+    })().catch(error => { this.#authority = null; throw error; });
+    return this.#authority;
+  }
+
+  #initialize(): Promise<void> {
+    this.#ready ??= this.#recover().catch(error => { this.#ready = null; throw error; });
+    return this.#ready;
   }
 
   async #recover(): Promise<void> {
-    const jobsDirectory = path.join(this.root, "jobs");
-    await mkdir(jobsDirectory, { recursive: true });
-    for (const entry of await readdir(jobsDirectory, { withFileTypes: true })) {
-      if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+    const authority = await this.#storage();
+    const enrollment = await pathPolicy.createDirectoryEnrollment(authority, this.#request("jobs", "create-directory"));
+    enrollment.commit();
+    for (const entry of await pathPolicy.listDirectory(authority, this.#request("jobs", "read-directory"))) {
+      if (entry.type !== "file" || !entry.name.endsWith(".json")) continue;
       try {
-        const value = JSON.parse(await readFile(path.join(jobsDirectory, entry.name), "utf8")) as MutableMediaJob;
-        if (!value || !JOB_ID.test(value.jobId)) continue;
+        const { bytes } = await pathPolicy.readFile(authority, this.#request(path.join("jobs", entry.name), "read-file"), 4 * 1024 * 1024);
+        const value = JSON.parse(Buffer.from(bytes).toString("utf8")) as MutableMediaJob;
+        if (!value || typeof value.jobId !== "string" || !JOB_ID.test(value.jobId) || entry.name !== `${value.jobId}.json`) continue;
         if (value.status === "queued" || value.status === "running") {
           value.status = "interrupted";
           value.error = "Generation was interrupted by process restart; provider job id is preserved for diagnosis";
@@ -280,14 +310,10 @@ export class MediaJobManager {
 
   async #persist(job: MutableMediaJob): Promise<void> {
     job.updatedAt = new Date().toISOString();
-    const target = path.join(this.root, "jobs", `${job.jobId}.json`);
+    const target = path.join("jobs", `${job.jobId}.json`);
     const snapshot = cloneJob(job);
     const write = async (): Promise<void> => {
-      await mkdir(path.dirname(target), { recursive: true });
-      const temporary = `${target}.${randomUUID()}.tmp`;
-      await writeFile(temporary, `${JSON.stringify(snapshot, null, 2)}\n`, "utf8");
-      await rm(target, { force: true });
-      await rename(temporary, target);
+      await pathPolicy.atomicCreateOrReplaceFile(await this.#storage(), this.#request(target, "create-file"), Buffer.from(`${JSON.stringify(snapshot, null, 2)}\n`));
     };
     const queued = this.#writeQueue.then(write, write);
     this.#writeQueue = queued;
@@ -307,10 +333,13 @@ export class MediaJobManager {
     if (bytes.length === 0 || bytes.length > maximum) throw new Error(`Generated ${job.kind} artifact size is invalid: ${bytes.length}`);
     const extension = mimeType === "image/jpeg" ? "jpg" : mimeType === "image/webp" ? "webp" : mimeType === "video/mp4" ? "mp4" : "png";
     const artifactId = `artifact_${randomBytes(12).toString("hex")}`;
-    const directory = path.join(this.root, "files", job.jobId);
-    await mkdir(directory, { recursive: true });
-    const filePath = path.join(directory, `${artifactId}.${extension}`);
-    await writeFile(filePath, bytes, { flag: "wx" });
+    const authority = await this.#storage();
+    const directory = path.join("files", job.jobId);
+    const enrollment = await pathPolicy.createDirectoryEnrollment(authority, this.#request(directory, "create-directory"));
+    enrollment.commit();
+    const relative = path.join(directory, `${artifactId}.${extension}`);
+    await pathPolicy.createFile(authority, this.#request(relative, "create-file"), bytes, maximum);
+    const filePath = path.join(this.root, relative);
     return Object.freeze({ artifactId, kind: job.kind, path: filePath, mimeType, bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex"), createdAt: new Date().toISOString(), providerUrl: result.url ?? null });
   }
 
@@ -355,7 +384,7 @@ export class MediaJobManager {
   }
 
   async start(kind: MediaKind, request: MediaRequest, provider: MediaProvider, cleanup?: () => Promise<void>): Promise<MediaJob> {
-    await this.#ready;
+    await this.#initialize();
     if (request.references.length > 4) throw new Error("At most four reference images are supported");
     const prompt = exactText(request.prompt, "Media prompt", 32_768);
     const jobId = `media_${randomBytes(12).toString("hex")}`;
@@ -377,7 +406,7 @@ export class MediaJobManager {
   }
 
   async status(jobIdInput: string): Promise<MediaJob> {
-    await this.#ready;
+    await this.#initialize();
     const jobId = exactText(jobIdInput, "Media job id", 64);
     if (!JOB_ID.test(jobId)) throw new TypeError("Media job id is invalid");
     const job = this.#jobs.get(jobId);
@@ -386,7 +415,7 @@ export class MediaJobManager {
   }
 
   async cancel(jobIdInput: string): Promise<MediaJob> {
-    await this.#ready;
+    await this.#initialize();
     const job = await this.status(jobIdInput);
     const mutable = this.#jobs.get(job.jobId)!;
     const active = this.#active.get(job.jobId);
@@ -402,7 +431,7 @@ export class MediaJobManager {
   }
 
   async history(limitInput = 50): Promise<MediaJob[]> {
-    await this.#ready;
+    await this.#initialize();
     const limit = Math.max(1, Math.min(MAX_HISTORY, Math.floor(limitInput)));
     return [...this.#jobs.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, limit).map(cloneJob);
   }

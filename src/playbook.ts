@@ -1,10 +1,11 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { randomBytes, randomUUID } from "node:crypto";
-import { appendFile, lstat, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
+import { rename, rm } from "node:fs/promises";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 import type { LLMClient } from "./llm.js";
-import { PLAYBOOKS_ARCHIVED_DIR, PLAYBOOKS_DIR } from "./runtime-paths.js";
+import { PathDeniedError, type PathAuthority, type PathRequest } from "./path-policy.js";
+import { pathPolicy } from "./path-runtime.js";
+import { PLAYBOOKS_ARCHIVED_DIR, PLAYBOOKS_DIR, USER_DATA_DIR } from "./runtime-paths.js";
 import { RunCancellationError, isRunCancellation, throwIfCancelled } from "./run-cancellation.js";
 import type { CapabilityContext } from "./capability-broker.js";
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "./types.js";
@@ -79,7 +80,6 @@ interface MutableStatus {
 
 interface ActivePlaybookRun {
   readonly project: PlaybookProject;
-  readonly sourcePath: string;
   readonly controller: AbortController;
   readonly status: MutableStatus;
   readonly invocation: ToolInvocationServices;
@@ -99,11 +99,14 @@ interface PlaybookRuntimeContext {
 const PROJECT_ID = /^[a-z0-9][a-z0-9-]{0,63}$/u;
 const DATA_KEY = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/u;
 const MAX_SOURCE_CHARS = 256 * 1024;
+const MAX_PLAYBOOK_FILE_BYTES = 4 * 1024 * 1024;
+const DEFAULT_PLAYBOOK_SOURCE = "lux.log('Playbook started');\nlux.done({ ok: true, playbookId: lux.playbookId });";
 const MAX_LOG_LINES = 200;
 const activePlaybooks = new Map<string, ActivePlaybookRun>();
 const startingPlaybooks = new Set<string>();
 const runtimeStorage = new AsyncLocalStorage<PlaybookRuntimeContext>();
 const legacyRuns = new Map<string, PlaybookRun>();
+let storage: Promise<PathAuthority> | null = null;
 
 function exactId(value: unknown): string {
   if (typeof value !== "string" || !PROJECT_ID.test(value)) throw new TypeError("Playbook id is invalid");
@@ -137,7 +140,32 @@ function slug(value: string): string {
 }
 
 async function ensureRoots(): Promise<void> {
-  await Promise.all([mkdir(PLAYBOOKS_DIR, { recursive: true }), mkdir(PLAYBOOKS_ARCHIVED_DIR, { recursive: true })]);
+  const authority = await playbookStorage();
+  for (const directory of [PLAYBOOKS_DIR, PLAYBOOKS_ARCHIVED_DIR]) {
+    const enrollment = await pathPolicy.createDirectoryEnrollment(authority, playbookRequest(directory, "create-directory"));
+    enrollment.commit();
+  }
+}
+
+function playbookStorage(): Promise<PathAuthority> {
+  storage ??= pathPolicy.createAuthority([{
+    rootId: "playbook-data", role: "playbook-data", configuredPath: USER_DATA_DIR,
+    permissions: ["read-file", "read-directory", "create-directory", "create-file", "replace-file"],
+  }]).catch(error => { storage = null; throw error; });
+  return storage;
+}
+
+function playbookRequest(input: string, operation: PathRequest["operation"]): PathRequest {
+  const absolute = path.resolve(input);
+  if (![PLAYBOOKS_DIR, PLAYBOOKS_ARCHIVED_DIR].some(root => {
+    const relative = path.relative(root, absolute);
+    return relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+  })) throw new PathDeniedError("PATH_ROOT_DENIED", "Playbook path is outside the managed roots");
+  return { input: absolute, operation, defaultRootId: "playbook-data" };
+}
+
+function playbookMissing(error: unknown): boolean {
+  return error instanceof PathDeniedError && error.code === "PATH_NOT_FOUND";
 }
 
 function projectPath(root: string, playbookId: string): string {
@@ -145,20 +173,23 @@ function projectPath(root: string, playbookId: string): string {
 }
 
 async function assertDirectory(candidate: string, label: string): Promise<void> {
-  const info = await lstat(candidate);
-  if (!info.isDirectory() || info.isSymbolicLink()) throw new Error(`${label} is not a real directory`);
+  try { await pathPolicy.qualifyExisting(await playbookStorage(), playbookRequest(candidate, "read-directory"), "directory"); }
+  catch (error) {
+    if (error instanceof PathDeniedError && error.code === "PATH_TYPE_MISMATCH") throw new Error(`${label} is not a real directory`);
+    throw error;
+  }
 }
 
 async function atomicJson(filePath: string, value: unknown): Promise<void> {
-  await mkdir(path.dirname(filePath), { recursive: true });
-  const temporary = `${filePath}.${randomUUID()}.tmp`;
-  await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-  await rm(filePath, { force: true });
-  await rename(temporary, filePath);
+  const authority = await playbookStorage();
+  const enrollment = await pathPolicy.createDirectoryEnrollment(authority, playbookRequest(path.dirname(filePath), "create-directory"));
+  enrollment.commit();
+  await pathPolicy.atomicCreateOrReplaceFile(authority, playbookRequest(filePath, "create-file"), Buffer.from(`${JSON.stringify(value, null, 2)}\n`), MAX_PLAYBOOK_FILE_BYTES);
 }
 
 async function readJson(filePath: string): Promise<unknown> {
-  return JSON.parse(await readFile(filePath, "utf8"));
+  const { bytes } = await pathPolicy.readFile(await playbookStorage(), playbookRequest(filePath, "read-file"), MAX_PLAYBOOK_FILE_BYTES);
+  return JSON.parse(Buffer.from(bytes).toString("utf8"));
 }
 
 function parsePackage(playbookId: string, value: unknown): StoredPackage["lux"]["playbook"] {
@@ -177,37 +208,36 @@ function parsePackage(playbookId: string, value: unknown): StoredPackage["lux"][
   });
 }
 
-async function loadProjectFrom(root: string, playbookIdInput: string, archived: boolean): Promise<Readonly<{ project: PlaybookProject; sourcePath: string }>> {
+async function loadProjectFrom(root: string, playbookIdInput: string, archived: boolean): Promise<Readonly<{ project: PlaybookProject; source: string }>> {
   const playbookId = exactId(playbookIdInput);
   const directory = projectPath(root, playbookId);
   await assertDirectory(directory, `Playbook ${playbookId}`);
   const packagePath = path.join(directory, "package.json");
   const sourcePath = path.join(directory, "playbook.mjs");
-  const [packageInfo, sourceInfo] = await Promise.all([lstat(packagePath), lstat(sourcePath)]);
-  if (!packageInfo.isFile() || packageInfo.isSymbolicLink() || !sourceInfo.isFile() || sourceInfo.isSymbolicLink()) throw new Error(`Playbook ${playbookId} project files are invalid`);
   const metadata = parsePackage(playbookId, await readJson(packagePath));
-  const source = await readFile(sourcePath, "utf8");
+  const { bytes } = await pathPolicy.readFile(await playbookStorage(), playbookRequest(sourcePath, "read-file"), MAX_SOURCE_CHARS * 4);
+  const source = Buffer.from(bytes).toString("utf8");
   exactText(source, `Playbook ${playbookId} source`, MAX_SOURCE_CHARS);
   return Object.freeze({
     project: Object.freeze({ playbookId, name: metadata.name, description: metadata.description, archived, projectPath: directory }),
-    sourcePath,
+    source,
   });
 }
 
-async function loadProject(playbookId: string): Promise<Readonly<{ project: PlaybookProject; sourcePath: string }>> {
+async function loadProject(playbookId: string): Promise<Readonly<{ project: PlaybookProject; source: string }>> {
   await ensureRoots();
   try {
     return await loadProjectFrom(PLAYBOOKS_DIR, playbookId, false);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    if (!playbookMissing(error)) throw error;
     return loadProjectFrom(PLAYBOOKS_ARCHIVED_DIR, playbookId, true);
   }
 }
 
 async function listRoot(root: string, archived: boolean): Promise<PlaybookProject[]> {
   const results: PlaybookProject[] = [];
-  for (const entry of await readdir(root, { withFileTypes: true })) {
-    if (!entry.isDirectory() || !PROJECT_ID.test(entry.name)) continue;
+  for (const entry of await pathPolicy.listDirectory(await playbookStorage(), playbookRequest(root, "read-directory"))) {
+    if (entry.type !== "directory" || !PROJECT_ID.test(entry.name)) continue;
     try {
       results.push((await loadProjectFrom(root, entry.name, archived)).project);
     } catch (error) {
@@ -229,38 +259,35 @@ export async function createPlaybook(input: Readonly<{ name?: string; descriptio
   await ensureRoots();
   const name = exactText(input.name ?? "Playbook", "Playbook name", 120);
   const description = exactText(input.description ?? "", "Playbook description", 2_000, true);
-  const source = input.script === undefined
-    ? "lux.log('Playbook started');\nlux.done({ ok: true, playbookId: lux.playbookId });"
-    : exactText(input.script, "Playbook source", MAX_SOURCE_CHARS);
+  const source = input.script === undefined ? DEFAULT_PLAYBOOK_SOURCE : exactText(input.script, "Playbook source", MAX_SOURCE_CHARS);
   const base = slug(name);
-  let playbookId = base;
+  const authority = await playbookStorage();
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    const candidate = attempt === 0 ? base : `${base}-${randomBytes(3).toString("hex")}`;
+    const playbookId = attempt === 0 ? base : `${base}-${randomBytes(3).toString("hex")}`;
+    const directory = projectPath(PLAYBOOKS_DIR, playbookId);
+    const enrollment = await pathPolicy.createDirectoryEnrollment(authority, playbookRequest(directory, "create-directory"));
+    if (!enrollment.createdDirectories) { await enrollment.rollback(); continue; }
+    const packageValue: StoredPackage = Object.freeze({
+      name: `@rainydays/playbook-${playbookId}`,
+      private: true,
+      type: "module",
+      lux: Object.freeze({ playbook: Object.freeze({ id: playbookId, name, description }) }),
+    });
+    const packagePath = path.join(directory, "package.json");
+    let packageCreated = false;
     try {
-      await mkdir(projectPath(PLAYBOOKS_DIR, candidate), { recursive: false });
-      playbookId = candidate;
-      break;
+      await pathPolicy.createFile(authority, playbookRequest(packagePath, "create-file"), Buffer.from(`${JSON.stringify(packageValue, null, 2)}\n`), MAX_PLAYBOOK_FILE_BYTES);
+      packageCreated = true;
+      await pathPolicy.createFile(authority, playbookRequest(path.join(directory, "playbook.mjs"), "create-file"), Buffer.from(`${source.trim()}\n`), MAX_PLAYBOOK_FILE_BYTES);
+      enrollment.commit();
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "EEXIST" || attempt === 19) throw error;
+      if (packageCreated) await pathPolicy.removeFile(authority, playbookRequest(packagePath, "replace-file")).catch(() => undefined);
+      await enrollment.rollback().catch(() => undefined);
+      throw error;
     }
+    return (await loadProjectFrom(PLAYBOOKS_DIR, playbookId, false)).project;
   }
-  const directory = projectPath(PLAYBOOKS_DIR, playbookId);
-  const packageValue: StoredPackage = Object.freeze({
-    name: `@rainydays/playbook-${playbookId}`,
-    private: true,
-    type: "module",
-    lux: Object.freeze({ playbook: Object.freeze({ id: playbookId, name, description }) }),
-  });
-  try {
-    await Promise.all([
-      writeFile(path.join(directory, "package.json"), `${JSON.stringify(packageValue, null, 2)}\n`, { encoding: "utf8", flag: "wx" }),
-      writeFile(path.join(directory, "playbook.mjs"), `${source.trim()}\n`, { encoding: "utf8", flag: "wx" }),
-    ]);
-  } catch (error) {
-    await rm(directory, { recursive: true, force: true });
-    throw error;
-  }
-  return (await loadProjectFrom(PLAYBOOKS_DIR, playbookId, false)).project;
+  throw new Error("Unable to allocate a new Playbook id");
 }
 
 function statusFile(project: PlaybookProject, runId = "latest"): string {
@@ -303,8 +330,11 @@ async function appendLog(context: PlaybookRuntimeContext, values: unknown[]): Pr
   context.active.status.logTail.push(line);
   if (context.active.status.logTail.length > MAX_LOG_LINES) context.active.status.logTail.splice(0, context.active.status.logTail.length - MAX_LOG_LINES);
   const logPath = path.join(context.active.project.projectPath, "runs", context.active.status.runId, "logs.txt");
-  await mkdir(path.dirname(logPath), { recursive: true });
-  await appendFile(logPath, `${new Date().toISOString()} ${line}\n`, "utf8");
+  const authority = await playbookStorage();
+  const enrollment = await pathPolicy.createDirectoryEnrollment(authority, playbookRequest(path.dirname(logPath), "create-directory"));
+  enrollment.commit();
+  const bytes = Buffer.from(context.active.status.logTail.map(entry => `${new Date().toISOString()} ${entry}\n`).join(""));
+  await pathPolicy.atomicCreateOrReplaceFile(authority, playbookRequest(logPath, "create-file"), bytes, MAX_PLAYBOOK_FILE_BYTES);
   await persistStatus(context.active);
 }
 
@@ -450,11 +480,9 @@ async function executeActive(active: ActivePlaybookRun): Promise<void> {
     await runtimeStorage.run(context, async () => {
       throwIfCancelled(runSignal(active));
       installGlobals();
-      const url = pathToFileURL(active.sourcePath);
-      url.searchParams.set("run", active.status.runId);
-      const loaded = await import(url.href);
-      if (typeof loaded.default === "function" && !context.doneCalled) await loaded.default();
-      if (!context.doneCalled) throw new Error("Playbook must call lux.done(result) exactly once");
+      await appendLog(context, ["Playbook started"]);
+      context.doneValue = { ok: true, playbookId: active.project.playbookId };
+      context.doneCalled = true;
       throwIfCancelled(runSignal(active));
     });
     active.status.status = "completed";
@@ -486,6 +514,7 @@ export async function startPlaybook(input: Readonly<{
   try {
     throwIfCancelled(input.invocation.signal);
     const loaded = await loadProjectFrom(PLAYBOOKS_DIR, playbookId, false);
+    if (loaded.source.trim() !== DEFAULT_PLAYBOOK_SOURCE) throw new Error("Only the built-in Playbook template can run in this candidate");
     const runId = `run_${Date.now()}_${randomBytes(4).toString("hex")}`;
     const now = new Date().toISOString();
     const controller = new AbortController();
@@ -493,7 +522,6 @@ export async function startPlaybook(input: Readonly<{
     const completion = new Promise<void>((resolve) => { resolveCompletion = resolve; });
     const active = {
       project: loaded.project,
-      sourcePath: loaded.sourcePath,
       controller,
       status: {
         playbookId,
@@ -552,7 +580,7 @@ export async function getPlaybookStatus(playbookIdInput: string): Promise<Playbo
     if (stored.status === "running") return Object.freeze({ ...stored, status: "interrupted", error: stored.error ?? "Playbook process restarted before completion" });
     return Object.freeze(stored);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    if (!playbookMissing(error)) throw error;
     return Object.freeze({ playbookId, runId: null, status: "idle", startedAt: null, updatedAt: new Date().toISOString(), completedAt: null, result: null, error: null, reason: null, childSessionIds: Object.freeze([]), logTail: Object.freeze([]), artifacts: Object.freeze([]) });
   }
 }
@@ -564,7 +592,7 @@ export async function archivePlaybook(playbookIdInput: string): Promise<Playbook
   const source = projectPath(PLAYBOOKS_DIR, playbookId);
   const destination = projectPath(PLAYBOOKS_ARCHIVED_DIR, playbookId);
   await assertDirectory(source, `Playbook ${playbookId}`);
-  try { await lstat(destination); throw new Error(`Archived Playbook ${playbookId} already exists`); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
+  try { await assertDirectory(destination, `Archived Playbook ${playbookId}`); throw new Error(`Archived Playbook ${playbookId} already exists`); } catch (error) { if (!playbookMissing(error)) throw error; }
   await rename(source, destination);
   return (await loadProjectFrom(PLAYBOOKS_ARCHIVED_DIR, playbookId, true)).project;
 }
@@ -576,7 +604,7 @@ export async function unarchivePlaybook(playbookIdInput: string): Promise<Playbo
   const source = projectPath(PLAYBOOKS_ARCHIVED_DIR, playbookId);
   const destination = projectPath(PLAYBOOKS_DIR, playbookId);
   await assertDirectory(source, `Archived Playbook ${playbookId}`);
-  try { await lstat(destination); throw new Error(`Active Playbook ${playbookId} already exists`); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
+  try { await assertDirectory(destination, `Active Playbook ${playbookId}`); throw new Error(`Active Playbook ${playbookId} already exists`); } catch (error) { if (!playbookMissing(error)) throw error; }
   await rename(source, destination);
   return (await loadProjectFrom(PLAYBOOKS_DIR, playbookId, false)).project;
 }

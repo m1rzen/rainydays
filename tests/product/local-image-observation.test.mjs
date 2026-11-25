@@ -173,7 +173,7 @@ test('regression: arbitrary successful tools must not forge artifact registratio
 test('regression: JPEG observation eviction must also remove the evicted disk file',async()=>{
   const {registerObservation,knownObservation}=await import('../../src/observations.ts');const {readdir}=await import('node:fs/promises');
   const session='review-jpeg-eviction';let first;
-  for(let i=0;i<41;i++){const obs=registerObservation(session,Buffer.concat([JPEG_1X1,Buffer.from([i])]),{source:'read',target:'image.jpg',sourceWidth:1,sourceHeight:1,scale:1,viewport:false});if(i===0)first=obs.sha256;}
+  for(let i=0;i<41;i++){const obs=await registerObservation(session,Buffer.concat([JPEG_1X1,Buffer.from([i])]),{source:'read',target:'image.jpg',sourceWidth:1,sourceHeight:1,scale:1,viewport:false});if(i===0)first=obs.sha256;}
   const directory=path.join(fixture,'observations',createHash('sha256').update(session).digest('hex').slice(0,24));const files=await readdir(directory);
   console.log(JSON.stringify({probe:'jpeg-eviction',registeredFirst:!!knownObservation(session,first),filesOnDisk:files.length}));assert.equal(knownObservation(session,first),null);assert.equal(files.length,40,'eviction must apply to JPEG files as well as the index');
 });

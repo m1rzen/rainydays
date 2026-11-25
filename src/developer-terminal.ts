@@ -5,6 +5,7 @@
 // ===========================================
 
 import { spawn, type ChildProcess } from "node:child_process";
+import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 import { randomUUID } from "node:crypto";
 import iconv from "iconv-lite";
 import { MixedOutputTranscoder, systemOemCodepage } from "./command-encoding.js";
@@ -69,46 +70,54 @@ function requireRecord(lease: IsolatedTerminalLease, owner: ResourceOwner): Deve
   return record;
 }
 
-export function startDeveloperShell(input: Readonly<{ terminalId: string; shell: "cmd" | "powershell"; cwd: string; owner: ResourceOwner; signal: AbortSignal }>): IsolatedTerminalLease {
+export async function startDeveloperShell(input: Readonly<{ terminalId: string; shell: "cmd" | "powershell"; cwd: string; owner: ResourceOwner; signal: AbortSignal }>): Promise<IsolatedTerminalLease> {
   throwIfCancelled(input.signal);
-  const codepage = systemOemCodepage();
-  const [command, args] = input.shell === "powershell"
-    ? ["powershell.exe", ["-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "-"]]
-    : [process.env.ComSpec || "cmd.exe", ["/d", "/q", "/k"]];
+  const codepage = await systemOemCodepage();
+  throwIfCancelled(input.signal);
+  const args = input.shell === "powershell"
+    ? ["-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "-"]
+    : ["/d", "/q", "/k"];
   const env = developerEnvironment();
   if (input.shell === "cmd") env.PROMPT = CMD_PROMPT;
-  const child = spawn(command, args, { cwd: input.cwd, env, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
-  const record: DeveloperTerminalRecord = {
-    owner: input.owner, terminalId: input.terminalId, shell: input.shell, codepage, child,
-    promptsSeen: 0, promptsAtCommand: 0, awaitingPrompt: false,
-    stdout: new RetainedStream(), stderr: new RetainedStream(),
-    exitCode: null, reason: null, running: true, stopping: null,
-  };
-  const stdoutText = new MixedOutputTranscoder(codepage), stderrText = new MixedOutputTranscoder(codepage);
-  child.stdout!.on("data", (chunk: Buffer) => {
-    let data = chunk;
-    for (let at = data.indexOf(PROMPT_SENTINEL); at >= 0; at = data.indexOf(PROMPT_SENTINEL)) {
-      data = Buffer.concat([data.subarray(0, at), data.subarray(at + PROMPT_SENTINEL.length)]);
-      record.promptsSeen += 1;
-    }
-    if (record.awaitingPrompt && record.promptsSeen > record.promptsAtCommand) record.awaitingPrompt = false;
-    record.stdout.push(stdoutText.push(data));
-  });
-  child.stderr!.on("data", (chunk: Buffer) => record.stderr.push(stderrText.push(chunk)));
-  child.stdin!.on("error", () => undefined);
-  child.once("error", error => {
-    record.stderr.push(Buffer.from(`\n[无法启动 ${command}: ${error.message}]\n`));
-    record.running = false; record.reason = "launch-failed";
-  });
-  child.once("close", code => {
-    record.running = false;
-    record.exitCode = code;
-    record.reason ??= code === 0 ? "completed" : "child-failed";
-  });
-  if (input.shell === "powershell") child.stdin!.write("[Console]::OutputEncoding = [Text.Encoding]::UTF8\n");
-  const lease = Object.freeze({ leaseId: randomUUID() });
-  records.set(lease, record);
-  return lease;
+  const executable = await getBootstrapPathStore().openTerminalShell(input.shell);
+  try {
+    await executable.assertCurrent("beforeProcessSpawn");
+    throwIfCancelled(input.signal);
+    const child = spawn(executable.canonicalPath, args, { cwd: input.cwd, env, shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+    const record: DeveloperTerminalRecord = {
+      owner: input.owner, terminalId: input.terminalId, shell: input.shell, codepage, child,
+      promptsSeen: 0, promptsAtCommand: 0, awaitingPrompt: false,
+      stdout: new RetainedStream(), stderr: new RetainedStream(),
+      exitCode: null, reason: null, running: true, stopping: null,
+    };
+    const stdoutText = new MixedOutputTranscoder(codepage), stderrText = new MixedOutputTranscoder(codepage);
+    child.stdout!.on("data", (chunk: Buffer) => {
+      let data = chunk;
+      for (let at = data.indexOf(PROMPT_SENTINEL); at >= 0; at = data.indexOf(PROMPT_SENTINEL)) {
+        data = Buffer.concat([data.subarray(0, at), data.subarray(at + PROMPT_SENTINEL.length)]);
+        record.promptsSeen += 1;
+      }
+      if (record.awaitingPrompt && record.promptsSeen > record.promptsAtCommand) record.awaitingPrompt = false;
+      record.stdout.push(stdoutText.push(data));
+    });
+    child.stderr!.on("data", (chunk: Buffer) => record.stderr.push(stderrText.push(chunk)));
+    child.stdin!.on("error", () => undefined);
+    child.once("error", error => {
+      record.stderr.push(Buffer.from(`\n[无法启动 ${input.shell}: ${error.message}]\n`));
+      record.running = false; record.reason = "launch-failed";
+    });
+    child.once("close", code => {
+      record.running = false;
+      record.exitCode = code;
+      record.reason ??= code === 0 ? "completed" : "child-failed";
+    });
+    if (input.shell === "powershell") child.stdin!.write("[Console]::OutputEncoding = [Text.Encoding]::UTF8\n");
+    const lease = Object.freeze({ leaseId: randomUUID() });
+    records.set(lease, record);
+    return lease;
+  } finally {
+    await executable.close();
+  }
 }
 
 /**

@@ -188,9 +188,11 @@ const healthCheckInterval = setInterval(async () => {
 
   try {
     if (!serverApiToken) throw new Error("Daemon API credential is unavailable");
-    const port = process.env.PORT || "3111";
+    const port = Number(process.env.PORT || "3111");
+    if (!Number.isInteger(port) || port < 1 || port > 65_535) throw new Error("Daemon HTTP port is invalid");
     const response = await fetch(`http://127.0.0.1:${port}/api/health/ready`, {
       headers: { "X-RainyDays-Token": serverApiToken },
+      redirect: "error",
       signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) {

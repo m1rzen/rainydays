@@ -1,18 +1,25 @@
 import { spawnSync } from "node:child_process";
 import iconv from "iconv-lite";
+import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 
 let oemCodepage: string | null = null;
 /**
  * 管道中的 cmd/PowerShell 按系统 OEM 代码页解析输入；chcp 65001 时 cmd 读取多字节输入会出错。
  * 因此命令行以 OEM 编码写入，运行中程序的 stdin 仍按 UTF-8 写入。
  */
-export function systemOemCodepage(): string {
-  if (oemCodepage) return oemCodepage;
+export async function systemOemCodepage(): Promise<string> {
+  if (oemCodepage || process.platform !== "win32") return oemCodepage ?? "utf8";
   let page = "utf8";
   try {
-    const output = spawnSync(process.env.ComSpec || "cmd.exe", ["/d", "/c", "chcp"], { windowsHide: true, timeout: 5000 }).stdout?.toString("latin1").trim() ?? "";
-    const number = /(\d+)\s*$/u.exec(output)?.[1];
-    if (number && number !== "65001" && iconv.encodingExists(`cp${number}`)) page = `cp${number}`;
+    const executable = await getBootstrapPathStore().openConsoleCodepage();
+    try {
+      await executable.assertCurrent("beforeProcessSpawn");
+      const output = spawnSync(executable.canonicalPath, [], { shell: false, windowsHide: true, timeout: 5000 }).stdout?.toString("latin1").trim() ?? "";
+      const number = /(\d+)\s*$/u.exec(output)?.[1];
+      if (number && number !== "65001" && iconv.encodingExists(`cp${number}`)) page = `cp${number}`;
+    } finally {
+      await executable.close();
+    }
   } catch { /* fall back to UTF-8 */ }
   oemCodepage = page;
   return page;

@@ -11,7 +11,7 @@ import { MAX_DRAFT_ATTACHMENT_BYTES, INLINE_ATTACHMENT_BYTES, isDocumentMime } f
 import { beginObservation } from "./observability.js";
 import { ContextBudgetExceededError, estimateProjectedRequestTokens, resolveRequestModel, resolveRequestBudget, type RequestBudget, type RequestBudgetReport } from "./request-budget.js";
 import { isModelNotFound } from "./model-connection.js";
-import { describeObservation, loadObservationBytes, type ToolObservation } from "./observations.js";
+import { describeObservation, knownObservation, loadObservationBytes, type ToolObservation } from "./observations.js";
 
 /** 最大重试次数 */
 const MAX_RETRIES = 3;
@@ -194,15 +194,18 @@ function observationMessage(sessionId: string | null, observations: readonly Too
   return { role: "user", content };
 }
 
-export function projectMessagesForProvider(
+function recentObservations(messages: readonly Message[]): ToolObservation[] {
+  return messages.flatMap(message => message.role === "tool" ? message.observations ?? [] : []).slice(-MAX_OBSERVATION_IMAGES);
+}
+
+function projectMessages(
   sessionId: string | null,
   messages: readonly Message[],
   resolveAttachment: AttachmentResolver | null,
-  imageInput: "none" | "data-uri" = "none",
-  resolveObservation: (sessionId: string, sha256: string) => Buffer | null = loadObservationBytes,
+  imageInput: "none" | "data-uri",
+  resolveObservation: (sessionId: string, sha256: string) => Buffer | null,
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
-  const all = messages.flatMap(message => message.role === "tool" && message.observations?.length ? [...message.observations] : []);
-  const recent = new Set(all.slice(-MAX_OBSERVATION_IMAGES));
+  const recent = new Set(recentObservations(messages));
   const projected: OpenAI.Chat.ChatCompletionMessageParam[] = [];
   let pending: ToolObservation[] = [];
   projectEachMessage(sessionId, messages, resolveAttachment, imageInput).forEach((message, index) => {
@@ -212,6 +215,22 @@ export function projectMessagesForProvider(
     if (pending.length && messages[index + 1]?.role !== "tool") { projected.push(observationMessage(sessionId, pending, recent, imageInput, resolveObservation)); pending = []; }
   });
   return projected;
+}
+
+export async function projectMessagesForProvider(
+  sessionId: string | null,
+  messages: readonly Message[],
+  resolveAttachment: AttachmentResolver | null,
+  imageInput: "none" | "data-uri" = "none",
+  resolveObservation: (sessionId: string, sha256: string) => Buffer | null | Promise<Buffer | null> = loadObservationBytes,
+): Promise<OpenAI.Chat.ChatCompletionMessageParam[]> {
+  const images = new Map<string, Buffer | null>();
+  if (sessionId && imageInput === "data-uri") {
+    for (const { sha256 } of recentObservations(messages)) {
+      if (!images.has(sha256)) images.set(sha256, await resolveObservation(sessionId, sha256));
+    }
+  }
+  return projectMessages(sessionId, messages, resolveAttachment, imageInput, (_sessionId, sha256) => images.get(sha256) ?? null);
 }
 
 function projectEachMessage(
@@ -286,7 +305,10 @@ export class LLMClient {
   getBudgetReport(): RequestBudgetReport | null { return this.budgetReport ? { ...this.budgetReport } : null; }
 
   estimateRequest(messages: Message[], tools?: ToolDefinition[], attachmentSessionId: string | null = null, attachmentResolver: AttachmentResolver | null = null): RequestBudgetReport {
-    return { ...this.requestBudget, estimatedInputTokens: estimateProjectedRequestTokens(projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput), tools) };
+    // Image cost is fixed by the budget estimator. The actual request rechecks the file and digest.
+    const projected = projectMessages(attachmentSessionId, messages, attachmentResolver, this.imageInput,
+      (sessionId, sha256) => knownObservation(sessionId, sha256) ? Buffer.alloc(0) : null);
+    return { ...this.requestBudget, estimatedInputTokens: estimateProjectedRequestTokens(projected, tools) };
   }
 
   private checkBudget(messages: unknown, tools?: ToolDefinition[]): RequestBudgetReport {
@@ -346,7 +368,7 @@ export class LLMClient {
     const client = transport ? this.createClient(transport) : this.client;
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       ...resolveRequestModel(this.model, attachmentSessionId),
-      messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
+      messages: await projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
       max_tokens: this.requestBudget.outputReserveTokens,
     };
 
@@ -442,7 +464,7 @@ export class LLMClient {
   ): AsyncGenerator<StreamEvent> {
     const params: OpenAI.Chat.ChatCompletionCreateParams = {
       ...resolveRequestModel(this.model, attachmentSessionId),
-      messages: projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
+      messages: await projectMessagesForProvider(attachmentSessionId, messages, attachmentResolver, this.imageInput),
       stream: true,
       stream_options: { include_usage: true },
       max_tokens: this.requestBudget.outputReserveTokens,

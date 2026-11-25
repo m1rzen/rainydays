@@ -5,6 +5,7 @@
 // ===========================================
 
 import { spawn } from "node:child_process";
+import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 import { MixedOutputTranscoder, systemOemCodepage } from "./command-encoding.js";
 import { getConfigSnapshot } from "./config.js";
 import { terminateProcessTree } from "./process-tree.js";
@@ -71,8 +72,10 @@ export interface DeveloperCommandResult {
 class TailBuffer {
   private text = "";
   omitted = 0;
-  private readonly decoder = new MixedOutputTranscoder(systemOemCodepage());
-  constructor(private readonly limit: number) {}
+  private readonly decoder: MixedOutputTranscoder;
+  constructor(private readonly limit: number, codepage: string) {
+    this.decoder = new MixedOutputTranscoder(codepage);
+  }
   push(chunk: Buffer | string): void { this.append(typeof chunk === "string" ? chunk : this.decoder.push(chunk).toString("utf8")); }
   end(): string { this.append(this.decoder.end().toString("utf8")); return this.text; }
   private append(value: string): void {
@@ -105,55 +108,65 @@ export async function runDeveloperCommand(input: Readonly<{
     throw new TypeError("命令必须是单行且不超过 32000 字符");
   }
   throwIfCancelled(signal);
+  const codepage = await systemOemCodepage();
+  throwIfCancelled(signal);
   const started = Date.now();
   // cmd 继承隐藏 console；先切到 UTF-8 让内建命令与多数 CLI 输出可读，再原样执行用户命令。
-  const child = spawn(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `"chcp 65001>nul & ${command}"`], {
-    cwd,
-    env: input.env ?? developerEnvironment(),
-    windowsHide: true,
-    windowsVerbatimArguments: true,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  const stdout = new TailBuffer(STDOUT_TAIL_CHARS);
-  const stderr = new TailBuffer(STDERR_TAIL_CHARS);
-  child.stdout!.on("data", chunk => stdout.push(chunk));
-  child.stderr!.on("data", chunk => stderr.push(chunk));
-
-  let timedOut = false;
-  let stopping: Promise<void> | null = null;
-  const stop = (): Promise<void> => {
-    if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve();
-    stopping ??= terminateProcessTree(child).catch(() => { try { child.kill("SIGKILL"); } catch { /* exit wait decides */ } });
-    return stopping;
-  };
-  const unregister = input.owner ? registerOwnedResource(input.owner, stop) : () => undefined;
-  const timer = setTimeout(() => { timedOut = true; void stop(); }, timeoutSeconds * 1000);
-  timer.unref?.();
-  const onAbort = () => { void stop(); };
-  signal.addEventListener("abort", onAbort, { once: true });
-
+  const executable = await getBootstrapPathStore().openTerminalShell("cmd");
   try {
-    const exitCode = await new Promise<number | null>((resolve, reject) => {
-      child.once("error", reject);
-      child.once("close", code => resolve(code));
-    });
-    if (stopping) await stopping;
+    await executable.assertCurrent("beforeProcessSpawn");
     throwIfCancelled(signal);
-    stdout.end();
-    stderr.end();
-    return Object.freeze({
-      stdout: stdout.value(),
-      stderr: stderr.value(),
-      exitCode: timedOut ? null : exitCode,
-      reason: timedOut ? "timeout" as const : "completed" as const,
-      durationMs: Date.now() - started,
-      omittedStdoutChars: stdout.omitted,
-      omittedStderrChars: stderr.omitted,
+    const child = spawn(executable.canonicalPath, ["/d", "/s", "/c", `"chcp 65001>nul & ${command}"`], {
+      cwd,
+      env: input.env ?? developerEnvironment(),
+      shell: false,
+      windowsHide: true,
+      windowsVerbatimArguments: true,
+      stdio: ["ignore", "pipe", "pipe"],
     });
+    const stdout = new TailBuffer(STDOUT_TAIL_CHARS, codepage);
+    const stderr = new TailBuffer(STDERR_TAIL_CHARS, codepage);
+    child.stdout!.on("data", chunk => stdout.push(chunk));
+    child.stderr!.on("data", chunk => stderr.push(chunk));
+
+    let timedOut = false;
+    let stopping: Promise<void> | null = null;
+    const stop = (): Promise<void> => {
+      if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve();
+      stopping ??= terminateProcessTree(child).catch(() => { try { child.kill("SIGKILL"); } catch { /* exit wait decides */ } });
+      return stopping;
+    };
+    const unregister = input.owner ? registerOwnedResource(input.owner, stop) : () => undefined;
+    const timer = setTimeout(() => { timedOut = true; void stop(); }, timeoutSeconds * 1000);
+    timer.unref?.();
+    const onAbort = () => { void stop(); };
+    signal.addEventListener("abort", onAbort, { once: true });
+
+    try {
+      const exitCode = await new Promise<number | null>((resolve, reject) => {
+        child.once("error", reject);
+        child.once("close", code => resolve(code));
+      });
+      if (stopping) await stopping;
+      throwIfCancelled(signal);
+      stdout.end();
+      stderr.end();
+      return Object.freeze({
+        stdout: stdout.value(),
+        stderr: stderr.value(),
+        exitCode: timedOut ? null : exitCode,
+        reason: timedOut ? "timeout" as const : "completed" as const,
+        durationMs: Date.now() - started,
+        omittedStdoutChars: stdout.omitted,
+        omittedStderrChars: stderr.omitted,
+      });
+    } finally {
+      clearTimeout(timer);
+      signal.removeEventListener("abort", onAbort);
+      unregister();
+    }
   } finally {
-    clearTimeout(timer);
-    signal.removeEventListener("abort", onAbort);
-    unregister();
+    await executable.close();
   }
 }
 
