@@ -5,12 +5,16 @@ import { mkdtemp, mkdir, open, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { collectDocumentOutputs } from "../../src/document-outputs.js";
-import { registerOutputDef, registerOutputExec } from "../../src/tools/output-registry.js";
-import { PathPolicy, PathDeniedError } from "../../src/path-policy.js";
-import { ToolArgumentsError } from "../../src/tool-pipeline.js";
+import { fileURLToPath } from "node:url";
 
 const fixture = await mkdtemp(path.join(os.tmpdir(), "rainydays-outputreg-"));
+// Registration reads the session checkpoint, so the database must be this fixture's, not the developer's.
+Object.assign(process.env, { RAINYDAYS_APP_ROOT: fileURLToPath(new URL("../../", import.meta.url)), RAINYDAYS_USER_DATA_DIR: fixture, RAINYDAYS_DATA_DIR: path.join(fixture, "data") });
+const { collectDocumentOutputs } = await import("../../src/document-outputs.js");
+const { registerOutputDef, registerOutputExec } = await import("../../src/tools/output-registry.js");
+const { PathPolicy, PathDeniedError } = await import("../../src/path-policy.js");
+const { ToolArgumentsError } = await import("../../src/tool-pipeline.js");
+const { closeDb } = await import("../../src/db.js");
 const outputDir = path.join(fixture, "成果 工作区");
 await mkdir(outputDir);
 const policy = new PathPolicy();
@@ -21,6 +25,7 @@ const invocation = { path: {
 } };
 test.after(async () => {
   policy.revoke(authority);
+  await closeDb();
   assert.equal(path.dirname(fixture), path.resolve(os.tmpdir()));
   assert(path.basename(fixture).startsWith("rainydays-outputreg-"));
   await rm(fixture, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
@@ -47,6 +52,23 @@ test("relative output resolves through the real gateway and survives receipt rep
   await assert.rejects(() => register("missing.md"), error => error instanceof ToolArgumentsError && /不存在/u.test(error.message));
   await assert.rejects(() => register("报告.md", "guess"), ToolArgumentsError);
   await assert.rejects(() => register(path.join(fixture, "outside.md")), PathDeniedError);
+});
+
+test("registration validates UTF-8 at the format preview boundary", async () => {
+  const cases = [
+    ["complete", Buffer.from("x" + "汉".repeat(1365)), "text"],
+    ["three-byte split", Buffer.from("汉".repeat(1800)), "text"],
+    ["four-byte split", Buffer.from("x".repeat(4095) + "🌧"), "text"],
+    ["truncated at EOF", Buffer.concat([Buffer.alloc(4095, 97), Buffer.from([0xe6])]), "unknown"],
+    ["invalid continuation", Buffer.concat([Buffer.alloc(4095, 97), Buffer.from([0xe6, 0x61])]), "unknown"],
+    ["embedded NUL", Buffer.from([0x61, 0, 0x62]), "unknown"],
+  ];
+  for (const [label, bytes, expected] of cases) {
+    await writeFile(path.join(outputDir, "边界.md"), bytes);
+    const receipt = await register("边界.md");
+    assert.equal(receipt.format, expected, label);
+    assert.equal(receipt.sha256, createHash("sha256").update(bytes).digest("hex"), label);
+  }
 });
 
 test("large files get a bounded preview, real size and full SHA-256; actual format wins", async () => {

@@ -288,6 +288,7 @@ export interface AgentStep {
   toolArgs?: Record<string, unknown>;
   toolStatus?: ToolOutcomeStatus;
   toolCode?: string | null;
+  wordRecovery?: { state: "pending" | "registered"; key: string };
   toolOutputBytes?: number;
   toolOriginalOutputBytes?: number;
   toolOutputTruncated?: boolean;

@@ -18,7 +18,7 @@ test("registered file roles and incomplete recovery are correct in the real desk
     const settings = { workspaceRoot: path.join(userData, "workspace"), departmentDataRoot: path.join(userData, "department"), outputDir: path.join(userData, "output") };
     await Promise.all(Object.values(settings).map(directory => mkdir(directory, { recursive: true })));
 
-    const files=[{name:'source.pdf',kind:'source',bytes:Buffer.from('%PDF-1.4\n% source')},{name:'result.mp4',kind:'deliverable',bytes:Buffer.from('000000186674797069736f6d00000200','hex')},{name:'work.md',kind:'intermediate',bytes:Buffer.from('# Work\nintermediate content')}];
+    const files=[{name:'source.pdf',kind:'source',bytes:Buffer.from('%PDF-1.4\n% source')},{name:'result.mp4',kind:'deliverable',bytes:Buffer.from('000000186674797069736f6d00000200','hex')},{name:'工作.md',kind:'intermediate',bytes:Buffer.from('# 成果\n' + '汉'.repeat(1800) + '\n预览末行')}];
     await Promise.all(files.map(file=>writeFile(path.join(settings.outputDir,file.name),file.bytes)));
     let streams=0;
     provider=createServer(async(req,res)=>{
@@ -55,7 +55,7 @@ test("registered file roles and incomplete recovery are correct in the real desk
     const rows=await client.evaluate('Array.from(document.querySelectorAll("#document-output-list .document-output-row"),e=>({name:e.querySelector("a").textContent,kind:e.dataset.artifactKind,meta:e.querySelector(".document-output-meta").textContent}))');
     assert.match(rows.find(r=>r.name==='source.pdf').meta,/PDF.*原始资料/u);
     assert.match(rows.find(r=>r.name==='result.mp4').meta,/MP4.*交付件/u);
-    assert.match(rows.find(r=>r.name==='work.md').meta,/Markdown.*中间产物/u);
+    assert.match(rows.find(r=>r.name==='工作.md').meta,/Markdown.*中间产物/u);
     assert.equal(rows.some(r=>r.meta.includes('Excel')),false);
     assert(await client.evaluate('Array.from(document.querySelectorAll(".run-status-note")).some(e=>e.textContent.includes("任务尚未完成"))'));
     await client.send('Page.reload',{ignoreCache:true});
@@ -70,8 +70,8 @@ test("registered file roles and incomplete recovery are correct in the real desk
         await writeFile(path.join(projectRoot,'test-results/glm-fix-artifact-'+width+'.png'),Buffer.from(screenshot.data,'base64'));
       }
     }
-    await client.evaluate('Array.from(document.querySelectorAll(".document-output-row")).find(e=>e.querySelector("a").textContent==="work.md").querySelector("button").click()');
-    await waitFor(()=>client.evaluate('document.getElementById("file-preview-content").textContent.includes("intermediate content")'),{timeoutMs:20000,label:'open registered Markdown in real preview'});
+    await client.evaluate('Array.from(document.querySelectorAll(".document-output-row")).find(e=>e.querySelector("a").textContent==="工作.md").querySelector("button").click()');
+    await waitFor(()=>client.evaluate('document.getElementById("file-preview-content").textContent.includes("预览末行")'),{timeoutMs:20000,label:'open registered Markdown in real preview'});
     console.log(JSON.stringify({rows,persistedCheckpoint:true,normalUserFlow:true}));
   } finally {
     client?.close();if(child)await terminateProcessTreeAsync(child);

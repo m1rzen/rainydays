@@ -811,14 +811,28 @@
       await performWorkbenchOperation({ type: "activate", paneId, tabId });
       if (located.tab.kind === "session") await selectSession(located.tab.sessionId, true);
     }
+    let outputPreviewReturn = null;
     async function closeWorkbenchTab(tabId) {
       const located = findWorkbenchTab(tabId);
       if (!located) return;
       if (located.tab.kind === "file" && blockDirtyFileNavigation()) return;
-      await performWorkbenchOperation({ type: "close", tabId, fallback: workbenchFallbackTab() });
+      const origin = outputPreviewReturn;
+      const returnFromOutput = origin?.fileTabId === tabId && activeWorkbenchTab()?.id === tabId
+        && origin.path === selectedAbsoluteFilePath && origin.generation === sessionSelectionGeneration;
+      const closeButton = returnFromOutput && document.activeElement instanceof HTMLButtonElement
+        && document.activeElement.matches('[data-action="close-file-viewer"], [data-action="close-workbench-tab"]')
+        ? document.activeElement : null;
+      if (closeButton) closeButton.disabled = true;
+      const closing = performWorkbenchOperation({ type: "close", tabId, fallback: workbenchFallbackTab() });
+      try { await closing; } finally { if (closeButton) closeButton.disabled = false; }
       closedWorkbenchTabs.push({ tab: { ...located.tab }, paneId: located.pane.id, index: located.index });
       if (closedWorkbenchTabs.length > 20) closedWorkbenchTabs.shift();
       renderWorkbenchLayout();
+      if (origin?.fileTabId === tabId && outputPreviewReturn === origin) outputPreviewReturn = null;
+      if (returnFromOutput && workbenchSaveQueue === closing && activeWorkbenchTab()?.id === origin.chatTabId
+        && currentSessionId === origin.sessionId && sessionSelectionGeneration === origin.generation
+        && document.activeElement === document.body && !dialogStack.length && !inputEl.disabled
+        && isRestorableFocusTarget(inputEl)) inputEl.focus({ preventScroll: true });
     }
     async function removeSessionWorkbenchTabs(sessionId) {
       if (!workbenchLayout || !workbenchPanes().some(pane => pane.tabs.some(tab => tab.kind === "session" && tab.sessionId === sessionId))) return;
@@ -1695,7 +1709,9 @@
       return parts.join("\\");
     }
 
-    async function openResolvedFilePath(absolutePath, ownerSessionId = currentSessionId) {
+    async function openResolvedFilePath(absolutePath, ownerSessionId = currentSessionId, fromOutput = false) {
+      const chat = fromOutput ? activeWorkbenchTab() : null;
+      const generation = sessionSelectionGeneration;
       try {
         const res = await fetch(`/api/files/resolve?path=${encodeURIComponent(absolutePath)}`, { headers: sessionHeaders(ownerSessionId) });
         const data = await res.json();
@@ -1704,6 +1720,10 @@
         currentFileRoot = data.rootId;
         currentFilePath = data.type === "directory" ? data.path : relativeDirectory(data.path);
         await toggleFileViewer(true);
+        const file = activeWorkbenchTab();
+        outputPreviewReturn = chat?.kind === "session" && chat.sessionId === ownerSessionId
+          && file?.kind === "file" && file.sessionId === ownerSessionId && data.type === "file"
+          ? { fileTabId: file.id, chatTabId: chat.id, sessionId: ownerSessionId, generation, path: absolutePath } : null;
         document.getElementById("file-root-select").value = currentFileRoot;
         if (data.type === "file") await previewFile(data.path, 1, absolutePath, data.rootId);
       } catch (err) {
@@ -1758,7 +1778,7 @@
     function createLocalFileLink(absolutePath) {
       const link = document.createElement("a");
       link.href = "#"; link.className = "local-file-link"; link.textContent = absolutePath; link.dataset.path = absolutePath; link.title = "在文件查看器中打开";
-      link.addEventListener("click", (event) => { event.preventDefault(); openResolvedFilePath(absolutePath); });
+      link.addEventListener("click", (event) => { event.preventDefault(); openResolvedFilePath(absolutePath, currentSessionId, documentOutputsEl.contains(link)); });
       return link;
     }
 
@@ -1881,7 +1901,10 @@
         const res = await fetch(`/api/sessions/${sessionId}/messages`, { headers: sessionHeaders(sessionId) });
         if (!res.ok) throw new Error("成果列表加载失败");
         const data = await res.json();
-        if (currentSessionId === sessionId && generation === documentOutputGeneration) renderDocumentOutputs(data.outputs || [], "", data.research);
+        if (currentSessionId === sessionId && generation === documentOutputGeneration) {
+          renderDocumentOutputs(data.outputs || [], "", data.research);
+          if (!isSessionRunning(sessionId)) renderCheckpointNotice(data.checkpoint);
+        }
       } catch {
         if (currentSessionId === sessionId && generation === documentOutputGeneration) renderDocumentOutputs([], "成果列表加载失败");
       }
@@ -3088,6 +3111,7 @@
       if (val.startsWith("/")) showSlashMenu(val.split(/\\s/)[0]); else closeSlashMenu();
     });
     inputEl.addEventListener("keydown", (e) => {
+      if (e.isComposing || e.keyCode === 229) return;
       if (slashMenu.classList.contains("visible")) {
         if (e.key === "ArrowDown") { e.preventDefault(); slashSelectedIdx = Math.min(slashSelectedIdx + 1, slashMenu.children.length - 1); updateSlashSelection(); }
         else if (e.key === "ArrowUp") { e.preventDefault(); slashSelectedIdx = Math.max(slashSelectedIdx - 1, 0); updateSlashSelection(); }
@@ -3097,6 +3121,7 @@
       if (e.key === "Enter" && !e.shiftKey && !slashMenu.classList.contains("visible")) { e.preventDefault(); formEl.requestSubmit(); }
     });
     inputEl.addEventListener("keydown", (e) => {
+      if (e.isComposing || e.keyCode === 229) return;
       if (slashMenu.classList.contains("visible")) return;
       if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
       if (!currentSessionId) return;
@@ -3523,6 +3548,15 @@
       const last = step.toolCallId ? cards.findLast(card => card.dataset.toolCallId === step.toolCallId && card.dataset.status === "running") || cards.findLast(card => card.dataset.toolCallId === step.toolCallId)
         : cards.find(card => card.dataset.toolName === step.toolName && card.dataset.status === "running") || cards.at(-1);
       if (!last) return;
+      if (step.wordRecovery?.state === "pending") last.dataset.wordRecovery = step.wordRecovery.key;
+      if (step.wordRecovery?.state === "registered") {
+        for (const card of cards.filter(card => card.dataset.wordRecovery === step.wordRecovery.key)) {
+          card.dataset.status = "success";
+          card.querySelector(".tool-card-status").textContent = "已核对原件";
+          card.querySelector(".icon").replaceChildren(createUiIcon("check"));
+          refreshToolGroupSummary(card.closest(".tool-group"));
+        }
+      }
       const succeeded = !step.toolStatus || step.toolStatus === "success";
       last.dataset.status = succeeded ? "success" : "error";
       const s = last.querySelector(".tool-card-status"); if (s) s.textContent = succeeded ? "完成" : "未完成";

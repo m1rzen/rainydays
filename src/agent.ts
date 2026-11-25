@@ -309,6 +309,10 @@ interface ParsedAgentToolCall {
   readonly parseError: string | null;
 }
 
+class VerifiedWordReplay extends ToolArgumentsError {
+  constructor(readonly recoveryKey: string, message: string) { super(message); }
+}
+
 interface PlannedAgentToolCall extends ParsedAgentToolCall {
   readonly originalIndex: number;
   readonly policy: ToolPolicy;
@@ -832,7 +836,8 @@ export class Agent {
         || error instanceof NetworkPolicyDeniedError
         || error instanceof ToolArgumentsError
         || error instanceof ToolLoopError;
-      const code = error instanceof CapabilityDeniedError || error instanceof PathDeniedError || error instanceof NetworkPolicyDeniedError || error instanceof ToolExecutionError || error instanceof ToolLoopError
+      const code = error instanceof VerifiedWordReplay ? "DOCX_WRITE_ALREADY_VERIFIED"
+        : error instanceof CapabilityDeniedError || error instanceof PathDeniedError || error instanceof NetworkPolicyDeniedError || error instanceof ToolExecutionError || error instanceof ToolLoopError
         ? error.code
         : error instanceof ToolArgumentsError
           ? "TOOL_ARGUMENTS_INVALID"
@@ -1233,7 +1238,11 @@ export class Agent {
           let planningError: unknown = personaSwitchExclusiveError ?? (parsed.toolArgs
             ? null
             : new ToolArgumentsError(parsed.parseError ?? "工具参数不是合法 JSON"));
-          if (!planningError && checkpoint?.isAlreadyApplied(parsed.toolName, parsed.toolArgs)) planningError = new ToolArgumentsError("检查点已确认此写入完成；已阻止重复执行，请读取已有产物并从未完成部分继续。");
+          if (!planningError && checkpoint?.isAlreadyApplied(parsed.toolName, parsed.toolArgs)) {
+            const message = "检查点已确认此写入完成；已阻止重复执行，请读取已有产物并从未完成部分继续。";
+            const key = parsed.toolName === "create_docx" && checkpoint.verifiedWordReplayKey(parsed.toolArgs);
+            planningError = key ? new VerifiedWordReplay(key, message) : new ToolArgumentsError(message);
+          }
           if (parsed.toolArgs) {
             try {
               if (toolSelection.enabled && !toolSelection.has(parsed.toolName)) throw new ToolArgumentsError("工具尚未加载或不在当前可用范围；请先调用 search_tools 发现所需能力，再按返回的参数调用。");
@@ -1308,7 +1317,13 @@ export class Agent {
                 hardFailure ??= settlement.reason;
                 continue;
               }
-              results[planned.originalIndex] = settlement.value.result;
+              const result = settlement.value.result;
+              results[planned.originalIndex] = result;
+              await checkpoint.capture(result.toolName, planned.toolArgs, result.outcome);
+              // A later call in this turn may wait for the user after Word is already on disk.
+              if (result.toolName === "create_docx" && result.outcome.status === "success") {
+                checkpoint.save("running", getTasksBySession(runSessionId));
+              }
               if (planned.toolName === "task_create" && settlement.value.result.outcome.status === "success") taskMode = true;
               if (isRunSettlementFailure(settlement.value.fatal)) settlementFailure ??= settlement.value.fatal;
               else if (isRunCancellation(settlement.value.fatal)) cancellationFailure ??= settlement.value.fatal;
@@ -1384,7 +1399,6 @@ export class Agent {
         ]);
         touch(runSessionId);
         results.forEach((entry, index) => ledger.record(entry.toolName, toolCallsParsed[index].toolArgs, entry.outcome));
-        for (const [index, entry] of results.entries()) await checkpoint.capture(entry.toolName, toolCallsParsed[index].toolArgs, entry.outcome);
         checkpoint.save("running", getTasksBySession(runSessionId));
         this.checkpointContext = checkpoint.context();
         if (batchCancellation) throw batchCancellation;
@@ -1414,8 +1428,19 @@ export class Agent {
             };
           }
 
+          const replay = plannedCalls[ri].planningError;
+          let wordRecovery: AgentStep["wordRecovery"];
+          if (replay instanceof VerifiedWordReplay && outcome.code === "DOCX_WRITE_ALREADY_VERIFIED") {
+            wordRecovery = { state: "pending", key: replay.recoveryKey };
+          } else if (toolName === "register_output" && outcome.status === "success" && !outcome.truncated) {
+            const receipt = JSON.parse(outcome.content);
+            if (receipt.format === "docx" && receipt.kind === "deliverable" && typeof receipt.wordRecoveryKey === "string") {
+              wordRecovery = { state: "registered", key: receipt.wordRecoveryKey };
+            }
+          }
           yield {
             type: "tool_result",
+            ...(wordRecovery ? { wordRecovery } : {}),
             content: outcome.content,
             toolName,
             toolStatus: outcome.status,

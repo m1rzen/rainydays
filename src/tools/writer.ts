@@ -3,6 +3,7 @@
 // 通用版：输出路径由 persona env.OUTPUT_DIR 决定
 // ===========================================
 
+import { createHash } from "node:crypto";
 import type { ToolDefinition, ToolExecutor, ToolInvocationServices } from "../types.js";
 import { throwIfCancelled } from "../run-cancellation.js";
 import { collectResearchSources, researchUrl } from "../research-sources.js";
@@ -182,7 +183,7 @@ export const createDocxExec: ToolExecutor = async (args, _env, invocation) => {
   if (!checked.success || expected.some(text => text && !checked.text.includes(text))) throw new Error("Word 生成后文字复读不一致，未保存成果。请缩小内容或检查输入字符。");
   throwIfCancelled(invocation.signal);
   await reservation.commit(buffer);
-  return JSON.stringify({ type: "document_output", format: "docx", path: reservation.path, verification: "text-read-back", message: `Word 文档已生成: ${relativePath}` });
+  return JSON.stringify({ type: "document_output", format: "docx", path: reservation.path, sha256: createHash("sha256").update(buffer).digest("hex"), verification: "text-read-back", message: `Word 文档已生成: ${relativePath}` });
 };
 
 // ===========================================

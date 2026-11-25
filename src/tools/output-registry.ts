@@ -1,4 +1,5 @@
 import path from "node:path";
+import { getSessionCheckpoint } from "../run-checkpoint.js";
 import { PathDeniedError } from "../path-policy.js";
 import { ToolArgumentsError } from "../tool-pipeline.js";
 import type { ToolDefinition, ToolExecutor } from "../types.js";
@@ -21,7 +22,10 @@ function detectFormat(bytes: Buffer): string | null {
   if (bytes.length >= 12 && bytes.subarray(4, 8).toString("ascii") === "ftyp") return "mp4";
   if (bytes.length >= 4 && bytes.subarray(0, 3).toString("ascii") === "ID3") return "mp3";
   if (!bytes.includes(0)) {
-    try { new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, 4096)); return "text"; } catch { /* fallthrough */ }
+    // Include continuation bytes of a character crossing the sample boundary.
+    let end = Math.min(bytes.length, 4096);
+    while (end < bytes.length && end < 4096 + 3 && (bytes[end] & 0xc0) === 0x80) end++;
+    try { new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, end)); return "text"; } catch { /* fallthrough */ }
   }
   return null;
 }
@@ -77,6 +81,11 @@ export const registerOutputExec: ToolExecutor = async (args, _env, invocationVal
   const { bytes, canonicalPath, sha256 } = inspected;
   const verification = "sha256";
   const detected = detectFormat(bytes);
+  const word = detected === "zip-container" && invocation.capabilityContext?.sessionId
+    ? getSessionCheckpoint(invocation.capabilityContext.sessionId)?.artifacts.find(file =>
+      file.path === canonicalPath && file.sha256 === sha256 && file.verifiedWordWrite)
+    : undefined;
+  const format = word ? "docx" : detected ?? "unknown";
   const byExtension = extensionFormat(filePath);
   const formatWarning = detected && byExtension && detected !== byExtension
     ? `扩展名提示 ${byExtension}，但文件内容是 ${detected}，请核对导出方式是否正确`
@@ -87,8 +96,9 @@ export const registerOutputExec: ToolExecutor = async (args, _env, invocationVal
     name: path.basename(canonicalPath),
     kind,
     ...(note ? { note } : {}),
-    format: detected ?? "unknown",
-    detectedFormat: detected ?? "unknown",
+    format,
+    detectedFormat: format,
+    ...(word ? { wordRecoveryKey: `${word.verifiedWordWrite}:${sha256}` } : {}),
     bytes: Number(inspected.snapshot.size),
     sha256,
     verification,

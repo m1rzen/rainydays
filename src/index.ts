@@ -3135,6 +3135,7 @@ app.post("/api/chat", async (req, res) => {
   let streamOpen = true;
   let status: "idle" | "error" = "idle";
   let hadToolFailure = false;
+  const pendingWordRecoveries = new Set<string>();
   let incomplete = false;
   let interrupted = false;
   const emit = (event: unknown) => {
@@ -3174,7 +3175,11 @@ app.post("/api/chat", async (req, res) => {
         for await (const step of runtime.agent.run(input, runId, claim.signal, attachments)) {
           if (step.type === "error") { status = "error"; if (step.interrupted) interrupted = true; }
           if (step.type === "answer_done") incomplete = step.outcome === "incomplete";
-          if (step.type === "tool_result" && step.toolStatus && step.toolStatus !== "success") hadToolFailure = true;
+          if (step.type === "tool_result") {
+            if (step.wordRecovery?.state === "pending") pendingWordRecoveries.add(step.wordRecovery.key);
+            else if (step.wordRecovery?.state === "registered") pendingWordRecoveries.delete(step.wordRecovery.key);
+            else if (step.toolStatus && step.toolStatus !== "success") hadToolFailure = true;
+          }
           emit(step);
         }
         attachments = Object.freeze([]);
@@ -3215,6 +3220,7 @@ app.post("/api/chat", async (req, res) => {
       status = "error";
       emit({ type: "error", sessionId: chatSessionId, runId, content: `Persona 切换失败: ${error instanceof Error ? error.message : String(error)}`, timestamp: Date.now() });
     }
+    hadToolFailure ||= pendingWordRecoveries.size > 0;
     updateDesktopSessionStatus(chatSessionId, status);
     if (!runCancelled || status === "error") {
       const sessionTitle = getSessionInfo(chatSessionId)?.title ?? "Session";
