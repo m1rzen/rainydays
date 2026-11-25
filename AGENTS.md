@@ -2,11 +2,11 @@
 
 面向少量同事的 Windows 通用 Agent。基础方向为文件、研究、文档和重复任务；最新规划加入代码、CLI、MCP、浏览器、原生桌面与有界子任务。
 
-- 开始任务：先读 `docs/STATUS.md`、`docs/agents/README.md`，再读当前票据及其引用。
-- 当前顺序只由 `docs/work/general-agent/plan.md` 维护；`docs/ROADMAP.md` 仅导航，D系列索引仅维护D票依赖。旧R票、审查、devlog和archive是按需证据，不能形成另一条执行队列。
+- 开始任务先读 `docs/STATUS.md`、`docs/agents/README.md`，再读当前票据及其引用。STATUS 只更新顶部的当前状态，历史移入 archive。
+- 当前顺序只由 [D+A 总路线第 7 节](docs/work/general-agent/plan.md#7-2026-11-25-路线修订用户批准)维护。`docs/ROADMAP.md` 仅导航，D 系列索引维护 D 票依赖。旧 R 票、审查、devlog 和 archive 按需查询。
 - 最新范围见 `docs/specs/general-agent.md`，基础工作流见 `docs/specs/colleague-delivery.md`。用户于2026-10-18批准整套D+A路线，按 `docs/work/general-agent/plan.md` 依赖连续执行，无须逐票重复确认。状态只按实际证据推进，获批不等于完成。
 - 开发流程见 `docs/agents/workflow.md`；修改运行链前读 `docs/agents/architecture.md`；开发代码/CLI/MCP/Computer Use/技能/子任务时读 `docs/agents/general-agent-capabilities.md`；安全投入边界见 `docs/agents/safety-budget.md`。
-- GLM 开发或返工先读 [执行规范](docs/agents/glm-execution.md)，每轮结束按 [审查交接规范](docs/agents/glm-review-handoff.md)提交固定版本与证据；审查 GLM 结果时同样先读交接规范。
+- GLM 开发或返工先读[执行规范](docs/agents/glm-execution.md)与[审查交接规范](docs/agents/glm-review-handoff.md)。按[文档规则](docs/agents/workflow.md#文档各自负责什么)在原票记录固定版本与证据。
 - Lux 仅作核心行为参考，按 `docs/research/lux-reference-plan.md` 研究。Prism、钉钉明确排除。旧 100% parity 规范与 68 卡为历史资料，不能重新成为普通功能前置门槛。
 - 默认搜索遵循 `.rgignore`，避开归档、旧全量规范、parity文档/报告与本地产物。当前票据确需历史契约时，用明确路径读取；资料用途见 `docs/archive/README.md`。parity中的现有实现边界仍按受影响行为验证。
 - 保留其他人的改动；本机数据库、密钥、私有备份和原始诊断不得进 Git。模型测试使用明确批准的配置与预算，已有授权按原范围延续。

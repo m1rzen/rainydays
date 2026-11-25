@@ -1,5 +1,7 @@
 # GLM 任务执行规范
 
+文档与交接写法如有冲突，以[执行流程的文档规则](workflow.md#文档各自负责什么)为准。
+
 生效：2026-11-17。适用于 GLM 在 RainyDays 中的开发、缺陷修复和审查返工。按用户要求，基于 [2026-11-16 独立审查](../work/general-agent/reviews/2026-11-16-glm-improvements-code-review.md)制定；它补充 [workflow](workflow.md)，排期仍只由 [plan.md](../work/general-agent/plan.md)维护。
 
 **交付单位是经过正常入口验证的用户行为。代码、文件、工具回执和新增测试分别只是证据的一部分。每轮结束按[审查交接规范](glm-review-handoff.md)交付固定版本，由 Codex 或用户指定的独立审查者复核。**

@@ -2,7 +2,7 @@
 
 适用于D系列基础任务与A系列通用能力。最新产品定义见[通用规格](../specs/general-agent.md)，优先级见[D+A任务图](../work/general-agent/plan.md)。流程服务于可交付结果，不增加逐卡角色仪式。基础验收与最终验收分开，A13是完整出口。
 
-GLM 开发、返工补充执行 [GLM 任务执行规范](glm-execution.md)；每轮结束和接收其结果审查时，使用 [GLM 审查交接规范](glm-review-handoff.md)。这两份规范细化完成门槛与证据，不改变下方票据体系和总路线。
+GLM 开发与返工按[执行规范](glm-execution.md)和[审查交接规范](glm-review-handoff.md)准备固定版本与证据，文档写法以下方规则为准。
 
 ## 开始与恢复
 
@@ -37,4 +37,7 @@ GLM 开发、返工补充执行 [GLM 任务执行规范](glm-execution.md)；每
 
 ## 文档各自负责什么
 
-STATUS 记录现在；规格定义行为；任务文件记录依赖与验收；acceptance 定义计分；research 记录外部事实；devlog 保留过去。修改事实时更新所属文档，其他位置链接引用。
+规格定义行为，票据记录依赖与验收，acceptance 定义计分，research 记录外部事实。其他位置链接引用。
+
+- [STATUS](../STATUS.md) 只保留当前状态、阻塞和下一步。每轮更新顶端摘要，历史放入 [archive](../archive/README.md)。
+- 每轮结果写入原票据的执行记录，最多 10 行。仅独立复核他人代码时可另写审查报告。其余工作轮次用原票记录进度与交接。

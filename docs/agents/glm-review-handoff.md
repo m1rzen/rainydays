@@ -1,5 +1,7 @@
 # GLM 审查交接规范
 
+文档与交接写法如有冲突，以[执行流程的文档规则](workflow.md#文档各自负责什么)为准。
+
 适用于每次 GLM 开发、修复、返工结束后提交给 Codex 的审查。执行要求见 [GLM 任务执行规范](glm-execution.md)；任务排期只由 [plan.md](../work/general-agent/plan.md)维护。
 
 生效：2026-11-17。

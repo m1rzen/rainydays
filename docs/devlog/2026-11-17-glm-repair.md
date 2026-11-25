@@ -6,6 +6,6 @@ R01–R09 已按[复核报告](../work/general-agent/reviews/2026-11-17-glm-repa
 
 最终冻结检查：构建、类型/lint 通过；产品 200/200、UI 15/15；路径/边界/样本/幂等 95/95；HTTP/SSE 5/5；成果 Electron 1/1，A14/R5 Electron 2/2。全部模型为本地确定性服务，未新增模型费用或实际安装验收；首轮 red 与阶段复试日志保留在本地 test-results。
 
-下一项只由[总路线第6节](../work/general-agent/plan.md#6-2026-11-17-修复后的执行窗口)维护：先冻结八场景各三次，D13 同版本内部候选可并行准备，再按依赖收尾 A06/A08/A11/A12、A09/A10 与 A13。A14 verified 仅代表本票工程范围；A08/A11 implemented，A13 ready。
+A14 在本轮工程范围内 verified，A08/A11 implemented，A13 ready。后续执行按[总路线第 7 节](../work/general-agent/plan.md#7-2026-11-25-路线修订用户批准)。
 
 用户既有 WIP、日常数据库与凭据保留；没有推送。回退范围为产品提交 535915a，其新增检查点复用 entities、未改变数据库 schema；旧相对回执没有自动回填，需按正确路径重新登记。
