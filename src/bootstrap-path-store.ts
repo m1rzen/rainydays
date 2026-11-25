@@ -270,6 +270,10 @@ export class BootstrapPathStore {
     return this.#openAppRuntimeFile(path.join("dist", "document-parser-worker.js"), "runtime-document-worker");
   }
 
+  async openLocalWorkerScript(): Promise<BootstrapRuntimeFileLease> {
+    return this.#openAppRuntimeFile(path.join("electron", "rainydays-worker.mjs"), "runtime-local-worker");
+  }
+
   async openDaemonServerScript(): Promise<BootstrapRuntimeFileLease> {
     return this.#openAppRuntimeFile(path.join("src", "index.ts"), "runtime-daemon-server");
   }

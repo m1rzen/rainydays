@@ -43,7 +43,7 @@ export const workerConnectDef: ToolDefinition = {
   type: "function",
   function: {
     name: "worker_connect",
-    description: "Attach an independent RainyDays Worker over authenticated stdio or SSH transport.",
+    description: "啟動產品內建的本機 Worker（stdio）。此版本未開放遠端 Worker，也不接受自訂 executable 或 args。",
     parameters: {
       type: "object",
       properties: {
@@ -55,7 +55,7 @@ export const workerConnectDef: ToolDefinition = {
     },
   },
 };
-export const workerConnectExec: ToolExecutor = async (args) => json(await workerRegistry.connect({
+export const workerConnectExec: ToolExecutor = async (args, _env, invocation) => json(await workerRegistry.connect({
   workerId: args.workerId as string,
   name: args.name as string | undefined,
   transport: args.transport as "stdio" | "ssh" | undefined,
@@ -65,6 +65,10 @@ export const workerConnectExec: ToolExecutor = async (args) => json(await worker
   remoteCommand: args.remoteCommand as string | undefined,
   executable: args.executable as string | undefined,
   args: args.args as string[] | undefined,
+}, (cwd, launch) => {
+  if (!invocation) throw new Error("Worker 工作目錄需要路徑授權。");
+  const defaultRootId = invocation.path.rootIdForEnv("WORKSPACE_ROOT") ?? undefined;
+  return invocation.path.withInitialCwd(cwd, { defaultRootId }, launch);
 }));
 
 export const workerDisconnectDef: ToolDefinition = { type: "function", function: { name: "worker_disconnect", description: "Detach and terminate a named non-local Worker transport.", parameters: { type: "object", properties: { workerId: { type: "string" } }, required: ["workerId"], ...noExtra } } };
@@ -92,8 +96,11 @@ export const bashExec: ToolExecutor = async (args, env, invocation) => {
   if (!invocation) throw new Error("bash requires invocation services");
   throwIfCancelled(invocation.signal);
   // Without a cwd the Worker falls back to the application folder, not the user's project.
-  const request = args.cwd === undefined && !args.worker_id && env?.WORKSPACE_ROOT ? { ...args, cwd: env.WORKSPACE_ROOT } : args;
-  return json(await workerRegistry.execute(sessionId(invocation), "bash", request, invocation.signal, typeof args.timeout === "number" ? Math.max(args.timeout + 5_000, 10_000) : undefined));
+  const requested = args.cwd ?? env?.WORKSPACE_ROOT;
+  const run = (request: Readonly<Record<string, unknown>>) => workerRegistry.execute(sessionId(invocation), "bash", request, invocation.signal, typeof args.timeout === "number" ? Math.max(args.timeout + 5_000, 10_000) : undefined);
+  if (typeof requested !== "string") return json(await run(args));
+  const defaultRootId = invocation.path.rootIdForEnv("WORKSPACE_ROOT") ?? undefined;
+  return json(await invocation.path.withInitialCwd(requested, { defaultRootId }, cwd => run({ ...args, cwd })));
 };
 
 export const bashOutputDef: ToolDefinition = { type: "function", function: { name: "bash_output", description: "Read current output or a line tail from a persistent shell on the selected Worker.", parameters: { type: "object", properties: { session: { type: "string" }, tail: { type: "number", minimum: 0 }, wait: { type: "number", minimum: 0 }, worker_id: { type: "string" } }, required: ["session"], ...noExtra } } };
@@ -114,7 +121,10 @@ export const workerUploadExec: ToolExecutor = async (args, _env, invocation) => 
   const rootId = invocation.path.rootIdForEnv("DATA_ROOT");
   if (!rootId) throw new Error("worker_upload requires DATA_ROOT");
   const file = await invocation.path.readFile(args.localPath as string, { defaultRootId: rootId, maxBytes: 128 * 1024 * 1024 });
-  return json(await workerRegistry.execute(sessionId(invocation), "upload", { file_path: args.remotePath, dataBase64: file.bytes.toString("base64") }, invocation.signal));
+  const localWorker = await workerRegistry.status(sessionId(invocation));
+  if (localWorker.status !== "online") throw new Error("選定的本機 Worker 未連線。");
+  const { bytesWritten } = await invocation.path.writeFile(args.remotePath as string, file.bytes, { defaultRootId: rootId, maxBytes: 128 * 1024 * 1024 });
+  return json({ filePath: path.normalize(args.remotePath as string), bytes: bytesWritten });
 };
 
 export const workerDownloadDef: ToolDefinition = { type: "function", function: { name: "worker_download", description: "Download a selected Worker file into local OUTPUT_DIR.", parameters: { type: "object", properties: { remotePath: { type: "string" }, localPath: { type: "string" } }, required: ["remotePath", "localPath"], ...noExtra } } };
@@ -122,9 +132,9 @@ export const workerDownloadExec: ToolExecutor = async (args, _env, invocation) =
   if (!invocation) throw new Error("worker_download requires invocation services");
   const rootId = invocation.path.rootIdForEnv("OUTPUT_DIR");
   if (!rootId) throw new Error("worker_download requires OUTPUT_DIR");
-  const result = await workerRegistry.execute<{ dataBase64: string; bytes: number }>(sessionId(invocation), "download", { file_path: args.remotePath }, invocation.signal);
-  const bytes = Buffer.from(result.dataBase64, "base64");
-  if (bytes.length !== result.bytes || bytes.length > 128 * 1024 * 1024) throw new Error("Worker download framing is invalid");
+  const localWorker = await workerRegistry.status(sessionId(invocation));
+  if (localWorker.status !== "online") throw new Error("選定的本機 Worker 未連線。");
+  const { bytes } = await invocation.path.readFile(args.remotePath as string, { defaultRootId: rootId, maxBytes: 128 * 1024 * 1024 });
   await invocation.path.writeFile(args.localPath as string, bytes, { defaultRootId: rootId, maxBytes: 128 * 1024 * 1024 });
   return json({ localPath: path.normalize(args.localPath as string), bytes: bytes.length });
 };

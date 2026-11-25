@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { fileURLToPath } from "node:url";
 import readline from "node:readline";
+import { getBootstrapPathStore } from "./bootstrap-path-store.js";
 import type { ToolInvocationServices } from "./types.js";
 
 export type WorkerTransport = "local" | "stdio" | "ssh" | "relay";
@@ -29,14 +29,23 @@ interface WorkerSpawnOptions {
   readonly workerId: string;
   readonly name: string;
   readonly transport: WorkerTransport;
-  readonly executable: string;
-  readonly args: readonly string[];
   readonly cwd?: string;
   readonly accessCode: string;
 }
 
 const WORKER_ID = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,79}$/u;
-const WORKER_CLI = process.env.RAINYDAYS_WORKER_CLI || fileURLToPath(new URL("../scripts/rainydays-worker.mjs", import.meta.url));
+const WORKER_ENV = ["SystemRoot", "WINDIR", "SystemDrive", "TEMP", "TMP", "PATH", "PATHEXT", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "ProgramFiles", "ProgramFiles(x86)", "HOME", "LANG", "LC_ALL", "RAINYDAYS_BASH_PATH", "RAINYDAYS_SH_PATH"] as const;
+const LOCAL_WORKER_ONLY = "此版本只支援內建本機 Worker，無法指定 executable 或 args。";
+
+function workerEnvironment(source: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {};
+  for (const key of WORKER_ENV) {
+    const value = source[key];
+    if (value !== undefined) env[key] = value;
+  }
+  if (process.versions.electron) env.ELECTRON_RUN_AS_NODE = "1";
+  return env;
+}
 
 function exactId(value: unknown): string {
   if (typeof value !== "string" || !WORKER_ID.test(value)) throw new TypeError("Worker id is invalid");
@@ -61,16 +70,11 @@ export class StdioWorkerAdapter {
   #pending = new Map<number, RpcPending>();
   #stderr = "";
 
-  private constructor(options: WorkerSpawnOptions) {
+  private constructor(options: WorkerSpawnOptions, child: ChildProcess) {
     this.workerId = options.workerId;
     this.name = options.name;
     this.transport = options.transport;
-    this.process = spawn(options.executable, [...options.args], {
-      cwd: options.cwd,
-      windowsHide: true,
-      stdio: ["pipe", "pipe", "pipe"],
-      env: { ...process.env },
-    });
+    this.process = child;
     const lines = readline.createInterface({ input: this.process.stdout!, crlfDelay: Infinity });
     lines.on("line", line => {
       let value: unknown;
@@ -99,12 +103,33 @@ export class StdioWorkerAdapter {
   }
 
   static async connect(options: WorkerSpawnOptions): Promise<StdioWorkerAdapter> {
-    const adapter = new StdioWorkerAdapter(options);
-    const hello = await adapter.request<{ workerName: string; platform: string; cwd: string; pid: number }>("hello", { accessCode: options.accessCode }, undefined, 15_000);
-    adapter.status = "online";
-    adapter.platform = hello.platform;
-    adapter.cwd = hello.cwd;
-    return adapter;
+    const bootstrap = getBootstrapPathStore();
+    const executable = await bootstrap.openNodeExecutable();
+    try {
+      const script = await bootstrap.openLocalWorkerScript();
+      try {
+        const launch = async (cwd: string) => {
+          await executable.assertCurrent("beforeProcessSpawn");
+          await script.assertCurrent("beforeProcessSpawn");
+          const child = spawn(executable.canonicalPath, [script.canonicalPath, "stdio", "--access-code", options.accessCode, "--cwd", cwd, "--name", options.name], {
+            cwd, shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"], env: workerEnvironment(),
+          });
+          const adapter = new StdioWorkerAdapter(options, child);
+          try {
+            await new Promise<void>((resolve, reject) => { child.once("spawn", resolve); child.once("error", reject); });
+            const hello = await adapter.request<{ workerName: string; platform: string; cwd: string; pid: number }>("hello", { accessCode: options.accessCode }, undefined, 15_000);
+            adapter.status = "online";
+            adapter.platform = hello.platform;
+            adapter.cwd = hello.cwd;
+            return adapter;
+          } catch (error) {
+            await adapter.close();
+            throw error;
+          }
+        };
+        return await (options.cwd === undefined ? bootstrap.withAppCwd(launch) : launch(options.cwd));
+      } finally { await script.close(); }
+    } finally { await executable.close(); }
   }
 
   async request<T = unknown>(operation: string, args: Readonly<Record<string, unknown>> = {}, signal?: AbortSignal, timeoutMs = 120_000): Promise<T> {
@@ -137,7 +162,7 @@ export class StdioWorkerAdapter {
 
   async close(): Promise<void> {
     try { this.process.stdin?.end(); } catch {}
-    if (this.process.exitCode === null) {
+    if (this.process.pid && this.process.exitCode === null && this.process.signalCode === null) {
       this.process.kill("SIGTERM");
       await new Promise(resolve => { const timer = setTimeout(resolve, 2_000); timer.unref?.(); this.process.once("exit", () => { clearTimeout(timer); resolve(undefined); }); });
       if (this.process.exitCode === null) this.process.kill("SIGKILL");
@@ -171,9 +196,6 @@ export class WorkerRegistry {
         workerId: "local",
         name: "Local",
         transport: "local",
-        executable: process.execPath,
-        args: [WORKER_CLI, "stdio", "--access-code", accessCode, "--cwd", process.cwd(), "--name", "Local"],
-        cwd: process.cwd(),
         accessCode,
       }).catch(error => { this.#localPromise = null; throw error; });
     }
@@ -198,27 +220,19 @@ export class WorkerRegistry {
     return worker.info(workerId === this.selectedWorkerId(sessionIdInput));
   }
 
-  async connect(input: WorkerConnectInput): Promise<WorkerInfo> {
+  async connect(input: WorkerConnectInput, useCwd?: (requested: string, launch: (cwd: string) => Promise<StdioWorkerAdapter>) => Promise<StdioWorkerAdapter>): Promise<WorkerInfo> {
+    if (input.transport === "ssh") throw new Error("此版本未開放遠端 Worker");
+    if (input.executable !== undefined || input.args !== undefined) throw new Error(LOCAL_WORKER_ONLY);
     const workerId = exactId(input.workerId);
     if (workerId === "local" || this.#workers.has(workerId)) throw new Error(`Worker already exists: ${workerId}`);
     const name = input.name ? exactText(input.name, "Worker name", 120) : workerId;
-    const transport = input.transport ?? "stdio";
-    const accessCode = input.accessCode ? exactText(input.accessCode, "Worker access code", 256) : randomBytes(24).toString("base64url");
-    let executable: string;
-    let args: string[];
-    if (input.executable) {
-      executable = exactText(input.executable, "Worker executable", 32_768);
-      args = (input.args ?? []).map(value => exactText(value, "Worker argument", 32_768, true));
-    } else if (transport === "ssh") {
-      const host = exactText(input.host, "SSH host", 512);
-      const remoteCommand = exactText(input.remoteCommand, "Remote Worker command", 8_192);
-      executable = process.platform === "win32" ? "ssh.exe" : "ssh";
-      args = [host, remoteCommand, "stdio", "--access-code", accessCode, "--cwd", input.cwd ?? ".", "--name", name];
-    } else {
-      executable = process.execPath;
-      args = [WORKER_CLI, "stdio", "--access-code", accessCode, "--cwd", input.cwd ?? process.cwd(), "--name", name];
+    const accessCode = randomBytes(24).toString("base64url");
+    const launch = (cwd?: string) => StdioWorkerAdapter.connect({ workerId, name, transport: "stdio", cwd, accessCode });
+    const worker = await (input.cwd !== undefined && useCwd ? useCwd(input.cwd, launch) : launch(input.cwd));
+    if (this.#workers.has(workerId)) {
+      await worker.close();
+      throw new Error(`Worker already exists: ${workerId}`);
     }
-    const worker = await StdioWorkerAdapter.connect({ workerId, name, transport, executable, args, cwd: transport === "stdio" ? input.cwd : undefined, accessCode });
     this.#workers.set(workerId, worker);
     return worker.info(false);
   }
@@ -255,8 +269,6 @@ export class WorkerRegistry {
     return worker.request<T>(operation, args, signal, timeoutMs);
   }
 
-  isRemoteSelected(sessionIdInput: string): boolean { return this.selectedWorkerId(sessionIdInput) !== "local"; }
-
   async dispose(): Promise<void> {
     const workers = [...this.#workers.values()];
     this.#workers.clear();
@@ -268,12 +280,12 @@ export class WorkerRegistry {
 
 export const workerRegistry = new WorkerRegistry();
 
-export async function routeToSelectedWorker(invocation: ToolInvocationServices | undefined, operation: string, args: Readonly<Record<string, unknown>>): Promise<string | null> {
+export async function routeToSelectedWorker(invocation: ToolInvocationServices | undefined, _operation: string, args: Readonly<Record<string, unknown>>): Promise<string | null> {
   if (!invocation) return null;
   const sessionId = invocation.capabilityContext.sessionId;
   const explicitWorkerId = typeof args.worker_id === "string" && args.worker_id.trim().length > 0 ? args.worker_id.trim() : null;
-  if (explicitWorkerId === "local") return null;
-  if (!explicitWorkerId && !workerRegistry.isRemoteSelected(sessionId)) return null;
-  const value = await workerRegistry.execute(sessionId, operation, args, invocation.signal);
-  return typeof value === "string" ? value : JSON.stringify(value, null, 2);
+  const workerId = explicitWorkerId ?? workerRegistry.selectedWorkerId(sessionId);
+  if (workerId !== "local" && (await workerRegistry.status(sessionId, workerId)).status !== "online") throw new Error("選定的本機 Worker 未連線。");
+  // Local file and script tools retain their normal PathPolicy and execution gateways.
+  return null;
 }

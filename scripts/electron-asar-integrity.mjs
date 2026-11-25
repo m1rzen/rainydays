@@ -26,6 +26,7 @@ function isRuntimeProjection(relative) {
     || relative === electronStageManifestName
     || relative === "package.json"
     || relative === "dist/document-parser-worker.js"
+    || relative === "electron/rainydays-worker.mjs"
     || sec03NativeBinarySet.has(relative)
     || /^(?:models|personas|public|skills)\//u.test(relative);
 }

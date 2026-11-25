@@ -7,7 +7,6 @@
 import path from "node:path";
 import type { ToolExecutor, ToolInvocationServices } from "./types.js";
 import { PathDeniedError } from "./path-policy.js";
-import { workerRegistry } from "./worker.js";
 
 export const PROJECT_INSTRUCTION_FILES = Object.freeze(["AGENTS.md", "CLAUDE.md"]);
 const MAX_LEVELS = 8;
@@ -94,17 +93,11 @@ export async function collectProjectInstructions(invocation: ToolInvocationServi
   return `\n\n--- 项目说明（首次涉及这些目录，本轮内不再重复）---\n${sections.join("\n\n")}\n\n${PROJECT_INSTRUCTION_BOUNDARY}`;
 }
 
-function remoteWorker(invocation: ToolInvocationServices, args: Readonly<Record<string, unknown>>): boolean {
-  const explicit = typeof args.worker_id === "string" && args.worker_id.trim() ? args.worker_id.trim() : null;
-  if (explicit) return explicit !== "local";
-  return workerRegistry.isRemoteSelected(invocation.capabilityContext.sessionId);
-}
-
 /** Appends applicable project instructions to a successful result. Lookup failures never fail the tool. */
 export function withProjectInstructions(executor: ToolExecutor, resolve: (args: Readonly<Record<string, unknown>>, invocation: ToolInvocationServices) => ProjectInstructionTarget | null): ToolExecutor {
   return async (args, env, invocation) => {
     const result = await executor(args, env, invocation);
-    if (!invocation || remoteWorker(invocation, args)) return result;
+    if (!invocation) return result;
     try {
       const target = resolve(args, invocation);
       if (!target) return result;

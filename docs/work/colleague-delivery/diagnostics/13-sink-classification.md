@@ -521,3 +521,31 @@ read_repo把runGitLsFiles扩为固定四种只读查询runGitQuery；该execFile
 | `npm run typecheck`、`npm run lint`、`git diff --check` | 均退出 0。 |
 | `npm run test:product`、`npm run test:product:ui`、預設隔離的 SEC-02/03 契約 | 需負責人複跑。真實 Windows 瀏覽器啟停、上傳下載、開發模式 PATH 與觀察落盤也需由負責人執行。舊 ECO-06 自訂 JS 執行案例與本輪凍結的白名單行為不同，需以當期交付範圍複核。 |
 | `npm run build`、`npm run test:package` | 清單閘門仍拒絕，尚未執行。無原生編譯、staging、Electron／NSIS 或已安裝證據。 |
+
+### 第三輪複核
+
+起點 `f596664`。負責人的第二輪結果為產品 201/201、UI 15/15、預設隔離 SEC-03 18/18、SEC-02 17/19。第三輪完成最後的 Worker 啟動、環境和 Playbook 目錄操作。原掃描器與交叉檢查均完整通過。
+
+| 位置 | 處置與登記依據 |
+| --- | --- |
+| `src/worker.ts:1,40,114` | 兩條本機 stdio 啟動共用同一個固定入口。Node／Electron 執行檔及內建腳本由 BootstrapPathStore 分別取得並複核租約。固定 argv 結構、產生握手密碼、shell 關閉。環境只投影 Windows 系統路徑、使用者目錄、暫存、PATH／PATHEXT、語系和已使用的 Bash／sh 路徑；Electron Node 模式旗標由程式設定。取消 `RAINYDAYS_WORKER_CLI` 覆寫，倉庫測試無使用者。登記新 spawn、環境讀取及對應匯入。 |
+| `src/worker.ts`、`src/tools/worker-tools.ts`、`src/tool-policies.ts`、`src/project-instructions.ts` | `worker_connect` 保留工具名稱及輸入 schema，拒絕 `executable`、`args` 和 SSH，使用指定中文錯誤。附接名稱對應本機 Worker；設定的 cwd 與 bash 提供的 cwd 使用原路徑閘道。第一版檔案傳輸和專案檔案／腳本工具保留於主程序既有授權流程，登記在本機的 Worker 選擇仍有 Session 隔離及離線拒絕。 |
+| `electron/rainydays-worker.mjs:2,74,88,105`、`scripts/rainydays-worker.mjs` | 既有入口改委派給 `electron/` 下的產品腳本。保留握手、狀態、bash、持久 shell 與 `computer_use` 協議。腳本端停止接收遠端原始檔案存取／腳本 RPC。固定 Windows 系統 shell 或明確選用的使用者工具鏈執行經批准的 Bash／桌面請求。清理使用本 Worker 擁有的子程序 PID 與固定 taskkill 參數。兩層環境投影均限制繼承範圍，保留使用者 PATH。新納管的三個精確 spawn 及其匯入均登記。 |
+| `package.json`、`scripts/electron-asar-integrity.mjs` | 內建腳本由 `electron/**/*` 正式納入 ASAR，明確列入 unpacked 內容以便檔案租約使用。SEC-02 使用原 `electron/` 掃描範圍收錄其執行點，包投影原有比對覆蓋來源位元組、ASAR 位置及執行點。 |
+| `src/playbook.ts` 改前 `3,596,608,616`、`src/path-policy.ts:2292,2318,2345,2362,2363` | 歸檔及還原使用同一授權根的目錄移動，要求目的地不存在，檢查來源及目的父目錄的身分並驗證發布後的來源身分。在 Windows 上由目錄 rename 拒絕覆蓋；其他平台不執行此移動。遞迴清理先列舉受限樹並拒絕連結或掛接點，刪除前重查根與各項身分，逐項 unlink/rmdir。新列舉、空位檢查、rename、rmdir、unlink 均以 PathPolicy 內部呼叫登記。 |
+| `tests/unit/path-policy-directories.test.mjs`、`tests/unit/tool03-bash.test.mjs`、`tests/contract/sec02-sink-inventory.test.mjs` | 新增目錄越根、目的地已存在、junction、移動中來源替換與有效目錄操作的測試。Worker 新增自訂 executable／argv／SSH 拒絕測試，保留既有 Bash 與 Session 選擇斷言。SEC-02 契約核對產品腳本入包及被掃描，將現行匯入數更新為 56。 |
+
+使用原產生器重建兩份清單。SEC-02 有 150 個檔案、183 個呼叫點，新增 9 筆呼叫與 2 筆匯入登記，56 個匯入與 2 筆既有語法例外。SEC-03 有 540 個檔案、626 個呼叫點，新增 5 筆精確登記，違規為 0。
+
+| 驗收 | 結果 |
+| --- | --- |
+| `npm run governance:sec02:sinks`、`npm run governance:sec03:sinks` | 均退出 0。 |
+| `node --experimental-test-isolation=none --test tests/contract/sec02-sink-inventory.test.mjs` | 19/19，原未登記、未解析、過期與 ASAR 竄改拒絕用例均通過。 |
+| 單程序 `npm run test:sec03:contract` | 設定 `NODE_OPTIONS=--experimental-test-isolation=none`，18/18。 |
+| `node --experimental-test-isolation=none --test tests/unit/path-policy-directories.test.mjs` | Windows 3/3。 |
+| `tests/unit/tool03-bash.test.mjs`、固定 Worker stdin 握手 | 以 Node 原生 TypeScript 轉譯及暫存路徑解析鉤子執行，Worker 啟動前的三種拒絕通過。兩項實際啟動案例在 `src/worker.ts:114` 受 `Error: spawn EPERM` 阻擋。直接執行固定腳本的未登入拒絕、握手和狀態回覆通過。 |
+| `npm run typecheck`、`npm run lint`、`git diff --check` | 均退出 0。 |
+| 離線 `npm run build` | 四個模型檔案通過，下載 0。首個失敗在 `build:native` 探測 MSVC。原文為 `Error: spawnSync C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe EPERM`。未到達後續原生編譯、build metadata、tsc emit、dist 完整性、assets。 |
+| `npm run test:package` | 構建未通過，因此未啟動。尚無本輪 staging、Electron／NSIS、ASAR 實檔或安裝測試結果。 |
+
+待負責人複跑預設隔離契約、產品／UI、真實 Worker Bash／桌面生命週期，以及 Windows 離線構建、包內清單與安裝候選。第三輪驗證為原掃描器、契約與人工順序核對。

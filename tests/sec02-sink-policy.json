@@ -1104,6 +1104,138 @@
       }
     },
     {
+      "siteId": "sink-49df232dfec0c8fd694472f5",
+      "sourcePath": "electron/rainydays-worker.mjs",
+      "normalizedNodeSha256": "4e10ad349bf04b146fff1ab8ac18704b5ce7f5fb0266088cf3734900abfd3972",
+      "container": "killTree",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.shell"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "electron/rainydays-worker.mjs#killTree:child-process.spawn",
+        "evidenceIds": [
+          "process-tree",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "windows-system-taskkill",
+            "anchor": "electron/rainydays-worker.mjs#killTree:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "owned-pid-fixed-argv",
+            "anchor": "electron/rainydays-worker.mjs#killTree:argument:1"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "electron/rainydays-worker.mjs#killTree:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-8a4a4e312e5bf83a1ef257a4",
+      "sourcePath": "electron/rainydays-worker.mjs",
+      "normalizedNodeSha256": "c64aa2b2ce10dd34e5826e9cc11f4738759c53fed36c4a6613c5c70b3df57091",
+      "container": "runOneShot",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd",
+        "argument:2.shell"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "electron/rainydays-worker.mjs#runOneShot:child-process.spawn",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-reviewed-worker-shell",
+            "anchor": "electron/rainydays-worker.mjs#runOneShot:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "broker-approved-command-or-fixed-gui-script",
+            "anchor": "electron/rainydays-worker.mjs#runOneShot:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "approved-worker-cwd",
+            "anchor": "electron/rainydays-worker.mjs#runOneShot:argument:2.cwd"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "electron/rainydays-worker.mjs#runOneShot:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-38a98500fac860741bdef6e0",
+      "sourcePath": "electron/rainydays-worker.mjs",
+      "normalizedNodeSha256": "ec4664de962cc7576a720b15441f4628ea43069e105428e77805ac40f120d5ee",
+      "container": "startPersistent",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd",
+        "argument:2.shell"
+      ],
+      "executionClass": "electron-runtime",
+      "packageExpectation": "included-in-asar",
+      "binding": {
+        "kind": "runtime-canary",
+        "anchor": "electron/rainydays-worker.mjs#startPersistent:child-process.spawn",
+        "evidenceIds": [
+          "process-cwd",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "fixed-reviewed-worker-shell",
+            "anchor": "electron/rainydays-worker.mjs#startPersistent:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-reviewed-argv",
+            "anchor": "electron/rainydays-worker.mjs#startPersistent:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "approved-worker-cwd",
+            "anchor": "electron/rainydays-worker.mjs#startPersistent:argument:2.cwd"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "electron/rainydays-worker.mjs#startPersistent:argument:2.shell"
+          }
+        ]
+      }
+    },
+    {
       "siteId": "sink-802a6df7dac2b0fdd4b6fa1d",
       "sourcePath": "electron/user-data-migration.cjs",
       "normalizedNodeSha256": "dbcd262637c39e2327bd2c548607f9e082b2ef933fb7dbae2205c182c5bd2d3c",
@@ -4327,6 +4459,152 @@
       }
     },
     {
+      "siteId": "sink-ad511269e79b289cce4ae8b1",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "789c5aa55f26226d5fd436e1ee844d4fcdbce424f401250af622dcd9fb3aa61c",
+      "container": "assertAbsent",
+      "family": "node-fs",
+      "api": "lstat",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#assertAbsent:node-fs.lstat",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "qualified-absent-destination",
+            "anchor": "src/path-policy.ts#assertAbsent:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-ae20eaba1a2aeb14ef3afd50",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "0e81f4f1fb029d3c550754082428aa873297f6fc5534f3fae35d2dd6d4a9aac4",
+      "container": "PathPolicy.moveDirectory",
+      "family": "node-fs",
+      "api": "rename",
+      "pathOperands": [
+        "argument:0",
+        "argument:1"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.moveDirectory:node-fs.rename",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "same-root-revalidated-source-identity",
+            "anchor": "src/path-policy.ts#PathPolicy.moveDirectory:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "same-root-absent-destination",
+            "anchor": "src/path-policy.ts#PathPolicy.moveDirectory:argument:1"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-524094b872d805b18924d489",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "ababd1d6dc428a40555365e60b9a24f0d428090062080992dc3a03fa0844c85e",
+      "container": "inspect",
+      "family": "node-fs",
+      "api": "readdir",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#inspect:node-fs.readdir",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "bounded-redirect-free-tree-directory",
+            "anchor": "src/path-policy.ts#inspect:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-f86a3fbfe76bb81050ce9802",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "826cbb8d6da870eb70b2780ede477416f270991361584bc00d7891a04ee7ee05",
+      "container": "PathPolicy.removeDirectoryTree",
+      "family": "node-fs",
+      "api": "rmdir",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeDirectoryTree:node-fs.rmdir",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "same-root-revalidated-directory-identity",
+            "anchor": "src/path-policy.ts#PathPolicy.removeDirectoryTree:argument:0"
+          }
+        ]
+      }
+    },
+    {
+      "siteId": "sink-0410197e600a06774915c794",
+      "sourcePath": "src/path-policy.ts",
+      "normalizedNodeSha256": "c665c7a33311ceabccf960b7a8cf074a96543de89122e1ad4c5d26fea0792f8c",
+      "container": "PathPolicy.removeDirectoryTree",
+      "family": "node-fs",
+      "api": "unlink",
+      "pathOperands": [
+        "argument:0"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "adapter-internal",
+        "anchor": "src/path-policy.ts#PathPolicy.removeDirectoryTree:node-fs.unlink",
+        "evidenceIds": [
+          "dispatcher-gateway",
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "same-root-revalidated-file-identity",
+            "anchor": "src/path-policy.ts#PathPolicy.removeDirectoryTree:argument:0"
+          }
+        ]
+      }
+    },
+    {
       "siteId": "sink-912df4104abb57a812ffda61",
       "sourcePath": "src/path-policy.ts",
       "normalizedNodeSha256": "5d1824cdf5f0568e0c6f724e23e932706bd841658bb0a78a9ed3d5478fe4dccc",
@@ -5103,7 +5381,52 @@
           }
         ]
       }
+    },
+    {
+      "siteId": "sink-082349039d5363c57c24ce8a",
+      "sourcePath": "src/worker.ts",
+      "normalizedNodeSha256": "a04391f82ce06b738933e9c6c41e484584f0997ce2f2f7fb63f33996a3b6d3b4",
+      "container": "launch",
+      "family": "child-process",
+      "api": "spawn",
+      "pathOperands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.cwd",
+        "argument:2.shell"
+      ],
+      "executionClass": "product-runtime",
+      "packageExpectation": "compiled-to-asar",
+      "binding": {
+        "kind": "bootstrap-adapter",
+        "anchor": "src/worker.ts#launch:child-process.spawn",
+        "evidenceIds": [
+          "packaged-asar"
+        ],
+        "operands": [
+          {
+            "selector": "argument:0",
+            "classification": "runtime-executable-lease",
+            "anchor": "src/worker.ts#launch:argument:0"
+          },
+          {
+            "selector": "argument:1",
+            "classification": "fixed-worker-entry-lease-and-argv",
+            "anchor": "src/worker.ts#launch:argument:1"
+          },
+          {
+            "selector": "argument:2.cwd",
+            "classification": "authority-canonical-cwd",
+            "anchor": "src/worker.ts#launch:argument:2.cwd"
+          },
+          {
+            "selector": "argument:2.shell",
+            "classification": "fixed-shell-false",
+            "anchor": "src/worker.ts#launch:argument:2.shell"
+          }
+        ]
+      }
     }
   ],
-  "canonicalPayloadSha256": "d81efb37481e368de3645c2daadd6d8f9f0aaf4fe8e998e80ca263cc6c8ed062"
+  "canonicalPayloadSha256": "e6308d550558277b90b2e323e867f86607d02173a378fa0ed69869bc0d75d3ea"
 }

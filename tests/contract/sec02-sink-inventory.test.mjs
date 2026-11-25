@@ -35,6 +35,15 @@ test("SEC-02 sink inventory exactly matches AST closure and package projection",
   const result = await validateSec02SinkInventory(projectRoot);
   assert(result.executableFileCount > 0);
   assert(result.sinkCount >= result.runtimeSinkCount);
+  const { readFile } = await import("node:fs/promises");
+  const [inventory, packageConfig] = await Promise.all([
+    readFile(path.join(projectRoot, sinkInventoryPath), "utf8").then(JSON.parse),
+    readFile(path.join(projectRoot, "package.json"), "utf8").then(JSON.parse),
+  ]);
+  const worker = "electron/rainydays-worker.mjs";
+  assert(inventory.files.some(file => file.sourcePath === worker && file.packageExpectation === "included-in-asar"));
+  assert(inventory.sinks.some(site => site.sourcePath === worker && site.family === "child-process"));
+  assert(packageConfig.build.files.includes("electron/**/*") && packageConfig.build.asarUnpack.includes(worker));
   const actual = {
     inventoryComplete: result.inventoryComplete,
     runtimeCanaryComplete: result.runtimeCanaryComplete,
@@ -432,7 +441,7 @@ test("SEC-02 current restricted runtime domain and reviewed exceptions are exact
     inventory.files.filter(entry => entry.sourcePath.startsWith("src/security-audit")).map(entry => entry.sourcePath).sort(),
     ["src/security-audit-journal.ts", "src/security-audit.ts"]
   );
-  assert.equal(result.importCount, 38);
+  assert.equal(result.importCount, 56);
   assert.equal(result.exceptionCount, 2);
   assert.equal(result.complete, true);
   assert.throws(() => validateSec02RestrictedSourceSet(new Map([["src/adapter.ts", `import fs from "node:fs"; fs.readFile(userPath, callback);`]]), policy, "b".repeat(64)), /different checker/);

@@ -10,6 +10,8 @@ export type PathOperation =
   | "create-file"
   | "replace-file"
   | "create-directory"
+  | "move-directory"
+  | "remove-directory-tree"
   | "watch-directory"
   | "initial-cwd"
   | "reveal";
@@ -188,7 +190,7 @@ class PathTargetExistsError extends Error {
 
 const operations = new Set<PathOperation>([
   "read-file", "read-directory", "search-tree", "create-file", "replace-file",
-  "create-directory", "watch-directory", "initial-cwd", "reveal",
+  "create-directory", "move-directory", "remove-directory-tree", "watch-directory", "initial-cwd", "reveal",
 ]);
 const dosDevices = new Set([
   "CON", "PRN", "AUX", "NUL", "CLOCK$", "CONIN$", "CONOUT$",
@@ -2270,6 +2272,95 @@ export class PathPolicy {
       } catch (error) {
         if (created.length > 0) await this.#rollbackCreated(created);
         throw error;
+      }
+    });
+  }
+
+  async moveDirectory(authority: PathAuthority, request: PathRequest, destination: string): Promise<void> {
+    if (request.operation !== "move-directory") throw new TypeError("directory move requires move-directory permission");
+    await this.#run(authority, request, async (record, state) => {
+      validatePathSyntax(destination, this.#platform);
+      const source = this.#selectTarget(record, request);
+      const target = this.#selectTarget(record, { ...request, input: destination });
+      state.rootId = source.root.rootId;
+      if (source.root !== target.root || this.#contains(source.lexicalTarget, target.lexicalTarget)
+        || [source, target].some(item => [item.root.lexicalPath, item.root.canonicalPath].some(root => this.#samePath(root, item.lexicalTarget)))) deny("PATH_ROOT_DENIED");
+      const root = source.root;
+      const destinationParent = this.#dirname(target.lexicalTarget);
+      const sourcePath = source.lexicalTarget;
+      const assertAbsent = async () => {
+        await fs.lstat(target.lexicalTarget, { bigint: true }).then(() => deny("PATH_OPERATION_DENIED"), (error: NodeJS.ErrnoException) => {
+          if (error.code !== "ENOENT") deny("PATH_OPERATION_DENIED");
+        });
+      };
+      const checkPaths = async () => {
+        await this.#verifyRoot(record, root, state);
+        await this.#walkNoRedirect(root, sourcePath);
+        await this.#walkNoRedirect(root, destinationParent);
+        const canonicalSource = this.#normalizeAbsolute(await this.#realpathOrDeny(sourcePath));
+        const canonicalParent = this.#normalizeAbsolute(await this.#realpathOrDeny(destinationParent));
+        const canonicalDestination = this.#join(canonicalParent, this.#basename(target.lexicalTarget));
+        if ([canonicalSource, canonicalParent, canonicalDestination].some(candidate => this.#selectCanonicalRoot(record, candidate, request.operation) !== root)) deny("PATH_ROOT_DENIED");
+        const identity = await this.#lstatIdentity(canonicalSource, "directory");
+        const parentIdentity = await this.#lstatIdentity(canonicalParent, "directory");
+        await assertAbsent();
+        return { canonicalSource, canonicalParent, canonicalDestination, identity, parentIdentity };
+      };
+      const before = await checkPaths();
+      await this.#barrier("beforeFinalCreate", state.operationId);
+      this.#assertActive(record);
+      const current = await checkPaths();
+      if (!this.#samePath(before.canonicalSource, current.canonicalSource) || !this.#samePath(before.canonicalParent, current.canonicalParent)
+        || !sameIdentity(before.identity, current.identity) || !sameIdentity(before.parentIdentity, current.parentIdentity)) deny("PATH_IDENTITY_CHANGED");
+      // Windows directory rename rejects an existing directory even if it is empty.
+      // POSIX rename can replace an empty directory, so this operation fails closed there.
+      if (process.platform !== "win32" || this.#platform !== "win32") deny("PATH_ROOT_UNSUPPORTED");
+      await fs.rename(current.canonicalSource, current.canonicalDestination).catch(() => deny("PATH_OPERATION_DENIED"));
+      await this.#verifyRoot(record, root, state);
+      await this.#walkNoRedirect(root, current.canonicalDestination);
+      const published = await this.#lstatIdentity(current.canonicalDestination, "directory");
+      if (!sameIdentity(before.identity, published)) deny("PATH_IDENTITY_CHANGED");
+    });
+  }
+
+  async removeDirectoryTree(authority: PathAuthority, request: PathRequest): Promise<void> {
+    if (request.operation !== "remove-directory-tree") throw new TypeError("directory tree removal requires remove-directory-tree permission");
+    await this.#run(authority, request, async (record, state) => {
+      const selected = this.#selectTarget(record, request);
+      const { root, lexicalTarget } = selected;
+      state.rootId = root.rootId;
+      if ([root.lexicalPath, root.canonicalPath].some(candidate => this.#samePath(candidate, lexicalTarget))) deny("PATH_ROOT_DENIED");
+      await this.#verifyRoot(record, root, state);
+      await this.#walkNoRedirect(root, lexicalTarget);
+      const canonical = this.#normalizeAbsolute(await this.#realpathOrDeny(lexicalTarget));
+      if (this.#selectCanonicalRoot(record, canonical, request.operation) !== root) deny("PATH_ROOT_DENIED");
+      const entries: { target: string; identity: ObjectIdentity }[] = [];
+      const inspect = async (target: string, depth: number, expected?: "file" | "directory"): Promise<void> => {
+        if (depth > 64 || entries.length >= 10_000) deny("PATH_OPERATION_DENIED");
+        await this.#walkNoRedirect(root, target);
+        if (this.#selectCanonicalRoot(record, target, request.operation) !== root) deny("PATH_ROOT_DENIED");
+        const identity = await this.#lstatIdentity(target, expected);
+        entries.push({ target, identity });
+        if (identity.type === "directory") {
+          for (const name of await fs.readdir(target)) await inspect(this.#join(target, name), depth + 1);
+        }
+      };
+      await inspect(canonical, 0, "directory");
+      const rootEntry = entries[0];
+      await this.#barrier("beforeFinalCreate", state.operationId);
+      this.#assertActive(record);
+      for (const entry of entries) {
+        await this.#walkNoRedirect(root, entry.target);
+        if (!sameIdentity(entry.identity, await this.#lstatIdentity(entry.target, entry.identity.type))) deny("PATH_IDENTITY_CHANGED");
+      }
+      for (const item of entries.reverse()) {
+        this.#assertActive(record);
+        await this.#verifyRoot(record, root, state);
+        await this.#walkNoRedirect(root, item.target);
+        if (!sameIdentity(rootEntry.identity, await this.#lstatIdentity(rootEntry.target, "directory"))
+          || !sameIdentity(item.identity, await this.#lstatIdentity(item.target, item.identity.type))) deny("PATH_IDENTITY_CHANGED");
+        if (item.identity.type === "directory") await fs.rmdir(item.target).catch(() => deny("PATH_OPERATION_DENIED"));
+        else await fs.unlink(item.target).catch(() => deny("PATH_OPERATION_DENIED"));
       }
     });
   }

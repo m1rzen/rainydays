@@ -74,7 +74,7 @@ package.json、scripts/build-electron.mjs、after-pack.cjs、electron/main.cjs�
 
 
 ### 2026-11-25 當前候選清單複核
-第二輪已從 SEC-03 原樣重建清單移除五個桌面 WIP 路徑。瀏覽器、開發 shell、觀察檔案、Media 儲存與 Playbook 執行已收緊。[逐項核對](../diagnostics/13-sink-classification.md#第二輪複核)
-SEC-02 剩 Playbook 歸檔／還原／刪除、Worker 啟動與兩個受管匯入；SEC-03 剩 Worker 啟動及環境兩處。
-單程序契約 SEC-02 為 17/19，原負向用例通過；SEC-03 為 18/18。typecheck、lint、diff 檢查通過；預設隔離的契約與產品測試需負責人複跑。
-兩道正式清單仍退出 1，尚未執行 build/test:package，D13 保持 blocked。
+第三輪已改為受管本機 Worker、固定入包腳本與 PathPolicy Playbook 目錄操作。兩份正式原清單均退出 0。[逐項核對](../diagnostics/13-sink-classification.md#第三輪複核)
+單程序契約 SEC-02 19/19、SEC-03 18/18，目錄操作 3/3，typecheck、lint、diff 通過，原負向檢查仍拒絕。
+離線 build 通過四個模型檔案，於 `build:native` 的 `vswhere.exe` 遇 `spawnSync ... EPERM`。尚未到達打包及安裝，D13 保持 blocked。
+需負責人複跑預設隔離契約、產品／UI、真實 Worker 與 build/test:package，再驗證當前安裝候選。

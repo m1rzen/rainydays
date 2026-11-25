@@ -1,6 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomBytes } from "node:crypto";
-import { rename, rm } from "node:fs/promises";
 import path from "node:path";
 import type { LLMClient } from "./llm.js";
 import { PathDeniedError, type PathAuthority, type PathRequest } from "./path-policy.js";
@@ -150,7 +149,7 @@ async function ensureRoots(): Promise<void> {
 function playbookStorage(): Promise<PathAuthority> {
   storage ??= pathPolicy.createAuthority([{
     rootId: "playbook-data", role: "playbook-data", configuredPath: USER_DATA_DIR,
-    permissions: ["read-file", "read-directory", "create-directory", "create-file", "replace-file"],
+    permissions: ["read-file", "read-directory", "create-directory", "create-file", "replace-file", "move-directory", "remove-directory-tree"],
   }]).catch(error => { storage = null; throw error; });
   return storage;
 }
@@ -591,9 +590,7 @@ export async function archivePlaybook(playbookIdInput: string): Promise<Playbook
   await ensureRoots();
   const source = projectPath(PLAYBOOKS_DIR, playbookId);
   const destination = projectPath(PLAYBOOKS_ARCHIVED_DIR, playbookId);
-  await assertDirectory(source, `Playbook ${playbookId}`);
-  try { await assertDirectory(destination, `Archived Playbook ${playbookId}`); throw new Error(`Archived Playbook ${playbookId} already exists`); } catch (error) { if (!playbookMissing(error)) throw error; }
-  await rename(source, destination);
+  await pathPolicy.moveDirectory(await playbookStorage(), playbookRequest(source, "move-directory"), playbookRequest(destination, "move-directory").input);
   return (await loadProjectFrom(PLAYBOOKS_ARCHIVED_DIR, playbookId, true)).project;
 }
 
@@ -603,9 +600,7 @@ export async function unarchivePlaybook(playbookIdInput: string): Promise<Playbo
   await ensureRoots();
   const source = projectPath(PLAYBOOKS_ARCHIVED_DIR, playbookId);
   const destination = projectPath(PLAYBOOKS_DIR, playbookId);
-  await assertDirectory(source, `Archived Playbook ${playbookId}`);
-  try { await assertDirectory(destination, `Active Playbook ${playbookId}`); throw new Error(`Active Playbook ${playbookId} already exists`); } catch (error) { if (!playbookMissing(error)) throw error; }
-  await rename(source, destination);
+  await pathPolicy.moveDirectory(await playbookStorage(), playbookRequest(source, "move-directory"), playbookRequest(destination, "move-directory").input);
   return (await loadProjectFrom(PLAYBOOKS_DIR, playbookId, false)).project;
 }
 
@@ -613,7 +608,7 @@ export async function deletePlaybook(playbookIdInput: string): Promise<void> {
   const playbookId = exactId(playbookIdInput);
   if (activePlaybooks.has(playbookId) || startingPlaybooks.has(playbookId)) throw new Error(`Playbook ${playbookId} is running and cannot be deleted`);
   const loaded = await loadProject(playbookId);
-  await rm(loaded.project.projectPath, { recursive: true, force: false });
+  await pathPolicy.removeDirectoryTree(await playbookStorage(), playbookRequest(loaded.project.projectPath, "remove-directory-tree"));
 }
 
 export function validatePlaybookSource(name: string, bytes: Uint8Array): Playbook {

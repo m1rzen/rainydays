@@ -647,6 +647,41 @@
       "api": "process.env",
       "container": "developerEnvironment",
       "occurrenceId": "exec-aabc05b80435bf0905d59e7f"
+    },
+    {
+      "sourcePath": "electron/rainydays-worker.mjs",
+      "family": "child-process",
+      "api": "spawn",
+      "container": "killTree",
+      "occurrenceId": "exec-57c233d86181ad324d0cd811"
+    },
+    {
+      "sourcePath": "electron/rainydays-worker.mjs",
+      "family": "child-process",
+      "api": "spawn",
+      "container": "runOneShot",
+      "occurrenceId": "exec-f893b5e76b32951178d3918d"
+    },
+    {
+      "sourcePath": "electron/rainydays-worker.mjs",
+      "family": "child-process",
+      "api": "spawn",
+      "container": "startPersistent",
+      "occurrenceId": "exec-636cabce7203250f5c004624"
+    },
+    {
+      "sourcePath": "src/worker.ts",
+      "family": "process-environment",
+      "api": "process.env",
+      "container": "workerEnvironment",
+      "occurrenceId": "exec-2533550e5aeada131b2542c5"
+    },
+    {
+      "sourcePath": "src/worker.ts",
+      "family": "child-process",
+      "api": "spawn",
+      "container": "launch",
+      "occurrenceId": "exec-40c3d8c3e92b2df9f5990b2f"
     }
   ],
   "fixedDynamicLoads": [],
@@ -1016,5 +1051,5 @@
       "occurrenceId": "exec-c52f91fdd68fcd90774471b7"
     }
   ],
-  "canonicalPayloadSha256": "e779356ee8746c3710ca20bc61765348b7d0f9ae2e13a461553eb47483a04b2e"
+  "canonicalPayloadSha256": "156a589655f2d7bece3d814c3f9d61a41fac421d302199e89450e0f7840f812b"
 }

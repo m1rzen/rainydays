@@ -4,8 +4,8 @@
   "architectureSha256": "1985ef61f9de682bfd04b60eba2f7cc9a44f4541394f04d08f826ff2356737fe",
   "scannerSha256": "d81dfe30bf6f7df1ce3221861923b011c495fb6be0af1efb026f8203f69d8cb1",
   "crosscheckSha256": "a2c62c23669d2924472d4c80761122a5c4446d12e6a27f8595221f55a0290093",
-  "policySha256": "9a3b205cc7a2af890fbe2509516b33be3e1f0819fdb161b6980e7e4a15a130f3",
-  "sourceSetSha256": "311aadcfc439883f653a194d2856ab6fc06de20c82ebb8c9e9731b29bc8d0092",
+  "policySha256": "df6b011b210445ab277f8de381eb0ab7c1100cfa68e4db6fdccd9cb544577dfe",
+  "sourceSetSha256": "22ae655653da4879f211a5f90e9b8ee38e9bd0ea0d2438dea1aa8bf9848b4a2b",
   "files": [
     {
       "sourcePath": "electron/ipc-contract.cjs",
@@ -29,6 +29,12 @@
       "sourcePath": "electron/preload.cjs",
       "bytes": 2586,
       "sha256": "e201976c91539242837cad4e7fd5e35c656258aca95643955ac8c58720944b14",
+      "executionClass": "electron-runtime"
+    },
+    {
+      "sourcePath": "electron/rainydays-worker.mjs",
+      "bytes": 18292,
+      "sha256": "eacb9b0509d64aec6e3b36d333cc6cd4049442a98c899d84c3749e7f16b32ca9",
       "executionClass": "electron-runtime"
     },
     {
@@ -231,8 +237,8 @@
     },
     {
       "sourcePath": "scripts/electron-asar-integrity.mjs",
-      "bytes": 15844,
-      "sha256": "3c1f99f19a586b72340555254da01074ce1f066add0f98615cac606633bd698d",
+      "bytes": 15896,
+      "sha256": "785ac8e7fb1792f4671604f61f9f3baae8252832a7c6b761ad403f5c1bafcaf3",
       "executionClass": "build-test"
     },
     {
@@ -627,8 +633,8 @@
     },
     {
       "sourcePath": "scripts/rainydays-worker.mjs",
-      "bytes": 23689,
-      "sha256": "fb97ebca53e97008f058baf5e5a04983514f9e4bb9b101e541c55f3a58d3690e",
+      "bytes": 63,
+      "sha256": "e604e2ebcb0dacd337e3b47a9065651a9897df19f49f0ed0c6caa34fb7061b29",
       "executionClass": "build-test"
     },
     {
@@ -927,8 +933,8 @@
     },
     {
       "sourcePath": "src/bootstrap-path-store.ts",
-      "bytes": 36868,
-      "sha256": "5356971f32a341ac7aaa1ee17c631e8ea7e60e52173f6c977480c2c350e24874",
+      "bytes": 37051,
+      "sha256": "efba164ebbcafdafbf90bc1f8b24d4b371e2e0ef270d92616a256225f3079d9d",
       "executionClass": "product-runtime"
     },
     {
@@ -1281,8 +1287,8 @@
     },
     {
       "sourcePath": "src/path-policy.ts",
-      "bytes": 136038,
-      "sha256": "6dd0d99fc07121a749e4cc749cd8847f947cf432c0fc4b1f5f37a6be9b7bbabc",
+      "bytes": 142245,
+      "sha256": "8e604af5eadcec72169701e8d22e56a93cd5249b039a26fe76090c1518085af3",
       "executionClass": "product-runtime"
     },
     {
@@ -1305,8 +1311,8 @@
     },
     {
       "sourcePath": "src/playbook.ts",
-      "bytes": 33202,
-      "sha256": "0f06760d0384a8029a82e6ec49f2d476b23e350dcc2dceb1f228418b0b248edf",
+      "bytes": 32957,
+      "sha256": "3d8722262f91c1bcf07a643e4f15ad5fdfc8e1c916d17fd858d17f40c86a05c8",
       "executionClass": "product-runtime"
     },
     {
@@ -1323,8 +1329,8 @@
     },
     {
       "sourcePath": "src/project-instructions.ts",
-      "bytes": 6936,
-      "sha256": "40667c921e5c72bab808a678f58aea56f6cef36457fcd8b43f5e1e3108832476",
+      "bytes": 6505,
+      "sha256": "c05f8b07296bf5fe95f5a6fe18e039e5392dc3de6892a31ebf09b49fc101778a",
       "executionClass": "product-runtime"
     },
     {
@@ -1467,8 +1473,8 @@
     },
     {
       "sourcePath": "src/tool-policies.ts",
-      "bytes": 17206,
-      "sha256": "5bf715627fadcda41ccf455a09fc14f5a6e7d0478bc8193b315132dcf29af709",
+      "bytes": 17284,
+      "sha256": "176d64078c6243d204e1c080b94023c4c7b6feba2a4337ac79f62cd1abecdc2e",
       "executionClass": "product-runtime"
     },
     {
@@ -1689,8 +1695,8 @@
     },
     {
       "sourcePath": "src/tools/worker-tools.ts",
-      "bytes": 11843,
-      "sha256": "b46c314f34e4a58c59f8429e15680f3922881c526fe6cb014d09886b7976ab54",
+      "bytes": 12583,
+      "sha256": "8986922565c1063c1498669ae2d287c02fc8d62cc0cba69cd321aaa0f20b8139",
       "executionClass": "product-runtime"
     },
     {
@@ -1725,8 +1731,8 @@
     },
     {
       "sourcePath": "src/worker.ts",
-      "bytes": 12922,
-      "sha256": "ca0e04cfce728224f268dab166085d60d1f714e98144bcfcf8e9fd29179a9f2e",
+      "bytes": 13812,
+      "sha256": "995a35f4cab60d6990f1cd3f363b42047664cc51b1220001d2089b321c5c4444",
       "executionClass": "product-runtime"
     },
     {
@@ -1941,8 +1947,8 @@
     },
     {
       "sourcePath": "tests/contract/sec02-sink-inventory.test.mjs",
-      "bytes": 24414,
-      "sha256": "ac668e55240e0ee8f5b53980429882c0031cbf4eb43f88ecb8d09159763302e3",
+      "bytes": 25080,
+      "sha256": "8485c83d41ea0326b6c168903618b7012e9113ae20ba04e41d1f77953d902a67",
       "executionClass": "build-test"
     },
     {
@@ -3044,6 +3050,12 @@
       "executionClass": "build-test"
     },
     {
+      "sourcePath": "tests/unit/path-policy-directories.test.mjs",
+      "bytes": 4085,
+      "sha256": "ab5bd2b80f0a5e8054362dd541fc1a7a7dad80cd9cc7c3fca98ebeffdc72b8ac",
+      "executionClass": "build-test"
+    },
+    {
       "sourcePath": "tests/unit/path-policy-streaming.test.mjs",
       "bytes": 6846,
       "sha256": "f810b942461ff7f0c607f1771af41051231189e23d887e017012029905646e3f",
@@ -3183,8 +3195,8 @@
     },
     {
       "sourcePath": "tests/unit/tool03-bash.test.mjs",
-      "bytes": 2404,
-      "sha256": "b526cd9b71b70f69fc9ccd61971fd646f8ca884189dfd4ee596d180aeaa2e89c",
+      "bytes": 2873,
+      "sha256": "5928262d02f2106751f3f811bfa4d67b8c5b1bb2a70c3a6f9559d8c5825a1cf3",
       "executionClass": "build-test"
     },
     {
@@ -3335,6 +3347,78 @@
         "forwarded-value"
       ],
       "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "electron-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-57c233d86181ad324d0cd811",
+      "occurrence": 1,
+      "sourcePath": "electron/rainydays-worker.mjs",
+      "line": 74,
+      "column": 22,
+      "nodeKind": "CallExpression",
+      "container": "killTree",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "a25c0630b6a27a9ca3a56f3850dcaea6191ad8cef12b3969ba6a53b91d7e8ec8",
+      "executionClass": "electron-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-f893b5e76b32951178d3918d",
+      "occurrence": 1,
+      "sourcePath": "electron/rainydays-worker.mjs",
+      "line": 88,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "runOneShot",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "0040b9375ba4fc88f4acf972b5c69219d7d7998b243182d91ce86161bbfd17c6",
+      "executionClass": "electron-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-636cabce7203250f5c004624",
+      "occurrence": 1,
+      "sourcePath": "electron/rainydays-worker.mjs",
+      "line": 105,
+      "column": 17,
+      "nodeKind": "CallExpression",
+      "container": "startPersistent",
+      "family": "child-process",
+      "api": "spawn",
+      "operands": [
+        "argument:0",
+        "argument:1",
+        "argument:2.env",
+        "argument:2.cwd",
+        "argument:2.shell",
+        "argument:2.stdio",
+        "argument:2.detached",
+        "argument:2.windowsVerbatimArguments"
+      ],
+      "normalizedNodeSha256": "20802678f40a17a9a3faa40fec54322681362131d61c52ab0f05e3619b996307",
       "executionClass": "electron-runtime",
       "classification": "fixed-purpose-production"
     },
@@ -5836,112 +5920,6 @@
       "classification": "build-test"
     },
     {
-      "id": "exec-f8e9f46167f549734235ebf0",
-      "occurrence": 1,
-      "sourcePath": "scripts/rainydays-worker.mjs",
-      "line": 65,
-      "column": 22,
-      "nodeKind": "CallExpression",
-      "container": "killTree",
-      "family": "child-process",
-      "api": "spawn",
-      "operands": [
-        "argument:0",
-        "argument:1",
-        "argument:2.env",
-        "argument:2.cwd",
-        "argument:2.shell",
-        "argument:2.stdio",
-        "argument:2.detached",
-        "argument:2.windowsVerbatimArguments"
-      ],
-      "normalizedNodeSha256": "084881c555e7bd9c0ae89b7e8d7887dacf2e78736cdc90446444a1a5c7a919d6",
-      "executionClass": "build-test",
-      "classification": "build-test"
-    },
-    {
-      "id": "exec-84212203dffa5f7a6c5e29f6",
-      "occurrence": 1,
-      "sourcePath": "scripts/rainydays-worker.mjs",
-      "line": 78,
-      "column": 20,
-      "nodeKind": "PropertyAccessExpression",
-      "container": "runOneShot",
-      "family": "process-environment",
-      "api": "process.env",
-      "operands": [
-        "forwarded-value"
-      ],
-      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
-      "executionClass": "build-test",
-      "classification": "build-test"
-    },
-    {
-      "id": "exec-8bba91a4ef88424dab3514dc",
-      "occurrence": 1,
-      "sourcePath": "scripts/rainydays-worker.mjs",
-      "line": 79,
-      "column": 17,
-      "nodeKind": "CallExpression",
-      "container": "runOneShot",
-      "family": "child-process",
-      "api": "spawn",
-      "operands": [
-        "argument:0",
-        "argument:1",
-        "argument:2.env",
-        "argument:2.cwd",
-        "argument:2.shell",
-        "argument:2.stdio",
-        "argument:2.detached",
-        "argument:2.windowsVerbatimArguments"
-      ],
-      "normalizedNodeSha256": "b139d2fcef3a79f8b23474c00c86808cc67428890a8a20e1fd8baa943d46e671",
-      "executionClass": "build-test",
-      "classification": "build-test"
-    },
-    {
-      "id": "exec-7523557c934ceeb3b6bff56c",
-      "occurrence": 1,
-      "sourcePath": "scripts/rainydays-worker.mjs",
-      "line": 95,
-      "column": 20,
-      "nodeKind": "PropertyAccessExpression",
-      "container": "startPersistent",
-      "family": "process-environment",
-      "api": "process.env",
-      "operands": [
-        "forwarded-value"
-      ],
-      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
-      "executionClass": "build-test",
-      "classification": "build-test"
-    },
-    {
-      "id": "exec-02f2de43ac93443206b2aa59",
-      "occurrence": 1,
-      "sourcePath": "scripts/rainydays-worker.mjs",
-      "line": 96,
-      "column": 17,
-      "nodeKind": "CallExpression",
-      "container": "startPersistent",
-      "family": "child-process",
-      "api": "spawn",
-      "operands": [
-        "argument:0",
-        "argument:1",
-        "argument:2.env",
-        "argument:2.cwd",
-        "argument:2.shell",
-        "argument:2.stdio",
-        "argument:2.detached",
-        "argument:2.windowsVerbatimArguments"
-      ],
-      "normalizedNodeSha256": "8c45bfd46bc327076dc5099bd5b6ea4448a0100ab8c6e506a721c96de07a3888",
-      "executionClass": "build-test",
-      "classification": "build-test"
-    },
-    {
       "id": "exec-f041e7713eef0c53601c5a76",
       "occurrence": 1,
       "sourcePath": "scripts/recover-session-history.mjs",
@@ -7615,13 +7593,30 @@
       "classification": "fixed-purpose-production"
     },
     {
-      "id": "exec-e0756815a53a005dba502199",
+      "id": "exec-2533550e5aeada131b2542c5",
       "occurrence": 1,
       "sourcePath": "src/worker.ts",
-      "line": 68,
-      "column": 20,
+      "line": 40,
+      "column": 56,
+      "nodeKind": "PropertyAccessExpression",
+      "container": "workerEnvironment",
+      "family": "process-environment",
+      "api": "process.env",
+      "operands": [
+        "forwarded-value"
+      ],
+      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
+      "executionClass": "product-runtime",
+      "classification": "fixed-purpose-production"
+    },
+    {
+      "id": "exec-40c3d8c3e92b2df9f5990b2f",
+      "occurrence": 1,
+      "sourcePath": "src/worker.ts",
+      "line": 114,
+      "column": 25,
       "nodeKind": "CallExpression",
-      "container": "StdioWorkerAdapter.constructor",
+      "container": "launch",
       "family": "child-process",
       "api": "spawn",
       "operands": [
@@ -7634,26 +7629,9 @@
         "argument:2.detached",
         "argument:2.windowsVerbatimArguments"
       ],
-      "normalizedNodeSha256": "edec374ccaf14a64d71c8a12ddddda7b32d9abb6745b14c9505c3a0704ebdd10",
+      "normalizedNodeSha256": "5779a56dc1f6ceb39777df8303c081070c14974b872d0b83a06e4e151952f793",
       "executionClass": "product-runtime",
-      "classification": "unclassified"
-    },
-    {
-      "id": "exec-3ee8255f079387285534b400",
-      "occurrence": 1,
-      "sourcePath": "src/worker.ts",
-      "line": 72,
-      "column": 17,
-      "nodeKind": "PropertyAccessExpression",
-      "container": "StdioWorkerAdapter.constructor",
-      "family": "process-environment",
-      "api": "process.env",
-      "operands": [
-        "forwarded-value"
-      ],
-      "normalizedNodeSha256": "022004bf422aed745ea4d48c0336c8cb18a4f13c0e4f65af0ea8a353256043ef",
-      "executionClass": "product-runtime",
-      "classification": "unclassified"
+      "classification": "fixed-purpose-production"
     },
     {
       "id": "exec-59b85b413d4af6f7a99221a4",
@@ -15005,20 +14983,7 @@
       "classification": "build-test"
     }
   ],
-  "violations": [
-    {
-      "code": "UNCLASSIFIED_EXECUTION_SINK",
-      "sourcePath": "src/worker.ts",
-      "line": 68,
-      "detail": "child-process.spawn occurrence exec-e0756815a53a005dba502199 is not in an exact SEC-03 class"
-    },
-    {
-      "code": "UNCLASSIFIED_EXECUTION_SINK",
-      "sourcePath": "src/worker.ts",
-      "line": 72,
-      "detail": "process-environment.process.env occurrence exec-3ee8255f079387285534b400 is not in an exact SEC-03 class"
-    }
-  ],
-  "migrated": false,
-  "canonicalPayloadSha256": "64b5ed7aa57b689af9bbb5ac5bb209ed2e1d37f429cae802c2a82a757f1b30b4"
+  "violations": [],
+  "migrated": true,
+  "canonicalPayloadSha256": "e5c4f026633fca71c744db43fde8c49654b35c9cd836508200258a6e978a3ea7"
 }

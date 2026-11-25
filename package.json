@@ -286,6 +286,7 @@
       "personas/**/*",
       "skills/**/*",
       "dist/document-parser-worker.js",
+      "electron/rainydays-worker.mjs",
       "dist/native/sandbox-host.exe",
       "dist/native/sandbox-launcher.node",
       "**/better-sqlite3/build/Release/*.node",

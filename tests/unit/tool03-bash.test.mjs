@@ -11,6 +11,12 @@ after(async () => { await registry.dispose(); await rm(root, { recursive: true, 
 const shell = process.platform === "win32" ? "powershell" : "bash";
 const print = process.platform === "win32" ? "Write-Output" : "printf";
 
+test("Worker connection rejects alternate executable, argv and SSH before launch", async () => {
+  await assert.rejects(registry.connect({ workerId: "custom-exe", executable: "another-program" }), /只支援內建本機 Worker/u);
+  await assert.rejects(registry.connect({ workerId: "custom-args", args: [] }), /只支援內建本機 Worker/u);
+  await assert.rejects(registry.connect({ workerId: "remote", transport: "ssh" }), /此版本未開放遠端 Worker/u);
+});
+
 test("TOOL-03 aligns one-shot and persistent bash contracts on the selected Worker", async () => {
   await registry.connect({ workerId: "tool03-remote", name: "TOOL-03 fixture", transport: "stdio", cwd: root, accessCode: "tool03-access" });
   await registry.select("session-tool03", "tool03-remote");
@@ -30,7 +36,7 @@ test("TOOL-03 aligns one-shot and persistent bash contracts on the selected Work
   assert.equal((await registry.execute("session-tool03", "bash_kill", { session: "dev" })).status, "killed");
 });
 
-test("ECO-03 selection is Session-scoped and disconnected remote targets fail closed", async () => {
+test("ECO-03 selection is Session-scoped and disconnected named Workers fail closed", async () => {
   const listed = await registry.list("session-tool03");
   assert.equal(listed.find(worker => worker.workerId === "tool03-remote").selected, true);
   assert.equal(listed.find(worker => worker.workerId === "local").selected, false);
