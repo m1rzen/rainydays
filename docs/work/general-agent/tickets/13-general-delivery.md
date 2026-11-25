@@ -8,7 +8,7 @@ Spec: [通用Agent规格](../../../specs/general-agent.md)
 
 Research: [技术依据与研究问题](../../../research/general-agent-stack.md)
 
-Blockers: A04、A06、A10、A11、A12、D18
+Blockers: A04、A06、A10、A11、A12、A14、A15、D18
 
 User stories: G01–G11
 
@@ -44,6 +44,8 @@ general-agent-acceptance.md为唯一最终计分入口；release.md与D18资料�
 保留他人修改和用户数据；变更按本票独立提交，回退仅针对自身变更。涉及数据迁移先准备测试副本与恢复路径。复用[安全预算](../../../agents/safety-budget.md)，只加本能力需要的边界检查。
 
 ## 执行记录
+
+2026-11-18，成果登记切片新增 P2：纯中文 UTF-8 Markdown 在 4096 字节取样边界可能被生产登记函数识别为 unknown。重现、适用范围和修复后普通会话验收见[交付复核](../reviews/2026-11-18-delivery-readiness.md)，进入 M3-04；当前整票仍为 ready。旧的九项工程关闭记录保留。
 
 尚未开始。获批后记录起点提交、修改边界、实际决定与偏离理由、调用授权、未完成条件；按[执行流程](../../../agents/workflow.md)推进。
 

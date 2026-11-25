@@ -8,7 +8,7 @@
 
 1. [STATUS](../STATUS.md)：当前事实、阻塞与下一步。
 2. [通用Agent规格](../specs/general-agent.md)：最新完整范围；基础文件/研究/文档行为见[基础规格](../specs/colleague-delivery.md)。
-3. [D+A总任务图](../work/general-agent/plan.md)：18项基础任务+13项新增任务，按真实依赖选择第一项已批准工作。
+3. [D+A总任务图](../work/general-agent/plan.md)：18项基础任务和15项通用任务（含后续批准的 A14、A15），按实际依赖选择已批准工作。当前交付窗口的操作和证据要求见[完整版执行规范书](../work/general-agent/delivery-execution.md)。
 4. 只读当前票据的研究与代码，按[workflow](workflow.md)实施；有界研究见[Lux计划](../research/lux-reference-plan.md)。
 5. 进入发布时读[通用验收](general-agent-acceptance.md)和[发布维护](release.md)；给同事的材料为[指南](../user-guide.md)。
 

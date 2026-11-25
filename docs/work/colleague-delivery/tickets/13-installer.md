@@ -67,3 +67,7 @@ package.json、scripts/build-electron.mjs、after-pack.cjs、electron/main.cjs�
 ### 后续有界核对（2026-10-20）
 
 [43项差异分类](../diagnostics/13-sink-classification.md)已按实际文件/函数核对，区分固定模块、受管bootstrap启动、Browser、Media、Playbook、Worker。只登记已核实的node:url、受管server spawn与固定附件模块3项，并移除2项无现代码的旧绑定；159条登记、40处仍未认证。原gate实际继续拒绝browser.ts:168；原新增/未解析/过期拒绝及ASAR篡改拒绝2/2通过。没有生成通过的inventory，扫描器和构建前置保持。现存资源祖先/进程归属与Playbook宿主import等缺口逐项写在分类表，不能笼统视作过期文本。
+
+### 2026-11-18 当前候选准备复核
+
+在文档 HEAD `7d23d0d` 对清单定向契约重跑得到 0/1，当前首个拒绝为 `src/browser.ts:255 module-loader.import`。10 月数量保留为当时记录。候选冻结还需明确五项未跟踪桌面输入的归属；四个本地模型文件有独立 manifest。详见[复跑与摘要](../../general-agent/reviews/2026-11-18-delivery-readiness.md)及[包与两机执行步骤](../../general-agent/delivery-execution.md)。本轮尚无通过原检查的当前安装候选，D13 继续 blocked。
