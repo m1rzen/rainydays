@@ -17,7 +17,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
+      "sha256": "b378b2b124162d179025c819f4857588d4ce0715f573cdfaa139489adc93cc7b",
       "owner": "ECO-08"
     },
     {
@@ -37,7 +37,7 @@
     },
     {
       "exactCasePath": "src/browser.ts",
-      "sha256": "adfb006bd9f197b515d68af7a87fd69fb340af8fe390ef0a2c3283e32d3a3004",
+      "sha256": "b47c6fd07c468a8a7d39912b66fb95b2528fd1896ec830b1ae0a5bf982109e5d",
       "owner": "ECO-08"
     },
     {
@@ -47,27 +47,27 @@
     },
     {
       "exactCasePath": "src/tool-policies.ts",
-      "sha256": "36517715129d97a1c909bef4e15bf0d0c58671aae9808656af659a2abc44271c",
+      "sha256": "176d64078c6243d204e1c080b94023c4c7b6feba2a4337ac79f62cd1abecdc2e",
       "owner": "ECO-08"
     },
     {
       "exactCasePath": "src/tools/browser-tools.ts",
-      "sha256": "fbeeaa8f29822ee57238733d6643760efef8fc1b3d10b7f8ac79073dd7e4239a",
+      "sha256": "c6701c382ff712dabb1755cb0b8337c247bf74cce9995f8fba810725bf0de926",
       "owner": "ECO-08"
     },
     {
       "exactCasePath": "src/tools/index.ts",
-      "sha256": "e1330b5e28cd33ed66bd3ae1566f665bae026c30d676457c656971ab28e75ea2",
+      "sha256": "1c81e90906991d39dbdf56b92c034ffd5865ab87b76496dae389cd006ad84e9e",
       "owner": "ECO-08"
     },
     {
       "exactCasePath": "personas/default.md",
-      "sha256": "12c1a5c6ac96508aa5ab3d11dd9027c7e919c6d6dcd1534b015443c3bb944567",
+      "sha256": "29232cb39c8df1eebf7477e85a0b3d478eab196dc70f862849dbf0bc5bacdb85",
       "owner": "ECO-08"
     },
     {
       "exactCasePath": "personas/general.md",
-      "sha256": "73f4f23961d2b3fc4cd0311be509fab2f009ffb1731e6abd4c5b9fdf24f3319a",
+      "sha256": "a44a1375a02d66ac4caac2cff9974757effb6b758a7709ee2772c6db8ddbd170",
       "owner": "ECO-08"
     }
   ],
@@ -81,7 +81,7 @@
     },
     {
       "exactCasePath": "tests/integration/eco08-browser-cdp.test.mjs",
-      "sha256": "fb17349ab1db4857524bb5f3f6a2db3bb94dbb0ff3e9dbcbe329546cda022c2a",
+      "sha256": "a8bd3bb6bd1a48ec348733a90648230363530e85b52da76d27c0fad5f3c57f7c",
       "kind": "test",
       "layer": "integration",
       "owner": "ECO-08"
@@ -94,5 +94,5 @@
       "owner": "ECO-08"
     }
   ],
-  "canonicalPayloadSha256": "7b4fc5269c73db8792a9f818e50929af98f75474b71ca46579e1e78ac3513c7e"
+  "canonicalPayloadSha256": "834adc9eb85cc1b666cfc28d2c5082eedfa1c94605efb5b137856c496b33dff0"
 }

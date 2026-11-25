@@ -28,7 +28,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
+      "sha256": "b378b2b124162d179025c819f4857588d4ce0715f573cdfaa139489adc93cc7b",
       "owner": "REL-03"
     },
     {
@@ -53,12 +53,12 @@
     },
     {
       "exactCasePath": "tests/sec02-sink-inventory.json",
-      "sha256": "2a6dcd397ee4ffb6a82ff70838ed53785f6a049303bdd1bd99f4b418434375a2",
+      "sha256": "27a556f708799290f97d58dde79458cae4e93ac95b75643a97d01f72f44c7fbb",
       "owner": "REL-03"
     },
     {
       "exactCasePath": "tests/sec02-sink-policy.json",
-      "sha256": "e66b4650ee26064c40975b58397fe6d7078a75586eb3f085f4f8e7ca8098c819",
+      "sha256": "c3da9cd3c0b9c4e9fb127d4b2f6c332c92c4b7cf82576ccf3b8acd40eb8f3cf0",
       "owner": "REL-03"
     }
   ],
@@ -99,5 +99,5 @@
       "owner": "REL-03"
     }
   ],
-  "canonicalPayloadSha256": "1ae8effc44678c2b21a29adc092c7f38c8bfd34e6b1a494b064673af05404902"
+  "canonicalPayloadSha256": "bbc39f3578c28886e9cf3260fd975ceb867d760848fa3fefaec1d20236f0de53"
 }

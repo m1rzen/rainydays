@@ -43,7 +43,7 @@
     },
     {
       "exactCasePath": "package.json",
-      "sha256": "d6cc396955d3afdf48863805db8690164732fbdbc3c539f51080ba652ea53219",
+      "sha256": "b378b2b124162d179025c819f4857588d4ce0715f573cdfaa139489adc93cc7b",
       "owner": "DATA-02"
     },
     {
@@ -169,5 +169,5 @@
       "owner": "DATA-02"
     }
   ],
-  "canonicalPayloadSha256": "64d12e816fdbb039a36cb94d8e9671e3bdd0ea9e5081df1b4d74fd78bccda5bb"
+  "canonicalPayloadSha256": "a2b753d159b034065011940c7b041b292f8dae9c6f67391f3ad3410d9aecbe00"
 }

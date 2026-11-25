@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "d6cc396955d3afdf48863805db8690164732fbdbc3c539f51080ba652ea53219",
+      "sha256": "b378b2b124162d179025c819f4857588d4ce0715f573cdfaa139489adc93cc7b",
       "owner": "TOOL-04"
     },
     {
@@ -93,7 +93,7 @@
     },
     {
       "exactCasePath": "tests/manifests/sec-03-resolved.json",
-      "sha256": "3702e99d3581cd07cbfee4393359446b9015a6237793a032894d115d64f47480",
+      "sha256": "42889a0477c016bbef60cac79077f73057806992fdbb29f10b6d3657eefa7894",
       "owner": "TOOL-04"
     },
     {
@@ -165,5 +165,5 @@
       "owner": "TOOL-04"
     }
   ],
-  "canonicalPayloadSha256": "87c6efa28053ed7e37eacfc34259fd5ef7b59ef80636d4b533ee63f8ad26370a"
+  "canonicalPayloadSha256": "5ed435a3c0f762e9d60ca52aeff23666a920714f13bc4da25c43cb7427ab0ee4"
 }

@@ -8,7 +8,7 @@
   "runtimeEntries": [
     {
       "exactCasePath": "package.json",
-      "sha256": "fb46dd7b2a960b266e54dc17e742d3097bd65d8a61bdde214ca592598b4e2699",
+      "sha256": "b378b2b124162d179025c819f4857588d4ce0715f573cdfaa139489adc93cc7b",
       "owner": "REL-04"
     },
     {
@@ -28,12 +28,12 @@
     },
     {
       "exactCasePath": "src/agent.ts",
-      "sha256": "3bfbeb374a8d3230e2a900b272f34d255fb60b9386e9675546bcaa725230560c",
+      "sha256": "499a71f5cf5b6202235e9f337f4e41d722aac3bf7e9c9355de421cb69844210c",
       "owner": "REL-04"
     },
     {
       "exactCasePath": "src/daemon.ts",
-      "sha256": "ddf9d8d60660807f41757a3620b431f99573fda211591a9268c8844993a9ee48",
+      "sha256": "6e4d88602c51b060f2a24a796f08269372c7c72f584429ff9523b3721f1b585f",
       "owner": "REL-04"
     },
     {
@@ -43,12 +43,12 @@
     },
     {
       "exactCasePath": "src/index.ts",
-      "sha256": "54ac0c7e279c4dc66de636b812bc530392b911357fe25263b597367bbc3c7a79",
+      "sha256": "44a0193bde436620d86d0e080a5af6f9cadfb605f99504f0e680b86de8d3b5ea",
       "owner": "REL-04"
     },
     {
       "exactCasePath": "src/llm.ts",
-      "sha256": "55bcb3cbf48c5ff98ab2a7a5f87b8cf839df376d95a3c7b3917a4c67c44e9458",
+      "sha256": "b9cdbd71456cf93b994649dc7ba471458e4426c15b6c5458e656a0179789afef",
       "owner": "REL-04"
     },
     {
@@ -96,18 +96,18 @@
     },
     {
       "exactCasePath": "tests/electron/desktop-smoke.test.mjs",
-      "sha256": "d650202d3436c38e3f4a9fd3fb8e90dc9229f6c6e00ec0127dacd008e476a10a",
+      "sha256": "b954bbb8d8fb478fb52adf8e339f011fd8e8d5e005af99460cf6d7467a439b68",
       "kind": "test",
       "layer": "electron",
       "owner": "REL-04"
     },
     {
       "exactCasePath": "tests/packaged/installed-smoke.test.mjs",
-      "sha256": "1bcaa3c56877014cab58866af4b2f92b7b295fdb2749bfdf51f24e38c87295e0",
+      "sha256": "6b6e5bd2268fb5ca7977436d2347bf68dd03ed2aecc51ab4ca228b051cc8acea",
       "kind": "test",
       "layer": "packaged",
       "owner": "REL-04"
     }
   ],
-  "canonicalPayloadSha256": "270ca5b2a28f67ecdd63a35183aa194e4f794bc0e93d20abd0740c12af3a9a03"
+  "canonicalPayloadSha256": "60bfe47d6b66871198682ab9ad96c5e6357ee13f42fc0dab5375d89c030030d1"
 }
